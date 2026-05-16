@@ -7,6 +7,7 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `WT Launcher/Program.cs` — current WinForms launcher implementation.
 - `WT Launcher/WT Launcher.exe` — built WinForms executable.
 - `retired/WT Launcher.hta` — retired legacy HTA snapshot kept only for archive/reference.
+- `retired/config.json` — retired HTA-local config used only when manually opening the archived HTA; it is not an active executable fallback.
 - `config.json` — canonical launcher configuration with multiple launch entries.
 - `WT Launcher/config.json` — legacy executable-local fallback/export config for standalone copies; the normal release layout uses the root `config.json`.
 - `WT_Shortcuts_Backup/` — backup `.lnk` shortcuts that inspired the launcher; these are data artifacts, not source code.
@@ -54,6 +55,7 @@ The verifier currently checks:
 - root config is treated as the canonical source; the executable-local fallback/export status is reported without modifying user data.
 - entries that combine `dangerously*` commands with `confirm: false` are reported without modifying user data.
 - the archived HTA and historical backup HTA have not drifted when both are present.
+- the retired HTA-local `retired/config.json` parses successfully and keeps dangerous commands behind confirmation.
 - stale risk patterns such as duplicate event-handler unregister attempts do not return.
 - HTA-derived UX invariants stay present in the active executable: collapsed sidebar by default, two high-signal stat cards, ellipsis-truncated card text, no hover layout shift, and a roomier edit dialog.
 - this README keeps the core operator sections present.
@@ -115,6 +117,7 @@ Important risks:
 - `directory` must exist before the WinForms launcher starts an item.
 - Command text is quoted before being passed to `wt.exe`, but it is still a shell command; review entries before launching.
 - The root `config.json` is the canonical source. `WT Launcher/config.json` is a legacy fallback/export snapshot, not a second active source.
+- `retired/config.json` belongs only to `retired/WT Launcher.hta`. It may be kept with the archived HTA for historical/manual reference, but it is not read by the active WinForms executable.
 
 ## Current implementation status
 

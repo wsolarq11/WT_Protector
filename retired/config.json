@@ -1,0 +1,92 @@
+﻿[
+    {
+        "name":  "启动脚本",
+        "directory":  "D:\\<USER>\\Desktop\\启动脚本",
+        "command":  "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
+        "confirm":  true
+    },
+    {
+        "name":  "opencode_WT_Protector",
+        "directory":  "D:\\<USER>\\Desktop\\WT_Protector",
+        "command":  "opencode",
+        "confirm":  false
+    },
+    {
+        "name":  "codex_temp",
+        "directory":  "D:\\<USER>\\Desktop\\temp_codex",
+        "command":  "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
+        "confirm":  true
+    },
+    {
+        "name":  "poollink",
+        "directory":  "D:\\<USER>\\Desktop\\poollink",
+        "command":  "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
+        "confirm":  true
+    },
+    {
+        "name":  "gh_mirror_gui",
+        "directory":  "D:\\<USER>\\Desktop\\!_Projects\\gh_mirror_gui",
+        "command":  "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
+        "confirm":  true
+    },
+    {
+        "name":  "Soft_Install",
+        "directory":  "D:\\<USER>\\Desktop\\Soft_Install",
+        "command":  "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
+        "confirm":  true
+    },
+    {
+        "name":  "FolderSizeMonitor",
+        "directory":  "D:\\<USER>\\Desktop\\FolderSizeMonitor",
+        "command":  "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
+        "confirm":  true
+    },
+    {
+        "name":  "在线安装Bat_20260320",
+        "directory":  "D:\\<USER>\\Desktop\\在线安装Bat_20260320",
+        "command":  "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
+        "confirm":  true
+    },
+    {
+        "name":  "Data_Acquisition_and_Analysis",
+        "directory":  "D:\\<PROJECT_ROOT>\\ER\\crawler\\Data_Acquisition_and_Analysis",
+        "command":  "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
+        "confirm":  true
+    },
+    {
+        "name":  "phoenix-crawler",
+        "directory":  "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
+        "command":  "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
+        "confirm":  true
+    },
+    {
+        "name":  "codex-control-plane-private",
+        "directory":  "C:\\<USER>\\codex-control-plane-private",
+        "command":  "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
+        "confirm":  true
+    },
+    {
+        "name":  "wsl_codex_launcher",
+        "directory":  "D:\\<PROJECT_ROOT>\\wsl_codex_launcher",
+        "command":  "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
+        "confirm":  true
+    },
+    {
+        "name":  "usage-observatory",
+        "directory":  "D:\\<PROJECT_ROOT>\\usage-observatory",
+        "command":  "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
+        "confirm":  true
+    },
+    {
+        "name":  "clashverge_proxyrules_analysis",
+        "directory":  "D:\\<PROJECT_ROOT>\\clashverge_proxyrules_analysis",
+        "command":  "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
+        "confirm":  true
+    },
+    {
+        "name":  "WT_Protector",
+        "directory":  "D:\\<USER>\\Desktop\\WT_Protector",
+        "command":  "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
+        "confirm":  true
+    }
+]

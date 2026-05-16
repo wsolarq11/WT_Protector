@@ -205,6 +205,35 @@ try {
         activeRootPresent = $false
         buildWtCommandCalls = $buildCalls
     }
+    $retiredConfigPath = Join-Path $root 'retired\config.json'
+    if (-not (Test-Path -LiteralPath $retiredConfigPath)) {
+        throw "Missing retired HTA-local config: $retiredConfigPath"
+    }
+    $retiredItems = @(Read-ConfigItems $retiredConfigPath)
+    $retiredDangerous = New-Object System.Collections.Generic.List[object]
+    $retiredIdx = 0
+    foreach ($item in $retiredItems) {
+        $command = [string]$item.command
+        if ($command -match 'dangerously' -and $item.confirm -eq $false) {
+            $retiredDangerous.Add([pscustomobject]@{
+                path = 'retired\config.json'
+                index = $retiredIdx
+                name = $item.name
+                command = $command
+            }) | Out-Null
+        }
+        $retiredIdx++
+    }
+    Add-Check 'hta-retired-config' @{
+        path = 'retired\config.json'
+        items = $retiredItems.Count
+        hash = Get-ShortHash $retiredConfigPath
+        activeSource = $false
+        dangerousUnconfirmed = $retiredDangerous.Count
+    }
+    if ($retiredDangerous.Count -gt 0) {
+        throw "retired HTA config has unconfirmed dangerous commands: count=$($retiredDangerous.Count)"
+    }
     if ((Test-Path -LiteralPath $hta) -and (Test-Path -LiteralPath $htaBackup)) {
         $h1 = Get-FileSha256 $hta
         $h2 = Get-FileSha256 $htaBackup
