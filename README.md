@@ -12,6 +12,7 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `WT_Shortcuts_Backup/` — backup `.lnk` shortcuts that inspired the launcher; these are data artifacts, not source code.
 - `tools/verify.ps1` — no-interaction local verification gate.
 - `tools/config-lib.ps1` — shared helper functions used by the verification and config tools.
+- `docs/giants-shoulders/` — "巨人肩膀库": curated external project lessons and source links for future stack/reflection decisions.
 
 ## Configuration schema
 
