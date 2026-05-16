@@ -28,6 +28,33 @@ try {
     }
     Add-Check 'source-patterns' @{ forbidden = 4; required = 5 }
 
+    foreach ($required in @(
+        'private bool _sidebarCollapsed = true',
+        '_statsRow.Controls.AddRange(new Control[] { stat1, stat2 })',
+        'TextRenderer.DrawText(g, item.directory',
+        'TextRenderer.DrawText(g, item.command',
+        'ClientSize = new Size(620, 460)'
+    )) {
+        if (-not $source.Contains($required)) { throw "HTA-derived UX guard missing: $required" }
+    }
+    if ($source.Contains('card.Location = new Point(card.Location.X')) {
+        throw 'HTA-derived UX guard failed: hover must not shift card layout'
+    }
+    foreach ($bad in @('DrawString(item.directory', 'DrawString(item.command')) {
+        if ($source.Contains($bad)) { throw "HTA-derived UX guard failed: card text must use bounded ellipsis rendering, found $bad" }
+    }
+    $ellipsisNoPrefixCount = [regex]::Matches($source, 'TextFormatFlags\.EndEllipsis \| TextFormatFlags\.SingleLine \| TextFormatFlags\.NoPrefix').Count
+    if ($ellipsisNoPrefixCount -lt 2) {
+        throw "HTA-derived UX guard failed: expected at least 2 bounded ellipsis path/command renderers, found $ellipsisNoPrefixCount"
+    }
+    Add-Check 'hta-derived-ux' @{
+        defaultSidebarCollapsed = $true
+        statCards = 2
+        ellipsisCardTextRenderers = $ellipsisNoPrefixCount
+        hoverLayoutShift = $false
+        editDialog = '620x460'
+    }
+
     $readmePath = Join-Path $root 'README.md'
     if (-not (Test-Path -LiteralPath $readmePath)) { throw 'Missing README.md' }
     $readme = Get-Content -Raw -Encoding UTF8 -LiteralPath $readmePath

@@ -122,9 +122,10 @@ namespace WTLauncher
         private string _configPath;
         private string _lastLaunched = "\u2014";
         private bool _darkMode = false;
-        private bool _sidebarCollapsed = false;
+        private bool _sidebarCollapsed = true;
         private const int SidebarExpanded = 200;
         private const int SidebarCollapsed = 68;
+        private int CurrentSidebarWidth { get { return _sidebarCollapsed ? SidebarCollapsed : SidebarExpanded; } }
 
         // Layout panels
         private Panel _sidebar;
@@ -209,7 +210,7 @@ namespace WTLauncher
             Size = new Size(1100, 720);
             BackColor = _darkMode ? Sub2Colors.DarkBg : Sub2Colors.S50;
             ForeColor = _darkMode ? Sub2Colors.DarkTextPrimary : Sub2Colors.S700;
-            Font = new Font("Microsoft YaHei UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
+            Font = new Font("Microsoft YaHei UI", 11F, FontStyle.Regular, GraphicsUnit.Point);
             FormBorderStyle = FormBorderStyle.Sizable;
             Padding = new Padding(0);
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.DoubleBuffer | ControlStyles.ResizeRedraw, true);
@@ -234,7 +235,7 @@ namespace WTLauncher
             // ====================================================================
             _sidebar = new Panel
             {
-                Width = SidebarExpanded,
+                Width = CurrentSidebarWidth,
                 Height = ClientSize.Height,
                 Location = new Point(0, 0),
                 Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left,
@@ -251,7 +252,7 @@ namespace WTLauncher
             _sidebarBrand = new Panel
             {
                 Height = 64,
-                Width = SidebarExpanded,
+                Width = CurrentSidebarWidth,
                 BackColor = Color.Transparent,
             };
             _sidebarBrand.Paint += (s, e) =>
@@ -293,7 +294,7 @@ namespace WTLauncher
             // ── Sidebar Nav ──
             _sidebarNav = new Panel
             {
-                Width = SidebarExpanded,
+                Width = CurrentSidebarWidth,
                 BackColor = Color.Transparent,
             };
 
@@ -311,7 +312,7 @@ namespace WTLauncher
             // ── Sidebar Bottom (Theme + Collapse) ──
             _sidebarBottom = new Panel
             {
-                Width = SidebarExpanded,
+                Width = CurrentSidebarWidth,
                 Height = 100,
                 BackColor = Color.Transparent,
             };
@@ -365,7 +366,7 @@ namespace WTLauncher
                 Cursor = Cursors.Hand,
                 Size = new Size(32, 32),
                 Location = new Point(14, 50),
-                Text = "\u25c0",
+                Text = _sidebarCollapsed ? "\u25b6" : "\u25c0",
                 TabStop = false,
             };
             _btnCollapse.FlatAppearance.BorderSize = 0;
@@ -497,17 +498,19 @@ namespace WTLauncher
                 "\u6700\u8fd1\u542f\u52a8", out _lblStat2Value, out _lblStat2Sub,
                 "\u4e0a\u6b21\u4f7f\u7528");
             // Stat 3: Batch ready (success)
-            var stat3 = CreateStatCard(2, Color.FromArgb(0xD1, 0xFA, 0xE5), Sub2Colors.Success,
+            CreateStatCard(2, Color.FromArgb(0xD1, 0xFA, 0xE5), Sub2Colors.Success,
                 "\u2713",
                 "\u6279\u91cf\u5f85\u547d", out _lblStat3Value, out _lblStat3Sub,
                 "\u5df2\u52fe\u9009\u9879");
             // Stat 4: Selected (warning)
-            var stat4 = CreateStatCard(3, Color.FromArgb(0xFE, 0xF3, 0xC7), Sub2Colors.Warning,
+            CreateStatCard(3, Color.FromArgb(0xFE, 0xF3, 0xC7), Sub2Colors.Warning,
                 "\u2605",
                 "\u5df2\u9009\u4e2d", out _lblStat4Value, out _lblStat4Sub,
                 "\u53ef\u6279\u91cf\u542f\u52a8");
 
-            _statsRow.Controls.AddRange(new Control[] { stat1, stat2, stat3, stat4 });
+            // Keep the active path close to the retired HTA: show only the two
+            // high-signal counters and leave batch state in the batch bar.
+            _statsRow.Controls.AddRange(new Control[] { stat1, stat2 });
             PositionStatCards();
 
             // ── Batch Bar ──
@@ -688,7 +691,7 @@ namespace WTLauncher
                 BackColor = Color.Transparent,
                 Font = new Font("Microsoft YaHei UI", 10F),
                 Cursor = Cursors.Hand,
-                Size = new Size(SidebarExpanded, 42),
+                Size = new Size(CurrentSidebarWidth, 42),
                 Location = new Point(0, top),
                 TextAlign = ContentAlignment.MiddleLeft,
                 Padding = new Padding(0),
@@ -879,7 +882,7 @@ namespace WTLauncher
             int startX = 0;
             int totalW = _statsRow.Width;
             int cardW = 220;
-            int cards = 4;
+            int cards = Math.Max(1, _statsRow.Controls.Count);
             int usedW = cards * cardW + (cards - 1) * gap;
             if (usedW < totalW)
                 startX = (totalW - usedW) / 2;
@@ -920,9 +923,9 @@ namespace WTLauncher
         {
             var card = new Panel
             {
-                Size = new Size(280, 130),
+                Size = new Size(320, 146),
                 BackColor = Color.Transparent,
-                Margin = new Padding(0, 0, 14, 14),
+                Margin = new Padding(0, 0, 16, 16),
                 Cursor = Cursors.Hand,
                 Tag = idx,
             };
@@ -963,25 +966,29 @@ namespace WTLauncher
                 }
 
                 // Name
-                using (var font = new Font("Microsoft YaHei UI", 13F, FontStyle.Bold))
-                    TextRenderer.DrawText(g, item.name, font, new Point(16, 14),
+                using (var font = new Font("Microsoft YaHei UI", 15F, FontStyle.Bold))
+                    TextRenderer.DrawText(g, item.name, font, new Rectangle(16, 12, card.Width - 56, 28),
                         _darkMode ? Sub2Colors.DarkTextPrimary : Sub2Colors.S700,
-                        TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine);
+                        TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter);
 
                 // Directory
                 if (!string.IsNullOrEmpty(item.directory))
                 {
-                    using (var font = new Font("Cascadia Code", 9F))
-                    using (var b = new SolidBrush(_darkMode ? Sub2Colors.DarkTextSecondary : Sub2Colors.S500))
-                        g.DrawString(item.directory, font, b, 16, 40);
+                    using (var font = new Font("Cascadia Code", 10F))
+                        TextRenderer.DrawText(g, item.directory, font,
+                            new Rectangle(16, 48, card.Width - 48, 24),
+                            _darkMode ? Sub2Colors.DarkTextSecondary : Sub2Colors.S500,
+                            TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
                 }
 
                 // Command
                 if (!string.IsNullOrEmpty(item.command))
                 {
-                    using (var font = new Font("Cascadia Code", 9F))
-                    using (var b = new SolidBrush(_darkMode ? Sub2Colors.S500 : Sub2Colors.S300))
-                        g.DrawString(item.command, font, b, 16, 58);
+                    using (var font = new Font("Cascadia Code", 10F))
+                        TextRenderer.DrawText(g, item.command, font,
+                            new Rectangle(16, 74, card.Width - 48, 24),
+                            _darkMode ? Sub2Colors.S500 : Sub2Colors.S300,
+                            TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
                 }
 
                 // Confirm badge
@@ -990,7 +997,7 @@ namespace WTLauncher
                     using (var font = new Font("Microsoft YaHei UI", 8F))
                     using (var b = new SolidBrush(Sub2Colors.S300))
                         TextRenderer.DrawText(g, "\u76f4\u63a5\u542f\u52a8", font,
-                            new Point(16, 100), b.Color,
+                            new Point(16, 116), b.Color,
                             TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine);
                 }
 
@@ -1010,13 +1017,11 @@ namespace WTLauncher
             card.MouseEnter += (s, e) =>
             {
                 isHovered = true;
-                card.Location = new Point(card.Location.X, card.Location.Y - 3);
                 card.Invalidate();
             };
             card.MouseLeave += (s, e) =>
             {
                 isHovered = false;
-                card.Location = new Point(card.Location.X, card.Location.Y + 3);
                 card.Invalidate();
             };
             card.Click += (s, e) => LaunchItem(idx);
@@ -1062,9 +1067,9 @@ namespace WTLauncher
         {
             var addCard = new Panel
             {
-                Size = new Size(280, 130),
+                Size = new Size(320, 146),
                 BackColor = Color.Transparent,
-                Margin = new Padding(0, 0, 14, 14),
+                Margin = new Padding(0, 0, 16, 16),
                 Cursor = Cursors.Hand,
             };
             addCard.Paint += (s, e) =>
@@ -1321,9 +1326,9 @@ namespace WTLauncher
                 MinimizeBox = false,
                 MaximizeBox = false,
                 ShowInTaskbar = false,
-                ClientSize = new Size(500, 400),
+                ClientSize = new Size(620, 460),
                 BackColor = _darkMode ? Sub2Colors.DarkCard : Color.White,
-                Font = new Font("Microsoft YaHei UI", 11F),
+                Font = new Font("Microsoft YaHei UI", 12F),
             })
             {
                 form.Paint += (s, e) =>
@@ -1341,7 +1346,7 @@ namespace WTLauncher
                 var hdr = new Label
                 {
                     Text = form.Text,
-                    Font = new Font("Microsoft YaHei UI", 15F, FontStyle.Bold),
+                    Font = new Font("Microsoft YaHei UI", 17F, FontStyle.Bold),
                     ForeColor = _darkMode ? Sub2Colors.DarkTextPrimary : Sub2Colors.S700,
                     Location = new Point(24, 18),
                     AutoSize = true,
@@ -1350,29 +1355,29 @@ namespace WTLauncher
                 {
                     Height = 1,
                     Width = form.ClientSize.Width - 48,
-                    Location = new Point(24, 52),
+                    Location = new Point(24, 58),
                     BackColor = _darkMode ? Sub2Colors.DarkBorder : Color.FromArgb(0xEE, 0xEE, 0xEE),
                 };
 
                 // Body
-                var lblName = new Label { Text = "\u540d\u79f0", Location = new Point(24, 72), AutoSize = true,
+                var lblName = new Label { Text = "\u540d\u79f0", Location = new Point(24, 78), AutoSize = true,
                     ForeColor = _darkMode ? Sub2Colors.DarkTextSecondary : Sub2Colors.S400 };
                 var txtName = new TextBox
                 {
-                    Text = item.name, Location = new Point(24, 94), Width = 452, Height = 32,
-                    Font = new Font("Microsoft YaHei UI", 12F), BorderStyle = BorderStyle.FixedSingle,
+                    Text = item.name, Location = new Point(24, 104), Width = 572, Height = 34,
+                    Font = new Font("Microsoft YaHei UI", 13F), BorderStyle = BorderStyle.FixedSingle,
                 };
 
-                var lblDir = new Label { Text = "\u76ee\u5f55", Location = new Point(24, 138), AutoSize = true,
+                var lblDir = new Label { Text = "\u76ee\u5f55", Location = new Point(24, 150), AutoSize = true,
                     ForeColor = _darkMode ? Sub2Colors.DarkTextSecondary : Sub2Colors.S400 };
                 var txtDir = new TextBox
                 {
-                    Text = item.directory, Location = new Point(24, 160), Width = 402, Height = 32,
-                    Font = new Font("Microsoft YaHei UI", 12F), BorderStyle = BorderStyle.FixedSingle,
+                    Text = item.directory, Location = new Point(24, 176), Width = 522, Height = 34,
+                    Font = new Font("Microsoft YaHei UI", 13F), BorderStyle = BorderStyle.FixedSingle,
                 };
                 var btnBrowse = new Button
                 {
-                    Text = "\u2026", Location = new Point(432, 160), Size = new Size(44, 32),
+                    Text = "\u2026", Location = new Point(552, 176), Size = new Size(44, 34),
                     FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand,
                     Font = new Font("Microsoft YaHei UI", 12F),
                     ForeColor = _darkMode ? Sub2Colors.DarkTextSecondary : Sub2Colors.S400,
@@ -1384,20 +1389,20 @@ namespace WTLauncher
                         if (dlg.ShowDialog() == DialogResult.OK) txtDir.Text = dlg.SelectedPath;
                 };
 
-                var lblCmd = new Label { Text = "\u547d\u4ee4", Location = new Point(24, 204), AutoSize = true,
+                var lblCmd = new Label { Text = "\u547d\u4ee4", Location = new Point(24, 222), AutoSize = true,
                     ForeColor = _darkMode ? Sub2Colors.DarkTextSecondary : Sub2Colors.S400 };
                 var txtCmd = new TextBox
                 {
-                    Text = item.command, Location = new Point(24, 226), Width = 452, Height = 60,
-                    Font = new Font("Cascadia Code", 11F), BorderStyle = BorderStyle.FixedSingle,
+                    Text = item.command, Location = new Point(24, 248), Width = 572, Height = 88,
+                    Font = new Font("Cascadia Code", 12F), BorderStyle = BorderStyle.FixedSingle,
                     Multiline = true, ScrollBars = ScrollBars.Vertical,
                 };
 
                 var chkConfirm = new CheckBox
                 {
                     Text = "\u542f\u52a8\u524d\u786e\u8ba4", Checked = item.confirm,
-                    Location = new Point(24, 296), AutoSize = true,
-                    Font = new Font("Microsoft YaHei UI", 11F),
+                    Location = new Point(24, 348), AutoSize = true,
+                    Font = new Font("Microsoft YaHei UI", 12F),
                     ForeColor = _darkMode ? Sub2Colors.DarkTextSecondary : Sub2Colors.S400,
                 };
 
@@ -1405,7 +1410,7 @@ namespace WTLauncher
                 var footerLine = new Label
                 {
                     Height = 1, Width = form.ClientSize.Width - 48,
-                    Location = new Point(24, 332),
+                    Location = new Point(24, 386),
                     BackColor = _darkMode ? Sub2Colors.DarkBorder : Color.FromArgb(0xEE, 0xEE, 0xEE),
                 };
 
@@ -1415,10 +1420,10 @@ namespace WTLauncher
                     FlatStyle = FlatStyle.Flat,
                     BackColor = Color.Transparent,
                     ForeColor = Color.White,
-                    Font = new Font("Microsoft YaHei UI", 11F, FontStyle.Bold),
+                    Font = new Font("Microsoft YaHei UI", 12F, FontStyle.Bold),
                     Cursor = Cursors.Hand,
-                    Size = new Size(90, 36),
-                    Location = new Point(290, 344),
+                    Size = new Size(104, 40),
+                    Location = new Point(384, 402),
                     Text = "\u4fdd\u5b58",
                 };
                 btnOk.FlatAppearance.BorderSize = 0;
@@ -1428,7 +1433,7 @@ namespace WTLauncher
                     var r = new Rectangle(0, 0, b.Width - 1, b.Height - 1);
                     using (var grad = Sub2Colors.GetPrimaryGradient(r))
                         e.Graphics.FillRoundedRect(grad, r, 10);
-                    using (var font = new Font("Microsoft YaHei UI", 11F, FontStyle.Bold))
+                    using (var font = new Font("Microsoft YaHei UI", 12F, FontStyle.Bold))
                         TextRenderer.DrawText(e.Graphics, b.Text, font, r, Color.White,
                             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
                 };
@@ -1439,10 +1444,10 @@ namespace WTLauncher
                     FlatStyle = FlatStyle.Flat,
                     BackColor = _darkMode ? Sub2Colors.S700 : Sub2Colors.S100,
                     ForeColor = _darkMode ? Sub2Colors.DarkTextSecondary : Sub2Colors.S400,
-                    Font = new Font("Microsoft YaHei UI", 11F),
+                    Font = new Font("Microsoft YaHei UI", 12F),
                     Cursor = Cursors.Hand,
-                    Size = new Size(80, 36),
-                    Location = new Point(390, 344),
+                    Size = new Size(90, 40),
+                    Location = new Point(506, 402),
                     Text = "\u53d6\u6d88",
                 };
                 btnCancel.FlatAppearance.BorderColor = Sub2Colors.S200;
@@ -1452,10 +1457,10 @@ namespace WTLauncher
                     FlatStyle = FlatStyle.Flat,
                     BackColor = Color.Transparent,
                     ForeColor = _darkMode ? Sub2Colors.DarkTextSecondary : Sub2Colors.S400,
-                    Font = new Font("Microsoft YaHei UI", 11F),
+                    Font = new Font("Microsoft YaHei UI", 12F),
                     Cursor = Cursors.Hand,
-                    Size = new Size(70, 36),
-                    Location = new Point(24, 344),
+                    Size = new Size(82, 40),
+                    Location = new Point(24, 402),
                     Text = "\u5220\u9664",
                     Visible = !isNew,
                 };

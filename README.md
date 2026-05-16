@@ -54,6 +54,7 @@ The verifier currently checks:
 - entries that combine `dangerously*` commands with `confirm: false` are reported without modifying user data.
 - the archived HTA and historical backup HTA have not drifted when both are present.
 - stale risk patterns such as duplicate event-handler unregister attempts do not return.
+- HTA-derived UX invariants stay present in the active executable: collapsed sidebar by default, two high-signal stat cards, ellipsis-truncated card text, no hover layout shift, and a roomier edit dialog.
 - this README keeps the core operator sections present.
 
 Manual build is still available through `WT Launcher/build.bat`, but the script pauses for interactive use. Prefer `tools/verify.ps1` for repeatable validation.
@@ -126,6 +127,7 @@ The WinForms app supports:
 - no-interaction compile/config verification via `tools/verify.ps1`.
 - root config is the active source of truth, with dangerous commands requiring launch confirmation.
 - the legacy HTA is retired under `retired/` and is not part of the active launcher path.
+- the active WinForms UI now ports the retired HTA's lower-friction feel: less chrome, larger card text, clipped long paths/commands, stable hover, and a roomier edit dialog.
 
 Known remaining work:
 
