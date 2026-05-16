@@ -1,0 +1,167 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="WTLauncher.App.Views.MainWindow"
+        Title="WT Launcher · Avalonia Spike"
+        Width="1180"
+        Height="760"
+        MinWidth="940"
+        MinHeight="600"
+        Background="#F8FAFC">
+  <Window.Styles>
+    <Style Selector="TextBlock.h1">
+      <Setter Property="FontSize" Value="28"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="#0F172A"/>
+    </Style>
+    <Style Selector="TextBlock.muted">
+      <Setter Property="Foreground" Value="#64748B"/>
+      <Setter Property="FontSize" Value="13"/>
+    </Style>
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="White"/>
+      <Setter Property="CornerRadius" Value="18"/>
+      <Setter Property="Padding" Value="18"/>
+      <Setter Property="Margin" Value="0,0,16,16"/>
+      <Setter Property="BorderBrush" Value="#E2E8F0"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BoxShadow" Value="0 8 24 0 #120F172A"/>
+    </Style>
+    <Style Selector="TextBlock.card-title">
+      <Setter Property="FontSize" Value="20"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="#0F172A"/>
+      <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+    </Style>
+    <Style Selector="TextBlock.mono">
+      <Setter Property="FontFamily" Value="Cascadia Code, Consolas"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Foreground" Value="#64748B"/>
+      <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+    </Style>
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="#2563EB"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Padding" Value="16,8"/>
+      <Setter Property="CornerRadius" Value="10"/>
+    </Style>
+    <Style Selector="Button.secondary">
+      <Setter Property="Background" Value="#EEF2FF"/>
+      <Setter Property="Foreground" Value="#1D4ED8"/>
+      <Setter Property="Padding" Value="14,8"/>
+      <Setter Property="CornerRadius" Value="10"/>
+    </Style>
+  </Window.Styles>
+
+  <Grid RowDefinitions="Auto,*,Auto" Margin="28,24">
+    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+      <StackPanel>
+        <TextBlock Classes="h1" Text="WT Launcher"/>
+        <TextBlock Classes="muted"
+                   Text="Avalonia spike · 大字、少 chrome、卡片、搜索、dry-run 优先"/>
+      </StackPanel>
+      <Button Grid.Column="1"
+              Classes="secondary"
+              Content="重新加载"
+              Command="{Binding RefreshCommand}"/>
+      <TextBlock Grid.Row="1"
+                 Grid.ColumnSpan="2"
+                 Margin="0,12,0,0"
+                 Classes="muted"
+                 Text="{Binding ConfigPathDisplay}"/>
+      <Grid Grid.Row="2"
+            Grid.ColumnSpan="2"
+            ColumnDefinitions="*,Auto"
+            Margin="0,18,0,0">
+        <TextBox PlaceholderText="搜索名称、目录或命令"
+                 Text="{Binding FilterText, Mode=TwoWay}"
+                 FontSize="18"
+                 Padding="14,10"/>
+        <Border Grid.Column="1"
+                Background="#E0F2FE"
+                CornerRadius="14"
+                Padding="14,8"
+                Margin="14,0,0,0"
+                VerticalAlignment="Center">
+          <TextBlock Foreground="#0369A1">
+            <Run Text="{Binding VisibleCount}"/>
+            <Run Text=" / "/>
+            <Run Text="{Binding TotalCount}"/>
+          </TextBlock>
+        </Border>
+      </Grid>
+    </Grid>
+
+    <ScrollViewer Grid.Row="1" Margin="0,22,0,18">
+      <ItemsControl ItemsSource="{Binding VisibleEntries}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel/>
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Classes="card" Width="338" MinHeight="184">
+              <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Classes="card-title"
+                             Text="{Binding Name}"/>
+                  <Border Grid.Column="1"
+                          Background="#FEF3C7"
+                          CornerRadius="999"
+                          Padding="8,3"
+                          IsVisible="{Binding IsDangerous}">
+                    <TextBlock Text="danger"
+                               FontSize="11"
+                               Foreground="#92400E"
+                               FontWeight="SemiBold"/>
+                  </Border>
+                </Grid>
+                <TextBlock Grid.Row="1"
+                           Margin="0,12,0,0"
+                           Classes="mono"
+                           Text="{Binding Directory}"/>
+                <TextBlock Grid.Row="2"
+                           Margin="0,8,0,0"
+                           Classes="mono"
+                           Text="{Binding Command}"/>
+                <TextBlock Grid.Row="3"
+                           Margin="0,14,0,12"
+                           Classes="muted"
+                           Text="{Binding ConfirmationLabel}"/>
+                <StackPanel Grid.Row="4"
+                            Orientation="Horizontal"
+                            Spacing="10">
+                  <Button Classes="primary"
+                          Content="启动"
+                          Command="{Binding LaunchCommand}"/>
+                  <Button Classes="secondary"
+                          Content="Dry run"
+                          Command="{Binding DryRunCommand}"/>
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+
+    <Border Grid.Row="2"
+            Background="White"
+            CornerRadius="16"
+            BorderBrush="#E2E8F0"
+            BorderThickness="1"
+            Padding="16">
+      <Grid RowDefinitions="Auto,Auto">
+        <TextBlock Text="{Binding StatusText}"
+                   FontSize="14"
+                   FontWeight="SemiBold"
+                   Foreground="#0F172A"/>
+        <TextBlock Grid.Row="1"
+                   Margin="0,8,0,0"
+                   Classes="mono"
+                   Text="{Binding DryRunText}"/>
+      </Grid>
+    </Border>
+  </Grid>
+</Window>

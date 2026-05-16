@@ -15,3 +15,8 @@ WT Launcher/.theme
 
 # Historical shortcut backup data, not source for the launcher
 WT_Shortcuts_Backup/
+
+# Spike build outputs
+spikes/avalonia-launcher/**/bin/
+spikes/avalonia-launcher/**/obj/
+spikes/avalonia-launcher/artifacts/

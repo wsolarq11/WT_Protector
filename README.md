@@ -14,6 +14,7 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `tools/verify.ps1` — no-interaction local verification gate.
 - `tools/config-lib.ps1` — shared helper functions used by the verification and config tools.
 - `docs/giants-shoulders/` — "巨人肩膀库": curated external project lessons and source links for future stack/reflection decisions.
+- `spikes/avalonia-launcher/` — non-active Avalonia/.NET 10 launcher spike for experience testing before any active-path migration.
 
 ## Configuration schema
 

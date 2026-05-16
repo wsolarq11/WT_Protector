@@ -134,6 +134,8 @@ Minimum acceptance gate:
 9. The screenshot and subjective review are clearly better than current WinForms.
 10. If it does not win, archive the spike without touching the active executable.
 
+Current local follow-up: `spikes/avalonia-launcher/` implements this as a non-active Avalonia/.NET 10 prototype with Core/App/Tests separation, a local `verify.ps1`, and a `run.ps1` experience entrypoint.
+
 ## Decision lens versus other candidates
 
 | Stack | Local conclusion after studying CodexSwitch |
@@ -153,4 +155,3 @@ Minimum acceptance gate:
 - .NET Native AOT deployment: <https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/>
 - .NET self-contained deployment: <https://learn.microsoft.com/en-us/dotnet/core/deploying/>
 - xUnit: <https://xunit.net/>
-
