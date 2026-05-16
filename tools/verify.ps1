@@ -158,22 +158,31 @@ try {
         targetHashAfter = $sync.targetHashAfter
     }
 
-    $hta = Join-Path $root 'WT Launcher.hta'
+    $activeHta = Join-Path $root 'WT Launcher.hta'
+    if (Test-Path -LiteralPath $activeHta) {
+        throw "Retired HTA must not remain on the active root path: $activeHta"
+    }
+    $hta = Join-Path $root 'retired\WT Launcher.hta'
     $htaBackup = Join-Path $root 'WT_Shortcuts_Backup\WT Launcher.hta'
-    if (Test-Path -LiteralPath $hta) {
-        $htaSource = Get-Content -Raw -Encoding UTF8 -LiteralPath $hta
-        foreach ($required in @('function quoteArg', 'function buildWtCommand')) {
-            if (-not $htaSource.Contains($required)) { throw "HTA required helper missing: $required" }
-        }
-        $buildCalls = [regex]::Matches($htaSource, 'buildWtCommand\(b\)').Count
-        if ($buildCalls -lt 2) { throw "HTA launch paths do not both use buildWtCommand; count=$buildCalls" }
-        Add-Check 'hta-source-patterns' @{ buildWtCommandCalls = $buildCalls }
+    if (-not (Test-Path -LiteralPath $hta)) {
+        throw "Missing retired HTA archive: $hta"
+    }
+    $htaSource = Get-Content -Raw -Encoding UTF8 -LiteralPath $hta
+    foreach ($required in @('function quoteArg', 'function buildWtCommand')) {
+        if (-not $htaSource.Contains($required)) { throw "Retired HTA required helper missing: $required" }
+    }
+    $buildCalls = [regex]::Matches($htaSource, 'buildWtCommand\(b\)').Count
+    if ($buildCalls -lt 2) { throw "Retired HTA launch paths do not both use buildWtCommand; count=$buildCalls" }
+    Add-Check 'hta-retired-archive' @{
+        path = 'retired\WT Launcher.hta'
+        activeRootPresent = $false
+        buildWtCommandCalls = $buildCalls
     }
     if ((Test-Path -LiteralPath $hta) -and (Test-Path -LiteralPath $htaBackup)) {
         $h1 = Get-FileSha256 $hta
         $h2 = Get-FileSha256 $htaBackup
         if ($h1 -ne $h2) { throw 'HTA backup drift detected' }
-        Add-Check 'hta-backup' @{ sha256 = $h1.Substring(0, 16) }
+        Add-Check 'hta-backup' @{ retiredSha256 = $h1.Substring(0, 16) }
     }
 
     [pscustomobject]@{

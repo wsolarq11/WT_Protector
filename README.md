@@ -6,7 +6,7 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 
 - `WT Launcher/Program.cs` — current WinForms launcher implementation.
 - `WT Launcher/WT Launcher.exe` — built WinForms executable.
-- `WT Launcher.hta` — legacy HTA implementation kept as a compatible snapshot.
+- `retired/WT Launcher.hta` — retired legacy HTA snapshot kept only for archive/reference.
 - `config.json` — canonical launcher configuration with multiple launch entries.
 - `WT Launcher/config.json` — legacy executable-local fallback/export config for standalone copies; the normal release layout uses the root `config.json`.
 - `WT_Shortcuts_Backup/` — backup `.lnk` shortcuts that inspired the launcher; these are data artifacts, not source code.
@@ -48,11 +48,11 @@ The verifier currently checks:
 - `Program.cs` compiles with `.NET Framework` `csc.exe`.
 - shipped `WT Launcher.exe` is up to date with `Program.cs`.
 - launch argument validation/quoting smoke tests pass without opening the GUI.
-- the HTA launcher uses the same centralized command-building pattern instead of inline `wt` string concatenation.
+- the legacy HTA is no longer active at the repository root and is archived under `retired/`.
 - JSON configs parse successfully.
 - root config is treated as the canonical source; the executable-local fallback/export status is reported without modifying user data.
 - entries that combine `dangerously*` commands with `confirm: false` are reported without modifying user data.
-- the root HTA and backup HTA have not drifted.
+- the archived HTA and historical backup HTA have not drifted when both are present.
 - stale risk patterns such as duplicate event-handler unregister attempts do not return.
 - this README keeps the core operator sections present.
 
@@ -68,7 +68,7 @@ The release build compiles to a temporary executable first, backs up the current
 
 ## Config sync helper
 
-The WinForms executable first looks for the root `config.json` next to this README and falls back to `WT Launcher/config.json` only when it is copied away from the release layout. The root HTA also reads the root `config.json`, so root config is the single active source in the normal layout.
+The WinForms executable first looks for the root `config.json` next to this README and falls back to `WT Launcher/config.json` only when it is copied away from the release layout. Root config is the single active source in the normal layout.
 
 Use the helper only when you intentionally want to export the root config into the executable-local fallback file for a standalone copy.
 
@@ -125,9 +125,9 @@ The WinForms app supports:
 - light/dark theme preference;
 - no-interaction compile/config verification via `tools/verify.ps1`.
 - root config is the active source of truth, with dangerous commands requiring launch confirmation.
+- the legacy HTA is retired under `retired/` and is not part of the active launcher path.
 
 Known remaining work:
 
-- decide whether the HTA implementation should be retired or kept as a legacy fallback;
 - add UI-level smoke tests if the tool becomes shared beyond this machine;
 - replace the interactive `build.bat` with a release-oriented build script if distribution is needed.
