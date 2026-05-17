@@ -51,17 +51,19 @@ if ([string]::IsNullOrWhiteSpace([string]$call[2])) { throw "empty command error
 $tests.Add([pscustomobject]@{ name = "empty-command-rejected"; ok = $true }) | Out-Null
 
 $releaseStartupPath = Get-RepoPath "WT Launcher"
-$expectedRootConfig = Get-RepoPath "config.json"
+$expectedRootConfig = Get-LauncherConfigPath
 $resolved = [string]$resolveConfigPath.Invoke($null, [object[]]@([string]$releaseStartupPath))
 if ($resolved -ne $expectedRootConfig) {
-    throw "release layout did not resolve root config: expected=$expectedRootConfig actual=$resolved"
+    throw "release layout did not resolve canonical config: expected=$expectedRootConfig actual=$resolved"
 }
 $tests.Add([pscustomobject]@{ name = "release-layout-uses-root-config"; ok = $true }) | Out-Null
 
 $standaloneDir = Join-Path ([IO.Path]::GetTempPath()) ("wt-launcher-standalone-" + [Guid]::NewGuid().ToString("N"))
 try {
     New-Item -ItemType Directory -Force -Path $standaloneDir | Out-Null
-    $standaloneConfig = Join-Path $standaloneDir "config.json"
+    $standaloneConfigDir = Join-Path $standaloneDir "config"
+    New-Item -ItemType Directory -Force -Path $standaloneConfigDir | Out-Null
+    $standaloneConfig = Join-Path $standaloneConfigDir "config.json"
     "[]" | Set-Content -Encoding UTF8 -LiteralPath $standaloneConfig
     $resolved = [string]$resolveConfigPath.Invoke($null, [object[]]@([string]$standaloneDir))
     if ($resolved -ne $standaloneConfig) {

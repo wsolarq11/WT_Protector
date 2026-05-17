@@ -10,9 +10,6 @@
 *.tmp
 WT Launcher/*build_log.txt
 
-# Local UI preference
-WT Launcher/.theme
-
 # Historical shortcut backup data, not source for the launcher
 WT_Shortcuts_Backup/
 

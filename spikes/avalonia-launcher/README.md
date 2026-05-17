@@ -16,7 +16,7 @@ From the repository root:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\spikes\avalonia-launcher\run.ps1
 ```
 
-The app reads the repository-root `config.json` and shows launch entries as large searchable cards.
+The app reads the repository-root `config/config.json`, persists selected checkboxes there, and stores portable UI preferences in `config/settings.json`.
 
 ## Verify
 
@@ -35,4 +35,3 @@ It does not replace the active WinForms executable.
 ## Acceptance question
 
 Keep this spike only if it clearly feels better than WinForms while keeping the same or stronger launch/config safety. If it does not win, archive it.
-

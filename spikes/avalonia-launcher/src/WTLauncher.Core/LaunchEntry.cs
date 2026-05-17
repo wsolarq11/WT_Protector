@@ -4,15 +4,21 @@ namespace WTLauncher.Core;
 
 public sealed record LaunchEntry
 {
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = "";
+
     [JsonPropertyName("name")]
-    public string Name { get; init; } = "";
+    public string Name { get; set; } = "";
 
     [JsonPropertyName("directory")]
-    public string Directory { get; init; } = "";
+    public string Directory { get; set; } = "";
 
     [JsonPropertyName("command")]
-    public string Command { get; init; } = "";
+    public string Command { get; set; } = "";
 
     [JsonPropertyName("confirm")]
-    public bool Confirm { get; init; } = true;
+    public bool Confirm { get; set; } = true;
+
+    [JsonPropertyName("selected")]
+    public bool Selected { get; set; }
 }

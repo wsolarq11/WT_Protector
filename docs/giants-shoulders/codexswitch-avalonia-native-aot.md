@@ -123,7 +123,7 @@ The spike must not replace `WT Launcher\WT Launcher.exe` until it wins.
 
 Minimum acceptance gate:
 
-1. Reads the existing root `config.json`.
+1. Reads the existing root `config/config.json`.
 2. Shows launch entries as large, low-chrome cards.
 3. Supports search/filter.
 4. Supports single-item launch dry-run using the same argument contract.
@@ -134,7 +134,7 @@ Minimum acceptance gate:
 9. The screenshot and subjective review are clearly better than current WinForms.
 10. If it does not win, archive the spike without touching the active executable.
 
-Current local follow-up: `spikes/avalonia-launcher/` implements this as a non-active Avalonia/.NET 10 prototype with Core/App/Tests separation, a local `verify.ps1`, and a `run.ps1` experience entrypoint.
+Current local follow-up: `spikes/avalonia-launcher/` implements this as a non-active Avalonia/.NET 10 prototype with Core/App/Tests separation, a local `verify.ps1`, a `run.ps1` experience entrypoint, persistent selected checkboxes, and portable `config/settings.json` UI preferences.
 
 ## Decision lens versus other candidates
 

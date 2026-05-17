@@ -99,16 +99,44 @@ namespace WTLauncher
     // =========================================================================
     public class ButtonItem
     {
+        public string id { get; set; }
         public string name { get; set; }
         public string directory { get; set; }
         public string command { get; set; }
         public bool confirm { get; set; }
+        public bool selected { get; set; }
         public ButtonItem()
         {
+            id = "";
             name = "";
             directory = "";
             command = "";
             confirm = true;
+            selected = false;
+        }
+    }
+
+    public class LauncherWindowSettings
+    {
+        public double width { get; set; }
+        public double height { get; set; }
+        public LauncherWindowSettings()
+        {
+            width = 1100;
+            height = 720;
+        }
+    }
+
+    public class LauncherSettings
+    {
+        public string theme { get; set; }
+        public string lastFilterText { get; set; }
+        public LauncherWindowSettings window { get; set; }
+        public LauncherSettings()
+        {
+            theme = "light";
+            lastFilterText = "";
+            window = new LauncherWindowSettings();
         }
     }
 
@@ -120,6 +148,8 @@ namespace WTLauncher
         private List<ButtonItem> _items = new List<ButtonItem>();
         private HashSet<int> _selected = new HashSet<int>();
         private string _configPath;
+        private string _settingsPath;
+        private LauncherSettings _settings = new LauncherSettings();
         private string _lastLaunched = "\u2014";
         private bool _darkMode = false;
         private bool _sidebarCollapsed = true;
@@ -180,18 +210,33 @@ namespace WTLauncher
             if (string.IsNullOrWhiteSpace(startupPath))
                 throw new ArgumentException("startupPath");
 
-            var localConfig = Path.Combine(startupPath, "config.json");
-            var parent = Directory.GetParent(startupPath);
-            if (parent == null)
-                return localConfig;
+            var dir = new DirectoryInfo(startupPath);
+            while (dir != null)
+            {
+                var rootConfig = Path.Combine(dir.FullName, "config", "config.json");
+                var readme = Path.Combine(dir.FullName, "README.md");
+                if (File.Exists(rootConfig) && File.Exists(readme))
+                    return rootConfig;
+                dir = dir.Parent;
+            }
 
-            var rootConfig = Path.Combine(parent.FullName, "config.json");
-            return File.Exists(rootConfig) ? rootConfig : localConfig;
+            var localConfig = Path.Combine(startupPath, "config", "config.json");
+            return localConfig;
+        }
+
+        private static string ResolveSettingsPath(string configPath)
+        {
+            var configDir = Path.GetDirectoryName(configPath);
+            if (string.IsNullOrWhiteSpace(configDir))
+                throw new ArgumentException("configPath");
+            return Path.Combine(configDir, "settings.json");
         }
 
         public MainForm()
         {
             _configPath = ResolveConfigPath(Application.StartupPath);
+            _settingsPath = ResolveSettingsPath(_configPath);
+            _settings = LoadSettings();
             _darkMode = LoadThemePref();
             InitializeComponent();
             LoadItems();
@@ -207,13 +252,16 @@ namespace WTLauncher
             Text = "WT Launcher";
             StartPosition = FormStartPosition.CenterScreen;
             MinimumSize = new Size(960, 640);
-            Size = new Size(1100, 720);
+            var savedWidth = (int)Math.Max(960, Math.Min(2400, _settings.window != null ? _settings.window.width : 1100));
+            var savedHeight = (int)Math.Max(640, Math.Min(1600, _settings.window != null ? _settings.window.height : 720));
+            Size = new Size(savedWidth, savedHeight);
             BackColor = _darkMode ? Sub2Colors.DarkBg : Sub2Colors.S50;
             ForeColor = _darkMode ? Sub2Colors.DarkTextPrimary : Sub2Colors.S700;
             Font = new Font("Microsoft YaHei UI", 11F, FontStyle.Regular, GraphicsUnit.Point);
             FormBorderStyle = FormBorderStyle.Sizable;
             Padding = new Padding(0);
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.DoubleBuffer | ControlStyles.ResizeRedraw, true);
+            FormClosing += (s, e) => SaveWindowSettings();
 
             // ── Background paint (mesh gradient) ──
             Paint += (s, e) =>
@@ -616,8 +664,8 @@ namespace WTLauncher
                 }
                 using (var font = new Font("Microsoft YaHei UI", 8F))
                 using (var b = new SolidBrush(_darkMode ? Sub2Colors.S600 : Sub2Colors.S200))
-                    TextRenderer.DrawText(g, "config.json", font,
-                        new Point(_statusBar.Width - 100, 12), b.Color);
+                    TextRenderer.DrawText(g, "config\\", font,
+                        new Point(_statusBar.Width - 82, 12), b.Color);
             };
             _statusBar.Controls.Add(_lblStatus);
 
@@ -674,10 +722,12 @@ namespace WTLauncher
         private void SelectAll_CheckedChanged(object sender, EventArgs e)
         {
             _selected.Clear();
-            if (_chkSelectAll.Checked)
+            for (int i = 0; i < _items.Count; i++)
             {
-                for (int i = 0; i < _items.Count; i++) _selected.Add(i);
+                _items[i].selected = _chkSelectAll.Checked;
+                if (_chkSelectAll.Checked) _selected.Add(i);
             }
+            SaveItems();
             UpdateBatchUI();
             RenderCards();
         }
@@ -1046,7 +1096,8 @@ namespace WTLauncher
             };
             chk.CheckedChanged += (s, e) =>
             {
-                if (chk.Checked) { _selected.Add(idx); } else { _selected.Remove(idx); }
+                SetSelectedState(idx, chk.Checked);
+                SaveItems();
                 card.Invalidate();
                 UpdateBatchUI();
             };
@@ -1159,9 +1210,17 @@ namespace WTLauncher
         // \u2014\u2014 Toggle select \u2014\u2014
         private void ToggleSelect(int idx)
         {
-            if (_selected.Contains(idx)) _selected.Remove(idx); else _selected.Add(idx);
+            SetSelectedState(idx, !_selected.Contains(idx));
+            SaveItems();
             UpdateBatchUI();
             RenderCards();
+        }
+
+        private void SetSelectedState(int idx, bool selected)
+        {
+            if (idx < 0 || idx >= _items.Count) return;
+            _items[idx].selected = selected;
+            if (selected) _selected.Add(idx); else _selected.Remove(idx);
         }
 
         // \u2014\u2014 Batch UI \u2014\u2014
@@ -1301,9 +1360,6 @@ namespace WTLauncher
                 }
                 catch { fail++; }
             }
-            _selected.Clear();
-            UpdateBatchUI();
-            RenderCards();
             SetStatus(fail > 0
                 ? string.Format("\u2713 {0} \u6210\u529f, {1} \u5931\u8d25", ok, fail)
                 : string.Format("\u2713 \u4e00\u952e\u542f\u52a8: {0} \u6210\u529f", ok),
@@ -1515,6 +1571,7 @@ namespace WTLauncher
                 "\u786e\u8ba4\u5220\u9664", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return false;
             _items.RemoveAt(idx);
             _selected.Clear();
+            foreach (var item in _items) item.selected = false;
             SaveItems();
             RenderStats();
             RenderCards();
@@ -1531,6 +1588,11 @@ namespace WTLauncher
                 var json = File.ReadAllText(_configPath, System.Text.Encoding.UTF8);
                 var data = new JavaScriptSerializer().Deserialize<List<ButtonItem>>(json);
                 if (data != null) _items = data;
+                _selected.Clear();
+                for (int i = 0; i < _items.Count; i++)
+                {
+                    if (_items[i] != null && _items[i].selected) _selected.Add(i);
+                }
             }
             catch { SetStatus("\u914d\u7f6e\u8bfb\u53d6\u5931\u8d25", false); }
 
@@ -1543,39 +1605,153 @@ namespace WTLauncher
         {
             try
             {
+                foreach (var item in _items)
+                {
+                    if (item != null && string.IsNullOrWhiteSpace(item.id))
+                        item.id = item.name ?? "";
+                }
+                var configDir = Path.GetDirectoryName(_configPath);
+                if (!string.IsNullOrWhiteSpace(configDir) && !Directory.Exists(configDir))
+                    Directory.CreateDirectory(configDir);
                 var bak = _configPath + ".bak";
                 if (File.Exists(_configPath))
                 {
                     if (File.Exists(bak)) File.Delete(bak);
                     File.Copy(_configPath, bak, true);
                 }
-                var json = new JavaScriptSerializer().Serialize(_items);
+                var json = PrettyJson(new JavaScriptSerializer().Serialize(_items));
                 File.WriteAllText(_configPath, json, System.Text.Encoding.UTF8);
             }
             catch (Exception ex) { SetStatus(string.Format("\u4fdd\u5b58\u5931\u8d25: {0}", ex.Message), false); }
         }
 
-        // \u2014\u2014 Dark mode \u2014\u2014
-        private bool LoadThemePref()
+        private static string PrettyJson(string json)
         {
-            var prefPath = Path.Combine(Application.StartupPath, ".theme");
+            if (string.IsNullOrWhiteSpace(json)) return json;
+
+            var sb = new StringBuilder(json.Length + 128);
+            var indent = 0;
+            var inString = false;
+            var escaping = false;
+            for (int i = 0; i < json.Length; i++)
+            {
+                var ch = json[i];
+                if (escaping)
+                {
+                    sb.Append(ch);
+                    escaping = false;
+                    continue;
+                }
+                if (ch == '\\' && inString)
+                {
+                    sb.Append(ch);
+                    escaping = true;
+                    continue;
+                }
+                if (ch == '"')
+                {
+                    sb.Append(ch);
+                    inString = !inString;
+                    continue;
+                }
+                if (inString)
+                {
+                    sb.Append(ch);
+                    continue;
+                }
+
+                switch (ch)
+                {
+                    case '{':
+                    case '[':
+                        sb.Append(ch);
+                        sb.AppendLine();
+                        indent++;
+                        AppendJsonIndent(sb, indent);
+                        break;
+                    case '}':
+                    case ']':
+                        sb.AppendLine();
+                        indent = Math.Max(0, indent - 1);
+                        AppendJsonIndent(sb, indent);
+                        sb.Append(ch);
+                        break;
+                    case ',':
+                        sb.Append(ch);
+                        sb.AppendLine();
+                        AppendJsonIndent(sb, indent);
+                        break;
+                    case ':':
+                        sb.Append(": ");
+                        break;
+                    default:
+                        if (!char.IsWhiteSpace(ch)) sb.Append(ch);
+                        break;
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        private static void AppendJsonIndent(StringBuilder sb, int indent)
+        {
+            sb.Append(' ', indent * 2);
+        }
+
+        // \u2014\u2014 Portable settings \u2014\u2014
+        private LauncherSettings LoadSettings()
+        {
             try
             {
-                if (File.Exists(prefPath))
+                if (File.Exists(_settingsPath))
                 {
-                    var val = File.ReadAllText(prefPath, System.Text.Encoding.UTF8).Trim();
-                    return val == "dark";
+                    var json = File.ReadAllText(_settingsPath, System.Text.Encoding.UTF8);
+                    var settings = new JavaScriptSerializer().Deserialize<LauncherSettings>(json);
+                    if (settings != null)
+                    {
+                        if (settings.window == null) settings.window = new LauncherWindowSettings();
+                        if (string.IsNullOrWhiteSpace(settings.theme)) settings.theme = "light";
+                        if (settings.lastFilterText == null) settings.lastFilterText = "";
+                        return settings;
+                    }
                 }
             }
             catch { }
-            return false;
+
+            return new LauncherSettings();
+        }
+
+        private void SaveSettings()
+        {
+            try
+            {
+                var settingsDir = Path.GetDirectoryName(_settingsPath);
+                if (!string.IsNullOrWhiteSpace(settingsDir) && !Directory.Exists(settingsDir))
+                    Directory.CreateDirectory(settingsDir);
+                if (_settings.window == null) _settings.window = new LauncherWindowSettings();
+                var json = PrettyJson(new JavaScriptSerializer().Serialize(_settings));
+                File.WriteAllText(_settingsPath, json, System.Text.Encoding.UTF8);
+            }
+            catch { }
+        }
+
+        private bool LoadThemePref()
+        {
+            return string.Equals(_settings.theme, "dark", StringComparison.OrdinalIgnoreCase);
         }
 
         private void SaveThemePref(bool dark)
         {
-            var prefPath = Path.Combine(Application.StartupPath, ".theme");
-            try { File.WriteAllText(prefPath, dark ? "dark" : "light", System.Text.Encoding.UTF8); }
-            catch { }
+            _settings.theme = dark ? "dark" : "light";
+            SaveWindowSettings();
+        }
+
+        private void SaveWindowSettings()
+        {
+            if (_settings.window == null) _settings.window = new LauncherWindowSettings();
+            _settings.window.width = Width;
+            _settings.window.height = Height;
+            SaveSettings();
         }
 
         private void ToggleDarkMode()

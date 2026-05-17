@@ -6,6 +6,26 @@ function Get-RepoPath([string]$RelativePath) {
     return (Join-Path (Get-RepoRoot) $RelativePath)
 }
 
+function Get-LauncherConfigPath {
+    return (Get-RepoPath 'config\config.json')
+}
+
+function Get-LauncherSettingsPath {
+    return (Get-RepoPath 'config\settings.json')
+}
+
+function Get-LegacyExportConfigPath {
+    return (Get-RepoPath 'WT Launcher\config\config.json')
+}
+
+function Get-LegacyExportSettingsPath {
+    return (Get-RepoPath 'WT Launcher\config\settings.json')
+}
+
+function Get-RetiredConfigPath {
+    return (Get-RepoPath 'retired\config\config.json')
+}
+
 function Read-ConfigItems([string]$Path) {
     if (-not (Test-Path -LiteralPath $Path)) { throw "Missing config: $Path" }
     $json = Get-Content -Raw -Encoding UTF8 -LiteralPath $Path | ConvertFrom-Json

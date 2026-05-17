@@ -12,6 +12,7 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     {
         Entry = entry;
         _owner = owner;
+        _isSelected = entry.Selected;
     }
 
     public LaunchEntry Entry { get; }
@@ -27,6 +28,14 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         : "直接启动";
 
     public bool IsDangerous => LaunchArgumentBuilder.IsDangerousCommand(Entry.Command);
+
+    [ObservableProperty]
+    private bool _isSelected;
+
+    partial void OnIsSelectedChanged(bool value)
+    {
+        _owner.UpdateSelection(this, value);
+    }
 
     [RelayCommand]
     private void DryRun()

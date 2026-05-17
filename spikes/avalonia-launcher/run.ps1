@@ -5,11 +5,11 @@ $ErrorActionPreference = 'Stop'
 
 $spikeRoot = $PSScriptRoot
 $repoRoot = Split-Path -Parent (Split-Path -Parent $spikeRoot)
-$config = Join-Path $repoRoot 'config.json'
+$config = Join-Path $repoRoot 'config\config.json'
 $project = Join-Path $spikeRoot 'src\WTLauncher.App\WTLauncher.App.csproj'
 
 if (-not (Test-Path -LiteralPath $config)) {
-    throw "Missing root config: $config"
+    throw "Missing portable config: $config"
 }
 
 dotnet run --project $project --configuration Release -- --config $config

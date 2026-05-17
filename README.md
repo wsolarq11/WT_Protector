@@ -7,9 +7,10 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `WT Launcher/Program.cs` — current WinForms launcher implementation.
 - `WT Launcher/WT Launcher.exe` — built WinForms executable.
 - `retired/WT Launcher.hta` — retired legacy HTA snapshot kept only for archive/reference.
-- `retired/config.json` — retired HTA-local config used only when manually opening the archived HTA; it is not an active executable fallback.
-- `config.json` — canonical launcher configuration with multiple launch entries.
-- `WT Launcher/config.json` — legacy executable-local fallback/export config for standalone copies; the normal release layout uses the root `config.json`.
+- `config/config.json` — canonical human-readable launcher configuration with multiple launch entries.
+- `config/settings.json` — portable UI preferences such as theme, last search text, and window size.
+- `WT Launcher/config/` — executable-local fallback/export config directory for standalone copies; the normal release layout uses root `config/`.
+- `retired/config/config.json` — retired HTA-local config used only when manually opening the archived HTA; it is not an active executable fallback.
 - `WT_Shortcuts_Backup/` — backup `.lnk` shortcuts that inspired the launcher; these are data artifacts, not source code.
 - `tools/verify.ps1` — no-interaction local verification gate.
 - `tools/config-lib.ps1` — shared helper functions used by the verification and config tools.
@@ -23,20 +24,37 @@ Each config file is a JSON array of launch items:
 ```json
 [
   {
+    "id": "example",
     "name": "example",
     "directory": "D:\\path\\to\\workspace",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
-    "confirm": true
+    "confirm": true,
+    "selected": false
   }
 ]
 ```
 
 Fields:
 
+- `id` — stable human-readable identity for future grouping/sorting/migration.
 - `name` — display name in the launcher UI.
 - `directory` — working directory passed to `wt.exe -d`.
 - `command` — command passed to `pwsh -NoExit -Command`.
 - `confirm` — when `true`, the UI asks before launching.
+- `selected` — persistent checkbox state used by the one-click/batch launch flow.
+
+Portable UI settings live beside the launch config:
+
+```json
+{
+  "theme": "light",
+  "lastFilterText": "",
+  "window": {
+    "width": 1180,
+    "height": 760
+  }
+}
+```
 
 ## Build and verification
 
@@ -53,10 +71,10 @@ The verifier currently checks:
 - launch argument validation/quoting smoke tests pass without opening the GUI.
 - the legacy HTA is no longer active at the repository root and is archived under `retired/`.
 - JSON configs parse successfully.
-- root config is treated as the canonical source; the executable-local fallback/export status is reported without modifying user data.
+- root `config/` is treated as the canonical portable config directory; the executable-local fallback/export status is reported without modifying user data.
 - entries that combine `dangerously*` commands with `confirm: false` are reported without modifying user data.
 - the archived HTA and historical backup HTA have not drifted when both are present.
-- the retired HTA-local `retired/config.json` parses successfully and keeps dangerous commands behind confirmation.
+- the retired HTA-local `retired/config/config.json` parses successfully and keeps dangerous commands behind confirmation.
 - stale risk patterns such as duplicate event-handler unregister attempts do not return.
 - HTA-derived UX invariants stay present in the active executable: collapsed sidebar by default, two high-signal stat cards, ellipsis-truncated card text, no hover layout shift, and a roomier edit dialog.
 - this README keeps the core operator sections present.
@@ -73,9 +91,9 @@ The release build compiles to a temporary executable first, backs up the current
 
 ## Config sync helper
 
-The WinForms executable first looks for the root `config.json` next to this README and falls back to `WT Launcher/config.json` only when it is copied away from the release layout. Root config is the single active source in the normal layout.
+The WinForms executable first looks for the root `config/config.json` next to this README and falls back to `WT Launcher/config/config.json` only when it is copied away from the release layout. Root `config/` is the single active source in the normal layout.
 
-Use the helper only when you intentionally want to export the root config into the executable-local fallback file for a standalone copy.
+Use the helper only when you intentionally want to export the root `config/` directory into the executable-local fallback directory for a standalone copy.
 
 Check what would happen without changing files:
 
@@ -83,17 +101,17 @@ Check what would happen without changing files:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\sync-config.ps1
 ```
 
-Apply/export the root config to the executable-local fallback only when you intentionally want that standalone snapshot:
+Apply/export the root config directory to the executable-local fallback only when you intentionally want that standalone snapshot:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\sync-config.ps1 -Apply
 ```
 
-`-Apply` backs up the current executable-local fallback before copying when that fallback already exists.
+`-Apply` backs up the current executable-local fallback files before copying when those fallback files already exist.
 
 ## Config hardening helper
 
-Check root config entries that would be changed from `confirm: false` to `confirm: true` because they contain a `dangerously*` command. A healthy hardened config reports zero changes needed:
+Check canonical `config/config.json` entries that would be changed from `confirm: false` to `confirm: true` because they contain a `dangerously*` command. A healthy hardened config reports zero changes needed:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\harden-config.ps1
@@ -105,7 +123,7 @@ Apply that hardening only when you intentionally want the extra launch confirmat
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\harden-config.ps1 -Apply
 ```
 
-`-Apply` backs up the root config before rewriting it. Run `tools/sync-config.ps1 -Apply` afterwards only if you also need to refresh the executable-local fallback/export copy.
+`-Apply` backs up `config/config.json` before rewriting it. Run `tools/sync-config.ps1 -Apply` afterwards only if you also need to refresh the executable-local fallback/export copy.
 
 ## Safety notes
 
@@ -117,8 +135,8 @@ Important risks:
 - `tools/verify.ps1` reports entries where a `dangerously*` command is paired with `confirm: false`; after hardening this should stay at zero.
 - `directory` must exist before the WinForms launcher starts an item.
 - Command text is quoted before being passed to `wt.exe`, but it is still a shell command; review entries before launching.
-- The root `config.json` is the canonical source. `WT Launcher/config.json` is a legacy fallback/export snapshot, not a second active source.
-- `retired/config.json` belongs only to `retired/WT Launcher.hta`. It may be kept with the archived HTA for historical/manual reference, but it is not read by the active WinForms executable.
+- The root `config/` directory is the canonical source. `WT Launcher/config/` is a legacy fallback/export snapshot, not a second active source.
+- `retired/config/config.json` belongs only to `retired/WT Launcher.hta`. It may be kept with the archived HTA for historical/manual reference, but it is not read by the active WinForms executable.
 
 ## Current implementation status
 
@@ -128,9 +146,10 @@ The WinForms app supports:
 - single launch and batch launch;
 - launch confirmation;
 - JSON persistence with `.bak` backup;
-- light/dark theme preference;
+- persistent selected checkbox state for one-click/batch launch;
+- portable `config/settings.json` UI preferences without AppData or registry writes;
 - no-interaction compile/config verification via `tools/verify.ps1`.
-- root config is the active source of truth, with dangerous commands requiring launch confirmation.
+- root `config/` is the active source of truth, with dangerous commands requiring launch confirmation.
 - the legacy HTA is retired under `retired/` and is not part of the active launcher path.
 - the active WinForms UI now ports the retired HTA's lower-friction feel: less chrome, larger card text, clipped long paths/commands, stable hover, and a roomier edit dialog.
 

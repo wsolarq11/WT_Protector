@@ -95,44 +95,74 @@ try {
         tests = @($launchArg.tests).Count
     }
 
-    $configs = @{}
-    $rootConfigPath = Join-Path $root 'config.json'
-    $configs['config.json'] = @(Read-ConfigItems $rootConfigPath)
-    Add-Check 'json' @{ path = 'config.json'; items = $configs['config.json'].Count }
-    $rootBackupPath = Join-Path $root 'config.json.bak'
-    if (Test-Path -LiteralPath $rootBackupPath) {
-        $configs['config.json.bak'] = @(Read-ConfigItems $rootBackupPath)
-        Add-Check 'json' @{ path = 'config.json.bak'; items = $configs['config.json.bak'].Count }
-    } else {
-        Add-Check 'json' @{ path = 'config.json.bak'; optional = $true; present = $false }
+    foreach ($forbiddenConfig in @(
+        (Join-Path $root 'config.json'),
+        (Join-Path $root 'WT Launcher\config.json'),
+        (Join-Path $root 'retired\config.json')
+    )) {
+        if (Test-Path -LiteralPath $forbiddenConfig) {
+            throw "Config must live under a config directory, but legacy file exists: $forbiddenConfig"
+        }
     }
 
-    $legacyConfigPath = Join-Path $root 'WT Launcher\config.json'
+    $configs = @{}
+    $rootConfigPath = Get-LauncherConfigPath
+    $canonicalKey = 'config\config.json'
+    $configs[$canonicalKey] = @(Read-ConfigItems $rootConfigPath)
+    Add-Check 'json' @{ path = $canonicalKey; items = $configs[$canonicalKey].Count }
+    $settingsPath = Get-LauncherSettingsPath
+    if (-not (Test-Path -LiteralPath $settingsPath)) { throw "Missing portable settings: $settingsPath" }
+    $settings = Get-Content -Raw -Encoding UTF8 -LiteralPath $settingsPath | ConvertFrom-Json
+    if ($null -eq $settings) { throw "Settings parsed to null: $settingsPath" }
+    Add-Check 'settings-json' @{
+        path = 'config\settings.json'
+        theme = $settings.theme
+        hasWindow = $null -ne $settings.window
+    }
+    $rootBackupPath = $rootConfigPath + '.bak'
+    if (Test-Path -LiteralPath $rootBackupPath) {
+        $configs['config\config.json.bak'] = @(Read-ConfigItems $rootBackupPath)
+        Add-Check 'json' @{ path = 'config\config.json.bak'; items = $configs['config\config.json.bak'].Count }
+    } else {
+        Add-Check 'json' @{ path = 'config\config.json.bak'; optional = $true; present = $false }
+    }
+
+    $legacyConfigPath = Get-LegacyExportConfigPath
+    $legacySettingsPath = Get-LegacyExportSettingsPath
     $rootConfigHash = Get-ShortHash $rootConfigPath
     $legacyConfigExists = Test-Path -LiteralPath $legacyConfigPath
     $legacyConfigHash = Get-ShortHash $legacyConfigPath
+    $settingsHash = Get-ShortHash $settingsPath
+    $legacySettingsExists = Test-Path -LiteralPath $legacySettingsPath
+    $legacySettingsHash = Get-ShortHash $legacySettingsPath
     $legacyItems = @()
     if ($legacyConfigExists) {
         $legacyItems = @(Read-ConfigItems $legacyConfigPath)
     }
     Add-Check 'config-layout' @{
-        canonical = 'config.json'
-        canonicalItems = $configs['config.json'].Count
+        canonical = $canonicalKey
+        canonicalItems = $configs[$canonicalKey].Count
         canonicalHash = $rootConfigHash
-        legacyExport = 'WT Launcher\config.json'
+        settings = 'config\settings.json'
+        settingsHash = $settingsHash
+        legacyExport = 'WT Launcher\config\config.json'
         legacyExportExists = $legacyConfigExists
         legacyExportItems = $legacyItems.Count
         legacyExportHash = $legacyConfigHash
         legacyExportInSync = $legacyConfigExists -and ($rootConfigHash -eq $legacyConfigHash)
+        legacySettings = 'WT Launcher\config\settings.json'
+        legacySettingsExists = $legacySettingsExists
+        legacySettingsHash = $legacySettingsHash
+        legacySettingsInSync = $legacySettingsExists -and ($settingsHash -eq $legacySettingsHash)
     }
 
     $dangerous = New-Object System.Collections.Generic.List[object]
     $idx = 0
-    foreach ($item in $configs['config.json']) {
+    foreach ($item in $configs[$canonicalKey]) {
         $command = [string]$item.command
         if ($command -match 'dangerously' -and $item.confirm -eq $false) {
             $dangerous.Add([pscustomobject]@{
-                path = 'config.json'
+                path = $canonicalKey
                 index = $idx
                 name = $item.name
                 command = $command
@@ -150,15 +180,15 @@ try {
 
     $hardenScript = Join-Path $PSScriptRoot 'harden-config.ps1'
     if (-not (Test-Path -LiteralPath $hardenScript)) { throw 'Missing tools\harden-config.ps1' }
-    $rootHashBeforeHarden = Get-FileSha256 (Join-Path $root 'config.json')
+    $rootHashBeforeHarden = Get-FileSha256 $rootConfigPath
     $hardenJson = & powershell -NoProfile -ExecutionPolicy Bypass -File $hardenScript
     $harden = $hardenJson | ConvertFrom-Json
-    $rootHashAfterHarden = Get-FileSha256 (Join-Path $root 'config.json')
+    $rootHashAfterHarden = Get-FileSha256 $rootConfigPath
     if ($harden.status -ne 'PASS') { throw 'harden-config dry-run did not pass' }
     if ($harden.mode -ne 'dry-run') { throw 'harden-config verifier call was not dry-run' }
     if ($harden.applied) { throw 'harden-config dry-run unexpectedly applied changes' }
     if ($rootHashBeforeHarden -ne $rootHashAfterHarden) {
-        throw 'harden-config dry-run changed root config hash'
+        throw 'harden-config dry-run changed canonical config hash'
     }
     Add-Check 'config-harden-dry-run' @{
         wouldChange = [bool]$harden.wouldChange
@@ -183,6 +213,9 @@ try {
         targetItemsBefore = $sync.targetItemsBefore
         targetHashBefore = $sync.targetHashBefore
         targetHashAfter = $sync.targetHashAfter
+        settingsTargetExistsBefore = $sync.settingsTargetExistsBefore
+        settingsTargetHashBefore = $sync.settingsTargetHashBefore
+        settingsTargetHashAfter = $sync.settingsTargetHashAfter
     }
 
     $activeHta = Join-Path $root 'WT Launcher.hta'
@@ -205,7 +238,7 @@ try {
         activeRootPresent = $false
         buildWtCommandCalls = $buildCalls
     }
-    $retiredConfigPath = Join-Path $root 'retired\config.json'
+    $retiredConfigPath = Get-RetiredConfigPath
     if (-not (Test-Path -LiteralPath $retiredConfigPath)) {
         throw "Missing retired HTA-local config: $retiredConfigPath"
     }
@@ -216,7 +249,7 @@ try {
         $command = [string]$item.command
         if ($command -match 'dangerously' -and $item.confirm -eq $false) {
             $retiredDangerous.Add([pscustomobject]@{
-                path = 'retired\config.json'
+                path = 'retired\config\config.json'
                 index = $retiredIdx
                 name = $item.name
                 command = $command
@@ -225,7 +258,7 @@ try {
         $retiredIdx++
     }
     Add-Check 'hta-retired-config' @{
-        path = 'retired\config.json'
+        path = 'retired\config\config.json'
         items = $retiredItems.Count
         hash = Get-ShortHash $retiredConfigPath
         activeSource = $false

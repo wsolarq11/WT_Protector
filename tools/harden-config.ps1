@@ -6,7 +6,7 @@ $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 . (Join-Path $PSScriptRoot 'config-lib.ps1')
 
-$configPath = Get-RepoPath 'config.json'
+$configPath = Get-LauncherConfigPath
 $changed = New-Object System.Collections.Generic.List[object]
 $backups = New-Object System.Collections.Generic.List[object]
 
@@ -47,5 +47,5 @@ if ($Apply -and $pathChanged) {
     count = $changed.Count
     entries = $changed
     backups = $backups
-    rootHash = Get-ShortHash (Get-RepoPath 'config.json')
+    rootHash = Get-ShortHash (Get-LauncherConfigPath)
 } | ConvertTo-Json -Depth 6

@@ -558,7 +558,7 @@ body {
   </div>
   <div id="btnGrid" class="btn-grid"></div>
   <div id="status">Ready</div>
-  <div class="footer">config.json · Enter 启动 · Ctrl+Enter 跳过确认</div>
+  <div class="footer">config\config.json · Enter 启动 · Ctrl+Enter 跳过确认</div>
 </div>
 
 <!-- Modal -->
@@ -609,7 +609,7 @@ function getScriptDir() {
   if (p.charAt(0) === '/') p = p.substring(1);
   return fso.GetParentFolderName(decodeURIComponent(p));
 }
-var CFG = fso.BuildPath(getScriptDir(), "config.json");
+var CFG = fso.BuildPath(fso.BuildPath(getScriptDir(), "config"), "config.json");
 var btns = [];
 
 function load() {
