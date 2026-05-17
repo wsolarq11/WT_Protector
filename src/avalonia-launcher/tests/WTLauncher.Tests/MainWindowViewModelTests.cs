@@ -98,10 +98,14 @@ public sealed class MainWindowViewModelTests
         Assert.Equal("daily", Assert.Single(viewModel.Presets).Id);
         Assert.Equal(1, viewModel.PresetCount);
         Assert.Equal("daily", viewModel.SelectedPreset?.Id);
+        Assert.Contains("缺 1", viewModel.PresetSelectionStatusText);
+        Assert.Contains("额外 1", viewModel.PresetSelectionStatusText);
 
         viewModel.ApplyPresetCommand.Execute(null);
 
         Assert.Equal(1, viewModel.SelectedCount);
+        Assert.Contains("已匹配启动组", viewModel.PresetSelectionStatusText);
+        Assert.Contains("1/1", viewModel.PresetSelectionStatusText);
         var entries = LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
         Assert.True(entries.Single(entry => entry.Id == "one").Selected);
         Assert.False(entries.Single(entry => entry.Id == "two").Selected);
