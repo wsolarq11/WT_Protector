@@ -47,6 +47,7 @@ $configs[$canonicalKey] = @(Read-ConfigItems $rootConfigPath)
 Add-Check 'json' @{ path = $canonicalKey; items = $configs[$canonicalKey].Count }
 
 $seenIds = @{}
+$selectedFields = 0
 $idx = 0
 foreach ($item in $configs[$canonicalKey]) {
     foreach ($field in @('id', 'name', 'directory', 'command')) {
@@ -54,11 +55,18 @@ foreach ($item in $configs[$canonicalKey]) {
             throw "Config item $idx is missing field: $field"
         }
     }
+    if (-not ($item.PSObject.Properties.Name -contains 'selected')) {
+        throw "Config item $idx is missing persistent selected field"
+    }
+    if (-not ($item.selected -is [bool])) {
+        throw "Config item $idx selected field must be boolean"
+    }
+    $selectedFields++
     if ($seenIds.ContainsKey([string]$item.id)) { throw "Duplicate config id: $($item.id)" }
     $seenIds[[string]$item.id] = $true
     $idx++
 }
-Add-Check 'config-schema' @{ uniqueIds = $seenIds.Count; selectedCapable = $true }
+Add-Check 'config-schema' @{ uniqueIds = $seenIds.Count; selectedFields = $selectedFields; selectedCapable = ($selectedFields -eq $configs[$canonicalKey].Count) }
 
 $settingsPath = Get-LauncherSettingsPath
 if (-not (Test-Path -LiteralPath $settingsPath)) { throw "Missing portable settings: $settingsPath" }

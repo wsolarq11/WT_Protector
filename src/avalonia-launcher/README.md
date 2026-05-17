@@ -11,7 +11,7 @@ From the repository root:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\run.ps1
 ```
 
-The app reads the repository-root `config/config.json`, persists selected checkboxes there, and stores portable UI preferences in `config/settings.json`.
+The app reads the repository-root `config/config.json`, persists selected checkboxes there, and stores portable UI preferences in `config/settings.json`. The header batch controls can select all visible filtered entries, clear the saved selection, or one-click launch the saved checked set.
 
 ## Verify
 

@@ -11,6 +11,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly string _settingsPath;
     private readonly LauncherSettings _settings;
     private readonly LauncherProcess _launcherProcess;
+    private bool _isBulkSelectionUpdate;
 
     [ObservableProperty]
     private string _filterText = "";
@@ -36,7 +37,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settingsPath = settingsPath;
         _settings = settings;
         _launcherProcess = launcherProcess;
-        ConfigPathDisplay = configPath;
+        ConfigPathDisplay = $"配置: {configPath}";
         FilterText = settings.LastFilterText;
         Refresh();
     }
@@ -72,8 +73,39 @@ public sealed partial class MainWindowViewModel : ObservableObject
         TotalCount = Entries.Count;
         SelectedCount = Entries.Count(entry => entry.IsSelected);
         LaunchSelectedCommand.NotifyCanExecuteChanged();
+        ClearSelectionCommand.NotifyCanExecuteChanged();
         ApplyFilter();
-        StatusText = $"已加载 {TotalCount} 个启动项";
+        StatusText = $"已加载 {TotalCount} 个启动项；勾选自动保存到 config\\config.json";
+    }
+
+    [RelayCommand]
+    private void SelectVisible()
+    {
+        var targets = VisibleEntries.Where(entry => !entry.IsSelected).ToList();
+        if (targets.Count == 0)
+        {
+            StatusText = VisibleEntries.Count == 0
+                ? "当前没有可勾选的可见项"
+                : "可见项已全部勾选";
+            return;
+        }
+
+        if (SetSelection(targets, selected: true))
+            StatusText = $"已勾选可见 {targets.Count} 项（已保存）";
+    }
+
+    [RelayCommand(CanExecute = nameof(CanClearSelection))]
+    private void ClearSelection()
+    {
+        var targets = Entries.Where(entry => entry.IsSelected).ToList();
+        if (targets.Count == 0)
+        {
+            StatusText = "当前没有已勾选项";
+            return;
+        }
+
+        if (SetSelection(targets, selected: false))
+            StatusText = $"已清空 {targets.Count} 个勾选项（已保存）";
     }
 
     [RelayCommand(CanExecute = nameof(CanLaunchSelected))]
@@ -144,7 +176,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         item.Entry.Selected = selected;
         SelectedCount = Entries.Count(entry => entry.IsSelected);
         LaunchSelectedCommand.NotifyCanExecuteChanged();
-        SaveConfig();
+        ClearSelectionCommand.NotifyCanExecuteChanged();
+        if (!_isBulkSelectionUpdate)
+            SaveConfig();
     }
 
     internal async Task LaunchAsync(LauncherEntryViewModel item)
@@ -177,6 +211,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return SelectedCount > 0;
     }
 
+    private bool CanClearSelection()
+    {
+        return SelectedCount > 0;
+    }
+
     private void ApplyFilter()
     {
         var filter = (FilterText ?? "").Trim();
@@ -195,15 +234,38 @@ public sealed partial class MainWindowViewModel : ObservableObject
         VisibleCount = VisibleEntries.Count;
     }
 
-    private void SaveConfig()
+    private bool SetSelection(IReadOnlyList<LauncherEntryViewModel> entries, bool selected)
+    {
+        _isBulkSelectionUpdate = true;
+        try
+        {
+            foreach (var entry in entries)
+            {
+                entry.IsSelected = selected;
+            }
+        }
+        finally
+        {
+            _isBulkSelectionUpdate = false;
+        }
+
+        SelectedCount = Entries.Count(entry => entry.IsSelected);
+        LaunchSelectedCommand.NotifyCanExecuteChanged();
+        ClearSelectionCommand.NotifyCanExecuteChanged();
+        return SaveConfig();
+    }
+
+    private bool SaveConfig()
     {
         try
         {
             LauncherConfigStore.Save(Entries.Select(entry => entry.Entry), _configPath);
+            return true;
         }
         catch (Exception ex)
         {
             StatusText = $"配置保存失败: {ex.Message}";
+            return false;
         }
     }
 

@@ -62,6 +62,31 @@ public sealed class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void ResolveConfigPath_FallsBackToExecutableLocalConfigForPortableCopy()
+    {
+        using var temp = new TempDirectory();
+        var appDir = System.IO.Path.Combine(temp.Path, "publish");
+        var configDir = System.IO.Path.Combine(appDir, "config");
+        Directory.CreateDirectory(configDir);
+        var config = System.IO.Path.Combine(configDir, "config.json");
+        File.WriteAllText(config, "[]");
+
+        var resolved = LauncherConfigStore.ResolveConfigPath(null, currentDirectory: null, appBaseDirectory: appDir);
+
+        Assert.Equal(config, resolved);
+    }
+
+    [Fact]
+    public void ResolveSettingsPath_StaysBesideResolvedConfig()
+    {
+        var config = System.IO.Path.Combine("portable-root", "config", "config.json");
+
+        var settings = LauncherConfigStore.ResolveSettingsPath(config);
+
+        Assert.EndsWith(System.IO.Path.Combine("portable-root", "config", "settings.json"), settings);
+    }
+
+    [Fact]
     public void Save_PersistsSelectionAndCreatesBackup()
     {
         using var temp = new TempDirectory();

@@ -141,8 +141,9 @@ Important risks:
 
 The Avalonia mainline supports:
 
-- add/edit/delete launch items;
+- search and direct card launch;
 - single launch and batch launch;
+- header actions for selecting all visible items or clearing the saved selection;
 - launch confirmation;
 - JSON persistence with `.bak` backup;
 - persistent selected checkbox state for one-click/batch launch;
@@ -152,5 +153,5 @@ The Avalonia mainline supports:
 
 Known remaining work:
 
-- run a manual click-through of the promoted Avalonia UI as the new mainline;
-- continue improving UI comfort now that `src/` points at the real target stack.
+- add/edit/delete launch item UI if editing inside the app becomes more valuable than direct JSON editing;
+- continue small screenshot-backed comfort passes without weakening the root `tools/verify.ps1` gate.

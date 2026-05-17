@@ -74,6 +74,12 @@
             <Run Text=" 项"/>
           </TextBlock>
         </Border>
+        <Button Classes="secondary"
+                Content="全选可见"
+                Command="{Binding SelectVisibleCommand}"/>
+        <Button Classes="secondary"
+                Content="清空"
+                Command="{Binding ClearSelectionCommand}"/>
         <Button Classes="primary"
                 Content="一键启动已勾选"
                 Command="{Binding LaunchSelectedCommand}"/>

@@ -12,6 +12,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\WTLauncher.App\WTLauncher.App.csproj" />
     <ProjectReference Include="..\..\src\WTLauncher.Core\WTLauncher.Core.csproj" />
   </ItemGroup>
   <ItemGroup>

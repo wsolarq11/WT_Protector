@@ -1,3 +1,4 @@
+using System.Text.Json;
 using WTLauncher.Core;
 
 namespace WTLauncher.Tests;
@@ -10,6 +11,7 @@ public sealed class RepositoryConfigContractTests
         var root = FindRepositoryRoot();
         var configPath = Path.Combine(root, "config", "config.json");
 
+        AssertEveryEntryDeclaresPersistentSelection(configPath);
         var entries = LauncherConfigStore.Load(configPath);
 
         Assert.NotEmpty(entries);
@@ -22,6 +24,25 @@ public sealed class RepositoryConfigContractTests
             if (LaunchArgumentBuilder.IsDangerousCommand(entry.Command))
                 Assert.True(plan.RequiresConfirmation);
         }
+    }
+
+    private static void AssertEveryEntryDeclaresPersistentSelection(string configPath)
+    {
+        var json = File.ReadAllText(configPath);
+        using var document = JsonDocument.Parse(json, new JsonDocumentOptions
+        {
+            AllowTrailingCommas = true,
+            CommentHandling = JsonCommentHandling.Skip,
+        });
+
+        var entries = document.RootElement.EnumerateArray().ToList();
+        Assert.All(entries, entry =>
+        {
+            Assert.True(entry.TryGetProperty("selected", out var selected), "Every entry must declare the portable selected checkbox state.");
+            Assert.True(
+                selected.ValueKind is JsonValueKind.True or JsonValueKind.False,
+                "The selected field must be a JSON boolean.");
+        });
     }
 
     private static string FindRepositoryRoot()
