@@ -32,7 +32,7 @@ public sealed class RepositoryConfigContractTests
             if (File.Exists(Path.Combine(dir.FullName, "config", "config.json"))
                 && File.Exists(Path.Combine(dir.FullName, "config", "settings.json"))
                 && File.Exists(Path.Combine(dir.FullName, "README.md"))
-                && Directory.Exists(Path.Combine(dir.FullName, "WT Launcher")))
+                && File.Exists(Path.Combine(dir.FullName, "WT Launcher.exe")))
             {
                 return dir.FullName;
             }

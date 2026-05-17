@@ -118,5 +118,37 @@
     "confirm": true,
     "id": "WT_Protector",
     "selected": false
+  },
+  {
+    "id": "claude_data_acquisition_and_analysis",
+    "name": "CLAUDE_Data_Acquisition_and_Analysis",
+    "directory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\Data_Acquisition_and_Analysis",
+    "command": "claude --dangerously-skip-permissions",
+    "confirm": true,
+    "selected": false
+  },
+  {
+    "id": "claude_phoenix_crawler",
+    "name": "CLAUDE_phoenix-crawler",
+    "directory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
+    "command": "claude --dangerously-skip-permissions",
+    "confirm": true,
+    "selected": false
+  },
+  {
+    "id": "SystemPerformanceLab_20260504",
+    "name": "SystemPerformanceLab_20260504",
+    "directory": "D:\\<USER>\\Desktop\\SystemPerformanceLab_20260504",
+    "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
+    "confirm": true,
+    "selected": false
+  },
+  {
+    "id": "claude_temp",
+    "name": "CLAUDE_temp",
+    "directory": "D:\\<USER>\\Desktop\\temp",
+    "command": "claude --dangerously-skip-permissions",
+    "confirm": true,
+    "selected": false
   }
 ]

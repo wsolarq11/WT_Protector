@@ -5,7 +5,7 @@ Purpose: prove whether a modern Avalonia/.NET launcher can beat the current WinF
 This spike is **not** the active launcher. The active executable remains:
 
 ```text
-WT Launcher\WT Launcher.exe
+WT Launcher.exe
 ```
 
 ## Run for experience

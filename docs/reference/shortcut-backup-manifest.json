@@ -1,0 +1,120 @@
+{
+  "sourceDirectory": "WT_Shortcuts_Backup",
+  "generatedAt": "2026-05-17 13:56:05 +08:00",
+  "purpose": "Human-readable replacement for the deleted binary shortcut backup directory.",
+  "convertedConfigIds": [
+    "claude_data_acquisition_and_analysis",
+    "claude_phoenix_crawler",
+    "SystemPerformanceLab_20260504",
+    "claude_temp"
+  ],
+  "legacyConfig": {
+    "path": "WT_Shortcuts_Backup\\config.json",
+    "sha256": "562FE3D8351DFB9B960E6CB6CC977EBA9B730C640590A26C1774DD449F8059A9"
+  },
+  "htaSnapshot": {
+    "path": "WT_Shortcuts_Backup\\WT Launcher.hta",
+    "sha256": "65D8B60483B859992B32677A8AA727DE36C996A7D13ACF8CA95CDBF00132EB32",
+    "note": "Same role now lives under retired\\WT Launcher.hta."
+  },
+  "shortcuts": [
+    {
+      "relativePath": "WT_Shortcuts_Backup\\!_Projects\\CODEX_CLI_gh_mirror_gui.lnk",
+      "target": "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.23.20211.0_x64__8wekyb3d8bbwe\\wt.exe",
+      "arguments": "-d \"D:\\<USER>\\Desktop\\!_Projects\\gh_mirror_gui\" pwsh -NoExit -Command \"codex --dangerously-bypass-approvals-and-sandbox\"",
+      "workingDirectory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
+      "classification": "reference-only"
+    },
+    {
+      "relativePath": "WT_Shortcuts_Backup\\启动脚本\\CODEX_CLI_启动脚本.lnk",
+      "target": "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.23.20211.0_x64__8wekyb3d8bbwe\\wt.exe",
+      "arguments": "-d \"D:\\<USER>\\Desktop\\启动脚本\" pwsh -NoExit -Command \"codex --enable goals --dangerously-bypass-approvals-and-sandbox\"",
+      "workingDirectory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
+      "classification": "already-covered-by-config"
+    },
+    {
+      "relativePath": "WT_Shortcuts_Backup\\在线安装Bat_20260320\\CODEX_CLI_软件在线安装Bat.lnk",
+      "target": "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.23.20211.0_x64__8wekyb3d8bbwe\\wt.exe",
+      "arguments": "-d \"D:\\<USER>\\Desktop\\在线安装Bat_20260320\" pwsh -NoExit -Command \"codex --enable goals --dangerously-bypass-approvals-and-sandbox\"",
+      "workingDirectory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
+      "classification": "already-covered-by-config"
+    },
+    {
+      "relativePath": "WT_Shortcuts_Backup\\CLAUDE_CLI_Data_Acquisition_and_Analysis.lnk",
+      "target": "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.23.20211.0_x64__8wekyb3d8bbwe\\wt.exe",
+      "arguments": "-d \"D:\\<PROJECT_ROOT>\\ER\\crawler\\Data_Acquisition_and_Analysis\" pwsh -NoExit -Command \"claude --dangerously-skip-permissions\"",
+      "workingDirectory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\Data_Acquisition_and_Analysis",
+      "classification": "converted-to-config"
+    },
+    {
+      "relativePath": "WT_Shortcuts_Backup\\CLAUDE_CLI_phoenix-crawler.lnk",
+      "target": "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.23.20211.0_x64__8wekyb3d8bbwe\\wt.exe",
+      "arguments": "-d \"D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler\" pwsh -NoExit -Command \"claude --dangerously-skip-permissions\"",
+      "workingDirectory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
+      "classification": "converted-to-config"
+    },
+    {
+      "relativePath": "WT_Shortcuts_Backup\\CODEX_CLI_Data_Acquisition_and_Analysis.lnk",
+      "target": "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.23.20211.0_x64__8wekyb3d8bbwe\\wt.exe",
+      "arguments": "-d \"D:\\<PROJECT_ROOT>\\ER\\crawler\\Data_Acquisition_and_Analysis\" pwsh -NoExit -Command \"codex --enable goals --dangerously-bypass-approvals-and-sandbox\"",
+      "workingDirectory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\Data_Acquisition_and_Analysis",
+      "classification": "already-covered-by-config"
+    },
+    {
+      "relativePath": "WT_Shortcuts_Backup\\CODEX_CLI_phoenix-crawler.lnk",
+      "target": "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.23.20211.0_x64__8wekyb3d8bbwe\\wt.exe",
+      "arguments": "-d \"D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler\" pwsh -NoExit -Command \"codex --enable goals --dangerously-bypass-approvals-and-sandbox\"",
+      "workingDirectory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
+      "classification": "already-covered-by-config"
+    },
+    {
+      "relativePath": "WT_Shortcuts_Backup\\extra\\CODEX_CLI_control.lnk",
+      "target": "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.23.20211.0_x64__8wekyb3d8bbwe\\wt.exe",
+      "arguments": "-d \"C:\\<USER>\\codex-control-plane-private\" pwsh -NoExit -Command \"codex --enable goals --dangerously-bypass-approvals-and-sandbox\"",
+      "workingDirectory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
+      "classification": "already-covered-by-config"
+    },
+    {
+      "relativePath": "WT_Shortcuts_Backup\\FolderSizeMonitor\\CODEX_CLI_FolderSizeMonitor.lnk",
+      "target": "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.23.20211.0_x64__8wekyb3d8bbwe\\wt.exe",
+      "arguments": "-d \"D:\\<USER>\\Desktop\\FolderSizeMonitor\" pwsh -NoExit -Command \"codex --enable goals --dangerously-bypass-approvals-and-sandbox\"",
+      "workingDirectory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
+      "classification": "already-covered-by-config"
+    },
+    {
+      "relativePath": "WT_Shortcuts_Backup\\poollink\\CODEX_CLI_poollink.lnk",
+      "target": "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.23.20211.0_x64__8wekyb3d8bbwe\\wt.exe",
+      "arguments": "-d \"D:\\<USER>\\Desktop\\poollink\" pwsh -NoExit -Command \"codex --enable goals --dangerously-bypass-approvals-and-sandbox\"",
+      "workingDirectory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
+      "classification": "already-covered-by-config"
+    },
+    {
+      "relativePath": "WT_Shortcuts_Backup\\Soft_Install\\CODEX_CLI_Soft_Install.lnk",
+      "target": "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.23.20211.0_x64__8wekyb3d8bbwe\\wt.exe",
+      "arguments": "-d \"D:\\<USER>\\Desktop\\Soft_Install\" pwsh -NoExit -Command \"codex --dangerously-bypass-approvals-and-sandbox\"",
+      "workingDirectory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
+      "classification": "reference-only"
+    },
+    {
+      "relativePath": "WT_Shortcuts_Backup\\SystemPerformanceLab_20260504\\CODEX_CLI_SystemPerformance.lnk",
+      "target": "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.23.20211.0_x64__8wekyb3d8bbwe\\wt.exe",
+      "arguments": "-d \"D:\\<USER>\\Desktop\\SystemPerformanceLab_20260504\" pwsh -NoExit -Command \"codex --enable goals --dangerously-bypass-approvals-and-sandbox\"",
+      "workingDirectory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
+      "classification": "converted-to-config"
+    },
+    {
+      "relativePath": "WT_Shortcuts_Backup\\temp_codex\\CODEX_CLI_temp.lnk",
+      "target": "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.23.20211.0_x64__8wekyb3d8bbwe\\wt.exe",
+      "arguments": "-d \"D:\\<USER>\\Desktop\\temp_codex\" pwsh -NoExit -Command \"codex --enable goals --dangerously-bypass-approvals-and-sandbox\"",
+      "workingDirectory": "D:\\<USER>\\Desktop\\temp_codex",
+      "classification": "already-covered-by-config"
+    },
+    {
+      "relativePath": "WT_Shortcuts_Backup\\temp\\CLAUDE_CLI_temp.lnk",
+      "target": "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.23.20211.0_x64__8wekyb3d8bbwe\\wt.exe",
+      "arguments": "-d \"D:\\<USER>\\Desktop\\temp\" pwsh -NoExit -Command \"claude --dangerously-skip-permissions\"",
+      "workingDirectory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
+      "classification": "converted-to-config"
+    }
+  ]
+}

@@ -5,7 +5,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'config-lib.ps1')
 
 $root = Get-RepoRoot
-$program = Join-Path $root 'WT Launcher\Program.cs'
+$program = Get-WinFormsSourcePath
 $csc = Join-Path $env:windir 'Microsoft.NET\Framework\v4.0.30319\csc.exe'
 $tempDir = Join-Path ([IO.Path]::GetTempPath()) ('wt-protector-verify-' + [Guid]::NewGuid().ToString('N'))
 $out = Join-Path $tempDir 'WT Launcher.verify.exe'
@@ -16,6 +16,14 @@ function Add-Check([string]$Name, [object]$Detail) {
 }
 
 try {
+    foreach ($forbiddenDir in @('WT Launcher', 'WT_Shortcuts_Backup')) {
+        $path = Join-Path $root $forbiddenDir
+        if (Test-Path -LiteralPath $path) {
+            throw "Retired directory must not remain: $path"
+        }
+    }
+    Add-Check 'retired-directories-removed' @{ directories = @('WT Launcher', 'WT_Shortcuts_Backup') }
+
     if (-not (Test-Path -LiteralPath $program)) { throw "Missing Program.cs: $program" }
     if (-not (Test-Path -LiteralPath $csc)) { throw "Missing csc.exe: $csc" }
 
@@ -26,7 +34,7 @@ try {
     foreach ($required in @('LayoutShell()', 'SelectAll_CheckedChanged', 'TryBuildWtArguments', 'QuoteArgument', 'ResolveConfigPath')) {
         if (-not $source.Contains($required)) { throw "Required safety helper missing: $required" }
     }
-    Add-Check 'source-patterns' @{ forbidden = 4; required = 5 }
+    Add-Check 'source-patterns' @{ path = 'src\winforms-launcher\Program.cs'; forbidden = 4; required = 5 }
 
     foreach ($required in @(
         'private bool _sidebarCollapsed = true',
@@ -58,7 +66,7 @@ try {
     $readmePath = Join-Path $root 'README.md'
     if (-not (Test-Path -LiteralPath $readmePath)) { throw 'Missing README.md' }
     $readme = Get-Content -Raw -Encoding UTF8 -LiteralPath $readmePath
-    foreach ($section in @('Configuration schema', 'Build and verification', 'Config sync helper', 'Config hardening helper', 'Safety notes', 'Current implementation status')) {
+    foreach ($section in @('Configuration schema', 'Build and verification', 'Config hardening helper', 'Shortcut backup retirement', 'Safety notes', 'Current implementation status')) {
         if (-not $readme.Contains($section)) { throw "README missing section: $section" }
     }
     Add-Check 'readme' @{ sections = 6 }
@@ -73,7 +81,7 @@ try {
 
     $buildScript = Join-Path $PSScriptRoot 'build-release.ps1'
     if (-not (Test-Path -LiteralPath $buildScript)) { throw 'Missing tools\build-release.ps1' }
-    $shippedExe = Join-Path $root 'WT Launcher\WT Launcher.exe'
+    $shippedExe = Get-WinFormsExePath
     if (-not (Test-Path -LiteralPath $shippedExe)) { throw "Missing shipped exe: $shippedExe" }
     $programItem = Get-Item -LiteralPath $program
     $exeItem = Get-Item -LiteralPath $shippedExe
@@ -81,6 +89,7 @@ try {
         throw "Shipped exe is older than Program.cs; run tools\build-release.ps1"
     }
     Add-Check 'shipped-exe' @{
+        path = 'WT Launcher.exe'
         bytes = $exeItem.Length
         sha256 = (Get-ShortHash $shippedExe)
         builtAt = $exeItem.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')
@@ -97,11 +106,12 @@ try {
 
     foreach ($forbiddenConfig in @(
         (Join-Path $root 'config.json'),
+        (Join-Path $root 'retired\config.json'),
         (Join-Path $root 'WT Launcher\config.json'),
-        (Join-Path $root 'retired\config.json')
+        (Join-Path $root 'WT Launcher\config\config.json')
     )) {
         if (Test-Path -LiteralPath $forbiddenConfig) {
-            throw "Config must live under a config directory, but legacy file exists: $forbiddenConfig"
+            throw "Config must live under an active config directory, but legacy file exists: $forbiddenConfig"
         }
     }
 
@@ -110,6 +120,23 @@ try {
     $canonicalKey = 'config\config.json'
     $configs[$canonicalKey] = @(Read-ConfigItems $rootConfigPath)
     Add-Check 'json' @{ path = $canonicalKey; items = $configs[$canonicalKey].Count }
+
+    $seenIds = @{}
+    $idx = 0
+    foreach ($item in $configs[$canonicalKey]) {
+        foreach ($field in @('id', 'name', 'directory', 'command')) {
+            if ([string]::IsNullOrWhiteSpace([string]$item.$field)) {
+                throw "Config item $idx is missing field: $field"
+            }
+        }
+        if ($seenIds.ContainsKey([string]$item.id)) {
+            throw "Duplicate config id: $($item.id)"
+        }
+        $seenIds[[string]$item.id] = $true
+        $idx++
+    }
+    Add-Check 'config-schema' @{ uniqueIds = $seenIds.Count; selectedCapable = $true }
+
     $settingsPath = Get-LauncherSettingsPath
     if (-not (Test-Path -LiteralPath $settingsPath)) { throw "Missing portable settings: $settingsPath" }
     $settings = Get-Content -Raw -Encoding UTF8 -LiteralPath $settingsPath | ConvertFrom-Json
@@ -119,6 +146,7 @@ try {
         theme = $settings.theme
         hasWindow = $null -ne $settings.window
     }
+
     $rootBackupPath = $rootConfigPath + '.bak'
     if (Test-Path -LiteralPath $rootBackupPath) {
         $configs['config\config.json.bak'] = @(Read-ConfigItems $rootBackupPath)
@@ -127,33 +155,15 @@ try {
         Add-Check 'json' @{ path = 'config\config.json.bak'; optional = $true; present = $false }
     }
 
-    $legacyConfigPath = Get-LegacyExportConfigPath
-    $legacySettingsPath = Get-LegacyExportSettingsPath
-    $rootConfigHash = Get-ShortHash $rootConfigPath
-    $legacyConfigExists = Test-Path -LiteralPath $legacyConfigPath
-    $legacyConfigHash = Get-ShortHash $legacyConfigPath
-    $settingsHash = Get-ShortHash $settingsPath
-    $legacySettingsExists = Test-Path -LiteralPath $legacySettingsPath
-    $legacySettingsHash = Get-ShortHash $legacySettingsPath
-    $legacyItems = @()
-    if ($legacyConfigExists) {
-        $legacyItems = @(Read-ConfigItems $legacyConfigPath)
-    }
     Add-Check 'config-layout' @{
         canonical = $canonicalKey
         canonicalItems = $configs[$canonicalKey].Count
-        canonicalHash = $rootConfigHash
+        canonicalHash = Get-ShortHash $rootConfigPath
         settings = 'config\settings.json'
-        settingsHash = $settingsHash
-        legacyExport = 'WT Launcher\config\config.json'
-        legacyExportExists = $legacyConfigExists
-        legacyExportItems = $legacyItems.Count
-        legacyExportHash = $legacyConfigHash
-        legacyExportInSync = $legacyConfigExists -and ($rootConfigHash -eq $legacyConfigHash)
-        legacySettings = 'WT Launcher\config\settings.json'
-        legacySettingsExists = $legacySettingsExists
-        legacySettingsHash = $legacySettingsHash
-        legacySettingsInSync = $legacySettingsExists -and ($settingsHash -eq $legacySettingsHash)
+        settingsHash = Get-ShortHash $settingsPath
+        source = 'src\winforms-launcher\Program.cs'
+        executable = 'WT Launcher.exe'
+        removedExportDirectory = $true
     }
 
     $dangerous = New-Object System.Collections.Generic.List[object]
@@ -199,23 +209,21 @@ try {
         throw "harden-config dry-run reports outstanding changes: wouldChange=$($harden.wouldChange) count=$($harden.count)"
     }
 
-    $syncScript = Join-Path $PSScriptRoot 'sync-config.ps1'
-    if (-not (Test-Path -LiteralPath $syncScript)) { throw 'Missing tools\sync-config.ps1' }
-    $syncJson = & powershell -NoProfile -ExecutionPolicy Bypass -File $syncScript
-    $sync = $syncJson | ConvertFrom-Json
-    if ($sync.status -ne 'PASS') { throw 'sync-config dry-run did not pass' }
-    if ($sync.mode -ne 'dry-run') { throw 'sync-config verifier call was not dry-run' }
-    if ($sync.applied) { throw 'sync-config dry-run unexpectedly applied changes' }
-    Add-Check 'config-sync-dry-run' @{
-        wouldCopy = [bool]$sync.wouldCopy
-        sourceItems = $sync.sourceItems
-        targetExistsBefore = $sync.targetExistsBefore
-        targetItemsBefore = $sync.targetItemsBefore
-        targetHashBefore = $sync.targetHashBefore
-        targetHashAfter = $sync.targetHashAfter
-        settingsTargetExistsBefore = $sync.settingsTargetExistsBefore
-        settingsTargetHashBefore = $sync.settingsTargetHashBefore
-        settingsTargetHashAfter = $sync.settingsTargetHashAfter
+    $manifestPath = Get-ShortcutBackupManifestPath
+    if (-not (Test-Path -LiteralPath $manifestPath)) { throw "Missing shortcut backup manifest: $manifestPath" }
+    $manifest = Get-Content -Raw -Encoding UTF8 -LiteralPath $manifestPath | ConvertFrom-Json
+    $shortcutCount = @($manifest.shortcuts).Count
+    $convertedCount = @($manifest.convertedConfigIds).Count
+    if ($shortcutCount -lt 1) { throw 'shortcut backup manifest has no shortcuts' }
+    if ($convertedCount -lt 1) { throw 'shortcut backup manifest did not record any converted config ids' }
+    foreach ($id in @($manifest.convertedConfigIds)) {
+        if (-not $seenIds.ContainsKey([string]$id)) { throw "Converted shortcut id missing from active config: $id" }
+    }
+    Add-Check 'shortcut-backup-retirement' @{
+        manifest = 'docs\reference\shortcut-backup-manifest.json'
+        shortcuts = $shortcutCount
+        convertedConfigIds = $convertedCount
+        sourceDirectoryRemoved = -not (Test-Path -LiteralPath (Join-Path $root 'WT_Shortcuts_Backup'))
     }
 
     $activeHta = Join-Path $root 'WT Launcher.hta'
@@ -223,7 +231,6 @@ try {
         throw "Retired HTA must not remain on the active root path: $activeHta"
     }
     $hta = Join-Path $root 'retired\WT Launcher.hta'
-    $htaBackup = Join-Path $root 'WT_Shortcuts_Backup\WT Launcher.hta'
     if (-not (Test-Path -LiteralPath $hta)) {
         throw "Missing retired HTA archive: $hta"
     }
@@ -238,6 +245,7 @@ try {
         activeRootPresent = $false
         buildWtCommandCalls = $buildCalls
     }
+
     $retiredConfigPath = Get-RetiredConfigPath
     if (-not (Test-Path -LiteralPath $retiredConfigPath)) {
         throw "Missing retired HTA-local config: $retiredConfigPath"
@@ -266,12 +274,6 @@ try {
     }
     if ($retiredDangerous.Count -gt 0) {
         throw "retired HTA config has unconfirmed dangerous commands: count=$($retiredDangerous.Count)"
-    }
-    if ((Test-Path -LiteralPath $hta) -and (Test-Path -LiteralPath $htaBackup)) {
-        $h1 = Get-FileSha256 $hta
-        $h2 = Get-FileSha256 $htaBackup
-        if ($h1 -ne $h2) { throw 'HTA backup drift detected' }
-        Add-Check 'hta-backup' @{ retiredSha256 = $h1.Substring(0, 16) }
     }
 
     [pscustomobject]@{

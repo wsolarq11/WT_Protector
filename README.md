@@ -4,22 +4,23 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 
 ## What this project contains
 
-- `WT Launcher/Program.cs` — current WinForms launcher implementation.
-- `WT Launcher/WT Launcher.exe` — built WinForms executable.
-- `retired/WT Launcher.hta` — retired legacy HTA snapshot kept only for archive/reference.
-- `config/config.json` — canonical human-readable launcher configuration with multiple launch entries.
+- `WT Launcher.exe` — active built WinForms executable at the repository root.
+- `src/winforms-launcher/Program.cs` — current WinForms launcher implementation.
+- `config/config.json` — canonical human-readable launcher configuration with launch entries and persistent checkbox state.
 - `config/settings.json` — portable UI preferences such as theme, last search text, and window size.
-- `WT Launcher/config/` — executable-local fallback/export config directory for standalone copies; the normal release layout uses root `config/`.
-- `retired/config/config.json` — retired HTA-local config used only when manually opening the archived HTA; it is not an active executable fallback.
-- `WT_Shortcuts_Backup/` — backup `.lnk` shortcuts that inspired the launcher; these are data artifacts, not source code.
+- `retired/WT Launcher.hta` — retired legacy HTA snapshot kept only for archive/reference.
+- `retired/config/config.json` — retired HTA-local config used only when manually opening the archived HTA.
+- `docs/reference/shortcut-backup-manifest.json` — human-readable replacement for the deleted `WT_Shortcuts_Backup/` binary shortcut tree.
 - `tools/verify.ps1` — no-interaction local verification gate.
 - `tools/config-lib.ps1` — shared helper functions used by the verification and config tools.
 - `docs/giants-shoulders/` — "巨人肩膀库": curated external project lessons and source links for future stack/reflection decisions.
 - `spikes/avalonia-launcher/` — non-active Avalonia/.NET 10 launcher spike for experience testing before any active-path migration.
 
+The old `WT Launcher/` and `WT_Shortcuts_Backup/` directories are intentionally removed. Recreate neither as an active source of truth.
+
 ## Configuration schema
 
-Each config file is a JSON array of launch items:
+Each active config file is a JSON array of launch items:
 
 ```json
 [
@@ -56,6 +57,17 @@ Portable UI settings live beside the launch config:
 }
 ```
 
+Normal layout is therefore simply:
+
+```text
+WT Launcher.exe
+config/
+  config.json
+  settings.json
+```
+
+If `WT Launcher.exe` is copied away from this repository, copy a sibling `config/` directory with it. The executable first looks upward for repository-root `config/config.json` next to `README.md`, then falls back to executable-local `config/config.json` for standalone portable copies.
+
 ## Build and verification
 
 Run the project gate from the repository root:
@@ -66,20 +78,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
 
 The verifier currently checks:
 
-- `Program.cs` compiles with `.NET Framework` `csc.exe`.
+- `src/winforms-launcher/Program.cs` compiles with `.NET Framework` `csc.exe`.
 - shipped `WT Launcher.exe` is up to date with `Program.cs`.
 - launch argument validation/quoting smoke tests pass without opening the GUI.
-- the legacy HTA is no longer active at the repository root and is archived under `retired/`.
-- JSON configs parse successfully.
-- root `config/` is treated as the canonical portable config directory; the executable-local fallback/export status is reported without modifying user data.
+- root `config/` is the only active portable config directory.
+- deleted debt directories `WT Launcher/` and `WT_Shortcuts_Backup/` do not return.
+- shortcut-backup knowledge has been converted into `docs/reference/shortcut-backup-manifest.json` and selected unique entries in `config/config.json`.
+- JSON configs parse successfully and config item `id` values are unique.
 - entries that combine `dangerously*` commands with `confirm: false` are reported without modifying user data.
-- the archived HTA and historical backup HTA have not drifted when both are present.
-- the retired HTA-local `retired/config/config.json` parses successfully and keeps dangerous commands behind confirmation.
+- the retired HTA remains archived under `retired/` and has its own retired-local config.
 - stale risk patterns such as duplicate event-handler unregister attempts do not return.
 - HTA-derived UX invariants stay present in the active executable: collapsed sidebar by default, two high-signal stat cards, ellipsis-truncated card text, no hover layout shift, and a roomier edit dialog.
 - this README keeps the core operator sections present.
-
-Manual build is still available through `WT Launcher/build.bat`, but the script pauses for interactive use. Prefer `tools/verify.ps1` for repeatable validation.
 
 Build the shipped executable from current source without interactive pause:
 
@@ -87,27 +97,7 @@ Build the shipped executable from current source without interactive pause:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build-release.ps1
 ```
 
-The release build compiles to a temporary executable first, backs up the current `WT Launcher/WT Launcher.exe`, then replaces it.
-
-## Config sync helper
-
-The WinForms executable first looks for the root `config/config.json` next to this README and falls back to `WT Launcher/config/config.json` only when it is copied away from the release layout. Root `config/` is the single active source in the normal layout.
-
-Use the helper only when you intentionally want to export the root `config/` directory into the executable-local fallback directory for a standalone copy.
-
-Check what would happen without changing files:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\sync-config.ps1
-```
-
-Apply/export the root config directory to the executable-local fallback only when you intentionally want that standalone snapshot:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\sync-config.ps1 -Apply
-```
-
-`-Apply` backs up the current executable-local fallback files before copying when those fallback files already exist.
+The release build compiles to a temporary executable first, backs up the current root `WT Launcher.exe`, then replaces it. Backup files match `*.bak-*` and are ignored as local rollback scratch.
 
 ## Config hardening helper
 
@@ -123,7 +113,20 @@ Apply that hardening only when you intentionally want the extra launch confirmat
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\harden-config.ps1 -Apply
 ```
 
-`-Apply` backs up `config/config.json` before rewriting it. Run `tools/sync-config.ps1 -Apply` afterwards only if you also need to refresh the executable-local fallback/export copy.
+`-Apply` backs up `config/config.json` before rewriting it.
+
+## Shortcut backup retirement
+
+`WT_Shortcuts_Backup/` used to hold binary `.lnk` files and an HTA/config snapshot. It is now removed.
+
+The useful parts were converted as follows:
+
+- executable HTA snapshot -> `retired/WT Launcher.hta`;
+- retired HTA config -> `retired/config/config.json`;
+- unique launch targets worth keeping active -> appended to `config/config.json` with stable `id` values;
+- remaining `.lnk` target/argument details -> `docs/reference/shortcut-backup-manifest.json`.
+
+Do not reintroduce `WT_Shortcuts_Backup/`. If a shortcut contains a launch target worth using, add it directly to `config/config.json`; if it is historical evidence only, update the reference manifest.
 
 ## Safety notes
 
@@ -131,11 +134,11 @@ This launcher intentionally starts arbitrary local commands. Treat every config 
 
 Important risks:
 
-- Commands such as `codex --dangerously-bypass-approvals-and-sandbox` are powerful and should normally keep `confirm: true` unless the entry is intentionally trusted.
+- Commands such as `codex --dangerously-bypass-approvals-and-sandbox` and `claude --dangerously-skip-permissions` are powerful and should normally keep `confirm: true` unless the entry is intentionally trusted.
 - `tools/verify.ps1` reports entries where a `dangerously*` command is paired with `confirm: false`; after hardening this should stay at zero.
 - `directory` must exist before the WinForms launcher starts an item.
 - Command text is quoted before being passed to `wt.exe`, but it is still a shell command; review entries before launching.
-- The root `config/` directory is the canonical source. `WT Launcher/config/` is a legacy fallback/export snapshot, not a second active source.
+- The root `config/` directory is the canonical source.
 - `retired/config/config.json` belongs only to `retired/WT Launcher.hta`. It may be kept with the archived HTA for historical/manual reference, but it is not read by the active WinForms executable.
 
 ## Current implementation status
@@ -148,12 +151,12 @@ The WinForms app supports:
 - JSON persistence with `.bak` backup;
 - persistent selected checkbox state for one-click/batch launch;
 - portable `config/settings.json` UI preferences without AppData or registry writes;
-- no-interaction compile/config verification via `tools/verify.ps1`.
-- root `config/` is the active source of truth, with dangerous commands requiring launch confirmation.
-- the legacy HTA is retired under `retired/` and is not part of the active launcher path.
-- the active WinForms UI now ports the retired HTA's lower-friction feel: less chrome, larger card text, clipped long paths/commands, stable hover, and a roomier edit dialog.
+- no-interaction compile/config verification via `tools/verify.ps1`;
+- root `config/` as the active source of truth, with dangerous commands requiring launch confirmation;
+- retired HTA under `retired/`, outside the active launcher path;
+- HTA-derived lower-friction feel: less chrome, larger card text, clipped long paths/commands, stable hover, and a roomier edit dialog.
 
 Known remaining work:
 
 - add UI-level smoke tests if the tool becomes shared beyond this machine;
-- replace the interactive `build.bat` with a release-oriented build script if distribution is needed.
+- decide whether the Avalonia spike should replace WinForms only after it clearly wins the same gate.

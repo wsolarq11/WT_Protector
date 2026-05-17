@@ -8,10 +8,6 @@
 # Local logs and scratch artifacts
 *.log
 *.tmp
-WT Launcher/*build_log.txt
-
-# Historical shortcut backup data, not source for the launcher
-WT_Shortcuts_Backup/
 
 # Spike build outputs
 spikes/avalonia-launcher/**/bin/

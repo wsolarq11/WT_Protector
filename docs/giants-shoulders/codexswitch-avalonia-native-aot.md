@@ -119,7 +119,7 @@ spikes/avalonia-launcher/
   tests/WTLauncher.Tests/
 ```
 
-The spike must not replace `WT Launcher\WT Launcher.exe` until it wins.
+The spike must not replace `WT Launcher.exe` until it wins.
 
 Minimum acceptance gate:
 

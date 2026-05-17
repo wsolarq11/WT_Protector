@@ -5,7 +5,7 @@ $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "config-lib.ps1")
 
 $root = Get-RepoRoot
-$exe = Get-RepoPath "WT Launcher\WT Launcher.exe"
+$exe = Get-WinFormsExePath
 if (-not (Test-Path -LiteralPath $exe)) { throw "Missing shipped exe: $exe" }
 
 $asm = [Reflection.Assembly]::LoadFile((Resolve-Path -LiteralPath $exe).Path)
@@ -50,7 +50,7 @@ if ($ok) { throw "empty command launch item was accepted" }
 if ([string]::IsNullOrWhiteSpace([string]$call[2])) { throw "empty command error was empty" }
 $tests.Add([pscustomobject]@{ name = "empty-command-rejected"; ok = $true }) | Out-Null
 
-$releaseStartupPath = Get-RepoPath "WT Launcher"
+$releaseStartupPath = Get-RepoRoot
 $expectedRootConfig = Get-LauncherConfigPath
 $resolved = [string]$resolveConfigPath.Invoke($null, [object[]]@([string]$releaseStartupPath))
 if ($resolved -ne $expectedRootConfig) {

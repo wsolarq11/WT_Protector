@@ -4,9 +4,8 @@ $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 . (Join-Path $PSScriptRoot 'config-lib.ps1')
 
-$root = Get-RepoRoot
-$program = Get-RepoPath 'WT Launcher\Program.cs'
-$target = Get-RepoPath 'WT Launcher\WT Launcher.exe'
+$program = Get-WinFormsSourcePath
+$target = Get-WinFormsExePath
 $csc = Join-Path $env:windir 'Microsoft.NET\Framework\v4.0.30319\csc.exe'
 $tempDir = Join-Path ([IO.Path]::GetTempPath()) ('wt-launcher-build-' + [Guid]::NewGuid().ToString('N'))
 $tempExe = Join-Path $tempDir 'WT Launcher.exe'

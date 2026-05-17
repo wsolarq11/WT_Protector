@@ -6,6 +6,14 @@ function Get-RepoPath([string]$RelativePath) {
     return (Join-Path (Get-RepoRoot) $RelativePath)
 }
 
+function Get-WinFormsSourcePath {
+    return (Get-RepoPath 'src\winforms-launcher\Program.cs')
+}
+
+function Get-WinFormsExePath {
+    return (Get-RepoPath 'WT Launcher.exe')
+}
+
 function Get-LauncherConfigPath {
     return (Get-RepoPath 'config\config.json')
 }
@@ -14,16 +22,12 @@ function Get-LauncherSettingsPath {
     return (Get-RepoPath 'config\settings.json')
 }
 
-function Get-LegacyExportConfigPath {
-    return (Get-RepoPath 'WT Launcher\config\config.json')
-}
-
-function Get-LegacyExportSettingsPath {
-    return (Get-RepoPath 'WT Launcher\config\settings.json')
-}
-
 function Get-RetiredConfigPath {
     return (Get-RepoPath 'retired\config\config.json')
+}
+
+function Get-ShortcutBackupManifestPath {
+    return (Get-RepoPath 'docs\reference\shortcut-backup-manifest.json')
 }
 
 function Read-ConfigItems([string]$Path) {
