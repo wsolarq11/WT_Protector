@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "defaultPresetId": "core-projects",
+  "presets": [
+    {
+      "id": "core-projects",
+      "name": "主线维护",
+      "description": "WT Launcher、控制面和两个 crawler 主仓；作为可审查的一键启动组，不自动启动。",
+      "entryIds": [
+        "WT_Protector",
+        "codex-control-plane-private",
+        "Data_Acquisition_and_Analysis",
+        "phoenix-crawler"
+      ]
+    },
+    {
+      "id": "blank-manual",
+      "name": "空白手动勾选",
+      "description": "清空勾选后手动选择，保留 HTA 式可见即点体验。",
+      "entryIds": []
+    }
+  ]
+}

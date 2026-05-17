@@ -23,6 +23,7 @@ Every entry in this library should record:
 | Entry | Why it matters |
 | --- | --- |
 | [CodexSwitch: Avalonia + .NET 10 + Native AOT](./codexswitch-avalonia-native-aot.md) | A modern C# desktop app shape that may fit a next-generation WT Launcher better than the current WinForms/GDI implementation. |
+| [First-class launcher patterns](./launcher-first-class-patterns.md) | 12-tool industry survey distilled into WT Launcher entries, presets, settings, and future status boundaries. |
 
 ## How to use before changing WT Launcher
 
@@ -31,4 +32,3 @@ Every entry in this library should record:
 3. Define a spike that does **not** replace the active executable until it proves first-order benefit.
 4. Compare against the active acceptance standard: quicker, simpler, more natural UX; same or stronger config/launch safety; same or cheaper verification.
 5. Adopt only if the spike wins under the same gate; otherwise archive the spike and keep the active path unchanged.
-

@@ -87,6 +87,49 @@ public sealed class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void PresetStore_RoundTripsHumanReadableLaunchGroups()
+    {
+        using var temp = new TempDirectory();
+        var presetPath = System.IO.Path.Combine(temp.Path, "config", "presets.json");
+
+        LauncherPresetStore.Save(
+            new LauncherPresetFile
+            {
+                DefaultPresetId = "daily",
+                Presets =
+                [
+                    new LauncherPreset
+                    {
+                        Id = "daily",
+                        Name = "日常启动",
+                        Description = "常用工作区",
+                        EntryIds = ["one", "two"],
+                    },
+                ],
+            },
+            presetPath);
+
+        var loaded = LauncherPresetStore.Load(presetPath);
+
+        Assert.Equal(1, loaded.SchemaVersion);
+        Assert.Equal("daily", loaded.DefaultPresetId);
+        var preset = Assert.Single(loaded.Presets);
+        Assert.Equal("日常启动", preset.Name);
+        Assert.Equal(["one", "two"], preset.EntryIds);
+        Assert.Contains("\"presets\"", File.ReadAllText(presetPath));
+    }
+
+    [Fact]
+    public void ResolvePresetPath_StaysBesideResolvedConfig()
+    {
+        var config = System.IO.Path.Combine("portable-root", "config", "config.json");
+
+        var presets = LauncherPresetStore.ResolvePresetPath(config);
+
+        Assert.EndsWith(System.IO.Path.Combine("portable-root", "config", "presets.json"), presets);
+    }
+
+    [Fact]
     public void Save_PersistsSelectionAndCreatesBackup()
     {
         using var temp = new TempDirectory();

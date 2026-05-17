@@ -8,6 +8,7 @@ namespace WTLauncher.App.ViewModels;
 public sealed partial class MainWindowViewModel : ObservableObject
 {
     private readonly string _configPath;
+    private readonly string _presetPath;
     private readonly string _settingsPath;
     private readonly LauncherSettings _settings;
     private readonly LauncherProcess _launcherProcess;
@@ -31,13 +32,20 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private int _selectedCount;
 
+    [ObservableProperty]
+    private int _presetCount;
+
+    [ObservableProperty]
+    private LauncherPresetViewModel? _selectedPreset;
+
     public MainWindowViewModel(string configPath, string settingsPath, LauncherSettings settings, LauncherProcess launcherProcess)
     {
         _configPath = configPath;
+        _presetPath = LauncherPresetStore.ResolvePresetPath(configPath);
         _settingsPath = settingsPath;
         _settings = settings;
         _launcherProcess = launcherProcess;
-        ConfigPathDisplay = $"配置: {configPath}";
+        ConfigPathDisplay = $"配置: {configPath} · 启动组: {_presetPath}";
         FilterText = settings.LastFilterText;
         Refresh();
     }
@@ -45,6 +53,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public ObservableCollection<LauncherEntryViewModel> Entries { get; } = [];
 
     public ObservableCollection<LauncherEntryViewModel> VisibleEntries { get; } = [];
+
+    public ObservableCollection<LauncherPresetViewModel> Presets { get; } = [];
 
     public string ConfigPathDisplay { get; }
 
@@ -72,10 +82,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         TotalCount = Entries.Count;
         SelectedCount = Entries.Count(entry => entry.IsSelected);
+        var presetLoadError = LoadPresets();
         LaunchSelectedCommand.NotifyCanExecuteChanged();
         ClearSelectionCommand.NotifyCanExecuteChanged();
+        ApplyPresetCommand.NotifyCanExecuteChanged();
         ApplyFilter();
-        StatusText = $"已加载 {TotalCount} 个启动项；勾选自动保存到 config\\config.json";
+        StatusText = presetLoadError
+            ?? $"已加载 {TotalCount} 个启动项、{PresetCount} 个启动组；勾选自动保存到 config\\config.json";
     }
 
     [RelayCommand]
@@ -106,6 +119,30 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         if (SetSelection(targets, selected: false))
             StatusText = $"已清空 {targets.Count} 个勾选项（已保存）";
+    }
+
+    [RelayCommand(CanExecute = nameof(CanApplyPreset))]
+    private void ApplyPreset()
+    {
+        if (SelectedPreset is null)
+        {
+            StatusText = "未选择启动组";
+            return;
+        }
+
+        var presetIds = SelectedPreset.EntryIds
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .ToHashSet(StringComparer.Ordinal);
+        var knownIds = Entries.Select(entry => entry.Entry.Id).ToHashSet(StringComparer.Ordinal);
+        var missing = presetIds.Where(id => !knownIds.Contains(id)).ToList();
+        if (missing.Count > 0)
+        {
+            StatusText = $"启动组引用了不存在的启动项: {string.Join(", ", missing)}";
+            return;
+        }
+
+        if (ReplaceSelection(presetIds))
+            StatusText = $"已应用启动组: {SelectedPreset.Name}（{SelectedCount} 项，已保存）";
     }
 
     [RelayCommand(CanExecute = nameof(CanLaunchSelected))]
@@ -181,6 +218,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
             SaveConfig();
     }
 
+    partial void OnSelectedPresetChanged(LauncherPresetViewModel? value)
+    {
+        ApplyPresetCommand.NotifyCanExecuteChanged();
+    }
+
     internal async Task LaunchAsync(LauncherEntryViewModel item)
     {
         try
@@ -214,6 +256,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private bool CanClearSelection()
     {
         return SelectedCount > 0;
+    }
+
+    private bool CanApplyPreset()
+    {
+        return SelectedPreset is not null && Entries.Count > 0;
     }
 
     private void ApplyFilter()
@@ -253,6 +300,53 @@ public sealed partial class MainWindowViewModel : ObservableObject
         LaunchSelectedCommand.NotifyCanExecuteChanged();
         ClearSelectionCommand.NotifyCanExecuteChanged();
         return SaveConfig();
+    }
+
+    private bool ReplaceSelection(IReadOnlySet<string> selectedIds)
+    {
+        _isBulkSelectionUpdate = true;
+        try
+        {
+            foreach (var entry in Entries)
+            {
+                entry.IsSelected = selectedIds.Contains(entry.Entry.Id);
+            }
+        }
+        finally
+        {
+            _isBulkSelectionUpdate = false;
+        }
+
+        SelectedCount = Entries.Count(entry => entry.IsSelected);
+        LaunchSelectedCommand.NotifyCanExecuteChanged();
+        ClearSelectionCommand.NotifyCanExecuteChanged();
+        return SaveConfig();
+    }
+
+    private string? LoadPresets()
+    {
+        Presets.Clear();
+        LauncherPresetFile presetFile;
+        try
+        {
+            presetFile = LauncherPresetStore.Load(_presetPath);
+        }
+        catch (Exception ex)
+        {
+            PresetCount = 0;
+            SelectedPreset = null;
+            return $"启动组加载失败: {ex.Message}";
+        }
+
+        foreach (var preset in presetFile.Presets)
+        {
+            Presets.Add(new LauncherPresetViewModel(preset));
+        }
+
+        PresetCount = Presets.Count;
+        SelectedPreset = Presets.FirstOrDefault(preset => preset.Id == presetFile.DefaultPresetId)
+            ?? Presets.FirstOrDefault();
+        return null;
     }
 
     private bool SaveConfig()

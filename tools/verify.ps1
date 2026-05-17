@@ -68,6 +68,47 @@ foreach ($item in $configs[$canonicalKey]) {
 }
 Add-Check 'config-schema' @{ uniqueIds = $seenIds.Count; selectedFields = $selectedFields; selectedCapable = ($selectedFields -eq $configs[$canonicalKey].Count) }
 
+$presetPath = Join-Path (Split-Path -Parent $rootConfigPath) 'presets.json'
+if (-not (Test-Path -LiteralPath $presetPath)) { throw "Missing portable launcher presets: $presetPath" }
+$presetDoc = Get-Content -Raw -Encoding UTF8 -LiteralPath $presetPath | ConvertFrom-Json
+if ($null -eq $presetDoc) { throw "Presets parsed to null: $presetPath" }
+if ([int]$presetDoc.schemaVersion -ne 1) { throw "Unsupported presets schemaVersion: $($presetDoc.schemaVersion)" }
+$defaultPresetId = [string]$presetDoc.defaultPresetId
+if ([string]::IsNullOrWhiteSpace($defaultPresetId)) { throw 'presets.json defaultPresetId is required' }
+$presetSeen = @{}
+$referencedEntryIds = @{}
+$presetCount = 0
+$nonEmptyPresetCount = 0
+foreach ($preset in @($presetDoc.presets)) {
+    $presetCount++
+    $presetId = [string]$preset.id
+    if ([string]::IsNullOrWhiteSpace($presetId)) { throw "Preset $presetCount is missing id" }
+    if ([string]::IsNullOrWhiteSpace([string]$preset.name)) { throw "Preset $presetId is missing name" }
+    if ($presetSeen.ContainsKey($presetId)) { throw "Duplicate preset id: $presetId" }
+    $presetSeen[$presetId] = $true
+
+    $entrySeen = @{}
+    $entryIds = @($preset.entryIds)
+    if ($entryIds.Count -gt 0) { $nonEmptyPresetCount++ }
+    foreach ($entryIdValue in $entryIds) {
+        $entryId = [string]$entryIdValue
+        if ([string]::IsNullOrWhiteSpace($entryId)) { throw "Preset $presetId has blank entry id" }
+        if ($entrySeen.ContainsKey($entryId)) { throw "Preset $presetId has duplicate entry id: $entryId" }
+        $entrySeen[$entryId] = $true
+        if (-not $seenIds.ContainsKey($entryId)) { throw "Preset $presetId references missing config entry id: $entryId" }
+        $referencedEntryIds[$entryId] = $true
+    }
+}
+if ($presetCount -lt 1) { throw 'presets.json must contain at least one preset' }
+if (-not $presetSeen.ContainsKey($defaultPresetId)) { throw "defaultPresetId does not match any preset: $defaultPresetId" }
+if ($nonEmptyPresetCount -lt 1) { throw 'presets.json must contain at least one preset with entryIds' }
+Add-Check 'presets-schema' @{
+    path = 'config\presets.json'
+    presets = $presetCount
+    defaultPresetId = $defaultPresetId
+    referencedEntries = $referencedEntryIds.Count
+}
+
 $settingsPath = Get-LauncherSettingsPath
 if (-not (Test-Path -LiteralPath $settingsPath)) { throw "Missing portable settings: $settingsPath" }
 $settings = Get-Content -Raw -Encoding UTF8 -LiteralPath $settingsPath | ConvertFrom-Json

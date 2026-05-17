@@ -94,13 +94,25 @@
                  Text="{Binding ConfigPathDisplay}"/>
       <Grid Grid.Row="2"
             Grid.ColumnSpan="2"
-            ColumnDefinitions="*,Auto"
+            ColumnDefinitions="*,Auto,Auto,Auto"
             Margin="0,12,0,0">
         <TextBox PlaceholderText="搜索名称、目录或命令"
                  Text="{Binding FilterText, Mode=TwoWay}"
                  FontSize="16"
                  Padding="12,8"/>
-        <Border Grid.Column="1"
+        <ComboBox Grid.Column="1"
+                  ItemsSource="{Binding Presets}"
+                  SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
+                  Width="220"
+                  Margin="12,0,0,0"
+                  VerticalAlignment="Center"
+                  PlaceholderText="选择启动组"/>
+        <Button Grid.Column="2"
+                Classes="secondary"
+                Content="应用启动组"
+                Command="{Binding ApplyPresetCommand}"
+                Margin="10,0,0,0"/>
+        <Border Grid.Column="3"
                 Background="#E0F2FE"
                 CornerRadius="14"
                 Padding="12,7"
