@@ -5,20 +5,24 @@
     {
       "id": "core-projects",
       "name": "主线维护",
-      "description": "WT Launcher、控制面和两个 crawler 主仓；作为可审查的一键启动组，不自动启动。",
       "entryIds": [
-        "WT_Protector",
-        "codex-control-plane-private",
-        "Data_Acquisition_and_Analysis",
-        "phoenix-crawler"
+        "启动脚本",
+        "opencode_WT_Protector"
       ]
     },
     {
       "id": "blank-manual",
       "name": "清空勾选 / 手动模式",
-      "description": "应用后清空所有勾选，然后手动选择；保留 HTA 式随手勾选体验。",
       "entryIds": [],
       "locked": true
+    },
+    {
+      "id": "新启动组",
+      "name": "新启动组",
+      "entryIds": [
+        "启动脚本",
+        "opencode_WT_Protector"
+      ]
     }
   ]
 }
