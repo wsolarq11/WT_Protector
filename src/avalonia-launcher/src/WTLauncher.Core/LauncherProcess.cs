@@ -11,6 +11,7 @@ public sealed class LauncherProcess
         Process.Start(new ProcessStartInfo(plan.Executable)
         {
             Arguments = plan.Arguments,
+            WorkingDirectory = plan.WorkingDirectory,
             UseShellExecute = false,
         });
     }

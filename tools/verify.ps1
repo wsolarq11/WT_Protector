@@ -40,16 +40,15 @@ foreach ($section in @('Configuration schema', 'Build and verification', 'Run th
 }
 Add-Check 'readme' @{ sections = 6 }
 
-$configs = @{}
 $rootConfigPath = Get-LauncherConfigPath
 $canonicalKey = 'config\config.json'
-$configs[$canonicalKey] = @(Read-ConfigItems $rootConfigPath)
-Add-Check 'json' @{ path = $canonicalKey; items = $configs[$canonicalKey].Count }
+$configItems = @(Read-ConfigItems $rootConfigPath)
+Add-Check 'json' @{ path = $canonicalKey; items = $configItems.Count }
 
 $seenIds = @{}
 $selectedFields = 0
 $idx = 0
-foreach ($item in $configs[$canonicalKey]) {
+foreach ($item in $configItems) {
     foreach ($field in @('id', 'name', 'directory', 'command')) {
         if ([string]::IsNullOrWhiteSpace([string]$item.$field)) {
             throw "Config item $idx is missing field: $field"
@@ -66,7 +65,7 @@ foreach ($item in $configs[$canonicalKey]) {
     $seenIds[[string]$item.id] = $true
     $idx++
 }
-Add-Check 'config-schema' @{ uniqueIds = $seenIds.Count; selectedFields = $selectedFields; selectedCapable = ($selectedFields -eq $configs[$canonicalKey].Count) }
+Add-Check 'config-schema' @{ uniqueIds = $seenIds.Count; selectedFields = $selectedFields; selectedCapable = ($selectedFields -eq $configItems.Count) }
 
 $presetPath = Join-Path (Split-Path -Parent $rootConfigPath) 'presets.json'
 if (-not (Test-Path -LiteralPath $presetPath)) { throw "Missing portable launcher presets: $presetPath" }
@@ -127,7 +126,7 @@ Add-Check 'settings-json' @{
 
 $dangerous = New-Object System.Collections.Generic.List[object]
 $idx = 0
-foreach ($item in $configs[$canonicalKey]) {
+foreach ($item in $configItems) {
     $command = [string]$item.command
     if (($command -match 'dangerously') -and ($item.confirm -eq $false)) {
         $dangerous.Add([pscustomobject]@{
@@ -145,7 +144,7 @@ if ($dangerous.Count -gt 0) { throw "dangerous commands still require hardening:
 $hardenScript = Join-Path $PSScriptRoot 'harden-config.ps1'
 if (-not (Test-Path -LiteralPath $hardenScript)) { throw 'Missing tools\harden-config.ps1' }
 $rootHashBeforeHarden = Get-FileSha256 $rootConfigPath
-$hardenJson = & powershell -NoProfile -ExecutionPolicy Bypass -File $hardenScript
+$hardenJson = & $hardenScript
 $harden = $hardenJson | ConvertFrom-Json
 $rootHashAfterHarden = Get-FileSha256 $rootConfigPath
 if ($harden.status -ne 'PASS') { throw 'harden-config dry-run did not pass' }
@@ -217,21 +216,15 @@ Add-Check 'hta-retired-config' @{
 }
 if ($retiredDangerous.Count -gt 0) { throw "retired HTA config has unconfirmed dangerous commands: count=$($retiredDangerous.Count)" }
 
-$launchArgTest = Join-Path $PSScriptRoot 'test-launch-args.ps1'
-if (-not (Test-Path -LiteralPath $launchArgTest)) { throw 'Missing tools\test-launch-args.ps1' }
-$launchArgJson = & powershell -NoProfile -ExecutionPolicy Bypass -File $launchArgTest
-$launchArg = ($launchArgJson | Select-Object -Last 1) | ConvertFrom-Json
-if ($launchArg.status -ne 'PASS') { throw 'launch argument smoke test did not pass' }
-Add-Check 'launch-arg-smoke' @{ tests = $launchArg.tests }
-
 $mainlineVerify = Join-Path $sourceRoot 'verify.ps1'
 if (-not (Test-Path -LiteralPath $mainlineVerify)) { throw "Missing mainline verify script: $mainlineVerify" }
-$mainlineJson = & powershell -NoProfile -ExecutionPolicy Bypass -File $mainlineVerify
+$mainlineJson = & $mainlineVerify
 $mainline = ($mainlineJson | Select-Object -Last 1) | ConvertFrom-Json
 if ($mainline.status -ne 'PASS') { throw 'Avalonia mainline verify did not pass' }
 Add-Check 'avalonia-mainline-verify' @{
     status = $mainline.status
     tests = $mainline.tests
+    guiSmoke = $mainline.guiSmoke
     publishedExe = $mainline.publishedExe
     sha256 = $mainline.sha256
 }

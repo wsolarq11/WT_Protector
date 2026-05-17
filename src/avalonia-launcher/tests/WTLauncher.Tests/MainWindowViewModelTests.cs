@@ -9,30 +9,7 @@ public sealed class MainWindowViewModelTests
     public void BatchSelectionCommandsPersistPortableConfig()
     {
         using var temp = new TempDirectory();
-        var configDir = Path.Combine(temp.Path, "config");
-        Directory.CreateDirectory(configDir);
-        var config = Path.Combine(configDir, "config.json");
-        var settings = Path.Combine(configDir, "settings.json");
-        File.WriteAllText(config, """
-        [
-          {
-            "id": "one",
-            "name": "one",
-            "directory": "D:\\one",
-            "command": "codex",
-            "confirm": true,
-            "selected": false
-          },
-          {
-            "id": "two",
-            "name": "two",
-            "directory": "D:\\two",
-            "command": "opencode",
-            "confirm": false,
-            "selected": false
-          }
-        ]
-        """);
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
 
         var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
 
@@ -51,34 +28,27 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void FilterTextPersistsPortableSettingsAndNarrowsVisibleEntries()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+
+        Assert.Equal(2, viewModel.VisibleCount);
+
+        viewModel.FilterText = "codex";
+
+        var visible = Assert.Single(viewModel.VisibleEntries);
+        Assert.Equal("one", visible.Entry.Id);
+        Assert.Equal("codex", LauncherSettingsStore.Load(settings).LastFilterText);
+    }
+
+    [Fact]
     public void ApplyPresetCommandReplacesAndPersistsPortableSelection()
     {
         using var temp = new TempDirectory();
-        var configDir = Path.Combine(temp.Path, "config");
-        Directory.CreateDirectory(configDir);
-        var config = Path.Combine(configDir, "config.json");
-        var settings = Path.Combine(configDir, "settings.json");
-        File.WriteAllText(config, """
-        [
-          {
-            "id": "one",
-            "name": "one",
-            "directory": "D:\\one",
-            "command": "codex",
-            "confirm": true,
-            "selected": false
-          },
-          {
-            "id": "two",
-            "name": "two",
-            "directory": "D:\\two",
-            "command": "opencode",
-            "confirm": false,
-            "selected": true
-          }
-        ]
-        """);
-        File.WriteAllText(Path.Combine(configDir, "presets.json"), """
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: false, twoSelected: true);
+        File.WriteAllText(presets, """
         {
           "schemaVersion": 1,
           "defaultPresetId": "daily",
@@ -116,34 +86,44 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void BrokenPresetWarnsAndDoesNotRewriteSelection()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: false, twoSelected: true);
+        File.WriteAllText(presets, """
+        {
+          "schemaVersion": 1,
+          "defaultPresetId": "broken",
+          "presets": [
+            {
+              "id": "broken",
+              "name": "Broken",
+              "description": "references a retired config id",
+              "entryIds": ["one", "missing-entry"]
+            }
+          ]
+        }
+        """);
+
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+
+        Assert.Equal("检查启动组", viewModel.ApplyPresetButtonText);
+        Assert.Contains("引用了 1 个不存在的启动项", viewModel.PresetSelectionStatusText);
+
+        viewModel.ApplyPresetCommand.Execute(null);
+
+        Assert.Contains("missing-entry", viewModel.StatusText);
+        Assert.False(File.Exists(config + ".bak"));
+        var entries = LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
+        Assert.False(entries.Single(entry => entry.Id == "one").Selected);
+        Assert.True(entries.Single(entry => entry.Id == "two").Selected);
+    }
+
+    [Fact]
     public async Task LaunchGroupCommandsCreateUpdateAndDeletePortablePresets()
     {
         using var temp = new TempDirectory();
-        var configDir = Path.Combine(temp.Path, "config");
-        Directory.CreateDirectory(configDir);
-        var config = Path.Combine(configDir, "config.json");
-        var settings = Path.Combine(configDir, "settings.json");
-        var presets = Path.Combine(configDir, "presets.json");
-        File.WriteAllText(config, """
-        [
-          {
-            "id": "one",
-            "name": "one",
-            "directory": "D:\\one",
-            "command": "codex",
-            "confirm": true,
-            "selected": true
-          },
-          {
-            "id": "two",
-            "name": "two",
-            "directory": "D:\\two",
-            "command": "opencode",
-            "confirm": false,
-            "selected": false
-          }
-        ]
-        """);
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
         File.WriteAllText(presets, """
         {
           "schemaVersion": 1,
@@ -212,20 +192,44 @@ public sealed class MainWindowViewModelTests
         Assert.True(viewModel.ApplyPresetCommand.CanExecute(null));
     }
 
-    private sealed class TempDirectory : IDisposable
+    private static (string Config, string Settings, string Presets) CreatePortableFixture(
+        TempDirectory temp,
+        bool oneSelected,
+        bool twoSelected)
     {
-        public TempDirectory()
-        {
-            Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "wt-launcher-viewmodel-test-" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(Path);
-        }
+        var configDir = Path.Combine(temp.Path, "config");
+        Directory.CreateDirectory(configDir);
+        var config = Path.Combine(configDir, "config.json");
+        WriteTwoEntryConfig(config, oneSelected, twoSelected);
+        return (config, Path.Combine(configDir, "settings.json"), Path.Combine(configDir, "presets.json"));
+    }
 
-        public string Path { get; }
+    private static void WriteTwoEntryConfig(string config, bool oneSelected, bool twoSelected)
+    {
+        File.WriteAllText(config, $$"""
+        [
+          {
+            "id": "one",
+            "name": "one",
+            "directory": "D:\\one",
+            "command": "codex",
+            "confirm": true,
+            "selected": {{JsonBool(oneSelected)}}
+          },
+          {
+            "id": "two",
+            "name": "two",
+            "directory": "D:\\two",
+            "command": "opencode",
+            "confirm": false,
+            "selected": {{JsonBool(twoSelected)}}
+          }
+        ]
+        """);
+    }
 
-        public void Dispose()
-        {
-            if (Directory.Exists(Path))
-                Directory.Delete(Path, recursive: true);
-        }
+    private static string JsonBool(bool value)
+    {
+        return value ? "true" : "false";
     }
 }

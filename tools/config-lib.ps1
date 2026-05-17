@@ -3,6 +3,12 @@ function Get-RepoRoot {
     return (Split-Path -Parent $PSScriptRoot)
 }
 
+function Invoke-NativeStep([string]$Name, [scriptblock]$Command) {
+    & $Command
+    $code = $LASTEXITCODE
+    if ($code -ne 0) { throw "$Name failed with exit code $code" }
+}
+
 function Get-RepoPath([string]$RelativePath) {
     return (Join-Path (Get-RepoRoot) $RelativePath)
 }

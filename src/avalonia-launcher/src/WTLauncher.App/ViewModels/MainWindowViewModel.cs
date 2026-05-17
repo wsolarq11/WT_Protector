@@ -120,7 +120,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             StatusText = $"已勾选可见 {targets.Count} 项（已保存）";
     }
 
-    [RelayCommand(CanExecute = nameof(CanClearSelection))]
+    [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private void ClearSelection()
     {
         var targets = Entries.Where(entry => entry.IsSelected).ToList();
@@ -143,22 +143,18 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var presetIds = SelectedPreset.EntryIds
-            .Where(id => !string.IsNullOrWhiteSpace(id))
-            .ToHashSet(StringComparer.Ordinal);
-        var knownIds = Entries.Select(entry => entry.Entry.Id).ToHashSet(StringComparer.Ordinal);
-        var missing = presetIds.Where(id => !knownIds.Contains(id)).ToList();
-        if (missing.Count > 0)
+        var selection = GetPresetSelectionSnapshot(SelectedPreset);
+        if (selection.MissingConfigIds.Count > 0)
         {
-            StatusText = $"启动组引用了不存在的启动项: {string.Join(", ", missing)}";
+            StatusText = $"启动组引用了不存在的启动项: {string.Join(", ", selection.MissingConfigIds)}";
             return;
         }
 
-        if (ReplaceSelection(presetIds))
+        if (ReplaceSelection(selection.PresetIds))
             StatusText = $"已应用启动组: {SelectedPreset.Name}（{SelectedCount} 项，已保存）";
     }
 
-    [RelayCommand(CanExecute = nameof(CanSaveSelectionAsPreset))]
+    [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private async Task SaveSelectionAsPresetAsync()
     {
         if (SelectedCount == 0)
@@ -274,7 +270,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         StatusText = $"已删除启动组: {preset.Name}";
     }
 
-    [RelayCommand(CanExecute = nameof(CanLaunchSelected))]
+    [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private async Task LaunchSelectedAsync()
     {
         var selected = Entries.Where(entry => entry.IsSelected).ToList();
@@ -378,24 +374,16 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    private bool CanLaunchSelected()
-    {
-        return SelectedCount > 0;
-    }
-
-    private bool CanClearSelection()
+    private bool CanOperateOnSelection()
     {
         return SelectedCount > 0;
     }
 
     private bool CanApplyPreset()
     {
-        return SelectedPreset is not null && Entries.Count > 0 && PresetSelectionHasChanges();
-    }
-
-    private bool CanSaveSelectionAsPreset()
-    {
-        return SelectedCount > 0;
+        return SelectedPreset is not null
+            && Entries.Count > 0
+            && GetPresetSelectionSnapshot(SelectedPreset!).HasChanges;
     }
 
     private bool CanUpdateSelectedPreset()
@@ -403,7 +391,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return SelectedPreset is not null
             && !SelectedPreset.IsLocked
             && SelectedCount > 0
-            && PresetSelectionHasChanges();
+            && GetPresetSelectionSnapshot(SelectedPreset!).HasChanges;
     }
 
     private bool CanDeleteSelectedPreset()
@@ -493,15 +481,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var selectedIds = Entries
-            .Where(entry => entry.IsSelected)
-            .Select(entry => entry.Entry.Id)
-            .ToHashSet(StringComparer.Ordinal);
-        var knownIds = Entries.Select(entry => entry.Entry.Id).ToHashSet(StringComparer.Ordinal);
-        var presetIds = SelectedPreset.EntryIds
-            .Where(id => !string.IsNullOrWhiteSpace(id))
-            .ToHashSet(StringComparer.Ordinal);
-        var missingConfigIds = presetIds.Where(id => !knownIds.Contains(id)).ToList();
+        var selection = GetPresetSelectionSnapshot(SelectedPreset);
+        var presetIds = selection.PresetIds;
+        var missingConfigIds = selection.MissingConfigIds;
         if (missingConfigIds.Count > 0)
         {
             ApplyPresetButtonText = "检查启动组";
@@ -509,9 +491,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var matched = selectedIds.Count(id => presetIds.Contains(id));
-        var missing = presetIds.Count(id => !selectedIds.Contains(id));
-        var extra = selectedIds.Count(id => !presetIds.Contains(id));
+        var matched = selection.MatchedCount;
+        var missing = selection.PresetIds.Count - matched;
+        var extra = selection.SelectedIds.Count - matched;
 
         if (presetIds.Count == 0)
         {
@@ -528,20 +510,29 @@ public sealed partial class MainWindowViewModel : ObservableObject
             : $"启动组“{SelectedPreset.Name}”：已匹配 {matched}/{presetIds.Count}，缺 {missing}，额外 {extra}；应用会替换当前勾选。";
     }
 
-    private bool PresetSelectionHasChanges()
+    private PresetSelectionSnapshot GetPresetSelectionSnapshot(LauncherPresetViewModel selectedPreset)
     {
-        if (SelectedPreset is null)
-            return false;
-
         var selectedIds = Entries
             .Where(entry => entry.IsSelected)
             .Select(entry => entry.Entry.Id)
             .ToHashSet(StringComparer.Ordinal);
-        var presetIds = SelectedPreset.EntryIds
+        var knownIds = Entries.Select(entry => entry.Entry.Id).ToHashSet(StringComparer.Ordinal);
+        var presetIds = selectedPreset.EntryIds
             .Where(id => !string.IsNullOrWhiteSpace(id))
             .ToHashSet(StringComparer.Ordinal);
+        var missingConfigIds = presetIds.Where(id => !knownIds.Contains(id)).ToList();
 
-        return !selectedIds.SetEquals(presetIds);
+        return new PresetSelectionSnapshot(selectedIds, presetIds, missingConfigIds);
+    }
+
+    private sealed record PresetSelectionSnapshot(
+        HashSet<string> SelectedIds,
+        HashSet<string> PresetIds,
+        List<string> MissingConfigIds)
+    {
+        public bool HasChanges => !SelectedIds.SetEquals(PresetIds);
+
+        public int MatchedCount => SelectedIds.Count(PresetIds.Contains);
     }
 
     private bool CanDeletePreset(string presetId)

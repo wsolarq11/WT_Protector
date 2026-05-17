@@ -110,10 +110,9 @@ The verifier currently checks:
 - dangerous commands keep `confirm: true`;
 - `retired/design/winforms-launcher.md` exists with the absorbed WinForms design lessons;
 - retired HTA and shortcut-backup reference material remain readable;
-- focused launch-argument tests pass;
-- Avalonia mainline restore/test/publish passes.
+- Avalonia mainline restore/test/isolated verification publish passes, including launch-argument tests and a hidden temp-config startup smoke of the published exe.
 
-Build/publish the mainline executable without running the whole root gate:
+The verifier publishes into isolated ignored output under `src/avalonia-launcher/artifacts/verify-publish/win-x64/` so a running release executable does not block the gate. Build/publish the stable mainline executable without running the whole root gate:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build-release.ps1

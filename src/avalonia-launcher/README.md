@@ -29,11 +29,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\veri
 
 The local mainline gate runs:
 
-1. `dotnet restore`
+1. `dotnet restore -r win-x64`
 2. `dotnet test -c Release`
-3. `dotnet publish -c Release -r win-x64 --self-contained true`
+3. `dotnet publish -c Release -r win-x64 --self-contained true` into isolated verification output
+4. a hidden temp-config startup smoke of the published exe
 
-Publish output is ignored under `artifacts/publish/win-x64/`.
+Verification publish output is ignored under `artifacts/verify-publish/win-x64/`. Stable release output from `tools/build-release.ps1` is ignored under `artifacts/publish/win-x64/`.
 
 ## Current acceptance question
 

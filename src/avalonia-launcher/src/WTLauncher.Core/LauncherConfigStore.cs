@@ -1,6 +1,3 @@
-using System.Text.Encodings.Web;
-using System.Text.Json;
-
 namespace WTLauncher.Core;
 
 public static class LauncherConfigStore
@@ -9,15 +6,6 @@ public static class LauncherConfigStore
     public const string ConfigFileName = "config.json";
     public const string SettingsFileName = "settings.json";
 
-    private static readonly JsonSerializerOptions Options = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-        WriteIndented = true,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-    };
-
     public static IReadOnlyList<LaunchEntry> Load(string configPath)
     {
         if (string.IsNullOrWhiteSpace(configPath))
@@ -25,8 +13,7 @@ public static class LauncherConfigStore
         if (!File.Exists(configPath))
             throw new FileNotFoundException("Launcher config not found.", configPath);
 
-        using var stream = File.OpenRead(configPath);
-        var entries = JsonSerializer.Deserialize<List<LaunchEntry>>(stream, Options)
+        var entries = LauncherJson.Load<List<LaunchEntry>>(configPath)
             ?? throw new InvalidDataException("Launcher config parsed to null.");
 
         return entries;
@@ -37,15 +24,7 @@ public static class LauncherConfigStore
         if (string.IsNullOrWhiteSpace(configPath))
             throw new ArgumentException("Config path is required.", nameof(configPath));
 
-        var directory = Path.GetDirectoryName(Path.GetFullPath(configPath));
-        if (!string.IsNullOrWhiteSpace(directory))
-            Directory.CreateDirectory(directory);
-
-        if (File.Exists(configPath))
-            File.Copy(configPath, configPath + ".bak", overwrite: true);
-
-        var json = JsonSerializer.Serialize(entries.ToList(), Options);
-        File.WriteAllText(configPath, json + Environment.NewLine);
+        LauncherJson.Save(entries.ToList(), configPath, backup: true);
     }
 
     public static string ResolveConfigPath(string? explicitPath, string? currentDirectory = null, string? appBaseDirectory = null)
@@ -72,12 +51,17 @@ public static class LauncherConfigStore
 
     public static string ResolveSettingsPath(string configPath)
     {
+        return ResolveSiblingPath(configPath, SettingsFileName);
+    }
+
+    internal static string ResolveSiblingPath(string configPath, string fileName)
+    {
         if (string.IsNullOrWhiteSpace(configPath))
             throw new ArgumentException("Config path is required.", nameof(configPath));
 
         var directory = Path.GetDirectoryName(Path.GetFullPath(configPath))
             ?? throw new InvalidOperationException("Config path must have a parent directory.");
-        return Path.Combine(directory, SettingsFileName);
+        return Path.Combine(directory, fileName);
     }
 
     private static string? FindLocalConfig(string? start)
