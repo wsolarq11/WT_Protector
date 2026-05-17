@@ -164,6 +164,7 @@ Important risks:
 - Command text is quoted before being passed to `wt.exe`, but it is still a shell command; review entries before launching.
 - Applying a preset only rewrites checkbox state; launching remains a separate explicit action.
 - The root `config/` directory is the canonical source.
+- Using the app can legitimately dirty tracked `config/config.json`, `config/presets.json`, and `config/settings.json`; review that user/app working set before committing or reverting it.
 - `retired/config/config.json` belongs only to `retired/WT Launcher.hta` and is not read by the Avalonia mainline.
 
 ## Current implementation status
