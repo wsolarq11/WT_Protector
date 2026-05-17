@@ -15,8 +15,6 @@ public sealed class LauncherPresetViewModel
 
     public string Name => Preset.Name;
 
-    public string Description => Preset.Description;
-
     public IReadOnlyList<string> EntryIds => Preset.EntryIds;
 
     public bool IsLocked => Preset.Locked;

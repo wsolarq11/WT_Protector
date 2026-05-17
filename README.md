@@ -56,7 +56,6 @@ Named launch groups live beside the launch config:
     {
       "id": "core-projects",
       "name": "主线维护",
-      "description": "Reviewable launch group; not auto-run.",
       "entryIds": ["WT_Protector"],
       "locked": false
     }

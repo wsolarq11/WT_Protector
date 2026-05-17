@@ -168,7 +168,7 @@ public sealed class MainWindowViewModelTests
 
         var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess())
         {
-            RequestNewPresetAsync = () => Task.FromResult<PresetDraft?>(new PresetDraft("Project Pair", "two workspaces")),
+            RequestNewPresetAsync = () => Task.FromResult<PresetDraft?>(new PresetDraft("Project Pair")),
         };
 
         Assert.True(viewModel.SaveSelectionAsPresetCommand.CanExecute(null));

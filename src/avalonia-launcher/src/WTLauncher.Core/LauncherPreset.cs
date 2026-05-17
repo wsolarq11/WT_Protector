@@ -22,9 +22,6 @@ public sealed record LauncherPreset
     [JsonPropertyName("name")]
     public string Name { get; set; } = "";
 
-    [JsonPropertyName("description")]
-    public string Description { get; set; } = "";
-
     [JsonPropertyName("entryIds")]
     public List<string> EntryIds { get; set; } = [];
 

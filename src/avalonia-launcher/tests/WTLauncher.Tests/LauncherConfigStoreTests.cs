@@ -102,7 +102,6 @@ public sealed class LauncherConfigStoreTests
                     {
                         Id = "daily",
                         Name = "日常启动",
-                        Description = "常用工作区",
                         EntryIds = ["one", "two"],
                     },
                 ],

@@ -181,13 +181,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var description = (draft.Description ?? string.Empty).Trim();
         var entryIds = GetSelectedEntryIds();
         var preset = new LauncherPreset
         {
             Id = GenerateUniquePresetId(name),
             Name = name,
-            Description = description,
             EntryIds = entryIds,
         };
 
@@ -228,7 +226,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         preset.Name = SelectedPreset.Name;
-        preset.Description = SelectedPreset.Description;
         preset.EntryIds = entryIds;
         if (!SavePresets())
             return;
