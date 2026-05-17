@@ -71,6 +71,18 @@ public sealed class RepositoryConfigContractTests
             Assert.False(string.IsNullOrWhiteSpace(id));
             Assert.False(string.IsNullOrWhiteSpace(name));
             Assert.True(presetIds.Add(id!), $"Duplicate preset id: {id}");
+            if (preset.TryGetProperty("locked", out var locked))
+            {
+                Assert.True(
+                    locked.ValueKind is JsonValueKind.True or JsonValueKind.False,
+                    $"Preset {id} locked field must be boolean.");
+            }
+            if (id == "blank-manual")
+            {
+                Assert.True(
+                    preset.TryGetProperty("locked", out locked) && locked.GetBoolean(),
+                    "blank-manual preset should stay locked so manual mode cannot be deleted in the UI.");
+            }
 
             var entryIds = new HashSet<string>(StringComparer.Ordinal);
             foreach (var entryIdElement in preset.GetProperty("entryIds").EnumerateArray())

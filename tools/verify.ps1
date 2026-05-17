@@ -86,6 +86,12 @@ foreach ($preset in @($presetDoc.presets)) {
     if ([string]::IsNullOrWhiteSpace([string]$preset.name)) { throw "Preset $presetId is missing name" }
     if ($presetSeen.ContainsKey($presetId)) { throw "Duplicate preset id: $presetId" }
     $presetSeen[$presetId] = $true
+    if ($preset.PSObject.Properties.Name -contains 'locked') {
+        if (-not ($preset.locked -is [bool])) { throw "Preset $presetId locked field must be boolean" }
+    }
+    if (($presetId -eq 'blank-manual') -and ($preset.locked -ne $true)) {
+        throw 'Preset blank-manual must stay locked so manual mode cannot be deleted in the UI'
+    }
 
     $entrySeen = @{}
     $entryIds = @($preset.entryIds)

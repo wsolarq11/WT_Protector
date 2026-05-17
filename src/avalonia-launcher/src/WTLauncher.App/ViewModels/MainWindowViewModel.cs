@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WTLauncher.Core;
@@ -12,6 +13,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly string _settingsPath;
     private readonly LauncherSettings _settings;
     private readonly LauncherProcess _launcherProcess;
+    private LauncherPresetFile _presetFile = new();
     private bool _isBulkSelectionUpdate;
 
     [ObservableProperty]
@@ -68,6 +70,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         static (_, _) => Task.FromResult(false);
 
     public Func<IReadOnlyList<LaunchEntry>, Task<bool>> ConfirmBatchLaunchAsync { get; set; } =
+        static _ => Task.FromResult(false);
+
+    public Func<Task<PresetDraft?>> RequestNewPresetAsync { get; set; } =
+        static () => Task.FromResult<PresetDraft?>(null);
+
+    public Func<LauncherPresetViewModel, Task<bool>> ConfirmDeletePresetAsync { get; set; } =
         static _ => Task.FromResult(false);
 
     partial void OnFilterTextChanged(string value)
@@ -148,6 +156,125 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         if (ReplaceSelection(presetIds))
             StatusText = $"已应用启动组: {SelectedPreset.Name}（{SelectedCount} 项，已保存）";
+    }
+
+    [RelayCommand(CanExecute = nameof(CanSaveSelectionAsPreset))]
+    private async Task SaveSelectionAsPresetAsync()
+    {
+        if (SelectedCount == 0)
+        {
+            StatusText = "未选择任何启动项";
+            return;
+        }
+
+        var draft = await RequestNewPresetAsync().ConfigureAwait(true);
+        if (draft is null)
+        {
+            StatusText = "已取消: 保存启动组";
+            return;
+        }
+
+        var name = (draft.Name ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            StatusText = "启动组名称不能为空";
+            return;
+        }
+
+        var description = (draft.Description ?? string.Empty).Trim();
+        var entryIds = GetSelectedEntryIds();
+        var preset = new LauncherPreset
+        {
+            Id = GenerateUniquePresetId(name),
+            Name = name,
+            Description = description,
+            EntryIds = entryIds,
+        };
+
+        _presetFile.Presets.Add(preset);
+        if (!SavePresets())
+            return;
+
+        LoadPresets(preset.Id);
+        StatusText = $"已保存启动组: {preset.Name}（{preset.EntryIds.Count} 项）";
+    }
+
+    [RelayCommand(CanExecute = nameof(CanUpdateSelectedPreset))]
+    private void UpdateSelectedPreset()
+    {
+        if (SelectedPreset is null)
+        {
+            StatusText = "未选择启动组";
+            return;
+        }
+        if (SelectedPreset.IsLocked)
+        {
+            StatusText = $"系统启动组不能更新: {SelectedPreset.Name}";
+            return;
+        }
+
+        var preset = _presetFile.Presets.FirstOrDefault(item => item.Id == SelectedPreset.Id);
+        if (preset is null)
+        {
+            StatusText = "当前启动组已不存在，请重新加载";
+            return;
+        }
+
+        var entryIds = GetSelectedEntryIds();
+        if (entryIds.Count == 0)
+        {
+            StatusText = "请先勾选至少一个启动项";
+            return;
+        }
+
+        preset.Name = SelectedPreset.Name;
+        preset.Description = SelectedPreset.Description;
+        preset.EntryIds = entryIds;
+        if (!SavePresets())
+            return;
+
+        LoadPresets(preset.Id);
+        StatusText = $"已更新启动组: {preset.Name}（{preset.EntryIds.Count} 项）";
+    }
+
+    [RelayCommand(CanExecute = nameof(CanDeleteSelectedPreset))]
+    private async Task DeleteSelectedPresetAsync()
+    {
+        if (SelectedPreset is null)
+        {
+            StatusText = "未选择启动组";
+            return;
+        }
+        if (SelectedPreset.IsLocked || !CanDeletePreset(SelectedPreset.Id))
+        {
+            StatusText = $"启动组不能删除: {SelectedPreset.Name}";
+            return;
+        }
+
+        var accepted = await ConfirmDeletePresetAsync(SelectedPreset).ConfigureAwait(true);
+        if (!accepted)
+        {
+            StatusText = $"已取消: 删除启动组 {SelectedPreset.Name}";
+            return;
+        }
+
+        var preset = _presetFile.Presets.FirstOrDefault(item => item.Id == SelectedPreset.Id);
+        if (preset is null)
+        {
+            StatusText = "当前启动组已不存在，请重新加载";
+            return;
+        }
+
+        _presetFile.Presets.Remove(preset);
+        if (_presetFile.DefaultPresetId == preset.Id)
+            _presetFile.DefaultPresetId = _presetFile.Presets.FirstOrDefault()?.Id ?? string.Empty;
+
+        if (!SavePresets())
+            return;
+
+        var fallbackPresetId = _presetFile.DefaultPresetId;
+        LoadPresets(fallbackPresetId);
+        StatusText = $"已删除启动组: {preset.Name}";
     }
 
     [RelayCommand(CanExecute = nameof(CanLaunchSelected))]
@@ -269,6 +396,27 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return SelectedPreset is not null && Entries.Count > 0 && PresetSelectionHasChanges();
     }
 
+    private bool CanSaveSelectionAsPreset()
+    {
+        return SelectedCount > 0;
+    }
+
+    private bool CanUpdateSelectedPreset()
+    {
+        return SelectedPreset is not null
+            && !SelectedPreset.IsLocked
+            && SelectedCount > 0
+            && PresetSelectionHasChanges();
+    }
+
+    private bool CanDeleteSelectedPreset()
+    {
+        if (SelectedPreset is null || SelectedPreset.IsLocked)
+            return false;
+
+        return CanDeletePreset(SelectedPreset.Id);
+    }
+
     private void ApplyFilter()
     {
         var filter = (FilterText ?? "").Trim();
@@ -334,6 +482,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         LaunchSelectedCommand.NotifyCanExecuteChanged();
         ClearSelectionCommand.NotifyCanExecuteChanged();
         ApplyPresetCommand.NotifyCanExecuteChanged();
+        NotifyPresetManagementCommands();
     }
 
     private void UpdatePresetSelectionStatus()
@@ -398,13 +547,87 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return !selectedIds.SetEquals(presetIds);
     }
 
-    private string? LoadPresets()
+    private bool CanDeletePreset(string presetId)
+    {
+        if (_presetFile.Presets.Count == 0)
+            return false;
+
+        var target = _presetFile.Presets.FirstOrDefault(preset => preset.Id == presetId);
+        if (target is null || target.Locked)
+            return false;
+
+        var remainingNonEmpty = _presetFile.Presets
+            .Count(preset => preset.Id != presetId && preset.EntryIds.Count > 0);
+        return remainingNonEmpty > 0;
+    }
+
+    private List<string> GetSelectedEntryIds()
+    {
+        return Entries
+            .Where(entry => entry.IsSelected)
+            .Select(entry => entry.Entry.Id)
+            .ToList();
+    }
+
+    private string GenerateUniquePresetId(string name)
+    {
+        var baseId = NormalizePresetId(name);
+        var candidate = baseId;
+        var index = 2;
+        var existing = _presetFile.Presets.Select(preset => preset.Id).ToHashSet(StringComparer.Ordinal);
+        while (existing.Contains(candidate))
+        {
+            candidate = $"{baseId}-{index++}";
+        }
+
+        return candidate;
+    }
+
+    private static string NormalizePresetId(string value)
+    {
+        var builder = new StringBuilder(value.Length);
+        var separatorPending = false;
+        foreach (var ch in value.Normalize(NormalizationForm.FormKC))
+        {
+            if (char.IsLetterOrDigit(ch))
+            {
+                builder.Append(char.ToLowerInvariant(ch));
+                separatorPending = false;
+            }
+            else if (ch is '-' or '_')
+            {
+                builder.Append(ch);
+                separatorPending = false;
+            }
+            else if (char.IsWhiteSpace(ch) || ch is '/' or '\\' or '.' or ':')
+            {
+                if (!separatorPending && builder.Length > 0)
+                {
+                    builder.Append('-');
+                    separatorPending = true;
+                }
+            }
+        }
+
+        var normalized = builder.ToString().Trim('-');
+        return string.IsNullOrWhiteSpace(normalized) ? "preset" : normalized;
+    }
+
+    private void NotifyPresetManagementCommands()
+    {
+        SaveSelectionAsPresetCommand.NotifyCanExecuteChanged();
+        UpdateSelectedPresetCommand.NotifyCanExecuteChanged();
+        DeleteSelectedPresetCommand.NotifyCanExecuteChanged();
+    }
+
+    private string? LoadPresets(string? preferredPresetId = null)
     {
         Presets.Clear();
         LauncherPresetFile presetFile;
         try
         {
             presetFile = LauncherPresetStore.Load(_presetPath);
+            _presetFile = presetFile;
         }
         catch (Exception ex)
         {
@@ -419,9 +642,25 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         PresetCount = Presets.Count;
-        SelectedPreset = Presets.FirstOrDefault(preset => preset.Id == presetFile.DefaultPresetId)
+        var targetPresetId = preferredPresetId ?? presetFile.DefaultPresetId;
+        SelectedPreset = Presets.FirstOrDefault(preset => preset.Id == targetPresetId)
             ?? Presets.FirstOrDefault();
+        NotifyPresetManagementCommands();
         return null;
+    }
+
+    private bool SavePresets()
+    {
+        try
+        {
+            LauncherPresetStore.Save(_presetFile, _presetPath);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"启动组保存失败: {ex.Message}";
+            return false;
+        }
     }
 
     private bool SaveConfig()

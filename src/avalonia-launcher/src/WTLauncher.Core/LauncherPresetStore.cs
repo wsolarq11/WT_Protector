@@ -1,3 +1,4 @@
+using System.Text.Encodings.Web;
 using System.Text.Json;
 
 namespace WTLauncher.Core;
@@ -12,6 +13,7 @@ public static class LauncherPresetStore
         ReadCommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true,
         WriteIndented = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
     public static LauncherPresetFile Load(string presetPath)
@@ -38,8 +40,8 @@ public static class LauncherPresetStore
         if (File.Exists(presetPath))
             File.Copy(presetPath, presetPath + ".bak", overwrite: true);
 
-        using var stream = File.Create(presetPath);
-        JsonSerializer.Serialize(stream, presets, Options);
+        var json = JsonSerializer.Serialize(presets, Options);
+        File.WriteAllText(presetPath, json + Environment.NewLine);
     }
 
     public static string ResolvePresetPath(string configPath)

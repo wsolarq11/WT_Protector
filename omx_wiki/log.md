@@ -44,3 +44,11 @@
 - **Pages:** first-class-launcher-patterns-and-wt-preset-decision.md
 - **Summary:** Lint: 1 issues (1 orphan, 0 stale, 0 broken, 0 contradictions)
 
+## [2026-05-17T11:54:05.599Z] add
+- **Pages:** first-class-launcher-patterns-and-wt-preset-decision.md
+- **Summary:** Refreshed wiki index and derived metadata surfaces
+
+## [2026-05-17T11:55:14.379Z] lint
+- **Pages:** first-class-launcher-patterns-and-wt-preset-decision.md
+- **Summary:** Lint: 1 issues (1 orphan, 0 stale, 0 broken, 0 contradictions)
+

@@ -34,6 +34,14 @@ A preset may replace checkbox state, but it must not launch by selection alone. 
 
 The UI should show the delta before replacement: matched preset entries, missing entries that applying would add, and extra checked entries that applying would remove. When already matched, applying should become a disabled no-op state. This keeps presets understandable without adding an editor or automation graph.
 
+Launch groups are now light first-class objects in the UI:
+
+- `保存为新启动组` creates a named group from the current checked entries.
+- `更新当前启动组` replaces an editable group's `entryIds` with the current checked entries.
+- `删除当前启动组` removes an editable group after confirmation.
+
+`blank-manual` stays `locked: true`: it is a system/manual-mode bridge that can be applied but not updated or deleted.
+
 ## Local gate
 
 `tools/verify.ps1` must reject unknown preset entry ids, duplicate preset ids, duplicate entry references, and missing `config/presets.json`.
@@ -44,6 +52,7 @@ The UI should show the delta before replacement: matched preset entries, missing
 - Add Core preset load/save/path support.
 - Add Avalonia selector plus explicit `应用启动组`.
 - Add live preset-vs-selection feedback so users can see the effect before applying.
+- Add light create/update/delete actions for editable launch groups.
 - Add xUnit + root verifier coverage.
 
 ## Future reflection

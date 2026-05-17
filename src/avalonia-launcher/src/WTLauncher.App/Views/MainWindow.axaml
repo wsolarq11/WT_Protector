@@ -54,7 +54,7 @@
   </Window.Styles>
 
   <Grid RowDefinitions="Auto,*,Auto" Margin="24,20">
-    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto">
+    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
       <StackPanel>
         <TextBlock Classes="h1" Text="WT Launcher"/>
         <TextBlock Classes="muted"
@@ -125,7 +125,22 @@
           </TextBlock>
         </Border>
       </Grid>
-      <TextBlock Grid.Row="3"
+      <StackPanel Grid.Row="3"
+                  Grid.ColumnSpan="2"
+                  Orientation="Horizontal"
+                  Spacing="10"
+                  Margin="0,10,0,0">
+        <Button Classes="secondary"
+                Content="保存为新启动组"
+                Command="{Binding SaveSelectionAsPresetCommand}"/>
+        <Button Classes="secondary"
+                Content="更新当前启动组"
+                Command="{Binding UpdateSelectedPresetCommand}"/>
+        <Button Classes="secondary"
+                Content="删除当前启动组"
+                Command="{Binding DeleteSelectedPresetCommand}"/>
+      </StackPanel>
+      <TextBlock Grid.Row="4"
                  Grid.ColumnSpan="2"
                  Margin="0,8,0,0"
                  Classes="muted"

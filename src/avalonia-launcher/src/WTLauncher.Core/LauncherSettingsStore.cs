@@ -1,3 +1,4 @@
+using System.Text.Encodings.Web;
 using System.Text.Json;
 
 namespace WTLauncher.Core;
@@ -10,6 +11,7 @@ public static class LauncherSettingsStore
         ReadCommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true,
         WriteIndented = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
     public static LauncherSettings Load(string settingsPath)
@@ -32,7 +34,7 @@ public static class LauncherSettingsStore
         if (!string.IsNullOrWhiteSpace(directory))
             Directory.CreateDirectory(directory);
 
-        using var stream = File.Create(settingsPath);
-        JsonSerializer.Serialize(stream, settings, Options);
+        var json = JsonSerializer.Serialize(settings, Options);
+        File.WriteAllText(settingsPath, json + Environment.NewLine);
     }
 }

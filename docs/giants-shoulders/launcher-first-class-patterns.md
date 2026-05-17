@@ -25,7 +25,7 @@ WT Launcher's local translation is now:
 
 ```text
 config/config.json    launch entries + persisted checkbox bridge
-config/presets.json   named launch groups referencing entry ids
+config/presets.json   named launch groups referencing entry ids, with light CRUD in the app
 config/settings.json  portable UI preferences
 ```
 
@@ -69,6 +69,7 @@ The first admitted slice is small and reversible:
 1. add `config/presets.json` as a human-readable named launch-group file;
 2. validate preset ids and entry references in both xUnit and `tools/verify.ps1`;
 3. expose a UI selector plus explicit `应用启动组` action;
-4. preserve existing `selected` checkboxes as the HTA-compatible bridge.
+4. add the light first-class actions `保存为新启动组` / `更新当前启动组` / `删除当前启动组`;
+5. preserve existing `selected` checkboxes as the HTA-compatible bridge.
 
 Rollback point: delete `config/presets.json`, `LauncherPreset*`, and the preset UI/tests; the old checkbox flow remains intact.

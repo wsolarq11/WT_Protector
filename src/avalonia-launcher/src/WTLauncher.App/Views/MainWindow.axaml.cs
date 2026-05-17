@@ -20,6 +20,8 @@ public sealed partial class MainWindow : Window
         _settings = settings;
         viewModel.ConfirmLaunchAsync = ConfirmLaunchAsync;
         viewModel.ConfirmBatchLaunchAsync = ConfirmBatchLaunchAsync;
+        viewModel.RequestNewPresetAsync = RequestNewPresetAsync;
+        viewModel.ConfirmDeletePresetAsync = ConfirmDeletePresetAsync;
         Closing += OnClosing;
     }
 
@@ -33,6 +35,29 @@ public sealed partial class MainWindow : Window
     {
         var dialog = new ConfirmBatchLaunchWindow(entries);
         return await dialog.ShowDialog<bool>(this).ConfigureAwait(true);
+    }
+
+    private async Task<PresetDraft?> RequestNewPresetAsync()
+    {
+        var dialog = new PresetDetailsWindow(GetSelectedEntryIds());
+        return await dialog.ShowDialog<PresetDraft?>(this).ConfigureAwait(true);
+    }
+
+    private async Task<bool> ConfirmDeletePresetAsync(LauncherPresetViewModel preset)
+    {
+        var dialog = new ConfirmPresetDeleteWindow(preset);
+        return await dialog.ShowDialog<bool>(this).ConfigureAwait(true);
+    }
+
+    private IReadOnlyList<string> GetSelectedEntryIds()
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+            return [];
+
+        return viewModel.Entries
+            .Where(entry => entry.IsSelected)
+            .Select(entry => entry.Entry.Id)
+            .ToList();
     }
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)

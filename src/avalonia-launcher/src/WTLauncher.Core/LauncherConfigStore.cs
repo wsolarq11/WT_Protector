@@ -1,3 +1,4 @@
+using System.Text.Encodings.Web;
 using System.Text.Json;
 
 namespace WTLauncher.Core;
@@ -14,6 +15,7 @@ public static class LauncherConfigStore
         ReadCommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true,
         WriteIndented = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
     public static IReadOnlyList<LaunchEntry> Load(string configPath)
@@ -42,8 +44,8 @@ public static class LauncherConfigStore
         if (File.Exists(configPath))
             File.Copy(configPath, configPath + ".bak", overwrite: true);
 
-        using var stream = File.Create(configPath);
-        JsonSerializer.Serialize(stream, entries.ToList(), Options);
+        var json = JsonSerializer.Serialize(entries.ToList(), Options);
+        File.WriteAllText(configPath, json + Environment.NewLine);
     }
 
     public static string ResolveConfigPath(string? explicitPath, string? currentDirectory = null, string? appBaseDirectory = null)

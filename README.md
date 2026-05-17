@@ -57,7 +57,8 @@ Named launch groups live beside the launch config:
       "id": "core-projects",
       "name": "主线维护",
       "description": "Reviewable launch group; not auto-run.",
-      "entryIds": ["WT_Protector"]
+      "entryIds": ["WT_Protector"],
+      "locked": false
     }
   ]
 }
@@ -69,6 +70,7 @@ Preset fields:
 - `defaultPresetId` — startup UI selection; applying it is explicit.
 - `presets[].id` — stable human-readable launch group identity.
 - `presets[].entryIds` — stable `config/config.json` entry ids; `tools/verify.ps1` rejects unknown or duplicate references.
+- `presets[].locked` — optional UI guard for system groups such as `blank-manual`; locked groups can still be applied but cannot be updated or deleted in the app.
 
 Portable UI settings live beside the launch config:
 
@@ -91,7 +93,7 @@ From the repository root:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\run.ps1
 ```
 
-The app reads root `config/config.json`, applies named launch groups from `config/presets.json`, persists selected checkboxes back to `config/config.json`, and stores portable UI preferences in `config/settings.json`. It does not use AppData or the registry for launcher state.
+The app reads root `config/config.json`, applies and edits named launch groups from `config/presets.json`, persists selected checkboxes back to `config/config.json`, and stores portable UI preferences in `config/settings.json`. It does not use AppData or the registry for launcher state.
 
 ## Build and verification
 
@@ -172,6 +174,7 @@ The Avalonia mainline supports:
 - single launch and batch launch;
 - header actions for selecting all visible items or clearing the saved selection;
 - named launch groups/presets that replace the saved selection through explicit apply;
+- first-class launch group actions: save current selection as a new group, update the current group from current selection, and delete editable groups;
 - live preset-vs-selection difference feedback before applying a launch group, with no-op apply disabled when already matched;
 - launch confirmation;
 - JSON persistence with `.bak` backup;

@@ -17,7 +17,8 @@
       "id": "blank-manual",
       "name": "清空勾选 / 手动模式",
       "description": "应用后清空所有勾选，然后手动选择；保留 HTA 式随手勾选体验。",
-      "entryIds": []
+      "entryIds": [],
+      "locked": true
     }
   ]
 }

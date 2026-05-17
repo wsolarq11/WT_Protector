@@ -116,7 +116,10 @@ public sealed class LauncherConfigStoreTests
         var preset = Assert.Single(loaded.Presets);
         Assert.Equal("日常启动", preset.Name);
         Assert.Equal(["one", "two"], preset.EntryIds);
-        Assert.Contains("\"presets\"", File.ReadAllText(presetPath));
+        var savedJson = File.ReadAllText(presetPath);
+        Assert.Contains("\"presets\"", savedJson);
+        Assert.Contains("日常启动", savedJson);
+        Assert.EndsWith(Environment.NewLine, savedJson);
     }
 
     [Fact]
@@ -143,7 +146,7 @@ public sealed class LauncherConfigStoreTests
                 new LaunchEntry
                 {
                     Id = "demo",
-                    Name = "demo",
+                    Name = "演示",
                     Directory = "D:\\demo",
                     Command = "codex",
                     Confirm = true,
@@ -154,6 +157,9 @@ public sealed class LauncherConfigStoreTests
 
         var entry = Assert.Single(LauncherConfigStore.Load(config));
         Assert.True(entry.Selected);
+        var savedJson = File.ReadAllText(config);
+        Assert.Contains("演示", savedJson);
+        Assert.EndsWith(Environment.NewLine, savedJson);
         Assert.True(File.Exists(config + ".bak"));
     }
 
@@ -167,7 +173,7 @@ public sealed class LauncherConfigStoreTests
             new LauncherSettings
             {
                 Theme = "dark",
-                LastFilterText = "crawler",
+                LastFilterText = "爬虫",
                 Window = new LauncherWindowSettings { Width = 1200, Height = 800 },
             },
             settings);
@@ -175,9 +181,12 @@ public sealed class LauncherConfigStoreTests
         var loaded = LauncherSettingsStore.Load(settings);
 
         Assert.Equal("dark", loaded.Theme);
-        Assert.Equal("crawler", loaded.LastFilterText);
+        Assert.Equal("爬虫", loaded.LastFilterText);
         Assert.Equal(1200, loaded.Window.Width);
         Assert.Equal(800, loaded.Window.Height);
+        var savedJson = File.ReadAllText(settings);
+        Assert.Contains("爬虫", savedJson);
+        Assert.EndsWith(Environment.NewLine, savedJson);
     }
 
     private sealed class TempDirectory : IDisposable

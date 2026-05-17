@@ -19,7 +19,9 @@ public sealed class LauncherPresetViewModel
 
     public IReadOnlyList<string> EntryIds => Preset.EntryIds;
 
-    public string Label => $"{Name} ({EntryIds.Count})";
+    public bool IsLocked => Preset.Locked;
+
+    public string Label => IsLocked ? $"{Name} 🔒 ({EntryIds.Count})" : $"{Name} ({EntryIds.Count})";
 
     public override string ToString()
     {

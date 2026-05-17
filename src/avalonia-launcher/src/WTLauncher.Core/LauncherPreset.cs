@@ -27,4 +27,8 @@ public sealed record LauncherPreset
 
     [JsonPropertyName("entryIds")]
     public List<string> EntryIds { get; set; } = [];
+
+    [JsonPropertyName("locked")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool Locked { get; set; }
 }
