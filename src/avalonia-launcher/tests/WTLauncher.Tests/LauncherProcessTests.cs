@@ -9,10 +9,10 @@ public sealed class LauncherProcessTests
     {
         using var temp = new TempDirectory("wt-launcher-process-test");
         const string sentinelFile = "started.txt";
-        var sentinelPath = Path.Combine(temp.Path, sentinelFile);
+        const string tempSentinelFile = "started.tmp";
         var plan = new LaunchPlan(
             "cmd.exe",
-            $"/c echo started > {sentinelFile}",
+            $"/c echo started > {tempSentinelFile} && move /y {tempSentinelFile} {sentinelFile} > nul",
             temp.Path,
             "echo started",
             false,
@@ -20,6 +20,7 @@ public sealed class LauncherProcessTests
 
         new LauncherProcess().Start(plan);
 
-        Assert.True(SpinWait.SpinUntil(() => File.Exists(sentinelPath) && File.ReadAllText(sentinelPath).Trim() == "started", TimeSpan.FromSeconds(5)));
+        Assert.True(SpinWait.SpinUntil(() => File.Exists(Path.Combine(temp.Path, sentinelFile)), TimeSpan.FromSeconds(5)));
+        Assert.Equal("started", File.ReadAllText(Path.Combine(temp.Path, sentinelFile)).Trim());
     }
 }
