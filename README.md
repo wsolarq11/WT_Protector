@@ -184,4 +184,4 @@ The Avalonia mainline supports:
 Known remaining work:
 
 - add/edit/delete launch item UI if editing inside the app becomes more valuable than direct JSON editing;
-- continue small screenshot-backed comfort passes without weakening the root `tools/verify.ps1` gate.
+- repeat screenshot-backed comfort passes only after UI changes, without weakening the root `tools/verify.ps1` gate.
