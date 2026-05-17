@@ -124,6 +124,8 @@ The publish output is ignored local build output under:
 src/avalonia-launcher/artifacts/publish/win-x64/WTLauncher.App.exe
 ```
 
+If that stable executable is already running, `tools/build-release.ps1` stops before publishing and reports the blocking PID(s); keep using `tools/verify.ps1` for routine gates, or close the running app before a stable release publish.
+
 ## Config hardening helper
 
 Check canonical `config/config.json` entries that would be changed from `confirm: false` to `confirm: true` because they contain a `dangerously*` command. A healthy hardened config reports zero changes needed:
