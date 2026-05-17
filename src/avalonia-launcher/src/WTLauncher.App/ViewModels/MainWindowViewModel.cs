@@ -27,6 +27,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private string _presetSelectionStatusText = "选择启动组后可查看与当前勾选的差异。";
 
     [ObservableProperty]
+    private string _applyPresetButtonText = "应用启动组";
+
+    [ObservableProperty]
     private int _totalCount;
 
     [ObservableProperty]
@@ -263,7 +266,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool CanApplyPreset()
     {
-        return SelectedPreset is not null && Entries.Count > 0;
+        return SelectedPreset is not null && Entries.Count > 0 && PresetSelectionHasChanges();
     }
 
     private void ApplyFilter()
@@ -337,6 +340,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         if (SelectedPreset is null)
         {
+            ApplyPresetButtonText = "应用启动组";
             PresetSelectionStatusText = PresetCount == 0
                 ? "暂无启动组；可以继续手动勾选。"
                 : "请选择一个启动组查看差异。";
@@ -354,6 +358,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var missingConfigIds = presetIds.Where(id => !knownIds.Contains(id)).ToList();
         if (missingConfigIds.Count > 0)
         {
+            ApplyPresetButtonText = "检查启动组";
             PresetSelectionStatusText = $"启动组“{SelectedPreset.Name}”引用了 {missingConfigIds.Count} 个不存在的启动项；请先修 config\\presets.json。";
             return;
         }
@@ -364,15 +369,33 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         if (presetIds.Count == 0)
         {
+            ApplyPresetButtonText = extra == 0 ? "手动模式" : "清空勾选";
             PresetSelectionStatusText = extra == 0
-                ? $"启动组“{SelectedPreset.Name}”为空；当前也没有勾选项。"
-                : $"启动组“{SelectedPreset.Name}”为空；当前有 {extra} 个额外勾选，应用会清空。";
+                ? $"已是“{SelectedPreset.Name}”：当前没有勾选项。"
+                : $"“{SelectedPreset.Name}”会清空当前 {extra} 个勾选项。";
             return;
         }
 
+        ApplyPresetButtonText = missing == 0 && extra == 0 ? "已匹配" : "应用启动组";
         PresetSelectionStatusText = missing == 0 && extra == 0
             ? $"已匹配启动组“{SelectedPreset.Name}”：{matched}/{presetIds.Count} 项。"
             : $"启动组“{SelectedPreset.Name}”：已匹配 {matched}/{presetIds.Count}，缺 {missing}，额外 {extra}；应用会替换当前勾选。";
+    }
+
+    private bool PresetSelectionHasChanges()
+    {
+        if (SelectedPreset is null)
+            return false;
+
+        var selectedIds = Entries
+            .Where(entry => entry.IsSelected)
+            .Select(entry => entry.Entry.Id)
+            .ToHashSet(StringComparer.Ordinal);
+        var presetIds = SelectedPreset.EntryIds
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .ToHashSet(StringComparer.Ordinal);
+
+        return !selectedIds.SetEquals(presetIds);
     }
 
     private string? LoadPresets()

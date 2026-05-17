@@ -32,7 +32,7 @@ The industry survey in [docs/giants-shoulders/launcher-first-class-patterns.md](
 
 A preset may replace checkbox state, but it must not launch by selection alone. Launch remains an explicit `一键启动已勾选` action.
 
-The UI should show the delta before replacement: matched preset entries, missing entries that applying would add, and extra checked entries that applying would remove. This keeps presets understandable without adding an editor or automation graph.
+The UI should show the delta before replacement: matched preset entries, missing entries that applying would add, and extra checked entries that applying would remove. When already matched, applying should become a disabled no-op state. This keeps presets understandable without adding an editor or automation graph.
 
 ## Local gate
 

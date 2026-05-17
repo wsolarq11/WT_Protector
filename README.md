@@ -172,7 +172,7 @@ The Avalonia mainline supports:
 - single launch and batch launch;
 - header actions for selecting all visible items or clearing the saved selection;
 - named launch groups/presets that replace the saved selection through explicit apply;
-- live preset-vs-selection difference feedback before applying a launch group;
+- live preset-vs-selection difference feedback before applying a launch group, with no-op apply disabled when already matched;
 - launch confirmation;
 - JSON persistence with `.bak` backup;
 - persistent selected checkbox state for one-click/batch launch;

@@ -109,7 +109,7 @@
                   PlaceholderText="选择启动组"/>
         <Button Grid.Column="2"
                 Classes="secondary"
-                Content="应用启动组"
+                Content="{Binding ApplyPresetButtonText}"
                 Command="{Binding ApplyPresetCommand}"
                 Margin="10,0,0,0"/>
         <Border Grid.Column="3"
