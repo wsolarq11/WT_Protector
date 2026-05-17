@@ -1,3 +1,4 @@
+
 # Local orchestration/runtime state
 .omx/
 
@@ -9,7 +10,8 @@
 *.log
 *.tmp
 
-# Spike build outputs
-spikes/avalonia-launcher/**/bin/
-spikes/avalonia-launcher/**/obj/
-spikes/avalonia-launcher/artifacts/
+# Build outputs
+artifacts/
+src/avalonia-launcher/**/bin/
+src/avalonia-launcher/**/obj/
+src/avalonia-launcher/artifacts/

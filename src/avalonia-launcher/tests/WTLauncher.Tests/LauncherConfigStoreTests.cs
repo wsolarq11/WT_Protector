@@ -54,7 +54,7 @@ public sealed class LauncherConfigStoreTests
         var config = System.IO.Path.Combine(configDir, "config.json");
         File.WriteAllText(config, "[]");
 
-        var nested = System.IO.Path.Combine(temp.Path, "spikes", "avalonia-launcher");
+        var nested = System.IO.Path.Combine(temp.Path, "src", "avalonia-launcher");
         Directory.CreateDirectory(nested);
         var resolved = LauncherConfigStore.ResolveConfigPath(null, currentDirectory: nested, appBaseDirectory: null);
 

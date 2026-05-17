@@ -1,3 +1,4 @@
+
 function Get-RepoRoot {
     return (Split-Path -Parent $PSScriptRoot)
 }
@@ -6,12 +7,24 @@ function Get-RepoPath([string]$RelativePath) {
     return (Join-Path (Get-RepoRoot) $RelativePath)
 }
 
-function Get-WinFormsSourcePath {
-    return (Get-RepoPath 'src\winforms-launcher\Program.cs')
+function Get-AvaloniaRoot {
+    return (Get-RepoPath 'src\avalonia-launcher')
 }
 
-function Get-WinFormsExePath {
-    return (Get-RepoPath 'WT Launcher.exe')
+function Get-AvaloniaSolutionPath {
+    return (Join-Path (Get-AvaloniaRoot) 'WTLauncher.Avalonia.sln')
+}
+
+function Get-AvaloniaAppProjectPath {
+    return (Join-Path (Get-AvaloniaRoot) 'src\WTLauncher.App\WTLauncher.App.csproj')
+}
+
+function Get-AvaloniaTestsProjectPath {
+    return (Join-Path (Get-AvaloniaRoot) 'tests\WTLauncher.Tests\WTLauncher.Tests.csproj')
+}
+
+function Get-AvaloniaPublishDir {
+    return (Join-Path (Get-AvaloniaRoot) 'artifacts\publish\win-x64')
 }
 
 function Get-LauncherConfigPath {
@@ -28,6 +41,10 @@ function Get-RetiredConfigPath {
 
 function Get-ShortcutBackupManifestPath {
     return (Get-RepoPath 'docs\reference\shortcut-backup-manifest.json')
+}
+
+function Get-WinFormsRetiredDesignPath {
+    return (Get-RepoPath 'retired\design\winforms-launcher.md')
 }
 
 function Read-ConfigItems([string]$Path) {

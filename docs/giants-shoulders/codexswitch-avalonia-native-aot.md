@@ -1,3 +1,4 @@
+
 # CodexSwitch: Avalonia + .NET 10 + Native AOT
 
 Reviewed on: 2026-05-17  
@@ -8,7 +9,7 @@ Local verification used: `git ls-remote https://github.com/AIDotNet/CodexSwitch.
 
 ## Why this belongs here
 
-WT Launcher's current active executable is a traditional single-file C# WinForms application using `System.Windows.Forms`, `System.Drawing`, and the .NET Framework `csc.exe` compiler. The observed UX problem is that a modern card-based launcher is being hand-drawn inside an old imperative UI stack.
+WT Launcher retired its former single-file WinForms/GDI line and promoted the Avalonia/.NET line into `src/avalonia-launcher/`. This note remains useful as the reference that justified that migration and as a guard against blindly copying unrelated CodexSwitch product scope.
 
 CodexSwitch is useful because it shows a modern C# desktop route without moving to Electron, WebView2, or Tauri:
 
@@ -42,14 +43,14 @@ The lesson is not "copy CodexSwitch". The lesson is that a C# desktop app can ge
 
 ## Lessons worth borrowing for WT Launcher
 
-### 1. Move the next UI out of WinForms hand drawing
+### 1. Keep UI out of hand-drawn WinForms
 
-Current WT Launcher pain comes from manually painting cards, hover, truncation, stats, and dialogs in `Program.cs`. Avalonia would let a launcher card become an actual component with layout, binding, trimming, styles, and theme resources.
+The retired WinForms line proved that cards, hover, truncation, stats, and dialogs become expensive when manually painted. Avalonia lets a launcher card become an actual component with layout, binding, styles, and theme resources.
 
-Local translation:
+Current local translation:
 
 ```text
-WTLauncher.Next/
+src/avalonia-launcher/
   src/WTLauncher.App/       Avalonia shell, pages, dialogs, styles
   src/WTLauncher.Core/      config parsing, launch argument builder, safety policy
   tests/WTLauncher.Tests/   xUnit tests for core behavior
@@ -71,7 +72,7 @@ LauncherViewModel
   BatchLaunchCommand
 ```
 
-This maps directly to existing launcher behavior and makes command logic testable without opening a GUI.
+This maps directly to launcher behavior and makes command logic testable without opening a GUI.
 
 ### 3. Treat design tokens/components as first-class
 
@@ -87,14 +88,14 @@ If those are components, UX iteration does not require editing launch logic.
 
 ### 4. Keep release proof close to the app
 
-CodexSwitch uses `dotnet restore`, `dotnet build`, `dotnet test`, and `dotnet publish`. WT Launcher should keep its local PowerShell front door, but a next stack can make `tools\verify.ps1` call:
+CodexSwitch uses `dotnet restore`, `dotnet build`, `dotnet test`, and `dotnet publish`. WT Launcher keeps a local PowerShell front door:
 
 ```powershell
-dotnet test .\WTLauncher.Next\tests\WTLauncher.Tests\WTLauncher.Tests.csproj -c Release
-dotnet publish .\WTLauncher.Next\src\WTLauncher.App\WTLauncher.App.csproj -c Release -r win-x64 --self-contained true
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build-release.ps1
 ```
 
-Native AOT should be a second step, not a day-one requirement.
+Native AOT should remain a later option, not a day-one requirement. The current mainline first proves normal self-contained `win-x64` publish.
 
 ## What not to copy blindly
 
@@ -105,44 +106,29 @@ Native AOT should be a second step, not a day-one requirement.
 | Native AOT from the first spike | AOT/trimming can add avoidable friction. Prove normal self-contained publish first. |
 | Large sidebar/dashboard shape | The HTA lesson says WT Launcher wants less chrome, not more. |
 | Submodule/component-library dependency | Useful pattern, but WT Launcher should begin with local minimal components. |
-| Upstream code copying | The upstream README states no license file is declared at review time; use ideas and public docs, not copied source. |
+| Upstream code copying | The upstream README states no license file was declared at review time; use ideas and public docs, not copied source. |
 
-## Candidate WT Launcher spike
+## Current local state
 
-Create a reversible proof under a non-active path:
+The former candidate spike has been promoted:
 
 ```text
-spikes/avalonia-launcher/
-  WTLauncher.Avalonia.slnx
+src/avalonia-launcher/
+  WTLauncher.Avalonia.sln
   src/WTLauncher.App/
   src/WTLauncher.Core/
   tests/WTLauncher.Tests/
 ```
 
-The spike must not replace `WT Launcher.exe` until it wins.
-
-Minimum acceptance gate:
-
-1. Reads the existing root `config/config.json`.
-2. Shows launch entries as large, low-chrome cards.
-3. Supports search/filter.
-4. Supports single-item launch dry-run using the same argument contract.
-5. Keeps real launch disabled in automated tests.
-6. `dotnet test` passes.
-7. `dotnet publish -c Release -r win-x64 --self-contained true` passes.
-8. `tools\capture-window.ps1` produces a screenshot.
-9. The screenshot and subjective review are clearly better than current WinForms.
-10. If it does not win, archive the spike without touching the active executable.
-
-Current local follow-up: `spikes/avalonia-launcher/` implements this as a non-active Avalonia/.NET 10 prototype with Core/App/Tests separation, a local `verify.ps1`, a `run.ps1` experience entrypoint, persistent selected checkboxes, and portable `config/settings.json` UI preferences.
+The retired WinForms line is documented in `retired/design/winforms-launcher.md`; the old root `WT Launcher.exe` and `src/winforms-launcher/` should not return unless there is an explicit rollback decision.
 
 ## Decision lens versus other candidates
 
 | Stack | Local conclusion after studying CodexSwitch |
 | --- | --- |
-| Current WinForms | Keep only as active fallback; do not invest more UX complexity here. |
+| Retired WinForms | Keep only the design lessons; do not restore as a parallel source tree. |
 | WebView2 | Fastest route to HTA-like HTML/CSS feel, but introduces JS bridge and web/runtime boundary. |
-| Avalonia | Best candidate for a long-lived C# native desktop launcher with modern UI and testable state. |
+| Avalonia | Current mainline candidate for a long-lived C# native desktop launcher with modern UI and testable state. |
 | Tauri | Strong long-term web/Rust route, but heavier migration for this small Windows launcher. |
 | WPF / WinUI 3 | Better than WinForms, but less compelling than Avalonia for cross-platform modern .NET and component reuse. |
 | Electron | UI-friendly but too heavy for a small local launcher. |

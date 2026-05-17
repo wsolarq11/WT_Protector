@@ -32,7 +32,7 @@ public sealed class RepositoryConfigContractTests
             if (File.Exists(Path.Combine(dir.FullName, "config", "config.json"))
                 && File.Exists(Path.Combine(dir.FullName, "config", "settings.json"))
                 && File.Exists(Path.Combine(dir.FullName, "README.md"))
-                && File.Exists(Path.Combine(dir.FullName, "WT Launcher.exe")))
+                && Directory.Exists(Path.Combine(dir.FullName, "src", "avalonia-launcher")))
             {
                 return dir.FullName;
             }

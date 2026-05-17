@@ -58,7 +58,7 @@
       <StackPanel>
         <TextBlock Classes="h1" Text="WT Launcher"/>
         <TextBlock Classes="muted"
-                   Text="Avalonia spike · 大字、少 chrome、卡片、搜索、dry-run 优先"/>
+                   Text="Avalonia mainline · 大字、少 chrome、卡片、搜索、dry-run 优先"/>
       </StackPanel>
       <StackPanel Grid.Column="1"
                   Orientation="Horizontal"
