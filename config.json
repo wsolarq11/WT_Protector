@@ -7,7 +7,7 @@
     },
     {
         "name":  "opencode_WT_Protector",
-        "directory":  "D:\\<USER>\\Desktop\\WT_Protector",
+        "directory":  "D:\\<PROJECT_ROOT>\\WT_Protector",
         "command":  "opencode",
         "confirm":  false
     },
@@ -85,7 +85,7 @@
     },
     {
         "name":  "WT_Protector",
-        "directory":  "D:\\<USER>\\Desktop\\WT_Protector",
+        "directory":  "D:\\<PROJECT_ROOT>\\WT_Protector",
         "command":  "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
         "confirm":  true
     }
