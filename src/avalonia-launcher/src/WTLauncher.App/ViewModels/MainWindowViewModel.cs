@@ -19,7 +19,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private string _statusText = "Ready";
 
     [ObservableProperty]
-    private string _dryRunText = "选择一个启动项查看 dry-run。";
+    private string _dryRunText = "选择一个启动项查看预演命令。";
 
     [ObservableProperty]
     private int _totalCount;
@@ -129,13 +129,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
             var plan = LaunchArgumentBuilder.Build(item.Entry);
             DryRunText = $"{plan.Executable} {plan.Arguments}";
             StatusText = plan.RequiresConfirmation
-                ? $"Dry-run: {item.Name}（需要确认）"
-                : $"Dry-run: {item.Name}";
+                ? $"预演: {item.Name}（需要确认）"
+                : $"预演: {item.Name}";
         }
         catch (Exception ex)
         {
             DryRunText = ex.Message;
-            StatusText = $"Dry-run 失败: {item.Name}";
+            StatusText = $"预演失败: {item.Name}";
         }
     }
 
