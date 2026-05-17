@@ -25,8 +25,7 @@ Invoke-NativeStep 'dotnet publish app win-x64' { dotnet publish $app -c Release 
 
 if (-not (Test-Path -LiteralPath $exe)) { throw "Published exe missing: $exe" }
 
-[pscustomobject]@{
-    status = 'PASS'
+New-ToolReceipt 'release-build' @{
     sourceRoot = Get-AvaloniaRoot
     publishedExe = Resolve-Path -LiteralPath $exe | ForEach-Object { $_.Path }
     bytes = (Get-Item -LiteralPath $exe).Length

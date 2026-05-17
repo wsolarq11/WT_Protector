@@ -220,17 +220,26 @@ $mainlineVerify = Join-Path $sourceRoot 'verify.ps1'
 if (-not (Test-Path -LiteralPath $mainlineVerify)) { throw "Missing mainline verify script: $mainlineVerify" }
 $mainlineJson = & $mainlineVerify
 $mainline = ($mainlineJson | Select-Object -Last 1) | ConvertFrom-Json
+foreach ($requiredField in @('schemaVersion', 'kind', 'status', 'repoHead', 'worktreeDirty', 'worktreeStatus')) {
+    if (-not ($mainline.PSObject.Properties.Name -contains $requiredField)) { throw "Avalonia mainline receipt missing field: $requiredField" }
+}
+if ([int]$mainline.schemaVersion -ne 1) { throw "Avalonia mainline receipt schemaVersion mismatch: $($mainline.schemaVersion)" }
+if ($mainline.kind -ne 'avalonia-mainline-verify') { throw "Avalonia mainline receipt kind mismatch: $($mainline.kind)" }
+if ([string]::IsNullOrWhiteSpace([string]$mainline.repoHead)) { throw 'Avalonia mainline receipt repoHead is required' }
 if ($mainline.status -ne 'PASS') { throw 'Avalonia mainline verify did not pass' }
 Add-Check 'avalonia-mainline-verify' @{
+    schemaVersion = $mainline.schemaVersion
+    kind = $mainline.kind
     status = $mainline.status
+    repoHead = $mainline.repoHead
+    worktreeDirty = $mainline.worktreeDirty
     tests = $mainline.tests
     guiSmoke = $mainline.guiSmoke
     publishedExe = $mainline.publishedExe
     sha256 = $mainline.sha256
 }
 
-[pscustomobject]@{
-    status = 'PASS'
+New-ToolReceipt 'root-verify' @{
     root = $root
     checks = $checks
-} | ConvertTo-Json -Depth 8
+} | ConvertTo-Json -Depth 8 -Compress

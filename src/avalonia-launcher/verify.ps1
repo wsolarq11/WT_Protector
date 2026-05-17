@@ -52,8 +52,7 @@ finally {
     }
 }
 
-[pscustomobject]@{
-    status = 'PASS'
+New-ToolReceipt 'avalonia-mainline-verify' @{
     sourceRoot = $sourceRoot
     tests = $totalTests
     guiSmoke = 'hidden-temp-config-window-title'

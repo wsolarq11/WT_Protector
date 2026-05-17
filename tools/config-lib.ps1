@@ -9,6 +9,35 @@ function Invoke-NativeStep([string]$Name, [scriptblock]$Command) {
     if ($code -ne 0) { throw "$Name failed with exit code $code" }
 }
 
+function Invoke-RepoGit([string[]]$GitArgs) {
+    try {
+        $output = & git -C (Get-RepoRoot) @GitArgs 2>$null
+        if ($LASTEXITCODE -eq 0) { return @($output) }
+    } catch {}
+    return @()
+}
+
+function New-ToolReceipt([string]$Kind, [hashtable]$Fields = @{}) {
+    $head = Invoke-RepoGit @('rev-parse', '--short', 'HEAD') | Select-Object -First 1
+    $status = @(Invoke-RepoGit @('status', '--short') | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    $receipt = [ordered]@{
+        schemaVersion = 1
+        kind = $Kind
+        status = 'PASS'
+        generatedAtUtc = (Get-Date).ToUniversalTime().ToString('o')
+        repoHead = $head
+        worktreeDirty = $status.Count -gt 0
+        worktreeStatus = $status
+    }
+
+    foreach ($field in $Fields.GetEnumerator()) {
+        if ($receipt.Contains($field.Key)) { throw "Receipt field conflicts with built-in field: $($field.Key)" }
+        $receipt[$field.Key] = $field.Value
+    }
+
+    return [pscustomobject]$receipt
+}
+
 function Get-RepoPath([string]$RelativePath) {
     return (Join-Path (Get-RepoRoot) $RelativePath)
 }
