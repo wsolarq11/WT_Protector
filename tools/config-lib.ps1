@@ -62,7 +62,10 @@ function Read-ConfigItems([string]$Path) {
 
 function Get-FileSha256([string]$Path) {
     if (-not (Test-Path -LiteralPath $Path)) { return $null }
-    return (Get-FileHash -Algorithm SHA256 -LiteralPath $Path).Hash
+    if (Get-Command Get-FileHash -ErrorAction SilentlyContinue) { return (Get-FileHash -Algorithm SHA256 -LiteralPath $Path).Hash }
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    try { return -join ($sha256.ComputeHash([System.IO.File]::ReadAllBytes($Path)) | ForEach-Object { $_.ToString('X2') }) }
+    finally { $sha256.Dispose() }
 }
 
 function Get-ShortHash([string]$Path) {
