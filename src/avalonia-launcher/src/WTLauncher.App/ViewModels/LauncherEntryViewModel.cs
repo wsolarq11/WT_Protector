@@ -44,9 +44,36 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     [ObservableProperty]
     private double _cardHeight = 164;
 
+    [ObservableProperty]
+    private bool _isCompactLayout;
+
+    public bool ShowDetails => !IsCompactLayout;
+
+    public double TitleFontSize => IsCompactLayout ? 16 : 18;
+
     partial void OnIsSelectedChanged(bool value)
     {
         _owner.UpdateSelection(this, value);
+    }
+
+    partial void OnCardWidthChanged(double value)
+    {
+        UpdateLayoutFlags();
+    }
+
+    partial void OnCardHeightChanged(double value)
+    {
+        UpdateLayoutFlags();
+    }
+
+    private void UpdateLayoutFlags()
+    {
+        var compact = CardHeight <= 118 || CardWidth <= 240;
+        if (compact == IsCompactLayout)
+            return;
+        IsCompactLayout = compact;
+        OnPropertyChanged(nameof(ShowDetails));
+        OnPropertyChanged(nameof(TitleFontSize));
     }
 
     public void RefreshDisplay()
@@ -58,6 +85,7 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         OnPropertyChanged(nameof(ConfirmationLabel));
         OnPropertyChanged(nameof(IsDangerous));
         OnPropertyChanged(nameof(UpdatedLabel));
+        OnPropertyChanged(nameof(TitleFontSize));
     }
 
     [RelayCommand]

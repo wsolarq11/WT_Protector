@@ -362,7 +362,7 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
-    public void CardSizingFitsCurrentMainlineCountInsideMinimumWindowRegion()
+    public void CardSizingPrefersScrollFallbackBeforeShrinkingBelowReadableMinimum()
     {
         using var temp = new TempDirectory();
         var entries = Enumerable.Range(1, 19)
@@ -381,7 +381,7 @@ public sealed class MainWindowViewModelTests
         viewModel.UpdateCardsAvailableSize(892, 330);
 
         var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
-        Assert.True(first.CardHeight < 96, "expected card height to shrink below the old hard minimum so min-window layout can fit");
+        Assert.True(first.CardHeight >= 80, "expected card height to stop shrinking before text becomes unreadable; scrolling is the fallback");
 
         const double gap = 10;
         var columns = Math.Max(1, (int)Math.Floor((892 + gap) / (first.CardWidth + gap)));
@@ -389,7 +389,7 @@ public sealed class MainWindowViewModelTests
         var usedWidth = (columns * first.CardWidth) + ((columns - 1) * gap);
         var usedHeight = (rows * first.CardHeight) + ((rows - 1) * gap);
         Assert.True(usedWidth <= 892.001, $"expected cards to fit minimum-window width, got {usedWidth}");
-        Assert.True(usedHeight <= 330.001, $"expected cards to fit minimum-window height, got {usedHeight}");
+        Assert.True(usedHeight > 330.001, $"expected min-window height to overflow so the ScrollViewer can act as fallback, got {usedHeight}");
     }
 
     private static (string Config, string Settings, string Presets) CreatePortableFixture(

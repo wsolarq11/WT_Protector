@@ -610,9 +610,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var targets = VisibleEntries.Count > 0 ? VisibleEntries : Entries;
         var count = Math.Max(1, targets.Count);
         const double gap = 10;
-        var bestColumns = 1;
-        var bestWidth = _cardsAvailableWidth;
-        var bestHeight = _cardsAvailableHeight;
+        const double preferredWidth = 300;
+        const double preferredHeight = 164;
+        // "No wheel" is a preference, not a requirement: never shrink cards below readability;
+        // let the ScrollViewer become the fallback when we cannot fit everything comfortably.
+        const double minWidth = 200;
+        const double minHeight = 80;
+        var bestWidth = Math.Max(minWidth, _cardsAvailableWidth);
+        var bestHeight = Math.Max(minHeight, _cardsAvailableHeight);
         var bestScore = double.NegativeInfinity;
 
         for (var columns = 1; columns <= count; columns++)
@@ -623,20 +628,25 @@ public sealed partial class MainWindowViewModel : ObservableObject
             if (width <= 0 || height <= 0)
                 continue;
 
-            var scale = Math.Min(width / 300, height / 164);
-            var shapePenalty = Math.Abs((width / height) - 1.8);
-            var score = scale - (shapePenalty * 0.08);
+            if (width < minWidth)
+                continue;
+
+            var effectiveHeight = Math.Max(minHeight, height);
+            var scale = Math.Min(width / preferredWidth, effectiveHeight / preferredHeight);
+            var shapePenalty = Math.Abs((width / effectiveHeight) - 1.8);
+            var overflowRatio = height < minHeight ? (minHeight / height) : 1;
+            var overflowPenalty = (overflowRatio - 1) * 0.18;
+            var score = scale - (shapePenalty * 0.08) - overflowPenalty;
             if (score > bestScore)
             {
                 bestScore = score;
-                bestColumns = columns;
                 bestWidth = width;
-                bestHeight = height;
+                bestHeight = effectiveHeight;
             }
         }
 
-        var cardWidth = Math.Max(1, Math.Floor(bestWidth));
-        var cardHeight = Math.Max(1, Math.Floor(bestHeight));
+        var cardWidth = Math.Max(minWidth, Math.Floor(bestWidth));
+        var cardHeight = Math.Max(minHeight, Math.Floor(bestHeight));
         foreach (var entry in Entries)
         {
             entry.CardWidth = cardWidth;

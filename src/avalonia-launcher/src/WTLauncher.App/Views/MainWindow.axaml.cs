@@ -80,16 +80,19 @@ public sealed partial class MainWindow : Window
     {
         if (DataContext is not MainWindowViewModel { IsCustomSortMode: true } || sender is not Control { DataContext: LauncherEntryViewModel item })
             return;
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            return;
 
         var data = new DataTransfer();
         data.Add(DataTransferItem.CreateText(item.Id));
+        e.Handled = true;
         await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move).ConfigureAwait(true);
     }
 
     private void OnEntryDragOver(object? sender, DragEventArgs e)
     {
         var canDrop = DataContext is MainWindowViewModel { IsCustomSortMode: true }
-            && ResolveEntryFromSource(e.Source) is not null
+            && ResolveEntryFromDragEvent(e) is not null
             && e.DataTransfer.Formats.Contains(DataFormat.Text);
         e.DragEffects = canDrop
             ? DragDropEffects.Move
@@ -102,7 +105,7 @@ public sealed partial class MainWindow : Window
         if (DataContext is not MainWindowViewModel viewModel)
             return;
 
-        var target = ResolveEntryFromSource(e.Source);
+        var target = ResolveEntryFromDragEvent(e);
         if (target is null)
             return;
         if (!e.DataTransfer.Formats.Contains(DataFormat.Text))
@@ -115,6 +118,16 @@ public sealed partial class MainWindow : Window
         viewModel.MoveEntryBefore(draggedId, target.Id);
         e.DragEffects = DragDropEffects.Move;
         e.Handled = true;
+    }
+
+    private LauncherEntryViewModel? ResolveEntryFromDragEvent(DragEventArgs e)
+    {
+        var direct = ResolveEntryFromSource(e.Source);
+        if (direct is not null)
+            return direct;
+
+        var visual = this.GetVisualAt(e.GetPosition(this));
+        return ResolveEntryFromSource(visual);
     }
 
     private static LauncherEntryViewModel? ResolveEntryFromSource(object? source)
