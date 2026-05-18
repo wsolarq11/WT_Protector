@@ -36,6 +36,7 @@ $smokeConfig = Join-Path $smokeRoot 'config\config.json'
 New-Item -ItemType Directory -Path (Split-Path -Parent $smokeConfig) -Force | Out-Null
 Set-Content -Encoding UTF8 -LiteralPath $smokeConfig -Value '[{"id":"smoke","name":"smoke","directory":".","command":"echo smoke","confirm":false,"selected":false}]'
 $smokeProcess = Start-Process -FilePath $exe -ArgumentList @('--config', $smokeConfig) -WorkingDirectory $smokeRoot -WindowStyle Hidden -PassThru
+$smokeExitedGracefully = $true
 try {
     $smokeTitle = $null
     for ($i = 0; $i -lt 30 -and $null -eq $smokeTitle; $i++) {
@@ -48,9 +49,14 @@ try {
 finally {
     if (-not $smokeProcess.HasExited) {
         $null = $smokeProcess.CloseMainWindow()
-        if (-not $smokeProcess.WaitForExit(2000)) { Stop-Process -Id $smokeProcess.Id -Force; $smokeProcess.WaitForExit(2000) | Out-Null }
+        if (-not $smokeProcess.WaitForExit(5000)) {
+            $smokeExitedGracefully = $false
+            Stop-Process -Id $smokeProcess.Id -Force
+            $smokeProcess.WaitForExit(2000) | Out-Null
+        }
     }
 }
+if (-not $smokeExitedGracefully) { throw 'Published app did not exit gracefully after CloseMainWindow during GUI smoke' }
 
 New-ToolReceipt 'avalonia-mainline-verify' @{
     sourceRoot = $sourceRoot

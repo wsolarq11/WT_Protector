@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 
 namespace WTLauncher.App;
 
@@ -8,7 +9,7 @@ internal static class Program
     public static void Main(string[] args)
     {
         BuildAvaloniaApp()
-            .StartWithClassicDesktopLifetime(args);
+            .StartWithClassicDesktopLifetime(args, ShutdownMode.OnMainWindowClose);
     }
 
     public static AppBuilder BuildAvaloniaApp()

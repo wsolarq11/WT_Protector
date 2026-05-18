@@ -114,6 +114,14 @@ The verifier currently checks:
 
 The final verifier line is a JSON receipt with `schemaVersion`, `kind`, `status`, `repoHead`, `worktreeDirty`, and `worktreeStatus` fields before tool-specific evidence. The Avalonia mainline receipt uses the same schema and is checked by the root gate.
 
+Canonical distributable output:
+
+- executable: `src/avalonia-launcher/artifacts/publish/win-x64/WTLauncher.App.exe`
+- folder: `src/avalonia-launcher/artifacts/publish/win-x64/`
+- builder: `powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build-release.ps1`
+
+Note: `src/avalonia-launcher/artifacts/verify-publish/win-x64/WTLauncher.App.exe` is only the isolated verifier publish target used by `verify.ps1`, not the canonical distributable path.
+
 The verifier publishes into isolated ignored output under `src/avalonia-launcher/artifacts/verify-publish/win-x64/` so a running release executable does not block the gate. Build/publish the stable mainline executable without running the whole root gate:
 
 ```powershell
