@@ -32,7 +32,8 @@ Each active config file is a JSON array of launch items:
     "directory": "D:\\path\\to\\workspace",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
     "confirm": true,
-    "selected": false
+    "selected": false,
+    "updatedAtUtc": "2026-05-18T09:30:00.0000000Z"
   }
 ]
 ```
@@ -45,6 +46,7 @@ Fields:
 - `command` — command passed to `pwsh -NoExit -Command`.
 - `confirm` — when `true`, the UI asks before launching.
 - `selected` — persistent checkbox state used by the one-click/batch launch flow.
+- `updatedAtUtc` — optional ISO-8601 UTC timestamp refreshed when the app adds or edits a button, and used by the “更新时间” sort mode.
 
 Named launch groups live beside the launch config:
 
@@ -77,12 +79,19 @@ Portable UI settings live beside the launch config:
 {
   "theme": "light",
   "lastFilterText": "",
+  "sortMode": "custom",
+  "customEntryOrder": ["启动脚本", "WT_Protector"],
   "window": {
     "width": 1180,
     "height": 760
   }
 }
 ```
+
+Additional settings fields:
+
+- `sortMode` — `custom`, `updated`, or `alphabetical`.
+- `customEntryOrder` — stable entry-id order used by the “自定义拖拽” mode and persisted after drag-drop reorder.
 
 ## Run the mainline app
 
@@ -183,10 +192,13 @@ The Avalonia mainline supports:
 
 - search and direct card launch;
 - single launch and batch launch;
+- adaptive card sizing so the visible buttons shrink to fit the current window region instead of forcing a second scroll path;
 - header actions for selecting all visible items or clearing the saved selection;
+- add/edit/delete launch buttons inside the app, with every editable field saved back to portable config;
 - named launch groups/presets that replace the saved selection through explicit apply;
 - first-class launch group actions: save current selection as a new group, update the current group from current selection, and delete editable groups;
 - live preset-vs-selection difference feedback before applying a launch group, with no-op apply disabled when already matched;
+- three persisted sort modes: `自定义拖拽`, `更新时间`, and `首字母顺序`;
 - launch confirmation;
 - JSON persistence with `.bak` backup;
 - persistent selected checkbox state for one-click/batch launch;
@@ -196,5 +208,4 @@ The Avalonia mainline supports:
 
 Known remaining work:
 
-- add/edit/delete launch item UI if editing inside the app becomes more valuable than direct JSON editing;
 - repeat screenshot-backed comfort passes only after UI changes, without weakening the root `tools/verify.ps1` gate.

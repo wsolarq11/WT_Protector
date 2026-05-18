@@ -21,4 +21,7 @@ public sealed record LaunchEntry
 
     [JsonPropertyName("selected")]
     public bool Selected { get; set; }
+
+    [JsonPropertyName("updatedAtUtc")]
+    public string UpdatedAtUtc { get; set; } = "";
 }

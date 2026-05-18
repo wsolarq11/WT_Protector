@@ -15,6 +15,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly LauncherProcess _launcherProcess;
     private LauncherPresetFile _presetFile = new();
     private bool _isBulkSelectionUpdate;
+    private bool _isRefreshing;
+    private double _cardsAvailableWidth = 900;
+    private double _cardsAvailableHeight = 420;
 
     [ObservableProperty]
     private string _filterText = "";
@@ -46,6 +49,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private LauncherPresetViewModel? _selectedPreset;
 
+    [ObservableProperty]
+    private LauncherSortModeViewModel? _selectedSortMode;
+
+    [ObservableProperty]
+    private bool _isCustomSortMode;
+
     public MainWindowViewModel(string configPath, string settingsPath, LauncherSettings settings, LauncherProcess launcherProcess)
     {
         _configPath = configPath;
@@ -55,6 +64,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _launcherProcess = launcherProcess;
         ConfigPathDisplay = $"配置: {configPath} · 启动组: {_presetPath}";
         FilterText = settings.LastFilterText;
+        _isRefreshing = true;
+        SelectedSortMode = SortModes.FirstOrDefault(mode => mode.Id == settings.SortMode) ?? SortModes[0];
+        _isRefreshing = false;
         Refresh();
     }
 
@@ -63,6 +75,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public ObservableCollection<LauncherEntryViewModel> VisibleEntries { get; } = [];
 
     public ObservableCollection<LauncherPresetViewModel> Presets { get; } = [];
+
+    public ObservableCollection<LauncherSortModeViewModel> SortModes { get; } =
+    [
+        new("custom", "自定义拖拽"),
+        new("updated", "更新时间"),
+        new("alphabetical", "首字母顺序"),
+    ];
 
     public string ConfigPathDisplay { get; }
 
@@ -78,6 +97,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public Func<LauncherPresetViewModel, Task<bool>> ConfirmDeletePresetAsync { get; set; } =
         static _ => Task.FromResult(false);
 
+    public Func<LaunchEntry?, Task<EntryDraft?>> RequestEntryDraftAsync { get; set; } =
+        static _ => Task.FromResult<EntryDraft?>(null);
+
+    public Func<LauncherEntryViewModel, Task<bool>> ConfirmDeleteEntryAsync { get; set; } =
+        static _ => Task.FromResult(false);
+
     partial void OnFilterTextChanged(string value)
     {
         _settings.LastFilterText = value ?? string.Empty;
@@ -85,14 +110,33 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ApplyFilter();
     }
 
+    partial void OnSelectedSortModeChanged(LauncherSortModeViewModel? value)
+    {
+        IsCustomSortMode = value?.Id == "custom";
+        if (value is null)
+            return;
+
+        _settings.SortMode = value.Id;
+        if (!_isRefreshing)
+        {
+            EnsureCustomOrderContainsEntries();
+            SaveSettings();
+            ApplyFilter();
+            StatusText = $"排序模式: {value.Label}（已保存）";
+        }
+    }
+
     [RelayCommand]
     private void Refresh()
     {
+        _isRefreshing = true;
         Entries.Clear();
         foreach (var entry in LauncherConfigStore.Load(_configPath))
         {
             Entries.Add(new LauncherEntryViewModel(entry, this));
         }
+        EnsureCustomOrderContainsEntries();
+        _isRefreshing = false;
 
         TotalCount = Entries.Count;
         SelectedCount = Entries.Count(entry => entry.IsSelected);
@@ -100,6 +144,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         NotifySelectionCommands();
         UpdatePresetSelectionStatus();
         ApplyFilter();
+        RecalculateCardSize();
         StatusText = presetLoadError
             ?? $"已加载 {TotalCount} 个启动项、{PresetCount} 个启动组；勾选自动保存到 config\\config.json";
     }
@@ -270,6 +315,138 @@ public sealed partial class MainWindowViewModel : ObservableObject
         StatusText = $"已删除启动组: {preset.Name}";
     }
 
+    [RelayCommand]
+    private async Task AddEntryAsync()
+    {
+        var draft = await RequestEntryDraftAsync(null).ConfigureAwait(true);
+        if (draft is null)
+        {
+            StatusText = "已取消: 新增按钮";
+            return;
+        }
+
+        var entry = CreateEntryFromDraft(draft, previousEntry: null);
+        var validation = ValidateEntry(entry, originalId: null);
+        if (validation is not null)
+        {
+            StatusText = validation;
+            return;
+        }
+
+        entry.UpdatedAtUtc = NowUtcText();
+        Entries.Add(new LauncherEntryViewModel(entry, this));
+        _settings.CustomEntryOrder.Add(entry.Id);
+        SelectedCount = Entries.Count(item => item.IsSelected);
+        TotalCount = Entries.Count;
+        if (!SaveConfig())
+            return;
+
+        SaveSettings();
+        NotifySelectionCommands();
+        ApplyFilter();
+        StatusText = $"已新增按钮: {entry.Name}（已保存）";
+    }
+
+    internal async Task EditEntryAsync(LauncherEntryViewModel item)
+    {
+        var oldId = item.Entry.Id;
+        var draft = await RequestEntryDraftAsync(item.Entry).ConfigureAwait(true);
+        if (draft is null)
+        {
+            StatusText = $"已取消: 编辑 {item.Name}";
+            return;
+        }
+
+        var updated = CreateEntryFromDraft(draft, item.Entry);
+        var validation = ValidateEntry(updated, oldId);
+        if (validation is not null)
+        {
+            StatusText = validation;
+            return;
+        }
+
+        item.Entry.Id = updated.Id;
+        item.Entry.Name = updated.Name;
+        item.Entry.Directory = updated.Directory;
+        item.Entry.Command = updated.Command;
+        item.Entry.Confirm = updated.Confirm;
+        item.Entry.Selected = updated.Selected;
+        item.Entry.UpdatedAtUtc = NowUtcText();
+        item.RefreshDisplay();
+        _isBulkSelectionUpdate = true;
+        try
+        {
+            item.IsSelected = updated.Selected;
+        }
+        finally
+        {
+            _isBulkSelectionUpdate = false;
+        }
+        if (!string.Equals(oldId, item.Entry.Id, StringComparison.Ordinal))
+            RenameEntryReferences(oldId, item.Entry.Id);
+
+        SelectedCount = Entries.Count(entry => entry.IsSelected);
+        if (!SaveConfig())
+            return;
+        if (!SavePresets())
+            return;
+
+        EnsureCustomOrderContainsEntries();
+        SaveSettings();
+        NotifySelectionCommands();
+        UpdatePresetSelectionStatus();
+        ApplyFilter();
+        StatusText = $"已更新按钮: {item.Name}（已保存）";
+    }
+
+    internal async Task DeleteEntryAsync(LauncherEntryViewModel item)
+    {
+        var accepted = await ConfirmDeleteEntryAsync(item).ConfigureAwait(true);
+        if (!accepted)
+        {
+            StatusText = $"已取消: 删除 {item.Name}";
+            return;
+        }
+
+        Entries.Remove(item);
+        RemoveEntryReferences(item.Entry.Id);
+        SelectedCount = Entries.Count(entry => entry.IsSelected);
+        TotalCount = Entries.Count;
+        if (!SaveConfig())
+            return;
+        if (!SavePresets())
+            return;
+
+        EnsureCustomOrderContainsEntries();
+        SaveSettings();
+        NotifySelectionCommands();
+        UpdatePresetSelectionStatus();
+        ApplyFilter();
+        StatusText = $"已删除按钮: {item.Name}（已保存）";
+    }
+
+    public void MoveEntryBefore(string draggedEntryId, string targetEntryId)
+    {
+        if (!IsCustomSortMode)
+        {
+            StatusText = "请先切换到“自定义拖拽”排序模式";
+            return;
+        }
+        if (string.Equals(draggedEntryId, targetEntryId, StringComparison.Ordinal))
+            return;
+
+        EnsureCustomOrderContainsEntries();
+        var order = _settings.CustomEntryOrder;
+        order.RemoveAll(id => string.Equals(id, draggedEntryId, StringComparison.Ordinal));
+        var targetIndex = order.FindIndex(id => string.Equals(id, targetEntryId, StringComparison.Ordinal));
+        if (targetIndex < 0)
+            targetIndex = order.Count;
+        order.Insert(targetIndex, draggedEntryId);
+        SaveSettings();
+        ApplyFilter();
+        StatusText = "已保存自定义拖拽排序";
+    }
+
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private async Task LaunchSelectedAsync()
     {
@@ -406,18 +583,181 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         var filter = (FilterText ?? "").Trim();
         VisibleEntries.Clear();
-        foreach (var entry in Entries)
+        var filtered = Entries.Where(entry =>
+            filter.Length == 0
+            || entry.Name.Contains(filter, StringComparison.OrdinalIgnoreCase)
+            || entry.Directory.Contains(filter, StringComparison.OrdinalIgnoreCase)
+            || entry.Command.Contains(filter, StringComparison.OrdinalIgnoreCase));
+
+        foreach (var entry in SortEntries(filtered))
         {
-            if (filter.Length == 0
-                || entry.Name.Contains(filter, StringComparison.OrdinalIgnoreCase)
-                || entry.Directory.Contains(filter, StringComparison.OrdinalIgnoreCase)
-                || entry.Command.Contains(filter, StringComparison.OrdinalIgnoreCase))
-            {
-                VisibleEntries.Add(entry);
-            }
+            VisibleEntries.Add(entry);
         }
 
         VisibleCount = VisibleEntries.Count;
+        RecalculateCardSize();
+    }
+
+    public void UpdateCardsAvailableSize(double width, double height)
+    {
+        _cardsAvailableWidth = Math.Max(220, width);
+        _cardsAvailableHeight = Math.Max(140, height);
+        RecalculateCardSize();
+    }
+
+    private void RecalculateCardSize()
+    {
+        var targets = VisibleEntries.Count > 0 ? VisibleEntries : Entries;
+        var count = Math.Max(1, targets.Count);
+        const double gap = 10;
+        var bestColumns = 1;
+        var bestWidth = _cardsAvailableWidth;
+        var bestHeight = _cardsAvailableHeight;
+        var bestScore = double.NegativeInfinity;
+
+        for (var columns = 1; columns <= count; columns++)
+        {
+            var rows = (int)Math.Ceiling(count / (double)columns);
+            var width = (_cardsAvailableWidth - ((columns - 1) * gap)) / columns;
+            var height = (_cardsAvailableHeight - ((rows - 1) * gap)) / rows;
+            if (width <= 0 || height <= 0)
+                continue;
+
+            var scale = Math.Min(width / 300, height / 164);
+            var shapePenalty = Math.Abs((width / height) - 1.8);
+            var score = scale - (shapePenalty * 0.08);
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestColumns = columns;
+                bestWidth = width;
+                bestHeight = height;
+            }
+        }
+
+        var cardWidth = Math.Max(1, Math.Floor(bestWidth));
+        var cardHeight = Math.Max(1, Math.Floor(bestHeight));
+        foreach (var entry in Entries)
+        {
+            entry.CardWidth = cardWidth;
+            entry.CardHeight = cardHeight;
+        }
+    }
+
+    private IEnumerable<LauncherEntryViewModel> SortEntries(IEnumerable<LauncherEntryViewModel> entries)
+    {
+        return SelectedSortMode?.Id switch
+        {
+            "updated" => entries
+                .OrderByDescending(entry => ParseUpdatedAt(entry.Entry.UpdatedAtUtc))
+                .ThenBy(entry => entry.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ThenBy(entry => entry.Id, StringComparer.Ordinal),
+            "alphabetical" => entries
+                .OrderBy(entry => entry.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ThenBy(entry => entry.Id, StringComparer.Ordinal),
+            _ => SortEntriesByCustomOrder(entries),
+        };
+    }
+
+    private IEnumerable<LauncherEntryViewModel> SortEntriesByCustomOrder(IEnumerable<LauncherEntryViewModel> entries)
+    {
+        EnsureCustomOrderContainsEntries();
+        var order = _settings.CustomEntryOrder
+            .Select((id, index) => new { id, index })
+            .GroupBy(item => item.id, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.First().index, StringComparer.Ordinal);
+        return entries
+            .OrderBy(entry => order.TryGetValue(entry.Id, out var index) ? index : int.MaxValue)
+            .ThenBy(entry => entry.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(entry => entry.Id, StringComparer.Ordinal);
+    }
+
+    private void EnsureCustomOrderContainsEntries()
+    {
+        var knownIds = Entries.Select(entry => entry.Id).ToHashSet(StringComparer.Ordinal);
+        _settings.CustomEntryOrder.RemoveAll(id => !knownIds.Contains(id));
+        foreach (var id in Entries.Select(entry => entry.Id))
+        {
+            if (!_settings.CustomEntryOrder.Contains(id, StringComparer.Ordinal))
+                _settings.CustomEntryOrder.Add(id);
+        }
+    }
+
+    private static DateTimeOffset ParseUpdatedAt(string? value)
+    {
+        return DateTimeOffset.TryParse(value, out var parsed)
+            ? parsed
+            : DateTimeOffset.MinValue;
+    }
+
+    private static string NowUtcText()
+    {
+        return DateTimeOffset.UtcNow.ToString("O");
+    }
+
+    private LaunchEntry CreateEntryFromDraft(EntryDraft draft, LaunchEntry? previousEntry)
+    {
+        return new LaunchEntry
+        {
+            Id = NormalizeEntryId(draft.Id),
+            Name = (draft.Name ?? string.Empty).Trim(),
+            Directory = (draft.Directory ?? string.Empty).Trim(),
+            Command = (draft.Command ?? string.Empty).Trim(),
+            Confirm = draft.Confirm,
+            Selected = draft.Selected,
+            UpdatedAtUtc = previousEntry?.UpdatedAtUtc ?? string.Empty,
+        };
+    }
+
+    private string? ValidateEntry(LaunchEntry entry, string? originalId)
+    {
+        if (string.IsNullOrWhiteSpace(entry.Id))
+            return "按钮 ID 不能为空";
+        if (string.IsNullOrWhiteSpace(entry.Name))
+            return "按钮名称不能为空";
+        if (string.IsNullOrWhiteSpace(entry.Directory))
+            return "按钮目录不能为空";
+        if (string.IsNullOrWhiteSpace(entry.Command))
+            return "按钮命令不能为空";
+        if (Entries.Any(existing =>
+                !string.Equals(existing.Id, originalId, StringComparison.Ordinal)
+                && string.Equals(existing.Id, entry.Id, StringComparison.Ordinal)))
+            return $"按钮 ID 已存在: {entry.Id}";
+
+        return null;
+    }
+
+    private static string NormalizeEntryId(string value)
+    {
+        return (value ?? string.Empty).Trim();
+    }
+
+    private void RenameEntryReferences(string oldId, string newId)
+    {
+        foreach (var preset in _presetFile.Presets)
+        {
+            for (var i = 0; i < preset.EntryIds.Count; i++)
+            {
+                if (string.Equals(preset.EntryIds[i], oldId, StringComparison.Ordinal))
+                    preset.EntryIds[i] = newId;
+            }
+        }
+
+        for (var i = 0; i < _settings.CustomEntryOrder.Count; i++)
+        {
+            if (string.Equals(_settings.CustomEntryOrder[i], oldId, StringComparison.Ordinal))
+                _settings.CustomEntryOrder[i] = newId;
+        }
+    }
+
+    private void RemoveEntryReferences(string entryId)
+    {
+        foreach (var preset in _presetFile.Presets)
+        {
+            preset.EntryIds.RemoveAll(id => string.Equals(id, entryId, StringComparison.Ordinal));
+        }
+
+        _settings.CustomEntryOrder.RemoveAll(id => string.Equals(id, entryId, StringComparison.Ordinal));
     }
 
     private bool SetSelection(IReadOnlyList<LauncherEntryViewModel> entries, bool selected)

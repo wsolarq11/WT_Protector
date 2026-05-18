@@ -21,7 +21,7 @@
       <Setter Property="Background" Value="White"/>
       <Setter Property="CornerRadius" Value="16"/>
       <Setter Property="Padding" Value="14"/>
-      <Setter Property="Margin" Value="0,0,12,12"/>
+      <Setter Property="Margin" Value="0"/>
       <Setter Property="BorderBrush" Value="#E2E8F0"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="BoxShadow" Value="0 8 24 0 #120F172A"/>
@@ -130,6 +130,9 @@
                   Orientation="Horizontal"
                   Spacing="10"
                   Margin="0,10,0,0">
+        <Button Classes="primary"
+                Content="新增按钮"
+                Command="{Binding AddEntryCommand}"/>
         <Button Classes="secondary"
                 Content="保存为新启动组"
                 Command="{Binding SaveSelectionAsPresetCommand}"/>
@@ -139,6 +142,14 @@
         <Button Classes="secondary"
                 Content="删除当前启动组"
                 Command="{Binding DeleteSelectedPresetCommand}"/>
+        <TextBlock Text="排序"
+                   Classes="muted"
+                   VerticalAlignment="Center"
+                   Margin="12,0,0,0"/>
+        <ComboBox ItemsSource="{Binding SortModes}"
+                  SelectedItem="{Binding SelectedSortMode, Mode=TwoWay}"
+                  Width="150"
+                  VerticalAlignment="Center"/>
       </StackPanel>
       <TextBlock Grid.Row="4"
                  Grid.ColumnSpan="2"
@@ -147,17 +158,24 @@
                  Text="{Binding PresetSelectionStatusText}"/>
     </Grid>
 
-    <ScrollViewer Grid.Row="1" Margin="0,16,0,14">
+    <ScrollViewer Grid.Row="1"
+                  Margin="0,16,0,14"
+                  HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Disabled">
       <ItemsControl ItemsSource="{Binding VisibleEntries}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
-            <WrapPanel/>
+            <WrapPanel ItemSpacing="10" LineSpacing="10"/>
           </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate>
-            <Border Classes="card" Width="300" MinHeight="164">
-              <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+            <Border Classes="card"
+                    Width="{Binding CardWidth}"
+                    Height="{Binding CardHeight}"
+                    ClipToBounds="True"
+                    DragDrop.AllowDrop="True">
+              <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto">
                 <Grid ColumnDefinitions="Auto,*,Auto">
                   <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
                             VerticalAlignment="Center"/>
@@ -188,16 +206,35 @@
                            Margin="0,10,0,10"
                            Classes="muted"
                            Text="{Binding ConfirmationLabel}"/>
-                <StackPanel Grid.Row="4"
-                            Orientation="Horizontal"
-                            Spacing="10">
+                <WrapPanel Grid.Row="4"
+                           ItemSpacing="8"
+                           LineSpacing="6">
                   <Button Classes="primary"
                           Content="启动"
                           Command="{Binding LaunchCommand}"/>
                   <Button Classes="secondary"
                           Content="预演"
                           Command="{Binding DryRunCommand}"/>
-                </StackPanel>
+                  <Button Classes="secondary"
+                          Content="编辑"
+                          Command="{Binding EditCommand}"/>
+                  <Button Classes="secondary"
+                          Content="删除"
+                          Command="{Binding DeleteCommand}"/>
+                </WrapPanel>
+                <Grid Grid.Row="5" ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+                  <TextBlock Classes="muted"
+                             Text="{Binding UpdatedLabel}"/>
+                  <Border Grid.Column="1"
+                          Background="#F1F5F9"
+                          CornerRadius="8"
+                          Padding="8,4"
+                          PointerPressed="OnEntryDragPointerPressed">
+                    <TextBlock Text="拖拽排序"
+                               Foreground="#334155"
+                               FontSize="12"/>
+                  </Border>
+                </Grid>
               </Grid>
             </Border>
           </DataTemplate>

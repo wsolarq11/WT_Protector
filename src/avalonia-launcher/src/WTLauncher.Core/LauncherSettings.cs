@@ -10,6 +10,12 @@ public sealed class LauncherSettings
     [JsonPropertyName("lastFilterText")]
     public string LastFilterText { get; set; } = "";
 
+    [JsonPropertyName("sortMode")]
+    public string SortMode { get; set; } = "custom";
+
+    [JsonPropertyName("customEntryOrder")]
+    public List<string> CustomEntryOrder { get; set; } = [];
+
     [JsonPropertyName("window")]
     public LauncherWindowSettings Window { get; set; } = new();
 }

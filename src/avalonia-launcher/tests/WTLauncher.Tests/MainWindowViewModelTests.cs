@@ -192,6 +192,206 @@ public sealed class MainWindowViewModelTests
         Assert.True(viewModel.ApplyPresetCommand.CanExecute(null));
     }
 
+    [Fact]
+    public async Task EntryCommandsPersistPortableConfigAndReferences()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        File.WriteAllText(presets, """
+        {
+          "schemaVersion": 1,
+          "defaultPresetId": "daily",
+          "presets": [
+            {
+              "id": "daily",
+              "name": "Daily",
+              "entryIds": ["one"]
+            }
+          ]
+        }
+        """);
+
+        var requestCount = 0;
+        var viewModel = new MainWindowViewModel(
+            config,
+            settings,
+            new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["one", "two"] },
+            new LauncherProcess())
+        {
+            RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
+                requestCount++ == 0
+                    ? new EntryDraft("three", "Three", "D:\\three", "pwsh", false, true)
+                    : new EntryDraft("one-renamed", "One Renamed", "D:\\renamed", "opencode", true, false)),
+            ConfirmDeleteEntryAsync = _ => Task.FromResult(true),
+        };
+
+        await viewModel.AddEntryCommand.ExecuteAsync(null);
+
+        var savedEntries = LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
+        var added = savedEntries.Single(entry => entry.Id == "three");
+        Assert.True(added.Selected);
+        Assert.False(string.IsNullOrWhiteSpace(added.UpdatedAtUtc));
+        var savedSettings = LauncherSettingsStore.Load(settings);
+        Assert.Equal(["one", "two", "three"], savedSettings.CustomEntryOrder);
+
+        await viewModel.Entries.Single(entry => entry.Id == "one").EditCommand.ExecuteAsync(null);
+
+        savedEntries = LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
+        Assert.DoesNotContain(savedEntries, entry => entry.Id == "one");
+        var edited = savedEntries.Single(entry => entry.Id == "one-renamed");
+        Assert.Equal("One Renamed", edited.Name);
+        Assert.Equal("D:\\renamed", edited.Directory);
+        Assert.Equal("opencode", edited.Command);
+        Assert.True(edited.Confirm);
+        Assert.False(edited.Selected);
+        Assert.False(string.IsNullOrWhiteSpace(edited.UpdatedAtUtc));
+
+        var savedPresetFile = LauncherPresetStore.Load(presets);
+        Assert.Equal(["one-renamed"], savedPresetFile.Presets.Single(preset => preset.Id == "daily").EntryIds);
+        savedSettings = LauncherSettingsStore.Load(settings);
+        Assert.Equal(["one-renamed", "two", "three"], savedSettings.CustomEntryOrder);
+
+        await viewModel.Entries.Single(entry => entry.Id == "one-renamed").DeleteCommand.ExecuteAsync(null);
+
+        savedEntries = LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
+        Assert.DoesNotContain(savedEntries, entry => entry.Id == "one-renamed");
+        savedPresetFile = LauncherPresetStore.Load(presets);
+        Assert.Empty(savedPresetFile.Presets.Single(preset => preset.Id == "daily").EntryIds);
+        savedSettings = LauncherSettingsStore.Load(settings);
+        Assert.Equal(["two", "three"], savedSettings.CustomEntryOrder);
+    }
+
+    [Fact]
+    public void SortModesAndCustomDragOrderPersistPortableSettings()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            new LaunchEntry
+            {
+                Id = "one",
+                Name = "Zulu",
+                Directory = "D:\\one",
+                Command = "codex",
+                Confirm = true,
+                UpdatedAtUtc = "2026-05-17T00:00:00Z",
+            },
+            new LaunchEntry
+            {
+                Id = "two",
+                Name = "Alpha",
+                Directory = "D:\\two",
+                Command = "opencode",
+                Confirm = false,
+                UpdatedAtUtc = "2026-05-18T00:00:00Z",
+            },
+            new LaunchEntry
+            {
+                Id = "three",
+                Name = "Mike",
+                Directory = "D:\\three",
+                Command = "pwsh",
+                Confirm = false,
+                UpdatedAtUtc = "",
+            });
+
+        var viewModel = new MainWindowViewModel(
+            config,
+            settings,
+            new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["three", "one", "two"] },
+            new LauncherProcess());
+
+        Assert.Equal(["three", "one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+
+        viewModel.MoveEntryBefore("two", "three");
+
+        Assert.Equal(["two", "three", "one"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        var savedSettings = LauncherSettingsStore.Load(settings);
+        Assert.Equal("custom", savedSettings.SortMode);
+        Assert.Equal(["two", "three", "one"], savedSettings.CustomEntryOrder);
+
+        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == "alphabetical");
+
+        Assert.Equal(["two", "three", "one"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        savedSettings = LauncherSettingsStore.Load(settings);
+        Assert.Equal("alphabetical", savedSettings.SortMode);
+        Assert.Equal(["two", "three", "one"], savedSettings.CustomEntryOrder);
+
+        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == "updated");
+
+        Assert.Equal(["two", "one", "three"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        savedSettings = LauncherSettingsStore.Load(settings);
+        Assert.Equal("updated", savedSettings.SortMode);
+    }
+
+    [Fact]
+    public void CardSizingShrinksButtonsToFitVisibleEntriesInsideWindowRegion()
+    {
+        using var temp = new TempDirectory();
+        var entries = Enumerable.Range(1, 6)
+            .Select(index => new LaunchEntry
+            {
+                Id = $"entry-{index}",
+                Name = $"Entry {index}",
+                Directory = $"D:\\entry-{index}",
+                Command = "pwsh",
+                Confirm = false,
+            })
+            .ToArray();
+        var (config, settings, _) = CreatePortableFixture(temp, entries);
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+
+        viewModel.UpdateCardsAvailableSize(640, 260);
+
+        var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
+        Assert.True(first.CardWidth < 300, "expected card width to shrink below the default width");
+        Assert.True(first.CardHeight < 164, "expected card height to shrink below the default height");
+        Assert.All(viewModel.VisibleEntries, entry =>
+        {
+            Assert.Equal(first.CardWidth, entry.CardWidth);
+            Assert.Equal(first.CardHeight, entry.CardHeight);
+        });
+
+        const double gap = 10;
+        var columns = Math.Max(1, (int)Math.Floor((640 + gap) / (first.CardWidth + gap)));
+        var rows = (int)Math.Ceiling(viewModel.VisibleEntries.Count / (double)columns);
+        var usedWidth = (columns * first.CardWidth) + ((columns - 1) * gap);
+        var usedHeight = (rows * first.CardHeight) + ((rows - 1) * gap);
+        Assert.True(usedWidth <= 640.001, $"expected cards to fit available width, got {usedWidth}");
+        Assert.True(usedHeight <= 260.001, $"expected cards to fit available height, got {usedHeight}");
+    }
+
+    [Fact]
+    public void CardSizingFitsCurrentMainlineCountInsideMinimumWindowRegion()
+    {
+        using var temp = new TempDirectory();
+        var entries = Enumerable.Range(1, 19)
+            .Select(index => new LaunchEntry
+            {
+                Id = $"entry-{index}",
+                Name = $"Entry {index}",
+                Directory = $"D:\\entry-{index}",
+                Command = "pwsh",
+                Confirm = false,
+            })
+            .ToArray();
+        var (config, settings, _) = CreatePortableFixture(temp, entries);
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+
+        viewModel.UpdateCardsAvailableSize(892, 330);
+
+        var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
+        Assert.True(first.CardHeight < 96, "expected card height to shrink below the old hard minimum so min-window layout can fit");
+
+        const double gap = 10;
+        var columns = Math.Max(1, (int)Math.Floor((892 + gap) / (first.CardWidth + gap)));
+        var rows = (int)Math.Ceiling(viewModel.VisibleEntries.Count / (double)columns);
+        var usedWidth = (columns * first.CardWidth) + ((columns - 1) * gap);
+        var usedHeight = (rows * first.CardHeight) + ((rows - 1) * gap);
+        Assert.True(usedWidth <= 892.001, $"expected cards to fit minimum-window width, got {usedWidth}");
+        Assert.True(usedHeight <= 330.001, $"expected cards to fit minimum-window height, got {usedHeight}");
+    }
+
     private static (string Config, string Settings, string Presets) CreatePortableFixture(
         TempDirectory temp,
         bool oneSelected,
@@ -201,6 +401,17 @@ public sealed class MainWindowViewModelTests
         Directory.CreateDirectory(configDir);
         var config = Path.Combine(configDir, "config.json");
         WriteTwoEntryConfig(config, oneSelected, twoSelected);
+        return (config, Path.Combine(configDir, "settings.json"), Path.Combine(configDir, "presets.json"));
+    }
+
+    private static (string Config, string Settings, string Presets) CreatePortableFixture(
+        TempDirectory temp,
+        params LaunchEntry[] entries)
+    {
+        var configDir = Path.Combine(temp.Path, "config");
+        Directory.CreateDirectory(configDir);
+        var config = Path.Combine(configDir, "config.json");
+        LauncherConfigStore.Save(entries, config);
         return (config, Path.Combine(configDir, "settings.json"), Path.Combine(configDir, "presets.json"));
     }
 
