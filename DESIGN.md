@@ -108,6 +108,7 @@
   - ViewModel 负责密度判断与拖拽状态
   - ViewModel 负责三视图状态、名称墙列数/项目尺寸、全局启动确认设置；三视图只能有一个可变来源，`IsCardsViewMode` / `IsDetailedListMode` / `IsNamesViewMode` 仅作为只读投影
   - 卡片密度只能有一个可变来源：`LauncherEntryLayoutDensity`；`IsCompactLayout` / `IsMicroLayout` 仅作为 XAML class 的只读投影
+  - 拖拽提示只能有一个 entry-local 可变来源：`DragCueState`；`IsDragPreviewTarget` / `IsDragPreviewSource` / `IsDragInsertBefore` / `IsDragInsertAfter` 仅作为 XAML class 的只读投影
   - 选择状态只有两个写入入口：用户勾选经 `IsSelected` 立即保存；批量/预设/编辑经 `SetSelectionFromOwner` 同步后只批量保存一次，不用全局 bulk flag 抑制副作用
   - 拖拽排序状态只能由单个 `DragReorderSession?` 持有；snapshot、source、target、last preview 不允许散落为多个 loose fields
   - View 负责拖拽 ghost、插入指示、轻动画

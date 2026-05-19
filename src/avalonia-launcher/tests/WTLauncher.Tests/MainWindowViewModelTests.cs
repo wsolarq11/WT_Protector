@@ -460,6 +460,23 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void EntryDragCueStateUsesOneTypedStateSource()
+    {
+        var dragFields = typeof(LauncherEntryViewModel)
+            .GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .Where(field => field.Name.Contains("Drag", StringComparison.OrdinalIgnoreCase))
+            .Select(field => field.Name)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.Equal(["_dragCueState"], dragFields);
+        Assert.Null(typeof(LauncherEntryViewModel).GetProperty(nameof(LauncherEntryViewModel.IsDragPreviewTarget))?.SetMethod);
+        Assert.Null(typeof(LauncherEntryViewModel).GetProperty(nameof(LauncherEntryViewModel.IsDragPreviewSource))?.SetMethod);
+        Assert.Null(typeof(LauncherEntryViewModel).GetProperty(nameof(LauncherEntryViewModel.IsDragInsertBefore))?.SetMethod);
+        Assert.Null(typeof(LauncherEntryViewModel).GetProperty(nameof(LauncherEntryViewModel.IsDragInsertAfter))?.SetMethod);
+    }
+
+    [Fact]
     public void CardLayoutDensitySwitchesBetweenNormalCompactAndMicro()
     {
         using var temp = new TempDirectory();

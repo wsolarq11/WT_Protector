@@ -50,18 +50,15 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     private double _nameTileHeight = 24;
 
     private LauncherEntryLayoutDensity _layoutDensity = LauncherEntryLayoutDensity.Normal;
+    private DragCueState _dragCueState = DragCueState.None;
 
-    [ObservableProperty]
-    private bool _isDragPreviewTarget;
+    public bool IsDragPreviewTarget => _dragCueState is DragCueState.TargetBefore or DragCueState.TargetAfter;
 
-    [ObservableProperty]
-    private bool _isDragPreviewSource;
+    public bool IsDragPreviewSource => _dragCueState == DragCueState.Source;
 
-    [ObservableProperty]
-    private bool _isDragInsertBefore;
+    public bool IsDragInsertBefore => _dragCueState == DragCueState.TargetBefore;
 
-    [ObservableProperty]
-    private bool _isDragInsertAfter;
+    public bool IsDragInsertAfter => _dragCueState == DragCueState.TargetAfter;
 
     public bool IsCompactLayout => _layoutDensity is LauncherEntryLayoutDensity.Compact or LauncherEntryLayoutDensity.Micro;
 
@@ -77,6 +74,25 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     {
         Entry.Selected = selected;
         SetProperty(ref _isSelected, selected, nameof(IsSelected));
+    }
+
+    internal void ShowDragPreviewSource() => SetDragCueState(DragCueState.Source);
+
+    internal void ShowDragPreviewTarget(bool insertAfter) =>
+        SetDragCueState(insertAfter ? DragCueState.TargetAfter : DragCueState.TargetBefore);
+
+    internal void ClearDragCue() => SetDragCueState(DragCueState.None);
+
+    private void SetDragCueState(DragCueState state)
+    {
+        if (_dragCueState == state)
+            return;
+
+        _dragCueState = state;
+        OnPropertyChanged(nameof(IsDragPreviewTarget));
+        OnPropertyChanged(nameof(IsDragPreviewSource));
+        OnPropertyChanged(nameof(IsDragInsertBefore));
+        OnPropertyChanged(nameof(IsDragInsertAfter));
     }
 
     partial void OnCardWidthChanged(double value)
@@ -155,6 +171,14 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     private Task DeleteAsync()
     {
         return _owner.DeleteEntryAsync(this);
+    }
+
+    private enum DragCueState
+    {
+        None,
+        Source,
+        TargetBefore,
+        TargetAfter,
     }
 }
 

@@ -511,7 +511,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             new List<string>(_settings.CustomEntryOrder),
             source);
         if (source is not null)
-            source.IsDragPreviewSource = true;
+            source.ShowDragPreviewSource();
     }
 
     public bool PreviewMoveEntryBefore(string draggedEntryId, string targetEntryId)
@@ -613,7 +613,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (ReferenceEquals(session.Target, target))
         {
             if (session.Target is not null)
-                UpdateDragInsertIndicator(session.Target, insertAfter);
+                session.Target.ShowDragPreviewTarget(insertAfter);
             return;
         }
 
@@ -621,8 +621,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         session.Target = target;
         if (session.Target is not null)
         {
-            session.Target.IsDragPreviewTarget = true;
-            UpdateDragInsertIndicator(session.Target, insertAfter);
+            session.Target.ShowDragPreviewTarget(insertAfter);
         }
     }
 
@@ -632,16 +631,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (session?.Target is not { } target)
             return;
 
-        target.IsDragPreviewTarget = false;
-        target.IsDragInsertBefore = false;
-        target.IsDragInsertAfter = false;
+        target.ClearDragCue();
         session.Target = null;
-    }
-
-    private static void UpdateDragInsertIndicator(LauncherEntryViewModel target, bool insertAfter)
-    {
-        target.IsDragInsertAfter = insertAfter;
-        target.IsDragInsertBefore = !insertAfter;
     }
 
     private void ClearDragPreviewState()
@@ -654,7 +645,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _dragReorderSession = null;
         if (session.Source is not null)
         {
-            session.Source.IsDragPreviewSource = false;
+            session.Source.ClearDragCue();
         }
     }
 
