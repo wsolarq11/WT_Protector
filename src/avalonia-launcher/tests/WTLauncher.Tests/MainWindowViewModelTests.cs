@@ -44,7 +44,7 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
-    public void VisibleRequiresConfirmationCountTracksFilteredEntries()
+    public void VisibleConfirmationCountersTrackFilteredEntries()
     {
         using var temp = new TempDirectory();
         var entries = new[]
@@ -70,13 +70,17 @@ public sealed class MainWindowViewModelTests
 
         var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
 
-        Assert.Equal(1, viewModel.VisibleRequiresConfirmationCount);
-        Assert.True(viewModel.HasVisibleRequiresConfirmation);
+        Assert.Equal(0, viewModel.VisibleDangerousCount);
+        Assert.False(viewModel.HasVisibleDangerous);
+        Assert.Equal(1, viewModel.VisibleManualConfirmCount);
+        Assert.True(viewModel.HasVisibleManualConfirm);
 
         viewModel.FilterText = "two";
 
-        Assert.Equal(0, viewModel.VisibleRequiresConfirmationCount);
-        Assert.False(viewModel.HasVisibleRequiresConfirmation);
+        Assert.Equal(0, viewModel.VisibleDangerousCount);
+        Assert.False(viewModel.HasVisibleDangerous);
+        Assert.Equal(0, viewModel.VisibleManualConfirmCount);
+        Assert.False(viewModel.HasVisibleManualConfirm);
     }
 
     [Fact]

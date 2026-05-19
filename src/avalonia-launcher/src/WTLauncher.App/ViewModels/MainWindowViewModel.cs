@@ -47,9 +47,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private int _visibleCount;
 
     [ObservableProperty]
-    private int _visibleRequiresConfirmationCount;
+    private int _visibleDangerousCount;
 
-    public bool HasVisibleRequiresConfirmation => VisibleRequiresConfirmationCount > 0;
+    [ObservableProperty]
+    private int _visibleManualConfirmCount;
+
+    public bool HasVisibleDangerous => VisibleDangerousCount > 0;
+
+    public bool HasVisibleManualConfirm => VisibleManualConfirmCount > 0;
 
     [ObservableProperty]
     private int _selectedCount;
@@ -137,9 +142,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    partial void OnVisibleRequiresConfirmationCountChanged(int value)
+    partial void OnVisibleDangerousCountChanged(int value)
     {
-        OnPropertyChanged(nameof(HasVisibleRequiresConfirmation));
+        OnPropertyChanged(nameof(HasVisibleDangerous));
+    }
+
+    partial void OnVisibleManualConfirmCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(HasVisibleManualConfirm));
     }
 
     [RelayCommand]
@@ -751,7 +761,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         VisibleCount = VisibleEntries.Count;
-        VisibleRequiresConfirmationCount = VisibleEntries.Count(entry => entry.RequiresConfirmation);
+        VisibleDangerousCount = VisibleEntries.Count(entry => entry.IsDangerous);
+        VisibleManualConfirmCount = VisibleEntries.Count(entry => entry.IsManualConfirmation);
         RecalculateCardSize();
     }
 

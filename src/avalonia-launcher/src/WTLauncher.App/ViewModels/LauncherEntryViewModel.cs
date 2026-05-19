@@ -33,6 +33,8 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     public bool RequiresConfirmation => Entry.Confirm || IsDangerous;
 
+    public bool IsManualConfirmation => Entry.Confirm && !IsDangerous;
+
     [ObservableProperty]
     private bool _isSelected;
 
@@ -118,6 +120,7 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         OnPropertyChanged(nameof(Command));
         OnPropertyChanged(nameof(IsDangerous));
         OnPropertyChanged(nameof(RequiresConfirmation));
+        OnPropertyChanged(nameof(IsManualConfirmation));
         OnPropertyChanged(nameof(UpdatedLabel));
         OnPropertyChanged(nameof(TitleFontSize));
     }

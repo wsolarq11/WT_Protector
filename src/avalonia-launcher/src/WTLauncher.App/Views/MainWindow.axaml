@@ -66,11 +66,16 @@
       <Setter Property="MinHeight" Value="26"/>
     </Style>
     <Style Selector="Border.confirm-badge">
-      <Setter Property="Background" Value="#FEF3C7"/>
       <Setter Property="CornerRadius" Value="999"/>
       <Setter Property="Padding" Value="10,0"/>
       <Setter Property="Height" Value="22"/>
       <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Border.confirm-badge.manual-confirm">
+      <Setter Property="Background" Value="#FEF3C7"/>
+    </Style>
+    <Style Selector="Border.confirm-badge.danger">
+      <Setter Property="Background" Value="#FFEDD5"/>
     </Style>
     <Style Selector="Border.card.compact Border.confirm-badge">
       <Setter Property="Height" Value="21"/>
@@ -82,10 +87,15 @@
     </Style>
     <Style Selector="TextBlock.confirm-badge-text">
       <Setter Property="FontSize" Value="11"/>
-      <Setter Property="Foreground" Value="#92400E"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="HorizontalAlignment" Value="Center"/>
       <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="TextBlock.confirm-badge-text.manual-confirm">
+      <Setter Property="Foreground" Value="#92400E"/>
+    </Style>
+    <Style Selector="TextBlock.confirm-badge-text.danger">
+      <Setter Property="Foreground" Value="#9A3412"/>
     </Style>
     <Style Selector="TextBlock.entry-dir">
       <Setter Property="Margin" Value="0,13,0,0"/>
@@ -195,15 +205,27 @@
             <Run Text=" 项"/>
           </TextBlock>
         </Border>
+        <Border Background="#FFEDD5"
+                CornerRadius="14"
+                Padding="12,8"
+                VerticalAlignment="Center"
+                IsVisible="{Binding HasVisibleDangerous}"
+                ToolTip.Tip="橙色：危险命令（命令包含 dangerously 等高风险标记，启动前将强制确认）">
+          <TextBlock Foreground="#9A3412">
+            <Run Text="危险 "/>
+            <Run Text="{Binding VisibleDangerousCount}"/>
+            <Run Text=" 项"/>
+          </TextBlock>
+        </Border>
         <Border Background="#FEF3C7"
                 CornerRadius="14"
                 Padding="12,8"
                 VerticalAlignment="Center"
-                IsVisible="{Binding HasVisibleRequiresConfirmation}"
-                ToolTip.Tip="黄色：启动前需要确认（包含危险命令等需要确认的启动项）">
+                IsVisible="{Binding HasVisibleManualConfirm}"
+                ToolTip.Tip="黄色：手动设置为“启动前需要确认”的启动项（非危险命令自动判断）">
           <TextBlock Foreground="#92400E">
             <Run Text="需确认 "/>
-            <Run Text="{Binding VisibleRequiresConfirmationCount}"/>
+            <Run Text="{Binding VisibleManualConfirmCount}"/>
             <Run Text=" 项"/>
           </TextBlock>
         </Border>
@@ -354,9 +376,17 @@
                              VerticalAlignment="Center"
                              Text="{Binding Name}"/>
                   <Border Grid.Column="2"
-                          Classes="confirm-badge"
-                          IsVisible="{Binding RequiresConfirmation}">
-                    <TextBlock Classes="confirm-badge-text"
+                          Classes="confirm-badge danger"
+                          IsVisible="{Binding IsDangerous}"
+                          ToolTip.Tip="危险命令：包含 dangerously 等高风险标记，启动前将强制确认">
+                    <TextBlock Classes="confirm-badge-text danger"
+                               Text="危险"/>
+                  </Border>
+                  <Border Grid.Column="2"
+                          Classes="confirm-badge manual-confirm"
+                          IsVisible="{Binding IsManualConfirmation}"
+                          ToolTip.Tip="手动确认：该启动项被设置为启动前需要确认">
+                    <TextBlock Classes="confirm-badge-text manual-confirm"
                                Text="需确认"/>
                   </Border>
                 </Grid>
