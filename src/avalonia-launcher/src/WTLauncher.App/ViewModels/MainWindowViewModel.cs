@@ -522,25 +522,25 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ClearDragPreviewTarget();
     }
 
-    public void PreviewMoveEntryBefore(string draggedEntryId, string targetEntryId)
+    public bool PreviewMoveEntryBefore(string draggedEntryId, string targetEntryId)
     {
-        PreviewMoveEntry(draggedEntryId, targetEntryId, insertAfter: false);
+        return PreviewMoveEntry(draggedEntryId, targetEntryId, insertAfter: false);
     }
 
-    public void PreviewMoveEntry(string draggedEntryId, string targetEntryId, bool insertAfter)
+    public bool PreviewMoveEntry(string draggedEntryId, string targetEntryId, bool insertAfter)
     {
         if (!IsCustomSortMode)
-            return;
+            return false;
         if (_customOrderDragSnapshot is null || !string.Equals(_customOrderDragEntryId, draggedEntryId, StringComparison.Ordinal))
             BeginDragReorder(draggedEntryId);
         if (_customOrderDragSnapshot is null)
-            return;
+            return false;
         if (string.Equals(draggedEntryId, targetEntryId, StringComparison.Ordinal))
-            return;
+            return false;
 
         if (string.Equals(_dragPreviewLastTargetId, targetEntryId, StringComparison.Ordinal)
             && _dragPreviewLastInsertAfter == insertAfter)
-            return;
+            return false;
 
         _dragPreviewLastTargetId = targetEntryId;
         _dragPreviewLastInsertAfter = insertAfter;
@@ -550,6 +550,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         var target = Entries.FirstOrDefault(entry => string.Equals(entry.Id, targetEntryId, StringComparison.Ordinal));
         SetDragPreviewTarget(target, insertAfter);
+        return true;
     }
 
     public void ClearDragHover()

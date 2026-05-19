@@ -146,14 +146,7 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        var (target, card) = resolved!.Value;
-        var positionInCard = e.GetPosition(card);
-        var insertAfter = UsesVerticalInsertPreview(viewModel)
-            ? positionInCard.Y >= (card.Bounds.Height * 0.5)
-            : positionInCard.X >= (card.Bounds.Width * 0.5);
-        var before = CaptureEntryCardBounds();
-        viewModel.PreviewMoveEntry(_activeDragEntryId, target.Id, insertAfter);
-        ScheduleReorderAnimation(before);
+        ApplyDragReorderPreview(e, viewModel, _activeDragEntryId, resolved!.Value);
     }
 
     private void OnEntryDrop(object? sender, DragEventArgs e)
@@ -171,17 +164,30 @@ public sealed partial class MainWindow : Window
         if (string.IsNullOrWhiteSpace(draggedId))
             return;
 
-        var (target, card) = resolved.Value;
-        var positionInCard = e.GetPosition(card);
-        var insertAfter = UsesVerticalInsertPreview(viewModel)
-            ? positionInCard.Y >= (card.Bounds.Height * 0.5)
-            : positionInCard.X >= (card.Bounds.Width * 0.5);
         _activeDragEntryId = draggedId;
-        var before = CaptureEntryCardBounds();
-        viewModel.PreviewMoveEntry(draggedId, target.Id, insertAfter);
-        ScheduleReorderAnimation(before);
+        ApplyDragReorderPreview(e, viewModel, draggedId, resolved.Value);
         e.DragEffects = DragDropEffects.Move;
         e.Handled = true;
+    }
+
+    private void ApplyDragReorderPreview(
+        DragEventArgs e,
+        MainWindowViewModel viewModel,
+        string draggedId,
+        (LauncherEntryViewModel Entry, Control Card) target)
+    {
+        var insertAfter = ShouldInsertAfter(e, viewModel, target.Card);
+        var before = CaptureEntryCardBounds();
+        if (viewModel.PreviewMoveEntry(draggedId, target.Entry.Id, insertAfter))
+            ScheduleReorderAnimation(before);
+    }
+
+    private static bool ShouldInsertAfter(DragEventArgs e, MainWindowViewModel viewModel, Control card)
+    {
+        var positionInCard = e.GetPosition(card);
+        return UsesVerticalInsertPreview(viewModel)
+            ? positionInCard.Y >= (card.Bounds.Height * 0.5)
+            : positionInCard.X >= (card.Bounds.Width * 0.5);
     }
 
     private (LauncherEntryViewModel Entry, Control Card)? ResolveEntryCardFromDragEvent(DragEventArgs e)

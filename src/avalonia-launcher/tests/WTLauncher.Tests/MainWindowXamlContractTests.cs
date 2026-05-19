@@ -33,6 +33,26 @@ public sealed class MainWindowXamlContractTests
         Assert.DoesNotContain("更新时间", xaml);
     }
 
+    [Fact]
+    public void MainWindow_DragReorderKeepsGhostFlipAndInsertPreviewContracts()
+    {
+        var xaml = File.ReadAllText(GetMainWindowXamlPath());
+        var codeBehind = File.ReadAllText(GetMainWindowCodeBehindPath());
+
+        Assert.Equal(3, Count(xaml, "Classes.drag-target=\"{Binding IsDragPreviewTarget}\""));
+        Assert.Equal(3, Count(xaml, "Classes.drag-source=\"{Binding IsDragPreviewSource}\""));
+        Assert.Equal(3, Count(xaml, "IsVisible=\"{Binding IsDragInsertBefore}\""));
+        Assert.Equal(3, Count(xaml, "IsVisible=\"{Binding IsDragInsertAfter}\""));
+
+        AssertInOrder(codeBehind, "ShowDragGhost(item, card", "DragDrop.DoDragDropAsync", "HideDragGhost()");
+        Assert.Contains("UpdateDragGhostPosition(e.GetPosition(this))", codeBehind);
+        Assert.Contains("private void ApplyDragReorderPreview(", codeBehind);
+        Assert.Equal(1, Count(codeBehind, "viewModel.PreviewMoveEntry("));
+        Assert.Contains("if (viewModel.PreviewMoveEntry", codeBehind);
+        AssertInOrder(codeBehind, "CaptureEntryCardBounds()", "ScheduleReorderAnimation(before)");
+        Assert.Contains("FLIP: jump back without transition", codeBehind);
+    }
+
     private static int Count(string text, string value)
     {
         var count = 0;
@@ -61,6 +81,12 @@ public sealed class MainWindowXamlContractTests
     {
         var root = FindRepositoryRoot();
         return Path.Combine(root, "src", "avalonia-launcher", "src", "WTLauncher.App", "Views", "MainWindow.axaml");
+    }
+
+    private static string GetMainWindowCodeBehindPath()
+    {
+        var root = FindRepositoryRoot();
+        return Path.Combine(root, "src", "avalonia-launcher", "src", "WTLauncher.App", "Views", "MainWindow.axaml.cs");
     }
 
     private static string FindRepositoryRoot()

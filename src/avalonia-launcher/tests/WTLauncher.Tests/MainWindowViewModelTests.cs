@@ -418,7 +418,8 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(["one", "two", "three"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
 
         viewModel.BeginDragReorder("three");
-        viewModel.PreviewMoveEntry("three", "one", insertAfter: false);
+        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
+        Assert.False(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
 
         Assert.Equal(["three", "one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         Assert.True(viewModel.Entries.Single(entry => entry.Id == "three").IsDragPreviewSource);
@@ -438,7 +439,7 @@ public sealed class MainWindowViewModelTests
             || entry.IsDragInsertAfter);
 
         viewModel.BeginDragReorder("three");
-        viewModel.PreviewMoveEntry("three", "one", insertAfter: false);
+        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
         viewModel.CommitDragReorder();
 
         Assert.Equal(["three", "one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
