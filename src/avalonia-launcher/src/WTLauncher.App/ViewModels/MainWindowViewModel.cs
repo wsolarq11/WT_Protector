@@ -387,14 +387,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         entry.UpdatedAtUtc = NowUtcText();
         Entries.Add(new LauncherEntryViewModel(entry, this));
         _settings.CustomEntryOrder.Add(entry.Id);
-        SelectedCount = Entries.Count(item => item.IsSelected);
-        TotalCount = Entries.Count;
-        if (!SaveConfig())
+        if (!SaveEntryCollectionChanges(savePresets: false))
             return;
 
-        SaveSettings();
-        NotifySelectionCommands();
-        ApplyFilter();
         StatusText = $"已新增按钮: {entry.Name}（已保存）";
     }
 
@@ -427,17 +422,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (!string.Equals(oldId, item.Entry.Id, StringComparison.Ordinal))
             RenameEntryReferences(oldId, item.Entry.Id);
 
-        SelectedCount = Entries.Count(entry => entry.IsSelected);
-        if (!SaveConfig())
-            return;
-        if (!SavePresets())
+        if (!SaveEntryCollectionChanges(savePresets: true))
             return;
 
-        EnsureCustomOrderContainsEntries();
-        SaveSettings();
-        NotifySelectionCommands();
-        UpdatePresetSelectionStatus();
-        ApplyFilter();
         StatusText = $"已更新按钮: {item.Name}（已保存）";
     }
 
@@ -452,19 +439,27 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         Entries.Remove(item);
         RemoveEntryReferences(item.Entry.Id);
+        if (!SaveEntryCollectionChanges(savePresets: true))
+            return;
+
+        StatusText = $"已删除按钮: {item.Name}（已保存）";
+    }
+
+    private bool SaveEntryCollectionChanges(bool savePresets)
+    {
         SelectedCount = Entries.Count(entry => entry.IsSelected);
         TotalCount = Entries.Count;
         if (!SaveConfig())
-            return;
-        if (!SavePresets())
-            return;
+            return false;
+        if (savePresets && !SavePresets())
+            return false;
 
         EnsureCustomOrderContainsEntries();
         SaveSettings();
         NotifySelectionCommands();
         UpdatePresetSelectionStatus();
         ApplyFilter();
-        StatusText = $"已删除按钮: {item.Name}（已保存）";
+        return true;
     }
 
     public void MoveEntryBefore(string draggedEntryId, string targetEntryId)
