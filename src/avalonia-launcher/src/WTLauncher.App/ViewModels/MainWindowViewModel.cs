@@ -845,85 +845,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         var targets = VisibleEntries.Count > 0 ? VisibleEntries : Entries;
         var count = Math.Max(1, targets.Count);
-        const double gap = 8;
-        const double rhythmUnit = 13;
-        const double goldenWidthUnits = 21;
-        const double goldenHeightUnits = 13;
-        const double goldenCardRatio = goldenWidthUnits / goldenHeightUnits;
-        const double preferredWidth = rhythmUnit * goldenWidthUnits;
-        const double preferredHeight = rhythmUnit * goldenHeightUnits;
-        // "No wheel" is a preference, not a requirement: never shrink cards below readability;
-        // let the ScrollViewer become the fallback when we cannot fit everything comfortably.
-        const double minWidth = 200;
-        const double minHeight = 96;
-        var bestWidth = Math.Max(minWidth, _cardsAvailableWidth);
-        var bestHeight = Math.Max(minHeight, _cardsAvailableHeight);
-        var bestScore = double.NegativeInfinity;
-
-        for (var columns = 1; columns <= count; columns++)
-        {
-            var rows = (int)Math.Ceiling(count / (double)columns);
-            var width = (_cardsAvailableWidth - ((columns - 1) * gap)) / columns;
-            var height = (_cardsAvailableHeight - ((rows - 1) * gap)) / rows;
-            if (width <= 0 || height <= 0)
-                continue;
-
-            if (width < minWidth)
-                continue;
-
-            var effectiveHeight = Math.Max(minHeight, height);
-            var shapedHeight = Math.Max(minHeight, Math.Min(effectiveHeight, width / goldenCardRatio));
-            var scale = Math.Min(width / preferredWidth, shapedHeight / preferredHeight);
-            var shapePenalty = Math.Abs((width / shapedHeight) - goldenCardRatio);
-            var overflowRatio = height < minHeight ? (minHeight / height) : 1;
-            var overflowPenalty = (overflowRatio - 1) * 0.18;
-            var score = scale - (shapePenalty * 0.08) - overflowPenalty;
-            if (score > bestScore)
-            {
-                bestScore = score;
-                bestWidth = width;
-                bestHeight = shapedHeight;
-            }
-        }
-
-        var cardWidth = Math.Max(minWidth, Math.Floor(bestWidth));
-        var cardHeight = Math.Max(minHeight, Math.Floor(bestHeight));
+        var layout = LauncherEntryLayoutCalculator.Calculate(_cardsAvailableWidth, _cardsAvailableHeight, count);
         foreach (var entry in Entries)
         {
-            entry.CardWidth = cardWidth;
-            entry.CardHeight = cardHeight;
-        }
-
-        RecalculateNameTileSize();
-    }
-
-    private void RecalculateNameTileSize()
-    {
-        var targets = VisibleEntries.Count > 0 ? VisibleEntries : Entries;
-        var count = Math.Max(1, targets.Count);
-        const double gap = 6;
-        const double rowHeight = 24;
-        const double rowGap = 4;
-        const double minWidth = 132;
-        const double preferredMaxWidth = 220;
-
-        var maxColumns = Math.Max(1, (int)Math.Floor((_cardsAvailableWidth + gap) / (minWidth + gap)));
-        var rowsFit = Math.Max(1, (int)Math.Floor((_cardsAvailableHeight + rowGap) / (rowHeight + rowGap)));
-        var columnsNeededToFitHeight = (int)Math.Ceiling(count / (double)rowsFit);
-        var columnsNeededToAvoidSparseRows = (int)Math.Ceiling((_cardsAvailableWidth + gap) / (preferredMaxWidth + gap));
-        var columns = Math.Clamp(
-            Math.Max(columnsNeededToFitHeight, columnsNeededToAvoidSparseRows),
-            1,
-            maxColumns);
-
-        if (_cardsAvailableWidth >= (minWidth * 2) + gap)
-            columns = Math.Max(2, columns);
-
-        var width = Math.Max(minWidth, Math.Floor((_cardsAvailableWidth - ((columns - 1) * gap)) / columns));
-        foreach (var entry in Entries)
-        {
-            entry.NameTileWidth = width;
-            entry.NameTileHeight = rowHeight;
+            entry.CardWidth = layout.CardWidth;
+            entry.CardHeight = layout.CardHeight;
+            entry.NameTileWidth = layout.NameTileWidth;
+            entry.NameTileHeight = layout.NameTileHeight;
         }
     }
 

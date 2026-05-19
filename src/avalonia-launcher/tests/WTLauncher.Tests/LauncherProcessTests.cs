@@ -17,9 +17,11 @@ public sealed class LauncherProcessTests
             "echo started",
             false);
 
-        new LauncherProcess().Start(plan);
+        using var process = new LauncherProcess().Start(plan);
 
-        Assert.True(SpinWait.SpinUntil(() => File.Exists(Path.Combine(temp.Path, sentinelFile)), TimeSpan.FromSeconds(5)));
+        Assert.True(process.WaitForExit(5000), "expected launched process to exit before temp cleanup");
+        Assert.Equal(0, process.ExitCode);
+        Assert.True(File.Exists(Path.Combine(temp.Path, sentinelFile)));
         Assert.Equal("started", File.ReadAllText(Path.Combine(temp.Path, sentinelFile)).Trim());
     }
 }

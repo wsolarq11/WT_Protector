@@ -4,15 +4,15 @@ namespace WTLauncher.Core;
 
 public sealed class LauncherProcess
 {
-    public void Start(LaunchPlan plan)
+    public Process Start(LaunchPlan plan)
     {
         ArgumentNullException.ThrowIfNull(plan);
 
-        Process.Start(new ProcessStartInfo(plan.Executable)
+        return Process.Start(new ProcessStartInfo(plan.Executable)
         {
             Arguments = plan.Arguments,
             WorkingDirectory = plan.WorkingDirectory,
             UseShellExecute = false,
-        });
+        }) ?? throw new InvalidOperationException($"Failed to start process: {plan.Executable}");
     }
 }
