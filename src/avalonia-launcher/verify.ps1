@@ -21,7 +21,9 @@ Invoke-NativeStep 'dotnet test' { dotnet test $tests -c Release --no-restore --v
 Invoke-NativeStep 'dotnet publish app win-x64' { dotnet publish $app -c Release -r win-x64 --self-contained true --no-restore -o $publishDir }
 
 $exe = Join-Path $publishDir 'WTLauncher.App.exe'
+$dll = Join-Path $publishDir 'WTLauncher.App.dll'
 if (-not (Test-Path -LiteralPath $exe)) { throw "Published exe missing: $exe" }
+if (-not (Test-Path -LiteralPath $dll)) { throw "Published app dll missing: $dll" }
 if (-not (Test-Path -LiteralPath $testResultsFile)) { throw "Test result file missing: $testResultsFile" }
 
 [xml]$testResults = Get-Content -Raw -Encoding UTF8 -LiteralPath $testResultsFile
@@ -63,6 +65,9 @@ New-ToolReceipt 'avalonia-mainline-verify' @{
     tests = $totalTests
     guiSmoke = 'hidden-temp-config-window-title'
     publishedExe = $exe
+    publishedDll = $dll
     bytes = (Get-Item -LiteralPath $exe).Length
     sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $exe).Hash.Substring(0, 16)
+    dllBytes = (Get-Item -LiteralPath $dll).Length
+    dllSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $dll).Hash.Substring(0, 16)
 } | ConvertTo-Json -Depth 4 -Compress

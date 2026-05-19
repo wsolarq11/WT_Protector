@@ -1,14 +1,18 @@
+using WTLauncher.Core;
+
 namespace WTLauncher.App.ViewModels;
 
 public sealed class LauncherDisplayModeViewModel
 {
-    public LauncherDisplayModeViewModel(string id, string label)
+    public LauncherDisplayModeViewModel(LauncherEntryViewMode mode, string label)
     {
-        Id = id;
+        Mode = mode;
         Label = label;
     }
 
-    public string Id { get; }
+    public LauncherEntryViewMode Mode { get; }
+
+    public string Id => Mode.ToSettingsValue();
 
     public string Label { get; }
 

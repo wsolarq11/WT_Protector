@@ -106,7 +106,7 @@
   - Confirmation：所有启动项只受全局开关控制；关闭确认时任何命令都不弹确认，不再计算、存储或展示危险命令状态
 - Token/component ownership:
   - ViewModel 负责密度判断与拖拽状态
-  - ViewModel 负责三视图状态、名称墙列数/项目尺寸、全局启动确认设置
+  - ViewModel 负责三视图状态、名称墙列数/项目尺寸、全局启动确认设置；三视图只能有一个可变来源，`IsCardsViewMode` / `IsDetailedListMode` / `IsNamesViewMode` 仅作为只读投影
   - View 负责拖拽 ghost、插入指示、轻动画
 
 ## Accessibility
@@ -154,6 +154,7 @@
 - Performance constraints: DragOver 预演要避免无差别重排；仅在目标或方向变化时更新
 - Compatibility constraints: 保持 Windows 主路径与当前发布门禁一致
 - Test/screenshot expectations: UI 变更必须继续通过 repo gate；拖拽、三视图持久化、名称墙自适应、全局确认策略、危险命令判断删除、四框行对齐优先补单测/结构检查，截图/体验回执作为后续校验
+  - 发布 / verify receipt 至少记录 `WTLauncher.App.dll` 的 hash；`WTLauncher.App.exe` 只作为 apphost 外壳，不能单独作为“最新代码已发布”的唯一证据
 
 ## Open questions
 - [ ] 是否要把“⋯”更多菜单也提供键盘快捷键入口？

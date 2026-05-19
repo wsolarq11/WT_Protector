@@ -180,6 +180,7 @@ if ([int]$mainline.schemaVersion -ne 1) { throw "Avalonia mainline receipt schem
 if ($mainline.kind -ne 'avalonia-mainline-verify') { throw "Avalonia mainline receipt kind mismatch: $($mainline.kind)" }
 if ([string]::IsNullOrWhiteSpace([string]$mainline.repoHead)) { throw 'Avalonia mainline receipt repoHead is required' }
 if ($mainline.status -ne 'PASS') { throw 'Avalonia mainline verify did not pass' }
+if ([string]::IsNullOrWhiteSpace([string]$mainline.publishedDll)) { throw 'Avalonia mainline verify publishedDll is required' }
 Add-Check 'avalonia-mainline-verify' @{
     schemaVersion = $mainline.schemaVersion
     kind = $mainline.kind
@@ -189,7 +190,9 @@ Add-Check 'avalonia-mainline-verify' @{
     tests = $mainline.tests
     guiSmoke = $mainline.guiSmoke
     publishedExe = $mainline.publishedExe
+    publishedDll = $mainline.publishedDll
     sha256 = $mainline.sha256
+    dllSha256 = $mainline.dllSha256
 }
 
 New-ToolReceipt 'root-verify' @{

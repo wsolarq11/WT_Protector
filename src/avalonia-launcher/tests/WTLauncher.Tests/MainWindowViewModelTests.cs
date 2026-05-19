@@ -545,6 +545,38 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void EntryViewModeUsesOneTypedStateSource()
+    {
+        Assert.Null(typeof(MainWindowViewModel).GetProperty(nameof(MainWindowViewModel.IsCardsViewMode))?.SetMethod);
+        Assert.Null(typeof(MainWindowViewModel).GetProperty(nameof(MainWindowViewModel.IsDetailedListMode))?.SetMethod);
+        Assert.Null(typeof(MainWindowViewModel).GetProperty(nameof(MainWindowViewModel.IsNamesViewMode))?.SetMethod);
+
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            new LaunchEntry
+            {
+                Id = "one",
+                Name = "One",
+                Directory = "D:\\one",
+                Command = "codex",
+                Confirm = false,
+            });
+
+        var viewModel = new MainWindowViewModel(
+            config,
+            settings,
+            new LauncherSettings { EntryViewMode = "details" },
+            new LauncherProcess());
+
+        Assert.Equal(LauncherEntryViewMode.Details, viewModel.SelectedDisplayMode?.Mode);
+        Assert.Equal("details", viewModel.SelectedDisplayMode?.Id);
+        Assert.Equal(
+            1,
+            new[] { viewModel.IsCardsViewMode, viewModel.IsDetailedListMode, viewModel.IsNamesViewMode }.Count(value => value));
+    }
+
+    [Fact]
     public void CardSizingShrinksButtonsToFitVisibleEntriesInsideWindowRegion()
     {
         using var temp = new TempDirectory();

@@ -65,12 +65,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private LauncherDisplayModeViewModel? _selectedDisplayMode;
 
     [ObservableProperty]
-    private bool _isDetailedListMode;
-
-    [ObservableProperty]
-    private bool _isNamesViewMode;
-
-    [ObservableProperty]
     private bool _requireConfirmationForLaunches;
 
     public MainWindowViewModel(string configPath, string settingsPath, LauncherSettings settings, LauncherProcess launcherProcess)
@@ -85,7 +79,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _requireConfirmationForLaunches = settings.RequireConfirmationForLaunches;
         _isRefreshing = true;
         SelectedSortMode = SortModes.FirstOrDefault(mode => mode.Id == settings.SortMode) ?? SortModes[0];
-        SelectedDisplayMode = DisplayModes.FirstOrDefault(mode => mode.Id == settings.EntryViewMode) ?? DisplayModes[0];
+        var savedViewMode = LauncherEntryViewModes.Parse(settings.EntryViewMode);
+        SelectedDisplayMode = DisplayModes.FirstOrDefault(mode => mode.Mode == savedViewMode) ?? DisplayModes[0];
         _isRefreshing = false;
         Refresh();
     }
@@ -105,12 +100,18 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public ObservableCollection<LauncherDisplayModeViewModel> DisplayModes { get; } =
     [
-        new("cards", "卡片"),
-        new("details", "详细信息"),
-        new("names", "名称墙"),
+        new(LauncherEntryViewMode.Cards, "卡片"),
+        new(LauncherEntryViewMode.Details, "详细信息"),
+        new(LauncherEntryViewMode.Names, "名称墙"),
     ];
 
-    public bool IsCardsViewMode => !IsDetailedListMode && !IsNamesViewMode;
+    private LauncherEntryViewMode CurrentEntryViewMode => SelectedDisplayMode?.Mode ?? LauncherEntryViewMode.Cards;
+
+    public bool IsCardsViewMode => CurrentEntryViewMode == LauncherEntryViewMode.Cards;
+
+    public bool IsDetailedListMode => CurrentEntryViewMode == LauncherEntryViewMode.Details;
+
+    public bool IsNamesViewMode => CurrentEntryViewMode == LauncherEntryViewMode.Names;
 
     public string LaunchConfirmationToggleText => RequireConfirmationForLaunches ? "启动需确认" : "启动无需确认";
 
@@ -163,8 +164,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     partial void OnSelectedDisplayModeChanged(LauncherDisplayModeViewModel? value)
     {
-        IsDetailedListMode = value?.Id == "details";
-        IsNamesViewMode = value?.Id == "names";
+        OnPropertyChanged(nameof(IsCardsViewMode));
+        OnPropertyChanged(nameof(IsDetailedListMode));
+        OnPropertyChanged(nameof(IsNamesViewMode));
         if (value is null)
             return;
 
@@ -175,16 +177,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
             SaveSettings();
             StatusText = $"视图模式: {value.Label}（已保存）";
         }
-    }
-
-    partial void OnIsDetailedListModeChanged(bool value)
-    {
-        OnPropertyChanged(nameof(IsCardsViewMode));
-    }
-
-    partial void OnIsNamesViewModeChanged(bool value)
-    {
-        OnPropertyChanged(nameof(IsCardsViewMode));
     }
 
     partial void OnRequireConfirmationForLaunchesChanged(bool value)

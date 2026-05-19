@@ -9,6 +9,7 @@ $solution = Get-AvaloniaSolutionPath
 $app = Get-AvaloniaAppProjectPath
 $publishDir = Get-AvaloniaPublishDir
 $exe = [IO.Path]::GetFullPath((Join-Path $publishDir 'WTLauncher.App.exe'))
+$dll = [IO.Path]::GetFullPath((Join-Path $publishDir 'WTLauncher.App.dll'))
 
 if (-not (Test-Path -LiteralPath $solution)) { throw "Missing solution: $solution" }
 if (-not (Test-Path -LiteralPath $app)) { throw "Missing app project: $app" }
@@ -24,11 +25,15 @@ Invoke-NativeStep 'dotnet restore solution win-x64' { dotnet restore $solution -
 Invoke-NativeStep 'dotnet publish app win-x64' { dotnet publish $app -c Release -r win-x64 --self-contained true --no-restore -o $publishDir }
 
 if (-not (Test-Path -LiteralPath $exe)) { throw "Published exe missing: $exe" }
+if (-not (Test-Path -LiteralPath $dll)) { throw "Published app dll missing: $dll" }
 
 New-ToolReceipt 'release-build' @{
     sourceRoot = Get-AvaloniaRoot
     publishedExe = Resolve-Path -LiteralPath $exe | ForEach-Object { $_.Path }
+    publishedDll = Resolve-Path -LiteralPath $dll | ForEach-Object { $_.Path }
     bytes = (Get-Item -LiteralPath $exe).Length
     sha256 = (Get-ShortHash $exe)
+    dllBytes = (Get-Item -LiteralPath $dll).Length
+    dllSha256 = (Get-ShortHash $dll)
     builtAt = (Get-Item -LiteralPath $exe).LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')
 } | ConvertTo-Json -Depth 4 -Compress
