@@ -624,6 +624,9 @@ public sealed class MainWindowViewModelTests
         Assert.Null(typeof(MainWindowViewModel).GetProperty(nameof(MainWindowViewModel.IsCardsViewMode))?.SetMethod);
         Assert.Null(typeof(MainWindowViewModel).GetProperty(nameof(MainWindowViewModel.IsDetailedListMode))?.SetMethod);
         Assert.Null(typeof(MainWindowViewModel).GetProperty(nameof(MainWindowViewModel.IsNamesViewMode))?.SetMethod);
+        Assert.DoesNotContain(
+            typeof(MainWindowViewModel).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance),
+            field => field.Name.Contains("Refreshing", StringComparison.OrdinalIgnoreCase));
 
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(

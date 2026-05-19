@@ -14,7 +14,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly LauncherSettings _settings;
     private readonly LauncherProcess _launcherProcess;
     private LauncherPresetFile _presetFile = new();
-    private bool _isRefreshing;
     private double _cardsAvailableWidth = 900;
     private double _cardsAvailableHeight = 420;
     private DragReorderSession? _dragReorderSession;
@@ -68,11 +67,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ConfigPathDisplay = $"配置: {configPath} · 启动组: {_presetPath}";
         FilterText = settings.LastFilterText;
         _requireConfirmationForLaunches = settings.RequireConfirmationForLaunches;
-        _isRefreshing = true;
-        SelectedSortMode = SortModes.FirstOrDefault(mode => mode.Id == settings.SortMode) ?? SortModes[0];
+        _selectedSortMode = SortModes.FirstOrDefault(mode => mode.Id == settings.SortMode) ?? SortModes[0];
+        _settings.SortMode = _selectedSortMode.Id;
         var savedViewMode = LauncherEntryViewModes.Parse(settings.EntryViewMode);
-        SelectedDisplayMode = DisplayModes.FirstOrDefault(mode => mode.Mode == savedViewMode) ?? DisplayModes[0];
-        _isRefreshing = false;
+        _selectedDisplayMode = DisplayModes.FirstOrDefault(mode => mode.Mode == savedViewMode) ?? DisplayModes[0];
+        _settings.EntryViewMode = _selectedDisplayMode.Id;
         Refresh();
     }
 
@@ -146,13 +145,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
 
         _settings.SortMode = value.Id;
-        if (!_isRefreshing)
-        {
-            EnsureCustomOrderContainsEntries();
-            SaveSettings();
-            ApplyFilter();
-            StatusText = $"排序模式: {value.Label}（已保存）";
-        }
+        EnsureCustomOrderContainsEntries();
+        SaveSettings();
+        ApplyFilter();
+        StatusText = $"排序模式: {value.Label}（已保存）";
     }
 
     partial void OnSelectedDisplayModeChanged(LauncherDisplayModeViewModel? value)
@@ -165,11 +161,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         _settings.EntryViewMode = value.Id;
         RefreshEntryLayoutPresentation();
-        if (!_isRefreshing)
-        {
-            SaveSettings();
-            StatusText = $"视图模式: {value.Label}（已保存）";
-        }
+        SaveSettings();
+        StatusText = $"视图模式: {value.Label}（已保存）";
     }
 
     partial void OnRequireConfirmationForLaunchesChanged(bool value)
@@ -179,26 +172,21 @@ public sealed partial class MainWindowViewModel : ObservableObject
         OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
         RefreshEntryLayoutPresentation();
         ApplyFilter();
-        if (!_isRefreshing)
-        {
-            SaveSettings();
-            StatusText = value
-                ? "启动确认: 所有启动项启动前统一确认"
-                : "启动确认: 所有启动项直接启动";
-        }
+        SaveSettings();
+        StatusText = value
+            ? "启动确认: 所有启动项启动前统一确认"
+            : "启动确认: 所有启动项直接启动";
     }
 
     [RelayCommand]
     private void Refresh()
     {
-        _isRefreshing = true;
         Entries.Clear();
         foreach (var entry in LauncherConfigStore.Load(_configPath))
         {
             Entries.Add(new LauncherEntryViewModel(entry, this));
         }
         EnsureCustomOrderContainsEntries();
-        _isRefreshing = false;
 
         TotalCount = Entries.Count;
         SelectedCount = Entries.Count(entry => entry.IsSelected);
