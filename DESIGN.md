@@ -159,7 +159,7 @@
 - Design-token constraints: 不新增独立设计系统；沿用现有样式和可控的少量局部 token
 - Performance constraints: DragOver 预演要避免无差别重排；仅在目标或方向变化时更新
 - Compatibility constraints: 保持 Windows 主路径与当前发布门禁一致
-- Test/screenshot expectations: UI 变更必须继续通过 repo gate；拖拽、三视图持久化、名称墙自适应、全局确认策略、危险命令判断删除、四框行对齐优先补单测/结构检查，截图/体验回执作为后续校验
+- Test/screenshot expectations: UI 变更必须继续通过 repo gate；拖拽、三视图持久化、名称墙自适应、全局确认策略、危险命令判断删除、四框行对齐优先补单测/结构检查；拖拽 ghost 的尺寸与指针偏移由 `LauncherDragGhostLayoutCalculator` 单测锁定，截图/体验回执作为视觉重改后的补充证据而不是发布裁判
   - 发布 / verify receipt 至少记录 `WTLauncher.App.dll` 的 hash；`WTLauncher.App.exe` 只作为 apphost 外壳，不能单独作为“最新代码已发布”的唯一证据
 
 ## Open questions

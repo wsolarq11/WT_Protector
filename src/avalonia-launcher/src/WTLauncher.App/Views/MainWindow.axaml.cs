@@ -225,13 +225,16 @@ public sealed partial class MainWindow : Window
         if (_overlayLayer is null || _dragGhost is not null)
             return;
 
-        var width = Math.Max(200, sourceCard.Bounds.Width);
-        var height = Math.Max(96, sourceCard.Bounds.Height);
+        var layout = LauncherDragGhostLayoutCalculator.Calculate(
+            sourceCard.Bounds.Width,
+            sourceCard.Bounds.Height,
+            position.X,
+            position.Y);
 
         var ghost = new Border
         {
-            Width = width,
-            Height = height,
+            Width = layout.Width,
+            Height = layout.Height,
             Classes = { "card" },
             Background = Brushes.White,
             BorderBrush = Brush.Parse("#38BDF8"),
@@ -278,18 +281,22 @@ public sealed partial class MainWindow : Window
 
         _dragGhost = ghost;
         _overlayLayer.Children.Add(ghost);
-        UpdateDragGhostPosition(position);
+        SetDragGhostPosition(layout.Left, layout.Top);
     }
 
     private void UpdateDragGhostPosition(Point position)
     {
+        var ghostPosition = LauncherDragGhostLayoutCalculator.CalculatePosition(position.X, position.Y);
+        SetDragGhostPosition(ghostPosition.Left, ghostPosition.Top);
+    }
+
+    private void SetDragGhostPosition(double left, double top)
+    {
         if (_dragGhost is null)
             return;
 
-        const double offsetX = 16;
-        const double offsetY = 16;
-        Canvas.SetLeft(_dragGhost, position.X + offsetX);
-        Canvas.SetTop(_dragGhost, position.Y + offsetY);
+        Canvas.SetLeft(_dragGhost, left);
+        Canvas.SetTop(_dragGhost, top);
     }
 
     private void HideDragGhost()

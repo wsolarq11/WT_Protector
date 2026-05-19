@@ -36,10 +36,11 @@ Purpose: convert 12 external first-class design benchmarks into WT Launcher acce
 
 - `DESIGN.md` is the canonical local design contract.
 - `src/avalonia-launcher/src/WTLauncher.App/Views/MainWindow.axaml` owns the visual surface and XAML style tokens.
+- `src/avalonia-launcher/src/WTLauncher.Core/LauncherDragGhostLayoutCalculator.cs` owns drag ghost size and pointer-follow geometry.
 - `src/avalonia-launcher/src/WTLauncher.App/ViewModels/MainWindowViewModel.cs` owns view state, layout inputs, selection, presets, and entry mutation orchestration.
 - `src/avalonia-launcher/tests/WTLauncher.Tests/*` locks core contracts for drag preview, details/names/cards modes, sizing fallback, and persistence.
 - `tools/verify.ps1` and `tools/build-release.ps1` remain the release judge; screenshots/manual inspection are useful receipts but not replacements for the gate.
 
-## Open benchmark gaps
+## Optional visual receipts
 
-- Manual visual inspection of live drag ghost alignment and insert cue animation remains useful because current tests prove structure and smoke startup, not pixel-level motion fidelity.
+- Manual visual inspection of live drag ghost alignment and insert cue animation remains useful after visual-heavy changes, but it is no longer a blocking benchmark gap: current source-tracked tests cover drag cue structure, insert token ownership, ghost pointer-follow geometry, FLIP subscription safety, and GUI smoke startup.
