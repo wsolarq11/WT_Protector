@@ -198,23 +198,6 @@ public sealed partial class MainWindow : Window
         return ResolveEntryCardFromSource(visual);
     }
 
-    private static LauncherEntryViewModel? ResolveEntryFromSource(object? source)
-    {
-        if (source is StyledElement { DataContext: LauncherEntryViewModel directEntry })
-            return directEntry;
-
-        if (source is not Visual visual)
-            return null;
-
-        foreach (var ancestor in visual.GetSelfAndVisualAncestors())
-        {
-            if (ancestor is StyledElement { DataContext: LauncherEntryViewModel entry })
-                return entry;
-        }
-
-        return null;
-    }
-
     private static (LauncherEntryViewModel Entry, Border Card)? ResolveEntryCardFromSource(object? source)
     {
         if (source is StyledElement { DataContext: LauncherEntryViewModel directEntry } && source is Border directBorder && directBorder.Classes.Contains("card"))
