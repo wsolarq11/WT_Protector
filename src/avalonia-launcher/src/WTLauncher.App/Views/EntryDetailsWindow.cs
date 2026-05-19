@@ -13,7 +13,6 @@ public sealed class EntryDetailsWindow : Window
     private readonly TextBox _nameBox;
     private readonly TextBox _directoryBox;
     private readonly TextBox _commandBox;
-    private readonly CheckBox _confirmBox;
     private readonly CheckBox _selectedBox;
     private readonly TextBlock _errorText;
 
@@ -32,11 +31,6 @@ public sealed class EntryDetailsWindow : Window
         _nameBox = CreateTextBox(entry?.Name ?? "");
         _directoryBox = CreateTextBox(entry?.Directory ?? "");
         _commandBox = CreateTextBox(entry?.Command ?? "");
-        _confirmBox = new CheckBox
-        {
-            Content = "启动前确认",
-            IsChecked = entry?.Confirm ?? true,
-        };
         _selectedBox = new CheckBox
         {
             Content = "保存为已勾选",
@@ -95,12 +89,18 @@ public sealed class EntryDetailsWindow : Window
                 _directoryBox,
                 Label("命令"),
                 _commandBox,
+                new TextBlock
+                {
+                    Text = "启动确认由主窗口顶部开关统一控制；危险命令仍会强制确认。",
+                    Foreground = Brush.Parse("#64748B"),
+                    TextWrapping = TextWrapping.Wrap,
+                },
                 new StackPanel
                 {
                     Orientation = Orientation.Horizontal,
                     Spacing = 18,
                     Margin = new Thickness(0, 8, 0, 0),
-                    Children = { _confirmBox, _selectedBox },
+                    Children = { _selectedBox },
                 },
                 _errorText,
                 footer,
@@ -142,12 +142,13 @@ public sealed class EntryDetailsWindow : Window
 
     private void Submit()
     {
+        var command = _commandBox.Text?.Trim() ?? string.Empty;
         var draft = new EntryDraft(
             _idBox.Text?.Trim() ?? string.Empty,
             _nameBox.Text?.Trim() ?? string.Empty,
             _directoryBox.Text?.Trim() ?? string.Empty,
-            _commandBox.Text?.Trim() ?? string.Empty,
-            _confirmBox.IsChecked == true,
+            command,
+            LaunchArgumentBuilder.IsDangerousCommand(command),
             _selectedBox.IsChecked == true);
 
         if (string.IsNullOrWhiteSpace(draft.Id)

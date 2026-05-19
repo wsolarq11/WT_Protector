@@ -16,6 +16,9 @@ public sealed class LauncherSettings
     [JsonPropertyName("entryViewMode")]
     public string EntryViewMode { get; set; } = "cards";
 
+    [JsonPropertyName("requireConfirmationForLaunches")]
+    public bool RequireConfirmationForLaunches { get; set; } = true;
+
     [JsonPropertyName("customEntryOrder")]
     public List<string> CustomEntryOrder { get; set; } = [];
 

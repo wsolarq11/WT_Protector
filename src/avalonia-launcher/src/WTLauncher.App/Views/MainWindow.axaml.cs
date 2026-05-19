@@ -148,7 +148,7 @@ public sealed partial class MainWindow : Window
 
         var (target, card) = resolved!.Value;
         var positionInCard = e.GetPosition(card);
-        var insertAfter = viewModel.IsDetailedListMode
+        var insertAfter = UsesVerticalInsertPreview(viewModel)
             ? positionInCard.Y >= (card.Bounds.Height * 0.5)
             : positionInCard.X >= (card.Bounds.Width * 0.5);
         var before = CaptureEntryCardBounds();
@@ -173,7 +173,7 @@ public sealed partial class MainWindow : Window
 
         var (target, card) = resolved.Value;
         var positionInCard = e.GetPosition(card);
-        var insertAfter = viewModel.IsDetailedListMode
+        var insertAfter = UsesVerticalInsertPreview(viewModel)
             ? positionInCard.Y >= (card.Bounds.Height * 0.5)
             : positionInCard.X >= (card.Bounds.Width * 0.5);
         _activeDragEntryId = draggedId;
@@ -293,12 +293,29 @@ public sealed partial class MainWindow : Window
         _dragGhost = null;
     }
 
+    private static bool UsesVerticalInsertPreview(MainWindowViewModel viewModel)
+    {
+        return viewModel.IsDetailedListMode;
+    }
+
+    private Control? GetActiveEntriesRoot()
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+            return null;
+
+        if (viewModel.IsDetailedListMode)
+            return DetailsEntriesItemsControl;
+
+        if (viewModel.IsNamesViewMode)
+            return NamesEntriesItemsControl;
+
+        return CardsEntriesItemsControl;
+    }
+
     private Dictionary<string, Rect> CaptureEntryCardBounds()
     {
         var bounds = new Dictionary<string, Rect>(StringComparer.Ordinal);
-        var root = DataContext is MainWindowViewModel { IsDetailedListMode: true }
-            ? DetailsEntriesItemsControl
-            : CardsEntriesItemsControl;
+        var root = GetActiveEntriesRoot();
         if (root is null)
             return bounds;
 
@@ -321,9 +338,7 @@ public sealed partial class MainWindow : Window
 
     private void ScheduleReorderAnimation(Dictionary<string, Rect> before)
     {
-        var root = DataContext is MainWindowViewModel { IsDetailedListMode: true }
-            ? DetailsEntriesItemsControl
-            : CardsEntriesItemsControl;
+        var root = GetActiveEntriesRoot();
         if (before.Count == 0 || root is null)
             return;
 

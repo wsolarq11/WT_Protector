@@ -46,9 +46,9 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     public bool IsDangerous => LaunchArgumentBuilder.IsDangerousCommand(Entry.Command);
 
-    public bool RequiresConfirmation => Entry.Confirm || IsDangerous;
+    public bool RequiresConfirmation => _owner.EntryRequiresLaunchConfirmation(Entry);
 
-    public bool IsManualConfirmation => Entry.Confirm && !IsDangerous;
+    public bool IsManualConfirmation => false;
 
     [ObservableProperty]
     private bool _isSelected;
@@ -58,6 +58,12 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     [ObservableProperty]
     private double _cardHeight = 164;
+
+    [ObservableProperty]
+    private double _nameTileWidth = 180;
+
+    [ObservableProperty]
+    private double _nameTileHeight = 24;
 
     [ObservableProperty]
     private bool _isCompactLayout;
@@ -77,13 +83,13 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     [ObservableProperty]
     private bool _isDragInsertAfter;
 
-    public bool ShowDirectory => _owner.IsDetailedListMode || !IsMicroLayout;
+    public bool ShowDirectory => !_owner.IsNamesViewMode && (_owner.IsDetailedListMode || !IsMicroLayout);
 
-    public bool ShowCommand => _owner.IsDetailedListMode || !IsCompactLayout;
+    public bool ShowCommand => !_owner.IsNamesViewMode && (_owner.IsDetailedListMode || !IsCompactLayout);
 
-    public bool ShowUpdatedLabel => _owner.IsDetailedListMode || !IsMicroLayout;
+    public bool ShowUpdatedLabel => !_owner.IsDetailedListMode && !_owner.IsNamesViewMode && !IsMicroLayout;
 
-    public double TitleFontSize => _owner.IsDetailedListMode ? 13 : IsMicroLayout ? 15 : IsCompactLayout ? 16 : 18;
+    public double TitleFontSize => _owner.IsDetailedListMode || _owner.IsNamesViewMode ? 13 : IsMicroLayout ? 15 : IsCompactLayout ? 16 : 18;
 
     partial void OnIsSelectedChanged(bool value)
     {
@@ -146,6 +152,8 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     public void RefreshLayoutPresentation()
     {
+        OnPropertyChanged(nameof(RequiresConfirmation));
+        OnPropertyChanged(nameof(IsManualConfirmation));
         OnPropertyChanged(nameof(ShowDirectory));
         OnPropertyChanged(nameof(ShowCommand));
         OnPropertyChanged(nameof(ShowUpdatedLabel));

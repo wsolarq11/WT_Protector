@@ -44,7 +44,7 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
-    public void VisibleConfirmationCountersTrackFilteredEntries()
+    public void GlobalConfirmationSwitchPersistsAndDangerousEntriesStayConfirmed()
     {
         using var temp = new TempDirectory();
         var entries = new[]
@@ -54,7 +54,7 @@ public sealed class MainWindowViewModelTests
                 Id = "one",
                 Name = "one",
                 Directory = "D:\\one",
-                Command = "codex",
+                Command = "codex --dangerously-bypass-approvals-and-sandbox",
                 Confirm = true,
             },
             new LaunchEntry
@@ -68,12 +68,22 @@ public sealed class MainWindowViewModelTests
         };
         var (config, settings, _) = CreatePortableFixture(temp, entries);
 
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var viewModel = new MainWindowViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = false },
+            new LauncherProcess());
 
-        Assert.Equal(0, viewModel.VisibleDangerousCount);
-        Assert.False(viewModel.HasVisibleDangerous);
-        Assert.Equal(1, viewModel.VisibleManualConfirmCount);
-        Assert.True(viewModel.HasVisibleManualConfirm);
+        Assert.False(viewModel.RequireConfirmationForLaunches);
+        Assert.Equal(1, viewModel.VisibleDangerousCount);
+        Assert.True(viewModel.HasVisibleDangerous);
+        Assert.False(viewModel.Entries.Single(entry => entry.Id == "two").RequiresConfirmation);
+        Assert.True(viewModel.Entries.Single(entry => entry.Id == "one").RequiresConfirmation);
+
+        viewModel.RequireConfirmationForLaunches = true;
+
+        Assert.True(LauncherSettingsStore.Load(settings).RequireConfirmationForLaunches);
+        Assert.All(viewModel.Entries, entry => Assert.True(entry.RequiresConfirmation));
 
         viewModel.FilterText = "two";
 
@@ -282,7 +292,7 @@ public sealed class MainWindowViewModelTests
         Assert.Equal("One Renamed", edited.Name);
         Assert.Equal("D:\\renamed", edited.Directory);
         Assert.Equal("opencode", edited.Command);
-        Assert.True(edited.Confirm);
+        Assert.False(edited.Confirm);
         Assert.False(edited.Selected);
         Assert.False(string.IsNullOrWhiteSpace(edited.UpdatedAtUtc));
 
@@ -512,16 +522,29 @@ public sealed class MainWindowViewModelTests
         viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == "details");
 
         Assert.True(viewModel.IsDetailedListMode);
+        Assert.False(viewModel.IsNamesViewMode);
         Assert.False(viewModel.IsCardsViewMode);
         Assert.True(entry.ShowDirectory);
         Assert.True(entry.ShowCommand);
-        Assert.True(entry.ShowUpdatedLabel);
+        Assert.False(entry.ShowUpdatedLabel);
         Assert.Equal(13, entry.TitleFontSize);
         Assert.Equal("details", LauncherSettingsStore.Load(settings).EntryViewMode);
+
+        viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == "names");
+
+        Assert.False(viewModel.IsDetailedListMode);
+        Assert.True(viewModel.IsNamesViewMode);
+        Assert.False(viewModel.IsCardsViewMode);
+        Assert.False(entry.ShowDirectory);
+        Assert.False(entry.ShowCommand);
+        Assert.False(entry.ShowUpdatedLabel);
+        Assert.Equal(13, entry.TitleFontSize);
+        Assert.Equal("names", LauncherSettingsStore.Load(settings).EntryViewMode);
 
         viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == "cards");
 
         Assert.False(viewModel.IsDetailedListMode);
+        Assert.False(viewModel.IsNamesViewMode);
         Assert.True(viewModel.IsCardsViewMode);
         Assert.False(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
@@ -565,6 +588,38 @@ public sealed class MainWindowViewModelTests
         var usedHeight = (rows * first.CardHeight) + ((rows - 1) * gap);
         Assert.True(usedWidth <= 640.001, $"expected cards to fit available width, got {usedWidth}");
         Assert.True(usedHeight <= 260.001, $"expected cards to fit available height, got {usedHeight}");
+    }
+
+    [Fact]
+    public void NameWallSizingUsesAdaptiveMultiColumnTiles()
+    {
+        using var temp = new TempDirectory();
+        var entries = Enumerable.Range(1, 19)
+            .Select(index => new LaunchEntry
+            {
+                Id = $"entry-{index}",
+                Name = $"Entry {index}",
+                Directory = $"D:\\entry-{index}",
+                Command = "pwsh",
+                Confirm = false,
+            })
+            .ToArray();
+        var (config, settings, _) = CreatePortableFixture(temp, entries);
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+
+        viewModel.UpdateCardsAvailableSize(892, 330);
+
+        var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
+        Assert.Equal(24, first.NameTileHeight);
+        Assert.InRange(first.NameTileWidth, 132, 220);
+
+        const double gap = 6;
+        const double rowGap = 4;
+        var columns = Math.Max(1, (int)Math.Floor((892 + gap) / (first.NameTileWidth + gap)));
+        var rows = (int)Math.Ceiling(viewModel.VisibleEntries.Count / (double)columns);
+        var usedHeight = (rows * first.NameTileHeight) + ((rows - 1) * rowGap);
+        Assert.True(columns >= 4, $"expected name wall to adapt to multiple columns, got {columns}");
+        Assert.True(usedHeight <= 330.001, $"expected name wall to fit all 19 root-scale items in the available height, got {usedHeight}");
     }
 
     [Fact]

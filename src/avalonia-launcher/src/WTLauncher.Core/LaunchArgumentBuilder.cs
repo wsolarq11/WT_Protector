@@ -4,7 +4,7 @@ namespace WTLauncher.Core;
 
 public static class LaunchArgumentBuilder
 {
-    public static LaunchPlan Build(LaunchEntry entry, bool validateDirectory = true)
+    public static LaunchPlan Build(LaunchEntry entry, bool validateDirectory = true, bool? requireConfirmation = null)
     {
         ArgumentNullException.ThrowIfNull(entry);
 
@@ -28,7 +28,7 @@ public static class LaunchArgumentBuilder
             arguments,
             directory,
             command,
-            entry.Confirm || isDangerous,
+            (requireConfirmation ?? entry.Confirm) || isDangerous,
             isDangerous);
     }
 

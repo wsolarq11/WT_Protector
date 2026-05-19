@@ -41,6 +41,29 @@ public sealed class LaunchArgumentBuilderTests
         Assert.True(plan.RequiresConfirmation);
     }
 
+    [Fact]
+    public void Build_UsesLaunchConfirmationOverrideButKeepsDangerousCommandsConfirmed()
+    {
+        using var temp = new TempDirectory();
+        var entry = new LaunchEntry
+        {
+            Name = "plain",
+            Directory = temp.Path,
+            Command = "pwsh",
+            Confirm = true,
+        };
+
+        var directPlan = LaunchArgumentBuilder.Build(entry, requireConfirmation: false);
+
+        Assert.False(directPlan.RequiresConfirmation);
+
+        entry.Command = "codex --dangerously-bypass-approvals-and-sandbox";
+        var dangerousPlan = LaunchArgumentBuilder.Build(entry, requireConfirmation: false);
+
+        Assert.True(dangerousPlan.IsDangerous);
+        Assert.True(dangerousPlan.RequiresConfirmation);
+    }
+
     [Theory]
     [InlineData("plain", "\"plain\"")]
     [InlineData("has space", "\"has space\"")]

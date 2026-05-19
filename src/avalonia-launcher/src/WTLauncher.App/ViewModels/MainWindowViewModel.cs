@@ -77,6 +77,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private bool _isDetailedListMode;
 
+    [ObservableProperty]
+    private bool _isNamesViewMode;
+
+    [ObservableProperty]
+    private bool _requireConfirmationForLaunches;
+
     public MainWindowViewModel(string configPath, string settingsPath, LauncherSettings settings, LauncherProcess launcherProcess)
     {
         _configPath = configPath;
@@ -86,6 +92,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _launcherProcess = launcherProcess;
         ConfigPathDisplay = $"配置: {configPath} · 启动组: {_presetPath}";
         FilterText = settings.LastFilterText;
+        _requireConfirmationForLaunches = settings.RequireConfirmationForLaunches;
         _isRefreshing = true;
         SelectedSortMode = SortModes.FirstOrDefault(mode => mode.Id == settings.SortMode) ?? SortModes[0];
         SelectedDisplayMode = DisplayModes.FirstOrDefault(mode => mode.Id == settings.EntryViewMode) ?? DisplayModes[0];
@@ -109,10 +116,17 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public ObservableCollection<LauncherDisplayModeViewModel> DisplayModes { get; } =
     [
         new("cards", "卡片"),
-        new("details", "详细列表"),
+        new("details", "详细信息"),
+        new("names", "名称墙"),
     ];
 
-    public bool IsCardsViewMode => !IsDetailedListMode;
+    public bool IsCardsViewMode => !IsDetailedListMode && !IsNamesViewMode;
+
+    public string LaunchConfirmationToggleText => RequireConfirmationForLaunches ? "启动需确认" : "启动无需确认";
+
+    public string LaunchConfirmationToggleTip => RequireConfirmationForLaunches
+        ? "普通启动项启动前会确认；危险命令始终强制确认。"
+        : "普通启动项会直接启动；危险命令仍会强制确认。";
 
     public string ConfigPathDisplay { get; }
 
@@ -160,6 +174,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     partial void OnSelectedDisplayModeChanged(LauncherDisplayModeViewModel? value)
     {
         IsDetailedListMode = value?.Id == "details";
+        IsNamesViewMode = value?.Id == "names";
         if (value is null)
             return;
 
@@ -175,6 +190,27 @@ public sealed partial class MainWindowViewModel : ObservableObject
     partial void OnIsDetailedListModeChanged(bool value)
     {
         OnPropertyChanged(nameof(IsCardsViewMode));
+    }
+
+    partial void OnIsNamesViewModeChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsCardsViewMode));
+    }
+
+    partial void OnRequireConfirmationForLaunchesChanged(bool value)
+    {
+        _settings.RequireConfirmationForLaunches = value;
+        OnPropertyChanged(nameof(LaunchConfirmationToggleText));
+        OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
+        RefreshEntryLayoutPresentation();
+        ApplyFilter();
+        if (!_isRefreshing)
+        {
+            SaveSettings();
+            StatusText = value
+                ? "启动确认: 普通启动项启动前确认（危险命令始终确认）"
+                : "启动确认: 普通启动项直接启动（危险命令仍会确认）";
+        }
     }
 
     partial void OnVisibleDangerousCountChanged(int value)
@@ -671,11 +707,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         try
         {
-            var accepted = await ConfirmBatchLaunchAsync(selected.Select(entry => entry.Entry).ToList()).ConfigureAwait(true);
-            if (!accepted)
+            if (selected.Any(entry => entry.RequiresConfirmation))
             {
-                StatusText = $"已取消: 批量启动 {selected.Count} 项";
-                return;
+                var accepted = await ConfirmBatchLaunchAsync(selected.Select(entry => entry.Entry).ToList()).ConfigureAwait(true);
+                if (!accepted)
+                {
+                    StatusText = $"已取消: 批量启动 {selected.Count} 项";
+                    return;
+                }
             }
 
             var ok = 0;
@@ -684,7 +723,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             {
                 try
                 {
-                    var plan = LaunchArgumentBuilder.Build(item.Entry);
+                    var plan = BuildLaunchPlan(item.Entry);
                     DryRunText = $"{plan.Executable} {plan.Arguments}";
                     _launcherProcess.Start(plan);
                     ok++;
@@ -709,7 +748,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         try
         {
-            var plan = LaunchArgumentBuilder.Build(item.Entry);
+            var plan = BuildLaunchPlan(item.Entry);
             DryRunText = $"{plan.Executable} {plan.Arguments}";
             StatusText = plan.RequiresConfirmation
                 ? $"预演: {item.Name}（需要确认）"
@@ -720,6 +759,17 @@ public sealed partial class MainWindowViewModel : ObservableObject
             DryRunText = ex.Message;
             StatusText = $"预演失败: {item.Name}";
         }
+    }
+
+    internal bool EntryRequiresLaunchConfirmation(LaunchEntry entry)
+    {
+        return RequireConfirmationForLaunches
+            || LaunchArgumentBuilder.IsDangerousCommand(entry.Command);
+    }
+
+    private LaunchPlan BuildLaunchPlan(LaunchEntry entry, bool validateDirectory = true)
+    {
+        return LaunchArgumentBuilder.Build(entry, validateDirectory, RequireConfirmationForLaunches);
     }
 
     internal void UpdateSelection(LauncherEntryViewModel item, bool selected)
@@ -742,7 +792,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         try
         {
-            var plan = LaunchArgumentBuilder.Build(item.Entry);
+            var plan = BuildLaunchPlan(item.Entry);
             DryRunText = $"{plan.Executable} {plan.Arguments}";
             if (plan.RequiresConfirmation)
             {
@@ -874,6 +924,38 @@ public sealed partial class MainWindowViewModel : ObservableObject
             entry.CardWidth = cardWidth;
             entry.CardHeight = cardHeight;
         }
+
+        RecalculateNameTileSize();
+    }
+
+    private void RecalculateNameTileSize()
+    {
+        var targets = VisibleEntries.Count > 0 ? VisibleEntries : Entries;
+        var count = Math.Max(1, targets.Count);
+        const double gap = 6;
+        const double rowHeight = 24;
+        const double rowGap = 4;
+        const double minWidth = 132;
+        const double preferredMaxWidth = 220;
+
+        var maxColumns = Math.Max(1, (int)Math.Floor((_cardsAvailableWidth + gap) / (minWidth + gap)));
+        var rowsFit = Math.Max(1, (int)Math.Floor((_cardsAvailableHeight + rowGap) / (rowHeight + rowGap)));
+        var columnsNeededToFitHeight = (int)Math.Ceiling(count / (double)rowsFit);
+        var columnsNeededToAvoidSparseRows = (int)Math.Ceiling((_cardsAvailableWidth + gap) / (preferredMaxWidth + gap));
+        var columns = Math.Clamp(
+            Math.Max(columnsNeededToFitHeight, columnsNeededToAvoidSparseRows),
+            1,
+            maxColumns);
+
+        if (_cardsAvailableWidth >= (minWidth * 2) + gap)
+            columns = Math.Max(2, columns);
+
+        var width = Math.Max(minWidth, Math.Floor((_cardsAvailableWidth - ((columns - 1) * gap)) / columns));
+        foreach (var entry in Entries)
+        {
+            entry.NameTileWidth = width;
+            entry.NameTileHeight = rowHeight;
+        }
     }
 
     private IEnumerable<LauncherEntryViewModel> SortEntries(IEnumerable<LauncherEntryViewModel> entries)
@@ -935,7 +1017,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             Name = (draft.Name ?? string.Empty).Trim(),
             Directory = (draft.Directory ?? string.Empty).Trim(),
             Command = (draft.Command ?? string.Empty).Trim(),
-            Confirm = draft.Confirm,
+            Confirm = LaunchArgumentBuilder.IsDangerousCommand(draft.Command),
             Selected = draft.Selected,
             UpdatedAtUtc = previousEntry?.UpdatedAtUtc ?? string.Empty,
         };
