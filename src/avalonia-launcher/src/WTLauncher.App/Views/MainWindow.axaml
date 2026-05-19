@@ -31,6 +31,7 @@
           <DoubleTransition Property="Opacity" Duration="0:0:0.12"/>
           <BrushTransition Property="BorderBrush" Duration="0:0:0.12"/>
           <ThicknessTransition Property="BorderThickness" Duration="0:0:0.12"/>
+          <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12"/>
         </Transitions>
       </Setter>
     </Style>
@@ -42,12 +43,38 @@
       <Setter Property="Padding" Value="10"/>
       <Setter Property="CornerRadius" Value="11"/>
     </Style>
+    <Style Selector="Border.card.detail-row">
+      <Setter Property="Padding" Value="14"/>
+      <Setter Property="CornerRadius" Value="12"/>
+    </Style>
     <Style Selector="Border.card.drag-target">
       <Setter Property="BorderBrush" Value="#38BDF8"/>
       <Setter Property="BorderThickness" Value="2"/>
     </Style>
     <Style Selector="Border.card.drag-source">
       <Setter Property="Opacity" Value="0.55"/>
+    </Style>
+    <Style Selector="Border.card.detail-row TextBlock.card-title">
+      <Setter Property="FontSize" Value="17"/>
+    </Style>
+    <Style Selector="Border.card.detail-row Border.confirm-badge">
+      <Setter Property="Height" Value="20"/>
+      <Setter Property="Padding" Value="8,0"/>
+    </Style>
+    <Style Selector="Border.card.detail-row TextBlock.confirm-badge-text">
+      <Setter Property="FontSize" Value="11"/>
+    </Style>
+    <Style Selector="Border.card.detail-row Button.primary">
+      <Setter Property="Padding" Value="13,7"/>
+      <Setter Property="CornerRadius" Value="9"/>
+    </Style>
+    <Style Selector="Border.card.detail-row Button.more">
+      <Setter Property="Padding" Value="11,6"/>
+      <Setter Property="CornerRadius" Value="9"/>
+    </Style>
+    <Style Selector="Border.card.detail-row Border.entry-drag-handle">
+      <Setter Property="Padding" Value="7,3"/>
+      <Setter Property="CornerRadius" Value="8"/>
     </Style>
     <Style Selector="TextBlock.card-title">
       <Setter Property="FontSize" Value="18"/>
@@ -305,6 +332,14 @@
                   SelectedItem="{Binding SelectedSortMode, Mode=TwoWay}"
                   Width="150"
                   VerticalAlignment="Center"/>
+        <TextBlock Text="视图"
+                   Classes="muted"
+                   VerticalAlignment="Center"
+                   Margin="12,0,0,0"/>
+        <ComboBox ItemsSource="{Binding DisplayModes}"
+                  SelectedItem="{Binding SelectedDisplayMode, Mode=TwoWay}"
+                  Width="150"
+                  VerticalAlignment="Center"/>
       </StackPanel>
       <TextBlock Grid.Row="4"
                  Grid.ColumnSpan="2"
@@ -317,127 +352,253 @@
                   Margin="0,16,0,14"
                   HorizontalScrollBarVisibility="Disabled"
                   VerticalScrollBarVisibility="Auto">
-      <ItemsControl ItemsSource="{Binding VisibleEntries}">
-        <ItemsControl.ItemsPanel>
-          <ItemsPanelTemplate>
-            <WrapPanel ItemSpacing="10" LineSpacing="10"/>
-          </ItemsPanelTemplate>
-        </ItemsControl.ItemsPanel>
-        <ItemsControl.ItemTemplate>
-          <DataTemplate>
-            <Border Classes="card"
-                    Classes.drag-target="{Binding IsDragPreviewTarget}"
-                    Classes.drag-source="{Binding IsDragPreviewSource}"
-                    Classes.compact="{Binding IsCompactLayout}"
-                    Classes.micro="{Binding IsMicroLayout}"
-                    Width="{Binding CardWidth}"
-                    Height="{Binding CardHeight}"
-                    ClipToBounds="True"
-                    DragDrop.AllowDrop="True">
-              <Border.ContextMenu>
-                <ContextMenu>
-                  <MenuItem Header="启动"
+      <Grid>
+        <ItemsControl x:Name="CardsEntriesItemsControl"
+                      ItemsSource="{Binding VisibleEntries}"
+                      IsVisible="{Binding IsCardsViewMode}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel ItemSpacing="10" LineSpacing="10"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Classes="card"
+                      Classes.drag-target="{Binding IsDragPreviewTarget}"
+                      Classes.drag-source="{Binding IsDragPreviewSource}"
+                      Classes.compact="{Binding IsCompactLayout}"
+                      Classes.micro="{Binding IsMicroLayout}"
+                      Width="{Binding CardWidth}"
+                      Height="{Binding CardHeight}"
+                      ClipToBounds="True"
+                      DragDrop.AllowDrop="True">
+                <Border.ContextMenu>
+                  <ContextMenu>
+                    <MenuItem Header="启动"
+                              Command="{Binding LaunchCommand}"/>
+                    <MenuItem Header="预演"
+                              Command="{Binding DryRunCommand}"/>
+                    <MenuItem Header="编辑"
+                              Command="{Binding EditCommand}"/>
+                    <MenuItem Header="删除"
+                              Command="{Binding DeleteCommand}"/>
+                  </ContextMenu>
+                </Border.ContextMenu>
+                <Grid RowDefinitions="Auto,*,Auto,Auto">
+                  <Border Grid.RowSpan="4"
+                          Width="4"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Stretch"
+                          CornerRadius="2"
+                          Background="#38BDF8"
+                          Opacity="0.9"
+                          IsHitTestVisible="False"
+                          IsVisible="{Binding IsDragInsertBefore}"/>
+                  <Border Grid.RowSpan="4"
+                          Width="4"
+                          HorizontalAlignment="Right"
+                          VerticalAlignment="Stretch"
+                          CornerRadius="2"
+                          Background="#38BDF8"
+                          Opacity="0.9"
+                          IsHitTestVisible="False"
+                          IsVisible="{Binding IsDragInsertAfter}"/>
+                  <Grid Classes="entry-header"
+                        ColumnDefinitions="Auto,*,Auto">
+                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                              VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1"
+                               Margin="8,0,0,0"
+                               Classes="card-title"
+                               FontSize="{Binding TitleFontSize}"
+                               VerticalAlignment="Center"
+                               Text="{Binding Name}"/>
+                    <Border Grid.Column="2"
+                            Classes="confirm-badge danger"
+                            IsVisible="{Binding IsDangerous}"
+                            ToolTip.Tip="危险命令：包含 dangerously 等高风险标记，启动前将强制确认">
+                      <TextBlock Classes="confirm-badge-text danger"
+                                 Text="危险"/>
+                    </Border>
+                    <Border Grid.Column="2"
+                            Classes="confirm-badge manual-confirm"
+                            IsVisible="{Binding IsManualConfirmation}"
+                            ToolTip.Tip="手动确认：该启动项被设置为启动前需要确认">
+                      <TextBlock Classes="confirm-badge-text manual-confirm"
+                                 Text="需确认"/>
+                    </Border>
+                  </Grid>
+                  <StackPanel Grid.Row="1"
+                              ClipToBounds="True">
+                    <TextBlock Classes="mono entry-dir"
+                               IsVisible="{Binding ShowDirectory}"
+                               MaxLines="1"
+                               TextTrimming="PathSegmentEllipsis"
+                               Text="{Binding Directory}"/>
+                    <TextBlock Classes="mono entry-cmd"
+                               IsVisible="{Binding ShowCommand}"
+                               MaxLines="1"
+                               TextTrimming="CharacterEllipsis"
+                               Text="{Binding Command}"/>
+                  </StackPanel>
+                  <Grid Grid.Row="2"
+                        Classes="entry-actions"
+                        ColumnDefinitions="*,Auto">
+                    <Button Classes="primary"
+                            Content="启动"
                             Command="{Binding LaunchCommand}"/>
-                  <MenuItem Header="预演"
-                            Command="{Binding DryRunCommand}"/>
-                  <MenuItem Header="编辑"
-                            Command="{Binding EditCommand}"/>
-                  <MenuItem Header="删除"
-                            Command="{Binding DeleteCommand}"/>
-                </ContextMenu>
-              </Border.ContextMenu>
-              <Grid RowDefinitions="Auto,*,Auto,Auto">
-                <Border Grid.RowSpan="4"
-                        Width="4"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        CornerRadius="2"
-                        Background="#38BDF8"
-                        Opacity="0.9"
-                        IsHitTestVisible="False"
-                        IsVisible="{Binding IsDragInsertBefore}"/>
-                <Border Grid.RowSpan="4"
-                        Width="4"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Stretch"
-                        CornerRadius="2"
-                        Background="#38BDF8"
-                        Opacity="0.9"
-                        IsHitTestVisible="False"
-                        IsVisible="{Binding IsDragInsertAfter}"/>
-                <Grid Classes="entry-header"
-                      ColumnDefinitions="Auto,*,Auto">
-                  <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                    <Button Grid.Column="1"
+                            Classes="secondary more"
+                            Content="⋯"
+                            Margin="8,0,0,0"
+                            Click="OnEntryMoreClicked"/>
+                  </Grid>
+                  <Grid Grid.Row="3"
+                        Classes="entry-footer"
+                        ColumnDefinitions="*,Auto">
+                    <TextBlock Classes="muted"
+                               IsVisible="{Binding ShowUpdatedLabel}"
+                               Text="{Binding UpdatedLabel}"/>
+                    <Border Grid.Column="1"
+                            Classes="entry-drag-handle"
+                            Cursor="Hand"
+                            PointerPressed="OnEntryDragPointerPressed">
+                      <TextBlock Text="拖拽"
+                                 Foreground="#334155"
+                                 FontSize="12"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"/>
+                    </Border>
+                  </Grid>
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <ItemsControl x:Name="DetailsEntriesItemsControl"
+                      ItemsSource="{Binding VisibleEntries}"
+                      IsVisible="{Binding IsDetailedListMode}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Spacing="10"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Classes="card detail-row"
+                      Classes.drag-target="{Binding IsDragPreviewTarget}"
+                      Classes.drag-source="{Binding IsDragPreviewSource}"
+                      ClipToBounds="True"
+                      HorizontalAlignment="Stretch"
+                      DragDrop.AllowDrop="True">
+                <Border.ContextMenu>
+                  <ContextMenu>
+                    <MenuItem Header="启动"
+                              Command="{Binding LaunchCommand}"/>
+                    <MenuItem Header="预演"
+                              Command="{Binding DryRunCommand}"/>
+                    <MenuItem Header="编辑"
+                              Command="{Binding EditCommand}"/>
+                    <MenuItem Header="删除"
+                              Command="{Binding DeleteCommand}"/>
+                  </ContextMenu>
+                </Border.ContextMenu>
+                <Grid ColumnDefinitions="Auto,*,Auto"
+                      RowDefinitions="Auto,Auto,Auto,Auto"
+                      ColumnSpacing="12"
+                      RowSpacing="2">
+                  <Border Grid.RowSpan="4"
+                          Height="4"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Top"
+                          CornerRadius="2"
+                          Background="#38BDF8"
+                          Opacity="0.9"
+                          IsHitTestVisible="False"
+                          IsVisible="{Binding IsDragInsertBefore}"/>
+                  <Border Grid.RowSpan="4"
+                          Height="4"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Bottom"
+                          CornerRadius="2"
+                          Background="#38BDF8"
+                          Opacity="0.9"
+                          IsHitTestVisible="False"
+                          IsVisible="{Binding IsDragInsertAfter}"/>
+                  <CheckBox Grid.RowSpan="4"
+                            IsChecked="{Binding IsSelected, Mode=TwoWay}"
                             VerticalAlignment="Center"/>
-                  <TextBlock Grid.Column="1"
-                             Margin="8,0,0,0"
-                             Classes="card-title"
-                             FontSize="{Binding TitleFontSize}"
-                             VerticalAlignment="Center"
-                             Text="{Binding Name}"/>
-                  <Border Grid.Column="2"
-                          Classes="confirm-badge danger"
-                          IsVisible="{Binding IsDangerous}"
-                          ToolTip.Tip="危险命令：包含 dangerously 等高风险标记，启动前将强制确认">
-                    <TextBlock Classes="confirm-badge-text danger"
-                               Text="危险"/>
-                  </Border>
-                  <Border Grid.Column="2"
-                          Classes="confirm-badge manual-confirm"
-                          IsVisible="{Binding IsManualConfirmation}"
-                          ToolTip.Tip="手动确认：该启动项被设置为启动前需要确认">
-                    <TextBlock Classes="confirm-badge-text manual-confirm"
-                               Text="需确认"/>
-                  </Border>
+                  <Grid Grid.Column="1"
+                        RowDefinitions="Auto,Auto,Auto,Auto">
+                    <Grid ColumnDefinitions="*,Auto"
+                          VerticalAlignment="Center">
+                      <TextBlock Classes="card-title"
+                                 FontSize="{Binding TitleFontSize}"
+                                 Text="{Binding Name}"/>
+                      <StackPanel Grid.Column="1"
+                                  Orientation="Horizontal"
+                                  Spacing="8"
+                                  VerticalAlignment="Center">
+                        <Border Classes="confirm-badge danger"
+                                IsVisible="{Binding IsDangerous}"
+                                ToolTip.Tip="危险命令：包含 dangerously 等高风险标记，启动前将强制确认">
+                          <TextBlock Classes="confirm-badge-text danger"
+                                     Text="危险"/>
+                        </Border>
+                        <Border Classes="confirm-badge manual-confirm"
+                                IsVisible="{Binding IsManualConfirmation}"
+                                ToolTip.Tip="手动确认：该启动项被设置为启动前需要确认">
+                          <TextBlock Classes="confirm-badge-text manual-confirm"
+                                     Text="需确认"/>
+                        </Border>
+                      </StackPanel>
+                    </Grid>
+                    <TextBlock Grid.Row="1"
+                               Classes="mono entry-dir"
+                               IsVisible="{Binding ShowDirectory}"
+                               MaxLines="1"
+                               TextTrimming="PathSegmentEllipsis"
+                               Text="{Binding Directory}"/>
+                    <TextBlock Grid.Row="2"
+                               Classes="mono entry-cmd"
+                               IsVisible="{Binding ShowCommand}"
+                               MaxLines="1"
+                               TextTrimming="CharacterEllipsis"
+                               Text="{Binding Command}"/>
+                    <TextBlock Grid.Row="3"
+                               Classes="muted entry-footer"
+                               IsVisible="{Binding ShowUpdatedLabel}"
+                               Text="{Binding UpdatedLabel}"/>
+                  </Grid>
+                  <StackPanel Grid.Column="2"
+                              Grid.RowSpan="4"
+                              Orientation="Vertical"
+                              Spacing="8"
+                              VerticalAlignment="Center">
+                    <Button Classes="primary"
+                            Content="启动"
+                            Command="{Binding LaunchCommand}"/>
+                    <Button Classes="secondary more"
+                            Content="⋯"
+                            Click="OnEntryMoreClicked"/>
+                    <Border Classes="entry-drag-handle"
+                            Cursor="Hand"
+                            HorizontalAlignment="Center"
+                            PointerPressed="OnEntryDragPointerPressed">
+                      <TextBlock Text="拖拽"
+                                 Foreground="#334155"
+                                 FontSize="12"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"/>
+                    </Border>
+                  </StackPanel>
                 </Grid>
-                <StackPanel Grid.Row="1"
-                            ClipToBounds="True">
-                  <TextBlock Classes="mono entry-dir"
-                             IsVisible="{Binding ShowDirectory}"
-                             MaxLines="1"
-                             TextTrimming="PathSegmentEllipsis"
-                             Text="{Binding Directory}"/>
-                  <TextBlock Classes="mono entry-cmd"
-                             IsVisible="{Binding ShowCommand}"
-                             MaxLines="1"
-                             TextTrimming="CharacterEllipsis"
-                             Text="{Binding Command}"/>
-                </StackPanel>
-                <Grid Grid.Row="2"
-                      Classes="entry-actions"
-                      ColumnDefinitions="*,Auto"
-                      >
-                  <Button Classes="primary"
-                          Content="启动"
-                          Command="{Binding LaunchCommand}"/>
-                  <Button Grid.Column="1"
-                          Classes="secondary more"
-                          Content="⋯"
-                          Margin="8,0,0,0"
-                          Click="OnEntryMoreClicked"/>
-                </Grid>
-                <Grid Grid.Row="3"
-                      Classes="entry-footer"
-                      ColumnDefinitions="*,Auto">
-                  <TextBlock Classes="muted"
-                             IsVisible="{Binding ShowUpdatedLabel}"
-                             Text="{Binding UpdatedLabel}"/>
-                  <Border Grid.Column="1"
-                          Classes="entry-drag-handle"
-                          Cursor="Hand"
-                          PointerPressed="OnEntryDragPointerPressed">
-                    <TextBlock Text="拖拽"
-                               Foreground="#334155"
-                               FontSize="12"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"/>
-                  </Border>
-                </Grid>
-              </Grid>
-            </Border>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </Grid>
     </ScrollViewer>
 
     <Border Grid.Row="2"

@@ -193,6 +193,9 @@ The Avalonia mainline supports:
 - search and direct card launch;
 - single launch and batch launch;
 - adaptive card sizing so the visible buttons shrink to fit the current window region instead of forcing a second scroll path;
+- custom-order dragging with a cursor-following ghost and live reorder preview so the redistribution is visible before drop;
+- three density states (Normal / Compact / Micro) that keep card content readable while the scroll view remains the fallback;
+- a Cards / Details (“详细列表”) view mode toggle for dense scanning and quick actions.
 - header actions for selecting all visible items or clearing the saved selection;
 - add/edit/delete launch buttons inside the app, with every editable field saved back to portable config;
 - named launch groups/presets that replace the saved selection through explicit apply;

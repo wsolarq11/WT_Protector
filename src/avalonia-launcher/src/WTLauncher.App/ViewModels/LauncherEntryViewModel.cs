@@ -62,13 +62,13 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     [ObservableProperty]
     private bool _isDragInsertAfter;
 
-    public bool ShowDirectory => !IsMicroLayout;
+    public bool ShowDirectory => _owner.IsDetailedListMode || !IsMicroLayout;
 
-    public bool ShowCommand => !IsCompactLayout;
+    public bool ShowCommand => _owner.IsDetailedListMode || !IsCompactLayout;
 
-    public bool ShowUpdatedLabel => !IsMicroLayout;
+    public bool ShowUpdatedLabel => _owner.IsDetailedListMode || !IsMicroLayout;
 
-    public double TitleFontSize => IsMicroLayout ? 15 : IsCompactLayout ? 16 : 18;
+    public double TitleFontSize => _owner.IsDetailedListMode ? 17 : IsMicroLayout ? 15 : IsCompactLayout ? 16 : 18;
 
     partial void OnIsSelectedChanged(bool value)
     {
@@ -122,6 +122,17 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         OnPropertyChanged(nameof(RequiresConfirmation));
         OnPropertyChanged(nameof(IsManualConfirmation));
         OnPropertyChanged(nameof(UpdatedLabel));
+        OnPropertyChanged(nameof(ShowDirectory));
+        OnPropertyChanged(nameof(ShowCommand));
+        OnPropertyChanged(nameof(ShowUpdatedLabel));
+        OnPropertyChanged(nameof(TitleFontSize));
+    }
+
+    public void RefreshLayoutPresentation()
+    {
+        OnPropertyChanged(nameof(ShowDirectory));
+        OnPropertyChanged(nameof(ShowCommand));
+        OnPropertyChanged(nameof(ShowUpdatedLabel));
         OnPropertyChanged(nameof(TitleFontSize));
     }
 

@@ -83,10 +83,12 @@
   - 拖拽 ghost（覆盖层上的半透明卡片）
   - 拖拽插入指示（卡片左/右高亮线）
   - 三档密度卡片布局（Normal / Compact / Micro）
+  - Cards / 详细列表双视图：卡片保留高密度扫视，详细列表用于更密集的字段扫描与快速操作
 - Variants and states:
   - Normal：展示名称、目录、命令摘要、启动
   - Compact：压缩次级信息，只保留关键可读信息与启动
   - Micro：仅保留最核心的名称和启动
+  - Details：展开目录、命令、更新时间与右侧快捷操作，优先保证密集扫描时的可读性
 - Token/component ownership:
   - ViewModel 负责密度判断与拖拽状态
   - View 负责拖拽 ghost、插入指示、轻动画
@@ -133,4 +135,3 @@
 
 ## Open questions
 - [ ] 是否要把“⋯”更多菜单也提供键盘快捷键入口？
-- [ ] 是否需要把拖拽插入指示进一步细化成 before/after 的明确占位线动画？

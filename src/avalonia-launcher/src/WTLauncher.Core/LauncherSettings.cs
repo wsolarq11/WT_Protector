@@ -13,6 +13,9 @@ public sealed class LauncherSettings
     [JsonPropertyName("sortMode")]
     public string SortMode { get; set; } = "custom";
 
+    [JsonPropertyName("entryViewMode")]
+    public string EntryViewMode { get; set; } = "cards";
+
     [JsonPropertyName("customEntryOrder")]
     public List<string> CustomEntryOrder { get; set; } = [];
 

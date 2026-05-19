@@ -483,6 +483,54 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void EntryViewModePersistsAndOverridesCardDensityForDetailedScanning()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            new LaunchEntry
+            {
+                Id = "one",
+                Name = "One",
+                Directory = "D:\\one",
+                Command = "codex",
+                Confirm = false,
+            });
+
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var entry = Assert.Single(viewModel.Entries);
+
+        entry.CardWidth = 210;
+        entry.CardHeight = 90;
+        Assert.False(viewModel.IsDetailedListMode);
+        Assert.True(viewModel.IsCardsViewMode);
+        Assert.False(entry.ShowDirectory);
+        Assert.False(entry.ShowCommand);
+        Assert.False(entry.ShowUpdatedLabel);
+        Assert.Equal(15, entry.TitleFontSize);
+
+        viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == "details");
+
+        Assert.True(viewModel.IsDetailedListMode);
+        Assert.False(viewModel.IsCardsViewMode);
+        Assert.True(entry.ShowDirectory);
+        Assert.True(entry.ShowCommand);
+        Assert.True(entry.ShowUpdatedLabel);
+        Assert.Equal(17, entry.TitleFontSize);
+        Assert.Equal("details", LauncherSettingsStore.Load(settings).EntryViewMode);
+
+        viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == "cards");
+
+        Assert.False(viewModel.IsDetailedListMode);
+        Assert.True(viewModel.IsCardsViewMode);
+        Assert.False(entry.ShowDirectory);
+        Assert.False(entry.ShowCommand);
+        Assert.False(entry.ShowUpdatedLabel);
+        Assert.Equal(15, entry.TitleFontSize);
+        Assert.Equal("cards", LauncherSettingsStore.Load(settings).EntryViewMode);
+    }
+
+    [Fact]
     public void CardSizingShrinksButtonsToFitVisibleEntriesInsideWindowRegion()
     {
         using var temp = new TempDirectory();

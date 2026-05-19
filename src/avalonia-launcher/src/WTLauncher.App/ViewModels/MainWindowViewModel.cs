@@ -71,6 +71,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private bool _isCustomSortMode;
 
+    [ObservableProperty]
+    private LauncherDisplayModeViewModel? _selectedDisplayMode;
+
+    [ObservableProperty]
+    private bool _isDetailedListMode;
+
     public MainWindowViewModel(string configPath, string settingsPath, LauncherSettings settings, LauncherProcess launcherProcess)
     {
         _configPath = configPath;
@@ -82,6 +88,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         FilterText = settings.LastFilterText;
         _isRefreshing = true;
         SelectedSortMode = SortModes.FirstOrDefault(mode => mode.Id == settings.SortMode) ?? SortModes[0];
+        SelectedDisplayMode = DisplayModes.FirstOrDefault(mode => mode.Id == settings.EntryViewMode) ?? DisplayModes[0];
         _isRefreshing = false;
         Refresh();
     }
@@ -98,6 +105,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         new("updated", "更新时间"),
         new("alphabetical", "首字母顺序"),
     ];
+
+    public ObservableCollection<LauncherDisplayModeViewModel> DisplayModes { get; } =
+    [
+        new("cards", "卡片"),
+        new("details", "详细列表"),
+    ];
+
+    public bool IsCardsViewMode => !IsDetailedListMode;
 
     public string ConfigPathDisplay { get; }
 
@@ -142,6 +157,26 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
     }
 
+    partial void OnSelectedDisplayModeChanged(LauncherDisplayModeViewModel? value)
+    {
+        IsDetailedListMode = value?.Id == "details";
+        if (value is null)
+            return;
+
+        _settings.EntryViewMode = value.Id;
+        RefreshEntryLayoutPresentation();
+        if (!_isRefreshing)
+        {
+            SaveSettings();
+            StatusText = $"视图模式: {value.Label}（已保存）";
+        }
+    }
+
+    partial void OnIsDetailedListModeChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsCardsViewMode));
+    }
+
     partial void OnVisibleDangerousCountChanged(int value)
     {
         OnPropertyChanged(nameof(HasVisibleDangerous));
@@ -171,6 +206,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         UpdatePresetSelectionStatus();
         ApplyFilter();
         RecalculateCardSize();
+        RefreshEntryLayoutPresentation();
         StatusText = presetLoadError
             ?? $"已加载 {TotalCount} 个启动项、{PresetCount} 个启动组；勾选自动保存到 config\\config.json";
     }
@@ -518,6 +554,16 @@ public sealed partial class MainWindowViewModel : ObservableObject
         SetDragPreviewTarget(target, insertAfter);
     }
 
+    public void ClearDragHover()
+    {
+        if (_customOrderDragSnapshot is null)
+            return;
+
+        ClearDragPreviewTarget();
+        _dragPreviewLastTargetId = null;
+        _dragPreviewLastInsertAfter = false;
+    }
+
     public void CommitDragReorder()
     {
         if (!IsCustomSortMode)
@@ -764,6 +810,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         VisibleDangerousCount = VisibleEntries.Count(entry => entry.IsDangerous);
         VisibleManualConfirmCount = VisibleEntries.Count(entry => entry.IsManualConfirmation);
         RecalculateCardSize();
+    }
+
+    private void RefreshEntryLayoutPresentation()
+    {
+        foreach (var entry in Entries)
+        {
+            entry.RefreshLayoutPresentation();
+        }
     }
 
     public void UpdateCardsAvailableSize(double width, double height)

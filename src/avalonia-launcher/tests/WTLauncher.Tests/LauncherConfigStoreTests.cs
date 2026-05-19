@@ -174,6 +174,7 @@ public sealed class LauncherConfigStoreTests
                 Theme = "dark",
                 LastFilterText = "爬虫",
                 SortMode = "alphabetical",
+                EntryViewMode = "details",
                 CustomEntryOrder = ["two", "one"],
                 Window = new LauncherWindowSettings { Width = 1200, Height = 800 },
             },
@@ -184,12 +185,14 @@ public sealed class LauncherConfigStoreTests
         Assert.Equal("dark", loaded.Theme);
         Assert.Equal("爬虫", loaded.LastFilterText);
         Assert.Equal("alphabetical", loaded.SortMode);
+        Assert.Equal("details", loaded.EntryViewMode);
         Assert.Equal(["two", "one"], loaded.CustomEntryOrder);
         Assert.Equal(1200, loaded.Window.Width);
         Assert.Equal(800, loaded.Window.Height);
         var savedJson = File.ReadAllText(settings);
         Assert.Contains("爬虫", savedJson);
         Assert.Contains("alphabetical", savedJson);
+        Assert.Contains("details", savedJson);
         Assert.EndsWith(Environment.NewLine, savedJson);
     }
 

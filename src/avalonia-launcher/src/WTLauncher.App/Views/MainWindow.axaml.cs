@@ -1,9 +1,12 @@
 using Avalonia;
+using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Transformation;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
@@ -17,6 +20,8 @@ public sealed partial class MainWindow : Window
     private OverlayLayer? _overlayLayer;
     private Border? _dragGhost;
     private string? _activeDragEntryId;
+    private Dictionary<string, Rect>? _pendingReorderAnimationSnapshot;
+    private bool _pendingReorderAnimationAttached;
 
     public MainWindow()
     {
@@ -84,10 +89,16 @@ public sealed partial class MainWindow : Window
 
     private async void OnEntryDragPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (DataContext is not MainWindowViewModel { IsCustomSortMode: true } || sender is not Control { DataContext: LauncherEntryViewModel item })
+        if (DataContext is not MainWindowViewModel { IsCustomSortMode: true })
             return;
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             return;
+
+        var resolved = ResolveEntryCardFromSource(sender);
+        if (resolved is null)
+            return;
+
+        var (item, card) = resolved.Value;
 
         var data = new DataTransfer();
         data.Add(DataTransferItem.CreateText(item.Id));
@@ -95,7 +106,7 @@ public sealed partial class MainWindow : Window
         _activeDragEntryId = item.Id;
         var viewModel = (MainWindowViewModel)DataContext;
         viewModel.BeginDragReorder(item.Id);
-        ShowDragGhost(item, e.GetPosition(this));
+        ShowDragGhost(item, card, e.GetPosition(this));
         var effect = await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move).ConfigureAwait(true);
         HideDragGhost();
         if (_activeDragEntryId is not null)
@@ -117,6 +128,9 @@ public sealed partial class MainWindow : Window
             return;
         }
 
+        if (_activeDragEntryId is not null)
+            UpdateDragGhostPosition(e.GetPosition(this));
+
         var resolved = ResolveEntryCardFromDragEvent(e);
         var canDrop = viewModel.IsCustomSortMode
             && resolved is not null
@@ -127,13 +141,19 @@ public sealed partial class MainWindow : Window
         e.Handled = canDrop;
 
         if (!canDrop || _activeDragEntryId is null)
+        {
+            viewModel.ClearDragHover();
             return;
+        }
 
-        UpdateDragGhostPosition(e.GetPosition(this));
         var (target, card) = resolved!.Value;
         var positionInCard = e.GetPosition(card);
-        var insertAfter = positionInCard.X >= (card.Bounds.Width * 0.5);
+        var insertAfter = viewModel.IsDetailedListMode
+            ? positionInCard.Y >= (card.Bounds.Height * 0.5)
+            : positionInCard.X >= (card.Bounds.Width * 0.5);
+        var before = CaptureEntryCardBounds();
         viewModel.PreviewMoveEntry(_activeDragEntryId, target.Id, insertAfter);
+        ScheduleReorderAnimation(before);
     }
 
     private void OnEntryDrop(object? sender, DragEventArgs e)
@@ -153,14 +173,18 @@ public sealed partial class MainWindow : Window
 
         var (target, card) = resolved.Value;
         var positionInCard = e.GetPosition(card);
-        var insertAfter = positionInCard.X >= (card.Bounds.Width * 0.5);
+        var insertAfter = viewModel.IsDetailedListMode
+            ? positionInCard.Y >= (card.Bounds.Height * 0.5)
+            : positionInCard.X >= (card.Bounds.Width * 0.5);
         _activeDragEntryId = draggedId;
+        var before = CaptureEntryCardBounds();
         viewModel.PreviewMoveEntry(draggedId, target.Id, insertAfter);
+        ScheduleReorderAnimation(before);
         e.DragEffects = DragDropEffects.Move;
         e.Handled = true;
     }
 
-    private (LauncherEntryViewModel Entry, Border Card)? ResolveEntryCardFromDragEvent(DragEventArgs e)
+    private (LauncherEntryViewModel Entry, Control Card)? ResolveEntryCardFromDragEvent(DragEventArgs e)
     {
         var direct = ResolveEntryCardFromSource(e.Source);
         if (direct is not null)
@@ -170,36 +194,40 @@ public sealed partial class MainWindow : Window
         return ResolveEntryCardFromSource(visual);
     }
 
-    private static (LauncherEntryViewModel Entry, Border Card)? ResolveEntryCardFromSource(object? source)
+    private static (LauncherEntryViewModel Entry, Control Card)? ResolveEntryCardFromSource(object? source)
     {
-        if (source is StyledElement { DataContext: LauncherEntryViewModel directEntry } && source is Border directBorder && directBorder.Classes.Contains("card"))
-            return (directEntry, directBorder);
+        if (source is StyledElement { DataContext: LauncherEntryViewModel directEntry } && source is Control directControl && directControl.Classes.Contains("card"))
+            return (directEntry, directControl);
 
         if (source is not Visual visual)
             return null;
 
         foreach (var ancestor in visual.GetSelfAndVisualAncestors())
         {
-            if (ancestor is Border { DataContext: LauncherEntryViewModel entry } border && border.Classes.Contains("card"))
-                return (entry, border);
+            if (ancestor is Control { DataContext: LauncherEntryViewModel entry } control && control.Classes.Contains("card"))
+                return (entry, control);
         }
 
         return null;
     }
 
-    private void ShowDragGhost(LauncherEntryViewModel item, Point position)
+    private void ShowDragGhost(LauncherEntryViewModel item, Control sourceCard, Point position)
     {
         _overlayLayer ??= OverlayLayer.GetOverlayLayer(this);
         if (_overlayLayer is null || _dragGhost is not null)
             return;
 
+        var width = Math.Max(200, sourceCard.Bounds.Width);
+        var height = Math.Max(96, sourceCard.Bounds.Height);
+
         var ghost = new Border
         {
-            Width = item.CardWidth,
-            Height = item.CardHeight,
+            Width = width,
+            Height = height,
+            Classes = { "card" },
             Background = Brushes.White,
-            BorderBrush = Brushes.Black,
-            BorderThickness = new Thickness(1),
+            BorderBrush = Brush.Parse("#38BDF8"),
+            BorderThickness = new Thickness(2),
             CornerRadius = new CornerRadius(13),
             Opacity = 0.86,
             IsHitTestVisible = false,
@@ -263,6 +291,96 @@ public sealed partial class MainWindow : Window
 
         _overlayLayer.Children.Remove(_dragGhost);
         _dragGhost = null;
+    }
+
+    private Dictionary<string, Rect> CaptureEntryCardBounds()
+    {
+        var bounds = new Dictionary<string, Rect>(StringComparer.Ordinal);
+        var root = DataContext is MainWindowViewModel { IsDetailedListMode: true }
+            ? DetailsEntriesItemsControl
+            : CardsEntriesItemsControl;
+        if (root is null)
+            return bounds;
+
+        foreach (var card in root.GetVisualDescendants().OfType<Border>())
+        {
+            if (!card.Classes.Contains("card"))
+                continue;
+            if (card.DataContext is not LauncherEntryViewModel entry)
+                continue;
+
+            var origin = card.TranslatePoint(new Point(0, 0), this);
+            if (origin is null)
+                continue;
+
+            bounds[entry.Id] = new Rect(origin.Value, card.Bounds.Size);
+        }
+
+        return bounds;
+    }
+
+    private void ScheduleReorderAnimation(Dictionary<string, Rect> before)
+    {
+        var root = DataContext is MainWindowViewModel { IsDetailedListMode: true }
+            ? DetailsEntriesItemsControl
+            : CardsEntriesItemsControl;
+        if (before.Count == 0 || root is null)
+            return;
+
+        _pendingReorderAnimationSnapshot = before;
+        if (_pendingReorderAnimationAttached)
+            return;
+
+        _pendingReorderAnimationAttached = true;
+        root.LayoutUpdated += OnEntriesLayoutUpdated;
+    }
+
+    private void OnEntriesLayoutUpdated(object? sender, EventArgs e)
+    {
+        var root = sender as Control;
+        if (root is null)
+            return;
+
+        root.LayoutUpdated -= OnEntriesLayoutUpdated;
+        _pendingReorderAnimationAttached = false;
+
+        var before = _pendingReorderAnimationSnapshot;
+        _pendingReorderAnimationSnapshot = null;
+        if (before is null || before.Count == 0)
+            return;
+
+        var after = CaptureEntryCardBounds();
+        if (after.Count == 0)
+            return;
+
+        foreach (var card in root.GetVisualDescendants().OfType<Border>())
+        {
+            if (!card.Classes.Contains("card"))
+                continue;
+            if (card.DataContext is not LauncherEntryViewModel entry)
+                continue;
+            if (!before.TryGetValue(entry.Id, out var oldRect))
+                continue;
+            if (!after.TryGetValue(entry.Id, out var newRect))
+                continue;
+
+            var deltaX = oldRect.X - newRect.X;
+            var deltaY = oldRect.Y - newRect.Y;
+            if (Math.Abs(deltaX) < 0.5 && Math.Abs(deltaY) < 0.5)
+                continue;
+
+            // FLIP: jump back without transition, then let the style transition animate to the final position.
+            card.Transitions = new Transitions();
+            card.RenderTransform = TransformOperations.Parse(FormattableString.Invariant($"translate({deltaX:0.##}px,{deltaY:0.##}px)"));
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (card.IsEffectivelyVisible is false)
+                    return;
+                card.ClearValue(Animatable.TransitionsProperty);
+                card.RenderTransform = TransformOperations.Parse("translate(0px,0px)");
+            }, DispatcherPriority.Render);
+        }
     }
 
     private void OnEntryMoreClicked(object? sender, RoutedEventArgs e)
