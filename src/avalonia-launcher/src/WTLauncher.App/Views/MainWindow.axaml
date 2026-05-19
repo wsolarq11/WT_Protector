@@ -243,6 +243,20 @@
       <Setter Property="HorizontalContentAlignment" Value="Center"/>
       <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
+    <Style Selector="Border.control-box">
+      <Setter Property="Background" Value="#FFFFFF"/>
+      <Setter Property="BorderBrush" Value="#E2E8F0"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="14"/>
+      <Setter Property="Padding" Value="10"/>
+      <Setter Property="VerticalAlignment" Value="Stretch"/>
+    </Style>
+    <Style Selector="TextBlock.control-box-label">
+      <Setter Property="Foreground" Value="#475569"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Margin" Value="0,0,0,6"/>
+    </Style>
   </Window.Styles>
 
   <Grid RowDefinitions="Auto,*,Auto" Margin="24,20">
@@ -288,37 +302,62 @@
                  Margin="0,8,0,0"
                  Classes="muted"
                  Text="{Binding ConfigPathDisplay}"/>
-      <Grid Grid.Row="2"
+      <Grid x:Name="ControlBoxesGrid"
+            Grid.Row="2"
             Grid.ColumnSpan="2"
-            ColumnDefinitions="*,Auto,Auto,Auto"
+            ColumnDefinitions="2.2*,1.1*,1.1*,2.2*"
+            ColumnSpacing="12"
             Margin="0,12,0,0">
-        <TextBox PlaceholderText="搜索名称、目录或命令"
-                 Text="{Binding FilterText, Mode=TwoWay}"
-                 FontSize="16"
-                 Padding="12,8"/>
-        <ComboBox Grid.Column="1"
-                  ItemsSource="{Binding Presets}"
-                  SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
-                  Width="220"
-                  Margin="12,0,0,0"
-                  VerticalAlignment="Center"
-                  PlaceholderText="选择启动组"/>
-        <Button Grid.Column="2"
-                Classes="secondary"
-                Content="{Binding ApplyPresetButtonText}"
-                Command="{Binding ApplyPresetCommand}"
-                Margin="10,0,0,0"/>
+        <Border Classes="control-box">
+          <StackPanel>
+            <TextBlock Classes="control-box-label"
+                       Text="搜索"/>
+            <TextBox PlaceholderText="搜索名称、目录或命令"
+                     Text="{Binding FilterText, Mode=TwoWay}"
+                     FontSize="16"
+                     Padding="12,8"/>
+          </StackPanel>
+        </Border>
+        <Border Grid.Column="1"
+                Classes="control-box">
+          <StackPanel>
+            <TextBlock Classes="control-box-label"
+                       Text="排序"/>
+            <ComboBox ItemsSource="{Binding SortModes}"
+                      SelectedItem="{Binding SelectedSortMode, Mode=TwoWay}"
+                      HorizontalAlignment="Stretch"/>
+          </StackPanel>
+        </Border>
+        <Border Grid.Column="2"
+                Classes="control-box">
+          <StackPanel>
+            <TextBlock Classes="control-box-label"
+                       Text="视图"/>
+            <ComboBox ItemsSource="{Binding DisplayModes}"
+                      SelectedItem="{Binding SelectedDisplayMode, Mode=TwoWay}"
+                      HorizontalAlignment="Stretch"/>
+          </StackPanel>
+        </Border>
         <Border Grid.Column="3"
-                Background="#E0F2FE"
-                CornerRadius="14"
-                Padding="12,7"
-                Margin="12,0,0,0"
-                VerticalAlignment="Center">
-          <TextBlock Foreground="#0369A1">
-            <Run Text="{Binding VisibleCount}"/>
-            <Run Text=" / "/>
-            <Run Text="{Binding TotalCount}"/>
-          </TextBlock>
+                Classes="control-box">
+          <Grid RowDefinitions="Auto,Auto"
+                ColumnDefinitions="*,Auto"
+                ColumnSpacing="8">
+            <TextBlock Grid.ColumnSpan="2"
+                       Classes="control-box-label"
+                       Text="启动组"/>
+            <ComboBox Grid.Row="1"
+                      ItemsSource="{Binding Presets}"
+                      SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Center"
+                      PlaceholderText="选择启动组"/>
+            <Button Grid.Row="1"
+                    Grid.Column="1"
+                    Classes="secondary"
+                    Content="{Binding ApplyPresetButtonText}"
+                    Command="{Binding ApplyPresetCommand}"/>
+          </Grid>
         </Border>
       </Grid>
       <StackPanel Grid.Row="3"
@@ -338,22 +377,17 @@
         <Button Classes="secondary"
                 Content="删除当前启动组"
                 Command="{Binding DeleteSelectedPresetCommand}"/>
-        <TextBlock Text="排序"
-                   Classes="muted"
-                   VerticalAlignment="Center"
-                   Margin="12,0,0,0"/>
-        <ComboBox ItemsSource="{Binding SortModes}"
-                  SelectedItem="{Binding SelectedSortMode, Mode=TwoWay}"
-                  Width="150"
-                  VerticalAlignment="Center"/>
-        <TextBlock Text="视图"
-                   Classes="muted"
-                   VerticalAlignment="Center"
-                   Margin="12,0,0,0"/>
-        <ComboBox ItemsSource="{Binding DisplayModes}"
-                  SelectedItem="{Binding SelectedDisplayMode, Mode=TwoWay}"
-                  Width="150"
-                  VerticalAlignment="Center"/>
+        <Border Background="#E0F2FE"
+                CornerRadius="14"
+                Padding="12,7"
+                Margin="12,0,0,0"
+                VerticalAlignment="Center">
+          <TextBlock Foreground="#0369A1">
+            <Run Text="{Binding VisibleCount}"/>
+            <Run Text=" / "/>
+            <Run Text="{Binding TotalCount}"/>
+          </TextBlock>
+        </Border>
       </StackPanel>
       <TextBlock Grid.Row="4"
                  Grid.ColumnSpan="2"
