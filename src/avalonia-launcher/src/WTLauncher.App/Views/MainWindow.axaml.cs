@@ -21,7 +21,6 @@ public sealed partial class MainWindow : Window
     private Border? _dragGhost;
     private string? _activeDragEntryId;
     private Dictionary<string, Rect>? _pendingReorderAnimationSnapshot;
-    private bool _pendingReorderAnimationAttached;
 
     public MainWindow()
     {
@@ -349,10 +348,7 @@ public sealed partial class MainWindow : Window
             return;
 
         _pendingReorderAnimationSnapshot = before;
-        if (_pendingReorderAnimationAttached)
-            return;
-
-        _pendingReorderAnimationAttached = true;
+        root.LayoutUpdated -= OnEntriesLayoutUpdated;
         root.LayoutUpdated += OnEntriesLayoutUpdated;
     }
 
@@ -363,7 +359,6 @@ public sealed partial class MainWindow : Window
             return;
 
         root.LayoutUpdated -= OnEntriesLayoutUpdated;
-        _pendingReorderAnimationAttached = false;
 
         var before = _pendingReorderAnimationSnapshot;
         _pendingReorderAnimationSnapshot = null;
