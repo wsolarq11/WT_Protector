@@ -19,12 +19,13 @@ public sealed class MainWindowViewModelTests
 
         Assert.Equal(2, viewModel.SelectedCount);
         Assert.All(LauncherConfigStore.Load(config), entry => Assert.True(entry.Selected));
+        Assert.All(LauncherConfigStore.Load(config + ".bak"), entry => Assert.False(entry.Selected));
 
         viewModel.ClearSelectionCommand.Execute(null);
 
         Assert.Equal(0, viewModel.SelectedCount);
         Assert.All(LauncherConfigStore.Load(config), entry => Assert.False(entry.Selected));
-        Assert.True(File.Exists(config + ".bak"));
+        Assert.All(LauncherConfigStore.Load(config + ".bak"), entry => Assert.True(entry.Selected));
     }
 
     [Fact]

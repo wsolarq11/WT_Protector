@@ -25,8 +25,17 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     public string Command => Entry.Command;
 
-    [ObservableProperty]
     private bool _isSelected;
+
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (SetProperty(ref _isSelected, value))
+                _owner.UpdateSelection(this, value);
+        }
+    }
 
     [ObservableProperty]
     private double _cardWidth = 300;
@@ -64,9 +73,10 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     public double TitleFontSize => _owner.IsDetailedListMode || _owner.IsNamesViewMode ? 13 : IsMicroLayout ? 15 : IsCompactLayout ? 16 : 18;
 
-    partial void OnIsSelectedChanged(bool value)
+    internal void SetSelectionFromOwner(bool selected)
     {
-        _owner.UpdateSelection(this, value);
+        Entry.Selected = selected;
+        SetProperty(ref _isSelected, selected, nameof(IsSelected));
     }
 
     partial void OnCardWidthChanged(double value)

@@ -14,7 +14,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly LauncherSettings _settings;
     private readonly LauncherProcess _launcherProcess;
     private LauncherPresetFile _presetFile = new();
-    private bool _isBulkSelectionUpdate;
     private bool _isRefreshing;
     private double _cardsAvailableWidth = 900;
     private double _cardsAvailableHeight = 420;
@@ -440,18 +439,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         item.Entry.Directory = updated.Directory;
         item.Entry.Command = updated.Command;
         item.Entry.Confirm = updated.Confirm;
-        item.Entry.Selected = updated.Selected;
+        item.SetSelectionFromOwner(updated.Selected);
         item.Entry.UpdatedAtUtc = NowUtcText();
         item.RefreshDisplay();
-        _isBulkSelectionUpdate = true;
-        try
-        {
-            item.IsSelected = updated.Selected;
-        }
-        finally
-        {
-            _isBulkSelectionUpdate = false;
-        }
         if (!string.Equals(oldId, item.Entry.Id, StringComparison.Ordinal))
             RenameEntryReferences(oldId, item.Entry.Id);
 
@@ -744,8 +734,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         SelectedCount = Entries.Count(entry => entry.IsSelected);
         NotifySelectionCommands();
         UpdatePresetSelectionStatus();
-        if (!_isBulkSelectionUpdate)
-            SaveConfig();
+        SaveConfig();
     }
 
     partial void OnSelectedPresetChanged(LauncherPresetViewModel? value)
@@ -973,17 +962,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool SetSelection(IReadOnlyList<LauncherEntryViewModel> entries, bool selected)
     {
-        _isBulkSelectionUpdate = true;
-        try
+        foreach (var entry in entries)
         {
-            foreach (var entry in entries)
-            {
-                entry.IsSelected = selected;
-            }
-        }
-        finally
-        {
-            _isBulkSelectionUpdate = false;
+            entry.SetSelectionFromOwner(selected);
         }
 
         SelectedCount = Entries.Count(entry => entry.IsSelected);
@@ -994,17 +975,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool ReplaceSelection(IReadOnlySet<string> selectedIds)
     {
-        _isBulkSelectionUpdate = true;
-        try
+        foreach (var entry in Entries)
         {
-            foreach (var entry in Entries)
-            {
-                entry.IsSelected = selectedIds.Contains(entry.Entry.Id);
-            }
-        }
-        finally
-        {
-            _isBulkSelectionUpdate = false;
+            entry.SetSelectionFromOwner(selectedIds.Contains(entry.Entry.Id));
         }
 
         SelectedCount = Entries.Count(entry => entry.IsSelected);
