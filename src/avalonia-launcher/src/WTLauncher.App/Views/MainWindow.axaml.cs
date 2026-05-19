@@ -17,7 +17,6 @@ public sealed partial class MainWindow : Window
     private OverlayLayer? _overlayLayer;
     private Border? _dragGhost;
     private string? _activeDragEntryId;
-    private bool _dragOperationCommitted;
 
     public MainWindow()
     {
@@ -34,9 +33,7 @@ public sealed partial class MainWindow : Window
         viewModel.ConfirmDeletePresetAsync = ConfirmDeletePresetAsync;
         viewModel.RequestEntryDraftAsync = RequestEntryDraftAsync;
         viewModel.ConfirmDeleteEntryAsync = ConfirmDeleteEntryAsync;
-        DragDrop.AddDragEnterHandler(this, OnEntryDragEnter);
         DragDrop.AddDragOverHandler(this, OnEntryDragOver);
-        DragDrop.AddDragLeaveHandler(this, OnEntryDragLeave);
         DragDrop.AddDropHandler(this, OnEntryDrop);
         SizeChanged += (_, _) => UpdateCardRegionSize(viewModel);
         Opened += (_, _) => UpdateCardRegionSize(viewModel);
@@ -96,34 +93,19 @@ public sealed partial class MainWindow : Window
         data.Add(DataTransferItem.CreateText(item.Id));
         e.Handled = true;
         _activeDragEntryId = item.Id;
-        _dragOperationCommitted = false;
-        ((MainWindowViewModel)DataContext).BeginDragReorder(item.Id);
+        var viewModel = (MainWindowViewModel)DataContext;
+        viewModel.BeginDragReorder(item.Id);
         ShowDragGhost(item, e.GetPosition(this));
-        await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move).ConfigureAwait(true);
+        var effect = await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move).ConfigureAwait(true);
         HideDragGhost();
-        if (!_dragOperationCommitted && _activeDragEntryId is not null && DataContext is MainWindowViewModel viewModel)
-            viewModel.CancelDragReorder();
+        if (_activeDragEntryId is not null)
+        {
+            if (effect == DragDropEffects.Move)
+                viewModel.CommitDragReorder();
+            else
+                viewModel.CancelDragReorder();
+        }
         _activeDragEntryId = null;
-        _dragOperationCommitted = false;
-    }
-
-    private void OnEntryDragEnter(object? sender, DragEventArgs e)
-    {
-        if (_activeDragEntryId is null || DataContext is not MainWindowViewModel { IsCustomSortMode: true })
-            return;
-
-        if (!e.DataTransfer.Formats.Contains(DataFormat.Text))
-            return;
-
-        if (_dragGhost is not null)
-            return;
-
-        if (DataContext is not MainWindowViewModel viewModel)
-            return;
-
-        var sourceItem = viewModel.Entries.FirstOrDefault(entry => string.Equals(entry.Id, _activeDragEntryId, StringComparison.Ordinal));
-        if (sourceItem is not null)
-            ShowDragGhost(sourceItem, e.GetPosition(this));
     }
 
     private void OnEntryDragOver(object? sender, DragEventArgs e)
@@ -154,14 +136,6 @@ public sealed partial class MainWindow : Window
         viewModel.PreviewMoveEntry(_activeDragEntryId, target.Id, insertAfter);
     }
 
-    private void OnEntryDragLeave(object? sender, DragEventArgs e)
-    {
-        if (_activeDragEntryId is null)
-            return;
-
-        HideDragGhost();
-    }
-
     private void OnEntryDrop(object? sender, DragEventArgs e)
     {
         if (DataContext is not MainWindowViewModel viewModel)
@@ -182,8 +156,6 @@ public sealed partial class MainWindow : Window
         var insertAfter = positionInCard.X >= (card.Bounds.Width * 0.5);
         _activeDragEntryId = draggedId;
         viewModel.PreviewMoveEntry(draggedId, target.Id, insertAfter);
-        _dragOperationCommitted = true;
-        viewModel.CommitDragReorder();
         e.DragEffects = DragDropEffects.Move;
         e.Handled = true;
     }
