@@ -405,6 +405,34 @@ public sealed partial class MainWindow : Window
         e.Handled = true;
     }
 
+    private void OnEntryRowDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not Control { DataContext: LauncherEntryViewModel entry })
+            return;
+
+        if (e.Source is Control source && IsEntryRowInteractiveSource(source))
+            return;
+
+        if (entry.LaunchCommand.CanExecute(null))
+            entry.LaunchCommand.Execute(null);
+
+        e.Handled = true;
+    }
+
+    private static bool IsEntryRowInteractiveSource(Control source)
+    {
+        foreach (var ancestor in source.GetSelfAndVisualAncestors())
+        {
+            if (ancestor is Button or CheckBox)
+                return true;
+
+            if (ancestor is Border border && border.Classes.Contains("entry-drag-handle"))
+                return true;
+        }
+
+        return false;
+    }
+
     private IReadOnlyList<string> GetSelectedEntryIds()
     {
         if (DataContext is not MainWindowViewModel viewModel)

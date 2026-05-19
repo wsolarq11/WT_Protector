@@ -566,6 +566,7 @@
                           Classes.selected="{Binding IsSelected}"
                           ClipToBounds="True"
                           HorizontalAlignment="Stretch"
+                          DoubleTapped="OnEntryRowDoubleTapped"
                           DragDrop.AllowDrop="True">
                     <Border.ContextMenu>
                       <ContextMenu>
