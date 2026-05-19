@@ -92,7 +92,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public ObservableCollection<LauncherDisplayModeViewModel> DisplayModes { get; } =
     [
         new(LauncherEntryViewMode.Cards, "卡片"),
-        new(LauncherEntryViewMode.Details, "详细信息"),
+        new(LauncherEntryViewMode.Details, "详细列表"),
         new(LauncherEntryViewMode.Names, "名称墙"),
     ];
 

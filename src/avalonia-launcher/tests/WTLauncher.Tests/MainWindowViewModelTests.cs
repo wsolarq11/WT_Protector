@@ -643,6 +643,7 @@ public sealed class MainWindowViewModelTests
             new LauncherSettings { EntryViewMode = "details" },
             new LauncherProcess());
 
+        Assert.Equal(new[] { "卡片", "详细列表", "名称墙" }, viewModel.DisplayModes.Select(mode => mode.Label));
         Assert.Equal(LauncherEntryViewMode.Details, viewModel.SelectedDisplayMode?.Mode);
         Assert.Equal("details", viewModel.SelectedDisplayMode?.Id);
         Assert.Equal(
