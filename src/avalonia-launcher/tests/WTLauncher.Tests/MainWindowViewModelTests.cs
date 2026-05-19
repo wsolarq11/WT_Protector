@@ -44,6 +44,42 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void VisibleRequiresConfirmationCountTracksFilteredEntries()
+    {
+        using var temp = new TempDirectory();
+        var entries = new[]
+        {
+            new LaunchEntry
+            {
+                Id = "one",
+                Name = "one",
+                Directory = "D:\\one",
+                Command = "codex",
+                Confirm = true,
+            },
+            new LaunchEntry
+            {
+                Id = "two",
+                Name = "two",
+                Directory = "D:\\two",
+                Command = "pwsh",
+                Confirm = false,
+            },
+        };
+        var (config, settings, _) = CreatePortableFixture(temp, entries);
+
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+
+        Assert.Equal(1, viewModel.VisibleRequiresConfirmationCount);
+        Assert.True(viewModel.HasVisibleRequiresConfirmation);
+
+        viewModel.FilterText = "two";
+
+        Assert.Equal(0, viewModel.VisibleRequiresConfirmationCount);
+        Assert.False(viewModel.HasVisibleRequiresConfirmation);
+    }
+
+    [Fact]
     public void ApplyPresetCommandReplacesAndPersistsPortableSelection()
     {
         using var temp = new TempDirectory();

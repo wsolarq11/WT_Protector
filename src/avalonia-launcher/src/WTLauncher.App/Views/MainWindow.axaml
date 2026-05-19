@@ -61,6 +61,32 @@
       <Setter Property="Foreground" Value="#64748B"/>
       <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
+    <Style Selector="Grid.entry-header">
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="MinHeight" Value="26"/>
+    </Style>
+    <Style Selector="Border.confirm-badge">
+      <Setter Property="Background" Value="#FEF3C7"/>
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="Padding" Value="10,0"/>
+      <Setter Property="Height" Value="22"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Border.card.compact Border.confirm-badge">
+      <Setter Property="Height" Value="21"/>
+      <Setter Property="Padding" Value="9,0"/>
+    </Style>
+    <Style Selector="Border.card.micro Border.confirm-badge">
+      <Setter Property="Height" Value="20"/>
+      <Setter Property="Padding" Value="8,0"/>
+    </Style>
+    <Style Selector="TextBlock.confirm-badge-text">
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="Foreground" Value="#92400E"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="HorizontalAlignment" Value="Center"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
     <Style Selector="TextBlock.entry-dir">
       <Setter Property="Margin" Value="0,13,0,0"/>
     </Style>
@@ -166,6 +192,18 @@
           <TextBlock Foreground="#047857">
             <Run Text="已勾选 "/>
             <Run Text="{Binding SelectedCount}"/>
+            <Run Text=" 项"/>
+          </TextBlock>
+        </Border>
+        <Border Background="#FEF3C7"
+                CornerRadius="14"
+                Padding="12,8"
+                VerticalAlignment="Center"
+                IsVisible="{Binding HasVisibleRequiresConfirmation}"
+                ToolTip.Tip="黄色：启动前需要确认（包含危险命令等需要确认的启动项）">
+          <TextBlock Foreground="#92400E">
+            <Run Text="需确认 "/>
+            <Run Text="{Binding VisibleRequiresConfirmationCount}"/>
             <Run Text=" 项"/>
           </TextBlock>
         </Border>
@@ -305,23 +343,21 @@
                         Opacity="0.9"
                         IsHitTestVisible="False"
                         IsVisible="{Binding IsDragInsertAfter}"/>
-                <Grid ColumnDefinitions="Auto,*,Auto">
+                <Grid Classes="entry-header"
+                      ColumnDefinitions="Auto,*,Auto">
                   <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
                             VerticalAlignment="Center"/>
                   <TextBlock Grid.Column="1"
                              Margin="8,0,0,0"
                              Classes="card-title"
                              FontSize="{Binding TitleFontSize}"
+                             VerticalAlignment="Center"
                              Text="{Binding Name}"/>
                   <Border Grid.Column="2"
-                          Background="#FEF3C7"
-                          CornerRadius="999"
-                          Padding="8,3"
+                          Classes="confirm-badge"
                           IsVisible="{Binding RequiresConfirmation}">
-                    <TextBlock Text="需确认"
-                               FontSize="11"
-                               Foreground="#92400E"
-                               FontWeight="SemiBold"/>
+                    <TextBlock Classes="confirm-badge-text"
+                               Text="需确认"/>
                   </Border>
                 </Grid>
                 <StackPanel Grid.Row="1"

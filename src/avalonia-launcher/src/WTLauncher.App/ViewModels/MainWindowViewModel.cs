@@ -47,6 +47,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private int _visibleCount;
 
     [ObservableProperty]
+    private int _visibleRequiresConfirmationCount;
+
+    public bool HasVisibleRequiresConfirmation => VisibleRequiresConfirmationCount > 0;
+
+    [ObservableProperty]
     private int _selectedCount;
 
     [ObservableProperty]
@@ -130,6 +135,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
             ApplyFilter();
             StatusText = $"排序模式: {value.Label}（已保存）";
         }
+    }
+
+    partial void OnVisibleRequiresConfirmationCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(HasVisibleRequiresConfirmation));
     }
 
     [RelayCommand]
@@ -741,6 +751,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         VisibleCount = VisibleEntries.Count;
+        VisibleRequiresConfirmationCount = VisibleEntries.Count(entry => entry.RequiresConfirmation);
         RecalculateCardSize();
     }
 
