@@ -20,12 +20,26 @@
     </Style>
     <Style Selector="Border.card">
       <Setter Property="Background" Value="White"/>
-      <Setter Property="CornerRadius" Value="16"/>
-      <Setter Property="Padding" Value="14"/>
+      <Setter Property="CornerRadius" Value="13"/>
+      <Setter Property="Padding" Value="13"/>
       <Setter Property="Margin" Value="0"/>
       <Setter Property="BorderBrush" Value="#E2E8F0"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="BoxShadow" Value="0 8 24 0 #120F172A"/>
+      <Setter Property="Transitions">
+        <Transitions>
+          <DoubleTransition Property="Opacity" Duration="0:0:0.12"/>
+          <BrushTransition Property="BorderBrush" Duration="0:0:0.12"/>
+          <ThicknessTransition Property="BorderThickness" Duration="0:0:0.12"/>
+        </Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="Border.card.drag-target">
+      <Setter Property="BorderBrush" Value="#38BDF8"/>
+      <Setter Property="BorderThickness" Value="2"/>
+    </Style>
+    <Style Selector="Border.card.drag-source">
+      <Setter Property="Opacity" Value="0.55"/>
     </Style>
     <Style Selector="TextBlock.card-title">
       <Setter Property="FontSize" Value="18"/>
@@ -172,6 +186,8 @@
         <ItemsControl.ItemTemplate>
           <DataTemplate>
             <Border Classes="card"
+                    Classes.drag-target="{Binding IsDragPreviewTarget}"
+                    Classes.drag-source="{Binding IsDragPreviewSource}"
                     Width="{Binding CardWidth}"
                     Height="{Binding CardHeight}"
                     ClipToBounds="True"
@@ -189,6 +205,24 @@
                 </ContextMenu>
               </Border.ContextMenu>
               <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto">
+                <Border Grid.RowSpan="6"
+                        Width="4"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Stretch"
+                        CornerRadius="2"
+                        Background="#38BDF8"
+                        Opacity="0.9"
+                        IsHitTestVisible="False"
+                        IsVisible="{Binding IsDragInsertBefore}"/>
+                <Border Grid.RowSpan="6"
+                        Width="4"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Stretch"
+                        CornerRadius="2"
+                        Background="#38BDF8"
+                        Opacity="0.9"
+                        IsHitTestVisible="False"
+                        IsVisible="{Binding IsDragInsertAfter}"/>
                 <Grid ColumnDefinitions="Auto,*,Auto">
                   <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
                             VerticalAlignment="Center"/>
@@ -201,7 +235,7 @@
                           Background="#FEF3C7"
                           CornerRadius="999"
                           Padding="8,3"
-                          IsVisible="{Binding IsDangerous}">
+                          IsVisible="{Binding RequiresConfirmation}">
                     <TextBlock Text="需确认"
                                FontSize="11"
                                Foreground="#92400E"
@@ -209,39 +243,32 @@
                   </Border>
                 </Grid>
                 <TextBlock Grid.Row="1"
-                           Margin="0,10,0,0"
+                           Margin="0,13,0,0"
                            Classes="mono"
-                           IsVisible="{Binding ShowDetails}"
+                           IsVisible="{Binding ShowDirectory}"
+                           MaxLines="1"
+                           TextTrimming="PathSegmentEllipsis"
                            Text="{Binding Directory}"/>
                 <TextBlock Grid.Row="2"
                            Margin="0,8,0,0"
                            Classes="mono"
-                           IsVisible="{Binding ShowDetails}"
+                           IsVisible="{Binding ShowCommand}"
+                           MaxLines="1"
+                           TextTrimming="CharacterEllipsis"
                            Text="{Binding Command}"/>
-                <TextBlock Grid.Row="3"
-                           Margin="0,10,0,10"
-                           Classes="muted"
-                           IsVisible="{Binding ShowDetails}"
-                           Text="{Binding ConfirmationLabel}"/>
-                <WrapPanel Grid.Row="4"
-                           ItemSpacing="8"
-                           LineSpacing="6">
+                <Grid Grid.Row="4"
+                      ColumnDefinitions="*,Auto"
+                      Margin="0,13,0,0">
                   <Button Classes="primary"
                           Content="启动"
                           Command="{Binding LaunchCommand}"/>
-                  <Button Classes="secondary"
-                          Content="预演"
-                          IsVisible="{Binding ShowDetails}"
-                          Command="{Binding DryRunCommand}"/>
-                  <Button Classes="secondary"
-                          Content="编辑"
-                          IsVisible="{Binding ShowDetails}"
-                          Command="{Binding EditCommand}"/>
-                  <Button Classes="secondary"
-                          Content="删除"
-                          IsVisible="{Binding ShowDetails}"
-                          Command="{Binding DeleteCommand}"/>
-                </WrapPanel>
+                  <Button Grid.Column="1"
+                          Classes="secondary"
+                          Content="⋯"
+                          Padding="12,8"
+                          Margin="8,0,0,0"
+                          Click="OnEntryMoreClicked"/>
+                </Grid>
                 <Grid Grid.Row="5" ColumnDefinitions="*,Auto" Margin="0,8,0,0">
                   <TextBlock Classes="muted"
                              Text="{Binding UpdatedLabel}"/>
@@ -251,7 +278,7 @@
                           Padding="8,4"
                           Cursor="Hand"
                           PointerPressed="OnEntryDragPointerPressed">
-                    <TextBlock Text="拖拽排序"
+                    <TextBlock Text="拖拽"
                                Foreground="#334155"
                                FontSize="12"/>
                   </Border>

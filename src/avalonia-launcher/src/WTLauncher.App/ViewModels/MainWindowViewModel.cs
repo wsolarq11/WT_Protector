@@ -18,6 +18,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private bool _isRefreshing;
     private double _cardsAvailableWidth = 900;
     private double _cardsAvailableHeight = 420;
+    private List<string>? _customOrderDragSnapshot;
+    private string? _customOrderDragEntryId;
+    private LauncherEntryViewModel? _dragPreviewTarget;
+    private LauncherEntryViewModel? _dragPreviewSource;
+    private string? _dragPreviewLastTargetId;
+    private bool _dragPreviewLastInsertAfter;
 
     [ObservableProperty]
     private string _filterText = "";
@@ -436,15 +442,155 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
 
         EnsureCustomOrderContainsEntries();
+        MoveEntryBeforeInternal(draggedEntryId, targetEntryId);
+        SaveSettings();
+        ApplyFilter();
+        StatusText = "已保存自定义拖拽排序";
+    }
+
+    public void BeginDragReorder(string draggedEntryId)
+    {
+        if (!IsCustomSortMode)
+            return;
+
+        EnsureCustomOrderContainsEntries();
+        _customOrderDragEntryId = draggedEntryId;
+        _customOrderDragSnapshot = new List<string>(_settings.CustomEntryOrder);
+        _dragPreviewLastTargetId = null;
+        _dragPreviewLastInsertAfter = false;
+
+        if (_dragPreviewSource is not null)
+            _dragPreviewSource.IsDragPreviewSource = false;
+        _dragPreviewSource = Entries.FirstOrDefault(entry => string.Equals(entry.Id, draggedEntryId, StringComparison.Ordinal));
+        if (_dragPreviewSource is not null)
+            _dragPreviewSource.IsDragPreviewSource = true;
+
+        ClearDragPreviewTarget();
+    }
+
+    public void PreviewMoveEntryBefore(string draggedEntryId, string targetEntryId)
+    {
+        PreviewMoveEntry(draggedEntryId, targetEntryId, insertAfter: false);
+    }
+
+    public void PreviewMoveEntry(string draggedEntryId, string targetEntryId, bool insertAfter)
+    {
+        if (!IsCustomSortMode)
+            return;
+        if (_customOrderDragSnapshot is null || !string.Equals(_customOrderDragEntryId, draggedEntryId, StringComparison.Ordinal))
+            BeginDragReorder(draggedEntryId);
+        if (_customOrderDragSnapshot is null)
+            return;
+        if (string.Equals(draggedEntryId, targetEntryId, StringComparison.Ordinal))
+            return;
+
+        if (string.Equals(_dragPreviewLastTargetId, targetEntryId, StringComparison.Ordinal)
+            && _dragPreviewLastInsertAfter == insertAfter)
+            return;
+
+        _dragPreviewLastTargetId = targetEntryId;
+        _dragPreviewLastInsertAfter = insertAfter;
+        EnsureCustomOrderContainsEntries();
+        MoveEntryRelativeInternal(draggedEntryId, targetEntryId, insertAfter);
+        ApplyFilter();
+
+        var target = Entries.FirstOrDefault(entry => string.Equals(entry.Id, targetEntryId, StringComparison.Ordinal));
+        SetDragPreviewTarget(target, insertAfter);
+    }
+
+    public void CommitDragReorder()
+    {
+        if (!IsCustomSortMode)
+            return;
+        if (_customOrderDragSnapshot is null)
+            return;
+
+        SaveSettings();
+        ClearDragPreviewState();
+        StatusText = "已保存自定义拖拽排序";
+    }
+
+    public void CancelDragReorder()
+    {
+        if (_customOrderDragSnapshot is null)
+            return;
+
+        _settings.CustomEntryOrder = new List<string>(_customOrderDragSnapshot);
+        ApplyFilter();
+        ClearDragPreviewState();
+        StatusText = "已取消: 拖拽排序";
+    }
+
+    private void MoveEntryBeforeInternal(string draggedEntryId, string targetEntryId)
+    {
         var order = _settings.CustomEntryOrder;
         order.RemoveAll(id => string.Equals(id, draggedEntryId, StringComparison.Ordinal));
         var targetIndex = order.FindIndex(id => string.Equals(id, targetEntryId, StringComparison.Ordinal));
         if (targetIndex < 0)
             targetIndex = order.Count;
         order.Insert(targetIndex, draggedEntryId);
-        SaveSettings();
-        ApplyFilter();
-        StatusText = "已保存自定义拖拽排序";
+    }
+
+    private void MoveEntryRelativeInternal(string draggedEntryId, string targetEntryId, bool insertAfter)
+    {
+        var order = _settings.CustomEntryOrder;
+        order.RemoveAll(id => string.Equals(id, draggedEntryId, StringComparison.Ordinal));
+        var targetIndex = order.FindIndex(id => string.Equals(id, targetEntryId, StringComparison.Ordinal));
+        if (targetIndex < 0)
+            targetIndex = order.Count;
+        if (insertAfter)
+            targetIndex++;
+        targetIndex = Math.Min(targetIndex, order.Count);
+        order.Insert(targetIndex, draggedEntryId);
+    }
+
+    private void SetDragPreviewTarget(LauncherEntryViewModel? target, bool insertAfter)
+    {
+        if (ReferenceEquals(_dragPreviewTarget, target))
+        {
+            if (_dragPreviewTarget is not null)
+                UpdateDragInsertIndicator(_dragPreviewTarget, insertAfter);
+            return;
+        }
+
+        ClearDragPreviewTarget();
+        _dragPreviewTarget = target;
+        if (_dragPreviewTarget is not null)
+        {
+            _dragPreviewTarget.IsDragPreviewTarget = true;
+            UpdateDragInsertIndicator(_dragPreviewTarget, insertAfter);
+        }
+    }
+
+    private void ClearDragPreviewTarget()
+    {
+        if (_dragPreviewTarget is null)
+            return;
+
+        _dragPreviewTarget.IsDragPreviewTarget = false;
+        _dragPreviewTarget.IsDragInsertBefore = false;
+        _dragPreviewTarget.IsDragInsertAfter = false;
+        _dragPreviewTarget = null;
+    }
+
+    private static void UpdateDragInsertIndicator(LauncherEntryViewModel target, bool insertAfter)
+    {
+        target.IsDragInsertAfter = insertAfter;
+        target.IsDragInsertBefore = !insertAfter;
+    }
+
+    private void ClearDragPreviewState()
+    {
+        ClearDragPreviewTarget();
+        _customOrderDragSnapshot = null;
+        _customOrderDragEntryId = null;
+        _dragPreviewLastTargetId = null;
+        _dragPreviewLastInsertAfter = false;
+        if (_dragPreviewSource is not null)
+        {
+            _dragPreviewSource.IsDragPreviewSource = false;
+            _dragPreviewSource = null;
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]

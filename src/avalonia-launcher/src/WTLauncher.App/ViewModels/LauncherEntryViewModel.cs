@@ -29,11 +29,9 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         ? "未记录更新时间"
         : $"更新 {Entry.UpdatedAtUtc}";
 
-    public string ConfirmationLabel => Entry.Confirm || LaunchArgumentBuilder.IsDangerousCommand(Entry.Command)
-        ? "确认后启动"
-        : "直接启动";
-
     public bool IsDangerous => LaunchArgumentBuilder.IsDangerousCommand(Entry.Command);
+
+    public bool RequiresConfirmation => Entry.Confirm || IsDangerous;
 
     [ObservableProperty]
     private bool _isSelected;
@@ -47,9 +45,26 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     [ObservableProperty]
     private bool _isCompactLayout;
 
-    public bool ShowDetails => !IsCompactLayout;
+    [ObservableProperty]
+    private bool _isMicroLayout;
 
-    public double TitleFontSize => IsCompactLayout ? 16 : 18;
+    [ObservableProperty]
+    private bool _isDragPreviewTarget;
+
+    [ObservableProperty]
+    private bool _isDragPreviewSource;
+
+    [ObservableProperty]
+    private bool _isDragInsertBefore;
+
+    [ObservableProperty]
+    private bool _isDragInsertAfter;
+
+    public bool ShowDirectory => !IsMicroLayout;
+
+    public bool ShowCommand => !IsCompactLayout;
+
+    public double TitleFontSize => IsMicroLayout ? 15 : IsCompactLayout ? 16 : 18;
 
     partial void OnIsSelectedChanged(bool value)
     {
@@ -68,11 +83,27 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     private void UpdateLayoutFlags()
     {
-        var compact = CardHeight <= 118 || CardWidth <= 240;
-        if (compact == IsCompactLayout)
+        var micro = CardHeight <= 96 || CardWidth <= 216;
+        var compact = micro || CardHeight <= 124 || CardWidth <= 248;
+
+        var changed = false;
+        if (micro != IsMicroLayout)
+        {
+            IsMicroLayout = micro;
+            changed = true;
+        }
+
+        if (compact != IsCompactLayout)
+        {
+            IsCompactLayout = compact;
+            changed = true;
+        }
+
+        if (!changed)
             return;
-        IsCompactLayout = compact;
-        OnPropertyChanged(nameof(ShowDetails));
+
+        OnPropertyChanged(nameof(ShowDirectory));
+        OnPropertyChanged(nameof(ShowCommand));
         OnPropertyChanged(nameof(TitleFontSize));
     }
 
@@ -82,8 +113,8 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Directory));
         OnPropertyChanged(nameof(Command));
-        OnPropertyChanged(nameof(ConfirmationLabel));
         OnPropertyChanged(nameof(IsDangerous));
+        OnPropertyChanged(nameof(RequiresConfirmation));
         OnPropertyChanged(nameof(UpdatedLabel));
         OnPropertyChanged(nameof(TitleFontSize));
     }

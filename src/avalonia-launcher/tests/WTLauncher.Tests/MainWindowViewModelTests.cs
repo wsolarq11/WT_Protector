@@ -325,6 +325,121 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void DragPreviewReordersInMemoryAndCanBeCancelledOrCommitted()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            new LaunchEntry
+            {
+                Id = "one",
+                Name = "One",
+                Directory = "D:\\one",
+                Command = "codex",
+                Confirm = false,
+            },
+            new LaunchEntry
+            {
+                Id = "two",
+                Name = "Two",
+                Directory = "D:\\two",
+                Command = "opencode",
+                Confirm = false,
+            },
+            new LaunchEntry
+            {
+                Id = "three",
+                Name = "Three",
+                Directory = "D:\\three",
+                Command = "pwsh",
+                Confirm = false,
+            });
+
+        var viewModel = new MainWindowViewModel(
+            config,
+            settings,
+            new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["one", "two", "three"] },
+            new LauncherProcess());
+        LauncherSettingsStore.Save(new LauncherSettings
+        {
+            SortMode = "custom",
+            CustomEntryOrder = ["one", "two", "three"],
+        }, settings);
+
+        Assert.Equal(["one", "two", "three"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+
+        viewModel.BeginDragReorder("three");
+        viewModel.PreviewMoveEntry("three", "one", insertAfter: false);
+
+        Assert.Equal(["three", "one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.True(viewModel.Entries.Single(entry => entry.Id == "three").IsDragPreviewSource);
+        var target = viewModel.Entries.Single(entry => entry.Id == "one");
+        Assert.True(target.IsDragPreviewTarget);
+        Assert.True(target.IsDragInsertBefore);
+        Assert.False(target.IsDragInsertAfter);
+        Assert.Equal(["one", "two", "three"], LauncherSettingsStore.Load(settings).CustomEntryOrder);
+
+        viewModel.CancelDragReorder();
+
+        Assert.Equal(["one", "two", "three"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.DoesNotContain(viewModel.Entries, entry =>
+            entry.IsDragPreviewSource
+            || entry.IsDragPreviewTarget
+            || entry.IsDragInsertBefore
+            || entry.IsDragInsertAfter);
+
+        viewModel.BeginDragReorder("three");
+        viewModel.PreviewMoveEntry("three", "one", insertAfter: false);
+        viewModel.CommitDragReorder();
+
+        Assert.Equal(["three", "one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["three", "one", "two"], LauncherSettingsStore.Load(settings).CustomEntryOrder);
+    }
+
+    [Fact]
+    public void CardLayoutDensitySwitchesBetweenNormalCompactAndMicro()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            new LaunchEntry
+            {
+                Id = "one",
+                Name = "One",
+                Directory = "D:\\one",
+                Command = "codex",
+                Confirm = false,
+            });
+
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var entry = Assert.Single(viewModel.Entries);
+
+        entry.CardWidth = 210;
+        entry.CardHeight = 90;
+        Assert.True(entry.IsMicroLayout);
+        Assert.True(entry.IsCompactLayout);
+        Assert.False(entry.ShowDirectory);
+        Assert.False(entry.ShowCommand);
+        Assert.Equal(15, entry.TitleFontSize);
+
+        entry.CardWidth = 240;
+        entry.CardHeight = 110;
+        Assert.False(entry.IsMicroLayout);
+        Assert.True(entry.IsCompactLayout);
+        Assert.True(entry.ShowDirectory);
+        Assert.False(entry.ShowCommand);
+        Assert.Equal(16, entry.TitleFontSize);
+
+        entry.CardWidth = 280;
+        entry.CardHeight = 140;
+        Assert.False(entry.IsMicroLayout);
+        Assert.False(entry.IsCompactLayout);
+        Assert.True(entry.ShowDirectory);
+        Assert.True(entry.ShowCommand);
+        Assert.Equal(18, entry.TitleFontSize);
+    }
+
+    [Fact]
     public void CardSizingShrinksButtonsToFitVisibleEntriesInsideWindowRegion()
     {
         using var temp = new TempDirectory();
