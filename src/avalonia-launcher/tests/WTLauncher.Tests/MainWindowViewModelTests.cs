@@ -579,13 +579,38 @@ public sealed class MainWindowViewModelTests
             Assert.Equal(first.CardHeight, entry.CardHeight);
         });
 
-        const double gap = 10;
+        const double gap = 8;
         var columns = Math.Max(1, (int)Math.Floor((640 + gap) / (first.CardWidth + gap)));
         var rows = (int)Math.Ceiling(viewModel.VisibleEntries.Count / (double)columns);
         var usedWidth = (columns * first.CardWidth) + ((columns - 1) * gap);
         var usedHeight = (rows * first.CardHeight) + ((rows - 1) * gap);
         Assert.True(usedWidth <= 640.001, $"expected cards to fit available width, got {usedWidth}");
         Assert.True(usedHeight <= 260.001, $"expected cards to fit available height, got {usedHeight}");
+    }
+
+    [Fact]
+    public void CardSizingUsesGoldenRatioWhenSpaceAllows()
+    {
+        using var temp = new TempDirectory();
+        var entries = Enumerable.Range(1, 6)
+            .Select(index => new LaunchEntry
+            {
+                Id = $"entry-{index}",
+                Name = $"Entry {index}",
+                Directory = $"D:\\entry-{index}",
+                Command = "pwsh",
+                Confirm = false,
+            })
+            .ToArray();
+        var (config, settings, _) = CreatePortableFixture(temp, entries);
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+
+        viewModel.UpdateCardsAvailableSize(900, 520);
+
+        var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
+        const double goldenRatio = 21d / 13d;
+        var actualRatio = first.CardWidth / first.CardHeight;
+        Assert.InRange(actualRatio, goldenRatio - 0.02, goldenRatio + 0.02);
     }
 
     [Fact]
@@ -642,7 +667,7 @@ public sealed class MainWindowViewModelTests
         var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
         Assert.True(first.CardHeight >= 96, "expected card height to stop shrinking before actions become unreachable; scrolling is the fallback");
 
-        const double gap = 10;
+        const double gap = 8;
         var columns = Math.Max(1, (int)Math.Floor((892 + gap) / (first.CardWidth + gap)));
         var rows = (int)Math.Ceiling(viewModel.VisibleEntries.Count / (double)columns);
         var usedWidth = (columns * first.CardWidth) + ((columns - 1) * gap);

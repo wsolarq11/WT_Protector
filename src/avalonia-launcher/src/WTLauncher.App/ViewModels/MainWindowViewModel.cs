@@ -853,9 +853,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         var targets = VisibleEntries.Count > 0 ? VisibleEntries : Entries;
         var count = Math.Max(1, targets.Count);
-        const double gap = 10;
-        const double preferredWidth = 300;
-        const double preferredHeight = 164;
+        const double gap = 8;
+        const double rhythmUnit = 13;
+        const double goldenWidthUnits = 21;
+        const double goldenHeightUnits = 13;
+        const double goldenCardRatio = goldenWidthUnits / goldenHeightUnits;
+        const double preferredWidth = rhythmUnit * goldenWidthUnits;
+        const double preferredHeight = rhythmUnit * goldenHeightUnits;
         // "No wheel" is a preference, not a requirement: never shrink cards below readability;
         // let the ScrollViewer become the fallback when we cannot fit everything comfortably.
         const double minWidth = 200;
@@ -876,8 +880,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 continue;
 
             var effectiveHeight = Math.Max(minHeight, height);
-            var scale = Math.Min(width / preferredWidth, effectiveHeight / preferredHeight);
-            var shapePenalty = Math.Abs((width / effectiveHeight) - 1.8);
+            var shapedHeight = Math.Max(minHeight, Math.Min(effectiveHeight, width / goldenCardRatio));
+            var scale = Math.Min(width / preferredWidth, shapedHeight / preferredHeight);
+            var shapePenalty = Math.Abs((width / shapedHeight) - goldenCardRatio);
             var overflowRatio = height < minHeight ? (minHeight / height) : 1;
             var overflowPenalty = (overflowRatio - 1) * 0.18;
             var score = scale - (shapePenalty * 0.08) - overflowPenalty;
@@ -885,7 +890,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             {
                 bestScore = score;
                 bestWidth = width;
-                bestHeight = effectiveHeight;
+                bestHeight = shapedHeight;
             }
         }
 

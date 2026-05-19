@@ -407,7 +407,7 @@
                       IsVisible="{Binding IsCardsViewMode}">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
-              <WrapPanel ItemSpacing="10" LineSpacing="10"/>
+              <WrapPanel ItemSpacing="8" LineSpacing="8"/>
             </ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
