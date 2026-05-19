@@ -761,7 +761,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         // "No wheel" is a preference, not a requirement: never shrink cards below readability;
         // let the ScrollViewer become the fallback when we cannot fit everything comfortably.
         const double minWidth = 200;
-        const double minHeight = 80;
+        const double minHeight = 96;
         var bestWidth = Math.Max(minWidth, _cardsAvailableWidth);
         var bestHeight = Math.Max(minHeight, _cardsAvailableHeight);
         var bestScore = double.NegativeInfinity;

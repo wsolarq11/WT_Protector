@@ -420,6 +420,7 @@ public sealed class MainWindowViewModelTests
         Assert.True(entry.IsCompactLayout);
         Assert.False(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
+        Assert.False(entry.ShowUpdatedLabel);
         Assert.Equal(15, entry.TitleFontSize);
 
         entry.CardWidth = 240;
@@ -428,6 +429,7 @@ public sealed class MainWindowViewModelTests
         Assert.True(entry.IsCompactLayout);
         Assert.True(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
+        Assert.True(entry.ShowUpdatedLabel);
         Assert.Equal(16, entry.TitleFontSize);
 
         entry.CardWidth = 280;
@@ -436,6 +438,7 @@ public sealed class MainWindowViewModelTests
         Assert.False(entry.IsCompactLayout);
         Assert.True(entry.ShowDirectory);
         Assert.True(entry.ShowCommand);
+        Assert.True(entry.ShowUpdatedLabel);
         Assert.Equal(18, entry.TitleFontSize);
     }
 
@@ -496,7 +499,7 @@ public sealed class MainWindowViewModelTests
         viewModel.UpdateCardsAvailableSize(892, 330);
 
         var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
-        Assert.True(first.CardHeight >= 80, "expected card height to stop shrinking before text becomes unreadable; scrolling is the fallback");
+        Assert.True(first.CardHeight >= 96, "expected card height to stop shrinking before actions become unreachable; scrolling is the fallback");
 
         const double gap = 10;
         var columns = Math.Max(1, (int)Math.Floor((892 + gap) / (first.CardWidth + gap)));

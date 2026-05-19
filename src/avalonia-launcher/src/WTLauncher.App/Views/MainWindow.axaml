@@ -34,6 +34,14 @@
         </Transitions>
       </Setter>
     </Style>
+    <Style Selector="Border.card.compact">
+      <Setter Property="Padding" Value="12"/>
+      <Setter Property="CornerRadius" Value="12"/>
+    </Style>
+    <Style Selector="Border.card.micro">
+      <Setter Property="Padding" Value="10"/>
+      <Setter Property="CornerRadius" Value="11"/>
+    </Style>
     <Style Selector="Border.card.drag-target">
       <Setter Property="BorderBrush" Value="#38BDF8"/>
       <Setter Property="BorderThickness" Value="2"/>
@@ -53,18 +61,90 @@
       <Setter Property="Foreground" Value="#64748B"/>
       <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
+    <Style Selector="TextBlock.entry-dir">
+      <Setter Property="Margin" Value="0,13,0,0"/>
+    </Style>
+    <Style Selector="TextBlock.entry-cmd">
+      <Setter Property="Margin" Value="0,8,0,0"/>
+    </Style>
+    <Style Selector="Grid.entry-actions">
+      <Setter Property="Margin" Value="0,13,0,0"/>
+    </Style>
+    <Style Selector="Grid.entry-footer">
+      <Setter Property="Margin" Value="0,8,0,0"/>
+    </Style>
+    <Style Selector="Border.card.compact TextBlock.entry-dir">
+      <Setter Property="Margin" Value="0,10,0,0"/>
+    </Style>
+    <Style Selector="Border.card.compact TextBlock.entry-cmd">
+      <Setter Property="Margin" Value="0,6,0,0"/>
+    </Style>
+    <Style Selector="Border.card.compact Grid.entry-actions">
+      <Setter Property="Margin" Value="0,10,0,0"/>
+    </Style>
+    <Style Selector="Border.card.compact Grid.entry-footer">
+      <Setter Property="Margin" Value="0,6,0,0"/>
+    </Style>
+    <Style Selector="Border.card.micro Grid.entry-actions">
+      <Setter Property="Margin" Value="0,8,0,0"/>
+    </Style>
+    <Style Selector="Border.card.micro Grid.entry-footer">
+      <Setter Property="Margin" Value="0,6,0,0"/>
+    </Style>
+    <Style Selector="Border.card.compact Button.primary">
+      <Setter Property="Padding" Value="14,7"/>
+      <Setter Property="CornerRadius" Value="9"/>
+    </Style>
+    <Style Selector="Border.card.micro Button.primary">
+      <Setter Property="Padding" Value="12,6"/>
+      <Setter Property="CornerRadius" Value="9"/>
+    </Style>
+    <Style Selector="Button.more">
+      <Setter Property="Padding" Value="12,8"/>
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="MinWidth" Value="40"/>
+    </Style>
+    <Style Selector="Border.card.compact Button.more">
+      <Setter Property="Padding" Value="11,6"/>
+      <Setter Property="MinWidth" Value="38"/>
+      <Setter Property="CornerRadius" Value="9"/>
+    </Style>
+    <Style Selector="Border.card.micro Button.more">
+      <Setter Property="Padding" Value="10,6"/>
+      <Setter Property="MinWidth" Value="36"/>
+      <Setter Property="CornerRadius" Value="9"/>
+    </Style>
+    <Style Selector="Border.entry-drag-handle">
+      <Setter Property="Background" Value="#F1F5F9"/>
+      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Padding" Value="8,4"/>
+    </Style>
+    <Style Selector="Border.card.compact Border.entry-drag-handle">
+      <Setter Property="Padding" Value="7,3"/>
+      <Setter Property="CornerRadius" Value="8"/>
+    </Style>
+    <Style Selector="Border.card.micro Border.entry-drag-handle">
+      <Setter Property="Padding" Value="6,2"/>
+      <Setter Property="CornerRadius" Value="7"/>
+    </Style>
     <Style Selector="Button.primary">
       <Setter Property="Background" Value="#2563EB"/>
       <Setter Property="Foreground" Value="White"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="Padding" Value="16,8"/>
       <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
     <Style Selector="Button.secondary">
       <Setter Property="Background" Value="#EEF2FF"/>
       <Setter Property="Foreground" Value="#1D4ED8"/>
       <Setter Property="Padding" Value="14,8"/>
       <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
   </Window.Styles>
 
@@ -188,6 +268,8 @@
             <Border Classes="card"
                     Classes.drag-target="{Binding IsDragPreviewTarget}"
                     Classes.drag-source="{Binding IsDragPreviewSource}"
+                    Classes.compact="{Binding IsCompactLayout}"
+                    Classes.micro="{Binding IsMicroLayout}"
                     Width="{Binding CardWidth}"
                     Height="{Binding CardHeight}"
                     ClipToBounds="True"
@@ -243,44 +325,45 @@
                   </Border>
                 </Grid>
                 <TextBlock Grid.Row="1"
-                           Margin="0,13,0,0"
-                           Classes="mono"
+                           Classes="mono entry-dir"
                            IsVisible="{Binding ShowDirectory}"
                            MaxLines="1"
                            TextTrimming="PathSegmentEllipsis"
                            Text="{Binding Directory}"/>
                 <TextBlock Grid.Row="2"
-                           Margin="0,8,0,0"
-                           Classes="mono"
+                           Classes="mono entry-cmd"
                            IsVisible="{Binding ShowCommand}"
                            MaxLines="1"
                            TextTrimming="CharacterEllipsis"
                            Text="{Binding Command}"/>
                 <Grid Grid.Row="4"
+                      Classes="entry-actions"
                       ColumnDefinitions="*,Auto"
-                      Margin="0,13,0,0">
+                      >
                   <Button Classes="primary"
                           Content="启动"
                           Command="{Binding LaunchCommand}"/>
                   <Button Grid.Column="1"
-                          Classes="secondary"
+                          Classes="secondary more"
                           Content="⋯"
-                          Padding="12,8"
                           Margin="8,0,0,0"
                           Click="OnEntryMoreClicked"/>
                 </Grid>
-                <Grid Grid.Row="5" ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+                <Grid Grid.Row="5"
+                      Classes="entry-footer"
+                      ColumnDefinitions="*,Auto">
                   <TextBlock Classes="muted"
+                             IsVisible="{Binding ShowUpdatedLabel}"
                              Text="{Binding UpdatedLabel}"/>
                   <Border Grid.Column="1"
-                          Background="#F1F5F9"
-                          CornerRadius="8"
-                          Padding="8,4"
+                          Classes="entry-drag-handle"
                           Cursor="Hand"
                           PointerPressed="OnEntryDragPointerPressed">
                     <TextBlock Text="拖拽"
                                Foreground="#334155"
-                               FontSize="12"/>
+                               FontSize="12"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
                   </Border>
                 </Grid>
               </Grid>

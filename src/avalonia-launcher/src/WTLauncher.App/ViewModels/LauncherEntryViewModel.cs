@@ -64,6 +64,8 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     public bool ShowCommand => !IsCompactLayout;
 
+    public bool ShowUpdatedLabel => !IsMicroLayout;
+
     public double TitleFontSize => IsMicroLayout ? 15 : IsCompactLayout ? 16 : 18;
 
     partial void OnIsSelectedChanged(bool value)
@@ -104,6 +106,7 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
         OnPropertyChanged(nameof(ShowDirectory));
         OnPropertyChanged(nameof(ShowCommand));
+        OnPropertyChanged(nameof(ShowUpdatedLabel));
         OnPropertyChanged(nameof(TitleFontSize));
     }
 
