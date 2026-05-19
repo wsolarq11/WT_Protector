@@ -557,6 +557,7 @@
                           VerticalAlignment="Center">
                       <!-- insertion preview -->
                       <Border Grid.ColumnSpan="6"
+                              ZIndex="10"
                               Height="4"
                               HorizontalAlignment="Stretch"
                               VerticalAlignment="Top"
@@ -566,6 +567,7 @@
                               IsHitTestVisible="False"
                               IsVisible="{Binding IsDragInsertBefore}"/>
                       <Border Grid.ColumnSpan="6"
+                              ZIndex="10"
                               Height="4"
                               HorizontalAlignment="Stretch"
                               VerticalAlignment="Bottom"
