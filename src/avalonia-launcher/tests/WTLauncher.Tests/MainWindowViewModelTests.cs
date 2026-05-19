@@ -516,7 +516,7 @@ public sealed class MainWindowViewModelTests
         Assert.True(entry.ShowDirectory);
         Assert.True(entry.ShowCommand);
         Assert.True(entry.ShowUpdatedLabel);
-        Assert.Equal(17, entry.TitleFontSize);
+        Assert.Equal(14, entry.TitleFontSize);
         Assert.Equal("details", LauncherSettingsStore.Load(settings).EntryViewMode);
 
         viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == "cards");
