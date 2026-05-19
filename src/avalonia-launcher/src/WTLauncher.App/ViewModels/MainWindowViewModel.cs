@@ -1,3 +1,4 @@
+using Avalonia;
 using System.Collections.ObjectModel;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -14,8 +15,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly LauncherSettings _settings;
     private readonly LauncherProcess _launcherProcess;
     private LauncherPresetFile _presetFile = new();
-    private double _cardsAvailableWidth = 900;
-    private double _cardsAvailableHeight = 420;
+    private Size _cardsAvailableSize = new(900, 420);
     private DragReorderSession? _dragReorderSession;
 
     [ObservableProperty]
@@ -814,10 +814,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    public void UpdateCardsAvailableSize(double width, double height)
+    public void UpdateCardsAvailableSize(Size availableSize)
     {
-        _cardsAvailableWidth = Math.Max(220, width);
-        _cardsAvailableHeight = Math.Max(140, height);
+        _cardsAvailableSize = new Size(
+            Math.Max(220, availableSize.Width),
+            Math.Max(140, availableSize.Height));
         RecalculateCardSize();
     }
 
@@ -825,7 +826,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         var targets = VisibleEntries.Count > 0 ? VisibleEntries : Entries;
         var count = Math.Max(1, targets.Count);
-        var layout = LauncherEntryLayoutCalculator.Calculate(_cardsAvailableWidth, _cardsAvailableHeight, count);
+        var layout = LauncherEntryLayoutCalculator.Calculate(
+            _cardsAvailableSize.Width,
+            _cardsAvailableSize.Height,
+            count);
         foreach (var entry in Entries)
         {
             entry.CardWidth = layout.CardWidth;

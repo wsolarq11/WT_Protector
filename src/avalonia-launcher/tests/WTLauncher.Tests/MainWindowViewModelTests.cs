@@ -1,3 +1,4 @@
+using Avalonia;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -655,6 +656,24 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void CardSizingUsesOneTypedAvailableSizeStateSource()
+    {
+        Assert.Null(typeof(MainWindowViewModel).GetField("_cardsAvailableWidth", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
+        Assert.Null(typeof(MainWindowViewModel).GetField("_cardsAvailableHeight", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
+        Assert.NotNull(typeof(MainWindowViewModel).GetField("_cardsAvailableSize", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
+
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+
+        viewModel.UpdateCardsAvailableSize(new Size(640, 260));
+
+        var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
+        Assert.True(first.CardWidth > 0);
+        Assert.True(first.CardHeight > 0);
+    }
+
+    [Fact]
     public void CardSizingShrinksButtonsToFitVisibleEntriesInsideWindowRegion()
     {
         using var temp = new TempDirectory();
@@ -671,7 +690,7 @@ public sealed class MainWindowViewModelTests
         var (config, settings, _) = CreatePortableFixture(temp, entries);
         var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
 
-        viewModel.UpdateCardsAvailableSize(640, 260);
+        viewModel.UpdateCardsAvailableSize(new Size(640, 260));
 
         var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
         Assert.True(first.CardWidth < 300, "expected card width to shrink below the default width");
@@ -708,7 +727,7 @@ public sealed class MainWindowViewModelTests
         var (config, settings, _) = CreatePortableFixture(temp, entries);
         var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
 
-        viewModel.UpdateCardsAvailableSize(900, 520);
+        viewModel.UpdateCardsAvailableSize(new Size(900, 520));
 
         var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
         const double goldenRatio = 21d / 13d;
@@ -733,7 +752,7 @@ public sealed class MainWindowViewModelTests
         var (config, settings, _) = CreatePortableFixture(temp, entries);
         var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
 
-        viewModel.UpdateCardsAvailableSize(892, 330);
+        viewModel.UpdateCardsAvailableSize(new Size(892, 330));
 
         var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
         Assert.Equal(24, first.NameTileHeight);
@@ -765,7 +784,7 @@ public sealed class MainWindowViewModelTests
         var (config, settings, _) = CreatePortableFixture(temp, entries);
         var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
 
-        viewModel.UpdateCardsAvailableSize(892, 330);
+        viewModel.UpdateCardsAvailableSize(new Size(892, 330));
 
         var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
         Assert.True(first.CardHeight >= 96, "expected card height to stop shrinking before actions become unreachable; scrolling is the fallback");
