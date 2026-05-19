@@ -486,6 +486,8 @@
                             Classes="secondary more"
                             Content="⋯"
                             Margin="8,0,0,0"
+                            ToolTip.Tip="更多操作"
+                            AutomationProperties.Name="更多操作"
                             Click="OnEntryMoreClicked"/>
                   </Grid>
                   <Grid Grid.Row="3"
@@ -616,6 +618,8 @@
                                 Command="{Binding LaunchCommand}"/>
                         <Button Classes="secondary more"
                                 Content="⋯"
+                                ToolTip.Tip="更多操作"
+                                AutomationProperties.Name="更多操作"
                                 Click="OnEntryMoreClicked"/>
                         <Border Classes="entry-drag-handle"
                                 Cursor="Hand"

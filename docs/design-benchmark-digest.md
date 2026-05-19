@@ -42,5 +42,4 @@ Purpose: convert 12 external first-class design benchmarks into WT Launcher acce
 
 ## Open benchmark gaps
 
-- Keyboard-only path for the “⋯” more menu is still listed as an open question in `DESIGN.md`.
 - Manual visual inspection of live drag ghost alignment and insert cue animation remains useful because current tests prove structure and smoke startup, not pixel-level motion fidelity.

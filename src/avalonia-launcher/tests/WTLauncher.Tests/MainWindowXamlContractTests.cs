@@ -70,6 +70,19 @@ public sealed class MainWindowXamlContractTests
         Assert.Contains("FLIP: jump back without transition", codeBehind);
     }
 
+    [Fact]
+    public void MainWindow_MoreMenuButtonsExposeKeyboardReachableLabel()
+    {
+        var xaml = File.ReadAllText(GetMainWindowXamlPath());
+        var codeBehind = File.ReadAllText(GetMainWindowCodeBehindPath());
+
+        Assert.Equal(2, Count(xaml, "Content=\"⋯\""));
+        Assert.Equal(2, Count(xaml, "Click=\"OnEntryMoreClicked\""));
+        Assert.Equal(2, Count(xaml, "ToolTip.Tip=\"更多操作\""));
+        Assert.Equal(2, Count(xaml, "AutomationProperties.Name=\"更多操作\""));
+        AssertInOrder(codeBehind, "private void OnEntryMoreClicked", "menu.Open(card)", "e.Handled = true");
+    }
+
     private static int Count(string text, string value)
     {
         var count = 0;

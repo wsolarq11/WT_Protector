@@ -117,7 +117,7 @@
 
 ## Accessibility
 - Target standard: 保持桌面工具可读、可点、可理解，避免过度依赖颜色
-- Keyboard/focus behavior: 主操作仍应可通过按钮和菜单完成；拖拽是加速路径，不是唯一入口
+- Keyboard/focus behavior: 主操作仍应可通过按钮和菜单完成；“⋯”更多操作是标准 Button，键盘聚焦后可用 Space/Enter 打开同一 ContextMenu；拖拽是加速路径，不是唯一入口
 - Contrast/readability: 路径/命令截断前保证最小可读性；小卡片不再强塞所有字段
 - Screen-reader semantics: 次级动作仍以标准菜单/按钮暴露，不把唯一入口藏在拖拽手势里
 - Toggle semantics: 全局确认开关必须可聚焦、可键盘切换，并用短标签说明当前状态；不再用危险命令例外解释增加认知分支
@@ -163,4 +163,4 @@
   - 发布 / verify receipt 至少记录 `WTLauncher.App.dll` 的 hash；`WTLauncher.App.exe` 只作为 apphost 外壳，不能单独作为“最新代码已发布”的唯一证据
 
 ## Open questions
-- [ ] 是否要把“⋯”更多菜单也提供键盘快捷键入口？
+- None currently.
