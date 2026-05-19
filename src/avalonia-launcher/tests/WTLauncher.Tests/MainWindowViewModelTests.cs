@@ -503,6 +503,25 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void CardLayoutDensityUsesOneTypedStateSource()
+    {
+        var densityFields = typeof(LauncherEntryViewModel)
+            .GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .Where(field =>
+                field.Name.Contains("Layout", StringComparison.OrdinalIgnoreCase)
+                || field.Name.Contains("Density", StringComparison.OrdinalIgnoreCase)
+                || field.Name.Contains("Compact", StringComparison.OrdinalIgnoreCase)
+                || field.Name.Contains("Micro", StringComparison.OrdinalIgnoreCase))
+            .Select(field => field.Name)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.Equal(["_layoutDensity"], densityFields);
+        Assert.Null(typeof(LauncherEntryViewModel).GetProperty(nameof(LauncherEntryViewModel.IsCompactLayout))?.SetMethod);
+        Assert.Null(typeof(LauncherEntryViewModel).GetProperty(nameof(LauncherEntryViewModel.IsMicroLayout))?.SetMethod);
+    }
+
+    [Fact]
     public void EntryViewModePersistsAndOverridesCardDensityForDetailedScanning()
     {
         using var temp = new TempDirectory();

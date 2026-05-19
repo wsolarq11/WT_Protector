@@ -49,11 +49,7 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     [ObservableProperty]
     private double _nameTileHeight = 24;
 
-    [ObservableProperty]
-    private bool _isCompactLayout;
-
-    [ObservableProperty]
-    private bool _isMicroLayout;
+    private LauncherEntryLayoutDensity _layoutDensity = LauncherEntryLayoutDensity.Normal;
 
     [ObservableProperty]
     private bool _isDragPreviewTarget;
@@ -66,6 +62,10 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isDragInsertAfter;
+
+    public bool IsCompactLayout => _layoutDensity is LauncherEntryLayoutDensity.Compact or LauncherEntryLayoutDensity.Micro;
+
+    public bool IsMicroLayout => _layoutDensity is LauncherEntryLayoutDensity.Micro;
 
     public bool ShowDirectory => !_owner.IsNamesViewMode && (_owner.IsDetailedListMode || !IsMicroLayout);
 
@@ -91,28 +91,28 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     private void UpdateLayoutFlags()
     {
-        var micro = CardHeight <= 96 || CardWidth <= 216;
-        var compact = micro || CardHeight <= 124 || CardWidth <= 248;
+        var density = MeasureLayoutDensity(CardWidth, CardHeight);
 
-        var changed = false;
-        if (micro != IsMicroLayout)
-        {
-            IsMicroLayout = micro;
-            changed = true;
-        }
-
-        if (compact != IsCompactLayout)
-        {
-            IsCompactLayout = compact;
-            changed = true;
-        }
-
-        if (!changed)
+        if (density == _layoutDensity)
             return;
 
+        _layoutDensity = density;
+        OnPropertyChanged(nameof(IsCompactLayout));
+        OnPropertyChanged(nameof(IsMicroLayout));
         OnPropertyChanged(nameof(ShowDirectory));
         OnPropertyChanged(nameof(ShowCommand));
         OnPropertyChanged(nameof(TitleFontSize));
+    }
+
+    private static LauncherEntryLayoutDensity MeasureLayoutDensity(double width, double height)
+    {
+        if (height <= 96 || width <= 216)
+            return LauncherEntryLayoutDensity.Micro;
+
+        if (height <= 124 || width <= 248)
+            return LauncherEntryLayoutDensity.Compact;
+
+        return LauncherEntryLayoutDensity.Normal;
     }
 
     public void RefreshDisplay()
@@ -156,4 +156,11 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     {
         return _owner.DeleteEntryAsync(this);
     }
+}
+
+internal enum LauncherEntryLayoutDensity
+{
+    Normal,
+    Compact,
+    Micro,
 }
