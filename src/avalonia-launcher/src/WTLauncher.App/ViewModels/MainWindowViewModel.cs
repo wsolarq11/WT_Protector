@@ -17,12 +17,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private bool _isRefreshing;
     private double _cardsAvailableWidth = 900;
     private double _cardsAvailableHeight = 420;
-    private List<string>? _customOrderDragSnapshot;
-    private string? _customOrderDragEntryId;
-    private LauncherEntryViewModel? _dragPreviewTarget;
-    private LauncherEntryViewModel? _dragPreviewSource;
-    private string? _dragPreviewLastTargetId;
-    private bool _dragPreviewLastInsertAfter;
+    private DragReorderSession? _dragReorderSession;
 
     [ObservableProperty]
     private string _filterText = "";
@@ -508,18 +503,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
 
         EnsureCustomOrderContainsEntries();
-        _customOrderDragEntryId = draggedEntryId;
-        _customOrderDragSnapshot = new List<string>(_settings.CustomEntryOrder);
-        _dragPreviewLastTargetId = null;
-        _dragPreviewLastInsertAfter = false;
+        ClearDragPreviewState();
 
-        if (_dragPreviewSource is not null)
-            _dragPreviewSource.IsDragPreviewSource = false;
-        _dragPreviewSource = Entries.FirstOrDefault(entry => string.Equals(entry.Id, draggedEntryId, StringComparison.Ordinal));
-        if (_dragPreviewSource is not null)
-            _dragPreviewSource.IsDragPreviewSource = true;
-
-        ClearDragPreviewTarget();
+        var source = Entries.FirstOrDefault(entry => string.Equals(entry.Id, draggedEntryId, StringComparison.Ordinal));
+        _dragReorderSession = new DragReorderSession(
+            draggedEntryId,
+            new List<string>(_settings.CustomEntryOrder),
+            source);
+        if (source is not null)
+            source.IsDragPreviewSource = true;
     }
 
     public bool PreviewMoveEntryBefore(string draggedEntryId, string targetEntryId)
@@ -531,19 +523,22 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         if (!IsCustomSortMode)
             return false;
-        if (_customOrderDragSnapshot is null || !string.Equals(_customOrderDragEntryId, draggedEntryId, StringComparison.Ordinal))
+        var session = _dragReorderSession;
+        if (session is null || !string.Equals(session.DraggedEntryId, draggedEntryId, StringComparison.Ordinal))
+        {
             BeginDragReorder(draggedEntryId);
-        if (_customOrderDragSnapshot is null)
+            session = _dragReorderSession;
+        }
+        if (session is null)
             return false;
         if (string.Equals(draggedEntryId, targetEntryId, StringComparison.Ordinal))
             return false;
 
-        if (string.Equals(_dragPreviewLastTargetId, targetEntryId, StringComparison.Ordinal)
-            && _dragPreviewLastInsertAfter == insertAfter)
+        var nextPreview = new DragInsertPreview(targetEntryId, insertAfter);
+        if (session.LastPreview == nextPreview)
             return false;
 
-        _dragPreviewLastTargetId = targetEntryId;
-        _dragPreviewLastInsertAfter = insertAfter;
+        session.LastPreview = nextPreview;
         EnsureCustomOrderContainsEntries();
         MoveEntryRelativeInternal(draggedEntryId, targetEntryId, insertAfter);
         ApplyFilter();
@@ -555,19 +550,18 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public void ClearDragHover()
     {
-        if (_customOrderDragSnapshot is null)
+        if (_dragReorderSession is null)
             return;
 
         ClearDragPreviewTarget();
-        _dragPreviewLastTargetId = null;
-        _dragPreviewLastInsertAfter = false;
+        _dragReorderSession.LastPreview = null;
     }
 
     public void CommitDragReorder()
     {
         if (!IsCustomSortMode)
             return;
-        if (_customOrderDragSnapshot is null)
+        if (_dragReorderSession is null)
             return;
 
         SaveSettings();
@@ -577,10 +571,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public void CancelDragReorder()
     {
-        if (_customOrderDragSnapshot is null)
+        var session = _dragReorderSession;
+        if (session is null)
             return;
 
-        _settings.CustomEntryOrder = new List<string>(_customOrderDragSnapshot);
+        _settings.CustomEntryOrder = new List<string>(session.Snapshot);
         ApplyFilter();
         ClearDragPreviewState();
         StatusText = "已取消: 拖拽排序";
@@ -611,31 +606,36 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void SetDragPreviewTarget(LauncherEntryViewModel? target, bool insertAfter)
     {
-        if (ReferenceEquals(_dragPreviewTarget, target))
+        var session = _dragReorderSession;
+        if (session is null)
+            return;
+
+        if (ReferenceEquals(session.Target, target))
         {
-            if (_dragPreviewTarget is not null)
-                UpdateDragInsertIndicator(_dragPreviewTarget, insertAfter);
+            if (session.Target is not null)
+                UpdateDragInsertIndicator(session.Target, insertAfter);
             return;
         }
 
         ClearDragPreviewTarget();
-        _dragPreviewTarget = target;
-        if (_dragPreviewTarget is not null)
+        session.Target = target;
+        if (session.Target is not null)
         {
-            _dragPreviewTarget.IsDragPreviewTarget = true;
-            UpdateDragInsertIndicator(_dragPreviewTarget, insertAfter);
+            session.Target.IsDragPreviewTarget = true;
+            UpdateDragInsertIndicator(session.Target, insertAfter);
         }
     }
 
     private void ClearDragPreviewTarget()
     {
-        if (_dragPreviewTarget is null)
+        var session = _dragReorderSession;
+        if (session?.Target is not { } target)
             return;
 
-        _dragPreviewTarget.IsDragPreviewTarget = false;
-        _dragPreviewTarget.IsDragInsertBefore = false;
-        _dragPreviewTarget.IsDragInsertAfter = false;
-        _dragPreviewTarget = null;
+        target.IsDragPreviewTarget = false;
+        target.IsDragInsertBefore = false;
+        target.IsDragInsertAfter = false;
+        session.Target = null;
     }
 
     private static void UpdateDragInsertIndicator(LauncherEntryViewModel target, bool insertAfter)
@@ -646,17 +646,29 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void ClearDragPreviewState()
     {
+        var session = _dragReorderSession;
+        if (session is null)
+            return;
+
         ClearDragPreviewTarget();
-        _customOrderDragSnapshot = null;
-        _customOrderDragEntryId = null;
-        _dragPreviewLastTargetId = null;
-        _dragPreviewLastInsertAfter = false;
-        if (_dragPreviewSource is not null)
+        _dragReorderSession = null;
+        if (session.Source is not null)
         {
-            _dragPreviewSource.IsDragPreviewSource = false;
-            _dragPreviewSource = null;
+            session.Source.IsDragPreviewSource = false;
         }
     }
+
+    private sealed record DragReorderSession(
+        string DraggedEntryId,
+        List<string> Snapshot,
+        LauncherEntryViewModel? Source)
+    {
+        public LauncherEntryViewModel? Target { get; set; }
+
+        public DragInsertPreview? LastPreview { get; set; }
+    }
+
+    private readonly record struct DragInsertPreview(string TargetEntryId, bool InsertAfter);
 
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private async Task LaunchSelectedAsync()

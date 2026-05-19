@@ -447,6 +447,19 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void DragPreviewStateUsesOneTypedSessionField()
+    {
+        var dragFields = typeof(MainWindowViewModel)
+            .GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .Where(field => field.Name.Contains("Drag", StringComparison.OrdinalIgnoreCase))
+            .Select(field => field.Name)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.Equal(["_dragReorderSession"], dragFields);
+    }
+
+    [Fact]
     public void CardLayoutDensitySwitchesBetweenNormalCompactAndMicro()
     {
         using var temp = new TempDirectory();
