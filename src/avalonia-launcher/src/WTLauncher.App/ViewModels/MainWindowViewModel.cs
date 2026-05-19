@@ -47,16 +47,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private int _visibleCount;
 
     [ObservableProperty]
-    private int _visibleDangerousCount;
-
-    [ObservableProperty]
-    private int _visibleManualConfirmCount;
-
-    public bool HasVisibleDangerous => VisibleDangerousCount > 0;
-
-    public bool HasVisibleManualConfirm => VisibleManualConfirmCount > 0;
-
-    [ObservableProperty]
     private int _selectedCount;
 
     [ObservableProperty]
@@ -125,8 +115,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public string LaunchConfirmationToggleText => RequireConfirmationForLaunches ? "启动需确认" : "启动无需确认";
 
     public string LaunchConfirmationToggleTip => RequireConfirmationForLaunches
-        ? "普通启动项启动前会确认；危险命令始终强制确认。"
-        : "普通启动项会直接启动；危险命令仍会强制确认。";
+        ? "所有启动项启动前统一确认。"
+        : "所有启动项直接启动，不弹确认。";
 
     public string ConfigPathDisplay { get; }
 
@@ -208,19 +198,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             SaveSettings();
             StatusText = value
-                ? "启动确认: 普通启动项启动前确认（危险命令始终确认）"
-                : "启动确认: 普通启动项直接启动（危险命令仍会确认）";
+                ? "启动确认: 所有启动项启动前统一确认"
+                : "启动确认: 所有启动项直接启动";
         }
-    }
-
-    partial void OnVisibleDangerousCountChanged(int value)
-    {
-        OnPropertyChanged(nameof(HasVisibleDangerous));
-    }
-
-    partial void OnVisibleManualConfirmCountChanged(int value)
-    {
-        OnPropertyChanged(nameof(HasVisibleManualConfirm));
     }
 
     [RelayCommand]
@@ -707,7 +687,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         try
         {
-            if (selected.Any(entry => entry.RequiresConfirmation))
+            if (RequireConfirmationForLaunches)
             {
                 var accepted = await ConfirmBatchLaunchAsync(selected.Select(entry => entry.Entry).ToList()).ConfigureAwait(true);
                 if (!accepted)
@@ -759,12 +739,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
             DryRunText = ex.Message;
             StatusText = $"预演失败: {item.Name}";
         }
-    }
-
-    internal bool EntryRequiresLaunchConfirmation(LaunchEntry entry)
-    {
-        return RequireConfirmationForLaunches
-            || LaunchArgumentBuilder.IsDangerousCommand(entry.Command);
     }
 
     private LaunchPlan BuildLaunchPlan(LaunchEntry entry, bool validateDirectory = true)
@@ -857,8 +831,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         VisibleCount = VisibleEntries.Count;
-        VisibleDangerousCount = VisibleEntries.Count(entry => entry.IsDangerous);
-        VisibleManualConfirmCount = VisibleEntries.Count(entry => entry.IsManualConfirmation);
         RecalculateCardSize();
     }
 
@@ -1017,7 +989,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             Name = (draft.Name ?? string.Empty).Trim(),
             Directory = (draft.Directory ?? string.Empty).Trim(),
             Command = (draft.Command ?? string.Empty).Trim(),
-            Confirm = LaunchArgumentBuilder.IsDangerousCommand(draft.Command),
+            Confirm = false,
             Selected = draft.Selected,
             UpdatedAtUtc = previousEntry?.UpdatedAtUtc ?? string.Empty,
         };

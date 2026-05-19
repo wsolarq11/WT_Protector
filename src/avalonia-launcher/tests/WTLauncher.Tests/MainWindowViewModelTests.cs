@@ -44,7 +44,7 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
-    public void GlobalConfirmationSwitchPersistsAndDangerousEntriesStayConfirmed()
+    public void GlobalConfirmationSwitchPersistsAndAppliesUniformlyToAllEntries()
     {
         using var temp = new TempDirectory();
         var entries = new[]
@@ -53,7 +53,7 @@ public sealed class MainWindowViewModelTests
             {
                 Id = "one",
                 Name = "one",
-                Directory = "D:\\one",
+                Directory = temp.Path,
                 Command = "codex --dangerously-bypass-approvals-and-sandbox",
                 Confirm = true,
             },
@@ -61,7 +61,7 @@ public sealed class MainWindowViewModelTests
             {
                 Id = "two",
                 Name = "two",
-                Directory = "D:\\two",
+                Directory = temp.Path,
                 Command = "pwsh",
                 Confirm = false,
             },
@@ -75,22 +75,20 @@ public sealed class MainWindowViewModelTests
             new LauncherProcess());
 
         Assert.False(viewModel.RequireConfirmationForLaunches);
-        Assert.Equal(1, viewModel.VisibleDangerousCount);
-        Assert.True(viewModel.HasVisibleDangerous);
-        Assert.False(viewModel.Entries.Single(entry => entry.Id == "two").RequiresConfirmation);
-        Assert.True(viewModel.Entries.Single(entry => entry.Id == "one").RequiresConfirmation);
+        viewModel.Entries.Single(entry => entry.Id == "one").DryRunCommand.Execute(null);
+        Assert.Equal("预演: one", viewModel.StatusText);
 
         viewModel.RequireConfirmationForLaunches = true;
 
         Assert.True(LauncherSettingsStore.Load(settings).RequireConfirmationForLaunches);
-        Assert.All(viewModel.Entries, entry => Assert.True(entry.RequiresConfirmation));
+        viewModel.Entries.Single(entry => entry.Id == "one").DryRunCommand.Execute(null);
+        Assert.Equal("预演: one（需要确认）", viewModel.StatusText);
+        viewModel.Entries.Single(entry => entry.Id == "two").DryRunCommand.Execute(null);
+        Assert.Equal("预演: two（需要确认）", viewModel.StatusText);
 
         viewModel.FilterText = "two";
 
-        Assert.Equal(0, viewModel.VisibleDangerousCount);
-        Assert.False(viewModel.HasVisibleDangerous);
-        Assert.Equal(0, viewModel.VisibleManualConfirmCount);
-        Assert.False(viewModel.HasVisibleManualConfirm);
+        Assert.Equal(1, viewModel.VisibleCount);
     }
 
     [Fact]
@@ -270,8 +268,8 @@ public sealed class MainWindowViewModelTests
         {
             RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
                 requestCount++ == 0
-                    ? new EntryDraft("three", "Three", "D:\\three", "pwsh", false, true)
-                    : new EntryDraft("one-renamed", "One Renamed", "D:\\renamed", "opencode", true, false)),
+                    ? new EntryDraft("three", "Three", "D:\\three", "pwsh", true)
+                    : new EntryDraft("one-renamed", "One Renamed", "D:\\renamed", "opencode", false)),
             ConfirmDeleteEntryAsync = _ => Task.FromResult(true),
         };
 

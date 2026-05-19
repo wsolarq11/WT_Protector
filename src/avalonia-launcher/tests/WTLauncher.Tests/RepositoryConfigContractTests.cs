@@ -19,12 +19,11 @@ public sealed class RepositoryConfigContractTests
         Assert.NotEmpty(entries);
         foreach (var entry in entries)
         {
-            var plan = LaunchArgumentBuilder.Build(entry, validateDirectory: false);
+            var plan = LaunchArgumentBuilder.Build(entry, validateDirectory: false, requireConfirmation: false);
             Assert.Equal("wt.exe", plan.Executable);
             Assert.StartsWith("-d ", plan.Arguments, StringComparison.Ordinal);
             Assert.Contains(" pwsh -NoExit -Command ", plan.Arguments, StringComparison.Ordinal);
-            if (LaunchArgumentBuilder.IsDangerousCommand(entry.Command))
-                Assert.True(plan.RequiresConfirmation);
+            Assert.False(plan.RequiresConfirmation);
         }
     }
 

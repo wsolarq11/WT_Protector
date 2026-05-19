@@ -31,8 +31,8 @@ public sealed class ConfirmLaunchWindow : Window
         };
         var warning = new TextBlock
         {
-            Text = plan.IsDangerous ? "此命令包含 dangerous/dangerously 标记，请确认你信任它。" : "此启动项要求确认。",
-            Foreground = plan.IsDangerous ? Brush.Parse("#B45309") : Brush.Parse("#475569"),
+            Text = "当前已开启启动确认，请确认后继续。",
+            Foreground = Brush.Parse("#475569"),
             TextWrapping = TextWrapping.Wrap,
         };
         var command = new TextBox

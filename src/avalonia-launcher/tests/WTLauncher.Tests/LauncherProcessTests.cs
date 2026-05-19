@@ -15,7 +15,6 @@ public sealed class LauncherProcessTests
             $"/c echo started > {tempSentinelFile} && move /y {tempSentinelFile} {sentinelFile} > nul",
             temp.Path,
             "echo started",
-            false,
             false);
 
         new LauncherProcess().Start(plan);

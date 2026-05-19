@@ -16,7 +16,7 @@ public sealed class LaunchArgumentBuilderTests
             Confirm = false,
         };
 
-        var plan = LaunchArgumentBuilder.Build(entry);
+        var plan = LaunchArgumentBuilder.Build(entry, requireConfirmation: false);
 
         Assert.Equal("wt.exe", plan.Executable);
         Assert.Equal($"-d {LaunchArgumentBuilder.QuoteArgument(temp.Path)} pwsh -NoExit -Command \"codex --version\"", plan.Arguments);
@@ -24,25 +24,26 @@ public sealed class LaunchArgumentBuilderTests
     }
 
     [Fact]
-    public void Build_ForcesConfirmationForDangerousCommand()
+    public void Build_UsesOnlyLaunchConfirmationOverride()
     {
         using var temp = new TempDirectory();
         var entry = new LaunchEntry
         {
-            Name = "danger",
+            Name = "demo",
             Directory = temp.Path,
             Command = "codex --dangerously-bypass-approvals-and-sandbox",
-            Confirm = false,
+            Confirm = true,
         };
 
-        var plan = LaunchArgumentBuilder.Build(entry);
+        var directPlan = LaunchArgumentBuilder.Build(entry, requireConfirmation: false);
+        var confirmedPlan = LaunchArgumentBuilder.Build(entry, requireConfirmation: true);
 
-        Assert.True(plan.IsDangerous);
-        Assert.True(plan.RequiresConfirmation);
+        Assert.False(directPlan.RequiresConfirmation);
+        Assert.True(confirmedPlan.RequiresConfirmation);
     }
 
     [Fact]
-    public void Build_UsesLaunchConfirmationOverrideButKeepsDangerousCommandsConfirmed()
+    public void Build_DefaultsToConfirmationWhenNoGlobalOverrideIsProvided()
     {
         using var temp = new TempDirectory();
         var entry = new LaunchEntry
@@ -53,15 +54,9 @@ public sealed class LaunchArgumentBuilderTests
             Confirm = true,
         };
 
-        var directPlan = LaunchArgumentBuilder.Build(entry, requireConfirmation: false);
+        var plan = LaunchArgumentBuilder.Build(entry);
 
-        Assert.False(directPlan.RequiresConfirmation);
-
-        entry.Command = "codex --dangerously-bypass-approvals-and-sandbox";
-        var dangerousPlan = LaunchArgumentBuilder.Build(entry, requireConfirmation: false);
-
-        Assert.True(dangerousPlan.IsDangerous);
-        Assert.True(dangerousPlan.RequiresConfirmation);
+        Assert.True(plan.RequiresConfirmation);
     }
 
     [Theory]

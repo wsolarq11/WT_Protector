@@ -5,5 +5,4 @@ public sealed record LaunchPlan(
     string Arguments,
     string WorkingDirectory,
     string Command,
-    bool RequiresConfirmation,
-    bool IsDangerous);
+    bool RequiresConfirmation);

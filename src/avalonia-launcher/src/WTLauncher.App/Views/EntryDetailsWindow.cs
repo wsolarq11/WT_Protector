@@ -91,7 +91,7 @@ public sealed class EntryDetailsWindow : Window
                 _commandBox,
                 new TextBlock
                 {
-                    Text = "启动确认由主窗口顶部开关统一控制；危险命令仍会强制确认。",
+                    Text = "启动确认由主窗口顶部开关统一控制；开启时所有启动项统一确认，关闭时所有启动项直接启动。",
                     Foreground = Brush.Parse("#64748B"),
                     TextWrapping = TextWrapping.Wrap,
                 },
@@ -148,7 +148,6 @@ public sealed class EntryDetailsWindow : Window
             _nameBox.Text?.Trim() ?? string.Empty,
             _directoryBox.Text?.Trim() ?? string.Empty,
             command,
-            LaunchArgumentBuilder.IsDangerousCommand(command),
             _selectedBox.IsChecked == true);
 
         if (string.IsNullOrWhiteSpace(draft.Id)

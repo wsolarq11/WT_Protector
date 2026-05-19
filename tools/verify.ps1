@@ -124,42 +124,6 @@ Add-Check 'settings-json' @{
     hasWindow = $null -ne $settings.window
 }
 
-$dangerous = New-Object System.Collections.Generic.List[object]
-$idx = 0
-foreach ($item in $configItems) {
-    $command = [string]$item.command
-    if (($command -match 'dangerously') -and ($item.confirm -eq $false)) {
-        $dangerous.Add([pscustomobject]@{
-            path = $canonicalKey
-            index = $idx
-            name = $item.name
-            command = $command
-        }) | Out-Null
-    }
-    $idx++
-}
-Add-Check 'dangerous-command-audit' @{ count = $dangerous.Count; entries = $dangerous }
-if ($dangerous.Count -gt 0) { throw "dangerous commands still require hardening: count=$($dangerous.Count)" }
-
-$hardenScript = Join-Path $PSScriptRoot 'harden-config.ps1'
-if (-not (Test-Path -LiteralPath $hardenScript)) { throw 'Missing tools\harden-config.ps1' }
-$rootHashBeforeHarden = Get-FileSha256 $rootConfigPath
-$hardenJson = & $hardenScript
-$harden = $hardenJson | ConvertFrom-Json
-$rootHashAfterHarden = Get-FileSha256 $rootConfigPath
-if ($harden.status -ne 'PASS') { throw 'harden-config dry-run did not pass' }
-if ($harden.mode -ne 'dry-run') { throw 'harden-config verifier call was not dry-run' }
-if ($harden.applied) { throw 'harden-config dry-run unexpectedly applied changes' }
-if ($rootHashBeforeHarden -ne $rootHashAfterHarden) { throw 'harden-config dry-run changed canonical config hash' }
-Add-Check 'config-harden-dry-run' @{
-    wouldChange = [bool]$harden.wouldChange
-    count = $harden.count
-    rootHash = $harden.rootHash
-}
-if ($harden.wouldChange -or ($harden.count -gt 0)) {
-    throw "harden-config dry-run reports outstanding changes: wouldChange=$($harden.wouldChange) count=$($harden.count)"
-}
-
 $manifestPath = Get-ShortcutBackupManifestPath
 if (-not (Test-Path -LiteralPath $manifestPath)) { throw "Missing shortcut backup manifest: $manifestPath" }
 $manifest = Get-Content -Raw -Encoding UTF8 -LiteralPath $manifestPath | ConvertFrom-Json
@@ -198,23 +162,12 @@ Add-Check 'hta-retired-archive' @{ path = 'retired\WT Launcher.hta'; buildWtComm
 $retiredConfigPath = Get-RetiredConfigPath
 if (-not (Test-Path -LiteralPath $retiredConfigPath)) { throw "Missing retired HTA-local config: $retiredConfigPath" }
 $retiredItems = @(Read-ConfigItems $retiredConfigPath)
-$retiredDangerous = New-Object System.Collections.Generic.List[object]
-$retiredIdx = 0
-foreach ($item in $retiredItems) {
-    $command = [string]$item.command
-    if (($command -match 'dangerously') -and ($item.confirm -eq $false)) {
-        $retiredDangerous.Add([pscustomobject]@{ path = 'retired\config\config.json'; index = $retiredIdx; name = $item.name; command = $command }) | Out-Null
-    }
-    $retiredIdx++
-}
 Add-Check 'hta-retired-config' @{
     path = 'retired\config\config.json'
     items = $retiredItems.Count
     hash = Get-ShortHash $retiredConfigPath
     activeSource = $false
-    dangerousUnconfirmed = $retiredDangerous.Count
 }
-if ($retiredDangerous.Count -gt 0) { throw "retired HTA config has unconfirmed dangerous commands: count=$($retiredDangerous.Count)" }
 
 $mainlineVerify = Join-Path $sourceRoot 'verify.ps1'
 if (-not (Test-Path -LiteralPath $mainlineVerify)) { throw "Missing mainline verify script: $mainlineVerify" }

@@ -1,4 +1,3 @@
-using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WTLauncher.Core;
@@ -29,26 +28,6 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     public string UpdatedLabel => string.IsNullOrWhiteSpace(Entry.UpdatedAtUtc)
         ? "未记录更新时间"
         : $"更新 {Entry.UpdatedAtUtc}";
-
-    public string UpdatedAtColumnText
-    {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(Entry.UpdatedAtUtc))
-                return "—";
-
-            if (DateTimeOffset.TryParse(Entry.UpdatedAtUtc, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var timestamp))
-                return timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
-
-            return Entry.UpdatedAtUtc;
-        }
-    }
-
-    public bool IsDangerous => LaunchArgumentBuilder.IsDangerousCommand(Entry.Command);
-
-    public bool RequiresConfirmation => _owner.EntryRequiresLaunchConfirmation(Entry);
-
-    public bool IsManualConfirmation => false;
 
     [ObservableProperty]
     private bool _isSelected;
@@ -139,11 +118,7 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Directory));
         OnPropertyChanged(nameof(Command));
-        OnPropertyChanged(nameof(IsDangerous));
-        OnPropertyChanged(nameof(RequiresConfirmation));
-        OnPropertyChanged(nameof(IsManualConfirmation));
         OnPropertyChanged(nameof(UpdatedLabel));
-        OnPropertyChanged(nameof(UpdatedAtColumnText));
         OnPropertyChanged(nameof(ShowDirectory));
         OnPropertyChanged(nameof(ShowCommand));
         OnPropertyChanged(nameof(ShowUpdatedLabel));
@@ -152,8 +127,6 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     public void RefreshLayoutPresentation()
     {
-        OnPropertyChanged(nameof(RequiresConfirmation));
-        OnPropertyChanged(nameof(IsManualConfirmation));
         OnPropertyChanged(nameof(ShowDirectory));
         OnPropertyChanged(nameof(ShowCommand));
         OnPropertyChanged(nameof(ShowUpdatedLabel));

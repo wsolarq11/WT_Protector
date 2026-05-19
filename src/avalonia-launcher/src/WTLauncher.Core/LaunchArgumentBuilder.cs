@@ -4,7 +4,7 @@ namespace WTLauncher.Core;
 
 public static class LaunchArgumentBuilder
 {
-    public static LaunchPlan Build(LaunchEntry entry, bool validateDirectory = true, bool? requireConfirmation = null)
+    public static LaunchPlan Build(LaunchEntry entry, bool validateDirectory = true, bool requireConfirmation = true)
     {
         ArgumentNullException.ThrowIfNull(entry);
 
@@ -21,21 +21,13 @@ public static class LaunchArgumentBuilder
         if (command.Length == 0)
             throw new LaunchPlanException($"Launch entry '{name}' has an empty command.");
 
-        var isDangerous = IsDangerousCommand(command);
         var arguments = $"-d {QuoteArgument(directory)} pwsh -NoExit -Command {QuoteArgument(command)}";
         return new LaunchPlan(
             "wt.exe",
             arguments,
             directory,
             command,
-            (requireConfirmation ?? entry.Confirm) || isDangerous,
-            isDangerous);
-    }
-
-    public static bool IsDangerousCommand(string? command)
-    {
-        return !string.IsNullOrWhiteSpace(command)
-            && command.Contains("dangerously", StringComparison.OrdinalIgnoreCase);
+            requireConfirmation);
     }
 
     public static string QuoteArgument(string? value)

@@ -16,12 +16,8 @@ public sealed class ConfirmBatchLaunchWindow : Window
         MinHeight = 340;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
-        var dangerousCount = entries.Count(entry => LaunchArgumentBuilder.IsDangerousCommand(entry.Command));
         var names = string.Join(Environment.NewLine, entries.Select(entry => "• " + entry.Name));
-
-        var message = dangerousCount > 0
-            ? $"将启动 {entries.Count} 个已勾选项，其中 {dangerousCount} 个包含 dangerous 标记。"
-            : $"将启动 {entries.Count} 个已勾选项。";
+        var message = $"将启动 {entries.Count} 个已勾选项。";
 
         var cancel = new Button
         {

@@ -44,7 +44,7 @@ Fields:
 - `name` — display name in the launcher UI.
 - `directory` — working directory passed to `wt.exe -d`.
 - `command` — command passed to `pwsh -NoExit -Command`.
-- `confirm` — when `true`, the UI asks before launching.
+- `confirm` — legacy compatibility field retained in the JSON shape; current launch confirmation is controlled by the global UI setting.
 - `selected` — persistent checkbox state used by the one-click/batch launch flow.
 - `updatedAtUtc` — optional ISO-8601 UTC timestamp refreshed when the app adds or edits a button, and used by the “更新时间” sort mode.
 
@@ -116,7 +116,7 @@ The verifier currently checks:
 - old `WT Launcher.exe`, `src/winforms-launcher/`, and `spikes/` do not return;
 - `src/avalonia-launcher/` has the solution, app project, tests project, and mainline verify script;
 - root `config/` parses, item `id` values are unique, persistent `selected` state remains part of the contract, and `presets.json` references only known entry ids;
-- dangerous commands keep `confirm: true`;
+- `settings.json` remains the portable source for the global launch-confirmation setting;
 - `retired/design/winforms-launcher.md` exists with the absorbed WinForms design lessons;
 - retired HTA and shortcut-backup reference material remain readable;
 - Avalonia mainline restore/test/isolated verification publish passes, including launch-argument tests and a hidden temp-config startup smoke of the published exe.
@@ -145,22 +145,6 @@ src/avalonia-launcher/artifacts/publish/win-x64/WTLauncher.App.exe
 
 If that stable executable is already running, `tools/build-release.ps1` stops before publishing and reports the blocking PID(s); keep using `tools/verify.ps1` for routine gates, or close the running app before a stable release publish.
 
-## Config hardening helper
-
-Check canonical `config/config.json` entries that would be changed from `confirm: false` to `confirm: true` because they contain a `dangerously*` command. A healthy hardened config reports zero changes needed:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\harden-config.ps1
-```
-
-Apply that hardening only when you intentionally want the extra launch confirmation:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\harden-config.ps1 -Apply
-```
-
-`-Apply` backs up `config/config.json` before rewriting it.
-
 ## WinForms retirement
 
 The former WinForms mainline has been retired into documentation instead of kept as a second source tree:
@@ -177,8 +161,7 @@ This launcher intentionally starts arbitrary local commands. Treat every config 
 
 Important risks:
 
-- Commands such as `codex --dangerously-bypass-approvals-and-sandbox` and `claude --dangerously-skip-permissions` are powerful and should normally keep `confirm: true` unless the entry is intentionally trusted.
-- `tools/verify.ps1` reports entries where a `dangerously*` command is paired with `confirm: false`; after hardening this should stay at zero.
+- Launch confirmation is a global UI setting: when enabled, every item asks before launch; when disabled, every item launches directly.
 - `directory` must exist before the launcher starts an item.
 - Command text is quoted before being passed to `wt.exe`, but it is still a shell command; review entries before launching.
 - Applying a preset only rewrites checkbox state; launching remains a separate explicit action.
@@ -202,7 +185,7 @@ The Avalonia mainline supports:
 - first-class launch group actions: save current selection as a new group, update the current group from current selection, and delete editable groups;
 - live preset-vs-selection difference feedback before applying a launch group, with no-op apply disabled when already matched;
 - three persisted sort modes: `自定义拖拽`, `更新时间`, and `首字母顺序`;
-- launch confirmation;
+- global launch confirmation;
 - JSON persistence with `.bak` backup;
 - persistent selected checkbox state for one-click/batch launch;
 - portable `config/settings.json` UI preferences without AppData or registry writes;
