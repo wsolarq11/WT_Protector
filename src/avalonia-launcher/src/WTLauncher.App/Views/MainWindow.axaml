@@ -489,14 +489,11 @@
                             Click="OnEntryMoreClicked"/>
                   </Grid>
                   <Grid Grid.Row="3"
-                        Classes="entry-footer"
-                        ColumnDefinitions="*,Auto">
-                    <TextBlock Classes="muted"
-                               IsVisible="{Binding ShowUpdatedLabel}"
-                               Text="{Binding UpdatedLabel}"/>
-                    <Border Grid.Column="1"
-                            Classes="entry-drag-handle"
+                        Classes="entry-footer">
+                    <Border Classes="entry-drag-handle"
                             Cursor="Hand"
+                            HorizontalAlignment="Right"
+                            ToolTip.Tip="拖拽排序"
                             PointerPressed="OnEntryDragPointerPressed">
                       <TextBlock Text="拖拽"
                                  Foreground="#334155"

@@ -25,10 +25,6 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     public string Command => Entry.Command;
 
-    public string UpdatedLabel => string.IsNullOrWhiteSpace(Entry.UpdatedAtUtc)
-        ? "未记录更新时间"
-        : $"更新 {Entry.UpdatedAtUtc}";
-
     [ObservableProperty]
     private bool _isSelected;
 
@@ -65,8 +61,6 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     public bool ShowDirectory => !_owner.IsNamesViewMode && (_owner.IsDetailedListMode || !IsMicroLayout);
 
     public bool ShowCommand => !_owner.IsNamesViewMode && (_owner.IsDetailedListMode || !IsCompactLayout);
-
-    public bool ShowUpdatedLabel => !_owner.IsDetailedListMode && !_owner.IsNamesViewMode && !IsMicroLayout;
 
     public double TitleFontSize => _owner.IsDetailedListMode || _owner.IsNamesViewMode ? 13 : IsMicroLayout ? 15 : IsCompactLayout ? 16 : 18;
 
@@ -108,7 +102,6 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
         OnPropertyChanged(nameof(ShowDirectory));
         OnPropertyChanged(nameof(ShowCommand));
-        OnPropertyChanged(nameof(ShowUpdatedLabel));
         OnPropertyChanged(nameof(TitleFontSize));
     }
 
@@ -118,10 +111,8 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Directory));
         OnPropertyChanged(nameof(Command));
-        OnPropertyChanged(nameof(UpdatedLabel));
         OnPropertyChanged(nameof(ShowDirectory));
         OnPropertyChanged(nameof(ShowCommand));
-        OnPropertyChanged(nameof(ShowUpdatedLabel));
         OnPropertyChanged(nameof(TitleFontSize));
     }
 
@@ -129,7 +120,6 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(ShowDirectory));
         OnPropertyChanged(nameof(ShowCommand));
-        OnPropertyChanged(nameof(ShowUpdatedLabel));
         OnPropertyChanged(nameof(TitleFontSize));
     }
 

@@ -23,6 +23,16 @@ public sealed class MainWindowXamlContractTests
         Assert.Contains("Content=\"{Binding ApplyPresetButtonText}\"", controlGrid);
     }
 
+    [Fact]
+    public void MainWindow_DoesNotRenderUpdatedTimeInEntryViews()
+    {
+        var xaml = File.ReadAllText(GetMainWindowXamlPath());
+
+        Assert.DoesNotContain("UpdatedLabel", xaml);
+        Assert.DoesNotContain("ShowUpdatedLabel", xaml);
+        Assert.DoesNotContain("更新时间", xaml);
+    }
+
     private static int Count(string text, string value)
     {
         var count = 0;

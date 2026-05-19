@@ -468,7 +468,6 @@ public sealed class MainWindowViewModelTests
         Assert.True(entry.IsCompactLayout);
         Assert.False(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
-        Assert.False(entry.ShowUpdatedLabel);
         Assert.Equal(15, entry.TitleFontSize);
 
         entry.CardWidth = 240;
@@ -477,7 +476,6 @@ public sealed class MainWindowViewModelTests
         Assert.True(entry.IsCompactLayout);
         Assert.True(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
-        Assert.True(entry.ShowUpdatedLabel);
         Assert.Equal(16, entry.TitleFontSize);
 
         entry.CardWidth = 280;
@@ -486,7 +484,6 @@ public sealed class MainWindowViewModelTests
         Assert.False(entry.IsCompactLayout);
         Assert.True(entry.ShowDirectory);
         Assert.True(entry.ShowCommand);
-        Assert.True(entry.ShowUpdatedLabel);
         Assert.Equal(18, entry.TitleFontSize);
     }
 
@@ -514,7 +511,6 @@ public sealed class MainWindowViewModelTests
         Assert.True(viewModel.IsCardsViewMode);
         Assert.False(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
-        Assert.False(entry.ShowUpdatedLabel);
         Assert.Equal(15, entry.TitleFontSize);
 
         viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == "details");
@@ -524,7 +520,6 @@ public sealed class MainWindowViewModelTests
         Assert.False(viewModel.IsCardsViewMode);
         Assert.True(entry.ShowDirectory);
         Assert.True(entry.ShowCommand);
-        Assert.False(entry.ShowUpdatedLabel);
         Assert.Equal(13, entry.TitleFontSize);
         Assert.Equal("details", LauncherSettingsStore.Load(settings).EntryViewMode);
 
@@ -535,7 +530,6 @@ public sealed class MainWindowViewModelTests
         Assert.False(viewModel.IsCardsViewMode);
         Assert.False(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
-        Assert.False(entry.ShowUpdatedLabel);
         Assert.Equal(13, entry.TitleFontSize);
         Assert.Equal("names", LauncherSettingsStore.Load(settings).EntryViewMode);
 
@@ -546,7 +540,6 @@ public sealed class MainWindowViewModelTests
         Assert.True(viewModel.IsCardsViewMode);
         Assert.False(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
-        Assert.False(entry.ShowUpdatedLabel);
         Assert.Equal(15, entry.TitleFontSize);
         Assert.Equal("cards", LauncherSettingsStore.Load(settings).EntryViewMode);
     }
