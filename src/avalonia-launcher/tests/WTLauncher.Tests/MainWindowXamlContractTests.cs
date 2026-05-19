@@ -43,6 +43,15 @@ public sealed class MainWindowXamlContractTests
         Assert.Equal(3, Count(xaml, "Classes.drag-source=\"{Binding IsDragPreviewSource}\""));
         Assert.Equal(3, Count(xaml, "IsVisible=\"{Binding IsDragInsertBefore}\""));
         Assert.Equal(3, Count(xaml, "IsVisible=\"{Binding IsDragInsertAfter}\""));
+        Assert.Equal(6, Count(xaml, "Classes=\"drag-insert\""));
+        Assert.Equal(1, Count(xaml, "<Style Selector=\"Border.drag-insert\">"));
+        AssertInOrder(
+            xaml,
+            "<Style Selector=\"Border.drag-insert\">",
+            "<Setter Property=\"CornerRadius\" Value=\"2\"/>",
+            "<Setter Property=\"Background\" Value=\"#38BDF8\"/>",
+            "<Setter Property=\"Opacity\" Value=\"0.9\"/>",
+            "<Setter Property=\"IsHitTestVisible\" Value=\"False\"/>");
 
         AssertInOrder(codeBehind, "ShowDragGhost(item, card", "DragDrop.DoDragDropAsync", "HideDragGhost()");
         Assert.Contains("UpdateDragGhostPosition(e.GetPosition(this))", codeBehind);

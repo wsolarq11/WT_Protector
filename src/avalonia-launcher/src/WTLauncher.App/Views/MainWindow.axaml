@@ -127,6 +127,12 @@
     <Style Selector="Border.card.drag-source">
       <Setter Property="Opacity" Value="0.55"/>
     </Style>
+    <Style Selector="Border.drag-insert">
+      <Setter Property="CornerRadius" Value="2"/>
+      <Setter Property="Background" Value="#38BDF8"/>
+      <Setter Property="Opacity" Value="0.9"/>
+      <Setter Property="IsHitTestVisible" Value="False"/>
+    </Style>
     <Style Selector="Border.card.detail-row Button.primary">
       <Setter Property="Padding" Value="8,2"/>
       <Setter Property="CornerRadius" Value="6"/>
@@ -435,22 +441,16 @@
                 </Border.ContextMenu>
                 <Grid RowDefinitions="Auto,*,Auto,Auto">
                   <Border Grid.RowSpan="4"
+                          Classes="drag-insert"
                           Width="4"
                           HorizontalAlignment="Left"
                           VerticalAlignment="Stretch"
-                          CornerRadius="2"
-                          Background="#38BDF8"
-                          Opacity="0.9"
-                          IsHitTestVisible="False"
                           IsVisible="{Binding IsDragInsertBefore}"/>
                   <Border Grid.RowSpan="4"
+                          Classes="drag-insert"
                           Width="4"
                           HorizontalAlignment="Right"
                           VerticalAlignment="Stretch"
-                          CornerRadius="2"
-                          Background="#38BDF8"
-                          Opacity="0.9"
-                          IsHitTestVisible="False"
                           IsVisible="{Binding IsDragInsertAfter}"/>
                   <Grid Classes="entry-header"
                         ColumnDefinitions="Auto,*">
@@ -569,24 +569,18 @@
                           VerticalAlignment="Center">
                       <!-- insertion preview -->
                       <Border Grid.ColumnSpan="5"
+                              Classes="drag-insert"
                               ZIndex="10"
                               Height="4"
                               HorizontalAlignment="Stretch"
                               VerticalAlignment="Top"
-                              CornerRadius="2"
-                              Background="#38BDF8"
-                              Opacity="0.9"
-                              IsHitTestVisible="False"
                               IsVisible="{Binding IsDragInsertBefore}"/>
                       <Border Grid.ColumnSpan="5"
+                              Classes="drag-insert"
                               ZIndex="10"
                               Height="4"
                               HorizontalAlignment="Stretch"
                               VerticalAlignment="Bottom"
-                              CornerRadius="2"
-                              Background="#38BDF8"
-                              Opacity="0.9"
-                              IsHitTestVisible="False"
                               IsVisible="{Binding IsDragInsertAfter}"/>
 
                       <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
@@ -679,24 +673,18 @@
                       ColumnSpacing="6"
                       VerticalAlignment="Center">
                   <Border Grid.ColumnSpan="3"
+                          Classes="drag-insert"
                           ZIndex="10"
                           Width="3"
                           HorizontalAlignment="Left"
                           VerticalAlignment="Stretch"
-                          CornerRadius="2"
-                          Background="#38BDF8"
-                          Opacity="0.9"
-                          IsHitTestVisible="False"
                           IsVisible="{Binding IsDragInsertBefore}"/>
                   <Border Grid.ColumnSpan="3"
+                          Classes="drag-insert"
                           ZIndex="10"
                           Width="3"
                           HorizontalAlignment="Right"
                           VerticalAlignment="Stretch"
-                          CornerRadius="2"
-                          Background="#38BDF8"
-                          Opacity="0.9"
-                          IsHitTestVisible="False"
                           IsVisible="{Binding IsDragInsertAfter}"/>
                   <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
                             VerticalAlignment="Center"/>
