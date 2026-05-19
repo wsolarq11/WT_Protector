@@ -83,7 +83,7 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     public bool ShowUpdatedLabel => _owner.IsDetailedListMode || !IsMicroLayout;
 
-    public double TitleFontSize => _owner.IsDetailedListMode ? 14 : IsMicroLayout ? 15 : IsCompactLayout ? 16 : 18;
+    public double TitleFontSize => _owner.IsDetailedListMode ? 13 : IsMicroLayout ? 15 : IsCompactLayout ? 16 : 18;
 
     partial void OnIsSelectedChanged(bool value)
     {

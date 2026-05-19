@@ -44,10 +44,15 @@
       <Setter Property="CornerRadius" Value="11"/>
     </Style>
     <Style Selector="Border.card.detail-row">
-      <Setter Property="Padding" Value="10,6"/>
-      <Setter Property="CornerRadius" Value="10"/>
-      <!-- Details list should feel closer to Windows Explorer: compact, column-aligned, low elevation. -->
-      <Setter Property="BoxShadow" Value="0 2 8 0 #080F172A"/>
+      <!-- Details list should feel closer to Windows Explorer: compact, column-aligned, flat rows. -->
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Padding" Value="10,4"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Margin" Value="0"/>
+      <Setter Property="MinHeight" Value="30"/>
+      <Setter Property="BorderBrush" Value="#E2E8F0"/>
+      <Setter Property="BorderThickness" Value="0,0,0,1"/>
+      <Setter Property="BoxShadow" Value="0 0 0 0 #00000000"/>
     </Style>
     <Style Selector="Border.card.detail-row:pointerover">
       <Setter Property="Background" Value="#F1F5F9"/>
@@ -61,15 +66,32 @@
     </Style>
     <Style Selector="Border.detail-header">
       <Setter Property="Background" Value="#F1F5F9"/>
-      <Setter Property="CornerRadius" Value="10"/>
       <Setter Property="BorderBrush" Value="#E2E8F0"/>
-      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderThickness" Value="0,0,0,1"/>
       <Setter Property="Padding" Value="10,6"/>
     </Style>
     <Style Selector="TextBlock.detail-header-text">
       <Setter Property="FontSize" Value="12"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="Foreground" Value="#64748B"/>
+    </Style>
+    <Style Selector="ListBox.details-list">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+      <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+    </Style>
+    <Style Selector="ListBox.details-list ListBoxItem">
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="Margin" Value="0"/>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    </Style>
+    <Style Selector="ListBox.details-list ListBoxItem:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="Transparent"/>
+    </Style>
+    <Style Selector="ListBox.details-list ListBoxItem:selected /template/ ContentPresenter">
+      <Setter Property="Background" Value="Transparent"/>
     </Style>
     <Style Selector="Border.card.drag-target">
       <Setter Property="BorderBrush" Value="#38BDF8"/>
@@ -370,11 +392,12 @@
                  Text="{Binding PresetSelectionStatusText}"/>
     </Grid>
 
-    <ScrollViewer Grid.Row="1"
-                  Margin="0,16,0,14"
-                  HorizontalScrollBarVisibility="Disabled"
-                  VerticalScrollBarVisibility="Auto">
-      <Grid>
+    <Grid Grid.Row="1"
+          Margin="0,16,0,14">
+      <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                    VerticalScrollBarVisibility="Auto"
+                    IsVisible="{Binding IsCardsViewMode}">
+        <Grid>
         <ItemsControl x:Name="CardsEntriesItemsControl"
                       ItemsSource="{Binding VisibleEntries}"
                       IsVisible="{Binding IsCardsViewMode}">
@@ -498,17 +521,24 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <Grid IsVisible="{Binding IsDetailedListMode}">
-          <Grid RowDefinitions="Auto,*"
-                RowSpacing="8">
-            <Border Classes="detail-header">
+      </Grid>
+      </ScrollViewer>
+
+      <Grid IsVisible="{Binding IsDetailedListMode}">
+        <Border Background="White"
+                CornerRadius="13"
+                BorderBrush="#E2E8F0"
+                BorderThickness="1"
+                ClipToBounds="True">
+          <Grid RowDefinitions="Auto,*">
+            <Border Classes="detail-header"
+                    CornerRadius="13 13 0 0">
               <Grid ColumnDefinitions="Auto,2*,2*,3*,160,Auto"
                     ColumnSpacing="12"
                     VerticalAlignment="Center">
                 <!-- align with rows: checkbox + columns -->
-                <TextBlock Margin="0,0,0,0"
-                           Text=""
-                           Width="18"/>
+                <CheckBox IsEnabled="False"
+                          Opacity="0"/>
                 <TextBlock Grid.Column="1"
                            Classes="detail-header-text"
                            Text="名称"/>
@@ -523,15 +553,12 @@
                            Text="更新时间"/>
               </Grid>
             </Border>
-            <ItemsControl x:Name="DetailsEntriesItemsControl"
-                          Grid.Row="1"
-                          ItemsSource="{Binding VisibleEntries}">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                  <StackPanel Spacing="6"/>
-                </ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate>
+
+            <ListBox x:Name="DetailsEntriesItemsControl"
+                     Grid.Row="1"
+                     Classes="details-list"
+                     ItemsSource="{Binding VisibleEntries}">
+              <ListBox.ItemTemplate>
                 <DataTemplate>
                   <Border Classes="card detail-row"
                           Classes.drag-target="{Binding IsDragPreviewTarget}"
@@ -586,6 +613,7 @@
                         <TextBlock Classes="card-title"
                                    FontSize="{Binding TitleFontSize}"
                                    MaxLines="1"
+                                   ToolTip.Tip="{Binding Name}"
                                    Text="{Binding Name}"/>
                         <StackPanel Grid.Column="1"
                                     Orientation="Horizontal"
@@ -610,12 +638,14 @@
                                  Classes="mono"
                                  MaxLines="1"
                                  TextTrimming="PathSegmentEllipsis"
+                                 ToolTip.Tip="{Binding Directory}"
                                  Text="{Binding Directory}"/>
 
                       <TextBlock Grid.Column="3"
                                  Classes="mono"
                                  MaxLines="1"
                                  TextTrimming="CharacterEllipsis"
+                                 ToolTip.Tip="{Binding Command}"
                                  Text="{Binding Command}"/>
 
                       <TextBlock Grid.Column="4"
@@ -647,12 +677,12 @@
                     </Grid>
                   </Border>
                 </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
+              </ListBox.ItemTemplate>
+            </ListBox>
           </Grid>
-        </Grid>
+        </Border>
       </Grid>
-    </ScrollViewer>
+    </Grid>
 
     <Border Grid.Row="2"
             Background="White"
