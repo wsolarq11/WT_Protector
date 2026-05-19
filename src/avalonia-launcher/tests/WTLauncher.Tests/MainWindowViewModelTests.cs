@@ -374,6 +374,29 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void SortModeUsesSelectedModeAsOnlyCustomSortState()
+    {
+        Assert.Null(typeof(MainWindowViewModel).GetProperty(nameof(MainWindowViewModel.IsCustomSortMode))?.SetMethod);
+        Assert.DoesNotContain(
+            typeof(MainWindowViewModel).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance),
+            field => field.Name.Contains("CustomSort", StringComparison.OrdinalIgnoreCase));
+
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        var viewModel = new MainWindowViewModel(
+            config,
+            settings,
+            new LauncherSettings { SortMode = "custom" },
+            new LauncherProcess());
+
+        Assert.True(viewModel.IsCustomSortMode);
+
+        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == "alphabetical");
+
+        Assert.False(viewModel.IsCustomSortMode);
+    }
+
+    [Fact]
     public void DragPreviewReordersInMemoryAndCanBeCancelledOrCommitted()
     {
         using var temp = new TempDirectory();

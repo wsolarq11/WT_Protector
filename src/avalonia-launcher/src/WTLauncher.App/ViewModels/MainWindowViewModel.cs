@@ -53,9 +53,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private LauncherSortModeViewModel? _selectedSortMode;
 
     [ObservableProperty]
-    private bool _isCustomSortMode;
-
-    [ObservableProperty]
     private LauncherDisplayModeViewModel? _selectedDisplayMode;
 
     [ObservableProperty]
@@ -101,6 +98,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private LauncherEntryViewMode CurrentEntryViewMode => SelectedDisplayMode?.Mode ?? LauncherEntryViewMode.Cards;
 
+    public bool IsCustomSortMode => SelectedSortMode?.Id == "custom";
+
     public bool IsCardsViewMode => CurrentEntryViewMode == LauncherEntryViewMode.Cards;
 
     public bool IsDetailedListMode => CurrentEntryViewMode == LauncherEntryViewMode.Details;
@@ -142,7 +141,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     partial void OnSelectedSortModeChanged(LauncherSortModeViewModel? value)
     {
-        IsCustomSortMode = value?.Id == "custom";
+        OnPropertyChanged(nameof(IsCustomSortMode));
         if (value is null)
             return;
 

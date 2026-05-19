@@ -106,6 +106,7 @@
   - Confirmation：所有启动项只受全局开关控制；关闭确认时任何命令都不弹确认，不再计算、存储或展示危险命令状态
 - Token/component ownership:
   - ViewModel 负责密度判断与拖拽状态
+  - 自定义排序状态只能由 `SelectedSortMode` 派生；`IsCustomSortMode` 仅作为只读投影，不保存第二份 bool
   - ViewModel 负责三视图状态、名称墙列数/项目尺寸、全局启动确认设置；三视图只能有一个可变来源，`IsCardsViewMode` / `IsDetailedListMode` / `IsNamesViewMode` 仅作为只读投影
   - 卡片密度只能有一个可变来源：`LauncherEntryLayoutDensity`；`IsCompactLayout` / `IsMicroLayout` 仅作为 XAML class 的只读投影
   - 拖拽提示只能有一个 entry-local 可变来源：`DragCueState`；`IsDragPreviewTarget` / `IsDragPreviewSource` / `IsDragInsertBefore` / `IsDragInsertAfter` 仅作为 XAML class 的只读投影
