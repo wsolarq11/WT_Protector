@@ -787,35 +787,18 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void RefreshEntryLayoutPresentation()
     {
-        foreach (var entry in Entries)
-        {
-            entry.RefreshLayoutPresentation();
-        }
+        LauncherEntryLayoutPresentation.Refresh(Entries);
     }
 
     public void UpdateCardsAvailableSize(Size availableSize)
     {
-        _cardsAvailableSize = new Size(
-            Math.Max(220, availableSize.Width),
-            Math.Max(140, availableSize.Height));
+        _cardsAvailableSize = LauncherEntryLayoutPresentation.NormalizeAvailableSize(availableSize);
         RecalculateCardSize();
     }
 
     private void RecalculateCardSize()
     {
-        var targets = VisibleEntries.Count > 0 ? VisibleEntries : Entries;
-        var count = Math.Max(1, targets.Count);
-        var layout = LauncherEntryLayoutCalculator.Calculate(
-            _cardsAvailableSize.Width,
-            _cardsAvailableSize.Height,
-            count);
-        foreach (var entry in Entries)
-        {
-            entry.CardWidth = layout.CardWidth;
-            entry.CardHeight = layout.CardHeight;
-            entry.NameTileWidth = layout.NameTileWidth;
-            entry.NameTileHeight = layout.NameTileHeight;
-        }
+        LauncherEntryLayoutPresentation.ApplyCardSize(Entries, VisibleEntries, _cardsAvailableSize);
     }
 
     private void EnsureCustomOrderContainsEntries()
