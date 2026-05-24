@@ -551,35 +551,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void RestorePersistedEntrySnapshot(LauncherEntryMutationSnapshot? snapshot, bool restorePresets)
     {
-        if (snapshot is null)
-            return;
-
-        var originalStatus = StatusText;
-        var restoreErrors = new List<string>();
-        try
-        {
-            LauncherConfigStore.Save(snapshot.CloneEntries(), _configPath, backup: false);
-        }
-        catch (Exception ex)
-        {
-            restoreErrors.Add($"config: {ex.Message}");
-        }
-
-        if (restorePresets)
-        {
-            try
-            {
-                LauncherPresetStore.Save(snapshot.ClonePresetFile(), _presetPath, backup: false);
-            }
-            catch (Exception ex)
-            {
-                restoreErrors.Add($"presets: {ex.Message}");
-            }
-        }
-
-        StatusText = restoreErrors.Count == 0
-            ? originalStatus
-            : $"{originalStatus}；回滚磁盘状态失败: {string.Join("；", restoreErrors)}";
+        StatusText = LauncherEntryPersistenceRollback.Restore(
+            snapshot,
+            _configPath,
+            _presetPath,
+            restorePresets,
+            StatusText);
     }
 
     public void MoveEntryBefore(string draggedEntryId, string targetEntryId)
