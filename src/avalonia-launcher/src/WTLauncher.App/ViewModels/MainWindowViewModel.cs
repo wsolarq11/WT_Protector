@@ -15,7 +15,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly LauncherProcess _launcherProcess;
     private LauncherPresetFile _presetFile = new();
     private Size _cardsAvailableSize = new(900, 420);
-    private DragReorderSession? _dragReorderSession;
+    private LauncherDragReorderSession? _dragReorderSession;
 
     [ObservableProperty]
     private string _filterText = "";
@@ -615,12 +615,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ClearDragPreviewState();
 
         var source = Entries.FirstOrDefault(entry => string.Equals(entry.Id, draggedEntryId, StringComparison.Ordinal));
-        _dragReorderSession = new DragReorderSession(
+        _dragReorderSession = LauncherDragReorderSession.Start(
             draggedEntryId,
             LauncherSettingsSnapshot.Capture(_settings),
             source);
-        if (source is not null)
-            source.ShowDragPreviewSource();
     }
 
     public bool PreviewMoveEntryBefore(string draggedEntryId, string targetEntryId)
@@ -633,7 +631,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (!IsCustomSortMode)
             return false;
         var session = _dragReorderSession;
-        if (session is null || !string.Equals(session.DraggedEntryId, draggedEntryId, StringComparison.Ordinal))
+        if (session is null || !session.IsFor(draggedEntryId))
         {
             BeginDragReorder(draggedEntryId);
             session = _dragReorderSession;
@@ -643,17 +641,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (string.Equals(draggedEntryId, targetEntryId, StringComparison.Ordinal))
             return false;
 
-        var nextPreview = new DragInsertPreview(targetEntryId, insertAfter);
-        if (session.LastPreview == nextPreview)
+        if (!session.TryRecordPreview(targetEntryId, insertAfter))
             return false;
 
-        session.LastPreview = nextPreview;
         EnsureCustomOrderContainsEntries();
         LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, draggedEntryId, targetEntryId, insertAfter);
         ApplyFilter();
 
         var target = Entries.FirstOrDefault(entry => string.Equals(entry.Id, targetEntryId, StringComparison.Ordinal));
-        SetDragPreviewTarget(target, insertAfter);
+        session.SetTarget(target, insertAfter);
         return true;
     }
 
@@ -662,8 +658,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (_dragReorderSession is null)
             return;
 
-        ClearDragPreviewTarget();
-        _dragReorderSession.LastPreview = null;
+        _dragReorderSession.ClearHover();
     }
 
     public void CommitDragReorder()
@@ -698,62 +693,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
         StatusText = "已取消: 拖拽排序";
     }
 
-    private void SetDragPreviewTarget(LauncherEntryViewModel? target, bool insertAfter)
-    {
-        var session = _dragReorderSession;
-        if (session is null)
-            return;
-
-        if (ReferenceEquals(session.Target, target))
-        {
-            if (session.Target is not null)
-                session.Target.ShowDragPreviewTarget(insertAfter);
-            return;
-        }
-
-        ClearDragPreviewTarget();
-        session.Target = target;
-        if (session.Target is not null)
-        {
-            session.Target.ShowDragPreviewTarget(insertAfter);
-        }
-    }
-
-    private void ClearDragPreviewTarget()
-    {
-        var session = _dragReorderSession;
-        if (session?.Target is not { } target)
-            return;
-
-        target.ClearDragCue();
-        session.Target = null;
-    }
-
     private void ClearDragPreviewState()
     {
         var session = _dragReorderSession;
         if (session is null)
             return;
 
-        ClearDragPreviewTarget();
         _dragReorderSession = null;
-        if (session.Source is not null)
-        {
-            session.Source.ClearDragCue();
-        }
+        session.Clear();
     }
-
-    private sealed record DragReorderSession(
-        string DraggedEntryId,
-        LauncherSettingsSnapshot Snapshot,
-        LauncherEntryViewModel? Source)
-    {
-        public LauncherEntryViewModel? Target { get; set; }
-
-        public DragInsertPreview? LastPreview { get; set; }
-    }
-
-    private readonly record struct DragInsertPreview(string TargetEntryId, bool InsertAfter);
 
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private async Task LaunchSelectedAsync()

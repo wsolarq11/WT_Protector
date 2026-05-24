@@ -1,0 +1,48 @@
+using WTLauncher.App.ViewModels;
+using WTLauncher.Core;
+
+namespace WTLauncher.Tests;
+
+public sealed class LauncherDragReorderSessionTests
+{
+    [Fact]
+    public void TryRecordPreviewIgnoresConsecutiveDuplicateTargetAndSide()
+    {
+        var session = LauncherDragReorderSession.Start(
+            "three",
+            LauncherSettingsSnapshot.Capture(new LauncherSettings()),
+            source: null);
+
+        Assert.True(session.TryRecordPreview("one", insertAfter: false));
+        Assert.False(session.TryRecordPreview("one", insertAfter: false));
+        Assert.True(session.TryRecordPreview("one", insertAfter: true));
+        Assert.True(session.TryRecordPreview("two", insertAfter: true));
+    }
+
+    [Fact]
+    public void ClearHoverAllowsSamePreviewAgain()
+    {
+        var session = LauncherDragReorderSession.Start(
+            "three",
+            LauncherSettingsSnapshot.Capture(new LauncherSettings()),
+            source: null);
+
+        Assert.True(session.TryRecordPreview("one", insertAfter: false));
+
+        session.ClearHover();
+
+        Assert.True(session.TryRecordPreview("one", insertAfter: false));
+    }
+
+    [Fact]
+    public void IsForUsesOrdinalEntryIdMatch()
+    {
+        var session = LauncherDragReorderSession.Start(
+            "Three",
+            LauncherSettingsSnapshot.Capture(new LauncherSettings()),
+            source: null);
+
+        Assert.True(session.IsFor("Three"));
+        Assert.False(session.IsFor("three"));
+    }
+}
