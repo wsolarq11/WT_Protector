@@ -776,15 +776,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void ApplyFilter()
     {
-        VisibleEntries.Clear();
-        var filtered = Entries.Where(entry => LauncherEntrySearch.Matches(entry.Entry, FilterText));
-
-        foreach (var entry in SortEntries(filtered))
-        {
-            VisibleEntries.Add(entry);
-        }
-
-        VisibleCount = VisibleEntries.Count;
+        VisibleCount = LauncherVisibleEntryCollection.Replace(
+            VisibleEntries,
+            Entries,
+            FilterText,
+            SelectedSortMode?.Id,
+            _settings.CustomEntryOrder);
         RecalculateCardSize();
     }
 
@@ -819,15 +816,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
             entry.NameTileWidth = layout.NameTileWidth;
             entry.NameTileHeight = layout.NameTileHeight;
         }
-    }
-
-    private IEnumerable<LauncherEntryViewModel> SortEntries(IEnumerable<LauncherEntryViewModel> entries)
-    {
-        return LauncherEntrySorter.Sort(
-            entries,
-            SelectedSortMode?.Id,
-            _settings.CustomEntryOrder,
-            Entries.Select(entry => entry.Id));
     }
 
     private void EnsureCustomOrderContainsEntries()
