@@ -248,7 +248,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         TotalCount = summary.TotalCount;
         SelectedCount = summary.SelectedCount;
-        var presetLoadError = LoadPresets();
+        var presetLoadError = ReloadPresets(preferredPresetId: null);
         NotifySelectionCommands();
         UpdatePresetSelectionStatus();
         ApplyFilter();
@@ -339,12 +339,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
             entryIds,
             preferredPresetId,
             SavePresets,
-            ApplyPresetFile);
+            ApplyPresetFileFromSnapshot);
         if (!result.IsSaved)
             return;
 
         var preset = result.Preset!;
-        LoadPresets(result.NextPresetId);
+        ReloadPresets(result.NextPresetId);
         StatusText = $"已保存启动组: {preset.Name}（{preset.EntryIds.Count} 项）";
     }
 
@@ -377,7 +377,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             entryIds,
             preferredPresetId,
             SavePresets,
-            ApplyPresetFile);
+            ApplyPresetFileFromSnapshot);
         if (result.Status == LauncherPresetMutationStatus.MissingPreset)
         {
             StatusText = "当前启动组已不存在，请重新加载";
@@ -387,7 +387,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
 
         var preset = result.Preset!;
-        LoadPresets(result.NextPresetId);
+        ReloadPresets(result.NextPresetId);
         StatusText = $"已更新启动组: {preset.Name}（{preset.EntryIds.Count} 项）";
     }
 
@@ -418,7 +418,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             SelectedPreset.Id,
             preferredPresetId,
             SavePresets,
-            ApplyPresetFile);
+            ApplyPresetFileFromSnapshot);
         if (result.Status == LauncherPresetMutationStatus.MissingPreset)
         {
             StatusText = "当前启动组已不存在，请重新加载";
@@ -428,7 +428,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
 
         var preset = result.Preset!;
-        LoadPresets(result.NextPresetId);
+        ReloadPresets(result.NextPresetId);
         StatusText = $"已删除启动组: {preset.Name}";
     }
 
@@ -563,7 +563,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             entry => new LauncherEntryViewModel(entry, this));
 
         _settings.CustomEntryOrder = snapshot.CloneCustomEntryOrder();
-        ApplyPresetFile(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
+        ApplyPresetFileFromSnapshot(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
         TotalCount = summary.TotalCount;
         RefreshSelectionState();
         ApplyFilter();
@@ -881,17 +881,21 @@ public sealed partial class MainWindowViewModel : ObservableObject
             DeleteSelectedPresetCommand);
     }
 
-    private string? LoadPresets(string? preferredPresetId = null)
+    private string? ReloadPresets(string? preferredPresetId)
     {
-        var error = LauncherPresetPersistence.Load(_presetPath, out var presetFile);
-        ApplyPresetFile(presetFile, preferredPresetId);
-        return error;
+        var result = LauncherPresetReload.Load(_presetPath, Presets, preferredPresetId);
+        _presetFile = result.PresetFile;
+        SelectedPreset = result.SelectedPreset;
+        PresetCount = result.PresetCount;
+        NotifyPresetManagementCommands();
+        return result.ErrorMessage;
     }
 
-    private void ApplyPresetFile(LauncherPresetFile presetFile, string? preferredPresetId)
+    private void ApplyPresetFileFromSnapshot(LauncherPresetFile presetFile, string? preferredPresetId)
     {
+        var selectedPreset = LauncherPresetCatalog.Apply(presetFile, Presets, preferredPresetId);
         _presetFile = presetFile;
-        SelectedPreset = LauncherPresetCatalog.Apply(presetFile, Presets, preferredPresetId);
+        SelectedPreset = selectedPreset;
         PresetCount = Presets.Count;
         NotifyPresetManagementCommands();
     }
