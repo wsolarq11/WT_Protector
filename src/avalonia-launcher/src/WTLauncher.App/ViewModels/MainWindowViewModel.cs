@@ -424,30 +424,30 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var entry = LauncherEntryDrafts.CreateEntry(draft, previousEntry: null);
-        var validation = LauncherEntryDrafts.ValidateEntry(entry, originalId: null, Entries.Select(existing => existing.Entry));
-        if (validation is not null)
+        var result = LauncherEntryWorkflow.AddEntry(
+            draft,
+            Entries,
+            _settings.CustomEntryOrder,
+            entry => new LauncherEntryViewModel(entry, this),
+            NowUtcText());
+        if (!result.Succeeded)
         {
-            StatusText = validation;
+            StatusText = result.Message ?? "新增按钮失败";
             return;
         }
 
-        entry.UpdatedAtUtc = NowUtcText();
-        Entries.Add(new LauncherEntryViewModel(entry, this));
-        _settings.CustomEntryOrder.Add(entry.Id);
         if (!SaveEntryCollectionChanges(savePresets: false, rollbackSnapshot: snapshot))
         {
             RestoreEntryMutationSnapshot(snapshot);
             return;
         }
 
-        StatusText = $"已新增按钮: {entry.Name}（已保存）";
+        StatusText = $"已新增按钮: {result.EntryName}（已保存）";
     }
 
     internal async Task EditEntryAsync(LauncherEntryViewModel item)
     {
         var snapshot = CaptureEntryMutationSnapshot();
-        var oldId = item.Entry.Id;
         var draft = await RequestEntryDraftAsync(item.Entry).ConfigureAwait(true);
         if (draft is null)
         {
@@ -455,24 +455,18 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var updated = LauncherEntryDrafts.CreateEntry(draft, item.Entry);
-        var validation = LauncherEntryDrafts.ValidateEntry(updated, oldId, Entries.Select(existing => existing.Entry));
-        if (validation is not null)
+        var result = LauncherEntryWorkflow.EditEntry(
+            item,
+            draft,
+            Entries,
+            _presetFile.Presets,
+            _settings.CustomEntryOrder,
+            NowUtcText());
+        if (!result.Succeeded)
         {
-            StatusText = validation;
+            StatusText = result.Message ?? "更新按钮失败";
             return;
         }
-
-        item.Entry.Id = updated.Id;
-        item.Entry.Name = updated.Name;
-        item.Entry.Directory = updated.Directory;
-        item.Entry.Command = updated.Command;
-        item.Entry.Confirm = updated.Confirm;
-        item.SetSelectionFromOwner(updated.Selected);
-        item.Entry.UpdatedAtUtc = NowUtcText();
-        item.RefreshDisplay();
-        if (!string.Equals(oldId, item.Entry.Id, StringComparison.Ordinal))
-            LauncherEntryReferences.Rename(oldId, item.Entry.Id, _presetFile.Presets, _settings.CustomEntryOrder);
 
         if (!SaveEntryCollectionChanges(savePresets: true, rollbackSnapshot: snapshot))
         {
@@ -480,7 +474,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        StatusText = $"已更新按钮: {item.Name}（已保存）";
+        StatusText = $"已更新按钮: {result.EntryName}（已保存）";
     }
 
     internal async Task DeleteEntryAsync(LauncherEntryViewModel item)
@@ -493,15 +487,18 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        Entries.Remove(item);
-        LauncherEntryReferences.Remove(item.Entry.Id, _presetFile.Presets, _settings.CustomEntryOrder);
+        var entryName = LauncherEntryWorkflow.DeleteEntry(
+            Entries,
+            item,
+            _presetFile.Presets,
+            _settings.CustomEntryOrder);
         if (!SaveEntryCollectionChanges(savePresets: true, rollbackSnapshot: snapshot))
         {
             RestoreEntryMutationSnapshot(snapshot);
             return;
         }
 
-        StatusText = $"已删除按钮: {item.Name}（已保存）";
+        StatusText = $"已删除按钮: {entryName}（已保存）";
     }
 
     private bool SaveEntryCollectionChanges(bool savePresets, LauncherEntryMutationSnapshot? rollbackSnapshot = null)
