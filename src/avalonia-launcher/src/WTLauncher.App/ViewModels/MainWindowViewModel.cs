@@ -496,18 +496,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         SelectedCount = Entries.Count(entry => entry.IsSelected);
         TotalCount = Entries.Count;
-        if (!SaveConfig())
-            return false;
-        if (savePresets && !SavePresets())
+        var result = LauncherEntryMutationPersistence.Save(
+            Entries.Select(entry => entry.Entry),
+            _configPath,
+            _presetFile,
+            _presetPath,
+            _settings,
+            _settingsPath,
+            savePresets,
+            rollbackSnapshot,
+            EnsureCustomOrderContainsEntries);
+        if (!result.Succeeded)
         {
-            RestorePersistedEntrySnapshot(rollbackSnapshot, restorePresets: false);
-            return false;
-        }
-
-        EnsureCustomOrderContainsEntries();
-        if (!SaveSettings())
-        {
-            RestorePersistedEntrySnapshot(rollbackSnapshot, restorePresets: savePresets);
+            StatusText = result.StatusText ?? StatusText;
             return false;
         }
 
@@ -540,16 +541,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ApplyFilter();
         RecalculateCardSize();
         RefreshEntryLayoutPresentation();
-    }
-
-    private void RestorePersistedEntrySnapshot(LauncherEntryMutationSnapshot? snapshot, bool restorePresets)
-    {
-        StatusText = LauncherEntryPersistenceRollback.Restore(
-            snapshot,
-            _configPath,
-            _presetPath,
-            restorePresets,
-            StatusText);
     }
 
     public void MoveEntryBefore(string draggedEntryId, string targetEntryId)
