@@ -147,7 +147,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (!SaveSettings())
         {
             snapshot.Restore(_settings);
-            _selectedSortMode = SortModes.FirstOrDefault(mode => mode.Id == snapshot.SortMode) ?? SortModes[0];
+            _selectedSortMode = LauncherModeCatalog.ResolveSortMode(SortModes, snapshot.SortMode);
             OnPropertyChanged(nameof(SelectedSortMode));
             OnPropertyChanged(nameof(IsCustomSortMode));
             ApplyFilter();
@@ -172,7 +172,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (!SaveSettings())
         {
             snapshot.Restore(_settings);
-            _selectedDisplayMode = DisplayModes.FirstOrDefault(mode => mode.Id == snapshot.EntryViewMode) ?? DisplayModes[0];
+            _selectedDisplayMode = LauncherModeCatalog.ResolveDisplayMode(DisplayModes, snapshot.EntryViewMode);
             OnPropertyChanged(nameof(SelectedDisplayMode));
             OnPropertyChanged(nameof(IsCardsViewMode));
             OnPropertyChanged(nameof(IsDetailedListMode));
