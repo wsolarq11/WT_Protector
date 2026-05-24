@@ -833,13 +833,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void ApplyFilter()
     {
-        var filter = (FilterText ?? "").Trim();
         VisibleEntries.Clear();
-        var filtered = Entries.Where(entry =>
-            filter.Length == 0
-            || entry.Name.Contains(filter, StringComparison.OrdinalIgnoreCase)
-            || entry.Directory.Contains(filter, StringComparison.OrdinalIgnoreCase)
-            || entry.Command.Contains(filter, StringComparison.OrdinalIgnoreCase));
+        var filtered = Entries.Where(entry => LauncherEntrySearch.Matches(entry.Entry, FilterText));
 
         foreach (var entry in SortEntries(filtered))
         {
