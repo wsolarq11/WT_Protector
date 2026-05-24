@@ -241,22 +241,26 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void Refresh()
     {
-        var summary = LauncherEntryReload.Load(
+        var result = LauncherReloadWorkflow.Load(
             _configPath,
+            _presetPath,
             Entries,
+            Presets,
+            _settings.CustomEntryOrder,
             entry => new LauncherEntryViewModel(entry, this));
-        EnsureCustomOrderContainsEntries();
 
-        TotalCount = summary.TotalCount;
-        SelectedCount = summary.SelectedCount;
-        var presetLoadError = ReloadPresets(preferredPresetId: null);
+        TotalCount = result.TotalCount;
+        SelectedCount = result.SelectedCount;
+        _presetFile = result.PresetFile;
+        SelectedPreset = result.SelectedPreset;
+        PresetCount = result.PresetCount;
         NotifySelectionCommands();
+        NotifyPresetManagementCommands();
         UpdatePresetSelectionStatus();
         ApplyFilter();
         RecalculateCardSize();
         RefreshEntryLayoutPresentation();
-        StatusText = presetLoadError
-            ?? $"已加载 {TotalCount} 个启动项、{PresetCount} 个启动组；勾选自动保存到 config\\config.json";
+        StatusText = result.StatusText;
     }
 
     [RelayCommand]
