@@ -4,6 +4,20 @@ namespace WTLauncher.App.ViewModels;
 
 public static class LauncherPresetSelectionRules
 {
+    public static LauncherPresetSelectionState BuildState(
+        LauncherPresetViewModel? selectedPreset,
+        int presetCount,
+        IEnumerable<LauncherEntryViewModel> entries)
+    {
+        ArgumentNullException.ThrowIfNull(entries);
+        var entryList = entries as IList<LauncherEntryViewModel> ?? entries.ToList();
+        var preview = BuildPreview(selectedPreset, presetCount, entryList);
+        return new LauncherPresetSelectionState(
+            entryList.Count(entry => entry.IsSelected),
+            preview.ApplyButtonText,
+            preview.StatusText);
+    }
+
     public static LauncherPresetSelectionPreview BuildPreview(
         LauncherPresetViewModel? selectedPreset,
         int presetCount,
@@ -55,3 +69,8 @@ public static class LauncherPresetSelectionRules
         return entries.Count(entry => entry.IsSelected);
     }
 }
+
+public sealed record LauncherPresetSelectionState(
+    int SelectedCount,
+    string ApplyPresetButtonText,
+    string PresetSelectionStatusText);

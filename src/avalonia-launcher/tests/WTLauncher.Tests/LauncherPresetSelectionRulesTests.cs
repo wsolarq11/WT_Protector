@@ -29,6 +29,28 @@ public sealed class LauncherPresetSelectionRulesTests
     }
 
     [Fact]
+    public void BuildStateReturnsSelectedCountAndPresetStatusTexts()
+    {
+        var entries = new[]
+        {
+            Entry("one", selected: true),
+            Entry("two", selected: false),
+        };
+        var selectedPreset = new LauncherPresetViewModel(new LauncherPreset
+        {
+            Id = "daily",
+            Name = "Daily",
+            EntryIds = ["one"],
+        });
+
+        var state = LauncherPresetSelectionRules.BuildState(selectedPreset, presetCount: 1, entries);
+
+        Assert.Equal(1, state.SelectedCount);
+        Assert.Equal("已匹配", state.ApplyPresetButtonText);
+        Assert.Contains("已匹配启动组", state.PresetSelectionStatusText);
+    }
+
+    [Fact]
     public void CanApplyRequiresASelectedPresetWithChanges()
     {
         var entries = new[]

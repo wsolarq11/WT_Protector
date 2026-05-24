@@ -816,9 +816,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void RefreshSelectionState()
     {
-        SelectedCount = Entries.Count(entry => entry.IsSelected);
+        ApplyPresetSelectionState();
         NotifySelectionCommands();
-        UpdatePresetSelectionStatus();
     }
 
     private void NotifySelectionCommands()
@@ -834,9 +833,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void UpdatePresetSelectionStatus()
     {
-        var selection = LauncherPresetSelectionRules.BuildPreview(SelectedPreset, PresetCount, Entries);
-        ApplyPresetButtonText = selection.ApplyButtonText;
-        PresetSelectionStatusText = selection.StatusText;
+        ApplyPresetSelectionState();
+    }
+
+    private void ApplyPresetSelectionState()
+    {
+        var selection = LauncherPresetSelectionRules.BuildState(SelectedPreset, PresetCount, Entries);
+        SelectedCount = selection.SelectedCount;
+        ApplyPresetButtonText = selection.ApplyPresetButtonText;
+        PresetSelectionStatusText = selection.PresetSelectionStatusText;
     }
 
     private List<string> GetSelectedEntryIds()
