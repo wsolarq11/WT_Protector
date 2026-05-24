@@ -240,9 +240,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void Refresh()
     {
-        var summary = LauncherEntryCollection.Replace(
+        var summary = LauncherEntryReload.Load(
+            _configPath,
             Entries,
-            LauncherConfigStore.Load(_configPath),
             entry => new LauncherEntryViewModel(entry, this));
         EnsureCustomOrderContainsEntries();
 
