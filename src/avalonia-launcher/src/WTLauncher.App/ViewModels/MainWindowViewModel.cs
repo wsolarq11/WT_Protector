@@ -823,10 +823,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void NotifySelectionCommands()
     {
-        LaunchSelectedCommand.NotifyCanExecuteChanged();
-        ClearSelectionCommand.NotifyCanExecuteChanged();
-        ApplyPresetCommand.NotifyCanExecuteChanged();
-        NotifyPresetManagementCommands();
+        LauncherCommandNotifications.NotifySelection(
+            LaunchSelectedCommand,
+            ClearSelectionCommand,
+            ApplyPresetCommand,
+            SaveSelectionAsPresetCommand,
+            UpdateSelectedPresetCommand,
+            DeleteSelectedPresetCommand);
     }
 
     private void UpdatePresetSelectionStatus()
@@ -843,9 +846,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void NotifyPresetManagementCommands()
     {
-        SaveSelectionAsPresetCommand.NotifyCanExecuteChanged();
-        UpdateSelectedPresetCommand.NotifyCanExecuteChanged();
-        DeleteSelectedPresetCommand.NotifyCanExecuteChanged();
+        LauncherCommandNotifications.NotifyPresetManagement(
+            SaveSelectionAsPresetCommand,
+            UpdateSelectedPresetCommand,
+            DeleteSelectedPresetCommand);
     }
 
     private void RestorePresetFile(LauncherPresetFile snapshot, string? preferredPresetId)
