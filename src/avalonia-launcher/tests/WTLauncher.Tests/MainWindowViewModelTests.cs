@@ -30,6 +30,21 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void SelectVisibleReportsWhenVisibleEntriesAreAlreadySelected()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: true, twoSelected: true);
+
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+
+        viewModel.SelectVisibleCommand.Execute(null);
+
+        Assert.Equal("可见项已全部勾选", viewModel.StatusText);
+        Assert.Equal(2, viewModel.SelectedCount);
+        Assert.All(viewModel.Entries, entry => Assert.True(entry.IsSelected));
+    }
+
+    [Fact]
     public void SelectionChangesRollBackWhenConfigSaveFails()
     {
         using var temp = new TempDirectory();

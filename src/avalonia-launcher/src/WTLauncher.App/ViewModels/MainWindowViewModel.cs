@@ -261,31 +261,17 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void SelectVisible()
     {
-        var targets = VisibleEntries.Where(entry => !entry.IsSelected).ToList();
-        if (targets.Count == 0)
-        {
-            StatusText = VisibleEntries.Count == 0
-                ? "当前没有可勾选的可见项"
-                : "可见项已全部勾选";
-            return;
-        }
-
-        if (SetSelection(targets, selected: true))
-            StatusText = $"已勾选可见 {targets.Count} 项（已保存）";
+        var result = LauncherSelectionWorkflow.SelectVisible(VisibleEntries, RefreshSelectionState, SaveConfig);
+        if (result.StatusText is not null)
+            StatusText = result.StatusText;
     }
 
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private void ClearSelection()
     {
-        var targets = Entries.Where(entry => entry.IsSelected).ToList();
-        if (targets.Count == 0)
-        {
-            StatusText = "当前没有已勾选项";
-            return;
-        }
-
-        if (SetSelection(targets, selected: false))
-            StatusText = $"已清空 {targets.Count} 个勾选项（已保存）";
+        var result = LauncherSelectionWorkflow.ClearSelection(Entries, RefreshSelectionState, SaveConfig);
+        if (result.StatusText is not null)
+            StatusText = result.StatusText;
     }
 
     [RelayCommand(CanExecute = nameof(CanApplyPreset))]
