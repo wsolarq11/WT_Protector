@@ -972,39 +972,16 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private IEnumerable<LauncherEntryViewModel> SortEntries(IEnumerable<LauncherEntryViewModel> entries)
     {
-        return SelectedSortMode?.Id switch
-        {
-            "updated" => entries
-                .OrderByDescending(entry => ParseUpdatedAt(entry.Entry.UpdatedAtUtc))
-                .ThenBy(entry => entry.Name, StringComparer.CurrentCultureIgnoreCase)
-                .ThenBy(entry => entry.Id, StringComparer.Ordinal),
-            "alphabetical" => entries
-                .OrderBy(entry => entry.Name, StringComparer.CurrentCultureIgnoreCase)
-                .ThenBy(entry => entry.Id, StringComparer.Ordinal),
-            _ => SortEntriesByCustomOrder(entries),
-        };
-    }
-
-    private IEnumerable<LauncherEntryViewModel> SortEntriesByCustomOrder(IEnumerable<LauncherEntryViewModel> entries)
-    {
-        EnsureCustomOrderContainsEntries();
-        var order = LauncherEntryOrder.BuildIndex(_settings.CustomEntryOrder);
-        return entries
-            .OrderBy(entry => order.TryGetValue(entry.Id, out var index) ? index : int.MaxValue)
-            .ThenBy(entry => entry.Name, StringComparer.CurrentCultureIgnoreCase)
-            .ThenBy(entry => entry.Id, StringComparer.Ordinal);
+        return LauncherEntrySorter.Sort(
+            entries,
+            SelectedSortMode?.Id,
+            _settings.CustomEntryOrder,
+            Entries.Select(entry => entry.Id));
     }
 
     private void EnsureCustomOrderContainsEntries()
     {
         LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, Entries.Select(entry => entry.Id));
-    }
-
-    private static DateTimeOffset ParseUpdatedAt(string? value)
-    {
-        return DateTimeOffset.TryParse(value, out var parsed)
-            ? parsed
-            : DateTimeOffset.MinValue;
     }
 
     private static string NowUtcText()
