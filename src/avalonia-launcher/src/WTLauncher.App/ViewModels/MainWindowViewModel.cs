@@ -269,7 +269,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var selection = GetPresetSelectionPreview(SelectedPreset);
+        var selection = LauncherPresetSelectionRules.BuildPreview(SelectedPreset, PresetCount, Entries);
         if (selection.MissingConfigIds.Count > 0)
         {
             StatusText = $"启动组引用了不存在的启动项: {string.Join(", ", selection.MissingConfigIds)}";
@@ -722,17 +722,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool CanApplyPreset()
     {
-        return SelectedPreset is not null
-            && Entries.Count > 0
-            && GetPresetSelectionPreview(SelectedPreset!).HasChanges;
+        return LauncherPresetSelectionRules.CanApply(SelectedPreset, PresetCount, Entries);
     }
 
     private bool CanUpdateSelectedPreset()
     {
-        return SelectedPreset is not null
-            && !SelectedPreset.IsLocked
-            && SelectedCount > 0
-            && GetPresetSelectionPreview(SelectedPreset!).HasChanges;
+        return LauncherPresetSelectionRules.CanUpdate(SelectedPreset, PresetCount, Entries);
     }
 
     private bool CanDeleteSelectedPreset()
@@ -836,18 +831,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void UpdatePresetSelectionStatus()
     {
-        var selection = GetPresetSelectionPreview(SelectedPreset);
+        var selection = LauncherPresetSelectionRules.BuildPreview(SelectedPreset, PresetCount, Entries);
         ApplyPresetButtonText = selection.ApplyButtonText;
         PresetSelectionStatusText = selection.StatusText;
-    }
-
-    private LauncherPresetSelectionPreview GetPresetSelectionPreview(LauncherPresetViewModel? selectedPreset)
-    {
-        return LauncherPresetCatalog.BuildSelectionPreview(
-            selectedPreset,
-            PresetCount,
-            Entries.Where(entry => entry.IsSelected).Select(entry => entry.Entry.Id),
-            Entries.Select(entry => entry.Entry.Id));
     }
 
     private List<string> GetSelectedEntryIds()
