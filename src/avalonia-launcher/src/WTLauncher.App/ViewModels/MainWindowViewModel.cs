@@ -557,13 +557,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void RestoreEntryMutationSnapshot(LauncherEntryMutationSnapshot snapshot)
     {
-        var summary = LauncherEntryCollection.Replace(
+        var summary = LauncherEntryMutationRestore.Restore(
+            snapshot,
             Entries,
-            snapshot.CloneEntries(),
+            _settings,
+            ApplyPresetFileFromSnapshot,
             entry => new LauncherEntryViewModel(entry, this));
-
-        _settings.CustomEntryOrder = snapshot.CloneCustomEntryOrder();
-        ApplyPresetFileFromSnapshot(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
         TotalCount = summary.TotalCount;
         RefreshSelectionState();
         ApplyFilter();
