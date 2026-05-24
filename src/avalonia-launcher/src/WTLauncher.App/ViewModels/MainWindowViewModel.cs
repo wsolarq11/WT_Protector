@@ -212,15 +212,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void Refresh()
     {
-        Entries.Clear();
-        foreach (var entry in LauncherConfigStore.Load(_configPath))
-        {
-            Entries.Add(new LauncherEntryViewModel(entry, this));
-        }
+        var summary = LauncherEntryCollection.Replace(
+            Entries,
+            LauncherConfigStore.Load(_configPath),
+            entry => new LauncherEntryViewModel(entry, this));
         EnsureCustomOrderContainsEntries();
 
-        TotalCount = Entries.Count;
-        SelectedCount = Entries.Count(entry => entry.IsSelected);
+        TotalCount = summary.TotalCount;
+        SelectedCount = summary.SelectedCount;
         var presetLoadError = LoadPresets();
         NotifySelectionCommands();
         UpdatePresetSelectionStatus();
@@ -523,15 +522,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void RestoreEntryMutationSnapshot(LauncherEntryMutationSnapshot snapshot)
     {
-        Entries.Clear();
-        foreach (var entry in snapshot.CloneEntries())
-        {
-            Entries.Add(new LauncherEntryViewModel(entry, this));
-        }
+        var summary = LauncherEntryCollection.Replace(
+            Entries,
+            snapshot.CloneEntries(),
+            entry => new LauncherEntryViewModel(entry, this));
 
         _settings.CustomEntryOrder = snapshot.CloneCustomEntryOrder();
         ApplyPresetFile(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
-        TotalCount = Entries.Count;
+        TotalCount = summary.TotalCount;
         RefreshSelectionState();
         ApplyFilter();
         RecalculateCardSize();
