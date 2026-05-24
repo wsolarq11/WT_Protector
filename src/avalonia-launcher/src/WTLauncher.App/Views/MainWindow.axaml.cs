@@ -475,8 +475,10 @@ public sealed partial class MainWindow : Window
         if (_settings is null || _settingsPath is null)
             return;
 
-        _settings.Window.Width = Width;
-        _settings.Window.Height = Height;
-        LauncherSettingsStore.Save(_settings, _settingsPath);
+        if (!LauncherSettingsStore.TrySaveWindowBounds(_settings, _settingsPath, Width, Height)
+            && DataContext is MainWindowViewModel viewModel)
+        {
+            viewModel.StatusText = "窗口尺寸保存失败；下次将使用上次保存的尺寸";
+        }
     }
 }

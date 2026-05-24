@@ -256,4 +256,45 @@ public sealed class LauncherConfigStoreTests
         Assert.EndsWith(Environment.NewLine, savedJson);
     }
 
+    [Fact]
+    public void SettingsStore_TrySaveWindowBoundsPersistsPortableCloseSize()
+    {
+        using var temp = new TempDirectory();
+        var settingsPath = System.IO.Path.Combine(temp.Path, "config", "settings.json");
+        var settings = new LauncherSettings
+        {
+            Window = new LauncherWindowSettings { Width = 1180, Height = 760 },
+        };
+
+        var saved = LauncherSettingsStore.TrySaveWindowBounds(settings, settingsPath, width: 1320, height: 840);
+
+        Assert.True(saved);
+        Assert.Equal(1320d, settings.Window.Width);
+        Assert.Equal(840d, settings.Window.Height);
+        var loaded = LauncherSettingsStore.Load(settingsPath);
+        Assert.Equal(1320d, loaded.Window.Width);
+        Assert.Equal(840d, loaded.Window.Height);
+    }
+
+    [Fact]
+    public void SettingsStore_TrySaveWindowBoundsReturnsFalseAndRollsBackOnCloseSaveFailure()
+    {
+        using var temp = new TempDirectory();
+        var configDir = System.IO.Path.Combine(temp.Path, "config");
+        Directory.CreateDirectory(configDir);
+        var settingsPath = System.IO.Path.Combine(configDir, "settings.json");
+        var settings = new LauncherSettings
+        {
+            Window = new LauncherWindowSettings { Width = 1180, Height = 760 },
+        };
+        Directory.CreateDirectory(settingsPath);
+
+        var saved = LauncherSettingsStore.TrySaveWindowBounds(settings, settingsPath, width: 1320, height: 840);
+
+        Assert.False(saved);
+        Assert.Equal(1180d, settings.Window.Width);
+        Assert.Equal(760d, settings.Window.Height);
+        Assert.Empty(Directory.EnumerateFiles(configDir, "settings.json.tmp-*"));
+    }
+
 }

@@ -19,7 +19,7 @@ public sealed partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var configPath = LauncherConfigStore.ResolveConfigPath(
-                ReadConfigArgument(desktop.Args),
+                LauncherStartupArguments.ReadConfigPath(desktop.Args),
                 Environment.CurrentDirectory,
                 AppContext.BaseDirectory);
             var settingsPath = LauncherConfigStore.ResolveSettingsPath(configPath);
@@ -38,17 +38,4 @@ public sealed partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
-    private static string? ReadConfigArgument(IReadOnlyList<string>? args)
-    {
-        if (args is null)
-            return null;
-
-        for (var i = 0; i < args.Count; i++)
-        {
-            if (string.Equals(args[i], "--config", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Count)
-                return args[i + 1];
-        }
-
-        return null;
-    }
 }
