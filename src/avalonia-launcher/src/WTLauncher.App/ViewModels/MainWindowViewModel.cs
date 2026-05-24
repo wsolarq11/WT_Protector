@@ -127,13 +127,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     partial void OnFilterTextChanged(string value)
     {
-        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
-        _settings.LastFilterText = value ?? string.Empty;
-        var result = LauncherSettingsMutationPersistence.Save(
+        var result = LauncherSettingsWorkflow.ChangeFilterText(
             _settings,
             _settingsPath,
-            snapshot,
-            () =>
+            value,
+            snapshot =>
             {
                 _filterText = snapshot.LastFilterText;
                 OnPropertyChanged(nameof(FilterText));
@@ -154,14 +152,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (value is null)
             return;
 
-        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
-        _settings.SortMode = value.Id;
-        EnsureCustomOrderContainsEntries();
-        var result = LauncherSettingsMutationPersistence.Save(
+        var result = LauncherSettingsWorkflow.ChangeSortMode(
             _settings,
             _settingsPath,
-            snapshot,
-            () =>
+            value.Id,
+            EnsureCustomOrderContainsEntries,
+            snapshot =>
             {
                 _selectedSortMode = LauncherModeCatalog.ResolveSortMode(SortModes, snapshot.SortMode);
                 OnPropertyChanged(nameof(SelectedSortMode));
@@ -186,14 +182,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (value is null)
             return;
 
-        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
-        _settings.EntryViewMode = value.Id;
-        RefreshEntryLayoutPresentation();
-        var result = LauncherSettingsMutationPersistence.Save(
+        var result = LauncherSettingsWorkflow.ChangeDisplayMode(
             _settings,
             _settingsPath,
-            snapshot,
-            () =>
+            value.Id,
+            RefreshEntryLayoutPresentation,
+            snapshot =>
             {
                 _selectedDisplayMode = LauncherModeCatalog.ResolveDisplayMode(DisplayModes, snapshot.EntryViewMode);
                 OnPropertyChanged(nameof(SelectedDisplayMode));
@@ -213,17 +207,18 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     partial void OnRequireConfirmationForLaunchesChanged(bool value)
     {
-        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
-        _settings.RequireConfirmationForLaunches = value;
-        OnPropertyChanged(nameof(LaunchConfirmationToggleText));
-        OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
-        RefreshEntryLayoutPresentation();
-        ApplyFilter();
-        var result = LauncherSettingsMutationPersistence.Save(
+        var result = LauncherSettingsWorkflow.ChangeLaunchConfirmation(
             _settings,
             _settingsPath,
-            snapshot,
+            value,
             () =>
+            {
+                OnPropertyChanged(nameof(LaunchConfirmationToggleText));
+                OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
+                RefreshEntryLayoutPresentation();
+                ApplyFilter();
+            },
+            snapshot =>
             {
                 _requireConfirmationForLaunches = snapshot.RequireConfirmationForLaunches;
                 OnPropertyChanged(nameof(RequireConfirmationForLaunches));
