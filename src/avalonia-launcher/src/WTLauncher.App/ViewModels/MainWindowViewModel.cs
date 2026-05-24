@@ -278,21 +278,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanApplyPreset))]
     private void ApplyPreset()
     {
-        if (SelectedPreset is null)
-        {
-            StatusText = "未选择启动组";
-            return;
-        }
-
-        var selection = LauncherPresetSelectionRules.BuildPreview(SelectedPreset, PresetCount, Entries);
-        if (selection.MissingConfigIds.Count > 0)
-        {
-            StatusText = $"启动组引用了不存在的启动项: {string.Join(", ", selection.MissingConfigIds)}";
-            return;
-        }
-
-        if (ReplaceSelection(selection.PresetIds))
-            StatusText = $"已应用启动组: {SelectedPreset.Name}（{SelectedCount} 项，已保存）";
+        var result = LauncherPresetApplyWorkflow.Apply(SelectedPreset, PresetCount, Entries, ReplaceSelection);
+        if (result.StatusText is not null)
+            StatusText = result.StatusText;
     }
 
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
