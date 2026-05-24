@@ -44,40 +44,34 @@ public sealed partial class MainWindow : Window
         Closing += OnClosing;
     }
 
-    private async Task<bool> ConfirmLaunchAsync(LaunchEntry entry, LaunchPlan plan)
+    private Task<bool> ConfirmLaunchAsync(LaunchEntry entry, LaunchPlan plan)
     {
-        var dialog = new ConfirmLaunchWindow(entry, plan);
-        return await dialog.ShowDialog<bool>(this).ConfigureAwait(true);
+        return LauncherDialogService.ConfirmLaunchAsync(this, entry, plan);
     }
 
-    private async Task<bool> ConfirmBatchLaunchAsync(IReadOnlyList<LaunchEntry> entries)
+    private Task<bool> ConfirmBatchLaunchAsync(IReadOnlyList<LaunchEntry> entries)
     {
-        var dialog = new ConfirmBatchLaunchWindow(entries);
-        return await dialog.ShowDialog<bool>(this).ConfigureAwait(true);
+        return LauncherDialogService.ConfirmBatchLaunchAsync(this, entries);
     }
 
-    private async Task<PresetDraft?> RequestNewPresetAsync()
+    private Task<PresetDraft?> RequestNewPresetAsync()
     {
-        var dialog = new PresetDetailsWindow(GetSelectedEntryIds());
-        return await dialog.ShowDialog<PresetDraft?>(this).ConfigureAwait(true);
+        return LauncherDialogService.RequestNewPresetAsync(this, GetSelectedEntryIds());
     }
 
-    private async Task<bool> ConfirmDeletePresetAsync(LauncherPresetViewModel preset)
+    private Task<bool> ConfirmDeletePresetAsync(LauncherPresetViewModel preset)
     {
-        var dialog = new ConfirmPresetDeleteWindow(preset);
-        return await dialog.ShowDialog<bool>(this).ConfigureAwait(true);
+        return LauncherDialogService.ConfirmDeletePresetAsync(this, preset);
     }
 
-    private async Task<EntryDraft?> RequestEntryDraftAsync(LaunchEntry? entry)
+    private Task<EntryDraft?> RequestEntryDraftAsync(LaunchEntry? entry)
     {
-        var dialog = new EntryDetailsWindow(entry);
-        return await dialog.ShowDialog<EntryDraft?>(this).ConfigureAwait(true);
+        return LauncherDialogService.RequestEntryDraftAsync(this, entry);
     }
 
-    private async Task<bool> ConfirmDeleteEntryAsync(LauncherEntryViewModel entry)
+    private Task<bool> ConfirmDeleteEntryAsync(LauncherEntryViewModel entry)
     {
-        var dialog = new ConfirmEntryDeleteWindow(entry);
-        return await dialog.ShowDialog<bool>(this).ConfigureAwait(true);
+        return LauncherDialogService.ConfirmDeleteEntryAsync(this, entry);
     }
 
     private void UpdateCardRegionSize(MainWindowViewModel viewModel)
