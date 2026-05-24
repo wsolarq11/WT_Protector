@@ -995,15 +995,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool SaveSettings()
     {
-        try
-        {
-            LauncherSettingsStore.Save(_settings, _settingsPath);
+        if (LauncherSettingsPersistence.Save(_settings, _settingsPath, out var errorMessage))
             return true;
-        }
-        catch (Exception ex)
-        {
-            StatusText = $"设置保存失败: {ex.Message}";
-            return false;
-        }
+
+        StatusText = errorMessage ?? "设置保存失败";
+        return false;
     }
 }
