@@ -132,12 +132,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     partial void OnFilterTextChanged(string value)
     {
-        var previous = _settings.LastFilterText;
+        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
         _settings.LastFilterText = value ?? string.Empty;
         if (!SaveSettings())
         {
-            _settings.LastFilterText = previous;
-            _filterText = previous;
+            snapshot.Restore(_settings);
+            _filterText = snapshot.LastFilterText;
             OnPropertyChanged(nameof(FilterText));
             ApplyFilter();
             return;
@@ -152,15 +152,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (value is null)
             return;
 
-        var previousSortMode = _settings.SortMode;
-        var previousOrder = new List<string>(_settings.CustomEntryOrder);
+        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
         _settings.SortMode = value.Id;
         EnsureCustomOrderContainsEntries();
         if (!SaveSettings())
         {
-            _settings.SortMode = previousSortMode;
-            _settings.CustomEntryOrder = previousOrder;
-            _selectedSortMode = SortModes.FirstOrDefault(mode => mode.Id == previousSortMode) ?? SortModes[0];
+            snapshot.Restore(_settings);
+            _selectedSortMode = SortModes.FirstOrDefault(mode => mode.Id == snapshot.SortMode) ?? SortModes[0];
             OnPropertyChanged(nameof(SelectedSortMode));
             OnPropertyChanged(nameof(IsCustomSortMode));
             ApplyFilter();
@@ -179,14 +177,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (value is null)
             return;
 
-        var previousEntryViewMode = _settings.EntryViewMode;
-        var previousDisplayMode = DisplayModes.FirstOrDefault(mode => mode.Id == previousEntryViewMode) ?? DisplayModes[0];
+        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
         _settings.EntryViewMode = value.Id;
         RefreshEntryLayoutPresentation();
         if (!SaveSettings())
         {
-            _settings.EntryViewMode = previousEntryViewMode;
-            _selectedDisplayMode = previousDisplayMode;
+            snapshot.Restore(_settings);
+            _selectedDisplayMode = DisplayModes.FirstOrDefault(mode => mode.Id == snapshot.EntryViewMode) ?? DisplayModes[0];
             OnPropertyChanged(nameof(SelectedDisplayMode));
             OnPropertyChanged(nameof(IsCardsViewMode));
             OnPropertyChanged(nameof(IsDetailedListMode));
@@ -200,7 +197,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     partial void OnRequireConfirmationForLaunchesChanged(bool value)
     {
-        var previousValue = _settings.RequireConfirmationForLaunches;
+        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
         _settings.RequireConfirmationForLaunches = value;
         OnPropertyChanged(nameof(LaunchConfirmationToggleText));
         OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
@@ -208,8 +205,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ApplyFilter();
         if (!SaveSettings())
         {
-            _settings.RequireConfirmationForLaunches = previousValue;
-            _requireConfirmationForLaunches = previousValue;
+            snapshot.Restore(_settings);
+            _requireConfirmationForLaunches = snapshot.RequireConfirmationForLaunches;
             OnPropertyChanged(nameof(RequireConfirmationForLaunches));
             OnPropertyChanged(nameof(LaunchConfirmationToggleText));
             OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
@@ -596,11 +593,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
 
         EnsureCustomOrderContainsEntries();
-        var snapshot = new List<string>(_settings.CustomEntryOrder);
+        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
         LauncherEntryOrder.MoveBefore(_settings.CustomEntryOrder, draggedEntryId, targetEntryId);
         if (!SaveSettings())
         {
-            _settings.CustomEntryOrder = snapshot;
+            snapshot.RestoreCustomEntryOrder(_settings);
             ApplyFilter();
             return;
         }
@@ -620,7 +617,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var source = Entries.FirstOrDefault(entry => string.Equals(entry.Id, draggedEntryId, StringComparison.Ordinal));
         _dragReorderSession = new DragReorderSession(
             draggedEntryId,
-            new List<string>(_settings.CustomEntryOrder),
+            LauncherSettingsSnapshot.Capture(_settings),
             source);
         if (source is not null)
             source.ShowDragPreviewSource();
@@ -679,7 +676,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var session = _dragReorderSession;
         if (!SaveSettings())
         {
-            _settings.CustomEntryOrder = new List<string>(session.Snapshot);
+            session.Snapshot.RestoreCustomEntryOrder(_settings);
             ApplyFilter();
             ClearDragPreviewState();
             return;
@@ -695,7 +692,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (session is null)
             return;
 
-        _settings.CustomEntryOrder = new List<string>(session.Snapshot);
+        session.Snapshot.RestoreCustomEntryOrder(_settings);
         ApplyFilter();
         ClearDragPreviewState();
         StatusText = "已取消: 拖拽排序";
@@ -748,7 +745,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private sealed record DragReorderSession(
         string DraggedEntryId,
-        List<string> Snapshot,
+        LauncherSettingsSnapshot Snapshot,
         LauncherEntryViewModel? Source)
     {
         public LauncherEntryViewModel? Target { get; set; }
