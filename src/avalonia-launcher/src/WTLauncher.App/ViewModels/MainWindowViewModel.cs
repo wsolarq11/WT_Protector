@@ -451,10 +451,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool SaveEntryCollectionChanges(bool savePresets, LauncherEntryMutationSnapshot? rollbackSnapshot = null)
     {
-        SelectedCount = Entries.Count(entry => entry.IsSelected);
-        TotalCount = Entries.Count;
-        var result = LauncherEntryMutationPersistence.Save(
-            Entries.Select(entry => entry.Entry),
+        var result = LauncherEntryCollectionSaveWorkflow.Save(
+            Entries,
             _configPath,
             _presetFile,
             _presetPath,
@@ -463,6 +461,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
             savePresets,
             rollbackSnapshot,
             EnsureCustomOrderContainsEntries);
+        SelectedCount = result.SelectedCount;
+        TotalCount = result.TotalCount;
         if (!result.Succeeded)
         {
             StatusText = result.StatusText ?? StatusText;
