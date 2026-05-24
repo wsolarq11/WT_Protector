@@ -118,9 +118,24 @@ $settingsPath = Get-LauncherSettingsPath
 if (-not (Test-Path -LiteralPath $settingsPath)) { throw "Missing portable settings: $settingsPath" }
 $settings = Get-Content -Raw -Encoding UTF8 -LiteralPath $settingsPath | ConvertFrom-Json
 if ($null -eq $settings) { throw "Settings parsed to null: $settingsPath" }
+$settingsOrder = @($settings.customEntryOrder)
+$settingsOrderSeen = @{}
+foreach ($id in $settingsOrder) {
+    if (-not $seenIds.ContainsKey([string]$id)) { throw "settings.json customEntryOrder references missing config entry id: $id" }
+    if ($settingsOrderSeen.ContainsKey([string]$id)) { throw "settings.json customEntryOrder has duplicate config entry id: $id" }
+    $settingsOrderSeen[[string]$id] = $true
+}
+if ($settingsOrder.Count -ne $seenIds.Count) { throw "settings.json customEntryOrder should contain every config entry id once" }
+if ([string]::IsNullOrWhiteSpace([string]$settings.sortMode)) { throw 'settings.json sortMode is required' }
+if ([string]::IsNullOrWhiteSpace([string]$settings.entryViewMode)) { throw 'settings.json entryViewMode is required' }
+if (-not ($settings.requireConfirmationForLaunches -is [bool])) { throw 'settings.json requireConfirmationForLaunches must be boolean' }
 Add-Check 'settings-json' @{
     path = 'config\settings.json'
     theme = $settings.theme
+    sortMode = $settings.sortMode
+    entryViewMode = $settings.entryViewMode
+    requireConfirmationForLaunches = $settings.requireConfirmationForLaunches
+    customEntryOrder = $settingsOrder.Count
     hasWindow = $null -ne $settings.window
 }
 

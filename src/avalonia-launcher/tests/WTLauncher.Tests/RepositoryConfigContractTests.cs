@@ -11,10 +11,12 @@ public sealed class RepositoryConfigContractTests
         var root = FindRepositoryRoot();
         var configPath = Path.Combine(root, "config", "config.json");
         var presetsPath = Path.Combine(root, "config", "presets.json");
+        var settingsPath = Path.Combine(root, "config", "settings.json");
 
         AssertEveryEntryDeclaresPersistentSelection(configPath);
         var entries = LauncherConfigStore.Load(configPath);
         AssertPresetsReferenceKnownEntries(presetsPath, entries);
+        AssertPortableSettingsContract(settingsPath, entries);
 
         Assert.NotEmpty(entries);
         foreach (var entry in entries)
@@ -25,6 +27,24 @@ public sealed class RepositoryConfigContractTests
             Assert.Contains(" pwsh -NoExit -Command ", plan.Arguments, StringComparison.Ordinal);
             Assert.False(plan.RequiresConfirmation);
         }
+    }
+
+    [Fact]
+    public void RepositoryRootSettings_RoundTripPortableStateFields()
+    {
+        var root = FindRepositoryRoot();
+        var settingsPath = Path.Combine(root, "config", "settings.json");
+
+        var settings = LauncherSettingsStore.Load(settingsPath);
+
+        Assert.Equal("light", settings.Theme);
+        Assert.Equal("", settings.LastFilterText);
+        Assert.Equal("custom", settings.SortMode);
+        Assert.Equal("cards", settings.EntryViewMode);
+        Assert.True(settings.RequireConfirmationForLaunches);
+        Assert.NotEmpty(settings.CustomEntryOrder);
+        Assert.Equal(1180d, settings.Window.Width);
+        Assert.Equal(760d, settings.Window.Height);
     }
 
     [Fact]
@@ -155,6 +175,37 @@ public sealed class RepositoryConfigContractTests
 
         Assert.Contains(defaultPresetId!, presetIds);
         Assert.True(nonEmptyPresetCount > 0, "At least one preset should name launch entries.");
+    }
+
+    private static void AssertPortableSettingsContract(string settingsPath, IReadOnlyList<LaunchEntry> entries)
+    {
+        var knownEntryIds = entries.Select(entry => entry.Id).ToHashSet(StringComparer.Ordinal);
+        var json = File.ReadAllText(settingsPath);
+        using var document = JsonDocument.Parse(json, new JsonDocumentOptions
+        {
+            AllowTrailingCommas = true,
+            CommentHandling = JsonCommentHandling.Skip,
+        });
+
+        var root = document.RootElement;
+        Assert.Equal("light", root.GetProperty("theme").GetString());
+        Assert.Equal("", root.GetProperty("lastFilterText").GetString());
+        Assert.Equal("custom", root.GetProperty("sortMode").GetString());
+        Assert.Equal("cards", root.GetProperty("entryViewMode").GetString());
+        Assert.True(root.GetProperty("requireConfirmationForLaunches").GetBoolean());
+
+        var entryOrder = root.GetProperty("customEntryOrder").EnumerateArray().Select(item => item.GetString()).ToList();
+        Assert.Equal(knownEntryIds.Count, entryOrder.Count);
+        Assert.Equal(knownEntryIds.Count, entryOrder.Distinct(StringComparer.Ordinal).Count());
+        Assert.All(entryOrder, entryId =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(entryId));
+            Assert.Contains(entryId!, knownEntryIds);
+        });
+
+        var window = root.GetProperty("window");
+        Assert.Equal(1180d, window.GetProperty("width").GetDouble());
+        Assert.Equal(760d, window.GetProperty("height").GetDouble());
     }
 
     private static int CountNumberedListItems(string text, string sectionStart, string sectionEnd)

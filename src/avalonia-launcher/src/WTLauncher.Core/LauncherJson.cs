@@ -22,14 +22,26 @@ internal static class LauncherJson
 
     public static void Save<T>(T value, string path, bool backup = false)
     {
-        var directory = Path.GetDirectoryName(Path.GetFullPath(path));
+        var fullPath = Path.GetFullPath(path);
+        var directory = Path.GetDirectoryName(fullPath);
         if (!string.IsNullOrWhiteSpace(directory))
             Directory.CreateDirectory(directory);
 
-        if (backup && File.Exists(path))
-            File.Copy(path, path + ".bak", overwrite: true);
-
         var json = JsonSerializer.Serialize(value, Options);
-        File.WriteAllText(path, json + Environment.NewLine);
+        var tempPath = fullPath + $".tmp-{Guid.NewGuid():N}";
+        try
+        {
+            File.WriteAllText(tempPath, json + Environment.NewLine);
+
+            if (backup && File.Exists(fullPath))
+                File.Copy(fullPath, fullPath + ".bak", overwrite: true);
+
+            File.Move(tempPath, fullPath, overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(tempPath))
+                File.Delete(tempPath);
+        }
     }
 }

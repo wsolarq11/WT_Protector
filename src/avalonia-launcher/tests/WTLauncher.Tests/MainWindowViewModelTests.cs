@@ -30,6 +30,107 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void SelectionChangesRollBackWhenConfigSaveFails()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        File.Delete(config);
+        Directory.CreateDirectory(config);
+
+        viewModel.Entries.Single(entry => entry.Id == "one").IsSelected = true;
+
+        Assert.Equal(0, viewModel.SelectedCount);
+        Assert.All(viewModel.Entries, entry => Assert.False(entry.IsSelected));
+        Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(config)!, "config.json.tmp-*"));
+    }
+
+    [Fact]
+    public async Task AddEntryRollsBackInMemoryStateWhenConfigSaveFails()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        var launcherSettings = new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["one", "two"] };
+        var viewModel = new MainWindowViewModel(config, settings, launcherSettings, new LauncherProcess())
+        {
+            RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
+                new EntryDraft("three", "Three", "D:\\three", "pwsh", true)),
+        };
+
+        File.Delete(config);
+        Directory.CreateDirectory(config);
+
+        await viewModel.AddEntryCommand.ExecuteAsync(null);
+
+        Assert.Equal(["one", "two"], viewModel.Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one", "two"], launcherSettings.CustomEntryOrder);
+        Assert.Equal(2, viewModel.TotalCount);
+        Assert.Equal(0, viewModel.SelectedCount);
+        Assert.Contains("配置保存失败", viewModel.StatusText);
+        Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(config)!, "config.json.tmp-*"));
+    }
+
+    [Fact]
+    public async Task AddEntryRollsBackConfigFileWhenSettingsSaveFailsAfterConfigSave()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess())
+        {
+            RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
+                new EntryDraft("three", "Three", "D:\\three", "pwsh", true)),
+        };
+
+        File.Delete(settings);
+        Directory.CreateDirectory(settings);
+
+        await viewModel.AddEntryCommand.ExecuteAsync(null);
+
+        Assert.Equal(["one", "two"], viewModel.Entries.Select(entry => entry.Id).ToArray());
+        Assert.Contains("设置保存失败", viewModel.StatusText);
+        var savedEntries = LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
+        Assert.DoesNotContain(savedEntries, entry => entry.Id == "three");
+        Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(config)!, "config.json.tmp-*"));
+    }
+
+    [Fact]
+    public async Task EditEntryRollsBackConfigFileWhenPresetSaveFailsAfterConfigSave()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        File.WriteAllText(presets, """
+        {
+          "schemaVersion": 1,
+          "defaultPresetId": "daily",
+          "presets": [
+            {
+              "id": "daily",
+              "name": "Daily",
+              "entryIds": ["one"]
+            }
+          ]
+        }
+        """);
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess())
+        {
+            RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
+                new EntryDraft("one-renamed", "One Renamed", "D:\\renamed", "opencode", false)),
+        };
+        File.Delete(presets);
+        Directory.CreateDirectory(presets);
+
+        await viewModel.Entries.Single(entry => entry.Id == "one").EditCommand.ExecuteAsync(null);
+
+        Assert.Equal(["one", "two"], viewModel.Entries.Select(entry => entry.Id).ToArray());
+        Assert.Contains("启动组保存失败", viewModel.StatusText);
+        var savedEntries = LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
+        Assert.Contains(savedEntries, entry => entry.Id == "one");
+        Assert.DoesNotContain(savedEntries, entry => entry.Id == "one-renamed");
+        Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(config)!, "config.json.tmp-*"));
+    }
+
+    [Fact]
     public void FilterTextPersistsPortableSettingsAndNarrowsVisibleEntries()
     {
         using var temp = new TempDirectory();
@@ -133,6 +234,43 @@ public sealed class MainWindowViewModelTests
         var entries = LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
         Assert.True(entries.Single(entry => entry.Id == "one").Selected);
         Assert.False(entries.Single(entry => entry.Id == "two").Selected);
+    }
+
+    [Fact]
+    public async Task LaunchGroupSaveRollsBackInMemoryStateWhenPersistFails()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
+        File.WriteAllText(presets, """
+        {
+          "schemaVersion": 1,
+          "defaultPresetId": "daily",
+          "presets": [
+            {
+              "id": "daily",
+              "name": "Daily",
+              "description": "demo preset",
+              "entryIds": ["one"]
+            }
+          ]
+        }
+        """);
+
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess())
+        {
+            RequestNewPresetAsync = () => Task.FromResult<PresetDraft?>(new PresetDraft("Project Pair")),
+        };
+
+        File.Delete(presets);
+        Directory.CreateDirectory(presets);
+
+        await viewModel.SaveSelectionAsPresetCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, viewModel.PresetCount);
+        Assert.Equal("daily", viewModel.SelectedPreset?.Id);
+        Assert.Single(viewModel.Presets, preset => preset.Id == "daily");
+        Assert.DoesNotContain(viewModel.Presets, preset => preset.Id == "project-pair");
+        Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(presets)!, "presets.json.tmp-*"));
     }
 
     [Fact]
@@ -375,6 +513,53 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void MoveEntryBeforeRollsBackWhenSettingsSaveFails()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            new LaunchEntry
+            {
+                Id = "one",
+                Name = "One",
+                Directory = "D:\\one",
+                Command = "codex",
+                Confirm = false,
+            },
+            new LaunchEntry
+            {
+                Id = "two",
+                Name = "Two",
+                Directory = "D:\\two",
+                Command = "opencode",
+                Confirm = false,
+            },
+            new LaunchEntry
+            {
+                Id = "three",
+                Name = "Three",
+                Directory = "D:\\three",
+                Command = "pwsh",
+                Confirm = false,
+            });
+
+        var launcherSettings = new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["one", "two", "three"] };
+        var viewModel = new MainWindowViewModel(
+            config,
+            settings,
+            launcherSettings,
+            new LauncherProcess());
+        Directory.CreateDirectory(settings);
+
+        viewModel.MoveEntryBefore("three", "one");
+
+        Assert.Equal(["one", "two", "three"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one", "two", "three"], launcherSettings.CustomEntryOrder);
+        Assert.Contains("设置保存失败", viewModel.StatusText);
+        Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(settings)!, "settings.json.tmp-*"));
+    }
+
+    [Fact]
     public void SortModeUsesSelectedModeAsOnlyCustomSortState()
     {
         Assert.Null(typeof(MainWindowViewModel).GetProperty(nameof(MainWindowViewModel.IsCustomSortMode))?.SetMethod);
@@ -395,6 +580,62 @@ public sealed class MainWindowViewModelTests
         viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == "alphabetical");
 
         Assert.False(viewModel.IsCustomSortMode);
+    }
+
+    [Fact]
+    public void VisibleSettingsRollBackWhenSettingsSaveFails()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            new LaunchEntry
+            {
+                Id = "one",
+                Name = "One",
+                Directory = "D:\\one",
+                Command = "codex",
+                Confirm = false,
+            },
+            new LaunchEntry
+            {
+                Id = "two",
+                Name = "Two",
+                Directory = "D:\\two",
+                Command = "opencode",
+                Confirm = false,
+            });
+
+        var launcherSettings = new LauncherSettings
+        {
+            SortMode = "custom",
+            EntryViewMode = "cards",
+            RequireConfirmationForLaunches = true,
+            CustomEntryOrder = ["one", "two"],
+        };
+        var viewModel = new MainWindowViewModel(config, settings, launcherSettings, new LauncherProcess());
+        Directory.CreateDirectory(settings);
+
+        viewModel.FilterText = "two";
+        Assert.Equal("", viewModel.FilterText);
+        Assert.Equal("", launcherSettings.LastFilterText);
+        Assert.Equal(2, viewModel.VisibleCount);
+        Assert.Contains("设置保存失败", viewModel.StatusText);
+
+        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == "alphabetical");
+        Assert.Equal("custom", viewModel.SelectedSortMode?.Id);
+        Assert.Equal("custom", launcherSettings.SortMode);
+        Assert.Equal(["one", "two"], launcherSettings.CustomEntryOrder);
+        Assert.Contains("设置保存失败", viewModel.StatusText);
+
+        viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == "details");
+        Assert.Equal("cards", viewModel.SelectedDisplayMode?.Id);
+        Assert.Equal("cards", launcherSettings.EntryViewMode);
+        Assert.Contains("设置保存失败", viewModel.StatusText);
+
+        viewModel.RequireConfirmationForLaunches = false;
+        Assert.True(viewModel.RequireConfirmationForLaunches);
+        Assert.True(launcherSettings.RequireConfirmationForLaunches);
+        Assert.Contains("设置保存失败", viewModel.StatusText);
     }
 
     [Fact]
@@ -468,6 +709,56 @@ public sealed class MainWindowViewModelTests
 
         Assert.Equal(["three", "one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         Assert.Equal(["three", "one", "two"], LauncherSettingsStore.Load(settings).CustomEntryOrder);
+    }
+
+    [Fact]
+    public void CommitDragReorderRollsBackWhenSettingsSaveFails()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            new LaunchEntry
+            {
+                Id = "one",
+                Name = "One",
+                Directory = "D:\\one",
+                Command = "codex",
+                Confirm = false,
+            },
+            new LaunchEntry
+            {
+                Id = "two",
+                Name = "Two",
+                Directory = "D:\\two",
+                Command = "opencode",
+                Confirm = false,
+            },
+            new LaunchEntry
+            {
+                Id = "three",
+                Name = "Three",
+                Directory = "D:\\three",
+                Command = "pwsh",
+                Confirm = false,
+            });
+
+        var launcherSettings = new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["one", "two", "three"] };
+        var viewModel = new MainWindowViewModel(
+            config,
+            settings,
+            launcherSettings,
+            new LauncherProcess());
+
+        viewModel.BeginDragReorder("three");
+        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
+        Directory.CreateDirectory(settings);
+
+        viewModel.CommitDragReorder();
+
+        Assert.Equal(["one", "two", "three"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one", "two", "three"], launcherSettings.CustomEntryOrder);
+        Assert.Contains("设置保存失败", viewModel.StatusText);
+        Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(settings)!, "settings.json.tmp-*"));
     }
 
     [Fact]

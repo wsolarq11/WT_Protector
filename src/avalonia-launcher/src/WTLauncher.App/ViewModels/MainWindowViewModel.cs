@@ -1,6 +1,5 @@
 using Avalonia;
 using System.Collections.ObjectModel;
-using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WTLauncher.Core;
@@ -133,8 +132,17 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     partial void OnFilterTextChanged(string value)
     {
+        var previous = _settings.LastFilterText;
         _settings.LastFilterText = value ?? string.Empty;
-        SaveSettings();
+        if (!SaveSettings())
+        {
+            _settings.LastFilterText = previous;
+            _filterText = previous;
+            OnPropertyChanged(nameof(FilterText));
+            ApplyFilter();
+            return;
+        }
+
         ApplyFilter();
     }
 
@@ -144,9 +152,21 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (value is null)
             return;
 
+        var previousSortMode = _settings.SortMode;
+        var previousOrder = new List<string>(_settings.CustomEntryOrder);
         _settings.SortMode = value.Id;
         EnsureCustomOrderContainsEntries();
-        SaveSettings();
+        if (!SaveSettings())
+        {
+            _settings.SortMode = previousSortMode;
+            _settings.CustomEntryOrder = previousOrder;
+            _selectedSortMode = SortModes.FirstOrDefault(mode => mode.Id == previousSortMode) ?? SortModes[0];
+            OnPropertyChanged(nameof(SelectedSortMode));
+            OnPropertyChanged(nameof(IsCustomSortMode));
+            ApplyFilter();
+            return;
+        }
+
         ApplyFilter();
         StatusText = $"排序模式: {value.Label}（已保存）";
     }
@@ -159,20 +179,45 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (value is null)
             return;
 
+        var previousEntryViewMode = _settings.EntryViewMode;
+        var previousDisplayMode = DisplayModes.FirstOrDefault(mode => mode.Id == previousEntryViewMode) ?? DisplayModes[0];
         _settings.EntryViewMode = value.Id;
         RefreshEntryLayoutPresentation();
-        SaveSettings();
+        if (!SaveSettings())
+        {
+            _settings.EntryViewMode = previousEntryViewMode;
+            _selectedDisplayMode = previousDisplayMode;
+            OnPropertyChanged(nameof(SelectedDisplayMode));
+            OnPropertyChanged(nameof(IsCardsViewMode));
+            OnPropertyChanged(nameof(IsDetailedListMode));
+            OnPropertyChanged(nameof(IsNamesViewMode));
+            RefreshEntryLayoutPresentation();
+            return;
+        }
+
         StatusText = $"视图模式: {value.Label}（已保存）";
     }
 
     partial void OnRequireConfirmationForLaunchesChanged(bool value)
     {
+        var previousValue = _settings.RequireConfirmationForLaunches;
         _settings.RequireConfirmationForLaunches = value;
         OnPropertyChanged(nameof(LaunchConfirmationToggleText));
         OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
         RefreshEntryLayoutPresentation();
         ApplyFilter();
-        SaveSettings();
+        if (!SaveSettings())
+        {
+            _settings.RequireConfirmationForLaunches = previousValue;
+            _requireConfirmationForLaunches = previousValue;
+            OnPropertyChanged(nameof(RequireConfirmationForLaunches));
+            OnPropertyChanged(nameof(LaunchConfirmationToggleText));
+            OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
+            RefreshEntryLayoutPresentation();
+            ApplyFilter();
+            return;
+        }
+
         StatusText = value
             ? "启动确认: 所有启动项启动前统一确认"
             : "启动确认: 所有启动项直接启动";
@@ -239,7 +284,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var selection = GetPresetSelectionSnapshot(SelectedPreset);
+        var selection = GetPresetSelectionPreview(SelectedPreset);
         if (selection.MissingConfigIds.Count > 0)
         {
             StatusText = $"启动组引用了不存在的启动项: {string.Join(", ", selection.MissingConfigIds)}";
@@ -276,14 +321,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var entryIds = GetSelectedEntryIds();
         var preset = new LauncherPreset
         {
-            Id = GenerateUniquePresetId(name),
+            Id = LauncherPresetIds.GenerateUnique(name, _presetFile.Presets.Select(item => item.Id)),
             Name = name,
             EntryIds = entryIds,
         };
 
+        var presetSnapshot = LauncherPresetFiles.Clone(_presetFile);
+        var preferredPresetId = SelectedPreset?.Id;
         _presetFile.Presets.Add(preset);
         if (!SavePresets())
+        {
+            RestorePresetFile(presetSnapshot, preferredPresetId);
             return;
+        }
 
         LoadPresets(preset.Id);
         StatusText = $"已保存启动组: {preset.Name}（{preset.EntryIds.Count} 项）";
@@ -317,10 +367,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
+        var presetSnapshot = LauncherPresetFiles.Clone(_presetFile);
+        var preferredPresetId = SelectedPreset.Id;
         preset.Name = SelectedPreset.Name;
         preset.EntryIds = entryIds;
         if (!SavePresets())
+        {
+            RestorePresetFile(presetSnapshot, preferredPresetId);
             return;
+        }
 
         LoadPresets(preset.Id);
         StatusText = $"已更新启动组: {preset.Name}（{preset.EntryIds.Count} 项）";
@@ -354,12 +409,17 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
+        var presetSnapshot = LauncherPresetFiles.Clone(_presetFile);
+        var preferredPresetId = SelectedPreset.Id;
         _presetFile.Presets.Remove(preset);
         if (_presetFile.DefaultPresetId == preset.Id)
             _presetFile.DefaultPresetId = _presetFile.Presets.FirstOrDefault()?.Id ?? string.Empty;
 
         if (!SavePresets())
+        {
+            RestorePresetFile(presetSnapshot, preferredPresetId);
             return;
+        }
 
         var fallbackPresetId = _presetFile.DefaultPresetId;
         LoadPresets(fallbackPresetId);
@@ -369,6 +429,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private async Task AddEntryAsync()
     {
+        var snapshot = CaptureEntryMutationSnapshot();
         var draft = await RequestEntryDraftAsync(null).ConfigureAwait(true);
         if (draft is null)
         {
@@ -376,8 +437,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var entry = CreateEntryFromDraft(draft, previousEntry: null);
-        var validation = ValidateEntry(entry, originalId: null);
+        var entry = LauncherEntryDrafts.CreateEntry(draft, previousEntry: null);
+        var validation = LauncherEntryDrafts.ValidateEntry(entry, originalId: null, Entries.Select(existing => existing.Entry));
         if (validation is not null)
         {
             StatusText = validation;
@@ -387,14 +448,18 @@ public sealed partial class MainWindowViewModel : ObservableObject
         entry.UpdatedAtUtc = NowUtcText();
         Entries.Add(new LauncherEntryViewModel(entry, this));
         _settings.CustomEntryOrder.Add(entry.Id);
-        if (!SaveEntryCollectionChanges(savePresets: false))
+        if (!SaveEntryCollectionChanges(savePresets: false, rollbackSnapshot: snapshot))
+        {
+            RestoreEntryMutationSnapshot(snapshot);
             return;
+        }
 
         StatusText = $"已新增按钮: {entry.Name}（已保存）";
     }
 
     internal async Task EditEntryAsync(LauncherEntryViewModel item)
     {
+        var snapshot = CaptureEntryMutationSnapshot();
         var oldId = item.Entry.Id;
         var draft = await RequestEntryDraftAsync(item.Entry).ConfigureAwait(true);
         if (draft is null)
@@ -403,8 +468,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var updated = CreateEntryFromDraft(draft, item.Entry);
-        var validation = ValidateEntry(updated, oldId);
+        var updated = LauncherEntryDrafts.CreateEntry(draft, item.Entry);
+        var validation = LauncherEntryDrafts.ValidateEntry(updated, oldId, Entries.Select(existing => existing.Entry));
         if (validation is not null)
         {
             StatusText = validation;
@@ -420,16 +485,20 @@ public sealed partial class MainWindowViewModel : ObservableObject
         item.Entry.UpdatedAtUtc = NowUtcText();
         item.RefreshDisplay();
         if (!string.Equals(oldId, item.Entry.Id, StringComparison.Ordinal))
-            RenameEntryReferences(oldId, item.Entry.Id);
+            LauncherEntryReferences.Rename(oldId, item.Entry.Id, _presetFile.Presets, _settings.CustomEntryOrder);
 
-        if (!SaveEntryCollectionChanges(savePresets: true))
+        if (!SaveEntryCollectionChanges(savePresets: true, rollbackSnapshot: snapshot))
+        {
+            RestoreEntryMutationSnapshot(snapshot);
             return;
+        }
 
         StatusText = $"已更新按钮: {item.Name}（已保存）";
     }
 
     internal async Task DeleteEntryAsync(LauncherEntryViewModel item)
     {
+        var snapshot = CaptureEntryMutationSnapshot();
         var accepted = await ConfirmDeleteEntryAsync(item).ConfigureAwait(true);
         if (!accepted)
         {
@@ -438,28 +507,98 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         Entries.Remove(item);
-        RemoveEntryReferences(item.Entry.Id);
-        if (!SaveEntryCollectionChanges(savePresets: true))
+        LauncherEntryReferences.Remove(item.Entry.Id, _presetFile.Presets, _settings.CustomEntryOrder);
+        if (!SaveEntryCollectionChanges(savePresets: true, rollbackSnapshot: snapshot))
+        {
+            RestoreEntryMutationSnapshot(snapshot);
             return;
+        }
 
         StatusText = $"已删除按钮: {item.Name}（已保存）";
     }
 
-    private bool SaveEntryCollectionChanges(bool savePresets)
+    private bool SaveEntryCollectionChanges(bool savePresets, LauncherEntryMutationSnapshot? rollbackSnapshot = null)
     {
         SelectedCount = Entries.Count(entry => entry.IsSelected);
         TotalCount = Entries.Count;
         if (!SaveConfig())
             return false;
         if (savePresets && !SavePresets())
+        {
+            RestorePersistedEntrySnapshot(rollbackSnapshot, restorePresets: false);
             return false;
+        }
 
         EnsureCustomOrderContainsEntries();
-        SaveSettings();
+        if (!SaveSettings())
+        {
+            RestorePersistedEntrySnapshot(rollbackSnapshot, restorePresets: savePresets);
+            return false;
+        }
+
         NotifySelectionCommands();
         UpdatePresetSelectionStatus();
         ApplyFilter();
         return true;
+    }
+
+    private LauncherEntryMutationSnapshot CaptureEntryMutationSnapshot()
+    {
+        return LauncherEntryMutationSnapshot.Capture(
+            Entries.Select(entry => entry.Entry),
+            _presetFile,
+            _settings.CustomEntryOrder,
+            SelectedPreset?.Id);
+    }
+
+    private void RestoreEntryMutationSnapshot(LauncherEntryMutationSnapshot snapshot)
+    {
+        Entries.Clear();
+        foreach (var entry in snapshot.CloneEntries())
+        {
+            Entries.Add(new LauncherEntryViewModel(entry, this));
+        }
+
+        _settings.CustomEntryOrder = snapshot.CloneCustomEntryOrder();
+        ApplyPresetFile(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
+        TotalCount = Entries.Count;
+        RefreshSelectionState();
+        ApplyFilter();
+        RecalculateCardSize();
+        RefreshEntryLayoutPresentation();
+    }
+
+    private void RestorePersistedEntrySnapshot(LauncherEntryMutationSnapshot? snapshot, bool restorePresets)
+    {
+        if (snapshot is null)
+            return;
+
+        var originalStatus = StatusText;
+        var restoreErrors = new List<string>();
+        try
+        {
+            LauncherConfigStore.Save(snapshot.CloneEntries(), _configPath, backup: false);
+        }
+        catch (Exception ex)
+        {
+            restoreErrors.Add($"config: {ex.Message}");
+        }
+
+        if (restorePresets)
+        {
+            try
+            {
+                LauncherPresetStore.Save(snapshot.ClonePresetFile(), _presetPath, backup: false);
+            }
+            catch (Exception ex)
+            {
+                restoreErrors.Add($"presets: {ex.Message}");
+            }
+        }
+
+        StatusText = restoreErrors.Count == 0
+            ? originalStatus
+            : $"{originalStatus}；回滚磁盘状态失败: {string.Join("；", restoreErrors)}";
     }
 
     public void MoveEntryBefore(string draggedEntryId, string targetEntryId)
@@ -473,8 +612,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
 
         EnsureCustomOrderContainsEntries();
-        MoveEntryBeforeInternal(draggedEntryId, targetEntryId);
-        SaveSettings();
+        var snapshot = new List<string>(_settings.CustomEntryOrder);
+        LauncherEntryOrder.MoveBefore(_settings.CustomEntryOrder, draggedEntryId, targetEntryId);
+        if (!SaveSettings())
+        {
+            _settings.CustomEntryOrder = snapshot;
+            ApplyFilter();
+            return;
+        }
+
         ApplyFilter();
         StatusText = "已保存自定义拖拽排序";
     }
@@ -522,7 +668,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         session.LastPreview = nextPreview;
         EnsureCustomOrderContainsEntries();
-        MoveEntryRelativeInternal(draggedEntryId, targetEntryId, insertAfter);
+        LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, draggedEntryId, targetEntryId, insertAfter);
         ApplyFilter();
 
         var target = Entries.FirstOrDefault(entry => string.Equals(entry.Id, targetEntryId, StringComparison.Ordinal));
@@ -546,7 +692,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (_dragReorderSession is null)
             return;
 
-        SaveSettings();
+        var session = _dragReorderSession;
+        if (!SaveSettings())
+        {
+            _settings.CustomEntryOrder = new List<string>(session.Snapshot);
+            ApplyFilter();
+            ClearDragPreviewState();
+            return;
+        }
+
         ClearDragPreviewState();
         StatusText = "已保存自定义拖拽排序";
     }
@@ -561,29 +715,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ApplyFilter();
         ClearDragPreviewState();
         StatusText = "已取消: 拖拽排序";
-    }
-
-    private void MoveEntryBeforeInternal(string draggedEntryId, string targetEntryId)
-    {
-        var order = _settings.CustomEntryOrder;
-        order.RemoveAll(id => string.Equals(id, draggedEntryId, StringComparison.Ordinal));
-        var targetIndex = order.FindIndex(id => string.Equals(id, targetEntryId, StringComparison.Ordinal));
-        if (targetIndex < 0)
-            targetIndex = order.Count;
-        order.Insert(targetIndex, draggedEntryId);
-    }
-
-    private void MoveEntryRelativeInternal(string draggedEntryId, string targetEntryId, bool insertAfter)
-    {
-        var order = _settings.CustomEntryOrder;
-        order.RemoveAll(id => string.Equals(id, draggedEntryId, StringComparison.Ordinal));
-        var targetIndex = order.FindIndex(id => string.Equals(id, targetEntryId, StringComparison.Ordinal));
-        if (targetIndex < 0)
-            targetIndex = order.Count;
-        if (insertAfter)
-            targetIndex++;
-        targetIndex = Math.Min(targetIndex, order.Count);
-        order.Insert(targetIndex, draggedEntryId);
     }
 
     private void SetDragPreviewTarget(LauncherEntryViewModel? target, bool insertAfter)
@@ -667,6 +798,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
             var ok = 0;
             var fail = 0;
+            var failures = new List<string>();
             foreach (var item in selected)
             {
                 try
@@ -676,15 +808,16 @@ public sealed partial class MainWindowViewModel : ObservableObject
                     _launcherProcess.Start(plan);
                     ok++;
                 }
-                catch
+                catch (Exception ex)
                 {
                     fail++;
+                    failures.Add($"{item.Name}: {ex.Message}");
                 }
             }
 
             StatusText = fail == 0
                 ? $"已启动 {ok} 个勾选项"
-                : $"已启动 {ok} 个勾选项，{fail} 个失败";
+                : $"已启动 {ok} 个勾选项，{fail} 个失败：{FormatLaunchFailures(failures)}";
         }
         catch (Exception ex)
         {
@@ -716,11 +849,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     internal void UpdateSelection(LauncherEntryViewModel item, bool selected)
     {
+        var previousSelected = item.Entry.Selected;
         item.Entry.Selected = selected;
-        SelectedCount = Entries.Count(entry => entry.IsSelected);
-        NotifySelectionCommands();
-        UpdatePresetSelectionStatus();
-        SaveConfig();
+        RefreshSelectionState();
+        if (SaveConfig())
+            return;
+
+        item.SetSelectionFromOwner(previousSelected);
+        RefreshSelectionState();
     }
 
     partial void OnSelectedPresetChanged(LauncherPresetViewModel? value)
@@ -763,7 +899,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         return SelectedPreset is not null
             && Entries.Count > 0
-            && GetPresetSelectionSnapshot(SelectedPreset!).HasChanges;
+            && GetPresetSelectionPreview(SelectedPreset!).HasChanges;
     }
 
     private bool CanUpdateSelectedPreset()
@@ -771,7 +907,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return SelectedPreset is not null
             && !SelectedPreset.IsLocked
             && SelectedCount > 0
-            && GetPresetSelectionSnapshot(SelectedPreset!).HasChanges;
+            && GetPresetSelectionPreview(SelectedPreset!).HasChanges;
     }
 
     private bool CanDeleteSelectedPreset()
@@ -852,10 +988,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private IEnumerable<LauncherEntryViewModel> SortEntriesByCustomOrder(IEnumerable<LauncherEntryViewModel> entries)
     {
         EnsureCustomOrderContainsEntries();
-        var order = _settings.CustomEntryOrder
-            .Select((id, index) => new { id, index })
-            .GroupBy(item => item.id, StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => group.First().index, StringComparer.Ordinal);
+        var order = LauncherEntryOrder.BuildIndex(_settings.CustomEntryOrder);
         return entries
             .OrderBy(entry => order.TryGetValue(entry.Id, out var index) ? index : int.MaxValue)
             .ThenBy(entry => entry.Name, StringComparer.CurrentCultureIgnoreCase)
@@ -864,13 +997,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void EnsureCustomOrderContainsEntries()
     {
-        var knownIds = Entries.Select(entry => entry.Id).ToHashSet(StringComparer.Ordinal);
-        _settings.CustomEntryOrder.RemoveAll(id => !knownIds.Contains(id));
-        foreach (var id in Entries.Select(entry => entry.Id))
-        {
-            if (!_settings.CustomEntryOrder.Contains(id, StringComparer.Ordinal))
-                _settings.CustomEntryOrder.Add(id);
-        }
+        LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, Entries.Select(entry => entry.Id));
     }
 
     private static DateTimeOffset ParseUpdatedAt(string? value)
@@ -885,95 +1012,66 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return DateTimeOffset.UtcNow.ToString("O");
     }
 
-    private LaunchEntry CreateEntryFromDraft(EntryDraft draft, LaunchEntry? previousEntry)
-    {
-        return new LaunchEntry
-        {
-            Id = NormalizeEntryId(draft.Id),
-            Name = (draft.Name ?? string.Empty).Trim(),
-            Directory = (draft.Directory ?? string.Empty).Trim(),
-            Command = (draft.Command ?? string.Empty).Trim(),
-            Confirm = false,
-            Selected = draft.Selected,
-            UpdatedAtUtc = previousEntry?.UpdatedAtUtc ?? string.Empty,
-        };
-    }
-
-    private string? ValidateEntry(LaunchEntry entry, string? originalId)
-    {
-        if (string.IsNullOrWhiteSpace(entry.Id))
-            return "按钮 ID 不能为空";
-        if (string.IsNullOrWhiteSpace(entry.Name))
-            return "按钮名称不能为空";
-        if (string.IsNullOrWhiteSpace(entry.Directory))
-            return "按钮目录不能为空";
-        if (string.IsNullOrWhiteSpace(entry.Command))
-            return "按钮命令不能为空";
-        if (Entries.Any(existing =>
-                !string.Equals(existing.Id, originalId, StringComparison.Ordinal)
-                && string.Equals(existing.Id, entry.Id, StringComparison.Ordinal)))
-            return $"按钮 ID 已存在: {entry.Id}";
-
-        return null;
-    }
-
-    private static string NormalizeEntryId(string value)
-    {
-        return (value ?? string.Empty).Trim();
-    }
-
-    private void RenameEntryReferences(string oldId, string newId)
-    {
-        foreach (var preset in _presetFile.Presets)
-        {
-            for (var i = 0; i < preset.EntryIds.Count; i++)
-            {
-                if (string.Equals(preset.EntryIds[i], oldId, StringComparison.Ordinal))
-                    preset.EntryIds[i] = newId;
-            }
-        }
-
-        for (var i = 0; i < _settings.CustomEntryOrder.Count; i++)
-        {
-            if (string.Equals(_settings.CustomEntryOrder[i], oldId, StringComparison.Ordinal))
-                _settings.CustomEntryOrder[i] = newId;
-        }
-    }
-
-    private void RemoveEntryReferences(string entryId)
-    {
-        foreach (var preset in _presetFile.Presets)
-        {
-            preset.EntryIds.RemoveAll(id => string.Equals(id, entryId, StringComparison.Ordinal));
-        }
-
-        _settings.CustomEntryOrder.RemoveAll(id => string.Equals(id, entryId, StringComparison.Ordinal));
-    }
-
     private bool SetSelection(IReadOnlyList<LauncherEntryViewModel> entries, bool selected)
     {
+        var snapshot = entries
+            .Select(entry => (Entry: entry, Selected: entry.IsSelected))
+            .ToList();
         foreach (var entry in entries)
         {
             entry.SetSelectionFromOwner(selected);
         }
 
-        SelectedCount = Entries.Count(entry => entry.IsSelected);
-        NotifySelectionCommands();
-        UpdatePresetSelectionStatus();
-        return SaveConfig();
+        RefreshSelectionState();
+        if (SaveConfig())
+            return true;
+
+        RestoreSelection(snapshot);
+        RefreshSelectionState();
+        return false;
     }
 
     private bool ReplaceSelection(IReadOnlySet<string> selectedIds)
     {
+        var snapshot = Entries
+            .Select(entry => (Entry: entry, Selected: entry.IsSelected))
+            .ToList();
         foreach (var entry in Entries)
         {
             entry.SetSelectionFromOwner(selectedIds.Contains(entry.Entry.Id));
         }
 
+        RefreshSelectionState();
+        if (SaveConfig())
+            return true;
+
+        RestoreSelection(snapshot);
+        RefreshSelectionState();
+        return false;
+    }
+
+    private void RefreshSelectionState()
+    {
         SelectedCount = Entries.Count(entry => entry.IsSelected);
         NotifySelectionCommands();
         UpdatePresetSelectionStatus();
-        return SaveConfig();
+    }
+
+    private static void RestoreSelection(IEnumerable<(LauncherEntryViewModel Entry, bool Selected)> snapshot)
+    {
+        foreach (var (entry, selected) in snapshot)
+        {
+            entry.SetSelectionFromOwner(selected);
+        }
+    }
+
+    private static string FormatLaunchFailures(IReadOnlyList<string> failures)
+    {
+        var preview = string.Join("；", failures.Take(3));
+        if (failures.Count > 3)
+            preview += $"；…另有 {failures.Count - 3} 项";
+
+        return preview;
     }
 
     private void NotifySelectionCommands()
@@ -988,65 +1086,24 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         if (SelectedPreset is null)
         {
-            ApplyPresetButtonText = "应用启动组";
-            PresetSelectionStatusText = PresetCount == 0
-                ? "暂无启动组；可以继续手动勾选。"
-                : "请选择一个启动组查看差异。";
+            var noPresetPreview = LauncherPresetSelectionPreview.NoPreset(PresetCount);
+            ApplyPresetButtonText = noPresetPreview.ApplyButtonText;
+            PresetSelectionStatusText = noPresetPreview.StatusText;
             return;
         }
 
-        var selection = GetPresetSelectionSnapshot(SelectedPreset);
-        var presetIds = selection.PresetIds;
-        var missingConfigIds = selection.MissingConfigIds;
-        if (missingConfigIds.Count > 0)
-        {
-            ApplyPresetButtonText = "检查启动组";
-            PresetSelectionStatusText = $"启动组“{SelectedPreset.Name}”引用了 {missingConfigIds.Count} 个不存在的启动项；请先修 config\\presets.json。";
-            return;
-        }
-
-        var matched = selection.MatchedCount;
-        var missing = selection.PresetIds.Count - matched;
-        var extra = selection.SelectedIds.Count - matched;
-
-        if (presetIds.Count == 0)
-        {
-            ApplyPresetButtonText = extra == 0 ? "手动模式" : "清空勾选";
-            PresetSelectionStatusText = extra == 0
-                ? $"已是“{SelectedPreset.Name}”：当前没有勾选项。"
-                : $"“{SelectedPreset.Name}”会清空当前 {extra} 个勾选项。";
-            return;
-        }
-
-        ApplyPresetButtonText = missing == 0 && extra == 0 ? "已匹配" : "应用启动组";
-        PresetSelectionStatusText = missing == 0 && extra == 0
-            ? $"已匹配启动组“{SelectedPreset.Name}”：{matched}/{presetIds.Count} 项。"
-            : $"启动组“{SelectedPreset.Name}”：已匹配 {matched}/{presetIds.Count}，缺 {missing}，额外 {extra}；应用会替换当前勾选。";
+        var selection = GetPresetSelectionPreview(SelectedPreset);
+        ApplyPresetButtonText = selection.ApplyButtonText;
+        PresetSelectionStatusText = selection.StatusText;
     }
 
-    private PresetSelectionSnapshot GetPresetSelectionSnapshot(LauncherPresetViewModel selectedPreset)
+    private LauncherPresetSelectionPreview GetPresetSelectionPreview(LauncherPresetViewModel selectedPreset)
     {
-        var selectedIds = Entries
-            .Where(entry => entry.IsSelected)
-            .Select(entry => entry.Entry.Id)
-            .ToHashSet(StringComparer.Ordinal);
-        var knownIds = Entries.Select(entry => entry.Entry.Id).ToHashSet(StringComparer.Ordinal);
-        var presetIds = selectedPreset.EntryIds
-            .Where(id => !string.IsNullOrWhiteSpace(id))
-            .ToHashSet(StringComparer.Ordinal);
-        var missingConfigIds = presetIds.Where(id => !knownIds.Contains(id)).ToList();
-
-        return new PresetSelectionSnapshot(selectedIds, presetIds, missingConfigIds);
-    }
-
-    private sealed record PresetSelectionSnapshot(
-        HashSet<string> SelectedIds,
-        HashSet<string> PresetIds,
-        List<string> MissingConfigIds)
-    {
-        public bool HasChanges => !SelectedIds.SetEquals(PresetIds);
-
-        public int MatchedCount => SelectedIds.Count(PresetIds.Contains);
+        return LauncherPresetSelectionPreview.ForPreset(
+            selectedPreset.Name,
+            Entries.Where(entry => entry.IsSelected).Select(entry => entry.Entry.Id),
+            Entries.Select(entry => entry.Entry.Id),
+            selectedPreset.EntryIds);
     }
 
     private bool CanDeletePreset(string presetId)
@@ -1071,50 +1128,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
             .ToList();
     }
 
-    private string GenerateUniquePresetId(string name)
-    {
-        var baseId = NormalizePresetId(name);
-        var candidate = baseId;
-        var index = 2;
-        var existing = _presetFile.Presets.Select(preset => preset.Id).ToHashSet(StringComparer.Ordinal);
-        while (existing.Contains(candidate))
-        {
-            candidate = $"{baseId}-{index++}";
-        }
-
-        return candidate;
-    }
-
-    private static string NormalizePresetId(string value)
-    {
-        var builder = new StringBuilder(value.Length);
-        var separatorPending = false;
-        foreach (var ch in value.Normalize(NormalizationForm.FormKC))
-        {
-            if (char.IsLetterOrDigit(ch))
-            {
-                builder.Append(char.ToLowerInvariant(ch));
-                separatorPending = false;
-            }
-            else if (ch is '-' or '_')
-            {
-                builder.Append(ch);
-                separatorPending = false;
-            }
-            else if (char.IsWhiteSpace(ch) || ch is '/' or '\\' or '.' or ':')
-            {
-                if (!separatorPending && builder.Length > 0)
-                {
-                    builder.Append('-');
-                    separatorPending = true;
-                }
-            }
-        }
-
-        var normalized = builder.ToString().Trim('-');
-        return string.IsNullOrWhiteSpace(normalized) ? "preset" : normalized;
-    }
-
     private void NotifyPresetManagementCommands()
     {
         SaveSelectionAsPresetCommand.NotifyCanExecuteChanged();
@@ -1122,22 +1135,32 @@ public sealed partial class MainWindowViewModel : ObservableObject
         DeleteSelectedPresetCommand.NotifyCanExecuteChanged();
     }
 
+    private void RestorePresetFile(LauncherPresetFile snapshot, string? preferredPresetId)
+    {
+        ApplyPresetFile(snapshot, preferredPresetId);
+    }
+
     private string? LoadPresets(string? preferredPresetId = null)
     {
-        Presets.Clear();
         LauncherPresetFile presetFile;
         try
         {
             presetFile = LauncherPresetStore.Load(_presetPath);
-            _presetFile = presetFile;
         }
         catch (Exception ex)
         {
-            PresetCount = 0;
-            SelectedPreset = null;
+            ApplyPresetFile(new LauncherPresetFile(), null);
             return $"启动组加载失败: {ex.Message}";
         }
 
+        ApplyPresetFile(presetFile, preferredPresetId);
+        return null;
+    }
+
+    private void ApplyPresetFile(LauncherPresetFile presetFile, string? preferredPresetId)
+    {
+        _presetFile = presetFile;
+        Presets.Clear();
         foreach (var preset in presetFile.Presets)
         {
             Presets.Add(new LauncherPresetViewModel(preset));
@@ -1148,7 +1171,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         SelectedPreset = Presets.FirstOrDefault(preset => preset.Id == targetPresetId)
             ?? Presets.FirstOrDefault();
         NotifyPresetManagementCommands();
-        return null;
     }
 
     private bool SavePresets()
@@ -1179,15 +1201,17 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    private void SaveSettings()
+    private bool SaveSettings()
     {
         try
         {
             LauncherSettingsStore.Save(_settings, _settingsPath);
+            return true;
         }
         catch (Exception ex)
         {
             StatusText = $"设置保存失败: {ex.Message}";
+            return false;
         }
     }
 }

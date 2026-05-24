@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using WTLauncher.Core;
 
 namespace WTLauncher.Tests;
@@ -10,12 +11,19 @@ public sealed class LauncherProcessTests
         using var temp = new TempDirectory("wt-launcher-process-test");
         const string sentinelFile = "started.txt";
         const string tempSentinelFile = "started.tmp";
-        var plan = new LaunchPlan(
-            "cmd.exe",
-            $"/c echo started > {tempSentinelFile} && move /y {tempSentinelFile} {sentinelFile} > nul",
-            temp.Path,
-            "echo started",
-            false);
+        var plan = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? new LaunchPlan(
+                "cmd.exe",
+                $"/c echo started > {tempSentinelFile} && move /y {tempSentinelFile} {sentinelFile} > nul",
+                temp.Path,
+                "echo started",
+                false)
+            : new LaunchPlan(
+                "/bin/sh",
+                $"-c \"printf started > {tempSentinelFile} && mv {tempSentinelFile} {sentinelFile}\"",
+                temp.Path,
+                "printf started",
+                false);
 
         using var process = new LauncherProcess().Start(plan);
 

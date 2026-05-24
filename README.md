@@ -8,7 +8,7 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `src/avalonia-launcher/` — active mainline Avalonia/.NET launcher source, tests, run script, and publish gate.
 - `config/config.json` — canonical human-readable launcher configuration with launch entries and persistent checkbox state.
 - `config/presets.json` — canonical human-readable named launch groups built from `config/config.json` entry ids.
-- `config/settings.json` — portable UI preferences such as theme, last search text, and window size.
+- `config/settings.json` — portable UI preferences such as theme, filter text, sort/view/confirmation state, custom order, and window size.
 - `retired/WT Launcher.hta` — retired legacy HTA snapshot kept only for archive/reference.
 - `retired/config/config.json` — retired HTA-local config used only when manually opening the archived HTA.
 - `retired/design/winforms-launcher.md` — retired WinForms executable/source design lessons and receipts.
@@ -80,6 +80,8 @@ Portable UI settings live beside the launch config:
   "theme": "light",
   "lastFilterText": "",
   "sortMode": "custom",
+  "entryViewMode": "cards",
+  "requireConfirmationForLaunches": true,
   "customEntryOrder": ["启动脚本", "WT_Protector"],
   "window": {
     "width": 1180,
@@ -91,6 +93,8 @@ Portable UI settings live beside the launch config:
 Additional settings fields:
 
 - `sortMode` — `custom`, `updated`, or `alphabetical`.
+- `entryViewMode` — `cards`, `details`, or `names`.
+- `requireConfirmationForLaunches` — global launch-confirmation toggle persisted with the other portable UI settings.
 - `customEntryOrder` — stable entry-id order used by the “自定义拖拽” mode and persisted after drag-drop reorder.
 
 ## Run the mainline app
@@ -116,10 +120,10 @@ The verifier currently checks:
 - old `WT Launcher.exe`, `src/winforms-launcher/`, and `spikes/` do not return;
 - `src/avalonia-launcher/` has the solution, app project, tests project, and mainline verify script;
 - root `config/` parses, item `id` values are unique, persistent `selected` state remains part of the contract, and `presets.json` references only known entry ids;
-- `settings.json` remains the portable source for the global launch-confirmation setting;
+- `settings.json` remains the portable source for sort mode, view mode, launch-confirmation state, and complete custom entry order;
 - `retired/design/winforms-launcher.md` exists with the absorbed WinForms design lessons;
 - retired HTA and shortcut-backup reference material remain readable;
-- Avalonia mainline restore/test/isolated verification publish passes, including launch-argument tests and a hidden temp-config startup smoke of the published exe.
+- Avalonia mainline restore/test/isolated verification publish passes, including launch-argument tests; on Windows the gate also performs a hidden temp-config startup smoke of the published exe, while non-Windows hosts record that GUI smoke as skipped after the win-x64 publish is verified.
 
 The final verifier line is a JSON receipt with `schemaVersion`, `kind`, `status`, `repoHead`, `worktreeDirty`, and `worktreeStatus` fields before tool-specific evidence. The Avalonia mainline receipt uses the same schema and is checked by the root gate.
 
@@ -166,6 +170,7 @@ Important risks:
 - Command text is quoted before being passed to `wt.exe`, but it is still a shell command; review entries before launching.
 - Applying a preset only rewrites checkbox state; launching remains a separate explicit action.
 - The root `config/` directory is the canonical source.
+- JSON saves are written through temporary files, normal config/preset writes keep `.bak` backups, and failed multi-file entry edits attempt to roll back both memory and already-written portable files.
 - Using the app can legitimately dirty tracked `config/config.json`, `config/presets.json`, and `config/settings.json`; review that user/app working set before committing or reverting it.
 - `retired/config/config.json` belongs only to `retired/WT Launcher.hta` and is not read by the Avalonia mainline.
 
@@ -186,7 +191,7 @@ The Avalonia mainline supports:
 - live preset-vs-selection difference feedback before applying a launch group, with no-op apply disabled when already matched;
 - three persisted sort modes: `自定义拖拽`, `更新时间`, and `首字母顺序`;
 - global launch confirmation;
-- JSON persistence with `.bak` backup;
+- JSON persistence with temporary-file writes, `.bak` backup for normal config/preset saves, and rollback compensation for failed multi-file entry edits;
 - persistent selected checkbox state for one-click/batch launch;
 - portable `config/settings.json` UI preferences without AppData or registry writes;
 - Core/App/Tests separation around launch argument rules and config behavior;

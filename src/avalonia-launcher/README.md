@@ -32,7 +32,7 @@ The local mainline gate runs:
 1. `dotnet restore -r win-x64`
 2. `dotnet test -c Release`
 3. `dotnet publish -c Release -r win-x64 --self-contained true` into isolated verification output
-4. a hidden temp-config startup smoke of the published exe
+4. a hidden temp-config startup smoke of the published exe on Windows; non-Windows hosts skip that GUI-only step after tests and win-x64 publish verification
 
 Verification publish output is ignored under `artifacts/verify-publish/win-x64/`. Stable release output from `tools/build-release.ps1` is ignored under `artifacts/publish/win-x64/`.
 

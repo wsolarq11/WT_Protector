@@ -15,12 +15,12 @@ public static class LauncherPresetStore
             ?? throw new InvalidDataException("Launcher presets parsed to null.");
     }
 
-    public static void Save(LauncherPresetFile presets, string presetPath)
+    public static void Save(LauncherPresetFile presets, string presetPath, bool backup = true)
     {
         if (string.IsNullOrWhiteSpace(presetPath))
             throw new ArgumentException("Preset path is required.", nameof(presetPath));
 
-        LauncherJson.Save(presets, presetPath, backup: true);
+        LauncherJson.Save(presets, presetPath, backup);
     }
 
     public static string ResolvePresetPath(string configPath)

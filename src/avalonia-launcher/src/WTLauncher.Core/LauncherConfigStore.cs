@@ -19,12 +19,12 @@ public static class LauncherConfigStore
         return entries;
     }
 
-    public static void Save(IEnumerable<LaunchEntry> entries, string configPath)
+    public static void Save(IEnumerable<LaunchEntry> entries, string configPath, bool backup = true)
     {
         if (string.IsNullOrWhiteSpace(configPath))
             throw new ArgumentException("Config path is required.", nameof(configPath));
 
-        LauncherJson.Save(entries.ToList(), configPath, backup: true);
+        LauncherJson.Save(entries.ToList(), configPath, backup);
     }
 
     public static string ResolveConfigPath(string? explicitPath, string? currentDirectory = null, string? appBaseDirectory = null)

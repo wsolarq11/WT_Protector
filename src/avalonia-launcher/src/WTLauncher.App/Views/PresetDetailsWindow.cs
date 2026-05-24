@@ -85,7 +85,7 @@ public sealed class PresetDetailsWindow : Window
             Padding = new Thickness(24),
             Child = new Grid
             {
-                RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto,Auto"),
+                RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto,Auto,Auto"),
                 RowSpacing = 12,
                 Children =
                 {

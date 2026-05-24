@@ -122,6 +122,36 @@ public sealed class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void PresetStore_CanSkipBackupForRollbackWrites()
+    {
+        using var temp = new TempDirectory();
+        var configDir = System.IO.Path.Combine(temp.Path, "config");
+        Directory.CreateDirectory(configDir);
+        var presetPath = System.IO.Path.Combine(configDir, "presets.json");
+        File.WriteAllText(presetPath, """{"schemaVersion":1,"defaultPresetId":"","presets":[]}""");
+
+        LauncherPresetStore.Save(
+            new LauncherPresetFile
+            {
+                DefaultPresetId = "daily",
+                Presets =
+                [
+                    new LauncherPreset
+                    {
+                        Id = "daily",
+                        Name = "Daily",
+                        EntryIds = ["one"],
+                    },
+                ],
+            },
+            presetPath,
+            backup: false);
+
+        Assert.False(File.Exists(presetPath + ".bak"));
+        Assert.Empty(Directory.EnumerateFiles(configDir, "presets.json.tmp-*"));
+    }
+
+    [Fact]
     public void ResolvePresetPath_StaysBesideResolvedConfig()
     {
         var config = System.IO.Path.Combine("portable-root", "config", "config.json");
@@ -160,6 +190,33 @@ public sealed class LauncherConfigStoreTests
         Assert.Contains("演示", savedJson);
         Assert.EndsWith(Environment.NewLine, savedJson);
         Assert.True(File.Exists(config + ".bak"));
+        Assert.Empty(Directory.EnumerateFiles(configDir, "config.json.tmp-*"));
+    }
+
+    [Fact]
+    public void Save_CanSkipBackupForRollbackWrites()
+    {
+        using var temp = new TempDirectory();
+        var configDir = System.IO.Path.Combine(temp.Path, "config");
+        Directory.CreateDirectory(configDir);
+        var config = System.IO.Path.Combine(configDir, "config.json");
+        File.WriteAllText(config, "[]");
+
+        LauncherConfigStore.Save(
+            [
+                new LaunchEntry
+                {
+                    Id = "demo",
+                    Name = "演示",
+                    Directory = "D:\\demo",
+                    Command = "codex",
+                },
+            ],
+            config,
+            backup: false);
+
+        Assert.False(File.Exists(config + ".bak"));
+        Assert.Empty(Directory.EnumerateFiles(configDir, "config.json.tmp-*"));
     }
 
     [Fact]
@@ -175,6 +232,7 @@ public sealed class LauncherConfigStoreTests
                 LastFilterText = "爬虫",
                 SortMode = "alphabetical",
                 EntryViewMode = "details",
+                RequireConfirmationForLaunches = false,
                 CustomEntryOrder = ["two", "one"],
                 Window = new LauncherWindowSettings { Width = 1200, Height = 800 },
             },
@@ -186,13 +244,15 @@ public sealed class LauncherConfigStoreTests
         Assert.Equal("爬虫", loaded.LastFilterText);
         Assert.Equal("alphabetical", loaded.SortMode);
         Assert.Equal("details", loaded.EntryViewMode);
+        Assert.False(loaded.RequireConfirmationForLaunches);
         Assert.Equal(["two", "one"], loaded.CustomEntryOrder);
-        Assert.Equal(1200, loaded.Window.Width);
-        Assert.Equal(800, loaded.Window.Height);
+        Assert.Equal(1200d, loaded.Window.Width);
+        Assert.Equal(800d, loaded.Window.Height);
         var savedJson = File.ReadAllText(settings);
         Assert.Contains("爬虫", savedJson);
         Assert.Contains("alphabetical", savedJson);
         Assert.Contains("details", savedJson);
+        Assert.Contains("requireConfirmationForLaunches", savedJson);
         Assert.EndsWith(Environment.NewLine, savedJson);
     }
 
