@@ -957,19 +957,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private string? LoadPresets(string? preferredPresetId = null)
     {
-        LauncherPresetFile presetFile;
-        try
-        {
-            presetFile = LauncherPresetStore.Load(_presetPath);
-        }
-        catch (Exception ex)
-        {
-            ApplyPresetFile(new LauncherPresetFile(), null);
-            return $"启动组加载失败: {ex.Message}";
-        }
-
+        var error = LauncherPresetPersistence.Load(_presetPath, out var presetFile);
         ApplyPresetFile(presetFile, preferredPresetId);
-        return null;
+        return error;
     }
 
     private void ApplyPresetFile(LauncherPresetFile presetFile, string? preferredPresetId)
@@ -982,16 +972,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool SavePresets()
     {
-        try
-        {
-            LauncherPresetStore.Save(_presetFile, _presetPath);
+        if (LauncherPresetPersistence.Save(_presetFile, _presetPath, out var errorMessage))
             return true;
-        }
-        catch (Exception ex)
-        {
-            StatusText = $"启动组保存失败: {ex.Message}";
-            return false;
-        }
+
+        StatusText = errorMessage ?? "启动组保存失败";
+        return false;
     }
 
     private bool SaveConfig()
