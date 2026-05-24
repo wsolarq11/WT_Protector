@@ -733,20 +733,18 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool SavePresets()
     {
-        if (LauncherPresetPersistence.Save(_presetFile, _presetPath, out var errorMessage))
-            return true;
-
-        StatusText = errorMessage ?? "启动组保存失败";
-        return false;
+        var result = LauncherPersistenceStatus.SavePresets(_presetFile, _presetPath);
+        if (!result.Succeeded && result.StatusText is not null)
+            StatusText = result.StatusText;
+        return result.Succeeded;
     }
 
     private bool SaveConfig()
     {
-        if (LauncherConfigPersistence.Save(Entries.Select(entry => entry.Entry), _configPath, out var errorMessage))
-            return true;
-
-        StatusText = errorMessage ?? "配置保存失败";
-        return false;
+        var result = LauncherPersistenceStatus.SaveConfig(Entries.Select(entry => entry.Entry), _configPath);
+        if (!result.Succeeded && result.StatusText is not null)
+            StatusText = result.StatusText;
+        return result.Succeeded;
     }
 
 }
