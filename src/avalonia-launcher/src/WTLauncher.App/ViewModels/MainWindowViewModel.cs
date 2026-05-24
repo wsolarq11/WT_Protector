@@ -929,34 +929,23 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void UpdatePresetSelectionStatus()
     {
-        if (SelectedPreset is null)
-        {
-            var noPresetPreview = LauncherPresetSelectionPreview.NoPreset(PresetCount);
-            ApplyPresetButtonText = noPresetPreview.ApplyButtonText;
-            PresetSelectionStatusText = noPresetPreview.StatusText;
-            return;
-        }
-
         var selection = GetPresetSelectionPreview(SelectedPreset);
         ApplyPresetButtonText = selection.ApplyButtonText;
         PresetSelectionStatusText = selection.StatusText;
     }
 
-    private LauncherPresetSelectionPreview GetPresetSelectionPreview(LauncherPresetViewModel selectedPreset)
+    private LauncherPresetSelectionPreview GetPresetSelectionPreview(LauncherPresetViewModel? selectedPreset)
     {
-        return LauncherPresetSelectionPreview.ForPreset(
-            selectedPreset.Name,
+        return LauncherPresetCatalog.BuildSelectionPreview(
+            selectedPreset,
+            PresetCount,
             Entries.Where(entry => entry.IsSelected).Select(entry => entry.Entry.Id),
-            Entries.Select(entry => entry.Entry.Id),
-            selectedPreset.EntryIds);
+            Entries.Select(entry => entry.Entry.Id));
     }
 
     private List<string> GetSelectedEntryIds()
     {
-        return Entries
-            .Where(entry => entry.IsSelected)
-            .Select(entry => entry.Entry.Id)
-            .ToList();
+        return LauncherPresetCatalog.GetSelectedEntryIds(Entries);
     }
 
     private void NotifyPresetManagementCommands()
@@ -991,16 +980,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private void ApplyPresetFile(LauncherPresetFile presetFile, string? preferredPresetId)
     {
         _presetFile = presetFile;
-        Presets.Clear();
-        foreach (var preset in presetFile.Presets)
-        {
-            Presets.Add(new LauncherPresetViewModel(preset));
-        }
-
+        SelectedPreset = LauncherPresetCatalog.Apply(presetFile, Presets, preferredPresetId);
         PresetCount = Presets.Count;
-        var targetPresetId = preferredPresetId ?? presetFile.DefaultPresetId;
-        SelectedPreset = Presets.FirstOrDefault(preset => preset.Id == targetPresetId)
-            ?? Presets.FirstOrDefault();
         NotifyPresetManagementCommands();
     }
 
