@@ -929,16 +929,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool SaveConfig()
     {
-        try
-        {
-            LauncherConfigStore.Save(Entries.Select(entry => entry.Entry), _configPath);
+        if (LauncherConfigPersistence.Save(Entries.Select(entry => entry.Entry), _configPath, out var errorMessage))
             return true;
-        }
-        catch (Exception ex)
-        {
-            StatusText = $"配置保存失败: {ex.Message}";
-            return false;
-        }
+
+        StatusText = errorMessage ?? "配置保存失败";
+        return false;
     }
 
     private bool SaveSettings()
