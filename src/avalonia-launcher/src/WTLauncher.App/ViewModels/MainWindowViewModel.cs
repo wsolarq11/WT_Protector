@@ -123,12 +123,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         var snapshot = LauncherSettingsSnapshot.Capture(_settings);
         _settings.LastFilterText = value ?? string.Empty;
-        if (!SaveSettings())
+        var result = LauncherSettingsMutationPersistence.Save(
+            _settings,
+            _settingsPath,
+            snapshot,
+            () =>
+            {
+                _filterText = snapshot.LastFilterText;
+                OnPropertyChanged(nameof(FilterText));
+                ApplyFilter();
+            });
+        if (!result.Succeeded)
         {
-            snapshot.Restore(_settings);
-            _filterText = snapshot.LastFilterText;
-            OnPropertyChanged(nameof(FilterText));
-            ApplyFilter();
+            StatusText = result.StatusText ?? StatusText;
             return;
         }
 
@@ -144,13 +151,20 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var snapshot = LauncherSettingsSnapshot.Capture(_settings);
         _settings.SortMode = value.Id;
         EnsureCustomOrderContainsEntries();
-        if (!SaveSettings())
+        var result = LauncherSettingsMutationPersistence.Save(
+            _settings,
+            _settingsPath,
+            snapshot,
+            () =>
+            {
+                _selectedSortMode = LauncherModeCatalog.ResolveSortMode(SortModes, snapshot.SortMode);
+                OnPropertyChanged(nameof(SelectedSortMode));
+                OnPropertyChanged(nameof(IsCustomSortMode));
+                ApplyFilter();
+            });
+        if (!result.Succeeded)
         {
-            snapshot.Restore(_settings);
-            _selectedSortMode = LauncherModeCatalog.ResolveSortMode(SortModes, snapshot.SortMode);
-            OnPropertyChanged(nameof(SelectedSortMode));
-            OnPropertyChanged(nameof(IsCustomSortMode));
-            ApplyFilter();
+            StatusText = result.StatusText ?? StatusText;
             return;
         }
 
@@ -169,15 +183,22 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var snapshot = LauncherSettingsSnapshot.Capture(_settings);
         _settings.EntryViewMode = value.Id;
         RefreshEntryLayoutPresentation();
-        if (!SaveSettings())
+        var result = LauncherSettingsMutationPersistence.Save(
+            _settings,
+            _settingsPath,
+            snapshot,
+            () =>
+            {
+                _selectedDisplayMode = LauncherModeCatalog.ResolveDisplayMode(DisplayModes, snapshot.EntryViewMode);
+                OnPropertyChanged(nameof(SelectedDisplayMode));
+                OnPropertyChanged(nameof(IsCardsViewMode));
+                OnPropertyChanged(nameof(IsDetailedListMode));
+                OnPropertyChanged(nameof(IsNamesViewMode));
+                RefreshEntryLayoutPresentation();
+            });
+        if (!result.Succeeded)
         {
-            snapshot.Restore(_settings);
-            _selectedDisplayMode = LauncherModeCatalog.ResolveDisplayMode(DisplayModes, snapshot.EntryViewMode);
-            OnPropertyChanged(nameof(SelectedDisplayMode));
-            OnPropertyChanged(nameof(IsCardsViewMode));
-            OnPropertyChanged(nameof(IsDetailedListMode));
-            OnPropertyChanged(nameof(IsNamesViewMode));
-            RefreshEntryLayoutPresentation();
+            StatusText = result.StatusText ?? StatusText;
             return;
         }
 
@@ -192,15 +213,22 @@ public sealed partial class MainWindowViewModel : ObservableObject
         OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
         RefreshEntryLayoutPresentation();
         ApplyFilter();
-        if (!SaveSettings())
+        var result = LauncherSettingsMutationPersistence.Save(
+            _settings,
+            _settingsPath,
+            snapshot,
+            () =>
+            {
+                _requireConfirmationForLaunches = snapshot.RequireConfirmationForLaunches;
+                OnPropertyChanged(nameof(RequireConfirmationForLaunches));
+                OnPropertyChanged(nameof(LaunchConfirmationToggleText));
+                OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
+                RefreshEntryLayoutPresentation();
+                ApplyFilter();
+            });
+        if (!result.Succeeded)
         {
-            snapshot.Restore(_settings);
-            _requireConfirmationForLaunches = snapshot.RequireConfirmationForLaunches;
-            OnPropertyChanged(nameof(RequireConfirmationForLaunches));
-            OnPropertyChanged(nameof(LaunchConfirmationToggleText));
-            OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
-            RefreshEntryLayoutPresentation();
-            ApplyFilter();
+            StatusText = result.StatusText ?? StatusText;
             return;
         }
 
@@ -556,10 +584,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         EnsureCustomOrderContainsEntries();
         var snapshot = LauncherSettingsSnapshot.Capture(_settings);
         LauncherEntryOrder.MoveBefore(_settings.CustomEntryOrder, draggedEntryId, targetEntryId);
-        if (!SaveSettings())
+        var result = LauncherSettingsMutationPersistence.Save(
+            _settings,
+            _settingsPath,
+            snapshot,
+            ApplyFilter);
+        if (!result.Succeeded)
         {
-            snapshot.RestoreCustomEntryOrder(_settings);
-            ApplyFilter();
+            StatusText = result.StatusText ?? StatusText;
             return;
         }
 
@@ -630,11 +662,18 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
 
         var session = _dragReorderSession;
-        if (!SaveSettings())
+        var result = LauncherSettingsMutationPersistence.Save(
+            _settings,
+            _settingsPath,
+            session.Snapshot,
+            () =>
+            {
+                ApplyFilter();
+                ClearDragPreviewState();
+            });
+        if (!result.Succeeded)
         {
-            session.Snapshot.RestoreCustomEntryOrder(_settings);
-            ApplyFilter();
-            ClearDragPreviewState();
+            StatusText = result.StatusText ?? StatusText;
             return;
         }
 
@@ -887,12 +926,4 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return false;
     }
 
-    private bool SaveSettings()
-    {
-        if (LauncherSettingsPersistence.Save(_settings, _settingsPath, out var errorMessage))
-            return true;
-
-        StatusText = errorMessage ?? "设置保存失败";
-        return false;
-    }
 }
