@@ -66,10 +66,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ConfigPathDisplay = $"配置: {configPath} · 启动组: {_presetPath}";
         FilterText = settings.LastFilterText;
         _requireConfirmationForLaunches = settings.RequireConfirmationForLaunches;
-        _selectedSortMode = SortModes.FirstOrDefault(mode => mode.Id == settings.SortMode) ?? SortModes[0];
+        _selectedSortMode = LauncherModeCatalog.ResolveSortMode(SortModes, settings.SortMode);
         _settings.SortMode = _selectedSortMode.Id;
-        var savedViewMode = LauncherEntryViewModes.Parse(settings.EntryViewMode);
-        _selectedDisplayMode = DisplayModes.FirstOrDefault(mode => mode.Mode == savedViewMode) ?? DisplayModes[0];
+        _selectedDisplayMode = LauncherModeCatalog.ResolveDisplayMode(DisplayModes, settings.EntryViewMode);
         _settings.EntryViewMode = _selectedDisplayMode.Id;
         Refresh();
     }
@@ -80,19 +79,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public ObservableCollection<LauncherPresetViewModel> Presets { get; } = [];
 
-    public ObservableCollection<LauncherSortModeViewModel> SortModes { get; } =
-    [
-        new("custom", "自定义拖拽"),
-        new("updated", "更新时间"),
-        new("alphabetical", "首字母顺序"),
-    ];
+    public ObservableCollection<LauncherSortModeViewModel> SortModes { get; } = LauncherModeCatalog.CreateSortModes();
 
-    public ObservableCollection<LauncherDisplayModeViewModel> DisplayModes { get; } =
-    [
-        new(LauncherEntryViewMode.Cards, "卡片"),
-        new(LauncherEntryViewMode.Details, "详细列表"),
-        new(LauncherEntryViewMode.Names, "名称墙"),
-    ];
+    public ObservableCollection<LauncherDisplayModeViewModel> DisplayModes { get; } = LauncherModeCatalog.CreateDisplayModes();
 
     private LauncherEntryViewMode CurrentEntryViewMode => SelectedDisplayMode?.Mode ?? LauncherEntryViewMode.Cards;
 
