@@ -15,7 +15,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly LauncherProcess _launcherProcess;
     private LauncherPresetFile _presetFile = new();
     private Size _cardsAvailableSize = new(900, 420);
-    private LauncherDragReorderSession? _dragReorderSession;
+    private readonly LauncherDragReorderWorkflow _dragReorderWorkflow;
 
     [ObservableProperty]
     private string _filterText = "";
@@ -63,6 +63,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settingsPath = settingsPath;
         _settings = settings;
         _launcherProcess = launcherProcess;
+        _dragReorderWorkflow = new LauncherDragReorderWorkflow(
+            _settings,
+            _settingsPath,
+            Entries,
+            EnsureCustomOrderContainsEntries,
+            ApplyFilter);
         ConfigPathDisplay = $"配置: {configPath} · 启动组: {_presetPath}";
         FilterText = settings.LastFilterText;
         _requireConfirmationForLaunches = settings.RequireConfirmationForLaunches;
@@ -558,45 +564,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public void MoveEntryBefore(string draggedEntryId, string targetEntryId)
     {
-        if (!IsCustomSortMode)
-        {
-            StatusText = "请先切换到“自定义拖拽”排序模式";
-            return;
-        }
-        if (string.Equals(draggedEntryId, targetEntryId, StringComparison.Ordinal))
-            return;
-
-        EnsureCustomOrderContainsEntries();
-        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
-        LauncherEntryOrder.MoveBefore(_settings.CustomEntryOrder, draggedEntryId, targetEntryId);
-        var result = LauncherSettingsMutationPersistence.Save(
-            _settings,
-            _settingsPath,
-            snapshot,
-            ApplyFilter);
-        if (!result.Succeeded)
-        {
-            StatusText = result.StatusText ?? StatusText;
-            return;
-        }
-
-        ApplyFilter();
-        StatusText = "已保存自定义拖拽排序";
+        var result = _dragReorderWorkflow.MoveBefore(IsCustomSortMode, draggedEntryId, targetEntryId);
+        if (result.StatusText is not null)
+            StatusText = result.StatusText;
     }
 
     public void BeginDragReorder(string draggedEntryId)
     {
-        if (!IsCustomSortMode)
-            return;
-
-        EnsureCustomOrderContainsEntries();
-        ClearDragPreviewState();
-
-        var source = Entries.FirstOrDefault(entry => string.Equals(entry.Id, draggedEntryId, StringComparison.Ordinal));
-        _dragReorderSession = LauncherDragReorderSession.Start(
-            draggedEntryId,
-            LauncherSettingsSnapshot.Capture(_settings),
-            source);
+        _dragReorderWorkflow.Begin(IsCustomSortMode, draggedEntryId);
     }
 
     public bool PreviewMoveEntryBefore(string draggedEntryId, string targetEntryId)
@@ -606,86 +581,26 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public bool PreviewMoveEntry(string draggedEntryId, string targetEntryId, bool insertAfter)
     {
-        if (!IsCustomSortMode)
-            return false;
-        var session = _dragReorderSession;
-        if (session is null || !session.IsFor(draggedEntryId))
-        {
-            BeginDragReorder(draggedEntryId);
-            session = _dragReorderSession;
-        }
-        if (session is null)
-            return false;
-        if (string.Equals(draggedEntryId, targetEntryId, StringComparison.Ordinal))
-            return false;
-
-        if (!session.TryRecordPreview(targetEntryId, insertAfter))
-            return false;
-
-        EnsureCustomOrderContainsEntries();
-        LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, draggedEntryId, targetEntryId, insertAfter);
-        ApplyFilter();
-
-        var target = Entries.FirstOrDefault(entry => string.Equals(entry.Id, targetEntryId, StringComparison.Ordinal));
-        session.SetTarget(target, insertAfter);
-        return true;
+        return _dragReorderWorkflow.Preview(IsCustomSortMode, draggedEntryId, targetEntryId, insertAfter);
     }
 
     public void ClearDragHover()
     {
-        if (_dragReorderSession is null)
-            return;
-
-        _dragReorderSession.ClearHover();
+        _dragReorderWorkflow.ClearHover();
     }
 
     public void CommitDragReorder()
     {
-        if (!IsCustomSortMode)
-            return;
-        if (_dragReorderSession is null)
-            return;
-
-        var session = _dragReorderSession;
-        var result = LauncherSettingsMutationPersistence.Save(
-            _settings,
-            _settingsPath,
-            session.Snapshot,
-            () =>
-            {
-                ApplyFilter();
-                ClearDragPreviewState();
-            });
-        if (!result.Succeeded)
-        {
-            StatusText = result.StatusText ?? StatusText;
-            return;
-        }
-
-        ClearDragPreviewState();
-        StatusText = "已保存自定义拖拽排序";
+        var result = _dragReorderWorkflow.Commit(IsCustomSortMode);
+        if (result.StatusText is not null)
+            StatusText = result.StatusText;
     }
 
     public void CancelDragReorder()
     {
-        var session = _dragReorderSession;
-        if (session is null)
-            return;
-
-        session.Snapshot.RestoreCustomEntryOrder(_settings);
-        ApplyFilter();
-        ClearDragPreviewState();
-        StatusText = "已取消: 拖拽排序";
-    }
-
-    private void ClearDragPreviewState()
-    {
-        var session = _dragReorderSession;
-        if (session is null)
-            return;
-
-        _dragReorderSession = null;
-        session.Clear();
+        var result = _dragReorderWorkflow.Cancel();
+        if (result.StatusText is not null)
+            StatusText = result.StatusText;
     }
 
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]

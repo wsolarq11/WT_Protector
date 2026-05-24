@@ -848,16 +848,24 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
-    public void DragPreviewStateUsesOneTypedSessionField()
+    public void DragPreviewStateUsesOneTypedWorkflowField()
     {
-        var dragFields = typeof(MainWindowViewModel)
+        var viewModelDragFields = typeof(MainWindowViewModel)
             .GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
             .Where(field => field.Name.Contains("Drag", StringComparison.OrdinalIgnoreCase))
             .Select(field => field.Name)
             .Order(StringComparer.Ordinal)
             .ToArray();
 
-        Assert.Equal(["_dragReorderSession"], dragFields);
+        var workflowDragFields = typeof(LauncherDragReorderWorkflow)
+            .GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .Where(field => field.Name.Contains("Drag", StringComparison.OrdinalIgnoreCase) || field.Name.Contains("Session", StringComparison.OrdinalIgnoreCase))
+            .Select(field => field.Name)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.Equal(["_dragReorderWorkflow"], viewModelDragFields);
+        Assert.Equal(["_session"], workflowDragFields);
     }
 
     [Fact]
