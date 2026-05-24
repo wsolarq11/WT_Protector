@@ -304,16 +304,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         var entryIds = GetSelectedEntryIds();
-        var presetSnapshot = LauncherPresetFiles.Clone(_presetFile);
         var preferredPresetId = SelectedPreset?.Id;
-        var preset = LauncherPresetWorkflow.AddPreset(_presetFile, name, entryIds);
-        if (!SavePresets())
-        {
-            RestorePresetFile(presetSnapshot, preferredPresetId);
+        var result = LauncherPresetMutationPersistence.AddPreset(
+            _presetFile,
+            name,
+            entryIds,
+            preferredPresetId,
+            SavePresets,
+            ApplyPresetFile);
+        if (!result.IsSaved)
             return;
-        }
 
-        LoadPresets(preset.Id);
+        var preset = result.Preset!;
+        LoadPresets(result.NextPresetId);
         StatusText = $"已保存启动组: {preset.Name}（{preset.EntryIds.Count} 项）";
     }
 
@@ -338,22 +341,25 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var presetSnapshot = LauncherPresetFiles.Clone(_presetFile);
         var preferredPresetId = SelectedPreset.Id;
-        var preset = LauncherPresetWorkflow.UpdatePreset(_presetFile, SelectedPreset.Id, SelectedPreset.Name, entryIds);
-        if (preset is null)
+        var result = LauncherPresetMutationPersistence.UpdatePreset(
+            _presetFile,
+            SelectedPreset.Id,
+            SelectedPreset.Name,
+            entryIds,
+            preferredPresetId,
+            SavePresets,
+            ApplyPresetFile);
+        if (result.Status == LauncherPresetMutationStatus.MissingPreset)
         {
-            RestorePresetFile(presetSnapshot, preferredPresetId);
             StatusText = "当前启动组已不存在，请重新加载";
             return;
         }
-        if (!SavePresets())
-        {
-            RestorePresetFile(presetSnapshot, preferredPresetId);
+        if (!result.IsSaved)
             return;
-        }
 
-        LoadPresets(preset.Id);
+        var preset = result.Preset!;
+        LoadPresets(result.NextPresetId);
         StatusText = $"已更新启动组: {preset.Name}（{preset.EntryIds.Count} 项）";
     }
 
@@ -378,23 +384,23 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var presetSnapshot = LauncherPresetFiles.Clone(_presetFile);
         var preferredPresetId = SelectedPreset.Id;
-        var preset = LauncherPresetWorkflow.DeletePreset(_presetFile, SelectedPreset.Id, out var fallbackPresetId);
-        if (preset is null)
+        var result = LauncherPresetMutationPersistence.DeletePreset(
+            _presetFile,
+            SelectedPreset.Id,
+            preferredPresetId,
+            SavePresets,
+            ApplyPresetFile);
+        if (result.Status == LauncherPresetMutationStatus.MissingPreset)
         {
-            RestorePresetFile(presetSnapshot, preferredPresetId);
             StatusText = "当前启动组已不存在，请重新加载";
             return;
         }
-
-        if (!SavePresets())
-        {
-            RestorePresetFile(presetSnapshot, preferredPresetId);
+        if (!result.IsSaved)
             return;
-        }
 
-        LoadPresets(fallbackPresetId);
+        var preset = result.Preset!;
+        LoadPresets(result.NextPresetId);
         StatusText = $"已删除启动组: {preset.Name}";
     }
 
@@ -855,11 +861,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
             SaveSelectionAsPresetCommand,
             UpdateSelectedPresetCommand,
             DeleteSelectedPresetCommand);
-    }
-
-    private void RestorePresetFile(LauncherPresetFile snapshot, string? preferredPresetId)
-    {
-        ApplyPresetFile(snapshot, preferredPresetId);
     }
 
     private string? LoadPresets(string? preferredPresetId = null)
