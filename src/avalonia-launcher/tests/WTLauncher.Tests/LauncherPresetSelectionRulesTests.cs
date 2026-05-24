@@ -97,6 +97,35 @@ public sealed class LauncherPresetSelectionRulesTests
         Assert.False(LauncherPresetSelectionRules.CanUpdate(unlockedPreset, 1, new[] { Entry("one", selected: false) }));
     }
 
+    [Fact]
+    public void CanDeleteRequiresUnlockedDeletablePreset()
+    {
+        var presetFile = new LauncherPresetFile
+        {
+            Presets =
+            [
+                new LauncherPreset { Id = "daily", Name = "Daily", EntryIds = ["one"] },
+                new LauncherPreset { Id = "secondary", Name = "Secondary", EntryIds = ["two"] },
+                new LauncherPreset { Id = "blank-manual", Name = "Manual", Locked = true },
+            ],
+        };
+        var daily = new LauncherPresetViewModel(presetFile.Presets.Single(preset => preset.Id == "daily"));
+        var locked = new LauncherPresetViewModel(presetFile.Presets.Single(preset => preset.Id == "blank-manual"));
+        var singleRemaining = new LauncherPresetFile
+        {
+            Presets =
+            [
+                new LauncherPreset { Id = "daily", Name = "Daily", EntryIds = ["one"] },
+                new LauncherPreset { Id = "blank-manual", Name = "Manual", Locked = true },
+            ],
+        };
+
+        Assert.False(LauncherPresetSelectionRules.CanDelete(null, presetFile));
+        Assert.False(LauncherPresetSelectionRules.CanDelete(locked, presetFile));
+        Assert.True(LauncherPresetSelectionRules.CanDelete(daily, presetFile));
+        Assert.False(LauncherPresetSelectionRules.CanDelete(daily, singleRemaining));
+    }
+
     private static LauncherEntryViewModel Entry(string id, bool selected)
     {
         using var temp = new TempDirectory();

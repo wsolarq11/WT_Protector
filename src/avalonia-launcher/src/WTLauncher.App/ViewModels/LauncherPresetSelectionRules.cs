@@ -64,6 +64,17 @@ public static class LauncherPresetSelectionRules
         return BuildPreview(selectedPreset, presetCount, entryList).HasChanges;
     }
 
+    public static bool CanDelete(
+        LauncherPresetViewModel? selectedPreset,
+        LauncherPresetFile presetFile)
+    {
+        ArgumentNullException.ThrowIfNull(presetFile);
+        if (selectedPreset is null || selectedPreset.IsLocked)
+            return false;
+
+        return LauncherPresetWorkflow.CanDeletePreset(presetFile, selectedPreset.Id);
+    }
+
     private static int SelectedCount(IEnumerable<LauncherEntryViewModel> entries)
     {
         return entries.Count(entry => entry.IsSelected);

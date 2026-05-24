@@ -767,10 +767,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool CanDeleteSelectedPreset()
     {
-        if (SelectedPreset is null || SelectedPreset.IsLocked)
-            return false;
-
-        return LauncherPresetWorkflow.CanDeletePreset(_presetFile, SelectedPreset.Id);
+        return LauncherPresetSelectionRules.CanDelete(SelectedPreset, _presetFile);
     }
 
     private void ApplyFilter()
