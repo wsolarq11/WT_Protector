@@ -319,16 +319,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         var entryIds = GetSelectedEntryIds();
-        var preset = new LauncherPreset
-        {
-            Id = LauncherPresetIds.GenerateUnique(name, _presetFile.Presets.Select(item => item.Id)),
-            Name = name,
-            EntryIds = entryIds,
-        };
-
         var presetSnapshot = LauncherPresetFiles.Clone(_presetFile);
         var preferredPresetId = SelectedPreset?.Id;
-        _presetFile.Presets.Add(preset);
+        var preset = LauncherPresetWorkflow.AddPreset(_presetFile, name, entryIds);
         if (!SavePresets())
         {
             RestorePresetFile(presetSnapshot, preferredPresetId);
@@ -353,13 +346,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var preset = _presetFile.Presets.FirstOrDefault(item => item.Id == SelectedPreset.Id);
-        if (preset is null)
-        {
-            StatusText = "当前启动组已不存在，请重新加载";
-            return;
-        }
-
         var entryIds = GetSelectedEntryIds();
         if (entryIds.Count == 0)
         {
@@ -369,8 +355,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         var presetSnapshot = LauncherPresetFiles.Clone(_presetFile);
         var preferredPresetId = SelectedPreset.Id;
-        preset.Name = SelectedPreset.Name;
-        preset.EntryIds = entryIds;
+        var preset = LauncherPresetWorkflow.UpdatePreset(_presetFile, SelectedPreset.Id, SelectedPreset.Name, entryIds);
+        if (preset is null)
+        {
+            RestorePresetFile(presetSnapshot, preferredPresetId);
+            StatusText = "当前启动组已不存在，请重新加载";
+            return;
+        }
         if (!SavePresets())
         {
             RestorePresetFile(presetSnapshot, preferredPresetId);
@@ -389,7 +380,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             StatusText = "未选择启动组";
             return;
         }
-        if (SelectedPreset.IsLocked || !CanDeletePreset(SelectedPreset.Id))
+        if (SelectedPreset.IsLocked || !LauncherPresetWorkflow.CanDeletePreset(_presetFile, SelectedPreset.Id))
         {
             StatusText = $"启动组不能删除: {SelectedPreset.Name}";
             return;
@@ -402,18 +393,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var preset = _presetFile.Presets.FirstOrDefault(item => item.Id == SelectedPreset.Id);
+        var presetSnapshot = LauncherPresetFiles.Clone(_presetFile);
+        var preferredPresetId = SelectedPreset.Id;
+        var preset = LauncherPresetWorkflow.DeletePreset(_presetFile, SelectedPreset.Id, out var fallbackPresetId);
         if (preset is null)
         {
+            RestorePresetFile(presetSnapshot, preferredPresetId);
             StatusText = "当前启动组已不存在，请重新加载";
             return;
         }
-
-        var presetSnapshot = LauncherPresetFiles.Clone(_presetFile);
-        var preferredPresetId = SelectedPreset.Id;
-        _presetFile.Presets.Remove(preset);
-        if (_presetFile.DefaultPresetId == preset.Id)
-            _presetFile.DefaultPresetId = _presetFile.Presets.FirstOrDefault()?.Id ?? string.Empty;
 
         if (!SavePresets())
         {
@@ -421,7 +409,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var fallbackPresetId = _presetFile.DefaultPresetId;
         LoadPresets(fallbackPresetId);
         StatusText = $"已删除启动组: {preset.Name}";
     }
@@ -847,7 +834,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (SelectedPreset is null || SelectedPreset.IsLocked)
             return false;
 
-        return CanDeletePreset(SelectedPreset.Id);
+        return LauncherPresetWorkflow.CanDeletePreset(_presetFile, SelectedPreset.Id);
     }
 
     private void ApplyFilter()
@@ -968,20 +955,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
             Entries.Where(entry => entry.IsSelected).Select(entry => entry.Entry.Id),
             Entries.Select(entry => entry.Entry.Id),
             selectedPreset.EntryIds);
-    }
-
-    private bool CanDeletePreset(string presetId)
-    {
-        if (_presetFile.Presets.Count == 0)
-            return false;
-
-        var target = _presetFile.Presets.FirstOrDefault(preset => preset.Id == presetId);
-        if (target is null || target.Locked)
-            return false;
-
-        var remainingNonEmpty = _presetFile.Presets
-            .Count(preset => preset.Id != presetId && preset.EntryIds.Count > 0);
-        return remainingNonEmpty > 0;
     }
 
     private List<string> GetSelectedEntryIds()
