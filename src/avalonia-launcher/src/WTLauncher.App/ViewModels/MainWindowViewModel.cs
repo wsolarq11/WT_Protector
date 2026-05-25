@@ -250,7 +250,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
             NotifySelectionCommands);
         NotifyPresetManagementCommands();
         ApplyFilter();
-        RecalculateCardSize();
         RefreshEntryLayoutPresentation();
         StatusText = result.StatusText;
     }
@@ -494,7 +493,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         TotalCount = summary.TotalCount;
         RefreshSelectionState();
         ApplyFilter();
-        RecalculateCardSize();
         RefreshEntryLayoutPresentation();
     }
 
@@ -638,11 +636,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
             Entries,
             VisibleEntries,
             availableSize);
-    }
-
-    private void RecalculateCardSize()
-    {
-        LauncherEntryLayoutPresentation.ApplyCardSize(Entries, VisibleEntries, _cardsAvailableSize);
     }
 
     private void EnsureCustomOrderContainsEntries()
