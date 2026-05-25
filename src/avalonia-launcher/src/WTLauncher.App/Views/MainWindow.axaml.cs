@@ -1,10 +1,8 @@
 using Avalonia;
-using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Input;
-using Avalonia.Media.Transformation;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using WTLauncher.App.ViewModels;
@@ -279,25 +277,14 @@ public sealed partial class MainWindow : Window
         if (after.Count == 0)
             return;
 
-        foreach (var card in root.GetVisualDescendants().OfType<Border>())
+        foreach (var target in MainWindowReorderFlipAnimation.FindTargets(root, before, after))
         {
-            if (!card.Classes.Contains("card"))
-                continue;
-            if (card.DataContext is not LauncherEntryViewModel entry)
-                continue;
-            if (!MainWindowReorderFlip.TryCalculateOffset(entry.Id, before, after, out var offset))
-                continue;
-
             // FLIP: jump back without transition, then let the style transition animate to the final position.
-            card.Transitions = new Transitions();
-            card.RenderTransform = TransformOperations.Parse(MainWindowReorderFlip.FormatTranslate(offset));
+            MainWindowReorderFlipAnimation.ApplyStart(target.Card, target.Offset);
 
             Dispatcher.UIThread.Post(() =>
             {
-                if (card.IsEffectivelyVisible is false)
-                    return;
-                card.ClearValue(Animatable.TransitionsProperty);
-                card.RenderTransform = TransformOperations.Parse("translate(0px,0px)");
+                MainWindowReorderFlipAnimation.TryApplyFinish(target.Card, target.Card.IsEffectivelyVisible);
             }, DispatcherPriority.Render);
         }
     }
