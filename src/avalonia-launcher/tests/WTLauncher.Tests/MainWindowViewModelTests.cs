@@ -344,7 +344,7 @@ public sealed class MainWindowViewModelTests
 
         var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess())
         {
-            RequestNewPresetAsync = () => Task.FromResult<PresetDraft?>(new PresetDraft("Project Pair")),
+            RequestNewPresetAsync = _ => Task.FromResult<PresetDraft?>(new PresetDraft("Project Pair")),
         };
 
         File.Delete(presets);
@@ -357,6 +357,27 @@ public sealed class MainWindowViewModelTests
         Assert.Single(viewModel.Presets, preset => preset.Id == "daily");
         Assert.DoesNotContain(viewModel.Presets, preset => preset.Id == "project-pair");
         Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(presets)!, "presets.json.tmp-*"));
+    }
+
+    [Fact]
+    public async Task LaunchGroupSavePassesSelectedEntryIdsToPresetDialog()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
+        IReadOnlyList<string>? dialogEntryIds = null;
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess())
+        {
+            RequestNewPresetAsync = entryIds =>
+            {
+                dialogEntryIds = entryIds.ToArray();
+                return Task.FromResult<PresetDraft?>(null);
+            },
+        };
+
+        await viewModel.SaveSelectionAsPresetCommand.ExecuteAsync(null);
+
+        Assert.Equal(["one"], dialogEntryIds);
+        Assert.Equal("已取消: 保存启动组", viewModel.StatusText);
     }
 
     [Fact]
@@ -422,7 +443,7 @@ public sealed class MainWindowViewModelTests
 
         var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess())
         {
-            RequestNewPresetAsync = () => Task.FromResult<PresetDraft?>(new PresetDraft("Project Pair")),
+            RequestNewPresetAsync = _ => Task.FromResult<PresetDraft?>(new PresetDraft("Project Pair")),
         };
 
         Assert.True(viewModel.SaveSelectionAsPresetCommand.CanExecute(null));

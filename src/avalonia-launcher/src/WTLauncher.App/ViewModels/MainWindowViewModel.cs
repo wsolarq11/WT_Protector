@@ -113,8 +113,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public Func<IReadOnlyList<LaunchEntry>, Task<bool>> ConfirmBatchLaunchAsync { get; set; } =
         static _ => Task.FromResult(false);
 
-    public Func<Task<PresetDraft?>> RequestNewPresetAsync { get; set; } =
-        static () => Task.FromResult<PresetDraft?>(null);
+    public Func<IReadOnlyList<string>, Task<PresetDraft?>> RequestNewPresetAsync { get; set; } =
+        static _ => Task.FromResult<PresetDraft?>(null);
 
     public Func<LauncherPresetViewModel, Task<bool>> ConfirmDeletePresetAsync { get; set; } =
         static _ => Task.FromResult(false);
@@ -284,7 +284,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var draft = await RequestNewPresetAsync().ConfigureAwait(true);
+        var entryIds = GetSelectedEntryIds();
+        var draft = await RequestNewPresetAsync(entryIds).ConfigureAwait(true);
         if (draft is null)
         {
             StatusText = "已取消: 保存启动组";
@@ -298,7 +299,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var entryIds = GetSelectedEntryIds();
         var preferredPresetId = SelectedPreset?.Id;
         var result = LauncherPresetManagementWorkflow.AddPreset(
             _presetFile,

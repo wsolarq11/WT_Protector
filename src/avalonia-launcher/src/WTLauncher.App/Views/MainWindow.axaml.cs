@@ -33,7 +33,7 @@ public sealed partial class MainWindow : Window
         _settings = settings;
         viewModel.ConfirmLaunchAsync = ConfirmLaunchAsync;
         viewModel.ConfirmBatchLaunchAsync = ConfirmBatchLaunchAsync;
-        viewModel.RequestNewPresetAsync = RequestNewPresetAsync;
+        viewModel.RequestNewPresetAsync = selectedEntryIds => LauncherDialogService.RequestNewPresetAsync(this, selectedEntryIds);
         viewModel.ConfirmDeletePresetAsync = ConfirmDeletePresetAsync;
         viewModel.RequestEntryDraftAsync = RequestEntryDraftAsync;
         viewModel.ConfirmDeleteEntryAsync = ConfirmDeleteEntryAsync;
@@ -52,11 +52,6 @@ public sealed partial class MainWindow : Window
     private Task<bool> ConfirmBatchLaunchAsync(IReadOnlyList<LaunchEntry> entries)
     {
         return LauncherDialogService.ConfirmBatchLaunchAsync(this, entries);
-    }
-
-    private Task<PresetDraft?> RequestNewPresetAsync()
-    {
-        return LauncherDialogService.RequestNewPresetAsync(this, GetSelectedEntryIds());
     }
 
     private Task<bool> ConfirmDeletePresetAsync(LauncherPresetViewModel preset)
@@ -434,17 +429,6 @@ public sealed partial class MainWindow : Window
             entry.LaunchCommand.Execute(null);
 
         e.Handled = true;
-    }
-
-    private IReadOnlyList<string> GetSelectedEntryIds()
-    {
-        if (DataContext is not MainWindowViewModel viewModel)
-            return [];
-
-        return viewModel.Entries
-            .Where(entry => entry.IsSelected)
-            .Select(entry => entry.Entry.Id)
-            .ToList();
     }
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
