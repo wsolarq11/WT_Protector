@@ -300,19 +300,12 @@ public sealed partial class MainWindow : Window
                 continue;
             if (card.DataContext is not LauncherEntryViewModel entry)
                 continue;
-            if (!before.TryGetValue(entry.Id, out var oldRect))
-                continue;
-            if (!after.TryGetValue(entry.Id, out var newRect))
-                continue;
-
-            var deltaX = oldRect.X - newRect.X;
-            var deltaY = oldRect.Y - newRect.Y;
-            if (Math.Abs(deltaX) < 0.5 && Math.Abs(deltaY) < 0.5)
+            if (!MainWindowReorderFlip.TryCalculateOffset(entry.Id, before, after, out var offset))
                 continue;
 
             // FLIP: jump back without transition, then let the style transition animate to the final position.
             card.Transitions = new Transitions();
-            card.RenderTransform = TransformOperations.Parse(FormattableString.Invariant($"translate({deltaX:0.##}px,{deltaY:0.##}px)"));
+            card.RenderTransform = TransformOperations.Parse(MainWindowReorderFlip.FormatTranslate(offset));
 
             Dispatcher.UIThread.Post(() =>
             {
