@@ -137,13 +137,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 OnPropertyChanged(nameof(FilterText));
                 ApplyFilter();
             });
-        if (!result.Succeeded)
-        {
-            StatusText = result.StatusText ?? StatusText;
-            return;
-        }
-
-        ApplyFilter();
+        LauncherSettingsResultWorkflow.Apply(result, status => StatusText = status, ApplyFilter);
     }
 
     partial void OnSelectedSortModeChanged(LauncherSortModeViewModel? value)
@@ -164,14 +158,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 OnPropertyChanged(nameof(IsCustomSortMode));
                 ApplyFilter();
             });
-        if (!result.Succeeded)
-        {
-            StatusText = result.StatusText ?? StatusText;
-            return;
-        }
-
-        ApplyFilter();
-        StatusText = $"排序模式: {value.Label}（已保存）";
+        LauncherSettingsResultWorkflow.Apply(
+            result,
+            status => StatusText = status,
+            () =>
+            {
+                ApplyFilter();
+                StatusText = $"排序模式: {value.Label}（已保存）";
+            });
     }
 
     partial void OnSelectedDisplayModeChanged(LauncherDisplayModeViewModel? value)
@@ -196,13 +190,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 OnPropertyChanged(nameof(IsNamesViewMode));
                 RefreshEntryLayoutPresentation();
             });
-        if (!result.Succeeded)
-        {
-            StatusText = result.StatusText ?? StatusText;
-            return;
-        }
-
-        StatusText = $"视图模式: {value.Label}（已保存）";
+        LauncherSettingsResultWorkflow.Apply(
+            result,
+            status => StatusText = status,
+            () => StatusText = $"视图模式: {value.Label}（已保存）");
     }
 
     partial void OnRequireConfirmationForLaunchesChanged(bool value)
@@ -227,15 +218,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 RefreshEntryLayoutPresentation();
                 ApplyFilter();
             });
-        if (!result.Succeeded)
-        {
-            StatusText = result.StatusText ?? StatusText;
-            return;
-        }
-
-        StatusText = value
-            ? "启动确认: 所有启动项启动前统一确认"
-            : "启动确认: 所有启动项直接启动";
+        LauncherSettingsResultWorkflow.Apply(
+            result,
+            status => StatusText = status,
+            () => StatusText = value
+                ? "启动确认: 所有启动项启动前统一确认"
+                : "启动确认: 所有启动项直接启动");
     }
 
     [RelayCommand]
