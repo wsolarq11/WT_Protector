@@ -459,7 +459,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool SaveEntryCollectionChanges(bool savePresets, LauncherEntryMutationSnapshot? rollbackSnapshot = null)
     {
-        var result = LauncherEntryCollectionSaveWorkflow.Save(
+        return LauncherEntryCollectionSaveStateWorkflow.Save(
             Entries,
             _configPath,
             _presetFile,
@@ -468,23 +468,25 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _settingsPath,
             savePresets,
             rollbackSnapshot,
-            EnsureCustomOrderContainsEntries);
-        SelectedCount = result.SelectedCount;
-        TotalCount = result.TotalCount;
-        if (!result.Succeeded)
-        {
-            StatusText = result.StatusText ?? StatusText;
-            return false;
-        }
+            EnsureCustomOrderContainsEntries,
+            ApplyEntryCollectionSaveState,
+            status => StatusText = status,
+            () =>
+            {
+                LauncherSelectionStateWorkflow.Refresh(
+                    SelectedPreset,
+                    PresetCount,
+                    Entries,
+                    ApplyPresetSelectionState,
+                    NotifySelectionCommands);
+                ApplyFilter();
+            });
+    }
 
-        LauncherSelectionStateWorkflow.Refresh(
-            SelectedPreset,
-            PresetCount,
-            Entries,
-            ApplyPresetSelectionState,
-            NotifySelectionCommands);
-        ApplyFilter();
-        return true;
+    private void ApplyEntryCollectionSaveState(LauncherEntryCollectionSaveState state)
+    {
+        SelectedCount = state.SelectedCount;
+        TotalCount = state.TotalCount;
     }
 
     private LauncherEntryMutationSnapshot CaptureEntryMutationSnapshot()
