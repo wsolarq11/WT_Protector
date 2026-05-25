@@ -618,13 +618,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void ApplyFilter()
     {
-        VisibleCount = LauncherVisibleEntryCollection.Replace(
+        var result = LauncherEntryVisibilityWorkflow.ApplyFilter(
             VisibleEntries,
             Entries,
             FilterText,
             SelectedSortMode?.Id,
-            _settings.CustomEntryOrder);
-        RecalculateCardSize();
+            _settings.CustomEntryOrder,
+            _cardsAvailableSize);
+        VisibleCount = result.VisibleCount;
     }
 
     private void RefreshEntryLayoutPresentation()
@@ -634,8 +635,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public void UpdateCardsAvailableSize(Size availableSize)
     {
-        _cardsAvailableSize = LauncherEntryLayoutPresentation.NormalizeAvailableSize(availableSize);
-        RecalculateCardSize();
+        _cardsAvailableSize = LauncherEntryVisibilityWorkflow.UpdateAvailableSize(
+            Entries,
+            VisibleEntries,
+            availableSize);
     }
 
     private void RecalculateCardSize()
