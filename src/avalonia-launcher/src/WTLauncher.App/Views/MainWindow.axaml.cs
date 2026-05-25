@@ -77,10 +77,7 @@ public sealed partial class MainWindow : Window
     private void UpdateCardRegionSize(MainWindowViewModel viewModel)
     {
         // Header/footer take the stable chrome area; the view model owns the cheap grid sizing.
-        viewModel.UpdateCardsAvailableSize(
-            new Size(
-                Math.Max(220, Bounds.Width - 48),
-                Math.Max(140, Bounds.Height - 270)));
+        viewModel.UpdateCardsAvailableSize(MainWindowLayoutMetrics.CalculateCardsAvailableSize(Bounds.Size));
     }
 
     private async void OnEntryDragPointerPressed(object? sender, PointerPressedEventArgs e)
