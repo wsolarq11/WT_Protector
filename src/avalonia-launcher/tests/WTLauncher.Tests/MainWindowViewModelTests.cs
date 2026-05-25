@@ -467,6 +467,49 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void ChangingSelectedPresetNotifiesPresetManagementCommands()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
+        File.WriteAllText(presets, """
+        {
+          "schemaVersion": 1,
+          "defaultPresetId": "daily",
+          "presets": [
+            {
+              "id": "daily",
+              "name": "Daily",
+              "description": "demo preset",
+              "entryIds": ["one"]
+            },
+            {
+              "id": "blank-manual",
+              "name": "Manual",
+              "description": "locked empty preset",
+              "entryIds": [],
+              "locked": true
+            }
+          ]
+        }
+        """);
+
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var applyNotifications = 0;
+        var updateNotifications = 0;
+        var deleteNotifications = 0;
+
+        viewModel.ApplyPresetCommand.CanExecuteChanged += (_, _) => applyNotifications++;
+        viewModel.UpdateSelectedPresetCommand.CanExecuteChanged += (_, _) => updateNotifications++;
+        viewModel.DeleteSelectedPresetCommand.CanExecuteChanged += (_, _) => deleteNotifications++;
+
+        viewModel.SelectedPreset = viewModel.Presets.Single(preset => preset.Id == "blank-manual");
+
+        Assert.True(applyNotifications > 0);
+        Assert.True(updateNotifications > 0);
+        Assert.True(deleteNotifications > 0);
+    }
+
+    [Fact]
     public async Task EntryCommandsPersistPortableConfigAndReferences()
     {
         using var temp = new TempDirectory();

@@ -574,8 +574,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     partial void OnSelectedPresetChanged(LauncherPresetViewModel? value)
     {
-        ApplyPresetCommand.NotifyCanExecuteChanged();
-        UpdatePresetSelectionStatus();
+        RefreshSelectionState();
     }
 
     internal async Task LaunchAsync(LauncherEntryViewModel item)
@@ -677,15 +676,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
             SaveSelectionAsPresetCommand,
             UpdateSelectedPresetCommand,
             DeleteSelectedPresetCommand);
-    }
-
-    private void UpdatePresetSelectionStatus()
-    {
-        LauncherSelectionStateWorkflow.Refresh(
-            SelectedPreset,
-            PresetCount,
-            Entries,
-            ApplyPresetSelectionState);
     }
 
     private void ApplyPresetSelectionState(LauncherPresetSelectionState selection)
