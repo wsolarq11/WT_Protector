@@ -400,21 +400,8 @@ public sealed partial class MainWindow : Window
         if (sender is not Control control)
             return;
 
-        Border? card = null;
-        foreach (var ancestor in control.GetSelfAndVisualAncestors())
-        {
-            if (ancestor is Border border && border.Classes.Contains("card"))
-            {
-                card = border;
-                break;
-            }
-        }
-
-        if (card?.ContextMenu is not ContextMenu menu)
-            return;
-
-        menu.Open(card);
-        e.Handled = true;
+        if (MainWindowCardContextMenu.TryOpenFor(control))
+            e.Handled = true;
     }
 
     private void OnEntryRowDoubleTapped(object? sender, TappedEventArgs e)
