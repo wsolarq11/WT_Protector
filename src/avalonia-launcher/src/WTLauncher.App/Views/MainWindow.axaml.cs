@@ -4,7 +4,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Input;
-using Avalonia.Media;
 using Avalonia.Media.Transformation;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -188,63 +187,16 @@ public sealed partial class MainWindow : Window
         if (_overlayLayer is null || _dragGhost is not null)
             return;
 
-        var layout = LauncherDragGhostLayoutCalculator.Calculate(
+        var ghost = MainWindowDragGhostFactory.Create(
+            item,
             sourceCard.Bounds.Width,
             sourceCard.Bounds.Height,
             position.X,
             position.Y);
 
-        var ghost = new Border
-        {
-            Width = layout.Width,
-            Height = layout.Height,
-            Classes = { "card" },
-            Background = Brushes.White,
-            BorderBrush = Brush.Parse("#38BDF8"),
-            BorderThickness = new Thickness(2),
-            CornerRadius = new CornerRadius(13),
-            Opacity = 0.86,
-            IsHitTestVisible = false,
-            BoxShadow = new BoxShadows(new BoxShadow
-            {
-                OffsetX = 0,
-                OffsetY = 10,
-                Blur = 28,
-                Spread = 0,
-                Color = Color.Parse("#220F172A"),
-            }),
-            Child = new StackPanel
-            {
-                Margin = new Thickness(13),
-                Spacing = 8,
-                IsHitTestVisible = false,
-                Children =
-                {
-                    new TextBlock
-                    {
-                        Text = item.Name,
-                        FontSize = item.TitleFontSize,
-                        FontWeight = FontWeight.SemiBold,
-                        Foreground = Brush.Parse("#0F172A"),
-                        TextTrimming = TextTrimming.CharacterEllipsis,
-                        IsHitTestVisible = false,
-                    },
-                    new TextBlock
-                    {
-                        Text = item.Directory,
-                        FontFamily = FontFamily.Parse("Cascadia Code, Consolas"),
-                        FontSize = 12,
-                        Foreground = Brush.Parse("#64748B"),
-                        TextTrimming = TextTrimming.CharacterEllipsis,
-                        IsHitTestVisible = false,
-                    },
-                },
-            },
-        };
-
-        _dragGhost = ghost;
-        _overlayLayer.Children.Add(ghost);
-        SetDragGhostPosition(layout.Left, layout.Top);
+        _dragGhost = ghost.Control;
+        _overlayLayer.Children.Add(ghost.Control);
+        SetDragGhostPosition(ghost.Left, ghost.Top);
     }
 
     private void UpdateDragGhostPosition(Point position)
