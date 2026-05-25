@@ -254,9 +254,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _presetFile = result.PresetFile;
         SelectedPreset = result.SelectedPreset;
         PresetCount = result.PresetCount;
-        NotifySelectionCommands();
+        LauncherSelectionStateWorkflow.Refresh(
+            SelectedPreset,
+            PresetCount,
+            Entries,
+            ApplyPresetSelectionState,
+            NotifySelectionCommands);
         NotifyPresetManagementCommands();
-        UpdatePresetSelectionStatus();
         ApplyFilter();
         RecalculateCardSize();
         RefreshEntryLayoutPresentation();
@@ -473,8 +477,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return false;
         }
 
-        NotifySelectionCommands();
-        UpdatePresetSelectionStatus();
+        LauncherSelectionStateWorkflow.Refresh(
+            SelectedPreset,
+            PresetCount,
+            Entries,
+            ApplyPresetSelectionState,
+            NotifySelectionCommands);
         ApplyFilter();
         return true;
     }
@@ -667,8 +675,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void RefreshSelectionState()
     {
-        ApplyPresetSelectionState();
-        NotifySelectionCommands();
+        LauncherSelectionStateWorkflow.Refresh(
+            SelectedPreset,
+            PresetCount,
+            Entries,
+            ApplyPresetSelectionState,
+            NotifySelectionCommands);
     }
 
     private void NotifySelectionCommands()
@@ -684,12 +696,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void UpdatePresetSelectionStatus()
     {
-        ApplyPresetSelectionState();
+        LauncherSelectionStateWorkflow.Refresh(
+            SelectedPreset,
+            PresetCount,
+            Entries,
+            ApplyPresetSelectionState);
     }
 
-    private void ApplyPresetSelectionState()
+    private void ApplyPresetSelectionState(LauncherPresetSelectionState selection)
     {
-        var selection = LauncherPresetSelectionRules.BuildState(SelectedPreset, PresetCount, Entries);
         SelectedCount = selection.SelectedCount;
         ApplyPresetButtonText = selection.ApplyPresetButtonText;
         PresetSelectionStatusText = selection.PresetSelectionStatusText;
