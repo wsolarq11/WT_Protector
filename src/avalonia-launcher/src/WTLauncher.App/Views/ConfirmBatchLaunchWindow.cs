@@ -19,20 +19,10 @@ public sealed class ConfirmBatchLaunchWindow : Window
         var names = string.Join(Environment.NewLine, entries.Select(entry => "• " + entry.Name));
         var message = $"将启动 {entries.Count} 个已勾选项。";
 
-        var cancel = new Button
-        {
-            Content = "取消",
-            MinWidth = 96,
-            IsCancel = true,
-        };
+        var cancel = LauncherDialogButtons.Cancel(minWidth: 96);
         cancel.Click += (_, _) => Close(false);
 
-        var launch = new Button
-        {
-            Content = "确认启动",
-            MinWidth = 116,
-            IsDefault = true,
-        };
+        var launch = LauncherDialogButtons.Primary("确认启动", minWidth: 116);
         launch.Click += (_, _) => Close(true);
 
         Content = new Border

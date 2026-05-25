@@ -45,23 +45,10 @@ public sealed class ConfirmLaunchWindow : Window
             TextWrapping = TextWrapping.Wrap,
             MinHeight = 120,
         };
-        var cancel = new Button
-        {
-            Content = "取消",
-            Padding = new Thickness(16, 8),
-            IsCancel = true,
-        };
+        var cancel = LauncherDialogButtons.Cancel();
         cancel.Click += (_, _) => Close(false);
 
-        var launch = new Button
-        {
-            Content = "确认启动",
-            Padding = new Thickness(18, 8),
-            Background = Brush.Parse("#2563EB"),
-            Foreground = Brushes.White,
-            FontWeight = FontWeight.SemiBold,
-            IsDefault = true,
-        };
+        var launch = LauncherDialogButtons.Primary("确认启动");
         launch.Click += (_, _) => Close(true);
 
         return new Grid

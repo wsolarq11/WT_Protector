@@ -42,23 +42,10 @@ public sealed class PresetDetailsWindow : Window
             TextWrapping = TextWrapping.Wrap,
         };
 
-        var cancel = new Button
-        {
-            Content = "取消",
-            Padding = new Thickness(16, 8),
-            IsCancel = true,
-        };
+        var cancel = LauncherDialogButtons.Cancel();
         cancel.Click += (_, _) => Close((PresetDraft?)null);
 
-        var save = new Button
-        {
-            Content = "保存启动组",
-            Padding = new Thickness(18, 8),
-            Background = Brush.Parse("#2563EB"),
-            Foreground = Brushes.White,
-            FontWeight = FontWeight.SemiBold,
-            IsDefault = true,
-        };
+        var save = LauncherDialogButtons.Primary("保存启动组");
         save.Click += (_, _) =>
         {
             var name = (_nameBox.Text ?? string.Empty).Trim();

@@ -43,23 +43,10 @@ public sealed class EntryDetailsWindow : Window
             TextWrapping = TextWrapping.Wrap,
         };
 
-        var cancel = new Button
-        {
-            Content = "取消",
-            Padding = new Thickness(16, 8),
-            IsCancel = true,
-        };
+        var cancel = LauncherDialogButtons.Cancel();
         cancel.Click += (_, _) => Close((EntryDraft?)null);
 
-        var save = new Button
-        {
-            Content = isEdit ? "保存按钮" : "新增按钮",
-            Padding = new Thickness(18, 8),
-            Background = Brush.Parse("#2563EB"),
-            Foreground = Brushes.White,
-            FontWeight = FontWeight.SemiBold,
-            IsDefault = true,
-        };
+        var save = LauncherDialogButtons.Primary(isEdit ? "保存按钮" : "新增按钮");
         save.Click += (_, _) => Submit();
 
         var footer = new StackPanel

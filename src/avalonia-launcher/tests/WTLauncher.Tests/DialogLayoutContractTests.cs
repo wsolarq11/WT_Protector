@@ -36,7 +36,15 @@ public sealed class DialogLayoutContractTests
     {
         var source = File.ReadAllText(GetViewPath(fileName));
 
-        Assert.Contains("IsCancel = true", ButtonBlock(source, "cancel"));
+        Assert.Contains(
+            fileName.Contains("Delete", StringComparison.Ordinal)
+                ? "var cancel = LauncherDialogButtons.SafeDefaultCancel();"
+                : "var cancel = LauncherDialogButtons.Cancel",
+            source);
+        var dialogButtons = GetDialogButtonsSource();
+        Assert.Contains("isCancel: true", MethodBlock(dialogButtons, "Cancel"));
+        Assert.Contains("isCancel: true", MethodBlock(dialogButtons, "SafeDefaultCancel"));
+        Assert.Contains("IsCancel = isCancel", MethodBlock(dialogButtons, "Create"));
     }
 
     [Theory]
@@ -48,7 +56,8 @@ public sealed class DialogLayoutContractTests
     {
         var source = File.ReadAllText(GetViewPath(fileName));
 
-        Assert.Contains("IsDefault = true", ButtonBlock(source, buttonName));
+        Assert.Contains($"var {buttonName} = LauncherDialogButtons.Primary", source);
+        Assert.Contains("isDefault: true", MethodBlock(GetDialogButtonsSource(), "Primary"));
     }
 
     [Theory]
@@ -58,17 +67,24 @@ public sealed class DialogLayoutContractTests
     {
         var source = File.ReadAllText(GetViewPath(fileName));
 
-        Assert.Contains("IsDefault = true", ButtonBlock(source, "cancel"));
-        Assert.DoesNotContain("IsDefault = true", ButtonBlock(source, "delete"));
+        Assert.Contains("var cancel = LauncherDialogButtons.SafeDefaultCancel();", source);
+        Assert.Contains("var delete = LauncherDialogButtons.Destructive", source);
+        Assert.Contains("isDefault: true", MethodBlock(GetDialogButtonsSource(), "SafeDefaultCancel"));
+        Assert.DoesNotContain("isDefault: true", MethodBlock(GetDialogButtonsSource(), "Destructive"));
     }
 
-    private static string ButtonBlock(string source, string buttonName)
+    private static string MethodBlock(string source, string methodName)
     {
-        var start = source.IndexOf($"var {buttonName} = new Button", StringComparison.Ordinal);
-        Assert.True(start >= 0, $"Expected {buttonName} button declaration.");
-        var end = source.IndexOf("};", start, StringComparison.Ordinal);
-        Assert.True(end > start, $"Expected {buttonName} button initializer to end.");
+        var start = source.IndexOf($"static Button {methodName}(", StringComparison.Ordinal);
+        Assert.True(start >= 0, $"Expected {methodName} method declaration.");
+        var end = source.IndexOf("\n    }\n", start, StringComparison.Ordinal);
+        Assert.True(end > start, $"Expected {methodName} method to end.");
         return source[start..(end + 2)];
+    }
+
+    private static string GetDialogButtonsSource()
+    {
+        return File.ReadAllText(GetViewPath("LauncherDialogButtons.cs"));
     }
 
     private static string GetViewPath(string fileName)

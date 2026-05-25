@@ -18,23 +18,10 @@ public sealed class ConfirmEntryDeleteWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = Brushes.White;
 
-        var cancel = new Button
-        {
-            Content = "取消",
-            Padding = new Thickness(16, 8),
-            IsDefault = true,
-            IsCancel = true,
-        };
+        var cancel = LauncherDialogButtons.SafeDefaultCancel();
         cancel.Click += (_, _) => Close(false);
 
-        var delete = new Button
-        {
-            Content = "删除按钮",
-            Padding = new Thickness(18, 8),
-            Background = Brush.Parse("#DC2626"),
-            Foreground = Brushes.White,
-            FontWeight = FontWeight.SemiBold,
-        };
+        var delete = LauncherDialogButtons.Destructive("删除按钮");
         delete.Click += (_, _) => Close(true);
 
         Content = new Border
