@@ -719,10 +719,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void ApplyPresetManagementResult(LauncherPresetManagementResult result)
     {
-        if (result.ShouldReload)
-            ReloadPresets(result.NextPresetId);
-        if (result.StatusText is not null)
-            StatusText = result.StatusText;
+        LauncherPresetManagementResultWorkflow.Apply(
+            result,
+            presetId => { ReloadPresets(presetId); },
+            status => StatusText = status);
     }
 
     private void NotifyPresetManagementCommands()
