@@ -83,6 +83,15 @@ public sealed class MainWindowXamlContractTests
         AssertInOrder(codeBehind, "private void OnEntryMoreClicked", "menu.Open(card)", "e.Handled = true");
     }
 
+    [Fact]
+    public void MainWindow_DragHandlesExposeAccessibilityLabel()
+    {
+        var xaml = File.ReadAllText(GetMainWindowXamlPath());
+
+        Assert.Equal(3, Count(xaml, "AutomationProperties.Name=\"拖拽排序\""));
+        Assert.Equal(3, Count(xaml, "ToolTip.Tip=\"拖拽排序\""));
+    }
+
     private static int Count(string text, string value)
     {
         var count = 0;

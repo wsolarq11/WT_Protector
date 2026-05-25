@@ -496,6 +496,7 @@
                             Cursor="Hand"
                             HorizontalAlignment="Right"
                             ToolTip.Tip="拖拽排序"
+                            AutomationProperties.Name="拖拽排序"
                             PointerPressed="OnEntryDragPointerPressed">
                       <TextBlock Text="拖拽"
                                  Foreground="#334155"
@@ -623,6 +624,8 @@
                                 Click="OnEntryMoreClicked"/>
                         <Border Classes="entry-drag-handle"
                                 Cursor="Hand"
+                                ToolTip.Tip="拖拽排序"
+                                AutomationProperties.Name="拖拽排序"
                                 PointerPressed="OnEntryDragPointerPressed">
                           <TextBlock Text="≡"
                                      Foreground="#334155"
@@ -702,6 +705,7 @@
                           Classes="entry-drag-handle"
                           Cursor="Hand"
                           ToolTip.Tip="拖拽排序"
+                          AutomationProperties.Name="拖拽排序"
                           PointerPressed="OnEntryDragPointerPressed">
                     <TextBlock Text="≡"
                                Foreground="#64748B"
