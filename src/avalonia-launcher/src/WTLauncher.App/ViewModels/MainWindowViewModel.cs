@@ -559,12 +559,21 @@ public sealed partial class MainWindowViewModel : ObservableObject
             RequireConfirmationForLaunches,
             ConfirmBatchLaunchAsync,
             plan => _launcherProcess.Start(plan)).ConfigureAwait(true);
-        ApplyLaunchResult(result);
+        LauncherLaunchResultWorkflow.Apply(
+            result.DryRunText,
+            result.StatusText,
+            status => StatusText = status,
+            dryRun => DryRunText = dryRun);
     }
 
     internal void ShowDryRun(LauncherEntryViewModel item)
     {
-        ApplyLaunchResult(LauncherLaunchWorkflow.Preview(item.Entry, item.Name, RequireConfirmationForLaunches));
+        var result = LauncherLaunchWorkflow.Preview(item.Entry, item.Name, RequireConfirmationForLaunches);
+        LauncherLaunchResultWorkflow.Apply(
+            result.DryRunText,
+            result.StatusText,
+            status => StatusText = status,
+            dryRun => DryRunText = dryRun);
     }
 
     internal void UpdateSelection(LauncherEntryViewModel item, bool selected)
@@ -586,14 +595,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
             RequireConfirmationForLaunches,
             ConfirmLaunchAsync,
             plan => _launcherProcess.Start(plan)).ConfigureAwait(true);
-        ApplyLaunchResult(result);
-    }
-
-    private void ApplyLaunchResult(LauncherLaunchResult result)
-    {
-        if (result.DryRunText is not null)
-            DryRunText = result.DryRunText;
-        StatusText = result.StatusText;
+        LauncherLaunchResultWorkflow.Apply(
+            result.DryRunText,
+            result.StatusText,
+            status => StatusText = status,
+            dryRun => DryRunText = dryRun);
     }
 
     private bool CanOperateOnSelection()
