@@ -733,21 +733,29 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private string? ReloadPresets(string? preferredPresetId)
     {
-        var result = LauncherPresetReload.Load(_presetPath, Presets, preferredPresetId);
-        _presetFile = result.PresetFile;
-        SelectedPreset = result.SelectedPreset;
-        PresetCount = result.PresetCount;
-        NotifyPresetManagementCommands();
-        return result.ErrorMessage;
+        return LauncherPresetStateWorkflow.Reload(
+            _presetPath,
+            Presets,
+            preferredPresetId,
+            ApplyPresetState,
+            NotifyPresetManagementCommands);
     }
 
     private void ApplyPresetFileFromSnapshot(LauncherPresetFile presetFile, string? preferredPresetId)
     {
-        var selectedPreset = LauncherPresetCatalog.Apply(presetFile, Presets, preferredPresetId);
-        _presetFile = presetFile;
-        SelectedPreset = selectedPreset;
-        PresetCount = Presets.Count;
-        NotifyPresetManagementCommands();
+        LauncherPresetStateWorkflow.ApplySnapshot(
+            presetFile,
+            Presets,
+            preferredPresetId,
+            ApplyPresetState,
+            NotifyPresetManagementCommands);
+    }
+
+    private void ApplyPresetState(LauncherPresetState state)
+    {
+        _presetFile = state.PresetFile;
+        SelectedPreset = state.SelectedPreset;
+        PresetCount = state.PresetCount;
     }
 
     private bool SavePresets()
