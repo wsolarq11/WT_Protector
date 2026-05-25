@@ -88,8 +88,7 @@ public sealed partial class MainWindow : Window
 
         var (item, card) = resolved.Value;
 
-        var data = new DataTransfer();
-        data.Add(DataTransferItem.CreateText(item.Id));
+        var data = MainWindowDragTextTransfer.CreateEntryIdTransfer(item.Id);
         e.Handled = true;
         _activeDragEntryId = item.Id;
         var viewModel = (MainWindowViewModel)DataContext;
@@ -122,7 +121,7 @@ public sealed partial class MainWindow : Window
         var resolved = ResolveEntryCardFromDragEvent(e);
         var canDrop = viewModel.IsCustomSortMode
             && resolved is not null
-            && e.DataTransfer.Formats.Contains(DataFormat.Text);
+            && MainWindowDragTextTransfer.CanAcceptEntryId(e.DataTransfer);
         e.DragEffects = canDrop
             ? DragDropEffects.Move
             : DragDropEffects.None;
@@ -145,11 +144,11 @@ public sealed partial class MainWindow : Window
         var resolved = ResolveEntryCardFromDragEvent(e);
         if (resolved is null)
             return;
-        if (!e.DataTransfer.Formats.Contains(DataFormat.Text))
+        if (!MainWindowDragTextTransfer.CanAcceptEntryId(e.DataTransfer))
             return;
 
-        var draggedId = e.DataTransfer.TryGetText();
-        if (string.IsNullOrWhiteSpace(draggedId))
+        var draggedId = MainWindowDragTextTransfer.TryGetEntryId(e.DataTransfer);
+        if (draggedId is null)
             return;
 
         _activeDragEntryId = draggedId;
