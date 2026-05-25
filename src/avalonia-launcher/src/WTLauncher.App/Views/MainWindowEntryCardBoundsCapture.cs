@@ -1,0 +1,47 @@
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.VisualTree;
+using WTLauncher.App.ViewModels;
+
+namespace WTLauncher.App.Views;
+
+public static class MainWindowEntryCardBoundsCapture
+{
+    public static Dictionary<string, Rect> Capture(Control root, Visual relativeTo)
+    {
+        ArgumentNullException.ThrowIfNull(root);
+        ArgumentNullException.ThrowIfNull(relativeTo);
+
+        return Capture(
+            root.GetVisualDescendants().OfType<Border>(),
+            card => card.TranslatePoint(new Point(0, 0), relativeTo),
+            card => card.Bounds.Size);
+    }
+
+    public static Dictionary<string, Rect> Capture(
+        IEnumerable<Border> cards,
+        Func<Border, Point?> translateOrigin,
+        Func<Border, Size> readSize)
+    {
+        ArgumentNullException.ThrowIfNull(cards);
+        ArgumentNullException.ThrowIfNull(translateOrigin);
+        ArgumentNullException.ThrowIfNull(readSize);
+
+        var bounds = new Dictionary<string, Rect>(StringComparer.Ordinal);
+        foreach (var card in cards)
+        {
+            if (!card.Classes.Contains("card"))
+                continue;
+            if (card.DataContext is not LauncherEntryViewModel entry)
+                continue;
+
+            var origin = translateOrigin(card);
+            if (origin is null)
+                continue;
+
+            bounds[entry.Id] = new Rect(origin.Value, readSize(card));
+        }
+
+        return bounds;
+    }
+}

@@ -244,26 +244,11 @@ public sealed partial class MainWindow : Window
 
     private Dictionary<string, Rect> CaptureEntryCardBounds()
     {
-        var bounds = new Dictionary<string, Rect>(StringComparer.Ordinal);
         var root = GetActiveEntriesRoot();
         if (root is null)
-            return bounds;
+            return [];
 
-        foreach (var card in root.GetVisualDescendants().OfType<Border>())
-        {
-            if (!card.Classes.Contains("card"))
-                continue;
-            if (card.DataContext is not LauncherEntryViewModel entry)
-                continue;
-
-            var origin = card.TranslatePoint(new Point(0, 0), this);
-            if (origin is null)
-                continue;
-
-            bounds[entry.Id] = new Rect(origin.Value, card.Bounds.Size);
-        }
-
-        return bounds;
+        return MainWindowEntryCardBoundsCapture.Capture(root, this);
     }
 
     private void ScheduleReorderAnimation(Dictionary<string, Rect> before)
