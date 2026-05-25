@@ -171,12 +171,9 @@ public sealed partial class MainWindow : Window
 
     private (LauncherEntryViewModel Entry, Control Card)? ResolveEntryCardFromDragEvent(DragEventArgs e)
     {
-        var direct = MainWindowEntryCardResolver.ResolveFromSource(e.Source);
-        if (direct is not null)
-            return direct;
-
-        var visual = this.GetVisualAt(e.GetPosition(this));
-        return MainWindowEntryCardResolver.ResolveFromSource(visual);
+        return MainWindowDragEventCardResolver.Resolve(
+            e.Source,
+            () => this.GetVisualAt(e.GetPosition(this)));
     }
 
     private void ShowDragGhost(LauncherEntryViewModel item, Control sourceCard, Point position)
