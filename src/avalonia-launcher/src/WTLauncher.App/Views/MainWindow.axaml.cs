@@ -119,21 +119,21 @@ public sealed partial class MainWindow : Window
             UpdateDragGhostPosition(e.GetPosition(this));
 
         var resolved = ResolveEntryCardFromDragEvent(e);
-        var canDrop = viewModel.IsCustomSortMode
-            && resolved is not null
-            && MainWindowDragTextTransfer.CanAcceptEntryId(e.DataTransfer);
-        e.DragEffects = canDrop
-            ? DragDropEffects.Move
-            : DragDropEffects.None;
-        e.Handled = canDrop;
+        var decision = MainWindowDragDropDecision.EvaluateDragOver(
+            viewModel.IsCustomSortMode,
+            resolved is not null,
+            e.DataTransfer,
+            _activeDragEntryId);
+        e.DragEffects = decision.Effects;
+        e.Handled = decision.Handled;
 
-        if (!canDrop || _activeDragEntryId is null)
+        if (decision.ShouldClearHover)
         {
             viewModel.ClearDragHover();
             return;
         }
 
-        ApplyDragReorderPreview(e, viewModel, _activeDragEntryId, resolved!.Value);
+        ApplyDragReorderPreview(e, viewModel, decision.PreviewDraggedEntryId!, resolved!.Value);
     }
 
     private void OnEntryDrop(object? sender, DragEventArgs e)
@@ -142,19 +142,14 @@ public sealed partial class MainWindow : Window
             return;
 
         var resolved = ResolveEntryCardFromDragEvent(e);
-        if (resolved is null)
-            return;
-        if (!MainWindowDragTextTransfer.CanAcceptEntryId(e.DataTransfer))
-            return;
-
-        var draggedId = MainWindowDragTextTransfer.TryGetEntryId(e.DataTransfer);
-        if (draggedId is null)
+        var decision = MainWindowDragDropDecision.EvaluateDrop(resolved is not null, e.DataTransfer);
+        if (!decision.Handled)
             return;
 
-        _activeDragEntryId = draggedId;
-        ApplyDragReorderPreview(e, viewModel, draggedId, resolved.Value);
-        e.DragEffects = DragDropEffects.Move;
-        e.Handled = true;
+        _activeDragEntryId = decision.DraggedEntryId;
+        ApplyDragReorderPreview(e, viewModel, decision.DraggedEntryId!, resolved!.Value);
+        e.DragEffects = decision.Effects;
+        e.Handled = decision.Handled;
     }
 
     private void ApplyDragReorderPreview(
