@@ -82,7 +82,7 @@ public sealed partial class MainWindow : Window
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             return;
 
-        var resolved = ResolveEntryCardFromSource(sender);
+        var resolved = MainWindowEntryCardResolver.ResolveFromSource(sender);
         if (resolved is null)
             return;
 
@@ -180,29 +180,12 @@ public sealed partial class MainWindow : Window
 
     private (LauncherEntryViewModel Entry, Control Card)? ResolveEntryCardFromDragEvent(DragEventArgs e)
     {
-        var direct = ResolveEntryCardFromSource(e.Source);
+        var direct = MainWindowEntryCardResolver.ResolveFromSource(e.Source);
         if (direct is not null)
             return direct;
 
         var visual = this.GetVisualAt(e.GetPosition(this));
-        return ResolveEntryCardFromSource(visual);
-    }
-
-    private static (LauncherEntryViewModel Entry, Control Card)? ResolveEntryCardFromSource(object? source)
-    {
-        if (source is StyledElement { DataContext: LauncherEntryViewModel directEntry } && source is Control directControl && directControl.Classes.Contains("card"))
-            return (directEntry, directControl);
-
-        if (source is not Visual visual)
-            return null;
-
-        foreach (var ancestor in visual.GetSelfAndVisualAncestors())
-        {
-            if (ancestor is Control { DataContext: LauncherEntryViewModel entry } control && control.Classes.Contains("card"))
-                return (entry, control);
-        }
-
-        return null;
+        return MainWindowEntryCardResolver.ResolveFromSource(visual);
     }
 
     private void ShowDragGhost(LauncherEntryViewModel item, Control sourceCard, Point position)
