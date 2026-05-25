@@ -23,6 +23,7 @@ public sealed class ConfirmBatchLaunchWindow : Window
         {
             Content = "取消",
             MinWidth = 96,
+            IsCancel = true,
         };
         cancel.Click += (_, _) => Close(false);
 
@@ -30,6 +31,7 @@ public sealed class ConfirmBatchLaunchWindow : Window
         {
             Content = "确认启动",
             MinWidth = 116,
+            IsDefault = true,
         };
         launch.Click += (_, _) => Close(true);
 

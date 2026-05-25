@@ -47,6 +47,7 @@ public sealed class EntryDetailsWindow : Window
         {
             Content = "取消",
             Padding = new Thickness(16, 8),
+            IsCancel = true,
         };
         cancel.Click += (_, _) => Close((EntryDraft?)null);
 
@@ -57,6 +58,7 @@ public sealed class EntryDetailsWindow : Window
             Background = Brush.Parse("#2563EB"),
             Foreground = Brushes.White,
             FontWeight = FontWeight.SemiBold,
+            IsDefault = true,
         };
         save.Click += (_, _) => Submit();
 

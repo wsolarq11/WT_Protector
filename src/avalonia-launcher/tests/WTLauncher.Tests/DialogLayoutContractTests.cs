@@ -25,6 +25,52 @@ public sealed class DialogLayoutContractTests
         Assert.Contains(5, placedRows);
     }
 
+    [Theory]
+    [InlineData("ConfirmBatchLaunchWindow.cs")]
+    [InlineData("ConfirmEntryDeleteWindow.cs")]
+    [InlineData("ConfirmLaunchWindow.cs")]
+    [InlineData("ConfirmPresetDeleteWindow.cs")]
+    [InlineData("EntryDetailsWindow.cs")]
+    [InlineData("PresetDetailsWindow.cs")]
+    public void DialogCancelButtonsBindEscapeToCancel(string fileName)
+    {
+        var source = File.ReadAllText(GetViewPath(fileName));
+
+        Assert.Contains("IsCancel = true", ButtonBlock(source, "cancel"));
+    }
+
+    [Theory]
+    [InlineData("ConfirmBatchLaunchWindow.cs", "launch")]
+    [InlineData("ConfirmLaunchWindow.cs", "launch")]
+    [InlineData("EntryDetailsWindow.cs", "save")]
+    [InlineData("PresetDetailsWindow.cs", "save")]
+    public void NonDestructiveDialogPrimaryActionsBindEnterAsDefault(string fileName, string buttonName)
+    {
+        var source = File.ReadAllText(GetViewPath(fileName));
+
+        Assert.Contains("IsDefault = true", ButtonBlock(source, buttonName));
+    }
+
+    [Theory]
+    [InlineData("ConfirmEntryDeleteWindow.cs")]
+    [InlineData("ConfirmPresetDeleteWindow.cs")]
+    public void DestructiveDeleteDialogsDefaultEnterToCancel(string fileName)
+    {
+        var source = File.ReadAllText(GetViewPath(fileName));
+
+        Assert.Contains("IsDefault = true", ButtonBlock(source, "cancel"));
+        Assert.DoesNotContain("IsDefault = true", ButtonBlock(source, "delete"));
+    }
+
+    private static string ButtonBlock(string source, string buttonName)
+    {
+        var start = source.IndexOf($"var {buttonName} = new Button", StringComparison.Ordinal);
+        Assert.True(start >= 0, $"Expected {buttonName} button declaration.");
+        var end = source.IndexOf("};", start, StringComparison.Ordinal);
+        Assert.True(end > start, $"Expected {buttonName} button initializer to end.");
+        return source[start..(end + 2)];
+    }
+
     private static string GetViewPath(string fileName)
     {
         return Path.Combine(

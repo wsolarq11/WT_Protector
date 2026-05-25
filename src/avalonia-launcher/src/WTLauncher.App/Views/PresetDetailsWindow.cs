@@ -46,6 +46,7 @@ public sealed class PresetDetailsWindow : Window
         {
             Content = "取消",
             Padding = new Thickness(16, 8),
+            IsCancel = true,
         };
         cancel.Click += (_, _) => Close((PresetDraft?)null);
 
@@ -56,6 +57,7 @@ public sealed class PresetDetailsWindow : Window
             Background = Brush.Parse("#2563EB"),
             Foreground = Brushes.White,
             FontWeight = FontWeight.SemiBold,
+            IsDefault = true,
         };
         save.Click += (_, _) =>
         {

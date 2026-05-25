@@ -22,6 +22,8 @@ public sealed class ConfirmEntryDeleteWindow : Window
         {
             Content = "取消",
             Padding = new Thickness(16, 8),
+            IsDefault = true,
+            IsCancel = true,
         };
         cancel.Click += (_, _) => Close(false);
 
