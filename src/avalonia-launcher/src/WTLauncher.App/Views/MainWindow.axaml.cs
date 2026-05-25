@@ -16,8 +16,8 @@ public sealed partial class MainWindow : Window
     private LauncherSettings? _settings;
     private OverlayLayer? _overlayLayer;
     private Border? _dragGhost;
+    private readonly MainWindowReorderAnimationScheduler _reorderAnimationScheduler = new();
     private string? _activeDragEntryId;
-    private Dictionary<string, Rect>? _pendingReorderAnimationSnapshot;
 
     public MainWindow()
     {
@@ -252,12 +252,14 @@ public sealed partial class MainWindow : Window
     private void ScheduleReorderAnimation(Dictionary<string, Rect> before)
     {
         var root = GetActiveEntriesRoot();
-        if (before.Count == 0 || root is null)
+        if (root is null)
             return;
 
-        _pendingReorderAnimationSnapshot = before;
-        root.LayoutUpdated -= OnEntriesLayoutUpdated;
-        root.LayoutUpdated += OnEntriesLayoutUpdated;
+        _reorderAnimationScheduler.Schedule(
+            before,
+            OnEntriesLayoutUpdated,
+            handler => root.LayoutUpdated -= handler,
+            handler => root.LayoutUpdated += handler);
     }
 
     private void OnEntriesLayoutUpdated(object? sender, EventArgs e)
@@ -266,10 +268,9 @@ public sealed partial class MainWindow : Window
         if (root is null)
             return;
 
-        root.LayoutUpdated -= OnEntriesLayoutUpdated;
-
-        var before = _pendingReorderAnimationSnapshot;
-        _pendingReorderAnimationSnapshot = null;
+        var before = _reorderAnimationScheduler.Consume(
+            OnEntriesLayoutUpdated,
+            handler => root.LayoutUpdated -= handler);
         if (before is null || before.Count == 0)
             return;
 

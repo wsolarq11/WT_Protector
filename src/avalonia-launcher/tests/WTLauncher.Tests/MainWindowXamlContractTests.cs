@@ -60,13 +60,15 @@ public sealed class MainWindowXamlContractTests
         Assert.Contains("if (viewModel.PreviewMoveEntry", codeBehind);
         AssertInOrder(codeBehind, "CaptureEntryCardBounds()", "ScheduleReorderAnimation(before)");
         Assert.DoesNotContain("_pendingReorderAnimationAttached", codeBehind);
+        Assert.DoesNotContain("_pendingReorderAnimationSnapshot", codeBehind);
         AssertInOrder(
             codeBehind,
-            "_pendingReorderAnimationSnapshot = before;",
-            "root.LayoutUpdated -= OnEntriesLayoutUpdated;",
-            "root.LayoutUpdated += OnEntriesLayoutUpdated;");
-        Assert.Equal(1, Count(codeBehind, "root.LayoutUpdated += OnEntriesLayoutUpdated;"));
-        Assert.Equal(2, Count(codeBehind, "root.LayoutUpdated -= OnEntriesLayoutUpdated;"));
+            "_reorderAnimationScheduler.Schedule(",
+            "handler => root.LayoutUpdated -= handler",
+            "handler => root.LayoutUpdated += handler");
+        Assert.Contains("_reorderAnimationScheduler.Consume(", codeBehind);
+        Assert.Equal(1, Count(codeBehind, "handler => root.LayoutUpdated += handler"));
+        Assert.Equal(2, Count(codeBehind, "handler => root.LayoutUpdated -= handler"));
         Assert.Contains("FLIP: jump back without transition", codeBehind);
     }
 
