@@ -760,17 +760,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private bool SavePresets()
     {
         var result = LauncherPersistenceStatus.SavePresets(_presetFile, _presetPath);
-        if (!result.Succeeded && result.StatusText is not null)
-            StatusText = result.StatusText;
-        return result.Succeeded;
+        return LauncherPersistenceResultWorkflow.Apply(result, status => StatusText = status);
     }
 
     private bool SaveConfig()
     {
         var result = LauncherPersistenceStatus.SaveConfig(Entries.Select(entry => entry.Entry), _configPath);
-        if (!result.Succeeded && result.StatusText is not null)
-            StatusText = result.StatusText;
-        return result.Succeeded;
+        return LauncherPersistenceResultWorkflow.Apply(result, status => StatusText = status);
     }
 
 }
