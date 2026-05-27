@@ -16,6 +16,12 @@ public sealed record LaunchEntry
     [JsonPropertyName("command")]
     public string Command { get; set; } = "";
 
+    /// <summary>
+    /// Legacy compatibility field. Runtime launch confirmation is controlled by
+    /// the global <c>requireConfirmationForLaunches</c> setting in settings.json.
+    /// This property is retained only for JSON backward compatibility and is not
+    /// used by <see cref="LaunchArgumentBuilder.Build"/>.
+    /// </summary>
     [JsonPropertyName("confirm")]
     public bool Confirm { get; set; } = true;
 

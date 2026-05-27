@@ -1,0 +1,15 @@
+# Normalize repository text as LF on every platform; Windows tools in this repo
+# already run correctly with LF and this avoids CRLF-only dirty diffs.
+* text=auto eol=lf
+
+# Binary/project assets.
+*.db binary
+*.exe binary
+*.dll binary
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+
+.snow/codebase/embeddings.db binary

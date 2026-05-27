@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "assetRoot": ".snow/",
+  "protected": true,
+  "policy": ".snow/ is a source-tracked protected project asset. Do not edit, delete, regenerate, move, normalize, or replace it without explicit user approval and a manifest refresh.",
+  "trackedFiles": [
+    {
+      "path": ".snow/settings.json",
+      "bytes": 474,
+      "sha256": "2C09AA2137102113CA717B3D7F668B328346AF651697F4CE2AC5300224B854FA"
+    },
+    {
+      "path": ".snow/codebase/embeddings.db",
+      "bytes": 24576,
+      "sha256": "78FE728FE8224E3F62A69E05434FEA19FBA8F3B8DE4BB6F799BA89086BDAFB2D"
+    }
+  ],
+  "notes": [
+    ".snow/hooks/ and .snow/notebook/ are empty local directories at manifest creation time; Git does not track empty directories.",
+    "Only the files listed in trackedFiles are allowed under .snow/ by the root verifier."
+  ]
+}

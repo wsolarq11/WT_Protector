@@ -19,7 +19,7 @@ public sealed class LauncherPresetViewModel
 
     public bool IsLocked => Preset.Locked;
 
-    public string Label => IsLocked ? $"{Name} 🔒 ({EntryIds.Count})" : $"{Name} ({EntryIds.Count})";
+    public string Label => IsLocked ? $"{Name} (系统组, {EntryIds.Count}项)" : $"{Name} ({EntryIds.Count}项)";
 
     public override string ToString()
     {

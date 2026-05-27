@@ -6,8 +6,8 @@ public static class MainWindowLayoutMetrics
 {
     private const double HorizontalChromeWidth = 48;
     private const double VerticalChromeHeight = 270;
-    private const double MinimumCardsWidth = 220;
-    private const double MinimumCardsHeight = 140;
+    public const double MinimumCardsWidth = 220;
+    public const double MinimumCardsHeight = 140;
 
     public static Size CalculateCardsAvailableSize(Size windowSize)
     {

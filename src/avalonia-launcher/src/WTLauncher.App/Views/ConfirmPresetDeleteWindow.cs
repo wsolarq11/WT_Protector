@@ -24,35 +24,37 @@ public sealed class ConfirmPresetDeleteWindow : Window
         var delete = LauncherDialogButtons.Destructive("删除启动组");
         delete.Click += (_, _) => Close(true);
 
+        var grid = new Grid
+        {
+            RowDefinitions = new RowDefinitions("Auto,Auto,Auto"),
+            RowSpacing = 12,
+            Children =
+            {
+                new TextBlock
+                {
+                    Text = "删除这个启动组？",
+                    FontSize = 22,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = Brush.Parse("#0F172A"),
+                },
+                new TextBlock
+                {
+                    Text = $"\"{preset.Name}\" 只会删除命名组，不会删除任何启动项。删除后可重新保存。",
+                    Foreground = Brush.Parse("#475569"),
+                    TextWrapping = TextWrapping.Wrap,
+                }.WithGridRow(1),
+                new TextBlock
+                {
+                    Text = $"包含 {preset.EntryIds.Count} 个启动项。",
+                    Foreground = Brush.Parse("#64748B"),
+                }.WithGridRow(2),
+            },
+        };
+
         Content = new Border
         {
             Padding = new Thickness(24),
-            Child = new Grid
-            {
-                RowDefinitions = new RowDefinitions("Auto,Auto,Auto"),
-                RowSpacing = 12,
-                Children =
-                {
-                    new TextBlock
-                    {
-                        Text = "删除这个启动组？",
-                        FontSize = 22,
-                        FontWeight = FontWeight.SemiBold,
-                        Foreground = Brush.Parse("#0F172A"),
-                    },
-                    Place(new TextBlock
-                    {
-                        Text = $"“{preset.Name}” 只会删除命名组，不会删除任何启动项。删除后可重新保存。",
-                        Foreground = Brush.Parse("#475569"),
-                        TextWrapping = TextWrapping.Wrap,
-                    }, 1),
-                    Place(new TextBlock
-                    {
-                        Text = $"包含 {preset.EntryIds.Count} 个启动项。",
-                        Foreground = Brush.Parse("#64748B"),
-                    }, 2),
-                },
-            },
+            Child = grid,
         };
 
         var footer = new StackPanel
@@ -64,14 +66,9 @@ public sealed class ConfirmPresetDeleteWindow : Window
             Children = { cancel, delete },
         };
         Grid.SetRow(footer, 3);
-        ((Grid)((Border)Content).Child!).RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-        ((Grid)((Border)Content).Child!).Children.Add(footer);
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        grid.Children.Add(footer);
     }
 
-    private static T Place<T>(T control, int row)
-        where T : Control
-    {
-        Grid.SetRow(control, row);
-        return control;
-    }
+
 }

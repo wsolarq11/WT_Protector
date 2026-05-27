@@ -37,7 +37,14 @@ public static class LauncherSettingsStore
             Save(settings, settingsPath);
             return true;
         }
-        catch
+        // Window-bounds save failures are always safe to ignore: the in-memory
+        // settings already carry the new values, and the next successful save
+        // (triggered by any other settings change) will persist them.
+        // Catching Exception rather than a narrower type because write failures
+        // can surface as IOException, UnauthorizedAccessException, or others
+        // depending on the underlying cause (disk full, permissions, path-is-
+        // directory, etc.).
+        catch (Exception)
         {
             settings.Window.Width = previousWidth;
             settings.Window.Height = previousHeight;

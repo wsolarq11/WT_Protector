@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Avalonia;
+using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 

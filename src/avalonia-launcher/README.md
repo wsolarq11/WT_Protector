@@ -1,4 +1,3 @@
-
 # Avalonia Launcher Mainline
 
 This is the active source line for WT Launcher. It was promoted from the former spike after the WinForms executable/source line was retired into `retired/design/winforms-launcher.md`.
@@ -39,3 +38,54 @@ Verification publish output is ignored under `artifacts/verify-publish/win-x64/`
 ## Current acceptance question
 
 This line has replaced the WinForms source tree as the mainline. Further work should improve the Avalonia UX directly while preserving the root `tools/verify.ps1` gate and the portable config contract.
+
+## Architecture layers
+
+The codebase is organized in five logical layers. Each layer depends only on the layers below it.
+
+### Layer 0 — Pure data & contracts (Core)
+
+`src/WTLauncher.Core/`
+
+- `LaunchEntry`, `LaunchPlan`, `LauncherPreset` — immutable-shaped records
+- `LaunchArgumentBuilder` — `wt.exe` argument construction with Windows-style quoting
+- `LauncherJson` — atomic temp-file + `.bak` JSON persistence
+- `LauncherEntrySearch`, `LauncherEntryOrder`, `LauncherEntryLayoutCalculator` — pure sort/filter/layout
+- `LauncherEntrySorter`, `LauncherVisibleEntryCollection` — generic sort/filter consuming `IHasLaunchEntry`
+
+### Layer 1 — Mutation workflows (ViewModels, stateless)
+
+`src/WTLauncher.App/ViewModels/LauncherEntryWorkflow.cs` etc.
+
+- Stateless static methods: `AddEntry`, `EditEntry`, `DeleteEntry` operate on collections
+- No MVVM dependency — callable from tests without constructing a ViewModel tree
+
+### Layer 2 — Persistence + rollback (ViewModels)
+
+`src/WTLauncher.App/ViewModels/LauncherEntryMutationPersistence.cs` etc.
+
+- Save-then-rollback pattern: snapshot-before → mutate → save all → restore on failure
+- `LauncherEntryMutationSnapshot`, `LauncherEntryMutationRestore`, `LauncherEntryPersistenceRollback`
+- Coordinates config.json + presets.json + settings.json as an atomic unit
+
+### Layer 3 — ViewModel orchestration
+
+`src/WTLauncher.App/ViewModels/MainWindowViewModel.cs`
+
+- The single writable owner of launcher UI state
+- Delegates to Layer 1–2 through static workflows
+- Injects dialog confirmation `Func<>` delegates through the `MainWindow` constructor
+
+### Layer 4 — Views & drag-drop
+
+`src/WTLauncher.App/Views/`
+
+- XAML with three view modes: Cards / Details / Names
+- Drag reorder: `MainWindowDragGhostFactory` → `MainWindowReorderFlipAnimation` (FLIP-based)
+- `MainWindowCardContextMenu`, `MainWindowClosingWorkflow`
+
+### Key invariants
+
+- One source per state: view modes, sort mode, drag session, card density each have a single owner
+- Core never references Avalonia or CommunityToolkit.Mvvm
+- All public workflow methods accept `Action<>` / `Func<>` callbacks instead of depending on shared mutable state

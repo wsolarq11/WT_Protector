@@ -85,16 +85,16 @@ public sealed class PresetDetailsWindow : Window
                         FontWeight = FontWeight.SemiBold,
                         Foreground = Brush.Parse("#0F172A"),
                     },
-                    Place(summary, 1),
-                    Place(new TextBlock
+                    summary.WithGridRow(1),
+                    new TextBlock
                     {
                         Text = "名称",
                         FontWeight = FontWeight.SemiBold,
                         Foreground = Brush.Parse("#334155"),
-                    }, 2),
-                    Place(_nameBox, 3),
-                    Place(_errorText, 4),
-                    Place(footer, 5),
+                    }.WithGridRow(2),
+                    _nameBox.WithGridRow(3),
+                    _errorText.WithGridRow(4),
+                    footer.WithGridRow(5),
                 },
             },
         };
@@ -106,10 +106,5 @@ public sealed class PresetDetailsWindow : Window
         };
     }
 
-    private static T Place<T>(T control, int row)
-        where T : Control
-    {
-        Grid.SetRow(control, row);
-        return control;
-    }
+
 }

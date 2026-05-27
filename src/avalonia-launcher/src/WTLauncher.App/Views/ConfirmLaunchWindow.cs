@@ -59,23 +59,18 @@ public sealed class ConfirmLaunchWindow : Window
             Children =
             {
                 title,
-                Place(warning, 1),
-                Place(command, 2),
-                Place(new StackPanel
+                warning.WithGridRow(1),
+                command.WithGridRow(2),
+                new StackPanel
                 {
                     Orientation = Orientation.Horizontal,
                     HorizontalAlignment = HorizontalAlignment.Right,
                     Spacing = 10,
                     Children = { cancel, launch },
-                }, 3),
+                }.WithGridRow(3),
             },
         };
     }
 
-    private static T Place<T>(T control, int row)
-        where T : Control
-    {
-        Grid.SetRow(control, row);
-        return control;
-    }
+
 }

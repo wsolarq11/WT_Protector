@@ -16,7 +16,7 @@ public sealed class DialogLayoutContractTests
         var declaredRowCount = rowDefinitionsMatch.Groups["rows"].Value
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Length;
-        var placedRows = Regex.Matches(source, "Place\\([^;]*?,\\s*(?<row>\\d+)\\)", RegexOptions.Singleline)
+        var placedRows = Regex.Matches(source, "WithGridRow\\((?<row>\\d+)\\)", RegexOptions.Singleline)
             .Select(match => int.Parse(match.Groups["row"].Value))
             .ToArray();
 

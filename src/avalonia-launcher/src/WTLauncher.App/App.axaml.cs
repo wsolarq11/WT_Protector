@@ -25,13 +25,11 @@ public sealed partial class App : Application
             var settingsPath = LauncherConfigStore.ResolveSettingsPath(configPath);
             var settings = LauncherSettingsStore.Load(settingsPath);
             var viewModel = new MainWindowViewModel(configPath, settingsPath, settings, new LauncherProcess());
-            var mainWindow = new MainWindow
+            var mainWindow = new MainWindow(viewModel, settingsPath, settings)
             {
-                DataContext = viewModel,
                 Width = settings.Window.Width,
                 Height = settings.Window.Height,
             };
-            mainWindow.Attach(viewModel, settingsPath, settings);
             desktop.MainWindow = mainWindow;
         }
 
