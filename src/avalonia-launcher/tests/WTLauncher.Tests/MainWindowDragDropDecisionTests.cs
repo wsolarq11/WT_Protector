@@ -89,6 +89,8 @@ public sealed class MainWindowDragDropDecisionTests
 
     private static DataTransfer EntryIdTransfer(string entryId)
     {
-        return MainWindowDragTextTransfer.CreateEntryIdTransfer(entryId);
+        var transfer = new DataTransfer();
+        transfer.Add(DataTransferItem.CreateText(entryId));
+        return transfer;
     }
 }

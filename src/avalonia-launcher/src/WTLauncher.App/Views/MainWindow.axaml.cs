@@ -82,7 +82,7 @@ public sealed partial class MainWindow : Window
 
         var (item, card) = resolved.Value;
 
-        var data = MainWindowDragTextTransfer.CreateEntryIdTransfer(item.Id);
+        var data = CreateEntryIdTransfer(item.Id);
         e.Handled = true;
         _activeDragEntryId = item.Id;
         var viewModel = (MainWindowViewModel)DataContext;
@@ -98,6 +98,13 @@ public sealed partial class MainWindow : Window
                 viewModel.CancelDragReorder();
         }
         _activeDragEntryId = null;
+    }
+
+    private static DataTransfer CreateEntryIdTransfer(string entryId)
+    {
+        var transfer = new DataTransfer();
+        transfer.Add(DataTransferItem.CreateText(entryId));
+        return transfer;
     }
 
     private void OnEntryDragOver(object? sender, DragEventArgs e)
