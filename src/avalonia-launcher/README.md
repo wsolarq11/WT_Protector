@@ -57,7 +57,7 @@ The codebase is organized in five logical layers. Each layer depends only on the
 `src/WTLauncher.App/ViewModels/MainWindowViewModel.cs`
 
 - Entry add/edit/delete command handlers own the short validation → mutate → save sequence.
-- Reusable rules stay in Core helpers such as `LauncherEntryDrafts` and `LauncherEntryReferences`; avoid a second ViewModel workflow when there is only one caller.
+- Shared rules stay in narrow helpers such as `LauncherEntryDrafts` and `LauncherEntryReferences`; avoid a second ViewModel workflow when there is only one caller.
 
 ### Layer 2 — Persistence + rollback (ViewModels)
 
