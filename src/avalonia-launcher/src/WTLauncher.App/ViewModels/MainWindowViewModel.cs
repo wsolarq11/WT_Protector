@@ -239,12 +239,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
         _presetFile = result.PresetFile;
         SelectedPreset = result.SelectedPreset;
         PresetCount = result.PresetCount;
-        LauncherSelectionStateWorkflow.Refresh(
-            SelectedPreset,
-            PresetCount,
-            Entries,
-            ApplyPresetSelectionState,
-            NotifySelectionCommands);
+        RefreshSelectionState();
         NotifyPresetManagementCommands();
         ApplyFilter();
         RefreshEntryLayoutPresentation();
@@ -454,12 +449,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
             status => StatusText = status,
             () =>
             {
-                LauncherSelectionStateWorkflow.Refresh(
-                    SelectedPreset,
-                    PresetCount,
-                    Entries,
-                    ApplyPresetSelectionState,
-                    NotifySelectionCommands);
+                RefreshSelectionState();
                 ApplyFilter();
             });
     }
@@ -650,12 +640,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     private void RefreshSelectionState()
     {
-        LauncherSelectionStateWorkflow.Refresh(
-            SelectedPreset,
-            PresetCount,
-            Entries,
-            ApplyPresetSelectionState,
-            NotifySelectionCommands);
+        ApplyPresetSelectionState(LauncherPresetSelectionRules.BuildState(SelectedPreset, PresetCount, Entries));
+        NotifySelectionCommands();
     }
 
     private void NotifySelectionCommands()
