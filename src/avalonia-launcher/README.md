@@ -50,8 +50,7 @@ The codebase is organized in five logical layers. Each layer depends only on the
 - `LaunchEntry`, `LaunchPlan`, `LauncherPreset` — immutable-shaped records
 - `LaunchArgumentBuilder` — `wt.exe` argument construction with Windows-style quoting
 - `LauncherJson` — atomic temp-file + `.bak` JSON persistence
-- `LauncherEntrySearch`, `LauncherEntryOrder`, `LauncherEntryLayoutCalculator` — pure sort/filter/layout
-- `LauncherEntrySearch` — pure entry filtering
+- `LauncherEntryOrder`, `LauncherEntryLayoutCalculator` — pure ordering/layout rules reused outside one ViewModel branch
 
 ### Layer 1 — Command-local mutations (ViewModels)
 

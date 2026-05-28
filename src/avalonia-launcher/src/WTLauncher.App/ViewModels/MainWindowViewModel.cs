@@ -743,7 +743,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
     private void ApplyFilter()
     {
         var source = Entries.ToList();
-        var filtered = source.Where(entry => LauncherEntrySearch.Matches(entry.Entry, FilterText ?? string.Empty));
+        var filterText = (FilterText ?? string.Empty).Trim();
+        var filtered = filterText.Length == 0
+            ? source
+            : source.Where(entry =>
+                entry.Entry.Name.Contains(filterText, StringComparison.OrdinalIgnoreCase)
+                || entry.Entry.Directory.Contains(filterText, StringComparison.OrdinalIgnoreCase)
+                || entry.Entry.Command.Contains(filterText, StringComparison.OrdinalIgnoreCase));
         var sorted = SelectedSortMode?.Id switch
         {
             "updated" => filtered

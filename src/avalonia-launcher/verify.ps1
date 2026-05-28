@@ -44,8 +44,8 @@ if ($isWindowsPlatform) {
     $smokeProcess = Start-Process -FilePath $exe -ArgumentList @('--config', $smokeConfig) -WorkingDirectory $smokeRoot -WindowStyle Hidden -PassThru
     $smokeExitedGracefully = $true
     try {
-        $smokeTitle = $null
-        for ($i = 0; $i -lt 30 -and $null -eq $smokeTitle; $i++) {
+        $smokeTitle = ''
+        for ($i = 0; $i -lt 30 -and $smokeTitle -ne 'WT Launcher'; $i++) {
             Start-Sleep -Milliseconds 100; $smokeProcess.Refresh()
             if ($smokeProcess.HasExited) { throw "Published app exited during GUI smoke with code $($smokeProcess.ExitCode)" }
             if ($smokeProcess.MainWindowHandle -ne 0) { $smokeTitle = $smokeProcess.MainWindowTitle }

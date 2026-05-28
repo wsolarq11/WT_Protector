@@ -146,19 +146,42 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
-    public void FilterTextPersistsPortableSettingsAndNarrowsVisibleEntries()
+    public void FilterTextPersistsPortableSettingsAndFiltersVisibleEntries()
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
         var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
 
-        Assert.Equal(2, viewModel.VisibleCount);
+        Assert.Equal(["one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
 
-        viewModel.FilterText = "codex";
+        viewModel.FilterText = "CODEX";
 
         var visible = Assert.Single(viewModel.VisibleEntries);
         Assert.Equal("one", visible.Entry.Id);
-        Assert.Equal("codex", LauncherSettingsStore.Load(settings).LastFilterText);
+        Assert.Equal("CODEX", LauncherSettingsStore.Load(settings).LastFilterText);
+
+        viewModel.FilterText = "D:\\TWO";
+
+        visible = Assert.Single(viewModel.VisibleEntries);
+        Assert.Equal("two", visible.Entry.Id);
+        Assert.Equal("D:\\TWO", LauncherSettingsStore.Load(settings).LastFilterText);
+
+        viewModel.FilterText = "ONE";
+
+        visible = Assert.Single(viewModel.VisibleEntries);
+        Assert.Equal("one", visible.Entry.Id);
+        Assert.Equal("ONE", LauncherSettingsStore.Load(settings).LastFilterText);
+
+        viewModel.FilterText = "   ";
+
+        Assert.Equal(["one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.Equal("   ", LauncherSettingsStore.Load(settings).LastFilterText);
+
+        viewModel.FilterText = "missing";
+
+        Assert.Empty(viewModel.VisibleEntries);
+        Assert.Equal(0, viewModel.VisibleCount);
+        Assert.Equal("missing", LauncherSettingsStore.Load(settings).LastFilterText);
     }
 
     [Fact]
