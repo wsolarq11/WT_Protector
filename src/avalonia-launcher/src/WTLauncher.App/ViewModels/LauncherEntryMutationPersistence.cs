@@ -35,14 +35,18 @@ public static class LauncherEntryMutationPersistence
         }
 
         beforeSaveSettings();
-        if (!LauncherSettingsPersistence.Save(settings, settingsPath, out var settingsError))
+        try
+        {
+            LauncherSettingsStore.Save(settings, settingsPath);
+        }
+        catch (Exception ex)
         {
             var status = LauncherEntryPersistenceRollback.Restore(
                 rollbackSnapshot,
                 configPath,
                 presetPath,
                 restorePresets: savePresets,
-                settingsError ?? "设置保存失败");
+                currentStatus: $"设置保存失败: {ex.Message}");
             return LauncherEntryMutationPersistenceResult.Failed(status);
         }
 

@@ -14,12 +14,17 @@ public static class LauncherSettingsMutationPersistence
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentNullException.ThrowIfNull(onRollback);
 
-        if (LauncherSettingsPersistence.Save(settings, settingsPath, out var errorMessage))
+        try
+        {
+            LauncherSettingsStore.Save(settings, settingsPath);
             return LauncherSettingsMutationResult.Saved();
-
-        snapshot.Restore(settings);
-        onRollback();
-        return LauncherSettingsMutationResult.Failed(errorMessage ?? "设置保存失败");
+        }
+        catch (Exception ex)
+        {
+            snapshot.Restore(settings);
+            onRollback();
+            return LauncherSettingsMutationResult.Failed($"设置保存失败: {ex.Message}");
+        }
     }
 }
 
