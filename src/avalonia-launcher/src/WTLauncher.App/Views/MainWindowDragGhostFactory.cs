@@ -7,7 +7,7 @@ namespace WTLauncher.App.Views;
 
 public static class MainWindowDragGhostFactory
 {
-    public static MainWindowDragGhostVisual Create(
+    public static (Border Control, double Left, double Top) Create(
         string name,
         string directory,
         double titleFontSize,
@@ -65,8 +65,6 @@ public static class MainWindowDragGhostFactory
             },
         };
 
-        return new MainWindowDragGhostVisual(control, layout.Left, layout.Top);
+        return (control, layout.Left, layout.Top);
     }
 }
-
-public sealed record MainWindowDragGhostVisual(Border Control, double Left, double Top);
