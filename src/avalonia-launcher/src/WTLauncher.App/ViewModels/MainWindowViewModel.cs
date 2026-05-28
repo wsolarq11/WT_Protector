@@ -6,7 +6,7 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
-public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewContext
+public sealed partial class MainWindowViewModel : ObservableObject
 {
     private readonly string _configPath;
     private readonly string _presetPath;

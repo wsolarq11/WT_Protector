@@ -7,13 +7,11 @@ namespace WTLauncher.App.ViewModels;
 public sealed partial class LauncherEntryViewModel : ObservableObject
 {
     private readonly MainWindowViewModel _owner;
-    private readonly IEntryViewContext _viewContext;
 
     public LauncherEntryViewModel(LaunchEntry entry, MainWindowViewModel owner)
     {
         Entry = entry;
         _owner = owner;
-        _viewContext = owner;
         _isSelected = entry.Selected;
     }
 
@@ -66,11 +64,11 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     public bool IsMicroLayout => _layoutDensity is LauncherEntryLayoutDensity.Micro;
 
-    public bool ShowDirectory => !_viewContext.IsNamesViewMode && (_viewContext.IsDetailedListMode || !IsMicroLayout);
+    public bool ShowDirectory => !_owner.IsNamesViewMode && (_owner.IsDetailedListMode || !IsMicroLayout);
 
-    public bool ShowCommand => !_viewContext.IsNamesViewMode && (_viewContext.IsDetailedListMode || !IsCompactLayout);
+    public bool ShowCommand => !_owner.IsNamesViewMode && (_owner.IsDetailedListMode || !IsCompactLayout);
 
-    public double TitleFontSize => _viewContext.IsDetailedListMode || _viewContext.IsNamesViewMode ? 13 : IsMicroLayout ? 15 : IsCompactLayout ? 16 : 18;
+    public double TitleFontSize => _owner.IsDetailedListMode || _owner.IsNamesViewMode ? 13 : IsMicroLayout ? 15 : IsCompactLayout ? 16 : 18;
 
     internal void SetSelectionFromOwner(bool selected)
     {
