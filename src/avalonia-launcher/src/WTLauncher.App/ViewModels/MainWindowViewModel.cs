@@ -137,7 +137,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
                 OnPropertyChanged(nameof(FilterText));
                 ApplyFilter();
             });
-        LauncherSettingsResultWorkflow.Apply(result, status => StatusText = status, ApplyFilter);
+        ApplySettingsResult(result, ApplyFilter);
     }
 
     partial void OnSelectedSortModeChanged(LauncherSortModeViewModel? value)
@@ -158,9 +158,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
                 OnPropertyChanged(nameof(IsCustomSortMode));
                 ApplyFilter();
             });
-        LauncherSettingsResultWorkflow.Apply(
+        ApplySettingsResult(
             result,
-            status => StatusText = status,
             () =>
             {
                 ApplyFilter();
@@ -190,9 +189,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
                 OnPropertyChanged(nameof(IsNamesViewMode));
                 RefreshEntryLayoutPresentation();
             });
-        LauncherSettingsResultWorkflow.Apply(
+        ApplySettingsResult(
             result,
-            status => StatusText = status,
             () => StatusText = $"视图模式: {value.Label}（已保存）");
     }
 
@@ -218,9 +216,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
                 RefreshEntryLayoutPresentation();
                 ApplyFilter();
             });
-        LauncherSettingsResultWorkflow.Apply(
+        ApplySettingsResult(
             result,
-            status => StatusText = status,
             () => StatusText = value
                 ? "启动确认: 所有启动项启动前统一确认"
                 : "启动确认: 所有启动项直接启动");
@@ -550,21 +547,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
             RequireConfirmationForLaunches,
             ConfirmBatchLaunchAsync,
             plan => _launcherProcess.Start(plan)).ConfigureAwait(true);
-        LauncherLaunchResultWorkflow.Apply(
-            result.DryRunText,
-            result.StatusText,
-            status => StatusText = status,
-            dryRun => DryRunText = dryRun);
+        ApplyLaunchResult(result);
     }
 
     internal void ShowDryRun(LauncherEntryViewModel item)
     {
         var result = LauncherLaunchWorkflow.Preview(item.Entry, item.Name, RequireConfirmationForLaunches);
-        LauncherLaunchResultWorkflow.Apply(
-            result.DryRunText,
-            result.StatusText,
-            status => StatusText = status,
-            dryRun => DryRunText = dryRun);
+        ApplyLaunchResult(result);
     }
 
     internal void UpdateSelection(LauncherEntryViewModel item, bool selected)
@@ -585,11 +574,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
             RequireConfirmationForLaunches,
             ConfirmLaunchAsync,
             plan => _launcherProcess.Start(plan)).ConfigureAwait(true);
-        LauncherLaunchResultWorkflow.Apply(
-            result.DryRunText,
-            result.StatusText,
-            status => StatusText = status,
-            dryRun => DryRunText = dryRun);
+        ApplyLaunchResult(result);
     }
 
     private bool CanOperateOnSelection()
@@ -698,10 +683,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     private void ApplyPresetManagementResult(LauncherPresetManagementResult result)
     {
-        LauncherPresetManagementResultWorkflow.Apply(
-            result,
-            presetId => { ReloadPresets(presetId); },
-            status => StatusText = status);
+        if (result.ShouldReload)
+            ReloadPresets(result.NextPresetId);
+        ApplyStatusText(result.StatusText);
     }
 
     private void NotifyPresetManagementCommands()
@@ -742,13 +726,39 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
     private bool SavePresets()
     {
         var result = LauncherPersistenceStatus.SavePresets(_presetFile, _presetPath);
-        return LauncherPersistenceResultWorkflow.Apply(result, status => StatusText = status);
+        return ApplyPersistenceResult(result);
     }
 
     private bool SaveConfig()
     {
         var result = LauncherPersistenceStatus.SaveConfig(Entries.Select(entry => entry.Entry), _configPath);
-        return LauncherPersistenceResultWorkflow.Apply(result, status => StatusText = status);
+        return ApplyPersistenceResult(result);
+    }
+
+    private void ApplySettingsResult(LauncherSettingsMutationResult result, Action onSuccess)
+    {
+        if (!result.Succeeded)
+        {
+            ApplyStatusText(result.StatusText);
+            return;
+        }
+
+        onSuccess();
+    }
+
+    private void ApplyLaunchResult(LauncherLaunchResult result)
+    {
+        if (result.DryRunText is not null)
+            DryRunText = result.DryRunText;
+        StatusText = result.StatusText;
+    }
+
+    private bool ApplyPersistenceResult(LauncherPersistenceStatusResult result)
+    {
+        if (!result.Succeeded)
+            ApplyStatusText(result.StatusText);
+
+        return result.Succeeded;
     }
 
 }
