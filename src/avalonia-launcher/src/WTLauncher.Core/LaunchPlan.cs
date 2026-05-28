@@ -5,4 +5,7 @@ public sealed record LaunchPlan(
     string Arguments,
     string WorkingDirectory,
     string Command,
-    bool RequiresConfirmation);
+    bool RequiresConfirmation)
+{
+    public string CommandLine => $"{Executable} {Arguments}";
+}

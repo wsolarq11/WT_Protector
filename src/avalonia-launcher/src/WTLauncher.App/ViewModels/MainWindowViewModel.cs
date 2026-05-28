@@ -675,7 +675,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                         item.Entry,
                         validateDirectory: true,
                         requireConfirmation: RequireConfirmationForLaunches);
-                    DryRunText = FormatLaunchPlan(plan);
+                    DryRunText = plan.CommandLine;
                     _launcherProcess.Start(plan);
                     ok++;
                 }
@@ -704,7 +704,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 item.Entry,
                 validateDirectory: true,
                 requireConfirmation: RequireConfirmationForLaunches);
-            DryRunText = FormatLaunchPlan(plan);
+            DryRunText = plan.CommandLine;
             StatusText = plan.RequiresConfirmation
                 ? $"预演: {item.Name}（需要确认）"
                 : $"预演: {item.Name}";
@@ -742,7 +742,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 item.Entry,
                 validateDirectory: true,
                 requireConfirmation: RequireConfirmationForLaunches);
-            dryRunText = FormatLaunchPlan(plan);
+            dryRunText = plan.CommandLine;
             if (plan.RequiresConfirmation)
             {
                 var accepted = await ConfirmLaunchAsync(item.Entry, plan).ConfigureAwait(true);
@@ -1073,11 +1073,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         onSuccess();
-    }
-
-    private static string FormatLaunchPlan(LaunchPlan plan)
-    {
-        return $"{plan.Executable} {plan.Arguments}";
     }
 
     private static string FormatLaunchFailures(IReadOnlyList<string> failures)
