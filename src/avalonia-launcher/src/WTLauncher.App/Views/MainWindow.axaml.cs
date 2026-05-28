@@ -160,10 +160,10 @@ public sealed partial class MainWindow : Window
 
     private static bool ShouldInsertAfter(DragEventArgs e, MainWindowViewModel viewModel, Control card)
     {
-        return MainWindowDragInsertDecision.ShouldInsertAfter(
-            e.GetPosition(card),
-            card.Bounds.Size,
-            UsesVerticalInsertPreview(viewModel));
+        var positionInCard = e.GetPosition(card);
+        return UsesVerticalInsertPreview(viewModel)
+            ? positionInCard.Y >= (card.Bounds.Height * 0.5)
+            : positionInCard.X >= (card.Bounds.Width * 0.5);
     }
 
     private (LauncherEntryViewModel Entry, Control Card)? ResolveEntryCardFromDragEvent(DragEventArgs e)
