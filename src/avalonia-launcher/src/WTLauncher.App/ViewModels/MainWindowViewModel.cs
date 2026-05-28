@@ -275,13 +275,14 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
     [RelayCommand(CanExecute = nameof(CanApplyPreset))]
     private void ApplyPreset()
     {
-        if (SelectedPreset is null)
+        var selectedPreset = SelectedPreset;
+        if (selectedPreset is null)
         {
             ApplyStatusText("未选择启动组");
             return;
         }
 
-        var selection = LauncherPresetSelectionRules.BuildPreview(SelectedPreset, PresetCount, Entries);
+        var selection = BuildPresetSelectionPreview(GetSelectedEntryIds());
         if (selection.MissingConfigIds.Count > 0)
         {
             ApplyStatusText($"启动组引用了不存在的启动项: {string.Join(", ", selection.MissingConfigIds)}");
@@ -289,7 +290,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
         }
 
         if (ReplaceSelection(selection.PresetIds))
-            ApplyStatusText($"已应用启动组: {SelectedPreset.Name}（{selection.PresetIds.Count} 项，已保存）");
+            ApplyStatusText($"已应用启动组: {selectedPreset.Name}（{selection.PresetIds.Count} 项，已保存）");
     }
 
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
@@ -712,17 +713,29 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     private bool CanApplyPreset()
     {
-        return LauncherPresetSelectionRules.CanApply(SelectedPreset, PresetCount, Entries);
+        if (SelectedPreset is null || Entries.Count == 0)
+            return false;
+
+        return BuildPresetSelectionPreview(GetSelectedEntryIds()).HasChanges;
     }
 
     private bool CanUpdateSelectedPreset()
     {
-        return LauncherPresetSelectionRules.CanUpdate(SelectedPreset, PresetCount, Entries);
+        if (SelectedPreset is null || SelectedPreset.IsLocked || Entries.Count == 0)
+            return false;
+
+        var selectedEntryIds = GetSelectedEntryIds();
+        if (selectedEntryIds.Count == 0)
+            return false;
+
+        return BuildPresetSelectionPreview(selectedEntryIds).HasChanges;
     }
 
     private bool CanDeleteSelectedPreset()
     {
-        return LauncherPresetSelectionRules.CanDelete(SelectedPreset, _presetFile);
+        return SelectedPreset is not null
+            && !SelectedPreset.IsLocked
+            && LauncherPresetWorkflow.CanDeletePreset(_presetFile, SelectedPreset.Id);
     }
 
     private void ApplyFilter()
@@ -811,7 +824,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     private void RefreshSelectionState()
     {
-        ApplyPresetSelectionState(LauncherPresetSelectionRules.BuildState(SelectedPreset, PresetCount, Entries));
+        var selectedEntryIds = GetSelectedEntryIds();
+        var preview = BuildPresetSelectionPreview(selectedEntryIds);
+        SelectedCount = selectedEntryIds.Count;
+        ApplyPresetButtonText = preview.ApplyButtonText;
+        PresetSelectionStatusText = preview.StatusText;
         NotifySelectionCommands();
     }
 
@@ -823,11 +840,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
         NotifyPresetManagementCommands();
     }
 
-    private void ApplyPresetSelectionState(LauncherPresetSelectionState selection)
+    private LauncherPresetSelectionPreview BuildPresetSelectionPreview(IReadOnlyList<string> selectedEntryIds)
     {
-        SelectedCount = selection.SelectedCount;
-        ApplyPresetButtonText = selection.ApplyPresetButtonText;
-        PresetSelectionStatusText = selection.PresetSelectionStatusText;
+        return LauncherPresetCatalog.BuildSelectionPreview(
+            SelectedPreset,
+            PresetCount,
+            selectedEntryIds,
+            Entries.Select(entry => entry.Entry.Id));
     }
 
     private List<string> GetSelectedEntryIds()
