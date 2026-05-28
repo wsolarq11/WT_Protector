@@ -867,13 +867,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             entry.SetSelectionFromOwner(selected);
         }
 
-        RefreshSelectionState();
-        if (SaveConfig())
-            return true;
-
-        RestoreSelection(snapshot);
-        RefreshSelectionState();
-        return false;
+        return SaveSelectionChangeOrRestore(snapshot);
     }
 
     private bool ReplaceSelection(IReadOnlySet<string> selectedIds)
@@ -886,6 +880,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
             entry.SetSelectionFromOwner(selectedIds.Contains(entry.Entry.Id));
         }
 
+        return SaveSelectionChangeOrRestore(snapshot);
+    }
+
+    private bool SaveSelectionChangeOrRestore(
+        IReadOnlyList<(LauncherEntryViewModel Entry, bool Selected)> snapshot)
+    {
         RefreshSelectionState();
         if (SaveConfig())
             return true;
