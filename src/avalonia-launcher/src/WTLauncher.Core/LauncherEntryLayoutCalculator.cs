@@ -1,15 +1,20 @@
 namespace WTLauncher.Core;
 
-public sealed record LauncherEntryLayout(double CardWidth, double CardHeight, double NameTileWidth, double NameTileHeight);
-
 public static class LauncherEntryLayoutCalculator
 {
-    public static LauncherEntryLayout Calculate(double availableWidth, double availableHeight, int itemCount)
+    public static (
+        double CardWidth,
+        double CardHeight,
+        double NameTileWidth,
+        double NameTileHeight) Calculate(
+            double availableWidth,
+            double availableHeight,
+            int itemCount)
     {
         var count = Math.Max(1, itemCount);
         var cardLayout = CalculateCardLayout(availableWidth, availableHeight, count);
         var nameTileLayout = CalculateNameTileLayout(availableWidth, availableHeight, count);
-        return new LauncherEntryLayout(cardLayout.Width, cardLayout.Height, nameTileLayout.Width, nameTileLayout.Height);
+        return (cardLayout.Width, cardLayout.Height, nameTileLayout.Width, nameTileLayout.Height);
     }
 
     private static (double Width, double Height) CalculateCardLayout(double availableWidth, double availableHeight, int count)
