@@ -309,15 +309,13 @@ public sealed partial class MainWindow : Window
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
-        MainWindowClosingWorkflow.TrySaveWindowBounds(
-            _settings,
-            _settingsPath,
-            Width,
-            Height,
-            status =>
-            {
-                if (DataContext is MainWindowViewModel viewModel)
-                    viewModel.StatusText = status;
-            });
+        if (_settings is null || _settingsPath is null)
+            return;
+
+        if (LauncherSettingsStore.TrySaveWindowBounds(_settings, _settingsPath, Width, Height))
+            return;
+
+        if (DataContext is MainWindowViewModel viewModel)
+            viewModel.StatusText = "窗口尺寸保存失败；下次将使用上次保存的尺寸";
     }
 }

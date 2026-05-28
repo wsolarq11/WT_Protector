@@ -73,7 +73,7 @@ The codebase is organized in five logical layers. Each layer depends only on the
 `src/WTLauncher.App/ViewModels/MainWindowViewModel.cs`
 
 - The single writable owner of launcher UI state
-- Delegates to Layer 1–2 through static workflows
+- Delegates reusable rules to Core helpers and persistence/rollback boundaries
 - Injects dialog confirmation `Func<>` delegates through the `MainWindow` constructor
 
 ### Layer 4 — Views & drag-drop
@@ -82,7 +82,7 @@ The codebase is organized in five logical layers. Each layer depends only on the
 
 - XAML with three view modes: Cards / Details / Names
 - Drag reorder: `MainWindowDragGhostFactory` → `MainWindowReorderFlipAnimation` (FLIP-based)
-- `MainWindowCardContextMenu`, `MainWindowClosingWorkflow`
+- `MainWindowCardContextMenu` and focused view helpers for drag, menu, and hit-test behavior
 
 ### Key invariants
 
