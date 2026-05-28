@@ -258,21 +258,21 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
     private void SelectVisible()
     {
         var result = LauncherSelectionWorkflow.SelectVisible(VisibleEntries, RefreshSelectionState, SaveConfig);
-        LauncherStatusTextWorkflow.Apply(result.StatusText, status => StatusText = status);
+        ApplyStatusText(result.StatusText);
     }
 
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private void ClearSelection()
     {
         var result = LauncherSelectionWorkflow.ClearSelection(Entries, RefreshSelectionState, SaveConfig);
-        LauncherStatusTextWorkflow.Apply(result.StatusText, status => StatusText = status);
+        ApplyStatusText(result.StatusText);
     }
 
     [RelayCommand(CanExecute = nameof(CanApplyPreset))]
     private void ApplyPreset()
     {
         var result = LauncherPresetApplyWorkflow.Apply(SelectedPreset, PresetCount, Entries, ReplaceSelection);
-        LauncherStatusTextWorkflow.Apply(result.StatusText, status => StatusText = status);
+        ApplyStatusText(result.StatusText);
     }
 
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
@@ -498,13 +498,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     private void ApplyEntryManagementResult(LauncherEntryManagementResult result)
     {
-        LauncherStatusTextWorkflow.Apply(result.StatusText, status => StatusText = status);
+        ApplyStatusText(result.StatusText);
     }
 
     public void MoveEntryBefore(string draggedEntryId, string targetEntryId)
     {
         var result = _dragReorderWorkflow.MoveBefore(IsCustomSortMode, draggedEntryId, targetEntryId);
-        LauncherStatusTextWorkflow.Apply(result.StatusText, status => StatusText = status);
+        ApplyStatusText(result.StatusText);
     }
 
     public void BeginDragReorder(string draggedEntryId)
@@ -530,13 +530,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
     public void CommitDragReorder()
     {
         var result = _dragReorderWorkflow.Commit(IsCustomSortMode);
-        LauncherStatusTextWorkflow.Apply(result.StatusText, status => StatusText = status);
+        ApplyStatusText(result.StatusText);
     }
 
     public void CancelDragReorder()
     {
         var result = _dragReorderWorkflow.Cancel();
-        LauncherStatusTextWorkflow.Apply(result.StatusText, status => StatusText = status);
+        ApplyStatusText(result.StatusText);
     }
 
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
@@ -645,6 +645,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
     private static string NowUtcText()
     {
         return DateTimeOffset.UtcNow.ToString("O");
+    }
+
+    private void ApplyStatusText(string? statusText)
+    {
+        if (statusText is not null)
+            StatusText = statusText;
     }
 
     private bool SetSelection(IReadOnlyList<LauncherEntryViewModel> entries, bool selected)
