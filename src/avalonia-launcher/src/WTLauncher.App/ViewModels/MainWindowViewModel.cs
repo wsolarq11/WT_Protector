@@ -506,8 +506,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     private bool SaveEntryCollectionChanges(bool savePresets, LauncherEntryMutationSnapshot? rollbackSnapshot = null)
     {
-        var result = LauncherEntryCollectionSaveWorkflow.Save(
-            Entries,
+        TotalCount = Entries.Count;
+        SelectedCount = Entries.Count(entry => entry.IsSelected);
+
+        var result = LauncherEntryMutationPersistence.Save(
+            Entries.Select(entry => entry.Entry),
             _configPath,
             _presetFile,
             _presetPath,
@@ -517,8 +520,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
             rollbackSnapshot,
             EnsureCustomOrderContainsEntries);
 
-        TotalCount = result.TotalCount;
-        SelectedCount = result.SelectedCount;
         if (!result.Succeeded)
         {
             if (result.StatusText is not null)
