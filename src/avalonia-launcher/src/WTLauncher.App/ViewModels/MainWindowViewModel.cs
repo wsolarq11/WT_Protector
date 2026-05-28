@@ -907,16 +907,22 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     private LauncherPresetSelectionPreview BuildPresetSelectionPreview(IReadOnlyList<string> selectedEntryIds)
     {
-        return LauncherPresetCatalog.BuildSelectionPreview(
-            SelectedPreset,
-            PresetCount,
+        if (SelectedPreset is null)
+            return LauncherPresetSelectionPreview.NoPreset(PresetCount);
+
+        return LauncherPresetSelectionPreview.ForPreset(
+            SelectedPreset.Name,
             selectedEntryIds,
-            Entries.Select(entry => entry.Entry.Id));
+            Entries.Select(entry => entry.Entry.Id),
+            SelectedPreset.EntryIds);
     }
 
     private List<string> GetSelectedEntryIds()
     {
-        return LauncherPresetCatalog.GetSelectedEntryIds(Entries);
+        return Entries
+            .Where(entry => entry.IsSelected)
+            .Select(entry => entry.Entry.Id)
+            .ToList();
     }
 
     private void NotifyPresetManagementCommands()
@@ -948,16 +954,29 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
             error = $"启动组加载失败: {ex.Message}";
         }
 
-        var selectedPreset = LauncherPresetCatalog.Apply(presetFile, Presets, preferredPresetId);
+        var selectedPreset = ReplacePresetViewModels(presetFile, preferredPresetId);
         ApplyPresetState(presetFile, selectedPreset, Presets.Count);
         return error;
     }
 
     private void ApplyPresetFileFromSnapshot(LauncherPresetFile presetFile, string? preferredPresetId)
     {
-        var selectedPreset = LauncherPresetCatalog.Apply(presetFile, Presets, preferredPresetId);
+        var selectedPreset = ReplacePresetViewModels(presetFile, preferredPresetId);
         ApplyPresetState(presetFile, selectedPreset, Presets.Count);
         NotifyPresetManagementCommands();
+    }
+
+    private LauncherPresetViewModel? ReplacePresetViewModels(LauncherPresetFile presetFile, string? preferredPresetId)
+    {
+        Presets.Clear();
+        foreach (var preset in presetFile.Presets)
+        {
+            Presets.Add(new LauncherPresetViewModel(preset));
+        }
+
+        var targetPresetId = preferredPresetId ?? presetFile.DefaultPresetId;
+        return Presets.FirstOrDefault(preset => preset.Id == targetPresetId)
+            ?? Presets.FirstOrDefault();
     }
 
     private bool SavePresetMutationOrRestore(LauncherPresetFile snapshot, string? preferredPresetId)

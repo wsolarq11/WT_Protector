@@ -346,6 +346,59 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void PresetLoadingPrefersDefaultAndFallsBackToFirstPreset()
+    {
+        using var defaultTemp = new TempDirectory();
+        var (defaultConfig, defaultSettings, defaultPresets) = CreatePortableFixture(
+            defaultTemp,
+            oneSelected: false,
+            twoSelected: false);
+        File.WriteAllText(defaultPresets, """
+        {
+          "schemaVersion": 1,
+          "defaultPresetId": "team",
+          "presets": [
+            { "id": "daily", "name": "Daily", "entryIds": ["one"] },
+            { "id": "team", "name": "Team", "entryIds": ["two"] }
+          ]
+        }
+        """);
+
+        var defaultViewModel = new MainWindowViewModel(
+            defaultConfig,
+            defaultSettings,
+            new LauncherSettings(),
+            new LauncherProcess());
+
+        Assert.Equal(["daily", "team"], defaultViewModel.Presets.Select(preset => preset.Id).ToArray());
+        Assert.Equal("team", defaultViewModel.SelectedPreset?.Id);
+
+        using var fallbackTemp = new TempDirectory();
+        var (fallbackConfig, fallbackSettings, fallbackPresets) = CreatePortableFixture(
+            fallbackTemp,
+            oneSelected: false,
+            twoSelected: false);
+        File.WriteAllText(fallbackPresets, """
+        {
+          "schemaVersion": 1,
+          "defaultPresetId": "missing",
+          "presets": [
+            { "id": "daily", "name": "Daily", "entryIds": ["one"] },
+            { "id": "team", "name": "Team", "entryIds": ["two"] }
+          ]
+        }
+        """);
+
+        var fallbackViewModel = new MainWindowViewModel(
+            fallbackConfig,
+            fallbackSettings,
+            new LauncherSettings(),
+            new LauncherProcess());
+
+        Assert.Equal("daily", fallbackViewModel.SelectedPreset?.Id);
+    }
+
+    [Fact]
     public async Task LaunchGroupSaveRollsBackInMemoryStateWhenPersistFails()
     {
         using var temp = new TempDirectory();
