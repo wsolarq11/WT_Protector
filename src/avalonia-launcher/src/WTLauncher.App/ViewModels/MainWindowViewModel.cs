@@ -572,14 +572,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return true;
     }
 
-    private LauncherEntryMutationSnapshot CaptureEntryMutationSnapshot()
-    {
-        return LauncherEntryMutationSnapshot.Capture(
+    private LauncherEntryMutationSnapshot CaptureEntryMutationSnapshot() =>
+        LauncherEntryMutationSnapshot.Capture(
             Entries.Select(entry => entry.Entry),
             _presetFile,
             _settings.CustomEntryOrder,
             SelectedPreset?.Id);
-    }
 
     private void RestoreEntryMutationSnapshot(LauncherEntryMutationSnapshot snapshot)
     {
@@ -766,10 +764,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    private bool CanOperateOnSelection()
-    {
-        return SelectedCount > 0;
-    }
+    private bool CanOperateOnSelection() => SelectedCount > 0;
 
     private bool CanApplyPreset()
     {
@@ -791,12 +786,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return BuildPresetSelectionPreview(selectedEntryIds).HasChanges;
     }
 
-    private bool CanDeleteSelectedPreset()
-    {
-        return SelectedPreset is not null
-            && !SelectedPreset.IsLocked
-            && LauncherPresetWorkflow.CanDeletePreset(_presetFile, SelectedPreset.Id);
-    }
+    private bool CanDeleteSelectedPreset() =>
+        SelectedPreset is not null
+        && !SelectedPreset.IsLocked
+        && LauncherPresetWorkflow.CanDeletePreset(_presetFile, SelectedPreset.Id);
 
     private void ApplyFilter()
     {
@@ -842,12 +835,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
             .ThenBy(entry => entry.Entry.Id, StringComparer.Ordinal);
     }
 
-    private static DateTimeOffset ParseUpdatedAt(string? value)
-    {
-        return DateTimeOffset.TryParse(value, out var parsed)
+    private static DateTimeOffset ParseUpdatedAt(string? value) =>
+        DateTimeOffset.TryParse(value, out var parsed)
             ? parsed
             : DateTimeOffset.MinValue;
-    }
 
     public void UpdateCardsAvailableSize(Size availableSize)
     {
@@ -855,15 +846,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         LauncherEntryLayoutPresentation.ApplyCardSize(Entries, VisibleEntries, _cardsAvailableSize);
     }
 
-    private void EnsureCustomOrderContainsEntries()
-    {
+    private void EnsureCustomOrderContainsEntries() =>
         LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, Entries.Select(entry => entry.Id));
-    }
 
-    private static string NowUtcText()
-    {
-        return DateTimeOffset.UtcNow.ToString("O");
-    }
+    private static string NowUtcText() => DateTimeOffset.UtcNow.ToString("O");
 
     private void ApplyStatusText(string? statusText)
     {
@@ -947,13 +933,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
             SelectedPreset.EntryIds);
     }
 
-    private List<string> GetSelectedEntryIds()
-    {
-        return Entries
+    private List<string> GetSelectedEntryIds() =>
+        Entries
             .Where(entry => entry.IsSelected)
             .Select(entry => entry.Entry.Id)
             .ToList();
-    }
 
     private void NotifyPresetManagementCommands()
     {
@@ -1055,14 +1039,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private string? SaveSettingsChange(
         LauncherSettingsSnapshot snapshot,
-        Action<LauncherSettingsSnapshot> onRollback)
-    {
-        return LauncherSettingsMutationPersistence.Save(
+        Action<LauncherSettingsSnapshot> onRollback) =>
+        LauncherSettingsMutationPersistence.Save(
             _settings,
             _settingsPath,
             snapshot,
             () => onRollback(snapshot));
-    }
 
     private void ApplySettingsResult(string? saveFailure, Action onSuccess)
     {
