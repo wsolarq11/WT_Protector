@@ -967,19 +967,17 @@ public sealed partial class MainWindowViewModel : ObservableObject
             error = $"启动组加载失败: {ex.Message}";
         }
 
-        var selectedPreset = ReplacePresetViewModels(presetFile, preferredPresetId);
-        ApplyPresetState(presetFile, selectedPreset, Presets.Count);
+        ApplyPresetFileState(presetFile, preferredPresetId);
         return error;
     }
 
     private void ApplyPresetFileFromSnapshot(LauncherPresetFile presetFile, string? preferredPresetId)
     {
-        var selectedPreset = ReplacePresetViewModels(presetFile, preferredPresetId);
-        ApplyPresetState(presetFile, selectedPreset, Presets.Count);
+        ApplyPresetFileState(presetFile, preferredPresetId);
         NotifyPresetManagementCommands();
     }
 
-    private LauncherPresetViewModel? ReplacePresetViewModels(LauncherPresetFile presetFile, string? preferredPresetId)
+    private void ApplyPresetFileState(LauncherPresetFile presetFile, string? preferredPresetId)
     {
         Presets.Clear();
         foreach (var preset in presetFile.Presets)
@@ -988,8 +986,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         var targetPresetId = preferredPresetId ?? presetFile.DefaultPresetId;
-        return Presets.FirstOrDefault(preset => preset.Id == targetPresetId)
+        _presetFile = presetFile;
+        SelectedPreset = Presets.FirstOrDefault(preset => preset.Id == targetPresetId)
             ?? Presets.FirstOrDefault();
+        PresetCount = Presets.Count;
     }
 
     private bool SavePresetMutationOrRestore(LauncherPresetFile snapshot, string? preferredPresetId)
@@ -999,13 +999,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         ApplyPresetFileFromSnapshot(snapshot, preferredPresetId);
         return false;
-    }
-
-    private void ApplyPresetState(LauncherPresetFile presetFile, LauncherPresetViewModel? selectedPreset, int presetCount)
-    {
-        _presetFile = presetFile;
-        SelectedPreset = selectedPreset;
-        PresetCount = presetCount;
     }
 
     private bool SavePresets()
