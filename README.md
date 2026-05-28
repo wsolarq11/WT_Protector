@@ -13,8 +13,7 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `retired/config/config.json` — retired HTA-local config used only when manually opening the archived HTA.
 - `retired/design/winforms-launcher.md` — retired WinForms executable/source design lessons and receipts.
 - `docs/reference/shortcut-backup-manifest.json` — human-readable replacement for the deleted `WT_Shortcuts_Backup/` binary shortcut tree.
-- `docs/reference/snow-asset-manifest.json` — hash manifest for the protected `.snow/` project asset.
-- `.snow/` — protected source-tracked project asset; inspect only, do not mutate without explicit user approval.
+- `.snow/` — ignored local runtime/index state; Git and verification intentionally do not track or validate it.
 - `.gitattributes` — repository line-ending policy; text is normalized as LF to avoid CRLF-only churn.
 - `tools/verify.ps1` — no-interaction local verification gate.
 - `tools/config-lib.ps1` — shared helper functions used by verification and config tools.

@@ -2,7 +2,7 @@
 # already run correctly with LF and this avoids CRLF-only dirty diffs.
 * text=auto eol=lf
 
-# Binary/project assets.
+# Binary files.
 *.db binary
 *.exe binary
 *.dll binary
@@ -11,5 +11,3 @@
 *.jpg binary
 *.jpeg binary
 *.webp binary
-
-.snow/codebase/embeddings.db binary

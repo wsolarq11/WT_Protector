@@ -15,13 +15,27 @@ function Add-Check([string]$Name, [object]$Detail) {
 $gitattributesPath = Join-Path $root '.gitattributes'
 if (-not (Test-Path -LiteralPath $gitattributesPath)) { throw 'Missing .gitattributes line-ending policy' }
 $gitattributes = Get-Content -Raw -Encoding UTF8 -LiteralPath $gitattributesPath
-foreach ($required in @('* text=auto eol=lf', '.snow/codebase/embeddings.db binary')) {
+foreach ($required in @('* text=auto eol=lf')) {
     if (-not $gitattributes.Contains($required)) { throw ".gitattributes missing required rule: $required" }
 }
 Add-Check 'line-ending-policy' @{
     path = '.gitattributes'
     text = 'lf'
-    snowEmbedding = 'binary'
+}
+
+$gitignorePath = Join-Path $root '.gitignore'
+if (-not (Test-Path -LiteralPath $gitignorePath)) { throw 'Missing .gitignore local-state policy' }
+$gitignore = Get-Content -Raw -Encoding UTF8 -LiteralPath $gitignorePath
+if (-not ($gitignore -match '(?m)^\.snow/$')) { throw '.gitignore must ignore .snow/ local state' }
+$trackedSnowFiles = @(& git -C $root ls-files -- .snow)
+if ($LASTEXITCODE -ne 0) { throw 'git ls-files failed while checking .snow/ local-state policy' }
+if ($trackedSnowFiles.Count -gt 0) {
+    throw ".snow/ must remain ignored local state, but tracked files remain: $($trackedSnowFiles -join ', ')"
+}
+Add-Check 'snow-ignored-local-state' @{
+    path = '.snow/'
+    trackedFiles = $trackedSnowFiles.Count
+    ignored = $true
 }
 
 foreach ($forbidden in @('spikes', 'src\winforms-launcher', 'WT Launcher.exe', 'WT Launcher')) {
@@ -149,55 +163,6 @@ Add-Check 'settings-json' @{
     requireConfirmationForLaunches = $settings.requireConfirmationForLaunches
     customEntryOrder = $settingsOrder.Count
     hasWindow = $null -ne $settings.window
-}
-
-$snowManifestPath = Join-Path $root 'docs\reference\snow-asset-manifest.json'
-if (-not (Test-Path -LiteralPath $snowManifestPath)) { throw "Missing .snow protected-asset manifest: $snowManifestPath" }
-$snowManifest = Get-Content -Raw -Encoding UTF8 -LiteralPath $snowManifestPath | ConvertFrom-Json
-if ([int]$snowManifest.schemaVersion -ne 1) { throw "Unsupported .snow manifest schemaVersion: $($snowManifest.schemaVersion)" }
-if ($snowManifest.protected -ne $true) { throw '.snow manifest must mark the asset as protected' }
-$snowRoot = Join-Path $root '.snow'
-if (-not (Test-Path -LiteralPath $snowRoot -PathType Container)) { throw "Missing protected .snow asset root: $snowRoot" }
-
-$expectedSnowFiles = @{}
-foreach ($file in @($snowManifest.trackedFiles)) {
-    $relativePath = ([string]$file.path).Replace('\', '/')
-    if (-not $relativePath.StartsWith('.snow/', [StringComparison]::Ordinal)) {
-        throw ".snow manifest entry must stay under .snow/: $relativePath"
-    }
-
-    $assetPath = Join-Path $root ($relativePath -replace '/', [IO.Path]::DirectorySeparatorChar)
-    if (-not (Test-Path -LiteralPath $assetPath -PathType Leaf)) { throw "Missing protected .snow asset file: $relativePath" }
-    $item = Get-Item -LiteralPath $assetPath
-    if ([int64]$file.bytes -ne $item.Length) {
-        throw ".snow asset byte size drifted: $relativePath expected=$($file.bytes) actual=$($item.Length)"
-    }
-
-    $actualHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $assetPath).Hash
-    if (-not $actualHash.Equals([string]$file.sha256, [StringComparison]::OrdinalIgnoreCase)) {
-        throw ".snow asset hash drifted: $relativePath"
-    }
-
-    $expectedSnowFiles[$relativePath] = $true
-}
-
-$rootPrefix = [IO.Path]::GetFullPath($root).TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
-$actualSnowFiles = @(Get-ChildItem -LiteralPath $snowRoot -File -Recurse -Force | ForEach-Object {
-    $fullName = [IO.Path]::GetFullPath($_.FullName)
-    if (-not $fullName.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
-        throw "Protected .snow asset escaped repository root: $fullName"
-    }
-    $fullName.Substring($rootPrefix.Length).Replace('\', '/')
-})
-foreach ($actualSnowFile in $actualSnowFiles) {
-    if (-not $expectedSnowFiles.ContainsKey($actualSnowFile)) {
-        throw "Unmanifested .snow asset file: $actualSnowFile"
-    }
-}
-Add-Check 'snow-protected-asset' @{
-    manifest = 'docs\reference\snow-asset-manifest.json'
-    files = $expectedSnowFiles.Count
-    protected = $true
 }
 
 $manifestPath = Get-ShortcutBackupManifestPath
