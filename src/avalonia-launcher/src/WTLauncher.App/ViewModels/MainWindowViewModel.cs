@@ -661,10 +661,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             {
                 try
                 {
-                    var plan = LaunchArgumentBuilder.Build(
-                        item.Entry,
-                        validateDirectory: true,
-                        requireConfirmation: RequireConfirmationForLaunches);
+                    var plan = BuildLaunchPlan(item);
                     DryRunText = plan.CommandLine;
                     _launcherProcess.Start(plan);
                     ok++;
@@ -690,10 +687,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         try
         {
-            var plan = LaunchArgumentBuilder.Build(
-                item.Entry,
-                validateDirectory: true,
-                requireConfirmation: RequireConfirmationForLaunches);
+            var plan = BuildLaunchPlan(item);
             DryRunText = plan.CommandLine;
             StatusText = plan.RequiresConfirmation
                 ? $"预演: {item.Name}（需要确认）"
@@ -728,10 +722,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         string? dryRunText = null;
         try
         {
-            var plan = LaunchArgumentBuilder.Build(
-                item.Entry,
-                validateDirectory: true,
-                requireConfirmation: RequireConfirmationForLaunches);
+            var plan = BuildLaunchPlan(item);
             dryRunText = plan.CommandLine;
             if (plan.RequiresConfirmation)
             {
@@ -755,6 +746,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
             StatusText = $"启动失败: {item.Name} — {ex.Message}";
         }
     }
+
+    private LaunchPlan BuildLaunchPlan(LauncherEntryViewModel item) =>
+        LaunchArgumentBuilder.Build(
+            item.Entry,
+            validateDirectory: true,
+            requireConfirmation: RequireConfirmationForLaunches);
 
     private bool CanOperateOnSelection() => SelectedCount > 0;
 
