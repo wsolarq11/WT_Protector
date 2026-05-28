@@ -11,8 +11,5 @@ public sealed record LauncherDisplayModeViewModel(LauncherEntryViewMode Mode, st
         _ => "cards",
     };
 
-    public override string ToString()
-    {
-        return Label;
-    }
+    public override string ToString() => Label;
 }

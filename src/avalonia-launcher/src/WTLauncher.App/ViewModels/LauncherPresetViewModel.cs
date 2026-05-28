@@ -21,8 +21,5 @@ public sealed class LauncherPresetViewModel
 
     public string Label => IsLocked ? $"{Name} (系统组, {EntryIds.Count}项)" : $"{Name} ({EntryIds.Count}项)";
 
-    public override string ToString()
-    {
-        return Label;
-    }
+    public override string ToString() => Label;
 }
