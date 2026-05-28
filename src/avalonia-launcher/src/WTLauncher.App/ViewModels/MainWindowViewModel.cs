@@ -241,7 +241,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var presetError = LoadPresetFile(preferredPresetId: null);
 
         RefreshSelectionState();
-        NotifyPresetManagementCommands();
         ApplyFilter();
         LauncherEntryLayoutPresentation.Refresh(Entries);
         StatusText = presetError
@@ -360,7 +359,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var preset = LauncherPresetWorkflow.UpdatePreset(_presetFile, SelectedPreset.Id, SelectedPreset.Name, entryIds);
         if (preset is null)
         {
-            ApplyPresetFileFromSnapshot(snapshot, preferredPresetId);
+            ApplyPresetFileState(snapshot, preferredPresetId);
             ApplyStatusText("当前启动组已不存在，请重新加载");
             return;
         }
@@ -397,7 +396,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var preset = LauncherPresetWorkflow.DeletePreset(_presetFile, SelectedPreset.Id, out var fallbackPresetId);
         if (preset is null)
         {
-            ApplyPresetFileFromSnapshot(snapshot, preferredPresetId);
+            ApplyPresetFileState(snapshot, preferredPresetId);
             ApplyStatusText("当前启动组已不存在，请重新加载");
             return;
         }
@@ -571,7 +570,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         ReplaceEntries(snapshot.CloneEntries());
         _settings.CustomEntryOrder = snapshot.CloneCustomEntryOrder();
-        ApplyPresetFileFromSnapshot(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
+        ApplyPresetFileState(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
         RefreshSelectionState();
         ApplyFilter();
         LauncherEntryLayoutPresentation.Refresh(Entries);
@@ -944,7 +943,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private void ReloadPresets(string? preferredPresetId)
     {
         LoadPresetFile(preferredPresetId);
-        NotifyPresetManagementCommands();
     }
 
     private string? LoadPresetFile(string? preferredPresetId)
@@ -966,12 +964,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return error;
     }
 
-    private void ApplyPresetFileFromSnapshot(LauncherPresetFile presetFile, string? preferredPresetId)
-    {
-        ApplyPresetFileState(presetFile, preferredPresetId);
-        NotifyPresetManagementCommands();
-    }
-
     private void ApplyPresetFileState(LauncherPresetFile presetFile, string? preferredPresetId)
     {
         Presets.Clear();
@@ -985,6 +977,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         SelectedPreset = Presets.FirstOrDefault(preset => preset.Id == targetPresetId)
             ?? Presets.FirstOrDefault();
         PresetCount = Presets.Count;
+        NotifyPresetManagementCommands();
     }
 
     private bool SavePresetMutationOrRestore(LauncherPresetFile snapshot, string? preferredPresetId)
@@ -992,7 +985,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (SavePresets())
             return true;
 
-        ApplyPresetFileFromSnapshot(snapshot, preferredPresetId);
+        ApplyPresetFileState(snapshot, preferredPresetId);
         return false;
     }
 
