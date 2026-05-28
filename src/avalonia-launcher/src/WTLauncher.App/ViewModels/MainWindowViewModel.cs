@@ -135,8 +135,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
     public Func<IReadOnlyList<LaunchEntry>, Task<bool>> ConfirmBatchLaunchAsync { get; set; } =
         static _ => Task.FromResult(false);
 
-    public Func<IReadOnlyList<string>, Task<PresetDraft?>> RequestNewPresetAsync { get; set; } =
-        static _ => Task.FromResult<PresetDraft?>(null);
+    public Func<IReadOnlyList<string>, Task<string?>> RequestNewPresetAsync { get; set; } =
+        static _ => Task.FromResult<string?>(null);
 
     public Func<LauncherPresetViewModel, Task<bool>> ConfirmDeletePresetAsync { get; set; } =
         static _ => Task.FromResult(false);
@@ -320,14 +320,14 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
         }
 
         var entryIds = GetSelectedEntryIds();
-        var draft = await RequestNewPresetAsync(entryIds).ConfigureAwait(true);
-        if (draft is null)
+        var presetName = await RequestNewPresetAsync(entryIds).ConfigureAwait(true);
+        if (presetName is null)
         {
             StatusText = "已取消: 保存启动组";
             return;
         }
 
-        var name = (draft.Name ?? string.Empty).Trim();
+        var name = presetName.Trim();
         if (string.IsNullOrWhiteSpace(name))
         {
             StatusText = "启动组名称不能为空";

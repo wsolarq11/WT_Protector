@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using WTLauncher.App.ViewModels;
 
 namespace WTLauncher.App.Views;
 
@@ -43,7 +42,7 @@ public sealed class PresetDetailsWindow : Window
         };
 
         var cancel = LauncherDialogButtons.Cancel();
-        cancel.Click += (_, _) => Close((PresetDraft?)null);
+        cancel.Click += (_, _) => Close((string?)null);
 
         var save = LauncherDialogButtons.Primary("保存启动组");
         save.Click += (_, _) =>
@@ -57,7 +56,7 @@ public sealed class PresetDetailsWindow : Window
                 return;
             }
 
-            Close(new PresetDraft(name));
+            Close(name);
         };
 
         var footer = new StackPanel

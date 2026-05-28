@@ -16,9 +16,9 @@ internal static class LauncherDialogService
         return new ConfirmBatchLaunchWindow(entries).ShowDialog<bool>(owner);
     }
 
-    public static Task<PresetDraft?> RequestNewPresetAsync(Window owner, IReadOnlyList<string> selectedEntryIds)
+    public static Task<string?> RequestNewPresetAsync(Window owner, IReadOnlyList<string> selectedEntryIds)
     {
-        return new PresetDetailsWindow(selectedEntryIds).ShowDialog<PresetDraft?>(owner);
+        return new PresetDetailsWindow(selectedEntryIds).ShowDialog<string?>(owner);
     }
 
     public static Task<bool> ConfirmDeletePresetAsync(Window owner, LauncherPresetViewModel preset)

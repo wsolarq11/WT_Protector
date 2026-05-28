@@ -420,7 +420,7 @@ public sealed class MainWindowViewModelTests
 
         var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess())
         {
-            RequestNewPresetAsync = _ => Task.FromResult<PresetDraft?>(new PresetDraft("Project Pair")),
+            RequestNewPresetAsync = _ => Task.FromResult<string?>("Project Pair"),
         };
 
         File.Delete(presets);
@@ -446,7 +446,7 @@ public sealed class MainWindowViewModelTests
             RequestNewPresetAsync = entryIds =>
             {
                 dialogEntryIds = entryIds.ToArray();
-                return Task.FromResult<PresetDraft?>(null);
+                return Task.FromResult<string?>(null);
             },
         };
 
@@ -519,7 +519,7 @@ public sealed class MainWindowViewModelTests
 
         var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess())
         {
-            RequestNewPresetAsync = _ => Task.FromResult<PresetDraft?>(new PresetDraft("Project Pair")),
+            RequestNewPresetAsync = _ => Task.FromResult<string?>("Project Pair"),
         };
 
         Assert.True(viewModel.SaveSelectionAsPresetCommand.CanExecute(null));
