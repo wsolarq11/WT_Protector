@@ -13,7 +13,7 @@ public sealed class LauncherEntryMutationPersistenceTests
         var settingsPath = Path.Combine(temp.Path, "settings.json");
         var beforeSettingsSaveCalled = false;
 
-        var result = LauncherEntryMutationPersistence.Save(
+        var saveFailure = LauncherEntryMutationPersistence.Save(
             entries: [Entry("mutated")],
             configPath: temp.Path,
             presetFile: Presets("mutated", "mutated"),
@@ -24,8 +24,7 @@ public sealed class LauncherEntryMutationPersistenceTests
             rollbackSnapshot: null,
             beforeSaveSettings: () => beforeSettingsSaveCalled = true);
 
-        Assert.False(result.Succeeded);
-        Assert.Contains("配置保存失败", result.StatusText);
+        Assert.Contains("配置保存失败", saveFailure);
         Assert.False(beforeSettingsSaveCalled);
         Assert.False(File.Exists(presetPath));
         Assert.False(File.Exists(settingsPath));
@@ -41,7 +40,7 @@ public sealed class LauncherEntryMutationPersistenceTests
         var snapshot = Snapshot();
         var beforeSettingsSaveCalled = false;
 
-        var result = LauncherEntryMutationPersistence.Save(
+        var saveFailure = LauncherEntryMutationPersistence.Save(
             entries: [Entry("mutated")],
             configPath: configPath,
             presetFile: Presets("mutated", "mutated"),
@@ -52,8 +51,7 @@ public sealed class LauncherEntryMutationPersistenceTests
             rollbackSnapshot: snapshot,
             beforeSaveSettings: () => beforeSettingsSaveCalled = true);
 
-        Assert.False(result.Succeeded);
-        Assert.Contains("启动组保存失败", result.StatusText);
+        Assert.Contains("启动组保存失败", saveFailure);
         Assert.Equal("one", Assert.Single(LauncherConfigStore.Load(configPath)).Id);
         Assert.False(beforeSettingsSaveCalled);
     }
@@ -69,7 +67,7 @@ public sealed class LauncherEntryMutationPersistenceTests
         var snapshot = Snapshot();
         var beforeSettingsSaveCalled = false;
 
-        var result = LauncherEntryMutationPersistence.Save(
+        var saveFailure = LauncherEntryMutationPersistence.Save(
             entries: [Entry("mutated")],
             configPath: configPath,
             presetFile: Presets("mutated", "mutated"),
@@ -80,8 +78,7 @@ public sealed class LauncherEntryMutationPersistenceTests
             rollbackSnapshot: snapshot,
             beforeSaveSettings: () => beforeSettingsSaveCalled = true);
 
-        Assert.False(result.Succeeded);
-        Assert.Contains("设置保存失败", result.StatusText);
+        Assert.Contains("设置保存失败", saveFailure);
         Assert.True(beforeSettingsSaveCalled);
         Assert.Equal("one", Assert.Single(LauncherConfigStore.Load(configPath)).Id);
         var preset = Assert.Single(LauncherPresetStore.Load(presetPath).Presets);

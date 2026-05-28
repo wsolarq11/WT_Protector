@@ -4,7 +4,7 @@ namespace WTLauncher.App.ViewModels;
 
 public static class LauncherEntryMutationPersistence
 {
-    public static LauncherEntryMutationPersistenceResult Save(
+    public static string? Save(
         IEnumerable<LaunchEntry> entries,
         string configPath,
         LauncherPresetFile presetFile,
@@ -26,7 +26,7 @@ public static class LauncherEntryMutationPersistence
         }
         catch (Exception ex)
         {
-            return LauncherEntryMutationPersistenceResult.Failed($"配置保存失败: {ex.Message}");
+            return $"配置保存失败: {ex.Message}";
         }
 
         if (savePresets)
@@ -43,7 +43,7 @@ public static class LauncherEntryMutationPersistence
                     presetPath,
                     restorePresets: false,
                     currentStatus: $"启动组保存失败: {ex.Message}");
-                return LauncherEntryMutationPersistenceResult.Failed(status);
+                return status;
             }
         }
 
@@ -60,10 +60,10 @@ public static class LauncherEntryMutationPersistence
                 presetPath,
                 restorePresets: savePresets,
                 currentStatus: $"设置保存失败: {ex.Message}");
-            return LauncherEntryMutationPersistenceResult.Failed(status);
+            return status;
         }
 
-        return LauncherEntryMutationPersistenceResult.Saved();
+        return null;
     }
 
     private static string RestoreSnapshotOnPersistenceFailure(
@@ -101,18 +101,5 @@ public static class LauncherEntryMutationPersistence
         return restoreErrors.Count == 0
             ? currentStatus
             : $"{currentStatus}；回滚磁盘状态失败: {string.Join("；", restoreErrors)}";
-    }
-}
-
-public readonly record struct LauncherEntryMutationPersistenceResult(bool Succeeded, string? StatusText)
-{
-    public static LauncherEntryMutationPersistenceResult Saved()
-    {
-        return new LauncherEntryMutationPersistenceResult(true, null);
-    }
-
-    public static LauncherEntryMutationPersistenceResult Failed(string statusText)
-    {
-        return new LauncherEntryMutationPersistenceResult(false, statusText);
     }
 }

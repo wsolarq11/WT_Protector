@@ -550,7 +550,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         TotalCount = Entries.Count;
         SelectedCount = Entries.Count(entry => entry.IsSelected);
 
-        var result = LauncherEntryMutationPersistence.Save(
+        var saveFailure = LauncherEntryMutationPersistence.Save(
             Entries.Select(entry => entry.Entry),
             _configPath,
             _presetFile,
@@ -561,10 +561,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
             rollbackSnapshot,
             EnsureCustomOrderContainsEntries);
 
-        if (!result.Succeeded)
+        if (saveFailure is not null)
         {
-            if (result.StatusText is not null)
-                StatusText = result.StatusText;
+            StatusText = saveFailure;
             return false;
         }
 
