@@ -607,7 +607,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public void MoveEntryBefore(string draggedEntryId, string targetEntryId)
     {
         var result = _dragReorderWorkflow.MoveBefore(IsCustomSortMode, draggedEntryId, targetEntryId);
-        ApplyStatusText(result.StatusText);
+        ApplyStatusText(result);
     }
 
     public void BeginDragReorder(string draggedEntryId)
@@ -633,13 +633,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public void CommitDragReorder()
     {
         var result = _dragReorderWorkflow.Commit(IsCustomSortMode);
-        ApplyStatusText(result.StatusText);
+        ApplyStatusText(result);
     }
 
     public void CancelDragReorder()
     {
         var result = _dragReorderWorkflow.Cancel();
-        ApplyStatusText(result.StatusText);
+        ApplyStatusText(result);
     }
 
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]

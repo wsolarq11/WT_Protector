@@ -25,12 +25,12 @@ public sealed class LauncherDragReorderWorkflow
         _applyFilter = applyFilter;
     }
 
-    public LauncherDragReorderResult MoveBefore(bool isCustomSortMode, string draggedEntryId, string targetEntryId)
+    public string? MoveBefore(bool isCustomSortMode, string draggedEntryId, string targetEntryId)
     {
         if (!isCustomSortMode)
-            return new LauncherDragReorderResult("请先切换到“自定义拖拽”排序模式");
+            return "请先切换到“自定义拖拽”排序模式";
         if (string.Equals(draggedEntryId, targetEntryId, StringComparison.Ordinal))
-            return new LauncherDragReorderResult(null);
+            return null;
 
         _ensureCustomOrderContainsEntries();
         var snapshot = LauncherSettingsSnapshot.Capture(_settings);
@@ -41,10 +41,10 @@ public sealed class LauncherDragReorderWorkflow
             snapshot,
             _applyFilter);
         if (!result.Succeeded)
-            return new LauncherDragReorderResult(result.StatusText);
+            return result.StatusText;
 
         _applyFilter();
-        return new LauncherDragReorderResult("已保存自定义拖拽排序");
+        return "已保存自定义拖拽排序";
     }
 
     public void Begin(bool isCustomSortMode, string draggedEntryId)
@@ -94,12 +94,12 @@ public sealed class LauncherDragReorderWorkflow
         _session?.ClearHover();
     }
 
-    public LauncherDragReorderResult Commit(bool isCustomSortMode)
+    public string? Commit(bool isCustomSortMode)
     {
         if (!isCustomSortMode)
-            return new LauncherDragReorderResult(null);
+            return null;
         if (_session is null)
-            return new LauncherDragReorderResult(null);
+            return null;
 
         var session = _session;
         var result = LauncherSettingsMutationPersistence.Save(
@@ -112,22 +112,22 @@ public sealed class LauncherDragReorderWorkflow
                 ClearPreviewState();
             });
         if (!result.Succeeded)
-            return new LauncherDragReorderResult(result.StatusText);
+            return result.StatusText;
 
         ClearPreviewState();
-        return new LauncherDragReorderResult("已保存自定义拖拽排序");
+        return "已保存自定义拖拽排序";
     }
 
-    public LauncherDragReorderResult Cancel()
+    public string? Cancel()
     {
         var session = _session;
         if (session is null)
-            return new LauncherDragReorderResult(null);
+            return null;
 
         session.Snapshot.RestoreCustomEntryOrder(_settings);
         _applyFilter();
         ClearPreviewState();
-        return new LauncherDragReorderResult("已取消: 拖拽排序");
+        return "已取消: 拖拽排序";
     }
 
     private void ClearPreviewState()
@@ -140,5 +140,3 @@ public sealed class LauncherDragReorderWorkflow
         session.Clear();
     }
 }
-
-public readonly record struct LauncherDragReorderResult(string? StatusText);
