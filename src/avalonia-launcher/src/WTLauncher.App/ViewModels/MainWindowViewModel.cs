@@ -736,11 +736,16 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     private bool SaveConfig()
     {
-        if (LauncherConfigPersistence.Save(Entries.Select(entry => entry.Entry), _configPath, out var errorMessage))
+        try
+        {
+            LauncherConfigStore.Save(Entries.Select(entry => entry.Entry), _configPath);
             return true;
-
-        ApplyStatusText(errorMessage ?? "配置保存失败");
-        return false;
+        }
+        catch (Exception ex)
+        {
+            ApplyStatusText($"配置保存失败: {ex.Message}");
+            return false;
+        }
     }
 
     private void ApplySettingsResult(LauncherSettingsMutationResult result, Action onSuccess)

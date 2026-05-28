@@ -20,8 +20,14 @@ public static class LauncherEntryMutationPersistence
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(beforeSaveSettings);
 
-        if (!LauncherConfigPersistence.Save(entries, configPath, out var configError))
-            return LauncherEntryMutationPersistenceResult.Failed(configError ?? "配置保存失败");
+        try
+        {
+            LauncherConfigStore.Save(entries, configPath);
+        }
+        catch (Exception ex)
+        {
+            return LauncherEntryMutationPersistenceResult.Failed($"配置保存失败: {ex.Message}");
+        }
 
         if (savePresets && !LauncherPresetPersistence.Save(presetFile, presetPath, out var presetError))
         {
