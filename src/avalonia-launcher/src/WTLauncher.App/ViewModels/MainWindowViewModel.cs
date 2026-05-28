@@ -191,9 +191,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     partial void OnSelectedDisplayModeChanged(LauncherDisplayModeViewModel? value)
     {
-        OnPropertyChanged(nameof(IsCardsViewMode));
-        OnPropertyChanged(nameof(IsDetailedListMode));
-        OnPropertyChanged(nameof(IsNamesViewMode));
+        NotifyDisplayModeProjectionChanged();
         if (value is null)
             return;
 
@@ -206,9 +204,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             {
                 _selectedDisplayMode = ResolveDisplayMode(snapshot.EntryViewMode);
                 OnPropertyChanged(nameof(SelectedDisplayMode));
-                OnPropertyChanged(nameof(IsCardsViewMode));
-                OnPropertyChanged(nameof(IsDetailedListMode));
-                OnPropertyChanged(nameof(IsNamesViewMode));
+                NotifyDisplayModeProjectionChanged();
                 LauncherEntryLayoutPresentation.Refresh(Entries);
             });
         ApplySettingsResult(
@@ -220,20 +216,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         var snapshot = LauncherSettingsSnapshot.Capture(_settings);
         _settings.RequireConfirmationForLaunches = value;
-        OnPropertyChanged(nameof(LaunchConfirmationToggleText));
-        OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
-        LauncherEntryLayoutPresentation.Refresh(Entries);
-        ApplyFilter();
+        RefreshLaunchConfirmationPresentation();
         var result = SaveSettingsChange(
             snapshot,
             snapshot =>
             {
                 _requireConfirmationForLaunches = snapshot.RequireConfirmationForLaunches;
                 OnPropertyChanged(nameof(RequireConfirmationForLaunches));
-                OnPropertyChanged(nameof(LaunchConfirmationToggleText));
-                OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
-                LauncherEntryLayoutPresentation.Refresh(Entries);
-                ApplyFilter();
+                RefreshLaunchConfirmationPresentation();
             });
         ApplySettingsResult(
             result,
@@ -752,6 +742,21 @@ public sealed partial class MainWindowViewModel : ObservableObject
             item.Entry,
             validateDirectory: true,
             requireConfirmation: RequireConfirmationForLaunches);
+
+    private void NotifyDisplayModeProjectionChanged()
+    {
+        OnPropertyChanged(nameof(IsCardsViewMode));
+        OnPropertyChanged(nameof(IsDetailedListMode));
+        OnPropertyChanged(nameof(IsNamesViewMode));
+    }
+
+    private void RefreshLaunchConfirmationPresentation()
+    {
+        OnPropertyChanged(nameof(LaunchConfirmationToggleText));
+        OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
+        LauncherEntryLayoutPresentation.Refresh(Entries);
+        ApplyFilter();
+    }
 
     private bool CanOperateOnSelection() => SelectedCount > 0;
 
