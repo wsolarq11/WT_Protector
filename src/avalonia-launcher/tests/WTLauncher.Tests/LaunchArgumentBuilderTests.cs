@@ -79,7 +79,7 @@ public sealed class LaunchArgumentBuilderTests
             Command = "pwsh",
         };
 
-        Assert.Throws<LaunchPlanException>(() => LaunchArgumentBuilder.Build(entry));
+        Assert.Throws<InvalidOperationException>(() => LaunchArgumentBuilder.Build(entry));
     }
 
 }

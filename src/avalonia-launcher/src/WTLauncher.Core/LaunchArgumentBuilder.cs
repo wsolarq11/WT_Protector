@@ -13,13 +13,13 @@ public static class LaunchArgumentBuilder
         var command = (entry.Command ?? "").Trim();
 
         if (name.Length == 0)
-            throw new LaunchPlanException("Launch entry name is empty.");
+            throw new InvalidOperationException("Launch entry name is empty.");
         if (directory.Length == 0)
-            throw new LaunchPlanException($"Launch entry '{name}' has an empty directory.");
+            throw new InvalidOperationException($"Launch entry '{name}' has an empty directory.");
         if (validateDirectory && !System.IO.Directory.Exists(directory))
-            throw new LaunchPlanException($"Launch entry '{name}' directory does not exist: {directory}");
+            throw new InvalidOperationException($"Launch entry '{name}' directory does not exist: {directory}");
         if (command.Length == 0)
-            throw new LaunchPlanException($"Launch entry '{name}' has an empty command.");
+            throw new InvalidOperationException($"Launch entry '{name}' has an empty command.");
 
         var arguments = $"-d {QuoteArgument(directory)} pwsh -NoExit -Command {QuoteArgument(command)}";
         return new LaunchPlan(
