@@ -725,14 +725,20 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     private bool SavePresets()
     {
-        var result = LauncherPersistenceStatus.SavePresets(_presetFile, _presetPath);
-        return ApplyPersistenceResult(result);
+        if (LauncherPresetPersistence.Save(_presetFile, _presetPath, out var errorMessage))
+            return true;
+
+        ApplyStatusText(errorMessage ?? "启动组保存失败");
+        return false;
     }
 
     private bool SaveConfig()
     {
-        var result = LauncherPersistenceStatus.SaveConfig(Entries.Select(entry => entry.Entry), _configPath);
-        return ApplyPersistenceResult(result);
+        if (LauncherConfigPersistence.Save(Entries.Select(entry => entry.Entry), _configPath, out var errorMessage))
+            return true;
+
+        ApplyStatusText(errorMessage ?? "配置保存失败");
+        return false;
     }
 
     private void ApplySettingsResult(LauncherSettingsMutationResult result, Action onSuccess)
@@ -751,14 +757,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
         if (result.DryRunText is not null)
             DryRunText = result.DryRunText;
         StatusText = result.StatusText;
-    }
-
-    private bool ApplyPersistenceResult(LauncherPersistenceStatusResult result)
-    {
-        if (!result.Succeeded)
-            ApplyStatusText(result.StatusText);
-
-        return result.Succeeded;
     }
 
 }
