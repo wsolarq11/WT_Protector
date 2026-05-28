@@ -291,8 +291,29 @@ public sealed partial class MainWindow : Window
         if (sender is not Control control)
             return;
 
-        if (MainWindowCardContextMenu.TryOpenFor(control))
+        if (TryOpenEntryCardContextMenu(control))
             e.Handled = true;
+    }
+
+    private static bool TryOpenEntryCardContextMenu(Control source)
+    {
+        var card = FindEntryCard(source);
+        if (card?.ContextMenu is not ContextMenu menu)
+            return false;
+
+        menu.Open(card);
+        return true;
+    }
+
+    private static Border? FindEntryCard(Control source)
+    {
+        foreach (var ancestor in source.GetSelfAndVisualAncestors())
+        {
+            if (ancestor is Border border && border.Classes.Contains("card"))
+                return border;
+        }
+
+        return null;
     }
 
     private void OnEntryRowDoubleTapped(object? sender, TappedEventArgs e)

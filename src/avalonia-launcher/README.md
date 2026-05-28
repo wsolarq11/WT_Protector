@@ -81,7 +81,7 @@ The codebase is organized in five logical layers. Each layer depends only on the
 
 - XAML with three view modes: Cards / Details / Names
 - Drag reorder: `MainWindowDragGhostFactory` → `MainWindowReorderFlipAnimation` (FLIP-based)
-- `MainWindowCardContextMenu` and focused view helpers for drag, menu, and hit-test behavior
+- Focused view helpers remain for shared drag and hit-test behavior; one-off menu guards stay in `MainWindow`
 
 ### Key invariants
 
