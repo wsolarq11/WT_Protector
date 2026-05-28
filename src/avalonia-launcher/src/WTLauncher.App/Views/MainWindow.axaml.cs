@@ -300,13 +300,27 @@ public sealed partial class MainWindow : Window
         if (sender is not Control { DataContext: LauncherEntryViewModel entry })
             return;
 
-        if (e.Source is Control source && MainWindowEntryRowInteraction.IsInteractiveSource(source))
+        if (e.Source is Control source && IsInteractiveRowSource(source))
             return;
 
         if (entry.LaunchCommand.CanExecute(null))
             entry.LaunchCommand.Execute(null);
 
         e.Handled = true;
+    }
+
+    private static bool IsInteractiveRowSource(Control source)
+    {
+        foreach (var ancestor in source.GetSelfAndVisualAncestors())
+        {
+            if (ancestor is Button or CheckBox)
+                return true;
+
+            if (ancestor is Border border && border.Classes.Contains("entry-drag-handle"))
+                return true;
+        }
+
+        return false;
     }
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
