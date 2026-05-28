@@ -946,11 +946,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         DeleteSelectedPresetCommand.NotifyCanExecuteChanged();
     }
 
-    private string? ReloadPresets(string? preferredPresetId)
+    private void ReloadPresets(string? preferredPresetId)
     {
-        var error = LoadPresetFile(preferredPresetId);
+        LoadPresetFile(preferredPresetId);
         NotifyPresetManagementCommands();
-        return error;
     }
 
     private string? LoadPresetFile(string? preferredPresetId)
