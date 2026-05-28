@@ -226,9 +226,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
     [RelayCommand]
     private void Refresh()
     {
-        var entrySummary = LauncherEntryReload.Load(
-            _configPath,
+        var entrySummary = LauncherEntryCollection.Replace(
             Entries,
+            LauncherConfigStore.Load(_configPath),
             entry => new LauncherEntryViewModel(entry, this));
         LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, Entries.Select(entry => entry.Id));
 
