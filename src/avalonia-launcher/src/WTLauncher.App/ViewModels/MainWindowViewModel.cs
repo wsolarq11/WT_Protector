@@ -671,7 +671,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
             {
                 try
                 {
-                    var plan = BuildLaunchPlan(item.Entry, RequireConfirmationForLaunches);
+                    var plan = LaunchArgumentBuilder.Build(
+                        item.Entry,
+                        validateDirectory: true,
+                        requireConfirmation: RequireConfirmationForLaunches);
                     DryRunText = FormatLaunchPlan(plan);
                     _launcherProcess.Start(plan);
                     ok++;
@@ -697,7 +700,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         try
         {
-            var plan = BuildLaunchPlan(item.Entry, RequireConfirmationForLaunches);
+            var plan = LaunchArgumentBuilder.Build(
+                item.Entry,
+                validateDirectory: true,
+                requireConfirmation: RequireConfirmationForLaunches);
             DryRunText = FormatLaunchPlan(plan);
             StatusText = plan.RequiresConfirmation
                 ? $"预演: {item.Name}（需要确认）"
@@ -732,7 +738,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         string? dryRunText = null;
         try
         {
-            var plan = BuildLaunchPlan(item.Entry, RequireConfirmationForLaunches);
+            var plan = LaunchArgumentBuilder.Build(
+                item.Entry,
+                validateDirectory: true,
+                requireConfirmation: RequireConfirmationForLaunches);
             dryRunText = FormatLaunchPlan(plan);
             if (plan.RequiresConfirmation)
             {
@@ -1069,11 +1078,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         onSuccess();
-    }
-
-    private static LaunchPlan BuildLaunchPlan(LaunchEntry entry, bool requireConfirmation)
-    {
-        return LaunchArgumentBuilder.Build(entry, validateDirectory: true, requireConfirmation: requireConfirmation);
     }
 
     private static string FormatLaunchPlan(LaunchPlan plan)
