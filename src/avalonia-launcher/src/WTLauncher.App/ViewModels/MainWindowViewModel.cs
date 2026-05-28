@@ -484,7 +484,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
         item.Entry.UpdatedAtUtc = NowUtcText();
         item.RefreshDisplay();
         if (!string.Equals(oldId, item.Entry.Id, StringComparison.Ordinal))
-            LauncherEntryReferences.Rename(oldId, item.Entry.Id, _presetFile.Presets, _settings.CustomEntryOrder);
+            RenameEntryReferences(oldId, item.Entry.Id);
 
         if (!SaveEntryCollectionChanges(true, snapshot))
         {
@@ -507,7 +507,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
         var entryName = item.Name;
         Entries.Remove(item);
-        LauncherEntryReferences.Remove(item.Entry.Id, _presetFile.Presets, _settings.CustomEntryOrder);
+        RemoveEntryReferences(item.Entry.Id);
         if (!SaveEntryCollectionChanges(true, snapshot))
         {
             RestoreEntryMutationSnapshot(snapshot);
@@ -515,6 +515,34 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
         }
 
         ApplyStatusText($"已删除按钮: {entryName}（已保存）");
+    }
+
+    private void RenameEntryReferences(string oldEntryId, string newEntryId)
+    {
+        foreach (var preset in _presetFile.Presets)
+        {
+            for (var i = 0; i < preset.EntryIds.Count; i++)
+            {
+                if (string.Equals(preset.EntryIds[i], oldEntryId, StringComparison.Ordinal))
+                    preset.EntryIds[i] = newEntryId;
+            }
+        }
+
+        for (var i = 0; i < _settings.CustomEntryOrder.Count; i++)
+        {
+            if (string.Equals(_settings.CustomEntryOrder[i], oldEntryId, StringComparison.Ordinal))
+                _settings.CustomEntryOrder[i] = newEntryId;
+        }
+    }
+
+    private void RemoveEntryReferences(string entryId)
+    {
+        foreach (var preset in _presetFile.Presets)
+        {
+            preset.EntryIds.RemoveAll(id => string.Equals(id, entryId, StringComparison.Ordinal));
+        }
+
+        _settings.CustomEntryOrder.RemoveAll(id => string.Equals(id, entryId, StringComparison.Ordinal));
     }
 
     private bool SaveEntryCollectionChanges(bool savePresets, LauncherEntryMutationSnapshot? rollbackSnapshot = null)
