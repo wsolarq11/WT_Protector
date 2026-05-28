@@ -1050,7 +1050,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    private LauncherSettingsMutationResult SaveSettingsChange(
+    private string? SaveSettingsChange(
         LauncherSettingsSnapshot snapshot,
         Action<LauncherSettingsSnapshot> onRollback)
     {
@@ -1061,11 +1061,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
             () => onRollback(snapshot));
     }
 
-    private void ApplySettingsResult(LauncherSettingsMutationResult result, Action onSuccess)
+    private void ApplySettingsResult(string? saveFailure, Action onSuccess)
     {
-        if (!result.Succeeded)
+        if (saveFailure is not null)
         {
-            ApplyStatusText(result.StatusText);
+            ApplyStatusText(saveFailure);
             return;
         }
 

@@ -15,14 +15,13 @@ public sealed class LauncherSettingsMutationPersistenceTests
         settings.LastFilterText = "new";
         var rollbackCalled = false;
 
-        var result = LauncherSettingsMutationPersistence.Save(
+        var saveFailure = LauncherSettingsMutationPersistence.Save(
             settings,
             settingsPath,
             snapshot,
             () => rollbackCalled = true);
 
-        Assert.True(result.Succeeded);
-        Assert.Null(result.StatusText);
+        Assert.Null(saveFailure);
         Assert.False(rollbackCalled);
         Assert.Equal("new", settings.LastFilterText);
         Assert.Equal("new", LauncherSettingsStore.Load(settingsPath).LastFilterText);
@@ -41,14 +40,13 @@ public sealed class LauncherSettingsMutationPersistenceTests
         settings.CustomEntryOrder = ["two", "one"];
         string? rollbackFilterText = null;
 
-        var result = LauncherSettingsMutationPersistence.Save(
+        var saveFailure = LauncherSettingsMutationPersistence.Save(
             settings: settings,
             settingsPath: temp.Path,
             snapshot: snapshot,
             onRollback: () => rollbackFilterText = settings.LastFilterText);
 
-        Assert.False(result.Succeeded);
-        Assert.Contains("设置保存失败", result.StatusText);
+        Assert.Contains("设置保存失败", saveFailure);
         Assert.Equal("old", rollbackFilterText);
         Assert.Equal("old", settings.LastFilterText);
         Assert.Equal("custom", settings.SortMode);

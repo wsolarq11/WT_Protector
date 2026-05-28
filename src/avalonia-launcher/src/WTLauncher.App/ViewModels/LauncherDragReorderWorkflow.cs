@@ -35,13 +35,13 @@ public sealed class LauncherDragReorderWorkflow
         _ensureCustomOrderContainsEntries();
         var snapshot = LauncherSettingsSnapshot.Capture(_settings);
         LauncherEntryOrder.MoveBefore(_settings.CustomEntryOrder, draggedEntryId, targetEntryId);
-        var result = LauncherSettingsMutationPersistence.Save(
+        var saveFailure = LauncherSettingsMutationPersistence.Save(
             _settings,
             _settingsPath,
             snapshot,
             _applyFilter);
-        if (!result.Succeeded)
-            return result.StatusText;
+        if (saveFailure is not null)
+            return saveFailure;
 
         _applyFilter();
         return "已保存自定义拖拽排序";
@@ -102,7 +102,7 @@ public sealed class LauncherDragReorderWorkflow
             return null;
 
         var session = _session;
-        var result = LauncherSettingsMutationPersistence.Save(
+        var saveFailure = LauncherSettingsMutationPersistence.Save(
             _settings,
             _settingsPath,
             session.Snapshot,
@@ -111,8 +111,8 @@ public sealed class LauncherDragReorderWorkflow
                 _applyFilter();
                 ClearPreviewState();
             });
-        if (!result.Succeeded)
-            return result.StatusText;
+        if (saveFailure is not null)
+            return saveFailure;
 
         ClearPreviewState();
         return "已保存自定义拖拽排序";
