@@ -607,21 +607,70 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private async Task LaunchSelectedAsync()
     {
-        var result = await LauncherLaunchWorkflow.LaunchBatchAsync(
-            Entries
-                .Where(entry => entry.IsSelected)
-                .Select(entry => new LauncherLaunchItem(entry.Name, entry.Entry))
-                .ToList(),
-            RequireConfirmationForLaunches,
-            ConfirmBatchLaunchAsync,
-            plan => _launcherProcess.Start(plan)).ConfigureAwait(true);
-        ApplyLaunchResult(result);
+        var selected = Entries.Where(entry => entry.IsSelected).ToList();
+        if (selected.Count == 0)
+        {
+            StatusText = "未选择任何启动项";
+            return;
+        }
+
+        try
+        {
+            if (RequireConfirmationForLaunches)
+            {
+                var accepted = await ConfirmBatchLaunchAsync(selected.Select(entry => entry.Entry).ToList())
+                    .ConfigureAwait(true);
+                if (!accepted)
+                {
+                    StatusText = $"已取消: 批量启动 {selected.Count} 项";
+                    return;
+                }
+            }
+
+            var ok = 0;
+            var fail = 0;
+            var failures = new List<string>();
+            foreach (var item in selected)
+            {
+                try
+                {
+                    var plan = BuildLaunchPlan(item.Entry, RequireConfirmationForLaunches);
+                    DryRunText = FormatLaunchPlan(plan);
+                    _launcherProcess.Start(plan);
+                    ok++;
+                }
+                catch (Exception ex)
+                {
+                    fail++;
+                    failures.Add($"{item.Name}: {ex.Message}");
+                }
+            }
+
+            StatusText = fail == 0
+                ? $"已启动 {ok} 个勾选项"
+                : $"已启动 {ok} 个勾选项，{fail} 个失败：{FormatLaunchFailures(failures)}";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"批量启动失败: {ex.Message}";
+        }
     }
 
     internal void ShowDryRun(LauncherEntryViewModel item)
     {
-        var result = LauncherLaunchWorkflow.Preview(item.Entry, item.Name, RequireConfirmationForLaunches);
-        ApplyLaunchResult(result);
+        try
+        {
+            var plan = BuildLaunchPlan(item.Entry, RequireConfirmationForLaunches);
+            DryRunText = FormatLaunchPlan(plan);
+            StatusText = plan.RequiresConfirmation
+                ? $"预演: {item.Name}（需要确认）"
+                : $"预演: {item.Name}";
+        }
+        catch (Exception ex)
+        {
+            DryRunText = ex.Message;
+            StatusText = $"预演失败: {item.Name}";
+        }
     }
 
     internal void UpdateSelection(LauncherEntryViewModel item, bool selected)
@@ -643,13 +692,32 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     internal async Task LaunchAsync(LauncherEntryViewModel item)
     {
-        var result = await LauncherLaunchWorkflow.LaunchOneAsync(
-            item.Entry,
-            item.Name,
-            RequireConfirmationForLaunches,
-            ConfirmLaunchAsync,
-            plan => _launcherProcess.Start(plan)).ConfigureAwait(true);
-        ApplyLaunchResult(result);
+        string? dryRunText = null;
+        try
+        {
+            var plan = BuildLaunchPlan(item.Entry, RequireConfirmationForLaunches);
+            dryRunText = FormatLaunchPlan(plan);
+            if (plan.RequiresConfirmation)
+            {
+                var accepted = await ConfirmLaunchAsync(item.Entry, plan).ConfigureAwait(true);
+                if (!accepted)
+                {
+                    DryRunText = dryRunText;
+                    StatusText = $"已取消: {item.Name}";
+                    return;
+                }
+            }
+
+            _launcherProcess.Start(plan);
+            DryRunText = dryRunText;
+            StatusText = $"已启动: {item.Name}";
+        }
+        catch (Exception ex)
+        {
+            if (dryRunText is not null)
+                DryRunText = dryRunText;
+            StatusText = $"启动失败: {item.Name} — {ex.Message}";
+        }
     }
 
     private bool CanOperateOnSelection()
@@ -884,11 +952,23 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
         onSuccess();
     }
 
-    private void ApplyLaunchResult(LauncherLaunchResult result)
+    private static LaunchPlan BuildLaunchPlan(LaunchEntry entry, bool requireConfirmation)
     {
-        if (result.DryRunText is not null)
-            DryRunText = result.DryRunText;
-        StatusText = result.StatusText;
+        return LaunchArgumentBuilder.Build(entry, validateDirectory: true, requireConfirmation: requireConfirmation);
+    }
+
+    private static string FormatLaunchPlan(LaunchPlan plan)
+    {
+        return $"{plan.Executable} {plan.Arguments}";
+    }
+
+    private static string FormatLaunchFailures(IReadOnlyList<string> failures)
+    {
+        var preview = string.Join("；", failures.Take(3));
+        if (failures.Count > 3)
+            preview += $"；…另有 {failures.Count - 3} 项";
+
+        return preview;
     }
 
 }
