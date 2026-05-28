@@ -416,16 +416,25 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
             return;
         }
 
-        var result = LauncherEntryManagementWorkflow.AddEntry(
+        var result = LauncherEntryWorkflow.AddEntry(
             draft,
-            snapshot,
             Entries,
             _settings.CustomEntryOrder,
             entry => new LauncherEntryViewModel(entry, this),
-            NowUtcText(),
-            SaveEntryCollectionChanges,
-            RestoreEntryMutationSnapshot);
-        ApplyEntryManagementResult(result);
+            NowUtcText());
+        if (!result.Succeeded)
+        {
+            ApplyStatusText(result.Message ?? "新增按钮失败");
+            return;
+        }
+
+        if (!SaveEntryCollectionChanges(false, snapshot))
+        {
+            RestoreEntryMutationSnapshot(snapshot);
+            return;
+        }
+
+        ApplyStatusText($"已新增按钮: {result.EntryName}（已保存）");
     }
 
     internal async Task EditEntryAsync(LauncherEntryViewModel item)
@@ -438,17 +447,26 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
             return;
         }
 
-        var result = LauncherEntryManagementWorkflow.EditEntry(
+        var result = LauncherEntryWorkflow.EditEntry(
             item,
             draft,
-            snapshot,
             Entries,
             _presetFile.Presets,
             _settings.CustomEntryOrder,
-            NowUtcText(),
-            SaveEntryCollectionChanges,
-            RestoreEntryMutationSnapshot);
-        ApplyEntryManagementResult(result);
+            NowUtcText());
+        if (!result.Succeeded)
+        {
+            ApplyStatusText(result.Message ?? "更新按钮失败");
+            return;
+        }
+
+        if (!SaveEntryCollectionChanges(true, snapshot))
+        {
+            RestoreEntryMutationSnapshot(snapshot);
+            return;
+        }
+
+        ApplyStatusText($"已更新按钮: {result.EntryName}（已保存）");
     }
 
     internal async Task DeleteEntryAsync(LauncherEntryViewModel item)
@@ -461,15 +479,18 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
             return;
         }
 
-        var result = LauncherEntryManagementWorkflow.DeleteEntry(
-            item,
-            snapshot,
+        var entryName = LauncherEntryWorkflow.DeleteEntry(
             Entries,
+            item,
             _presetFile.Presets,
-            _settings.CustomEntryOrder,
-            SaveEntryCollectionChanges,
-            RestoreEntryMutationSnapshot);
-        ApplyEntryManagementResult(result);
+            _settings.CustomEntryOrder);
+        if (!SaveEntryCollectionChanges(true, snapshot))
+        {
+            RestoreEntryMutationSnapshot(snapshot);
+            return;
+        }
+
+        ApplyStatusText($"已删除按钮: {entryName}（已保存）");
     }
 
     private bool SaveEntryCollectionChanges(bool savePresets, LauncherEntryMutationSnapshot? rollbackSnapshot = null)
@@ -520,11 +541,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
         RefreshSelectionState();
         ApplyFilter();
         RefreshEntryLayoutPresentation();
-    }
-
-    private void ApplyEntryManagementResult(LauncherEntryManagementResult result)
-    {
-        ApplyStatusText(result.StatusText);
     }
 
     public void MoveEntryBefore(string draggedEntryId, string targetEntryId)
