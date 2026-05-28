@@ -226,24 +226,25 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
     [RelayCommand]
     private void Refresh()
     {
-        var result = LauncherReloadWorkflow.Load(
+        var entrySummary = LauncherEntryReload.Load(
             _configPath,
-            _presetPath,
             Entries,
-            Presets,
-            _settings.CustomEntryOrder,
             entry => new LauncherEntryViewModel(entry, this));
+        LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, Entries.Select(entry => entry.Id));
 
-        TotalCount = result.TotalCount;
-        SelectedCount = result.SelectedCount;
-        _presetFile = result.PresetFile;
-        SelectedPreset = result.SelectedPreset;
-        PresetCount = result.PresetCount;
+        var presetResult = LauncherPresetReload.Load(_presetPath, Presets, preferredPresetId: null);
+
+        TotalCount = entrySummary.TotalCount;
+        SelectedCount = entrySummary.SelectedCount;
+        _presetFile = presetResult.PresetFile;
+        SelectedPreset = presetResult.SelectedPreset;
+        PresetCount = presetResult.PresetCount;
         RefreshSelectionState();
         NotifyPresetManagementCommands();
         ApplyFilter();
         RefreshEntryLayoutPresentation();
-        StatusText = result.StatusText;
+        StatusText = presetResult.ErrorMessage
+            ?? $"已加载 {entrySummary.TotalCount} 个启动项、{presetResult.PresetCount} 个启动组；勾选自动保存到 config\\config.json";
     }
 
     [RelayCommand]
