@@ -127,10 +127,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     partial void OnFilterTextChanged(string value)
     {
-        var result = LauncherSettingsWorkflow.ChangeFilterText(
-            _settings,
-            _settingsPath,
-            value,
+        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
+        _settings.LastFilterText = value ?? string.Empty;
+        var result = SaveSettingsChange(
+            snapshot,
             snapshot =>
             {
                 _filterText = snapshot.LastFilterText;
@@ -146,11 +146,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
         if (value is null)
             return;
 
-        var result = LauncherSettingsWorkflow.ChangeSortMode(
-            _settings,
-            _settingsPath,
-            value.Id,
-            EnsureCustomOrderContainsEntries,
+        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
+        _settings.SortMode = value.Id;
+        EnsureCustomOrderContainsEntries();
+        var result = SaveSettingsChange(
+            snapshot,
             snapshot =>
             {
                 _selectedSortMode = LauncherModeCatalog.ResolveSortMode(SortModes, snapshot.SortMode);
@@ -175,11 +175,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
         if (value is null)
             return;
 
-        var result = LauncherSettingsWorkflow.ChangeDisplayMode(
-            _settings,
-            _settingsPath,
-            value.Id,
-            RefreshEntryLayoutPresentation,
+        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
+        _settings.EntryViewMode = value.Id;
+        RefreshEntryLayoutPresentation();
+        var result = SaveSettingsChange(
+            snapshot,
             snapshot =>
             {
                 _selectedDisplayMode = LauncherModeCatalog.ResolveDisplayMode(DisplayModes, snapshot.EntryViewMode);
@@ -196,17 +196,14 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     partial void OnRequireConfirmationForLaunchesChanged(bool value)
     {
-        var result = LauncherSettingsWorkflow.ChangeLaunchConfirmation(
-            _settings,
-            _settingsPath,
-            value,
-            () =>
-            {
-                OnPropertyChanged(nameof(LaunchConfirmationToggleText));
-                OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
-                RefreshEntryLayoutPresentation();
-                ApplyFilter();
-            },
+        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
+        _settings.RequireConfirmationForLaunches = value;
+        OnPropertyChanged(nameof(LaunchConfirmationToggleText));
+        OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
+        RefreshEntryLayoutPresentation();
+        ApplyFilter();
+        var result = SaveSettingsChange(
+            snapshot,
             snapshot =>
             {
                 _requireConfirmationForLaunches = snapshot.RequireConfirmationForLaunches;
@@ -851,6 +848,17 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
             ApplyStatusText($"配置保存失败: {ex.Message}");
             return false;
         }
+    }
+
+    private LauncherSettingsMutationResult SaveSettingsChange(
+        LauncherSettingsSnapshot snapshot,
+        Action<LauncherSettingsSnapshot> onRollback)
+    {
+        return LauncherSettingsMutationPersistence.Save(
+            _settings,
+            _settingsPath,
+            snapshot,
+            () => onRollback(snapshot));
     }
 
     private void ApplySettingsResult(LauncherSettingsMutationResult result, Action onSuccess)
