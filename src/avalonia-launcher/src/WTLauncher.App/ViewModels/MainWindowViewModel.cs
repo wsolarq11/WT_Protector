@@ -107,8 +107,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     private LauncherDisplayModeViewModel ResolveDisplayMode(string? entryViewMode)
     {
-        var savedViewMode = LauncherEntryViewModes.Parse(entryViewMode);
-        return DisplayModes.FirstOrDefault(mode => mode.Mode == savedViewMode)
+        return DisplayModes.FirstOrDefault(mode => mode.Id == entryViewMode)
             ?? DisplayModes[0];
     }
 

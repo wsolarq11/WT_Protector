@@ -12,7 +12,12 @@ public sealed class LauncherDisplayModeViewModel
 
     public LauncherEntryViewMode Mode { get; }
 
-    public string Id => Mode.ToSettingsValue();
+    public string Id => Mode switch
+    {
+        LauncherEntryViewMode.Details => "details",
+        LauncherEntryViewMode.Names => "names",
+        _ => "cards",
+    };
 
     public string Label { get; }
 
