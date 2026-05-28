@@ -1,25 +1,12 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
-using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.Views;
 
 public static class MainWindowDragGhostFactory
 {
-    public static MainWindowDragGhostVisual Create(
-        LauncherEntryViewModel item,
-        double sourceWidth,
-        double sourceHeight,
-        double pointerX,
-        double pointerY)
-    {
-        ArgumentNullException.ThrowIfNull(item);
-
-        return Create(item.Name, item.Directory, item.TitleFontSize, sourceWidth, sourceHeight, pointerX, pointerY);
-    }
-
     public static MainWindowDragGhostVisual Create(
         string name,
         string directory,

@@ -198,7 +198,9 @@ public sealed partial class MainWindow : Window
             return;
 
         var ghost = MainWindowDragGhostFactory.Create(
-            item,
+            item.Name,
+            item.Directory,
+            item.TitleFontSize,
             sourceCard.Bounds.Width,
             sourceCard.Bounds.Height,
             position.X,
