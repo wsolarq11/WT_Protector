@@ -538,12 +538,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     private void RestoreEntryMutationSnapshot(LauncherEntryMutationSnapshot snapshot)
     {
-        var summary = LauncherEntryMutationRestore.Restore(
-            snapshot,
+        var summary = LauncherEntryCollection.Replace(
             Entries,
-            _settings,
-            ApplyPresetFileFromSnapshot,
+            snapshot.CloneEntries(),
             entry => new LauncherEntryViewModel(entry, this));
+
+        _settings.CustomEntryOrder = snapshot.CloneCustomEntryOrder();
+        ApplyPresetFileFromSnapshot(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
         TotalCount = summary.TotalCount;
         RefreshSelectionState();
         ApplyFilter();
@@ -816,13 +817,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     private void NotifySelectionCommands()
     {
-        LauncherCommandNotifications.NotifySelection(
-            LaunchSelectedCommand,
-            ClearSelectionCommand,
-            ApplyPresetCommand,
-            SaveSelectionAsPresetCommand,
-            UpdateSelectedPresetCommand,
-            DeleteSelectedPresetCommand);
+        LaunchSelectedCommand.NotifyCanExecuteChanged();
+        ClearSelectionCommand.NotifyCanExecuteChanged();
+        ApplyPresetCommand.NotifyCanExecuteChanged();
+        NotifyPresetManagementCommands();
     }
 
     private void ApplyPresetSelectionState(LauncherPresetSelectionState selection)
@@ -839,10 +837,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     private void NotifyPresetManagementCommands()
     {
-        LauncherCommandNotifications.NotifyPresetManagement(
-            SaveSelectionAsPresetCommand,
-            UpdateSelectedPresetCommand,
-            DeleteSelectedPresetCommand);
+        SaveSelectionAsPresetCommand.NotifyCanExecuteChanged();
+        UpdateSelectedPresetCommand.NotifyCanExecuteChanged();
+        DeleteSelectedPresetCommand.NotifyCanExecuteChanged();
     }
 
     private string? ReloadPresets(string? preferredPresetId)

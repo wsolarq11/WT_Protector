@@ -62,10 +62,10 @@ The codebase is organized in five logical layers. Each layer depends only on the
 
 ### Layer 2 — Persistence + rollback (ViewModels)
 
-`src/WTLauncher.App/ViewModels/LauncherEntryMutationPersistence.cs` etc.
+`src/WTLauncher.App/ViewModels/MainWindowViewModel.cs` + `LauncherEntryMutationSnapshot`
 
 - Save-then-rollback pattern: snapshot-before → mutate → save all → restore on failure
-- `LauncherEntryMutationSnapshot`, `LauncherEntryMutationRestore`
+- `LauncherEntryMutationSnapshot`, `LauncherEntryCollection.Replace`
 - Coordinates config.json + presets.json + settings.json as an atomic unit
 
 ### Layer 3 — ViewModel orchestration
