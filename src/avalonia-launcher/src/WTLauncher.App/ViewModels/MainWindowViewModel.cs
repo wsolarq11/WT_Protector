@@ -223,22 +223,17 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
     [RelayCommand]
     private void Refresh()
     {
-        var entrySummary = LauncherEntryCollection.Replace(
-            Entries,
-            LauncherConfigStore.Load(_configPath),
-            entry => new LauncherEntryViewModel(entry, this));
+        ReplaceEntries(LauncherConfigStore.Load(_configPath));
         LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, Entries.Select(entry => entry.Id));
 
         var presetError = LoadPresetFile(preferredPresetId: null);
 
-        TotalCount = entrySummary.TotalCount;
-        SelectedCount = entrySummary.SelectedCount;
         RefreshSelectionState();
         NotifyPresetManagementCommands();
         ApplyFilter();
         RefreshEntryLayoutPresentation();
         StatusText = presetError
-            ?? $"已加载 {entrySummary.TotalCount} 个启动项、{PresetCount} 个启动组；勾选自动保存到 config\\config.json";
+            ?? $"已加载 {TotalCount} 个启动项、{PresetCount} 个启动组；勾选自动保存到 config\\config.json";
     }
 
     [RelayCommand]
@@ -539,17 +534,24 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     private void RestoreEntryMutationSnapshot(LauncherEntryMutationSnapshot snapshot)
     {
-        var summary = LauncherEntryCollection.Replace(
-            Entries,
-            snapshot.CloneEntries(),
-            entry => new LauncherEntryViewModel(entry, this));
-
+        ReplaceEntries(snapshot.CloneEntries());
         _settings.CustomEntryOrder = snapshot.CloneCustomEntryOrder();
         ApplyPresetFileFromSnapshot(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
-        TotalCount = summary.TotalCount;
         RefreshSelectionState();
         ApplyFilter();
         RefreshEntryLayoutPresentation();
+    }
+
+    private void ReplaceEntries(IEnumerable<LaunchEntry> entries)
+    {
+        Entries.Clear();
+        foreach (var entry in entries)
+        {
+            Entries.Add(new LauncherEntryViewModel(entry, this));
+        }
+
+        TotalCount = Entries.Count;
+        SelectedCount = Entries.Count(entry => entry.IsSelected);
     }
 
     public void MoveEntryBefore(string draggedEntryId, string targetEntryId)
