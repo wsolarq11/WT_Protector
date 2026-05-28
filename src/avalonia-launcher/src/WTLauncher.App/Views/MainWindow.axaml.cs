@@ -29,7 +29,7 @@ public sealed partial class MainWindow : Window
         _settings = settings;
         viewModel.ConfirmLaunchAsync = ConfirmLaunchAsync;
         viewModel.ConfirmBatchLaunchAsync = ConfirmBatchLaunchAsync;
-        viewModel.RequestNewPresetAsync = selectedEntryIds => LauncherDialogService.RequestNewPresetAsync(this, selectedEntryIds);
+        viewModel.RequestNewPresetAsync = RequestNewPresetAsync;
         viewModel.ConfirmDeletePresetAsync = ConfirmDeletePresetAsync;
         viewModel.RequestEntryDraftAsync = RequestEntryDraftAsync;
         viewModel.ConfirmDeleteEntryAsync = ConfirmDeleteEntryAsync;
@@ -42,27 +42,32 @@ public sealed partial class MainWindow : Window
 
     private Task<bool> ConfirmLaunchAsync(LaunchEntry entry, LaunchPlan plan)
     {
-        return LauncherDialogService.ConfirmLaunchAsync(this, entry, plan);
+        return new ConfirmLaunchWindow(entry, plan).ShowDialog<bool>(this);
     }
 
     private Task<bool> ConfirmBatchLaunchAsync(IReadOnlyList<LaunchEntry> entries)
     {
-        return LauncherDialogService.ConfirmBatchLaunchAsync(this, entries);
+        return new ConfirmBatchLaunchWindow(entries).ShowDialog<bool>(this);
+    }
+
+    private Task<string?> RequestNewPresetAsync(IReadOnlyList<string> selectedEntryIds)
+    {
+        return new PresetDetailsWindow(selectedEntryIds).ShowDialog<string?>(this);
     }
 
     private Task<bool> ConfirmDeletePresetAsync(LauncherPresetViewModel preset)
     {
-        return LauncherDialogService.ConfirmDeletePresetAsync(this, preset);
+        return new ConfirmPresetDeleteWindow(preset).ShowDialog<bool>(this);
     }
 
     private Task<EntryDraft?> RequestEntryDraftAsync(LaunchEntry? entry)
     {
-        return LauncherDialogService.RequestEntryDraftAsync(this, entry);
+        return new EntryDetailsWindow(entry).ShowDialog<EntryDraft?>(this);
     }
 
     private Task<bool> ConfirmDeleteEntryAsync(LauncherEntryViewModel entry)
     {
-        return LauncherDialogService.ConfirmDeleteEntryAsync(this, entry);
+        return new ConfirmEntryDeleteWindow(entry).ShowDialog<bool>(this);
     }
 
     private void UpdateCardRegionSize(MainWindowViewModel viewModel)
