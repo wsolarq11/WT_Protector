@@ -177,7 +177,7 @@ public sealed partial class MainWindow : Window
     private static bool ShouldInsertAfter(DragEventArgs e, MainWindowViewModel viewModel, Control card)
     {
         var positionInCard = e.GetPosition(card);
-        return UsesVerticalInsertPreview(viewModel)
+        return viewModel.IsDetailedListMode
             ? positionInCard.Y >= (card.Bounds.Height * 0.5)
             : positionInCard.X >= (card.Bounds.Width * 0.5);
     }
@@ -233,11 +233,6 @@ public sealed partial class MainWindow : Window
 
         _overlayLayer.Children.Remove(_dragGhost);
         _dragGhost = null;
-    }
-
-    private static bool UsesVerticalInsertPreview(MainWindowViewModel viewModel)
-    {
-        return viewModel.IsDetailedListMode;
     }
 
     private Control? GetActiveEntriesRoot()
