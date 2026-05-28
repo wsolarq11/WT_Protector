@@ -29,15 +29,22 @@ public static class LauncherEntryMutationPersistence
             return LauncherEntryMutationPersistenceResult.Failed($"配置保存失败: {ex.Message}");
         }
 
-        if (savePresets && !LauncherPresetPersistence.Save(presetFile, presetPath, out var presetError))
+        if (savePresets)
         {
-            var status = LauncherEntryPersistenceRollback.Restore(
-                rollbackSnapshot,
-                configPath,
-                presetPath,
-                restorePresets: false,
-                presetError ?? "启动组保存失败");
-            return LauncherEntryMutationPersistenceResult.Failed(status);
+            try
+            {
+                LauncherPresetStore.Save(presetFile, presetPath);
+            }
+            catch (Exception ex)
+            {
+                var status = LauncherEntryPersistenceRollback.Restore(
+                    rollbackSnapshot,
+                    configPath,
+                    presetPath,
+                    restorePresets: false,
+                    currentStatus: $"启动组保存失败: {ex.Message}");
+                return LauncherEntryMutationPersistenceResult.Failed(status);
+            }
         }
 
         beforeSaveSettings();

@@ -727,11 +727,16 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     private bool SavePresets()
     {
-        if (LauncherPresetPersistence.Save(_presetFile, _presetPath, out var errorMessage))
+        try
+        {
+            LauncherPresetStore.Save(_presetFile, _presetPath);
             return true;
-
-        ApplyStatusText(errorMessage ?? "启动组保存失败");
-        return false;
+        }
+        catch (Exception ex)
+        {
+            ApplyStatusText($"启动组保存失败: {ex.Message}");
+            return false;
+        }
     }
 
     private bool SaveConfig()

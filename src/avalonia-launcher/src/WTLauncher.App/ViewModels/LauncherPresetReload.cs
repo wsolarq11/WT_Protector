@@ -10,7 +10,19 @@ public static class LauncherPresetReload
         ObservableCollection<LauncherPresetViewModel> presets,
         string? preferredPresetId)
     {
-        var error = LauncherPresetPersistence.Load(presetPath, out var presetFile);
+        LauncherPresetFile presetFile;
+        string? error;
+        try
+        {
+            presetFile = LauncherPresetStore.Load(presetPath);
+            error = null;
+        }
+        catch (Exception ex)
+        {
+            presetFile = new LauncherPresetFile();
+            error = $"启动组加载失败: {ex.Message}";
+        }
+
         var selectedPreset = LauncherPresetCatalog.Apply(presetFile, presets, preferredPresetId);
         return new LauncherPresetReloadResult(
             presetFile,
