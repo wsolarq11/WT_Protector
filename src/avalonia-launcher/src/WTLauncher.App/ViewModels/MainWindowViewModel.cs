@@ -444,11 +444,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         Entries.Add(new LauncherEntryViewModel(entry, this));
         _settings.CustomEntryOrder.Add(entry.Id);
 
-        if (!SaveEntryCollectionChanges(false, snapshot))
-        {
-            RestoreEntryMutationSnapshot(snapshot);
+        if (!SaveEntryCollectionChanges(savePresets: false, snapshot))
             return;
-        }
 
         ApplyStatusText($"已新增按钮: {entry.Name}（已保存）");
     }
@@ -486,11 +483,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (!string.Equals(oldId, item.Entry.Id, StringComparison.Ordinal))
             RenameEntryReferences(oldId, item.Entry.Id);
 
-        if (!SaveEntryCollectionChanges(true, snapshot))
-        {
-            RestoreEntryMutationSnapshot(snapshot);
+        if (!SaveEntryCollectionChanges(savePresets: true, snapshot))
             return;
-        }
 
         ApplyStatusText($"已更新按钮: {item.Name}（已保存）");
     }
@@ -508,11 +502,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var entryName = item.Name;
         Entries.Remove(item);
         RemoveEntryReferences(item.Entry.Id);
-        if (!SaveEntryCollectionChanges(true, snapshot))
-        {
-            RestoreEntryMutationSnapshot(snapshot);
+        if (!SaveEntryCollectionChanges(savePresets: true, snapshot))
             return;
-        }
 
         ApplyStatusText($"已删除按钮: {entryName}（已保存）");
     }
@@ -545,7 +536,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settings.CustomEntryOrder.RemoveAll(id => string.Equals(id, entryId, StringComparison.Ordinal));
     }
 
-    private bool SaveEntryCollectionChanges(bool savePresets, LauncherEntryMutationSnapshot? rollbackSnapshot = null)
+    private bool SaveEntryCollectionChanges(bool savePresets, LauncherEntryMutationSnapshot rollbackSnapshot)
     {
         TotalCount = Entries.Count;
         SelectedCount = Entries.Count(entry => entry.IsSelected);
@@ -564,6 +555,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (saveFailure is not null)
         {
             StatusText = saveFailure;
+            RestoreEntryMutationSnapshot(rollbackSnapshot);
             return false;
         }
 
