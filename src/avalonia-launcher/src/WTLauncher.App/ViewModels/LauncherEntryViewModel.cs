@@ -95,15 +95,9 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         OnPropertyChanged(nameof(IsDragInsertAfter));
     }
 
-    partial void OnCardWidthChanged(double value)
-    {
-        UpdateLayoutFlags();
-    }
+    partial void OnCardWidthChanged(double value) => UpdateLayoutFlags();
 
-    partial void OnCardHeightChanged(double value)
-    {
-        UpdateLayoutFlags();
-    }
+    partial void OnCardHeightChanged(double value) => UpdateLayoutFlags();
 
     private void UpdateLayoutFlags()
     {
@@ -150,28 +144,16 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void DryRun()
-    {
-        _owner.ShowDryRun(this);
-    }
+    private void DryRun() => _owner.ShowDryRun(this);
 
     [RelayCommand]
-    private Task LaunchAsync()
-    {
-        return _owner.LaunchAsync(this);
-    }
+    private Task LaunchAsync() => _owner.LaunchAsync(this);
 
     [RelayCommand]
-    private Task EditAsync()
-    {
-        return _owner.EditEntryAsync(this);
-    }
+    private Task EditAsync() => _owner.EditEntryAsync(this);
 
     [RelayCommand]
-    private Task DeleteAsync()
-    {
-        return _owner.DeleteEntryAsync(this);
-    }
+    private Task DeleteAsync() => _owner.DeleteEntryAsync(this);
 
     private enum DragCueState
     {
