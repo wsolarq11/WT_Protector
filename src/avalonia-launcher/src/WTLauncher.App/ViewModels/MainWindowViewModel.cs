@@ -232,19 +232,16 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
             entry => new LauncherEntryViewModel(entry, this));
         LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, Entries.Select(entry => entry.Id));
 
-        var presetResult = LauncherPresetReload.Load(_presetPath, Presets, preferredPresetId: null);
+        var presetError = LoadPresetFile(preferredPresetId: null);
 
         TotalCount = entrySummary.TotalCount;
         SelectedCount = entrySummary.SelectedCount;
-        _presetFile = presetResult.PresetFile;
-        SelectedPreset = presetResult.SelectedPreset;
-        PresetCount = presetResult.PresetCount;
         RefreshSelectionState();
         NotifyPresetManagementCommands();
         ApplyFilter();
         RefreshEntryLayoutPresentation();
-        StatusText = presetResult.ErrorMessage
-            ?? $"已加载 {entrySummary.TotalCount} 个启动项、{presetResult.PresetCount} 个启动组；勾选自动保存到 config\\config.json";
+        StatusText = presetError
+            ?? $"已加载 {entrySummary.TotalCount} 个启动项、{PresetCount} 个启动组；勾选自动保存到 config\\config.json";
     }
 
     [RelayCommand]
@@ -789,10 +786,29 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     private string? ReloadPresets(string? preferredPresetId)
     {
-        var result = LauncherPresetReload.Load(_presetPath, Presets, preferredPresetId);
-        ApplyPresetState(result.PresetFile, result.SelectedPreset, result.PresetCount);
+        var error = LoadPresetFile(preferredPresetId);
         NotifyPresetManagementCommands();
-        return result.ErrorMessage;
+        return error;
+    }
+
+    private string? LoadPresetFile(string? preferredPresetId)
+    {
+        LauncherPresetFile presetFile;
+        string? error;
+        try
+        {
+            presetFile = LauncherPresetStore.Load(_presetPath);
+            error = null;
+        }
+        catch (Exception ex)
+        {
+            presetFile = new LauncherPresetFile();
+            error = $"启动组加载失败: {ex.Message}";
+        }
+
+        var selectedPreset = LauncherPresetCatalog.Apply(presetFile, Presets, preferredPresetId);
+        ApplyPresetState(presetFile, selectedPreset, Presets.Count);
+        return error;
     }
 
     private void ApplyPresetFileFromSnapshot(LauncherPresetFile presetFile, string? preferredPresetId)
