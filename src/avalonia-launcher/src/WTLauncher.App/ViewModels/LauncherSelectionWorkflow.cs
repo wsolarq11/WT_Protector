@@ -20,8 +20,20 @@ public static class LauncherSelectionWorkflow
                     : "可见项已全部勾选");
         }
 
-        if (LauncherSelectionPersistence.SetSelection(targets, selected: true, refreshSelectionState, saveConfig))
+        var snapshot = targets
+            .Select(entry => (Entry: entry, Selected: entry.IsSelected))
+            .ToList();
+        foreach (var entry in targets)
+        {
+            entry.SetSelectionFromOwner(selected: true);
+        }
+
+        refreshSelectionState();
+        if (saveConfig())
             return new LauncherSelectionActionResult($"已勾选可见 {targets.Count} 项（已保存）");
+
+        RestoreSelection(snapshot);
+        refreshSelectionState();
 
         return new LauncherSelectionActionResult(null);
     }
@@ -39,10 +51,30 @@ public static class LauncherSelectionWorkflow
         if (targets.Count == 0)
             return new LauncherSelectionActionResult("当前没有已勾选项");
 
-        if (LauncherSelectionPersistence.SetSelection(targets, selected: false, refreshSelectionState, saveConfig))
+        var snapshot = targets
+            .Select(entry => (Entry: entry, Selected: entry.IsSelected))
+            .ToList();
+        foreach (var entry in targets)
+        {
+            entry.SetSelectionFromOwner(selected: false);
+        }
+
+        refreshSelectionState();
+        if (saveConfig())
             return new LauncherSelectionActionResult($"已清空 {targets.Count} 个勾选项（已保存）");
 
+        RestoreSelection(snapshot);
+        refreshSelectionState();
+
         return new LauncherSelectionActionResult(null);
+    }
+
+    private static void RestoreSelection(IEnumerable<(LauncherEntryViewModel Entry, bool Selected)> snapshot)
+    {
+        foreach (var (entry, selected) in snapshot)
+        {
+            entry.SetSelectionFromOwner(selected);
+        }
     }
 }
 

@@ -548,7 +548,14 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     internal void UpdateSelection(LauncherEntryViewModel item, bool selected)
     {
-        LauncherSelectionPersistence.UpdateSingle(item, selected, RefreshSelectionState, SaveConfig);
+        var previousSelected = item.Entry.Selected;
+        item.Entry.Selected = selected;
+        RefreshSelectionState();
+        if (SaveConfig())
+            return;
+
+        item.SetSelectionFromOwner(previousSelected);
+        RefreshSelectionState();
     }
 
     partial void OnSelectedPresetChanged(LauncherPresetViewModel? value)
@@ -628,14 +635,27 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
             StatusText = statusText;
     }
 
-    private bool SetSelection(IReadOnlyList<LauncherEntryViewModel> entries, bool selected)
-    {
-        return LauncherSelectionPersistence.SetSelection(entries, selected, RefreshSelectionState, SaveConfig);
-    }
-
     private bool ReplaceSelection(IReadOnlySet<string> selectedIds)
     {
-        return LauncherSelectionPersistence.ReplaceSelection(Entries, selectedIds, RefreshSelectionState, SaveConfig);
+        var snapshot = Entries
+            .Select(entry => (Entry: entry, Selected: entry.IsSelected))
+            .ToList();
+        foreach (var entry in Entries)
+        {
+            entry.SetSelectionFromOwner(selectedIds.Contains(entry.Entry.Id));
+        }
+
+        RefreshSelectionState();
+        if (SaveConfig())
+            return true;
+
+        foreach (var (entry, selected) in snapshot)
+        {
+            entry.SetSelectionFromOwner(selected);
+        }
+
+        RefreshSelectionState();
+        return false;
     }
 
     private void RefreshSelectionState()
