@@ -419,16 +419,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var entry = LauncherEntryDrafts.CreateEntry(draft, previousEntry: null);
-        var validation = LauncherEntryDrafts.ValidateEntry(
-            entry,
+        var entry = CreateEntryFromDraftOrReportValidation(
+            draft,
             originalId: null,
-            Entries.Select(existing => existing.Entry));
-        if (validation is not null)
-        {
-            ApplyStatusText(validation);
+            previousEntry: null);
+        if (entry is null)
             return;
-        }
 
         entry.UpdatedAtUtc = NowUtcText();
         Entries.Add(new LauncherEntryViewModel(entry, this));
@@ -451,16 +447,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         var oldId = item.Entry.Id;
-        var updated = LauncherEntryDrafts.CreateEntry(draft, item.Entry);
-        var validation = LauncherEntryDrafts.ValidateEntry(
-            updated,
-            oldId,
-            Entries.Select(existing => existing.Entry));
-        if (validation is not null)
-        {
-            ApplyStatusText(validation);
+        var updated = CreateEntryFromDraftOrReportValidation(draft, oldId, item.Entry);
+        if (updated is null)
             return;
-        }
 
         item.Entry.Id = updated.Id;
         item.Entry.Name = updated.Name;
@@ -496,6 +485,23 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
 
         ApplyStatusText($"已删除按钮: {entryName}（已保存）");
+    }
+
+    private LaunchEntry? CreateEntryFromDraftOrReportValidation(
+        EntryDraft draft,
+        string? originalId,
+        LaunchEntry? previousEntry)
+    {
+        var entry = LauncherEntryDrafts.CreateEntry(draft, previousEntry);
+        var validation = LauncherEntryDrafts.ValidateEntry(
+            entry,
+            originalId,
+            Entries.Select(existing => existing.Entry));
+        if (validation is null)
+            return entry;
+
+        ApplyStatusText(validation);
+        return null;
     }
 
     private void RenameEntryReferences(string oldEntryId, string newEntryId)
