@@ -742,12 +742,18 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     private void ApplyFilter()
     {
-        VisibleCount = LauncherVisibleEntryCollection.Replace(
-            VisibleEntries,
-            Entries,
-            FilterText ?? string.Empty,
-            SelectedSortMode?.Id,
-            _settings.CustomEntryOrder);
+        var source = Entries.ToList();
+        VisibleEntries.Clear();
+        foreach (var entry in LauncherEntrySorter.Sort(
+                     source.Where(entry => LauncherEntrySearch.Matches(entry.Entry, FilterText ?? string.Empty)),
+                     SelectedSortMode?.Id,
+                     _settings.CustomEntryOrder,
+                     source.Select(entry => entry.Entry.Id)))
+        {
+            VisibleEntries.Add(entry);
+        }
+
+        VisibleCount = VisibleEntries.Count;
         LauncherEntryLayoutPresentation.ApplyCardSize(Entries, VisibleEntries, _cardsAvailableSize);
     }
 
