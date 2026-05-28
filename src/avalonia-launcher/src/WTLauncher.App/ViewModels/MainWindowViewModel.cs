@@ -250,15 +250,32 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
     [RelayCommand]
     private void SelectVisible()
     {
-        var result = LauncherSelectionWorkflow.SelectVisible(VisibleEntries, RefreshSelectionState, SaveConfig);
-        ApplyStatusText(result.StatusText);
+        var targets = VisibleEntries.Where(entry => !entry.IsSelected).ToList();
+        if (targets.Count == 0)
+        {
+            ApplyStatusText(
+                VisibleEntries.Count == 0
+                    ? "当前没有可勾选的可见项"
+                    : "可见项已全部勾选");
+            return;
+        }
+
+        if (SetSelection(targets, selected: true))
+            ApplyStatusText($"已勾选可见 {targets.Count} 项（已保存）");
     }
 
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private void ClearSelection()
     {
-        var result = LauncherSelectionWorkflow.ClearSelection(Entries, RefreshSelectionState, SaveConfig);
-        ApplyStatusText(result.StatusText);
+        var targets = Entries.Where(entry => entry.IsSelected).ToList();
+        if (targets.Count == 0)
+        {
+            ApplyStatusText("当前没有已勾选项");
+            return;
+        }
+
+        if (SetSelection(targets, selected: false))
+            ApplyStatusText($"已清空 {targets.Count} 个勾选项（已保存）");
     }
 
     [RelayCommand(CanExecute = nameof(CanApplyPreset))]
@@ -690,6 +707,25 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
             StatusText = statusText;
     }
 
+    private bool SetSelection(IReadOnlyList<LauncherEntryViewModel> entries, bool selected)
+    {
+        var snapshot = entries
+            .Select(entry => (Entry: entry, Selected: entry.IsSelected))
+            .ToList();
+        foreach (var entry in entries)
+        {
+            entry.SetSelectionFromOwner(selected);
+        }
+
+        RefreshSelectionState();
+        if (SaveConfig())
+            return true;
+
+        RestoreSelection(snapshot);
+        RefreshSelectionState();
+        return false;
+    }
+
     private bool ReplaceSelection(IReadOnlySet<string> selectedIds)
     {
         var snapshot = Entries
@@ -704,13 +740,17 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
         if (SaveConfig())
             return true;
 
+        RestoreSelection(snapshot);
+        RefreshSelectionState();
+        return false;
+    }
+
+    private static void RestoreSelection(IEnumerable<(LauncherEntryViewModel Entry, bool Selected)> snapshot)
+    {
         foreach (var (entry, selected) in snapshot)
         {
             entry.SetSelectionFromOwner(selected);
         }
-
-        RefreshSelectionState();
-        return false;
     }
 
     private void RefreshSelectionState()
