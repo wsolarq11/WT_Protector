@@ -159,7 +159,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 OnPropertyChanged(nameof(FilterText));
                 ApplyFilter();
             });
-        ApplySettingsResult(result, ApplyFilter);
+        ApplySettingsChange(result, ApplyFilter);
     }
 
     partial void OnSelectedSortModeChanged(LauncherSortModeViewModel? value)
@@ -180,7 +180,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 OnPropertyChanged(nameof(IsCustomSortMode));
                 ApplyFilter();
             });
-        ApplySettingsResult(
+        ApplySettingsChange(
             result,
             () =>
             {
@@ -207,7 +207,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 NotifyDisplayModeProjectionChanged();
                 LauncherEntryLayoutPresentation.Refresh(Entries);
             });
-        ApplySettingsResult(
+        ApplySettingsChange(
             result,
             () => StatusText = $"视图模式: {value.Label}（已保存）");
     }
@@ -225,7 +225,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 OnPropertyChanged(nameof(RequireConfirmationForLaunches));
                 RefreshLaunchConfirmationPresentation();
             });
-        ApplySettingsResult(
+        ApplySettingsChange(
             result,
             () => StatusText = value
                 ? "启动确认: 所有启动项启动前统一确认"
@@ -1032,7 +1032,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             snapshot,
             () => onRollback(snapshot));
 
-    private void ApplySettingsResult(string? saveFailure, Action onSuccess)
+    private void ApplySettingsChange(string? saveFailure, Action onSuccess)
     {
         if (saveFailure is not null)
         {
