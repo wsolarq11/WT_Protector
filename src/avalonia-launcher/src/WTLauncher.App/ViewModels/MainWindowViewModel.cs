@@ -743,18 +743,46 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
     private void ApplyFilter()
     {
         var source = Entries.ToList();
+        var filtered = source.Where(entry => LauncherEntrySearch.Matches(entry.Entry, FilterText ?? string.Empty));
+        var sorted = SelectedSortMode?.Id switch
+        {
+            "updated" => filtered
+                .OrderByDescending(entry => ParseUpdatedAt(entry.Entry.UpdatedAtUtc))
+                .ThenBy(entry => entry.Entry.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ThenBy(entry => entry.Entry.Id, StringComparer.Ordinal),
+            "alphabetical" => filtered
+                .OrderBy(entry => entry.Entry.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ThenBy(entry => entry.Entry.Id, StringComparer.Ordinal),
+            _ => SortByCustomOrder(filtered, source.Select(entry => entry.Entry.Id)),
+        };
+
         VisibleEntries.Clear();
-        foreach (var entry in LauncherEntrySorter.Sort(
-                     source.Where(entry => LauncherEntrySearch.Matches(entry.Entry, FilterText ?? string.Empty)),
-                     SelectedSortMode?.Id,
-                     _settings.CustomEntryOrder,
-                     source.Select(entry => entry.Entry.Id)))
+        foreach (var entry in sorted)
         {
             VisibleEntries.Add(entry);
         }
 
         VisibleCount = VisibleEntries.Count;
         LauncherEntryLayoutPresentation.ApplyCardSize(Entries, VisibleEntries, _cardsAvailableSize);
+    }
+
+    private IEnumerable<LauncherEntryViewModel> SortByCustomOrder(
+        IEnumerable<LauncherEntryViewModel> entries,
+        IEnumerable<string> allEntryIds)
+    {
+        LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, allEntryIds);
+        var order = LauncherEntryOrder.BuildIndex(_settings.CustomEntryOrder);
+        return entries
+            .OrderBy(entry => order.TryGetValue(entry.Entry.Id, out var index) ? index : int.MaxValue)
+            .ThenBy(entry => entry.Entry.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(entry => entry.Entry.Id, StringComparer.Ordinal);
+    }
+
+    private static DateTimeOffset ParseUpdatedAt(string? value)
+    {
+        return DateTimeOffset.TryParse(value, out var parsed)
+            ? parsed
+            : DateTimeOffset.MinValue;
     }
 
     private void RefreshEntryLayoutPresentation()

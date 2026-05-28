@@ -4,7 +4,7 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
-public sealed partial class LauncherEntryViewModel : ObservableObject, IHasLaunchEntry
+public sealed partial class LauncherEntryViewModel : ObservableObject
 {
     private readonly MainWindowViewModel _owner;
     private readonly IEntryViewContext _viewContext;
