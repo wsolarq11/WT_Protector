@@ -14,7 +14,9 @@ public sealed class LauncherEntryMutationSnapshotTests
             Name = "One",
             Directory = "D:\\one",
             Command = "pwsh",
+            Confirm = true,
             Selected = true,
+            UpdatedAtUtc = "2026-05-20T00:00:00Z",
         };
         var presetFile = new LauncherPresetFile
         {
@@ -37,7 +39,15 @@ public sealed class LauncherEntryMutationSnapshotTests
         order[0] = "changed";
 
         Assert.Equal("daily", snapshot.SelectedPresetId);
-        Assert.Equal("one", Assert.Single(snapshot.Entries).Id);
+        var snapshotEntry = Assert.Single(snapshot.Entries);
+        Assert.NotSame(entry, snapshotEntry);
+        Assert.Equal("one", snapshotEntry.Id);
+        Assert.Equal("One", snapshotEntry.Name);
+        Assert.Equal("D:\\one", snapshotEntry.Directory);
+        Assert.Equal("pwsh", snapshotEntry.Command);
+        Assert.True(snapshotEntry.Confirm);
+        Assert.True(snapshotEntry.Selected);
+        Assert.Equal("2026-05-20T00:00:00Z", snapshotEntry.UpdatedAtUtc);
         Assert.Equal("one", Assert.Single(snapshot.PresetFile.Presets[0].EntryIds));
         Assert.Equal("one", Assert.Single(snapshot.CustomEntryOrder));
     }
