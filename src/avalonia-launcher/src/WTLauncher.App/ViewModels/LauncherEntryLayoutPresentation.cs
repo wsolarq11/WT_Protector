@@ -1,16 +1,18 @@
 using Avalonia;
-using WTLauncher.App.Views;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
 public static class LauncherEntryLayoutPresentation
 {
+    private const double MinimumCardsWidth = 220;
+    private const double MinimumCardsHeight = 140;
+
     public static Size NormalizeAvailableSize(Size availableSize)
     {
         return new Size(
-            Math.Max(MainWindowLayoutMetrics.MinimumCardsWidth, availableSize.Width),
-            Math.Max(MainWindowLayoutMetrics.MinimumCardsHeight, availableSize.Height));
+            Math.Max(MinimumCardsWidth, availableSize.Width),
+            Math.Max(MinimumCardsHeight, availableSize.Height));
     }
 
     public static void ApplyCardSize(

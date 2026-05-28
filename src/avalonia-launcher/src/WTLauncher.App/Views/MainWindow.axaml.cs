@@ -12,6 +12,8 @@ namespace WTLauncher.App.Views;
 
 public sealed partial class MainWindow : Window
 {
+    private const double CardsRegionHorizontalChromeWidth = 48;
+    private const double CardsRegionVerticalChromeHeight = 270;
     private string? _settingsPath;
     private LauncherSettings? _settings;
     private OverlayLayer? _overlayLayer;
@@ -66,7 +68,9 @@ public sealed partial class MainWindow : Window
     private void UpdateCardRegionSize(MainWindowViewModel viewModel)
     {
         // Header/footer take the stable chrome area; the view model owns the cheap grid sizing.
-        viewModel.UpdateCardsAvailableSize(MainWindowLayoutMetrics.CalculateCardsAvailableSize(Bounds.Size));
+        viewModel.UpdateCardsAvailableSize(new Size(
+            Bounds.Width - CardsRegionHorizontalChromeWidth,
+            Bounds.Height - CardsRegionVerticalChromeHeight));
     }
 
     private async void OnEntryDragPointerPressed(object? sender, PointerPressedEventArgs e)
