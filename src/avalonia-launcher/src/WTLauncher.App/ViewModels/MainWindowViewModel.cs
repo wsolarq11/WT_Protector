@@ -72,9 +72,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
         ConfigPathDisplay = $"配置: {configPath} · 启动组: {_presetPath}";
         FilterText = settings.LastFilterText;
         _requireConfirmationForLaunches = settings.RequireConfirmationForLaunches;
-        _selectedSortMode = LauncherModeCatalog.ResolveSortMode(SortModes, settings.SortMode);
+        _selectedSortMode = ResolveSortMode(settings.SortMode);
         _settings.SortMode = _selectedSortMode.Id;
-        _selectedDisplayMode = LauncherModeCatalog.ResolveDisplayMode(DisplayModes, settings.EntryViewMode);
+        _selectedDisplayMode = ResolveDisplayMode(settings.EntryViewMode);
         _settings.EntryViewMode = _selectedDisplayMode.Id;
         Refresh();
     }
@@ -85,9 +85,32 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
 
     public ObservableCollection<LauncherPresetViewModel> Presets { get; } = [];
 
-    public ObservableCollection<LauncherSortModeViewModel> SortModes { get; } = LauncherModeCatalog.CreateSortModes();
+    public ObservableCollection<LauncherSortModeViewModel> SortModes { get; } =
+    [
+        new("custom", "自定义拖拽"),
+        new("updated", "更新时间"),
+        new("alphabetical", "首字母顺序"),
+    ];
 
-    public ObservableCollection<LauncherDisplayModeViewModel> DisplayModes { get; } = LauncherModeCatalog.CreateDisplayModes();
+    public ObservableCollection<LauncherDisplayModeViewModel> DisplayModes { get; } =
+    [
+        new(LauncherEntryViewMode.Cards, "卡片"),
+        new(LauncherEntryViewMode.Details, "详细列表"),
+        new(LauncherEntryViewMode.Names, "名称墙"),
+    ];
+
+    private LauncherSortModeViewModel ResolveSortMode(string? sortModeId)
+    {
+        return SortModes.FirstOrDefault(mode => mode.Id == sortModeId)
+            ?? SortModes[0];
+    }
+
+    private LauncherDisplayModeViewModel ResolveDisplayMode(string? entryViewMode)
+    {
+        var savedViewMode = LauncherEntryViewModes.Parse(entryViewMode);
+        return DisplayModes.FirstOrDefault(mode => mode.Mode == savedViewMode)
+            ?? DisplayModes[0];
+    }
 
     private LauncherEntryViewMode CurrentEntryViewMode => SelectedDisplayMode?.Mode ?? LauncherEntryViewMode.Cards;
 
@@ -153,7 +176,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
             snapshot,
             snapshot =>
             {
-                _selectedSortMode = LauncherModeCatalog.ResolveSortMode(SortModes, snapshot.SortMode);
+                _selectedSortMode = ResolveSortMode(snapshot.SortMode);
                 OnPropertyChanged(nameof(SelectedSortMode));
                 OnPropertyChanged(nameof(IsCustomSortMode));
                 ApplyFilter();
@@ -182,7 +205,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryViewCo
             snapshot,
             snapshot =>
             {
-                _selectedDisplayMode = LauncherModeCatalog.ResolveDisplayMode(DisplayModes, snapshot.EntryViewMode);
+                _selectedDisplayMode = ResolveDisplayMode(snapshot.EntryViewMode);
                 OnPropertyChanged(nameof(SelectedDisplayMode));
                 OnPropertyChanged(nameof(IsCardsViewMode));
                 OnPropertyChanged(nameof(IsDetailedListMode));

@@ -662,6 +662,7 @@ public sealed class MainWindowViewModelTests
             new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["three", "one", "two"] },
             new LauncherProcess());
 
+        Assert.Equal(["custom", "updated", "alphabetical"], viewModel.SortModes.Select(mode => mode.Id).ToArray());
         Assert.Equal(["three", "one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
 
         viewModel.MoveEntryBefore("two", "three");
@@ -683,6 +684,24 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(["two", "one", "three"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         savedSettings = LauncherSettingsStore.Load(settings);
         Assert.Equal("updated", savedSettings.SortMode);
+    }
+
+    [Fact]
+    public void SavedUnknownModesFallbackToDefaultModes()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+
+        var viewModel = new MainWindowViewModel(
+            config,
+            settings,
+            new LauncherSettings { SortMode = "missing", EntryViewMode = "missing" },
+            new LauncherProcess());
+
+        Assert.Equal("custom", viewModel.SelectedSortMode?.Id);
+        Assert.Equal(new[] { "卡片", "详细列表", "名称墙" }, viewModel.DisplayModes.Select(mode => mode.Label));
+        Assert.Equal(LauncherEntryViewMode.Cards, viewModel.SelectedDisplayMode?.Mode);
+        Assert.Equal("cards", viewModel.SelectedDisplayMode?.Id);
     }
 
     [Fact]
