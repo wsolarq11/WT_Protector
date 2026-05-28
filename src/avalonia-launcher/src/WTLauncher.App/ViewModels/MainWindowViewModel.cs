@@ -199,7 +199,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         var snapshot = LauncherSettingsSnapshot.Capture(_settings);
         _settings.EntryViewMode = value.Id;
-        RefreshEntryLayoutPresentation();
+        LauncherEntryLayoutPresentation.Refresh(Entries);
         var result = SaveSettingsChange(
             snapshot,
             snapshot =>
@@ -209,7 +209,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 OnPropertyChanged(nameof(IsCardsViewMode));
                 OnPropertyChanged(nameof(IsDetailedListMode));
                 OnPropertyChanged(nameof(IsNamesViewMode));
-                RefreshEntryLayoutPresentation();
+                LauncherEntryLayoutPresentation.Refresh(Entries);
             });
         ApplySettingsResult(
             result,
@@ -222,7 +222,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settings.RequireConfirmationForLaunches = value;
         OnPropertyChanged(nameof(LaunchConfirmationToggleText));
         OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
-        RefreshEntryLayoutPresentation();
+        LauncherEntryLayoutPresentation.Refresh(Entries);
         ApplyFilter();
         var result = SaveSettingsChange(
             snapshot,
@@ -232,7 +232,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 OnPropertyChanged(nameof(RequireConfirmationForLaunches));
                 OnPropertyChanged(nameof(LaunchConfirmationToggleText));
                 OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
-                RefreshEntryLayoutPresentation();
+                LauncherEntryLayoutPresentation.Refresh(Entries);
                 ApplyFilter();
             });
         ApplySettingsResult(
@@ -253,7 +253,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         RefreshSelectionState();
         NotifyPresetManagementCommands();
         ApplyFilter();
-        RefreshEntryLayoutPresentation();
+        LauncherEntryLayoutPresentation.Refresh(Entries);
         StatusText = presetError
             ?? $"已加载 {TotalCount} 个启动项、{PresetCount} 个启动组；勾选自动保存到 config\\config.json";
     }
@@ -588,7 +588,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ApplyPresetFileFromSnapshot(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
         RefreshSelectionState();
         ApplyFilter();
-        RefreshEntryLayoutPresentation();
+        LauncherEntryLayoutPresentation.Refresh(Entries);
     }
 
     private void ReplaceEntries(IEnumerable<LaunchEntry> entries)
@@ -847,11 +847,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return DateTimeOffset.TryParse(value, out var parsed)
             ? parsed
             : DateTimeOffset.MinValue;
-    }
-
-    private void RefreshEntryLayoutPresentation()
-    {
-        LauncherEntryLayoutPresentation.Refresh(Entries);
     }
 
     public void UpdateCardsAvailableSize(Size availableSize)
