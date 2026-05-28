@@ -53,12 +53,12 @@ The codebase is organized in five logical layers. Each layer depends only on the
 - `LauncherEntrySearch`, `LauncherEntryOrder`, `LauncherEntryLayoutCalculator` — pure sort/filter/layout
 - `LauncherEntrySorter`, `LauncherVisibleEntryCollection` — generic sort/filter consuming `IHasLaunchEntry`
 
-### Layer 1 — Mutation workflows (ViewModels, stateless)
+### Layer 1 — Command-local mutations (ViewModels)
 
-`src/WTLauncher.App/ViewModels/LauncherEntryWorkflow.cs` etc.
+`src/WTLauncher.App/ViewModels/MainWindowViewModel.cs`
 
-- Stateless static methods: `AddEntry`, `EditEntry`, `DeleteEntry` operate on collections
-- No MVVM dependency — callable from tests without constructing a ViewModel tree
+- Entry add/edit/delete command handlers own the short validation → mutate → save sequence.
+- Reusable rules stay in Core helpers such as `LauncherEntryDrafts` and `LauncherEntryReferences`; avoid a second ViewModel workflow when there is only one caller.
 
 ### Layer 2 — Persistence + rollback (ViewModels)
 
