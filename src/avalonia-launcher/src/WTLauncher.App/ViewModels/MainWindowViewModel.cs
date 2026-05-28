@@ -700,12 +700,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         var previousSelected = item.Entry.Selected;
         item.Entry.Selected = selected;
-        RefreshSelectionState();
-        if (SaveConfig())
-            return;
-
-        item.SetSelectionFromOwner(previousSelected);
-        RefreshSelectionState();
+        SaveSelectionChangeOrRestore([(Entry: item, Selected: previousSelected)]);
     }
 
     partial void OnSelectedPresetChanged(LauncherPresetViewModel? value)
