@@ -5,6 +5,12 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
+    public Func<IReadOnlyList<string>, Task<string?>> RequestNewPresetAsync { get; set; } =
+        static _ => Task.FromResult<string?>(null);
+
+    public Func<LauncherPresetViewModel, Task<bool>> ConfirmDeletePresetAsync { get; set; } =
+        static _ => Task.FromResult(false);
+
     [RelayCommand(CanExecute = nameof(CanApplyPreset))]
     private void ApplyPreset()
     {

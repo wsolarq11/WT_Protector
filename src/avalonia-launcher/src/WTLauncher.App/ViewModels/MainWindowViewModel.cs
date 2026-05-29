@@ -14,7 +14,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly LauncherLaunchWorkflow _launchWorkflow;
     private LauncherPresetFile _presetFile = new();
 
-
     [ObservableProperty]
     private string _statusText = "Ready";
 
@@ -41,7 +40,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private LauncherPresetViewModel? _selectedPreset;
-
 
     [ObservableProperty]
     private bool _requireConfirmationForLaunches;
@@ -75,24 +73,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public ObservableCollection<LauncherPresetViewModel> Presets { get; } = [];
 
-
     public string ConfigPathDisplay { get; }
-
-    public Func<IReadOnlyList<LaunchEntry>, Task<bool>> ConfirmBatchLaunchAsync { get; set; } =
-        static _ => Task.FromResult(false);
-
-    public Func<IReadOnlyList<string>, Task<string?>> RequestNewPresetAsync { get; set; } =
-        static _ => Task.FromResult<string?>(null);
-
-    public Func<LauncherPresetViewModel, Task<bool>> ConfirmDeletePresetAsync { get; set; } =
-        static _ => Task.FromResult(false);
-
-    public Func<LaunchEntry?, Task<EntryDraft?>> RequestEntryDraftAsync { get; set; } =
-        static _ => Task.FromResult<EntryDraft?>(null);
-
-    public Func<LauncherEntryViewModel, Task<bool>> ConfirmDeleteEntryAsync { get; set; } =
-        static _ => Task.FromResult(false);
-
 
     [RelayCommand]
     private void Refresh()
@@ -109,13 +90,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
             ?? $"已加载 {TotalCount} 个启动项、{PresetCount} 个启动组；勾选自动保存到 config\\config.json";
     }
 
-
     private void ApplyStatusText(string? statusText)
     {
         if (statusText is not null)
             StatusText = statusText;
     }
-
 
     private bool SaveConfig()
     {
@@ -132,7 +111,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     private static LaunchEntry ToLaunchEntry(LauncherEntryViewModel entry) => entry.Entry;
-
 
     private void SaveSettingsChange(
         LauncherSettingsSnapshot snapshot,

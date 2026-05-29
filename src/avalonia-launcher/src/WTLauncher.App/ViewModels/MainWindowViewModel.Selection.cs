@@ -1,9 +1,13 @@
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
+    public Func<IReadOnlyList<LaunchEntry>, Task<bool>> ConfirmBatchLaunchAsync { get; set; } =
+        static _ => Task.FromResult(false);
+
     [RelayCommand]
     private void SelectVisible()
     {

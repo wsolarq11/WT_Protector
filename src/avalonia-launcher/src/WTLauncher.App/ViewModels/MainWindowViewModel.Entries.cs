@@ -5,6 +5,12 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
+    public Func<LaunchEntry?, Task<EntryDraft?>> RequestEntryDraftAsync { get; set; } =
+        static _ => Task.FromResult<EntryDraft?>(null);
+
+    public Func<LauncherEntryViewModel, Task<bool>> ConfirmDeleteEntryAsync { get; set; } =
+        static _ => Task.FromResult(false);
+
     [RelayCommand]
     private async Task AddEntryAsync()
     {
