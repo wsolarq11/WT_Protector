@@ -42,9 +42,9 @@ public sealed class DialogLayoutContractTests
                 : "var cancel = LauncherDialogButtons.Cancel",
             source);
         var dialogButtons = GetDialogButtonsSource();
-        Assert.Contains("isCancel: true", MethodBlock(dialogButtons, "Cancel"));
-        Assert.Contains("Cancel(minWidth, isDefault: true)", MethodBlock(dialogButtons, "SafeDefaultCancel"));
-        Assert.Contains("IsCancel = isCancel", MethodBlock(dialogButtons, "Create"));
+        Assert.Contains("isCancel: true", MethodSource(dialogButtons, "Cancel"));
+        Assert.Contains("Cancel(minWidth, isDefault: true)", MethodSource(dialogButtons, "SafeDefaultCancel"));
+        Assert.Contains("IsCancel = isCancel", MethodSource(dialogButtons, "Create"));
     }
 
     [Theory]
@@ -55,9 +55,10 @@ public sealed class DialogLayoutContractTests
     public void NonDestructiveDialogPrimaryActionsBindEnterAsDefault(string fileName, string buttonName)
     {
         var source = File.ReadAllText(TestRepositoryPaths.View(fileName));
+        var dialogButtons = GetDialogButtonsSource();
 
         Assert.Contains($"var {buttonName} = LauncherDialogButtons.Primary", source);
-        Assert.Contains("isDefault: true", MethodBlock(GetDialogButtonsSource(), "Primary"));
+        Assert.Contains("isDefault: true", MethodSource(dialogButtons, "Primary"));
     }
 
     [Theory]
@@ -66,14 +67,15 @@ public sealed class DialogLayoutContractTests
     public void DestructiveDeleteDialogsDefaultEnterToCancel(string fileName)
     {
         var source = File.ReadAllText(TestRepositoryPaths.View(fileName));
+        var dialogButtons = GetDialogButtonsSource();
 
         Assert.Contains("var cancel = LauncherDialogButtons.SafeDefaultCancel();", source);
         Assert.Contains("var delete = LauncherDialogButtons.Destructive", source);
-        Assert.Contains("isDefault: true", MethodBlock(GetDialogButtonsSource(), "SafeDefaultCancel"));
-        Assert.DoesNotContain("isDefault: true", MethodBlock(GetDialogButtonsSource(), "Destructive"));
+        Assert.Contains("isDefault: true", MethodSource(dialogButtons, "SafeDefaultCancel"));
+        Assert.DoesNotContain("isDefault: true", MethodSource(dialogButtons, "Destructive"));
     }
 
-    private static string MethodBlock(string source, string methodName)
+    private static string MethodSource(string source, string methodName)
     {
         var start = source.IndexOf($"static Button {methodName}(", StringComparison.Ordinal);
         Assert.True(start >= 0, $"Expected {methodName} method declaration.");
