@@ -402,7 +402,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var draft = await RequestEntryDraftAsync(null).ConfigureAwait(true);
         if (draft is null)
         {
-            StatusText = "已取消: 新增按钮";
+            StatusText = LauncherEntryStatus.AddCanceled;
             return;
         }
 
@@ -420,7 +420,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (!SaveEntryCollectionChanges(savePresets: false, snapshot))
             return;
 
-        ApplyStatusText($"已新增按钮: {entry.Name}（已保存）");
+        ApplyStatusText(LauncherEntryStatus.Added(entry.Name));
     }
 
     internal async Task EditEntryAsync(LauncherEntryViewModel item)
@@ -429,7 +429,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var draft = await RequestEntryDraftAsync(item.Entry).ConfigureAwait(true);
         if (draft is null)
         {
-            StatusText = $"已取消: 编辑 {item.Name}";
+            StatusText = LauncherEntryStatus.EditCanceled(item.Name);
             return;
         }
 
@@ -445,7 +445,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (!SaveEntryCollectionChanges(savePresets: true, snapshot))
             return;
 
-        ApplyStatusText($"已更新按钮: {item.Name}（已保存）");
+        ApplyStatusText(LauncherEntryStatus.Updated(item.Name));
     }
 
     internal async Task DeleteEntryAsync(LauncherEntryViewModel item)
@@ -454,7 +454,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var accepted = await ConfirmDeleteEntryAsync(item).ConfigureAwait(true);
         if (!accepted)
         {
-            StatusText = $"已取消: 删除 {item.Name}";
+            StatusText = LauncherEntryStatus.DeleteCanceled(item.Name);
             return;
         }
 
@@ -464,7 +464,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (!SaveEntryCollectionChanges(savePresets: true, snapshot))
             return;
 
-        ApplyStatusText($"已删除按钮: {entryName}（已保存）");
+        ApplyStatusText(LauncherEntryStatus.Deleted(entryName));
     }
 
     private LaunchEntry? CreateEntryFromDraftOrReportValidation(
