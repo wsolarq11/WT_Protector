@@ -12,7 +12,7 @@ public sealed class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
 
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var viewModel = CreateViewModel(config, settings);
 
         Assert.Equal(0, viewModel.SelectedCount);
 
@@ -35,7 +35,7 @@ public sealed class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: true, twoSelected: true);
 
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var viewModel = CreateViewModel(config, settings);
 
         viewModel.SelectVisibleCommand.Execute(null);
 
@@ -50,7 +50,7 @@ public sealed class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
 
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var viewModel = CreateViewModel(config, settings);
         File.Delete(config);
         Directory.CreateDirectory(config);
 
@@ -150,7 +150,7 @@ public sealed class MainWindowViewModelTests
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var viewModel = CreateViewModel(config, settings);
 
         Assert.Equal(["one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
 
@@ -323,7 +323,7 @@ public sealed class MainWindowViewModelTests
         }
         """);
 
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var viewModel = CreateViewModel(config, settings);
 
         Assert.Equal("daily", Assert.Single(viewModel.Presets).Id);
         Assert.Equal(1, viewModel.PresetCount);
@@ -476,7 +476,7 @@ public sealed class MainWindowViewModelTests
         }
         """);
 
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var viewModel = CreateViewModel(config, settings);
 
         Assert.Equal("检查启动组", viewModel.ApplyPresetButtonText);
         Assert.Contains("引用了 1 个不存在的启动项", viewModel.PresetSelectionStatusText);
@@ -590,7 +590,7 @@ public sealed class MainWindowViewModelTests
         }
         """);
 
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var viewModel = CreateViewModel(config, settings);
         var applyNotifications = 0;
         var updateNotifications = 0;
         var deleteNotifications = 0;
@@ -1014,7 +1014,7 @@ public sealed class MainWindowViewModelTests
                 Confirm = false,
             });
 
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var viewModel = CreateViewModel(config, settings);
         var entry = Assert.Single(viewModel.Entries);
 
         entry.CardWidth = 210;
@@ -1076,7 +1076,7 @@ public sealed class MainWindowViewModelTests
                 Confirm = false,
             });
 
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var viewModel = CreateViewModel(config, settings);
         var entry = Assert.Single(viewModel.Entries);
 
         entry.CardWidth = 210;
@@ -1164,7 +1164,7 @@ public sealed class MainWindowViewModelTests
 
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var viewModel = CreateViewModel(config, settings);
 
         viewModel.UpdateCardsAvailableSize(new Size(640, 260));
 
@@ -1188,7 +1188,7 @@ public sealed class MainWindowViewModelTests
             })
             .ToArray();
         var (config, settings, _) = CreatePortableFixture(temp, entries);
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var viewModel = CreateViewModel(config, settings);
 
         viewModel.UpdateCardsAvailableSize(new Size(640, 260));
 
@@ -1225,7 +1225,7 @@ public sealed class MainWindowViewModelTests
             })
             .ToArray();
         var (config, settings, _) = CreatePortableFixture(temp, entries);
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var viewModel = CreateViewModel(config, settings);
 
         viewModel.UpdateCardsAvailableSize(new Size(900, 520));
 
@@ -1250,7 +1250,7 @@ public sealed class MainWindowViewModelTests
             })
             .ToArray();
         var (config, settings, _) = CreatePortableFixture(temp, entries);
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var viewModel = CreateViewModel(config, settings);
 
         viewModel.UpdateCardsAvailableSize(new Size(892, 330));
 
@@ -1282,7 +1282,7 @@ public sealed class MainWindowViewModelTests
             })
             .ToArray();
         var (config, settings, _) = CreatePortableFixture(temp, entries);
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess());
+        var viewModel = CreateViewModel(config, settings);
 
         viewModel.UpdateCardsAvailableSize(new Size(892, 330));
 
@@ -1333,6 +1333,9 @@ public sealed class MainWindowViewModelTests
         LauncherConfigStore.Save(entries, config);
         return (config, Path.Combine(configDir, "settings.json"), Path.Combine(configDir, "presets.json"));
     }
+
+    private static MainWindowViewModel CreateViewModel(string config, string settings) =>
+        new(config, settings, new LauncherSettings(), new LauncherProcess());
 
     private static List<LaunchEntry> LoadEntriesById(string config) =>
         LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
