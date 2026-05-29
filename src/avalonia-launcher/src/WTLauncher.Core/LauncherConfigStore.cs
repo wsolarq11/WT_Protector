@@ -42,9 +42,12 @@ public static class LauncherConfigStore
 
         foreach (var candidateRoot in candidateRoots)
         {
-            var found = FindLocalConfig(candidateRoot);
-            if (found is not null)
-                return found;
+            if (string.IsNullOrWhiteSpace(candidateRoot))
+                continue;
+
+            var config = Path.Combine(Path.GetFullPath(candidateRoot), ConfigDirectoryName, ConfigFileName);
+            if (File.Exists(config))
+                return config;
         }
 
         return Path.GetFullPath(Path.Combine(currentDirectory ?? Environment.CurrentDirectory, ConfigDirectoryName, ConfigFileName));
@@ -63,15 +66,6 @@ public static class LauncherConfigStore
         var directory = Path.GetDirectoryName(Path.GetFullPath(configPath))
             ?? throw new InvalidOperationException("Config path must have a parent directory.");
         return Path.Combine(directory, fileName);
-    }
-
-    private static string? FindLocalConfig(string? start)
-    {
-        if (string.IsNullOrWhiteSpace(start))
-            return null;
-
-        var config = Path.Combine(Path.GetFullPath(start), ConfigDirectoryName, ConfigFileName);
-        return File.Exists(config) ? config : null;
     }
 
     private static string? FindUpward(string? start)
