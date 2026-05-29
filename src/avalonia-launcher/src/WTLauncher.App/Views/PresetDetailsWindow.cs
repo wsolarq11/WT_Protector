@@ -44,19 +44,7 @@ public sealed class PresetDetailsWindow : Window
         cancel.Click += (_, _) => Close((string?)null);
 
         var save = LauncherDialogButtons.Primary("保存启动组");
-        save.Click += (_, _) =>
-        {
-            var name = (_nameBox.Text ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                _errorText.Text = "请输入启动组名称。";
-                _errorText.IsVisible = true;
-                _nameBox.Focus();
-                return;
-            }
-
-            Close(name);
-        };
+        save.Click += (_, _) => Submit();
 
         var footer = LauncherDialogButtons.Footer(14, cancel, save);
 
@@ -97,5 +85,17 @@ public sealed class PresetDetailsWindow : Window
         };
     }
 
+    private void Submit()
+    {
+        var name = (_nameBox.Text ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            _errorText.Text = "请输入启动组名称。";
+            _errorText.IsVisible = true;
+            _nameBox.Focus();
+            return;
+        }
 
+        Close(name);
+    }
 }
