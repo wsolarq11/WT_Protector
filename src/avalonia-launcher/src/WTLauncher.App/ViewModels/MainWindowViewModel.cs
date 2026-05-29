@@ -482,7 +482,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var validation = LauncherEntryDrafts.ValidateEntry(
             entry,
             originalId,
-            Entries.Select(existing => existing.Entry));
+            Entries.Select(ToLaunchEntry));
         if (validation is null)
             return entry;
 
@@ -495,7 +495,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         TotalCount = Entries.Count;
 
         var saveFailure = LauncherEntryMutationPersistence.Save(
-            Entries.Select(entry => entry.Entry),
+            Entries.Select(ToLaunchEntry),
             _configPath,
             _presetFile,
             _presetPath,
@@ -519,7 +519,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private LauncherEntryMutationSnapshot CaptureEntryMutationSnapshot() =>
         LauncherEntryMutationSnapshot.Capture(
-            Entries.Select(entry => entry.Entry),
+            Entries.Select(ToLaunchEntry),
             _presetFile,
             _settings.CustomEntryOrder,
             SelectedPreset?.Id);
@@ -586,7 +586,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             if (RequireConfirmationForLaunches)
             {
-                var accepted = await ConfirmBatchLaunchAsync(selected.Select(entry => entry.Entry).ToList())
+                var accepted = await ConfirmBatchLaunchAsync(selected.Select(ToLaunchEntry).ToList())
                     .ConfigureAwait(true);
                 if (!accepted)
                 {
@@ -739,7 +739,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             FilterText,
             SelectedSortMode?.Id,
             _settings.CustomEntryOrder,
-            static entry => entry.Entry);
+            ToLaunchEntry);
 
         VisibleEntries.Clear();
         foreach (var entry in sorted)
@@ -921,7 +921,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         try
         {
-            LauncherConfigStore.Save(Entries.Select(entry => entry.Entry), _configPath);
+            LauncherConfigStore.Save(Entries.Select(ToLaunchEntry), _configPath);
             return true;
         }
         catch (Exception ex)
@@ -930,6 +930,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return false;
         }
     }
+
+    private static LaunchEntry ToLaunchEntry(LauncherEntryViewModel entry) => entry.Entry;
 
     private string? SaveSettingsChange(
         LauncherSettingsSnapshot snapshot,
