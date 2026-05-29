@@ -33,7 +33,7 @@ public sealed class LauncherDragReorderWorkflow
         _ensureCustomOrderContainsEntries();
         ClearPreviewState();
 
-        var source = _entries.FirstOrDefault(entry => string.Equals(entry.Id, draggedEntryId, StringComparison.Ordinal));
+        var source = FindEntry(draggedEntryId);
         _session = LauncherDragReorderSession.Start(
             draggedEntryId,
             LauncherSettingsSnapshot.Capture(_settings),
@@ -62,10 +62,13 @@ public sealed class LauncherDragReorderWorkflow
         LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, draggedEntryId, targetEntryId, insertAfter);
         _applyFilter();
 
-        var target = _entries.FirstOrDefault(entry => string.Equals(entry.Id, targetEntryId, StringComparison.Ordinal));
+        var target = FindEntry(targetEntryId);
         session.SetTarget(target, insertAfter);
         return true;
     }
+
+    private LauncherEntryViewModel? FindEntry(string entryId) =>
+        _entries.FirstOrDefault(entry => string.Equals(entry.Id, entryId, StringComparison.Ordinal));
 
     public void ClearHover()
     {
