@@ -12,7 +12,7 @@ public static class LauncherPresetWorkflow
         {
             Id = LauncherPresetIds.GenerateUnique(name, presetFile.Presets.Select(item => item.Id)),
             Name = name,
-            EntryIds = entryIds.ToList(),
+            EntryIds = [.. entryIds],
         };
         presetFile.Presets.Add(preset);
         return preset;
@@ -30,7 +30,7 @@ public static class LauncherPresetWorkflow
             return null;
 
         preset.Name = name;
-        preset.EntryIds = entryIds.ToList();
+        preset.EntryIds = [.. entryIds];
         return preset;
     }
 
