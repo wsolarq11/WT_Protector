@@ -209,11 +209,10 @@ public sealed class MainWindowViewModelTests
         };
         var (config, settings, _) = CreatePortableFixture(temp, entries);
 
-        var viewModel = new MainWindowViewModel(
+        var viewModel = CreateViewModel(
             config,
             settings,
-            new LauncherSettings { RequireConfirmationForLaunches = false },
-            new LauncherProcess());
+            new LauncherSettings { RequireConfirmationForLaunches = false });
 
         Assert.False(viewModel.RequireConfirmationForLaunches);
         viewModel.Entries.Single(entry => entry.Id == "one").DryRunCommand.Execute(null);
@@ -246,11 +245,10 @@ public sealed class MainWindowViewModelTests
                 Command = "codex --version",
                 Confirm = true,
             });
-        var viewModel = new MainWindowViewModel(
+        var viewModel = CreateViewModel(
             config,
             settings,
-            new LauncherSettings { RequireConfirmationForLaunches = true },
-            new LauncherProcess());
+            new LauncherSettings { RequireConfirmationForLaunches = true });
         var confirmCalls = 0;
         viewModel.ConfirmLaunchAsync = (_, _) =>
         {
@@ -289,11 +287,10 @@ public sealed class MainWindowViewModelTests
                 Confirm = false,
                 Selected = true,
             });
-        var viewModel = new MainWindowViewModel(
+        var viewModel = CreateViewModel(
             config,
             settings,
-            new LauncherSettings { RequireConfirmationForLaunches = false },
-            new LauncherProcess());
+            new LauncherSettings { RequireConfirmationForLaunches = false });
 
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 
@@ -364,11 +361,7 @@ public sealed class MainWindowViewModelTests
         }
         """);
 
-        var defaultViewModel = new MainWindowViewModel(
-            defaultConfig,
-            defaultSettings,
-            new LauncherSettings(),
-            new LauncherProcess());
+        var defaultViewModel = CreateViewModel(defaultConfig, defaultSettings);
 
         Assert.Equal(["daily", "team"], defaultViewModel.Presets.Select(preset => preset.Id).ToArray());
         Assert.Equal("team", defaultViewModel.SelectedPreset?.Id);
@@ -389,11 +382,7 @@ public sealed class MainWindowViewModelTests
         }
         """);
 
-        var fallbackViewModel = new MainWindowViewModel(
-            fallbackConfig,
-            fallbackSettings,
-            new LauncherSettings(),
-            new LauncherProcess());
+        var fallbackViewModel = CreateViewModel(fallbackConfig, fallbackSettings);
 
         Assert.Equal("daily", fallbackViewModel.SelectedPreset?.Id);
     }
@@ -709,11 +698,10 @@ public sealed class MainWindowViewModelTests
                 UpdatedAtUtc = "",
             });
 
-        var viewModel = new MainWindowViewModel(
+        var viewModel = CreateViewModel(
             config,
             settings,
-            new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["three", "one", "two"] },
-            new LauncherProcess());
+            new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["three", "one", "two"] });
 
         Assert.Equal(["custom", "updated", "alphabetical"], viewModel.SortModes.Select(mode => mode.Id).ToArray());
         Assert.Equal(["three", "one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
@@ -747,11 +735,10 @@ public sealed class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
 
-        var viewModel = new MainWindowViewModel(
+        var viewModel = CreateViewModel(
             config,
             settings,
-            new LauncherSettings { SortMode = "missing", EntryViewMode = "missing" },
-            new LauncherProcess());
+            new LauncherSettings { SortMode = "missing", EntryViewMode = "missing" });
 
         Assert.Equal("custom", viewModel.SelectedSortMode?.Id);
         Assert.Equal(new[] { "卡片", "详细列表", "名称墙" }, viewModel.DisplayModes.Select(mode => mode.Label));
@@ -769,11 +756,10 @@ public sealed class MainWindowViewModelTests
 
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
-        var viewModel = new MainWindowViewModel(
+        var viewModel = CreateViewModel(
             config,
             settings,
-            new LauncherSettings { SortMode = "custom" },
-            new LauncherProcess());
+            new LauncherSettings { SortMode = "custom" });
 
         Assert.True(viewModel.IsCustomSortMode);
 
@@ -812,7 +798,7 @@ public sealed class MainWindowViewModelTests
             RequireConfirmationForLaunches = true,
             CustomEntryOrder = ["one", "two"],
         };
-        var viewModel = new MainWindowViewModel(config, settings, launcherSettings, new LauncherProcess());
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
         Directory.CreateDirectory(settings);
 
         viewModel.FilterText = "two";
@@ -869,11 +855,10 @@ public sealed class MainWindowViewModelTests
                 Confirm = false,
             });
 
-        var viewModel = new MainWindowViewModel(
+        var viewModel = CreateViewModel(
             config,
             settings,
-            new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["one", "two", "three"] },
-            new LauncherProcess());
+            new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["one", "two", "three"] });
         LauncherSettingsStore.Save(new LauncherSettings
         {
             SortMode = "custom",
@@ -943,11 +928,7 @@ public sealed class MainWindowViewModelTests
             });
 
         var launcherSettings = new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["one", "two", "three"] };
-        var viewModel = new MainWindowViewModel(
-            config,
-            settings,
-            launcherSettings,
-            new LauncherProcess());
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
 
         viewModel.BeginDragReorder("three");
         Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
@@ -1140,11 +1121,10 @@ public sealed class MainWindowViewModelTests
                 Confirm = false,
             });
 
-        var viewModel = new MainWindowViewModel(
+        var viewModel = CreateViewModel(
             config,
             settings,
-            new LauncherSettings { EntryViewMode = "details" },
-            new LauncherProcess());
+            new LauncherSettings { EntryViewMode = "details" });
 
         Assert.Equal(new[] { "卡片", "详细列表", "名称墙" }, viewModel.DisplayModes.Select(mode => mode.Label));
         Assert.Equal(LauncherEntryViewMode.Details, viewModel.SelectedDisplayMode?.Mode);
@@ -1334,8 +1314,11 @@ public sealed class MainWindowViewModelTests
         return (config, Path.Combine(configDir, "settings.json"), Path.Combine(configDir, "presets.json"));
     }
 
-    private static MainWindowViewModel CreateViewModel(string config, string settings) =>
-        new(config, settings, new LauncherSettings(), new LauncherProcess());
+    private static MainWindowViewModel CreateViewModel(
+        string config,
+        string settings,
+        LauncherSettings? launcherSettings = null) =>
+        new(config, settings, launcherSettings ?? new LauncherSettings(), new LauncherProcess());
 
     private static List<LaunchEntry> LoadEntriesById(string config) =>
         LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
