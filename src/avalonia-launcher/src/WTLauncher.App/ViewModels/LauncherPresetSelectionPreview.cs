@@ -47,7 +47,7 @@ public sealed class LauncherPresetSelectionPreview
         return new LauncherPresetSelectionPreview(
             new HashSet<string>(StringComparer.Ordinal),
             new HashSet<string>(StringComparer.Ordinal),
-            Array.Empty<string>(),
+            [],
             matchedCount: 0,
             missingCount: 0,
             extraCount: 0,
