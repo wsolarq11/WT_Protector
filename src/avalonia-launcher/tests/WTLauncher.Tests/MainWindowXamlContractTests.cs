@@ -5,7 +5,7 @@ public sealed class MainWindowXamlContractTests
     [Fact]
     public void MainWindow_UsesSingleFourBoxControlGrid()
     {
-        var xaml = File.ReadAllText(GetMainWindowXamlPath());
+        var xaml = File.ReadAllText(TestRepositoryPaths.MainWindowXaml);
         var gridStart = xaml.IndexOf("x:Name=\"ControlBoxesGrid\"", StringComparison.Ordinal);
         Assert.True(gridStart >= 0, "MainWindow must keep search/sort/view/preset controls in one named parent Grid.");
 
@@ -26,7 +26,7 @@ public sealed class MainWindowXamlContractTests
     [Fact]
     public void MainWindow_DoesNotRenderUpdatedTimeInEntryViews()
     {
-        var xaml = File.ReadAllText(GetMainWindowXamlPath());
+        var xaml = File.ReadAllText(TestRepositoryPaths.MainWindowXaml);
 
         Assert.DoesNotContain("UpdatedLabel", xaml);
         Assert.DoesNotContain("ShowUpdatedLabel", xaml);
@@ -36,8 +36,8 @@ public sealed class MainWindowXamlContractTests
     [Fact]
     public void MainWindow_DragReorderKeepsGhostFlipAndInsertPreviewContracts()
     {
-        var xaml = File.ReadAllText(GetMainWindowXamlPath());
-        var codeBehind = File.ReadAllText(GetMainWindowCodeBehindPath());
+        var xaml = File.ReadAllText(TestRepositoryPaths.MainWindowXaml);
+        var codeBehind = File.ReadAllText(TestRepositoryPaths.MainWindowCodeBehind);
 
         Assert.Equal(3, Count(xaml, "Classes.drag-target=\"{Binding IsDragPreviewTarget}\""));
         Assert.Equal(3, Count(xaml, "Classes.drag-source=\"{Binding IsDragPreviewSource}\""));
@@ -75,8 +75,8 @@ public sealed class MainWindowXamlContractTests
     [Fact]
     public void MainWindow_MoreMenuButtonsExposeKeyboardReachableLabel()
     {
-        var xaml = File.ReadAllText(GetMainWindowXamlPath());
-        var codeBehind = File.ReadAllText(GetMainWindowCodeBehindPath());
+        var xaml = File.ReadAllText(TestRepositoryPaths.MainWindowXaml);
+        var codeBehind = File.ReadAllText(TestRepositoryPaths.MainWindowCodeBehind);
 
         Assert.Equal(2, Count(xaml, "Content=\"⋯\""));
         Assert.Equal(2, Count(xaml, "Click=\"OnEntryMoreClicked\""));
@@ -88,7 +88,7 @@ public sealed class MainWindowXamlContractTests
     [Fact]
     public void MainWindow_DragHandlesExposeAccessibilityLabel()
     {
-        var xaml = File.ReadAllText(GetMainWindowXamlPath());
+        var xaml = File.ReadAllText(TestRepositoryPaths.MainWindowXaml);
 
         Assert.Equal(3, Count(xaml, "AutomationProperties.Name=\"拖拽排序\""));
         Assert.Equal(3, Count(xaml, "ToolTip.Tip=\"拖拽排序\""));
@@ -118,33 +118,4 @@ public sealed class MainWindowXamlContractTests
         }
     }
 
-    private static string GetMainWindowXamlPath()
-    {
-        var root = FindRepositoryRoot();
-        return Path.Combine(root, "src", "avalonia-launcher", "src", "WTLauncher.App", "Views", "MainWindow.axaml");
-    }
-
-    private static string GetMainWindowCodeBehindPath()
-    {
-        var root = FindRepositoryRoot();
-        return Path.Combine(root, "src", "avalonia-launcher", "src", "WTLauncher.App", "Views", "MainWindow.axaml.cs");
-    }
-
-    private static string FindRepositoryRoot()
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "config", "config.json"))
-                && File.Exists(Path.Combine(dir.FullName, "README.md"))
-                && Directory.Exists(Path.Combine(dir.FullName, "src", "avalonia-launcher")))
-            {
-                return dir.FullName;
-            }
-
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate WT_Protector repository root from test output directory.");
-    }
 }

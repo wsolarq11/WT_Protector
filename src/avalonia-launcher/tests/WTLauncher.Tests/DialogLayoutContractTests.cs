@@ -7,7 +7,7 @@ public sealed class DialogLayoutContractTests
     [Fact]
     public void PresetDetailsWindow_DoesNotPlaceControlsOutsideDeclaredGridRows()
     {
-        var source = File.ReadAllText(GetViewPath("PresetDetailsWindow.cs"));
+        var source = File.ReadAllText(TestRepositoryPaths.View("PresetDetailsWindow.cs"));
         var rowDefinitionsMatch = Regex.Match(
             source,
             "RowDefinitions\\s*=\\s*new RowDefinitions\\(\"(?<rows>[^\"]+)\"\\)");
@@ -34,7 +34,7 @@ public sealed class DialogLayoutContractTests
     [InlineData("PresetDetailsWindow.cs")]
     public void DialogCancelButtonsBindEscapeToCancel(string fileName)
     {
-        var source = File.ReadAllText(GetViewPath(fileName));
+        var source = File.ReadAllText(TestRepositoryPaths.View(fileName));
 
         Assert.Contains(
             fileName.Contains("Delete", StringComparison.Ordinal)
@@ -54,7 +54,7 @@ public sealed class DialogLayoutContractTests
     [InlineData("PresetDetailsWindow.cs", "save")]
     public void NonDestructiveDialogPrimaryActionsBindEnterAsDefault(string fileName, string buttonName)
     {
-        var source = File.ReadAllText(GetViewPath(fileName));
+        var source = File.ReadAllText(TestRepositoryPaths.View(fileName));
 
         Assert.Contains($"var {buttonName} = LauncherDialogButtons.Primary", source);
         Assert.Contains("isDefault: true", MethodBlock(GetDialogButtonsSource(), "Primary"));
@@ -65,7 +65,7 @@ public sealed class DialogLayoutContractTests
     [InlineData("ConfirmPresetDeleteWindow.cs")]
     public void DestructiveDeleteDialogsDefaultEnterToCancel(string fileName)
     {
-        var source = File.ReadAllText(GetViewPath(fileName));
+        var source = File.ReadAllText(TestRepositoryPaths.View(fileName));
 
         Assert.Contains("var cancel = LauncherDialogButtons.SafeDefaultCancel();", source);
         Assert.Contains("var delete = LauncherDialogButtons.Destructive", source);
@@ -84,36 +84,6 @@ public sealed class DialogLayoutContractTests
 
     private static string GetDialogButtonsSource()
     {
-        return File.ReadAllText(GetViewPath("LauncherDialogButtons.cs"));
-    }
-
-    private static string GetViewPath(string fileName)
-    {
-        return Path.Combine(
-            FindRepositoryRoot(),
-            "src",
-            "avalonia-launcher",
-            "src",
-            "WTLauncher.App",
-            "Views",
-            fileName);
-    }
-
-    private static string FindRepositoryRoot()
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "config", "config.json"))
-                && File.Exists(Path.Combine(dir.FullName, "README.md"))
-                && Directory.Exists(Path.Combine(dir.FullName, "src", "avalonia-launcher")))
-            {
-                return dir.FullName;
-            }
-
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate WT_Protector repository root from test output directory.");
+        return File.ReadAllText(TestRepositoryPaths.View("LauncherDialogButtons.cs"));
     }
 }

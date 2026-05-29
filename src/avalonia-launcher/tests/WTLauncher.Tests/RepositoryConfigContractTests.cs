@@ -8,10 +8,9 @@ public sealed class RepositoryConfigContractTests
     [Fact]
     public void RepositoryRootConfig_LoadsAndBuildsDryRunPlans()
     {
-        var root = FindRepositoryRoot();
-        var configPath = Path.Combine(root, "config", "config.json");
-        var presetsPath = Path.Combine(root, "config", "presets.json");
-        var settingsPath = Path.Combine(root, "config", "settings.json");
+        var configPath = TestRepositoryPaths.Config("config.json");
+        var presetsPath = TestRepositoryPaths.Config("presets.json");
+        var settingsPath = TestRepositoryPaths.Config("settings.json");
 
         AssertEveryEntryDeclaresPersistentSelection(configPath);
         var entries = LauncherConfigStore.Load(configPath);
@@ -32,8 +31,7 @@ public sealed class RepositoryConfigContractTests
     [Fact]
     public void RepositoryRootSettings_RoundTripPortableStateFields()
     {
-        var root = FindRepositoryRoot();
-        var settingsPath = Path.Combine(root, "config", "settings.json");
+        var settingsPath = TestRepositoryPaths.Config("settings.json");
 
         var settings = LauncherSettingsStore.Load(settingsPath);
 
@@ -50,9 +48,8 @@ public sealed class RepositoryConfigContractTests
     [Fact]
     public void RepositoryDesignBenchmarkDigest_IsSourceTrackedAndReferenced()
     {
-        var root = FindRepositoryRoot();
-        var digestPath = Path.Combine(root, "docs", "design-benchmark-digest.md");
-        var designPath = Path.Combine(root, "DESIGN.md");
+        var digestPath = TestRepositoryPaths.Document("design-benchmark-digest.md");
+        var designPath = TestRepositoryPaths.RootFile("DESIGN.md");
 
         Assert.True(File.Exists(digestPath), "The 12-benchmark digest must stay source-tracked.");
 
@@ -237,22 +234,4 @@ public sealed class RepositoryConfigContractTests
             && line[dot + 1] == ' ';
     }
 
-    private static string FindRepositoryRoot()
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "config", "config.json"))
-                && File.Exists(Path.Combine(dir.FullName, "config", "settings.json"))
-                && File.Exists(Path.Combine(dir.FullName, "README.md"))
-                && Directory.Exists(Path.Combine(dir.FullName, "src", "avalonia-launcher")))
-            {
-                return dir.FullName;
-            }
-
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate WT_Protector repository root from test output directory.");
-    }
 }
