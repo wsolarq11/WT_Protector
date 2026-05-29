@@ -1,8 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
-using WTLauncher.App.ViewModels;
 using WTLauncher.App.Views;
-using WTLauncher.Core;
+using static WTLauncher.Tests.MainWindowEntryCardTestFactory;
 
 namespace WTLauncher.Tests;
 
@@ -73,42 +72,8 @@ public sealed class MainWindowReorderFlipAnimationTests
         Assert.NotNull(card.RenderTransform);
     }
 
-    private static Border Card(LauncherEntryViewModel entry)
-    {
-        return new Border
-        {
-            Classes = { "card" },
-            DataContext = entry,
-        };
-    }
-
     private static Rect Rect(double x, double y)
     {
         return new Rect(x, y, 100, 60);
-    }
-
-    private static MainWindowViewModel CreateOwner(string rootPath)
-    {
-        var configPath = Path.Combine(rootPath, "config.json");
-        var settingsPath = Path.Combine(rootPath, "settings.json");
-        LauncherConfigStore.Save([CreateEntry("owner")], configPath);
-        return new MainWindowViewModel(configPath, settingsPath, new LauncherSettings(), new LauncherProcess());
-    }
-
-    private static LauncherEntryViewModel CreateEntryViewModel(MainWindowViewModel owner, string id)
-    {
-        return new LauncherEntryViewModel(CreateEntry(id), owner);
-    }
-
-    private static LaunchEntry CreateEntry(string id)
-    {
-        return new LaunchEntry
-        {
-            Id = id,
-            Name = id,
-            Directory = $"D:\\{id}",
-            Command = "pwsh",
-            Confirm = false,
-        };
     }
 }

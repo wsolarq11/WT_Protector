@@ -1,7 +1,6 @@
 using Avalonia.Controls;
-using WTLauncher.App.ViewModels;
 using WTLauncher.App.Views;
-using WTLauncher.Core;
+using static WTLauncher.Tests.MainWindowEntryCardTestFactory;
 
 namespace WTLauncher.Tests;
 
@@ -12,11 +11,7 @@ public sealed class MainWindowEntryCardResolverTests
     {
         using var temp = new TempDirectory();
         var entry = CreateEntryViewModel(temp.Path, "direct");
-        var card = new Border
-        {
-            Classes = { "card" },
-            DataContext = entry,
-        };
+        var card = Card(entry);
 
         var resolved = MainWindowEntryCardResolver.ResolveFromSource(card);
 
@@ -32,18 +27,10 @@ public sealed class MainWindowEntryCardResolverTests
         var outerEntry = CreateEntryViewModel(temp.Path, "outer");
         var innerEntry = CreateEntryViewModel(temp.Path, "inner");
         var source = new Button();
-        var innerCard = new Border
-        {
-            Classes = { "card" },
-            DataContext = innerEntry,
-            Child = source,
-        };
-        var outerCard = new Border
-        {
-            Classes = { "card" },
-            DataContext = outerEntry,
-            Child = innerCard,
-        };
+        var innerCard = Card(innerEntry);
+        innerCard.Child = source;
+        var outerCard = Card(outerEntry);
+        outerCard.Child = innerCard;
 
         var resolved = MainWindowEntryCardResolver.ResolveFromSource(source);
 
@@ -67,34 +54,5 @@ public sealed class MainWindowEntryCardResolverTests
         Assert.Null(MainWindowEntryCardResolver.ResolveFromSource(source));
         Assert.Null(MainWindowEntryCardResolver.ResolveFromSource(cardWithoutEntry));
         Assert.Null(MainWindowEntryCardResolver.ResolveFromSource(new object()));
-    }
-
-    private static LauncherEntryViewModel CreateEntryViewModel(string rootPath, string id)
-    {
-        var configPath = Path.Combine(rootPath, $"{id}-config.json");
-        var settingsPath = Path.Combine(rootPath, $"{id}-settings.json");
-        var entry = CreateEntry(id);
-
-        LauncherConfigStore.Save([entry], configPath);
-
-        var owner = new MainWindowViewModel(
-            configPath,
-            settingsPath,
-            new LauncherSettings(),
-            new LauncherProcess());
-
-        return new LauncherEntryViewModel(entry, owner);
-    }
-
-    private static LaunchEntry CreateEntry(string id)
-    {
-        return new LaunchEntry
-        {
-            Id = id,
-            Name = id,
-            Directory = $"D:\\{id}",
-            Command = "pwsh",
-            Confirm = false,
-        };
     }
 }
