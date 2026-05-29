@@ -329,7 +329,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (!SavePresetMutationOrRestore(snapshot, preferredPresetId))
             return;
 
-        ReloadPresets(preset.Id);
+        LoadPresetFile(preset.Id);
         ApplyStatusText($"已保存启动组: {preset.Name}（{preset.EntryIds.Count} 项）");
     }
 
@@ -366,7 +366,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (!SavePresetMutationOrRestore(snapshot, preferredPresetId))
             return;
 
-        ReloadPresets(preset.Id);
+        LoadPresetFile(preset.Id);
         ApplyStatusText($"已更新启动组: {preset.Name}（{preset.EntryIds.Count} 项）");
     }
 
@@ -403,7 +403,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (!SavePresetMutationOrRestore(snapshot, preferredPresetId))
             return;
 
-        ReloadPresets(fallbackPresetId);
+        LoadPresetFile(fallbackPresetId);
         ApplyStatusText($"已删除启动组: {preset.Name}");
     }
 
@@ -938,11 +938,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         SaveSelectionAsPresetCommand.NotifyCanExecuteChanged();
         UpdateSelectedPresetCommand.NotifyCanExecuteChanged();
         DeleteSelectedPresetCommand.NotifyCanExecuteChanged();
-    }
-
-    private void ReloadPresets(string? preferredPresetId)
-    {
-        LoadPresetFile(preferredPresetId);
     }
 
     private string? LoadPresetFile(string? preferredPresetId)
