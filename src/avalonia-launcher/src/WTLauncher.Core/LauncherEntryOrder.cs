@@ -18,10 +18,9 @@ public static class LauncherEntryOrder
 
         foreach (var id in knownIds)
         {
-            if (!seen.Contains(id))
+            if (seen.Add(id))
             {
                 customOrder.Add(id);
-                seen.Add(id);
             }
         }
     }
