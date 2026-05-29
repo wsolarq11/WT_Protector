@@ -15,11 +15,11 @@ public sealed class LauncherEntryOrderTests
     }
 
     [Fact]
-    public void MoveBeforeMovesDraggedEntryBeforeTarget()
+    public void MoveRelativeMovesDraggedEntryBeforeTarget()
     {
         var order = new List<string> { "one", "two", "three" };
 
-        LauncherEntryOrder.MoveBefore(order, "three", "one");
+        LauncherEntryOrder.MoveRelative(order, "three", "one", insertAfter: false);
 
         Assert.Equal(["three", "one", "two"], order);
     }

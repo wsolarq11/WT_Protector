@@ -34,7 +34,11 @@ public sealed class LauncherDragReorderWorkflow
 
         _ensureCustomOrderContainsEntries();
         var snapshot = LauncherSettingsSnapshot.Capture(_settings);
-        LauncherEntryOrder.MoveBefore(_settings.CustomEntryOrder, draggedEntryId, targetEntryId);
+        LauncherEntryOrder.MoveRelative(
+            _settings.CustomEntryOrder,
+            draggedEntryId,
+            targetEntryId,
+            insertAfter: false);
         var saveFailure = LauncherSettingsMutationPersistence.Save(
             _settings,
             _settingsPath,

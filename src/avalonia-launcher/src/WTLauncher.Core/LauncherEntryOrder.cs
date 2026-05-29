@@ -35,11 +35,6 @@ public static class LauncherEntryOrder
             .ToDictionary(group => group.Key, group => group.First().index, StringComparer.Ordinal);
     }
 
-    public static void MoveBefore(List<string> customOrder, string draggedEntryId, string targetEntryId)
-    {
-        MoveRelative(customOrder, draggedEntryId, targetEntryId, insertAfter: false);
-    }
-
     public static void MoveRelative(
         List<string> customOrder,
         string draggedEntryId,
