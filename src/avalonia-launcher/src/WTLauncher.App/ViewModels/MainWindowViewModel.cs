@@ -419,7 +419,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (entry is null)
             return;
 
-        entry.UpdatedAtUtc = DateTimeOffset.UtcNow.ToString("O");
+        entry.UpdatedAtUtc = CurrentTimestampUtc();
         Entries.Add(new LauncherEntryViewModel(entry, this));
         _settings.CustomEntryOrder.Add(entry.Id);
 
@@ -444,7 +444,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (updated is null)
             return;
 
-        item.ReplaceEntryFromOwner(updated, DateTimeOffset.UtcNow.ToString("O"));
+        item.ReplaceEntryFromOwner(updated, CurrentTimestampUtc());
         if (!string.Equals(oldId, item.Id, StringComparison.Ordinal))
             LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, item.Id);
 
@@ -939,6 +939,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     private static LaunchEntry ToLaunchEntry(LauncherEntryViewModel entry) => entry.Entry;
+
+    private static string CurrentTimestampUtc() => DateTimeOffset.UtcNow.ToString("O");
 
     private string? SaveSettingsChange(
         LauncherSettingsSnapshot snapshot,
