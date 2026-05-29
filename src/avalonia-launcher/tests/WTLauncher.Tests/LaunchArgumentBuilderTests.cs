@@ -8,13 +8,7 @@ public sealed class LaunchArgumentBuilderTests
     public void Build_ProducesCurrentWtArgumentContract()
     {
         using var temp = new TempDirectory();
-        var entry = new LaunchEntry
-        {
-            Name = "demo",
-            Directory = temp.Path,
-            Command = "codex --version",
-            Confirm = false,
-        };
+        var entry = Entry(temp.Path, command: "codex --version");
 
         var plan = LaunchArgumentBuilder.Build(entry, requireConfirmation: false);
 
@@ -27,13 +21,10 @@ public sealed class LaunchArgumentBuilderTests
     public void Build_UsesOnlyLaunchConfirmationOverride()
     {
         using var temp = new TempDirectory();
-        var entry = new LaunchEntry
-        {
-            Name = "demo",
-            Directory = temp.Path,
-            Command = "codex --dangerously-bypass-approvals-and-sandbox",
-            Confirm = true,
-        };
+        var entry = Entry(
+            temp.Path,
+            command: "codex --dangerously-bypass-approvals-and-sandbox",
+            confirm: true);
 
         var directPlan = LaunchArgumentBuilder.Build(entry, requireConfirmation: false);
         var confirmedPlan = LaunchArgumentBuilder.Build(entry, requireConfirmation: true);
@@ -46,13 +37,7 @@ public sealed class LaunchArgumentBuilderTests
     public void Build_DefaultsToConfirmationWhenNoGlobalOverrideIsProvided()
     {
         using var temp = new TempDirectory();
-        var entry = new LaunchEntry
-        {
-            Name = "plain",
-            Directory = temp.Path,
-            Command = "pwsh",
-            Confirm = true,
-        };
+        var entry = Entry(temp.Path, name: "plain", confirm: true);
 
         var plan = LaunchArgumentBuilder.Build(entry);
 
@@ -72,14 +57,26 @@ public sealed class LaunchArgumentBuilderTests
     [Fact]
     public void Build_RejectsMissingDirectoryWhenValidationEnabled()
     {
-        var entry = new LaunchEntry
-        {
-            Name = "missing",
-            Directory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")),
-            Command = "pwsh",
-        };
+        var entry = Entry(
+            Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")),
+            name: "missing");
 
         Assert.Throws<InvalidOperationException>(() => LaunchArgumentBuilder.Build(entry));
+    }
+
+    private static LaunchEntry Entry(
+        string directory,
+        string name = "demo",
+        string command = "pwsh",
+        bool confirm = false)
+    {
+        return new LaunchEntry
+        {
+            Name = name,
+            Directory = directory,
+            Command = command,
+            Confirm = confirm,
+        };
     }
 
 }
