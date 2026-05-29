@@ -1,6 +1,7 @@
 using Avalonia;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
+using static WTLauncher.Tests.MainWindowEntryCardTestFactory;
 
 namespace WTLauncher.Tests;
 
@@ -48,30 +49,10 @@ public sealed class LauncherEntryLayoutPresentationTests
         Assert.All(entries, entry => Assert.Equal(expected.CardWidth, entry.CardWidth));
     }
 
-    private static MainWindowViewModel CreateOwner(string rootPath)
-    {
-        var configPath = Path.Combine(rootPath, "config.json");
-        var settingsPath = Path.Combine(rootPath, "settings.json");
-        LauncherConfigStore.Save([Entry("owner")], configPath);
-        return new MainWindowViewModel(configPath, settingsPath, new LauncherSettings(), new LauncherProcess());
-    }
-
     private static List<LauncherEntryViewModel> Entries(MainWindowViewModel owner, params string[] ids)
     {
         return ids
-            .Select(id => new LauncherEntryViewModel(Entry(id), owner))
+            .Select(id => CreateEntryViewModel(owner, id))
             .ToList();
-    }
-
-    private static LaunchEntry Entry(string id)
-    {
-        return new LaunchEntry
-        {
-            Id = id,
-            Name = id,
-            Directory = $"D:\\{id}",
-            Command = "pwsh",
-            Confirm = false,
-        };
     }
 }
