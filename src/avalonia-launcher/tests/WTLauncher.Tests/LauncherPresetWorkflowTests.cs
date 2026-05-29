@@ -26,21 +26,8 @@ public sealed class LauncherPresetWorkflowTests
     [Fact]
     public void ClonePresetFile_CreatesDeepCopyForRollback()
     {
-        var original = new LauncherPresetFile
-        {
-            SchemaVersion = 1,
-            DefaultPresetId = "daily",
-            Presets =
-            [
-                new LauncherPreset
-                {
-                    Id = "daily",
-                    Name = "Daily",
-                    EntryIds = ["one"],
-                    Locked = true,
-                },
-            ],
-        };
+        var original = PresetFile("daily", Preset("daily", "Daily", true, "one"));
+        original.SchemaVersion = 1;
 
         var clone = LauncherPresetFiles.Clone(original);
 
@@ -57,18 +44,7 @@ public sealed class LauncherPresetWorkflowTests
     [Fact]
     public void AddPreset_AppendsUniquePresetWithSelectedEntries()
     {
-        var presetFile = new LauncherPresetFile
-        {
-            Presets =
-            [
-                new LauncherPreset
-                {
-                    Id = "project-pair",
-                    Name = "Existing",
-                    EntryIds = ["one"],
-                },
-            ],
-        };
+        var presetFile = PresetFile(Preset("project-pair", "Existing", "one"));
 
         var preset = LauncherPresetWorkflow.AddPreset(presetFile, "Project Pair", ["one", "two"]);
 
@@ -81,25 +57,9 @@ public sealed class LauncherPresetWorkflowTests
     [Fact]
     public void UpdatePreset_ChangesUnlockedPresetButNotLockedOrMissingPreset()
     {
-        var presetFile = new LauncherPresetFile
-        {
-            Presets =
-            [
-                new LauncherPreset
-                {
-                    Id = "daily",
-                    Name = "Daily",
-                    EntryIds = ["one"],
-                },
-                new LauncherPreset
-                {
-                    Id = "blank-manual",
-                    Name = "Manual",
-                    EntryIds = [],
-                    Locked = true,
-                },
-            ],
-        };
+        var presetFile = PresetFile(
+            Preset("daily", "Daily", "one"),
+            Preset("blank-manual", "Manual", locked: true));
 
         var updated = LauncherPresetWorkflow.UpdatePreset(presetFile, "daily", "Daily Updated", ["one", "two"]);
         var locked = LauncherPresetWorkflow.UpdatePreset(presetFile, "blank-manual", "Changed", ["one"]);
@@ -116,32 +76,11 @@ public sealed class LauncherPresetWorkflowTests
     [Fact]
     public void DeletePreset_RemovesOnlyAllowedPresetAndUpdatesDefaultFallback()
     {
-        var presetFile = new LauncherPresetFile
-        {
-            DefaultPresetId = "daily",
-            Presets =
-            [
-                new LauncherPreset
-                {
-                    Id = "daily",
-                    Name = "Daily",
-                    EntryIds = ["one"],
-                },
-                new LauncherPreset
-                {
-                    Id = "secondary",
-                    Name = "Secondary",
-                    EntryIds = ["two"],
-                },
-                new LauncherPreset
-                {
-                    Id = "blank-manual",
-                    Name = "Manual",
-                    EntryIds = [],
-                    Locked = true,
-                },
-            ],
-        };
+        var presetFile = PresetFile(
+            "daily",
+            Preset("daily", "Daily", "one"),
+            Preset("secondary", "Secondary", "two"),
+            Preset("blank-manual", "Manual", locked: true));
 
         Assert.True(LauncherPresetWorkflow.CanDeletePreset(presetFile, "daily"));
 
@@ -156,5 +95,30 @@ public sealed class LauncherPresetWorkflowTests
         Assert.Equal("secondary", lockedFallbackId);
         Assert.Contains(presetFile.Presets, preset => preset.Id == "blank-manual");
     }
+
+    private static LauncherPresetFile PresetFile(params LauncherPreset[] presets) =>
+        new()
+        {
+            Presets = [.. presets],
+        };
+
+    private static LauncherPresetFile PresetFile(string defaultPresetId, params LauncherPreset[] presets) =>
+        new()
+        {
+            DefaultPresetId = defaultPresetId,
+            Presets = [.. presets],
+        };
+
+    private static LauncherPreset Preset(string id, string name, params string[] entryIds) =>
+        Preset(id, name, locked: false, entryIds);
+
+    private static LauncherPreset Preset(string id, string name, bool locked, params string[] entryIds) =>
+        new()
+        {
+            Id = id,
+            Name = name,
+            EntryIds = [.. entryIds],
+            Locked = locked,
+        };
 
 }
