@@ -41,7 +41,7 @@ public static class LauncherPresetWorkflow
     {
         ArgumentNullException.ThrowIfNull(presetFile);
         var preset = presetFile.Presets.FirstOrDefault(item => item.Id == presetId);
-        if (preset is null || preset.Locked || !CanDeletePreset(presetFile, presetId))
+        if (preset is null || !CanDeletePreset(presetFile, presetId))
         {
             fallbackPresetId = presetFile.DefaultPresetId;
             return null;
@@ -58,9 +58,6 @@ public static class LauncherPresetWorkflow
     public static bool CanDeletePreset(LauncherPresetFile presetFile, string presetId)
     {
         ArgumentNullException.ThrowIfNull(presetFile);
-        if (presetFile.Presets.Count == 0)
-            return false;
-
         var target = presetFile.Presets.FirstOrDefault(preset => preset.Id == presetId);
         if (target is null || target.Locked)
             return false;
