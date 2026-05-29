@@ -30,13 +30,7 @@ public sealed class ConfirmBatchLaunchWindow : Window
             Padding = new Thickness(22),
             Child = new Grid
             {
-                RowDefinitions =
-                {
-                    new RowDefinition(GridLength.Auto),
-                    new RowDefinition(GridLength.Auto),
-                    new RowDefinition(GridLength.Star),
-                    new RowDefinition(GridLength.Auto),
-                },
+                RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto"),
                 Children =
                 {
                     new TextBlock
