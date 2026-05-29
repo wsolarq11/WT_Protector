@@ -832,9 +832,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool SetSelection(IReadOnlyList<LauncherEntryViewModel> entries, bool selected)
     {
-        var snapshot = entries
-            .Select(entry => (Entry: entry, Selected: entry.IsSelected))
-            .ToList();
+        var snapshot = CaptureSelectionSnapshot(entries);
         foreach (var entry in entries)
         {
             entry.SetSelectionFromOwner(selected);
@@ -845,15 +843,21 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool ReplaceSelection(IReadOnlySet<string> selectedIds)
     {
-        var snapshot = Entries
-            .Select(entry => (Entry: entry, Selected: entry.IsSelected))
-            .ToList();
+        var snapshot = CaptureSelectionSnapshot(Entries);
         foreach (var entry in Entries)
         {
             entry.SetSelectionFromOwner(selectedIds.Contains(entry.Entry.Id));
         }
 
         return SaveSelectionChangeOrRestore(snapshot);
+    }
+
+    private static List<(LauncherEntryViewModel Entry, bool Selected)> CaptureSelectionSnapshot(
+        IEnumerable<LauncherEntryViewModel> entries)
+    {
+        return entries
+            .Select(entry => (Entry: entry, Selected: entry.IsSelected))
+            .ToList();
     }
 
     private bool SaveSelectionChangeOrRestore(
