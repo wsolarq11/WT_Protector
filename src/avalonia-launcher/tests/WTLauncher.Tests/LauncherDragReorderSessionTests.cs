@@ -8,10 +8,7 @@ public sealed class LauncherDragReorderSessionTests
     [Fact]
     public void TryRecordPreviewIgnoresConsecutiveDuplicateTargetAndSide()
     {
-        var session = LauncherDragReorderSession.Start(
-            "three",
-            LauncherSettingsSnapshot.Capture(new LauncherSettings()),
-            source: null);
+        var session = StartSession();
 
         Assert.True(session.TryRecordPreview("one", insertAfter: false));
         Assert.False(session.TryRecordPreview("one", insertAfter: false));
@@ -22,10 +19,7 @@ public sealed class LauncherDragReorderSessionTests
     [Fact]
     public void ClearHoverAllowsSamePreviewAgain()
     {
-        var session = LauncherDragReorderSession.Start(
-            "three",
-            LauncherSettingsSnapshot.Capture(new LauncherSettings()),
-            source: null);
+        var session = StartSession();
 
         Assert.True(session.TryRecordPreview("one", insertAfter: false));
 
@@ -37,12 +31,17 @@ public sealed class LauncherDragReorderSessionTests
     [Fact]
     public void IsForUsesOrdinalEntryIdMatch()
     {
-        var session = LauncherDragReorderSession.Start(
-            "Three",
-            LauncherSettingsSnapshot.Capture(new LauncherSettings()),
-            source: null);
+        var session = StartSession("Three");
 
         Assert.True(session.IsFor("Three"));
         Assert.False(session.IsFor("three"));
+    }
+
+    private static LauncherDragReorderSession StartSession(string draggedEntryId = "three")
+    {
+        return LauncherDragReorderSession.Start(
+            draggedEntryId,
+            LauncherSettingsSnapshot.Capture(new LauncherSettings()),
+            source: null);
     }
 }
