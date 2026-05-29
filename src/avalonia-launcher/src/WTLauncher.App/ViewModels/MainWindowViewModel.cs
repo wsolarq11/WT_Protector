@@ -534,7 +534,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private bool SaveEntryCollectionChanges(bool savePresets, LauncherEntryMutationSnapshot rollbackSnapshot)
     {
         TotalCount = Entries.Count;
-        SelectedCount = Entries.Count(entry => entry.IsSelected);
 
         var saveFailure = LauncherEntryMutationPersistence.Save(
             Entries.Select(entry => entry.Entry),
