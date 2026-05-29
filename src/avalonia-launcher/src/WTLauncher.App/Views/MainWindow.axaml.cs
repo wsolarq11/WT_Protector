@@ -153,7 +153,17 @@ public sealed partial class MainWindow : Window
             : positionInCard.X >= (target.Card.Bounds.Width * 0.5);
         var before = CaptureEntryCardBounds();
         if (viewModel.PreviewMoveEntry(draggedId, target.Entry.Id, insertAfter))
-            ScheduleReorderAnimation(before);
+        {
+            var root = GetActiveEntriesRoot();
+            if (root is null)
+                return;
+
+            _reorderAnimationScheduler.Schedule(
+                before,
+                OnEntriesLayoutUpdated,
+                handler => root.LayoutUpdated -= handler,
+                handler => root.LayoutUpdated += handler);
+        }
     }
 
     private (LauncherEntryViewModel Entry, Control Card)? ResolveEntryCardFromDragEvent(DragEventArgs e)
@@ -215,19 +225,6 @@ public sealed partial class MainWindow : Window
             return [];
 
         return MainWindowEntryCardBoundsCapture.Capture(root, this);
-    }
-
-    private void ScheduleReorderAnimation(Dictionary<string, Rect> before)
-    {
-        var root = GetActiveEntriesRoot();
-        if (root is null)
-            return;
-
-        _reorderAnimationScheduler.Schedule(
-            before,
-            OnEntriesLayoutUpdated,
-            handler => root.LayoutUpdated -= handler,
-            handler => root.LayoutUpdated += handler);
     }
 
     private void OnEntriesLayoutUpdated(object? sender, EventArgs e)

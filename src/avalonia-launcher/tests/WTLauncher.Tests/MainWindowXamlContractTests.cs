@@ -67,7 +67,12 @@ public sealed class MainWindowXamlContractTests
         Assert.Contains("private void ApplyDragReorderPreview(", codeBehind);
         Assert.Equal(1, Count(codeBehind, "viewModel.PreviewMoveEntry("));
         Assert.Contains("if (viewModel.PreviewMoveEntry", codeBehind);
-        AssertInOrder(codeBehind, "CaptureEntryCardBounds()", "ScheduleReorderAnimation(before)");
+        AssertInOrder(
+            codeBehind,
+            "var before = CaptureEntryCardBounds();",
+            "if (viewModel.PreviewMoveEntry",
+            "var root = GetActiveEntriesRoot();",
+            "_reorderAnimationScheduler.Schedule(");
         Assert.DoesNotContain("_pendingReorderAnimationAttached", codeBehind);
         Assert.DoesNotContain("_pendingReorderAnimationSnapshot", codeBehind);
         AssertInOrder(
