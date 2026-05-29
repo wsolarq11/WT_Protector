@@ -106,7 +106,7 @@ public sealed class LauncherConfigStoreTests
         var savedJson = File.ReadAllText(presetPath);
         Assert.Contains("\"presets\"", savedJson);
         Assert.Contains("日常启动", savedJson);
-        Assert.EndsWith(Environment.NewLine, savedJson);
+        AssertUsesRepositoryLineEndings(savedJson);
     }
 
     [Fact]
@@ -156,7 +156,7 @@ public sealed class LauncherConfigStoreTests
         Assert.True(entry.Selected);
         var savedJson = File.ReadAllText(config);
         Assert.Contains("演示", savedJson);
-        Assert.EndsWith(Environment.NewLine, savedJson);
+        AssertUsesRepositoryLineEndings(savedJson);
         Assert.True(File.Exists(config + ".bak"));
         Assert.Empty(Directory.EnumerateFiles(configDir, "config.json.tmp-*"));
     }
@@ -215,7 +215,7 @@ public sealed class LauncherConfigStoreTests
         Assert.Contains("alphabetical", savedJson);
         Assert.Contains("details", savedJson);
         Assert.Contains("requireConfirmationForLaunches", savedJson);
-        Assert.EndsWith(Environment.NewLine, savedJson);
+        AssertUsesRepositoryLineEndings(savedJson);
     }
 
     [Fact]
@@ -285,4 +285,9 @@ public sealed class LauncherConfigStoreTests
             Selected = selected,
         };
 
+    private static void AssertUsesRepositoryLineEndings(string text)
+    {
+        Assert.EndsWith("\n", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("\r", text);
+    }
 }

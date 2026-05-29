@@ -5,6 +5,8 @@ namespace WTLauncher.Core;
 
 internal static class LauncherJson
 {
+    private const string RepositoryLineEnding = "\n";
+
     private static readonly JsonSerializerOptions Options = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -27,11 +29,11 @@ internal static class LauncherJson
         if (!string.IsNullOrWhiteSpace(directory))
             Directory.CreateDirectory(directory);
 
-        var json = JsonSerializer.Serialize(value, Options);
+        var json = NormalizeLineEndings(JsonSerializer.Serialize(value, Options));
         var tempPath = fullPath + $".tmp-{Guid.NewGuid():N}";
         try
         {
-            File.WriteAllText(tempPath, json + Environment.NewLine);
+            File.WriteAllText(tempPath, json + RepositoryLineEnding);
 
             if (backup && File.Exists(fullPath))
                 File.Copy(fullPath, fullPath + ".bak", overwrite: true);
@@ -43,5 +45,12 @@ internal static class LauncherJson
             if (File.Exists(tempPath))
                 File.Delete(tempPath);
         }
+    }
+
+    private static string NormalizeLineEndings(string text)
+    {
+        return text
+            .Replace("\r\n", RepositoryLineEnding)
+            .Replace("\r", RepositoryLineEnding);
     }
 }
