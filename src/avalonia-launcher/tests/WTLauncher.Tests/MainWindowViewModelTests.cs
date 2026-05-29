@@ -236,10 +236,10 @@ public sealed partial class MainWindowViewModelTests
         }
         """);
 
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), CreateLaunchWorkflow())
-        {
-            RequestNewPresetAsync = _ => Task.FromResult<string?>("Project Pair"),
-        };
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            configure: vm => vm.RequestNewPresetAsync = _ => Task.FromResult<string?>("Project Pair"));
 
         File.Delete(presets);
         Directory.CreateDirectory(presets);
@@ -259,14 +259,14 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
         IReadOnlyList<string>? dialogEntryIds = null;
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), CreateLaunchWorkflow())
-        {
-            RequestNewPresetAsync = entryIds =>
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            configure: vm => vm.RequestNewPresetAsync = entryIds =>
             {
                 dialogEntryIds = entryIds.ToArray();
                 return Task.FromResult<string?>(null);
-            },
-        };
+            });
 
         await viewModel.SaveSelectionAsPresetCommand.ExecuteAsync(null);
 
@@ -335,10 +335,10 @@ public sealed partial class MainWindowViewModelTests
         }
         """);
 
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), CreateLaunchWorkflow())
-        {
-            RequestNewPresetAsync = _ => Task.FromResult<string?>("Project Pair"),
-        };
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            configure: vm => vm.RequestNewPresetAsync = _ => Task.FromResult<string?>("Project Pair"));
 
         Assert.True(viewModel.SaveSelectionAsPresetCommand.CanExecute(null));
 

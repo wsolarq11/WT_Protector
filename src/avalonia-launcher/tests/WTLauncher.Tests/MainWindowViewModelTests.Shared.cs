@@ -56,8 +56,17 @@ public sealed partial class MainWindowViewModelTests
     private static MainWindowViewModel CreateViewModel(
         string config,
         string settings,
-        LauncherSettings? launcherSettings = null) =>
-        new(config, settings, launcherSettings ?? new LauncherSettings(), CreateLaunchWorkflow());
+        LauncherSettings? launcherSettings = null,
+        Action<MainWindowViewModel>? configure = null)
+    {
+        var viewModel = new MainWindowViewModel(
+            config,
+            settings,
+            launcherSettings ?? new LauncherSettings(),
+            CreateLaunchWorkflow());
+        configure?.Invoke(viewModel);
+        return viewModel;
+    }
 
     private static List<LaunchEntry> LoadEntriesById(string config) =>
         LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();

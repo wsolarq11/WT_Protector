@@ -11,11 +11,12 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
         var launcherSettings = new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["one", "two"] };
-        var viewModel = new MainWindowViewModel(config, settings, launcherSettings, CreateLaunchWorkflow())
-        {
-            RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
-                new EntryDraft("three", "Three", "D:\\three", "pwsh", true)),
-        };
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            launcherSettings,
+            vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
+                new EntryDraft("three", "Three", "D:\\three", "pwsh", true)));
 
         File.Delete(config);
         Directory.CreateDirectory(config);
@@ -35,11 +36,11 @@ public sealed partial class MainWindowViewModelTests
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), CreateLaunchWorkflow())
-        {
-            RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
-                new EntryDraft("three", "Three", "D:\\three", "pwsh", true)),
-        };
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            configure: vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
+                new EntryDraft("three", "Three", "D:\\three", "pwsh", true)));
 
         File.Delete(settings);
         Directory.CreateDirectory(settings);
@@ -71,11 +72,11 @@ public sealed partial class MainWindowViewModelTests
           ]
         }
         """);
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), CreateLaunchWorkflow())
-        {
-            RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
-                new EntryDraft("one-renamed", "One Renamed", "D:\\renamed", "opencode", false)),
-        };
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            configure: vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
+                new EntryDraft("one-renamed", "One Renamed", "D:\\renamed", "opencode", false)));
         File.Delete(presets);
         Directory.CreateDirectory(presets);
 
@@ -109,18 +110,18 @@ public sealed partial class MainWindowViewModelTests
         """);
 
         var requestCount = 0;
-        var viewModel = new MainWindowViewModel(
+        var viewModel = CreateViewModel(
             config,
             settings,
             new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["one", "two"] },
-            CreateLaunchWorkflow())
-        {
-            RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
-                requestCount++ == 0
-                    ? new EntryDraft("three", "Three", "D:\\three", "pwsh", true)
-                    : new EntryDraft("one-renamed", "One Renamed", "D:\\renamed", "opencode", false)),
-            ConfirmDeleteEntryAsync = _ => Task.FromResult(true),
-        };
+            vm =>
+            {
+                vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
+                    requestCount++ == 0
+                        ? new EntryDraft("three", "Three", "D:\\three", "pwsh", true)
+                        : new EntryDraft("one-renamed", "One Renamed", "D:\\renamed", "opencode", false));
+                vm.ConfirmDeleteEntryAsync = _ => Task.FromResult(true);
+            });
 
         await viewModel.AddEntryCommand.ExecuteAsync(null);
 
