@@ -588,12 +588,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         SelectedCount = Entries.Count(entry => entry.IsSelected);
     }
 
-    public void MoveEntryBefore(string draggedEntryId, string targetEntryId)
-    {
-        var result = _dragReorderWorkflow.MoveBefore(IsCustomSortMode, draggedEntryId, targetEntryId);
-        ApplyStatusText(result);
-    }
-
     public void BeginDragReorder(string draggedEntryId)
     {
         _dragReorderWorkflow.Begin(IsCustomSortMode, draggedEntryId);

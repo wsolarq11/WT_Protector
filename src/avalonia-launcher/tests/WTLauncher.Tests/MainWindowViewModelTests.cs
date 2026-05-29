@@ -718,7 +718,9 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(["custom", "updated", "alphabetical"], viewModel.SortModes.Select(mode => mode.Id).ToArray());
         Assert.Equal(["three", "one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
 
-        viewModel.MoveEntryBefore("two", "three");
+        viewModel.BeginDragReorder("two");
+        Assert.True(viewModel.PreviewMoveEntry("two", "three", insertAfter: false));
+        viewModel.CommitDragReorder();
 
         Assert.Equal(["two", "three", "one"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         var savedSettings = LauncherSettingsStore.Load(settings);
@@ -755,53 +757,6 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(new[] { "卡片", "详细列表", "名称墙" }, viewModel.DisplayModes.Select(mode => mode.Label));
         Assert.Equal(LauncherEntryViewMode.Cards, viewModel.SelectedDisplayMode?.Mode);
         Assert.Equal("cards", viewModel.SelectedDisplayMode?.Id);
-    }
-
-    [Fact]
-    public void MoveEntryBeforeRollsBackWhenSettingsSaveFails()
-    {
-        using var temp = new TempDirectory();
-        var (config, settings, _) = CreatePortableFixture(
-            temp,
-            new LaunchEntry
-            {
-                Id = "one",
-                Name = "One",
-                Directory = "D:\\one",
-                Command = "codex",
-                Confirm = false,
-            },
-            new LaunchEntry
-            {
-                Id = "two",
-                Name = "Two",
-                Directory = "D:\\two",
-                Command = "opencode",
-                Confirm = false,
-            },
-            new LaunchEntry
-            {
-                Id = "three",
-                Name = "Three",
-                Directory = "D:\\three",
-                Command = "pwsh",
-                Confirm = false,
-            });
-
-        var launcherSettings = new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["one", "two", "three"] };
-        var viewModel = new MainWindowViewModel(
-            config,
-            settings,
-            launcherSettings,
-            new LauncherProcess());
-        Directory.CreateDirectory(settings);
-
-        viewModel.MoveEntryBefore("three", "one");
-
-        Assert.Equal(["one", "two", "three"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(["one", "two", "three"], launcherSettings.CustomEntryOrder);
-        Assert.Contains("设置保存失败", viewModel.StatusText);
-        Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(settings)!, "settings.json.tmp-*"));
     }
 
     [Fact]
