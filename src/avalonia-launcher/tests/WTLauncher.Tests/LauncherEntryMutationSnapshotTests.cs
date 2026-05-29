@@ -8,29 +8,8 @@ public sealed class LauncherEntryMutationSnapshotTests
     [Fact]
     public void CaptureDeepCopiesMutableEntryPresetAndOrderState()
     {
-        var entry = new LaunchEntry
-        {
-            Id = "one",
-            Name = "One",
-            Directory = "D:\\one",
-            Command = "pwsh",
-            Confirm = true,
-            Selected = true,
-            UpdatedAtUtc = "2026-05-20T00:00:00Z",
-        };
-        var presetFile = new LauncherPresetFile
-        {
-            DefaultPresetId = "daily",
-            Presets =
-            [
-                new LauncherPreset
-                {
-                    Id = "daily",
-                    Name = "Daily",
-                    EntryIds = ["one"],
-                },
-            ],
-        };
+        var entry = Entry(confirm: true, selected: true, updatedAtUtc: "2026-05-20T00:00:00Z");
+        var presetFile = PresetFile();
         var order = new List<string> { "one" };
 
         var snapshot = LauncherEntryMutationSnapshot.Capture([entry], presetFile, order, selectedPresetId: "daily");
@@ -56,20 +35,8 @@ public sealed class LauncherEntryMutationSnapshotTests
     public void CloneMethodsReturnFreshMutableCopies()
     {
         var snapshot = LauncherEntryMutationSnapshot.Capture(
-            [new LaunchEntry { Id = "one", Name = "One", Directory = "D:\\one", Command = "pwsh" }],
-            new LauncherPresetFile
-            {
-                DefaultPresetId = "daily",
-                Presets =
-                [
-                    new LauncherPreset
-                    {
-                        Id = "daily",
-                        Name = "Daily",
-                        EntryIds = ["one"],
-                    },
-                ],
-            },
+            [Entry()],
+            PresetFile(),
             ["one"],
             selectedPresetId: "daily");
 
@@ -84,4 +51,34 @@ public sealed class LauncherEntryMutationSnapshotTests
         Assert.Equal("one", Assert.Single(snapshot.PresetFile.Presets[0].EntryIds));
         Assert.Equal("one", Assert.Single(snapshot.CustomEntryOrder));
     }
+
+    private static LaunchEntry Entry(
+        bool confirm = false,
+        bool selected = false,
+        string updatedAtUtc = "") =>
+        new()
+        {
+            Id = "one",
+            Name = "One",
+            Directory = "D:\\one",
+            Command = "pwsh",
+            Confirm = confirm,
+            Selected = selected,
+            UpdatedAtUtc = updatedAtUtc,
+        };
+
+    private static LauncherPresetFile PresetFile() =>
+        new()
+        {
+            DefaultPresetId = "daily",
+            Presets =
+            [
+                new LauncherPreset
+                {
+                    Id = "daily",
+                    Name = "Daily",
+                    EntryIds = ["one"],
+                },
+            ],
+        };
 }
