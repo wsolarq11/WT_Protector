@@ -32,36 +32,19 @@ public sealed partial class MainWindow : Window
         DataContext = viewModel;
         _settingsPath = settingsPath;
         _settings = settings;
-        viewModel.ConfirmLaunchAsync = ConfirmLaunchAsync;
-        viewModel.ConfirmBatchLaunchAsync = ConfirmBatchLaunchAsync;
-        viewModel.RequestNewPresetAsync = RequestNewPresetAsync;
-        viewModel.ConfirmDeletePresetAsync = ConfirmDeletePresetAsync;
-        viewModel.RequestEntryDraftAsync = RequestEntryDraftAsync;
-        viewModel.ConfirmDeleteEntryAsync = ConfirmDeleteEntryAsync;
+        viewModel.ConfirmLaunchAsync = (entry, plan) => new ConfirmLaunchWindow(entry, plan).ShowDialog<bool>(this);
+        viewModel.ConfirmBatchLaunchAsync = entries => new ConfirmBatchLaunchWindow(entries).ShowDialog<bool>(this);
+        viewModel.RequestNewPresetAsync = selectedEntryIds =>
+            new PresetDetailsWindow(selectedEntryIds).ShowDialog<string?>(this);
+        viewModel.ConfirmDeletePresetAsync = preset => new ConfirmPresetDeleteWindow(preset).ShowDialog<bool>(this);
+        viewModel.RequestEntryDraftAsync = entry => new EntryDetailsWindow(entry).ShowDialog<EntryDraft?>(this);
+        viewModel.ConfirmDeleteEntryAsync = entry => new ConfirmEntryDeleteWindow(entry).ShowDialog<bool>(this);
         DragDrop.AddDragOverHandler(this, OnEntryDragOver);
         DragDrop.AddDropHandler(this, OnEntryDrop);
         SizeChanged += (_, _) => UpdateCardRegionSize(viewModel);
         Opened += (_, _) => UpdateCardRegionSize(viewModel);
         Closing += OnClosing;
     }
-
-    private Task<bool> ConfirmLaunchAsync(LaunchEntry entry, LaunchPlan plan) =>
-        new ConfirmLaunchWindow(entry, plan).ShowDialog<bool>(this);
-
-    private Task<bool> ConfirmBatchLaunchAsync(IReadOnlyList<LaunchEntry> entries) =>
-        new ConfirmBatchLaunchWindow(entries).ShowDialog<bool>(this);
-
-    private Task<string?> RequestNewPresetAsync(IReadOnlyList<string> selectedEntryIds) =>
-        new PresetDetailsWindow(selectedEntryIds).ShowDialog<string?>(this);
-
-    private Task<bool> ConfirmDeletePresetAsync(LauncherPresetViewModel preset) =>
-        new ConfirmPresetDeleteWindow(preset).ShowDialog<bool>(this);
-
-    private Task<EntryDraft?> RequestEntryDraftAsync(LaunchEntry? entry) =>
-        new EntryDetailsWindow(entry).ShowDialog<EntryDraft?>(this);
-
-    private Task<bool> ConfirmDeleteEntryAsync(LauncherEntryViewModel entry) =>
-        new ConfirmEntryDeleteWindow(entry).ShowDialog<bool>(this);
 
     private void UpdateCardRegionSize(MainWindowViewModel viewModel)
     {
