@@ -54,7 +54,11 @@ public sealed class MainWindowXamlContractTests
             "<Setter Property=\"IsHitTestVisible\" Value=\"False\"/>");
 
         AssertInOrder(codeBehind, "ShowDragGhost(item, card", "DragDrop.DoDragDropAsync", "HideDragGhost()");
-        Assert.Contains("UpdateDragGhostPosition(e.GetPosition(this))", codeBehind);
+        AssertInOrder(
+            codeBehind,
+            "if (_activeDragEntryId is not null)",
+            "LauncherDragGhostLayoutCalculator.CalculatePosition",
+            "SetDragGhostPosition(ghostPosition.Left, ghostPosition.Top)");
         Assert.Contains("private void ApplyDragReorderPreview(", codeBehind);
         Assert.Equal(1, Count(codeBehind, "viewModel.PreviewMoveEntry("));
         Assert.Contains("if (viewModel.PreviewMoveEntry", codeBehind);

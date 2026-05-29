@@ -96,7 +96,11 @@ public sealed partial class MainWindow : Window
         }
 
         if (_activeDragEntryId is not null)
-            UpdateDragGhostPosition(e.GetPosition(this));
+        {
+            var pointerPosition = e.GetPosition(this);
+            var ghostPosition = LauncherDragGhostLayoutCalculator.CalculatePosition(pointerPosition.X, pointerPosition.Y);
+            SetDragGhostPosition(ghostPosition.Left, ghostPosition.Top);
+        }
 
         var resolved = ResolveEntryCardFromDragEvent(e);
         var decision = MainWindowDragDropDecision.EvaluateDragOver(
@@ -174,12 +178,6 @@ public sealed partial class MainWindow : Window
         _dragGhost = ghost.Control;
         _overlayLayer.Children.Add(ghost.Control);
         SetDragGhostPosition(ghost.Left, ghost.Top);
-    }
-
-    private void UpdateDragGhostPosition(Point position)
-    {
-        var ghostPosition = LauncherDragGhostLayoutCalculator.CalculatePosition(position.X, position.Y);
-        SetDragGhostPosition(ghostPosition.Left, ghostPosition.Top);
     }
 
     private void SetDragGhostPosition(double left, double top)
