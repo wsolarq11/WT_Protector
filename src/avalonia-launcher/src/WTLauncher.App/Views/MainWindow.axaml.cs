@@ -280,23 +280,19 @@ public sealed partial class MainWindow : Window
 
     private static bool TryOpenEntryCardContextMenu(Control source)
     {
-        var card = FindEntryCard(source);
-        if (card?.ContextMenu is not ContextMenu menu)
-            return false;
-
-        menu.Open(card);
-        return true;
-    }
-
-    private static Border? FindEntryCard(Control source)
-    {
         foreach (var ancestor in source.GetSelfAndVisualAncestors())
         {
             if (ancestor is Border border && border.Classes.Contains("card"))
-                return border;
+            {
+                if (border.ContextMenu is not ContextMenu menu)
+                    return false;
+
+                menu.Open(border);
+                return true;
+            }
         }
 
-        return null;
+        return false;
     }
 
     private void OnEntryRowDoubleTapped(object? sender, TappedEventArgs e)
