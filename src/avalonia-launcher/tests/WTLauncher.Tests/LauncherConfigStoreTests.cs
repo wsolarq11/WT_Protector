@@ -8,9 +8,9 @@ public sealed class LauncherConfigStoreTests
     public void Load_ReadsRootConfigShape()
     {
         using var temp = new TempDirectory();
-        var configDir = System.IO.Path.Combine(temp.Path, "config");
+        var configDir = Path.Combine(temp.Path, "config");
         Directory.CreateDirectory(configDir);
-        var config = System.IO.Path.Combine(configDir, "config.json");
+        var config = Path.Combine(configDir, "config.json");
         File.WriteAllText(config, """
         [
           {
@@ -37,24 +37,24 @@ public sealed class LauncherConfigStoreTests
     [Fact]
     public void ResolveConfigPath_PrefersExplicitPath()
     {
-        var explicitPath = System.IO.Path.Combine("somewhere", "config.json");
+        var explicitPath = Path.Combine("somewhere", "config.json");
 
         var resolved = LauncherConfigStore.ResolveConfigPath(explicitPath, currentDirectory: "ignored", appBaseDirectory: "ignored");
 
-        Assert.EndsWith(System.IO.Path.Combine("somewhere", "config.json"), resolved);
+        Assert.EndsWith(Path.Combine("somewhere", "config.json"), resolved);
     }
 
     [Fact]
     public void ResolveConfigPath_FindsConfigDirectoryUnderRepositoryRoot()
     {
         using var temp = new TempDirectory();
-        File.WriteAllText(System.IO.Path.Combine(temp.Path, "README.md"), "demo");
-        var configDir = System.IO.Path.Combine(temp.Path, "config");
+        File.WriteAllText(Path.Combine(temp.Path, "README.md"), "demo");
+        var configDir = Path.Combine(temp.Path, "config");
         Directory.CreateDirectory(configDir);
-        var config = System.IO.Path.Combine(configDir, "config.json");
+        var config = Path.Combine(configDir, "config.json");
         File.WriteAllText(config, "[]");
 
-        var nested = System.IO.Path.Combine(temp.Path, "src", "avalonia-launcher");
+        var nested = Path.Combine(temp.Path, "src", "avalonia-launcher");
         Directory.CreateDirectory(nested);
         var resolved = LauncherConfigStore.ResolveConfigPath(null, currentDirectory: nested, appBaseDirectory: null);
 
@@ -65,10 +65,10 @@ public sealed class LauncherConfigStoreTests
     public void ResolveConfigPath_FallsBackToExecutableLocalConfigForPortableCopy()
     {
         using var temp = new TempDirectory();
-        var appDir = System.IO.Path.Combine(temp.Path, "publish");
-        var configDir = System.IO.Path.Combine(appDir, "config");
+        var appDir = Path.Combine(temp.Path, "publish");
+        var configDir = Path.Combine(appDir, "config");
         Directory.CreateDirectory(configDir);
-        var config = System.IO.Path.Combine(configDir, "config.json");
+        var config = Path.Combine(configDir, "config.json");
         File.WriteAllText(config, "[]");
 
         var resolved = LauncherConfigStore.ResolveConfigPath(null, currentDirectory: null, appBaseDirectory: appDir);
@@ -79,18 +79,18 @@ public sealed class LauncherConfigStoreTests
     [Fact]
     public void ResolveSettingsPath_StaysBesideResolvedConfig()
     {
-        var config = System.IO.Path.Combine("portable-root", "config", "config.json");
+        var config = Path.Combine("portable-root", "config", "config.json");
 
         var settings = LauncherConfigStore.ResolveSettingsPath(config);
 
-        Assert.EndsWith(System.IO.Path.Combine("portable-root", "config", "settings.json"), settings);
+        Assert.EndsWith(Path.Combine("portable-root", "config", "settings.json"), settings);
     }
 
     [Fact]
     public void PresetStore_RoundTripsHumanReadableLaunchGroups()
     {
         using var temp = new TempDirectory();
-        var presetPath = System.IO.Path.Combine(temp.Path, "config", "presets.json");
+        var presetPath = Path.Combine(temp.Path, "config", "presets.json");
 
         LauncherPresetStore.Save(
             new LauncherPresetFile
@@ -125,9 +125,9 @@ public sealed class LauncherConfigStoreTests
     public void PresetStore_CanSkipBackupForRollbackWrites()
     {
         using var temp = new TempDirectory();
-        var configDir = System.IO.Path.Combine(temp.Path, "config");
+        var configDir = Path.Combine(temp.Path, "config");
         Directory.CreateDirectory(configDir);
-        var presetPath = System.IO.Path.Combine(configDir, "presets.json");
+        var presetPath = Path.Combine(configDir, "presets.json");
         File.WriteAllText(presetPath, """{"schemaVersion":1,"defaultPresetId":"","presets":[]}""");
 
         LauncherPresetStore.Save(
@@ -154,20 +154,20 @@ public sealed class LauncherConfigStoreTests
     [Fact]
     public void ResolvePresetPath_StaysBesideResolvedConfig()
     {
-        var config = System.IO.Path.Combine("portable-root", "config", "config.json");
+        var config = Path.Combine("portable-root", "config", "config.json");
 
         var presets = LauncherPresetStore.ResolvePresetPath(config);
 
-        Assert.EndsWith(System.IO.Path.Combine("portable-root", "config", "presets.json"), presets);
+        Assert.EndsWith(Path.Combine("portable-root", "config", "presets.json"), presets);
     }
 
     [Fact]
     public void Save_PersistsSelectionAndCreatesBackup()
     {
         using var temp = new TempDirectory();
-        var configDir = System.IO.Path.Combine(temp.Path, "config");
+        var configDir = Path.Combine(temp.Path, "config");
         Directory.CreateDirectory(configDir);
-        var config = System.IO.Path.Combine(configDir, "config.json");
+        var config = Path.Combine(configDir, "config.json");
         File.WriteAllText(config, "[]");
 
         LauncherConfigStore.Save(
@@ -197,9 +197,9 @@ public sealed class LauncherConfigStoreTests
     public void Save_CanSkipBackupForRollbackWrites()
     {
         using var temp = new TempDirectory();
-        var configDir = System.IO.Path.Combine(temp.Path, "config");
+        var configDir = Path.Combine(temp.Path, "config");
         Directory.CreateDirectory(configDir);
-        var config = System.IO.Path.Combine(configDir, "config.json");
+        var config = Path.Combine(configDir, "config.json");
         File.WriteAllText(config, "[]");
 
         LauncherConfigStore.Save(
@@ -223,7 +223,7 @@ public sealed class LauncherConfigStoreTests
     public void SettingsStore_RoundTripsPortableSettings()
     {
         using var temp = new TempDirectory();
-        var settings = System.IO.Path.Combine(temp.Path, "config", "settings.json");
+        var settings = Path.Combine(temp.Path, "config", "settings.json");
 
         LauncherSettingsStore.Save(
             new LauncherSettings
@@ -260,7 +260,7 @@ public sealed class LauncherConfigStoreTests
     public void SettingsStore_TrySaveWindowBoundsPersistsPortableCloseSize()
     {
         using var temp = new TempDirectory();
-        var settingsPath = System.IO.Path.Combine(temp.Path, "config", "settings.json");
+        var settingsPath = Path.Combine(temp.Path, "config", "settings.json");
         var settings = new LauncherSettings
         {
             Window = new LauncherWindowSettings { Width = 1180, Height = 760 },
@@ -280,9 +280,9 @@ public sealed class LauncherConfigStoreTests
     public void SettingsStore_TrySaveWindowBoundsReturnsFalseAndRollsBackOnCloseSaveFailure()
     {
         using var temp = new TempDirectory();
-        var configDir = System.IO.Path.Combine(temp.Path, "config");
+        var configDir = Path.Combine(temp.Path, "config");
         Directory.CreateDirectory(configDir);
-        var settingsPath = System.IO.Path.Combine(configDir, "settings.json");
+        var settingsPath = Path.Combine(configDir, "settings.json");
         var settings = new LauncherSettings
         {
             Window = new LauncherWindowSettings { Width = 1180, Height = 760 },
