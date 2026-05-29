@@ -865,7 +865,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         catch (Exception ex)
         {
             presetFile = new LauncherPresetFile();
-            error = $"启动组加载失败: {ex.Message}";
+            error = LauncherPersistenceStatus.PresetLoadFailed(ex);
         }
 
         ApplyPresetFileState(presetFile, preferredPresetId);
@@ -906,7 +906,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ApplyStatusText($"启动组保存失败: {ex.Message}");
+            ApplyStatusText(LauncherPersistenceStatus.PresetSaveFailed(ex));
             return false;
         }
     }
@@ -920,7 +920,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ApplyStatusText($"配置保存失败: {ex.Message}");
+            ApplyStatusText(LauncherPersistenceStatus.ConfigSaveFailed(ex));
             return false;
         }
     }

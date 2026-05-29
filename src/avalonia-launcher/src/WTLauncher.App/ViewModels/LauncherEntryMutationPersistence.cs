@@ -26,7 +26,7 @@ public static class LauncherEntryMutationPersistence
         }
         catch (Exception ex)
         {
-            return $"配置保存失败: {ex.Message}";
+            return LauncherPersistenceStatus.ConfigSaveFailed(ex);
         }
 
         if (savePresets)
@@ -42,7 +42,7 @@ public static class LauncherEntryMutationPersistence
                     configPath,
                     presetPath,
                     restorePresets: false,
-                    currentStatus: $"启动组保存失败: {ex.Message}");
+                    currentStatus: LauncherPersistenceStatus.PresetSaveFailed(ex));
                 return status;
             }
         }
@@ -59,7 +59,7 @@ public static class LauncherEntryMutationPersistence
                 configPath,
                 presetPath,
                 restorePresets: savePresets,
-                currentStatus: $"设置保存失败: {ex.Message}");
+                currentStatus: LauncherPersistenceStatus.SettingsSaveFailed(ex));
             return status;
         }
 
@@ -98,8 +98,6 @@ public static class LauncherEntryMutationPersistence
             }
         }
 
-        return restoreErrors.Count == 0
-            ? currentStatus
-            : $"{currentStatus}；回滚磁盘状态失败: {string.Join("；", restoreErrors)}";
+        return LauncherPersistenceStatus.RollbackFailed(currentStatus, restoreErrors);
     }
 }

@@ -23,7 +23,7 @@ public static class LauncherSettingsMutationPersistence
         {
             snapshot.Restore(settings);
             onRollback();
-            return $"设置保存失败: {ex.Message}";
+            return LauncherPersistenceStatus.SettingsSaveFailed(ex);
         }
     }
 }
