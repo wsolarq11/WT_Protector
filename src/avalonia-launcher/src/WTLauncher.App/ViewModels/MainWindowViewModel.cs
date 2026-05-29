@@ -261,7 +261,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private void ClearSelection()
     {
-        var targets = Entries.Where(entry => entry.IsSelected).ToList();
+        var targets = GetSelectedEntries();
         if (targets.Count == 0)
         {
             ApplyStatusText("当前没有已勾选项");
@@ -575,7 +575,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private async Task LaunchSelectedAsync()
     {
-        var selected = Entries.Where(entry => entry.IsSelected).ToList();
+        var selected = GetSelectedEntries();
         if (selected.Count == 0)
         {
             StatusText = "未选择任何启动项";
@@ -849,9 +849,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private IEnumerable<string> GetEntryIds() =>
         Entries.Select(entry => entry.Id);
 
-    private List<string> GetSelectedEntryIds() =>
+    private List<LauncherEntryViewModel> GetSelectedEntries() =>
         Entries
             .Where(entry => entry.IsSelected)
+            .ToList();
+
+    private List<string> GetSelectedEntryIds() =>
+        GetSelectedEntries()
             .Select(entry => entry.Id)
             .ToList();
 
