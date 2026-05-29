@@ -11,7 +11,7 @@ public sealed class LauncherSettings
     public string LastFilterText { get; set; } = "";
 
     [JsonPropertyName("sortMode")]
-    public string SortMode { get; set; } = "custom";
+    public string SortMode { get; set; } = LauncherEntryVisibility.CustomSortModeId;
 
     [JsonPropertyName("entryViewMode")]
     public string EntryViewMode { get; set; } = "cards";

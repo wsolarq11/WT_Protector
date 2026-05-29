@@ -70,7 +70,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             EnsureCustomOrderContainsEntries,
             ApplyFilter);
         ConfigPathDisplay = $"配置: {configPath} · 启动组: {_presetPath}";
-        FilterText = settings.LastFilterText;
+        _filterText = settings.LastFilterText ?? string.Empty;
         _requireConfirmationForLaunches = settings.RequireConfirmationForLaunches;
         _selectedSortMode = ResolveSortMode(settings.SortMode);
         _settings.SortMode = _selectedSortMode.Id;
@@ -87,9 +87,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public ObservableCollection<LauncherSortModeViewModel> SortModes { get; } =
     [
-        new("custom", "自定义拖拽"),
-        new("updated", "更新时间"),
-        new("alphabetical", "首字母顺序"),
+        new(LauncherEntryVisibility.CustomSortModeId, "自定义拖拽"),
+        new(LauncherEntryVisibility.UpdatedSortModeId, "更新时间"),
+        new(LauncherEntryVisibility.AlphabeticalSortModeId, "首字母顺序"),
     ];
 
     public ObservableCollection<LauncherDisplayModeViewModel> DisplayModes { get; } =
@@ -107,7 +107,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private LauncherEntryViewMode CurrentEntryViewMode => SelectedDisplayMode?.Mode ?? LauncherEntryViewMode.Cards;
 
-    public bool IsCustomSortMode => SelectedSortMode?.Id == "custom";
+    public bool IsCustomSortMode => SelectedSortMode?.Id == LauncherEntryVisibility.CustomSortModeId;
 
     public bool IsCardsViewMode => CurrentEntryViewMode == LauncherEntryViewMode.Cards;
 
@@ -769,26 +769,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void ApplyFilter()
     {
-        IEnumerable<LauncherEntryViewModel> source = Entries;
-        var filterText = (FilterText ?? string.Empty).Trim();
-        IEnumerable<LauncherEntryViewModel> filtered = filterText.Length == 0
-            ? source
-            : source.Where(entry =>
-                entry.Entry.Name.Contains(filterText, StringComparison.OrdinalIgnoreCase)
-                || entry.Entry.Directory.Contains(filterText, StringComparison.OrdinalIgnoreCase)
-                || entry.Entry.Command.Contains(filterText, StringComparison.OrdinalIgnoreCase));
-        var allEntryIds = source.Select(entry => entry.Entry.Id);
-        var sorted = SelectedSortMode?.Id switch
-        {
-            "updated" => filtered
-                .OrderByDescending(entry => ParseUpdatedAt(entry.Entry.UpdatedAtUtc))
-                .ThenBy(entry => entry.Entry.Name, StringComparer.CurrentCultureIgnoreCase)
-                .ThenBy(entry => entry.Entry.Id, StringComparer.Ordinal),
-            "alphabetical" => filtered
-                .OrderBy(entry => entry.Entry.Name, StringComparer.CurrentCultureIgnoreCase)
-                .ThenBy(entry => entry.Entry.Id, StringComparer.Ordinal),
-            _ => SortByCustomOrder(filtered, allEntryIds),
-        };
+        var sorted = LauncherEntryVisibility.FilterAndSort(
+            Entries,
+            FilterText,
+            SelectedSortMode?.Id,
+            _settings.CustomEntryOrder,
+            static entry => entry.Entry);
 
         VisibleEntries.Clear();
         foreach (var entry in sorted)
@@ -799,23 +785,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         VisibleCount = VisibleEntries.Count;
         LauncherEntryLayoutPresentation.ApplyCardSize(Entries, VisibleEntries, _cardsAvailableSize);
     }
-
-    private IEnumerable<LauncherEntryViewModel> SortByCustomOrder(
-        IEnumerable<LauncherEntryViewModel> entries,
-        IEnumerable<string> allEntryIds)
-    {
-        LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, allEntryIds);
-        var order = LauncherEntryOrder.BuildIndex(_settings.CustomEntryOrder);
-        return entries
-            .OrderBy(entry => order.TryGetValue(entry.Entry.Id, out var index) ? index : int.MaxValue)
-            .ThenBy(entry => entry.Entry.Name, StringComparer.CurrentCultureIgnoreCase)
-            .ThenBy(entry => entry.Entry.Id, StringComparer.Ordinal);
-    }
-
-    private static DateTimeOffset ParseUpdatedAt(string? value) =>
-        DateTimeOffset.TryParse(value, out var parsed)
-            ? parsed
-            : DateTimeOffset.MinValue;
 
     public void UpdateCardsAvailableSize(Size availableSize)
     {

@@ -146,6 +146,23 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void ConstructorAppliesSavedFilterWithoutPersistingSettings()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { LastFilterText = "CODEX" });
+
+        var visible = Assert.Single(viewModel.VisibleEntries);
+        Assert.Equal("one", visible.Entry.Id);
+        Assert.Equal("CODEX", viewModel.FilterText);
+        Assert.False(File.Exists(settings));
+    }
+
+    [Fact]
     public void FilterTextPersistsPortableSettingsAndFiltersVisibleEntries()
     {
         using var temp = new TempDirectory();
