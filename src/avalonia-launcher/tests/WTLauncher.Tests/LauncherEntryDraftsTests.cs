@@ -8,16 +8,12 @@ public sealed class LauncherEntryDraftsTests
     [Fact]
     public void CreateEntryTrimsDraftFieldsAndPreservesPreviousTimestamp()
     {
-        var previous = new LaunchEntry
-        {
-            Id = "old",
-            Name = "Old",
-            Directory = "D:\\old",
-            Command = "pwsh",
-            Confirm = true,
-            Selected = false,
-            UpdatedAtUtc = "2026-05-20T00:00:00Z",
-        };
+        var previous = Entry(
+            "old",
+            "Old",
+            "D:\\old",
+            confirm: true,
+            updatedAtUtc: "2026-05-20T00:00:00Z");
 
         var entry = LauncherEntryDrafts.CreateEntry(
             new EntryDraft(" new-id ", " New Name ", " D:\\new ", " codex ", true),
@@ -44,13 +40,7 @@ public sealed class LauncherEntryDraftsTests
         string command,
         string expected)
     {
-        var entry = new LaunchEntry
-        {
-            Id = id,
-            Name = name,
-            Directory = directory,
-            Command = command,
-        };
+        var entry = Entry(id, name, directory, command);
 
         var result = LauncherEntryDrafts.ValidateEntry(entry, originalId: null, existingEntries: []);
 
@@ -62,16 +52,37 @@ public sealed class LauncherEntryDraftsTests
     {
         var existing = new[]
         {
-            new LaunchEntry { Id = "one", Name = "One", Directory = "D:\\one", Command = "pwsh" },
-            new LaunchEntry { Id = "two", Name = "Two", Directory = "D:\\two", Command = "codex" },
+            Entry("one", "One", "D:\\one"),
+            Entry("two", "Two", "D:\\two", "codex"),
         };
 
-        var sameAsOriginal = new LaunchEntry { Id = "one", Name = "Renamed", Directory = "D:\\new", Command = "opencode" };
-        var duplicateOther = new LaunchEntry { Id = "two", Name = "Renamed", Directory = "D:\\new", Command = "opencode" };
+        var sameAsOriginal = Entry("one", "Renamed", "D:\\new", "opencode");
+        var duplicateOther = Entry("two", "Renamed", "D:\\new", "opencode");
 
         Assert.Null(LauncherEntryDrafts.ValidateEntry(sameAsOriginal, originalId: "one", existingEntries: existing));
         Assert.Equal(
             "按钮 ID 已存在: two",
             LauncherEntryDrafts.ValidateEntry(duplicateOther, originalId: "one", existingEntries: existing));
+    }
+
+    private static LaunchEntry Entry(
+        string id,
+        string name,
+        string directory,
+        string command = "pwsh",
+        bool confirm = false,
+        bool selected = false,
+        string updatedAtUtc = "")
+    {
+        return new LaunchEntry
+        {
+            Id = id,
+            Name = name,
+            Directory = directory,
+            Command = command,
+            Confirm = confirm,
+            Selected = selected,
+            UpdatedAtUtc = updatedAtUtc,
+        };
     }
 }
