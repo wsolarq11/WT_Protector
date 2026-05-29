@@ -625,14 +625,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             var plan = BuildLaunchPlan(item);
             DryRunText = plan.CommandLine;
-            StatusText = plan.RequiresConfirmation
-                ? $"预演: {item.Name}（需要确认）"
-                : $"预演: {item.Name}";
+            StatusText = LauncherSingleLaunchStatus.Preview(item.Name, plan.RequiresConfirmation);
         }
         catch (Exception ex)
         {
             DryRunText = ex.Message;
-            StatusText = $"预演失败: {item.Name}";
+            StatusText = LauncherSingleLaunchStatus.PreviewFailed(item.Name);
         }
     }
 
@@ -660,20 +658,20 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 if (!accepted)
                 {
                     DryRunText = dryRunText;
-                    StatusText = $"已取消: {item.Name}";
+                    StatusText = LauncherSingleLaunchStatus.Canceled(item.Name);
                     return;
                 }
             }
 
             _launcherProcess.Start(plan);
             DryRunText = dryRunText;
-            StatusText = $"已启动: {item.Name}";
+            StatusText = LauncherSingleLaunchStatus.Started(item.Name);
         }
         catch (Exception ex)
         {
             if (dryRunText is not null)
                 DryRunText = dryRunText;
-            StatusText = $"启动失败: {item.Name} — {ex.Message}";
+            StatusText = LauncherSingleLaunchStatus.Failed(item.Name, ex);
         }
     }
 
