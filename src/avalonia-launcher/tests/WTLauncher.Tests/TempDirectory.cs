@@ -1,11 +1,13 @@
+using IOPath = System.IO.Path;
+
 namespace WTLauncher.Tests;
 
 internal sealed class TempDirectory : IDisposable
 {
     public TempDirectory(string? prefix = null)
     {
-        Path = System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(),
+        Path = IOPath.Combine(
+            IOPath.GetTempPath(),
             $"{prefix ?? "wt-launcher-test"}-{Guid.NewGuid():N}");
         Directory.CreateDirectory(Path);
     }
