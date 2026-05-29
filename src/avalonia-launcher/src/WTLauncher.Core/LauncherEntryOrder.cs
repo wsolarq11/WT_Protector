@@ -27,11 +27,18 @@ public static class LauncherEntryOrder
 
     public static IReadOnlyDictionary<string, int> BuildIndex(IEnumerable<string> customOrder)
     {
-        return customOrder
-            .Where(id => !string.IsNullOrWhiteSpace(id))
-            .Select((id, index) => new { id, index })
-            .GroupBy(item => item.id, StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => group.First().index, StringComparer.Ordinal);
+        var indexById = new Dictionary<string, int>(StringComparer.Ordinal);
+        var index = 0;
+        foreach (var id in customOrder)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                continue;
+
+            indexById.TryAdd(id, index);
+            index++;
+        }
+
+        return indexById;
     }
 
     public static void MoveRelative(
