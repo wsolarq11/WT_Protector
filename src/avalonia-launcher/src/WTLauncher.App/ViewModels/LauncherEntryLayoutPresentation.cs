@@ -23,7 +23,8 @@ public static class LauncherEntryLayoutPresentation
         ArgumentNullException.ThrowIfNull(entries);
         ArgumentNullException.ThrowIfNull(visibleEntries);
 
-        var count = Math.Max(1, visibleEntries.Count > 0 ? visibleEntries.Count : entries.Count);
+        var count = visibleEntries.Count == 0 ? entries.Count : visibleEntries.Count;
+        count = Math.Max(1, count);
         var layout = LauncherEntryLayoutCalculator.Calculate(
             availableSize.Width,
             availableSize.Height,
