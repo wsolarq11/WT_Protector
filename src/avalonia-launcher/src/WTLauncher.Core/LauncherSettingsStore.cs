@@ -26,11 +26,11 @@ public static class LauncherSettingsStore
         if (string.IsNullOrWhiteSpace(settingsPath))
             throw new ArgumentException("Settings path is required.", nameof(settingsPath));
 
-        settings.Window ??= new LauncherWindowSettings();
-        var previousWidth = settings.Window.Width;
-        var previousHeight = settings.Window.Height;
-        settings.Window.Width = width;
-        settings.Window.Height = height;
+        var window = settings.Window ??= new LauncherWindowSettings();
+        var previousWidth = window.Width;
+        var previousHeight = window.Height;
+        window.Width = width;
+        window.Height = height;
 
         try
         {
@@ -42,8 +42,8 @@ public static class LauncherSettingsStore
         // or other path/storage exceptions depending on the underlying cause.
         catch (Exception)
         {
-            settings.Window.Width = previousWidth;
-            settings.Window.Height = previousHeight;
+            window.Width = previousWidth;
+            window.Height = previousHeight;
             return false;
         }
     }
