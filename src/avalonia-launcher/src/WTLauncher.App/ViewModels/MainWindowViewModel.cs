@@ -595,9 +595,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 }
             }
 
-            var ok = 0;
-            var fail = 0;
-            var failures = new List<string>();
+            var report = new LauncherBatchLaunchReport();
             foreach (var item in selected)
             {
                 try
@@ -605,18 +603,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
                     var plan = BuildLaunchPlan(item);
                     DryRunText = plan.CommandLine;
                     _launcherProcess.Start(plan);
-                    ok++;
+                    report.RecordStarted();
                 }
                 catch (Exception ex)
                 {
-                    fail++;
-                    failures.Add($"{item.Name}: {ex.Message}");
+                    report.RecordFailure(item.Name, ex);
                 }
             }
 
-            StatusText = fail == 0
-                ? $"已启动 {ok} 个勾选项"
-                : $"已启动 {ok} 个勾选项，{fail} 个失败：{FormatLaunchFailures(failures)}";
+            StatusText = report.ToStatusText();
         }
         catch (Exception ex)
         {
@@ -960,15 +955,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         onSuccess();
-    }
-
-    private static string FormatLaunchFailures(IReadOnlyList<string> failures)
-    {
-        var preview = string.Join("；", failures.Take(3));
-        if (failures.Count > 3)
-            preview += $"；…另有 {failures.Count - 3} 项";
-
-        return preview;
     }
 
 }
