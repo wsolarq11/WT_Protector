@@ -466,7 +466,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         var entryName = item.Name;
         Entries.Remove(item);
-        LauncherEntryReferences.RemoveEntryId(_presetFile, _settings.CustomEntryOrder, item.Entry.Id);
+        LauncherEntryReferences.RemoveEntryId(_presetFile, _settings.CustomEntryOrder, item.Id);
         if (!SaveEntryCollectionChanges(savePresets: true, snapshot))
             return;
 
@@ -782,7 +782,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var snapshot = CaptureSelectionSnapshot(Entries);
         foreach (var entry in Entries)
         {
-            entry.SetSelectionFromOwner(selectedIds.Contains(entry.Entry.Id));
+            entry.SetSelectionFromOwner(selectedIds.Contains(entry.Id));
         }
 
         return SaveSelectionChangeOrRestore(snapshot);
@@ -842,14 +842,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return LauncherPresetSelectionPreview.ForPreset(
             SelectedPreset.Name,
             selectedEntryIds,
-            Entries.Select(entry => entry.Entry.Id),
+            Entries.Select(entry => entry.Id),
             SelectedPreset.EntryIds);
     }
 
     private List<string> GetSelectedEntryIds() =>
         Entries
             .Where(entry => entry.IsSelected)
-            .Select(entry => entry.Entry.Id)
+            .Select(entry => entry.Id)
             .ToList();
 
     private void NotifyPresetManagementCommands()
