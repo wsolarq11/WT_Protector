@@ -62,8 +62,7 @@ public static class LauncherPresetWorkflow
         if (target is null || target.Locked)
             return false;
 
-        var remainingNonEmpty = presetFile.Presets
-            .Count(preset => preset.Id != presetId && preset.EntryIds.Count > 0);
-        return remainingNonEmpty > 0;
+        return presetFile.Presets
+            .Any(preset => preset.Id != presetId && preset.EntryIds.Count > 0);
     }
 }
