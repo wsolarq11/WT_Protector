@@ -1157,16 +1157,7 @@ public sealed class MainWindowViewModelTests
     public void CardSizingShrinksButtonsToFitVisibleEntriesInsideWindowRegion()
     {
         using var temp = new TempDirectory();
-        var entries = Enumerable.Range(1, 6)
-            .Select(index => new LaunchEntry
-            {
-                Id = $"entry-{index}",
-                Name = $"Entry {index}",
-                Directory = $"D:\\entry-{index}",
-                Command = "pwsh",
-                Confirm = false,
-            })
-            .ToArray();
+        var entries = NumberedEntries(6);
         var (config, settings, _) = CreatePortableFixture(temp, entries);
         var viewModel = CreateViewModel(config, settings);
 
@@ -1194,16 +1185,7 @@ public sealed class MainWindowViewModelTests
     public void CardSizingUsesGoldenRatioWhenSpaceAllows()
     {
         using var temp = new TempDirectory();
-        var entries = Enumerable.Range(1, 6)
-            .Select(index => new LaunchEntry
-            {
-                Id = $"entry-{index}",
-                Name = $"Entry {index}",
-                Directory = $"D:\\entry-{index}",
-                Command = "pwsh",
-                Confirm = false,
-            })
-            .ToArray();
+        var entries = NumberedEntries(6);
         var (config, settings, _) = CreatePortableFixture(temp, entries);
         var viewModel = CreateViewModel(config, settings);
 
@@ -1219,16 +1201,7 @@ public sealed class MainWindowViewModelTests
     public void NameWallSizingUsesAdaptiveMultiColumnTiles()
     {
         using var temp = new TempDirectory();
-        var entries = Enumerable.Range(1, 19)
-            .Select(index => new LaunchEntry
-            {
-                Id = $"entry-{index}",
-                Name = $"Entry {index}",
-                Directory = $"D:\\entry-{index}",
-                Command = "pwsh",
-                Confirm = false,
-            })
-            .ToArray();
+        var entries = NumberedEntries(19);
         var (config, settings, _) = CreatePortableFixture(temp, entries);
         var viewModel = CreateViewModel(config, settings);
 
@@ -1251,16 +1224,7 @@ public sealed class MainWindowViewModelTests
     public void CardSizingPrefersScrollFallbackBeforeShrinkingBelowReadableMinimum()
     {
         using var temp = new TempDirectory();
-        var entries = Enumerable.Range(1, 19)
-            .Select(index => new LaunchEntry
-            {
-                Id = $"entry-{index}",
-                Name = $"Entry {index}",
-                Directory = $"D:\\entry-{index}",
-                Command = "pwsh",
-                Confirm = false,
-            })
-            .ToArray();
+        var entries = NumberedEntries(19);
         var (config, settings, _) = CreatePortableFixture(temp, entries);
         var viewModel = CreateViewModel(config, settings);
 
@@ -1277,6 +1241,18 @@ public sealed class MainWindowViewModelTests
         Assert.True(usedWidth <= 892.001, $"expected cards to fit minimum-window width, got {usedWidth}");
         Assert.True(usedHeight > 330.001, $"expected min-window height to overflow so the ScrollViewer can act as fallback, got {usedHeight}");
     }
+
+    private static LaunchEntry[] NumberedEntries(int count) =>
+        Enumerable.Range(1, count)
+            .Select(index => new LaunchEntry
+            {
+                Id = $"entry-{index}",
+                Name = $"Entry {index}",
+                Directory = $"D:\\entry-{index}",
+                Command = "pwsh",
+                Confirm = false,
+            })
+            .ToArray();
 
     private static (string Config, string Settings, string Presets) CreatePortableFixture(
         TempDirectory temp,
