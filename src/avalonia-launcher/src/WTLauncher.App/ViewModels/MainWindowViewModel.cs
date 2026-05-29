@@ -453,7 +453,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         item.Entry.UpdatedAtUtc = DateTimeOffset.UtcNow.ToString("O");
         item.RefreshDisplay();
         if (!string.Equals(oldId, item.Entry.Id, StringComparison.Ordinal))
-            RenameEntryReferences(oldId, item.Entry.Id);
+            LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, item.Entry.Id);
 
         if (!SaveEntryCollectionChanges(savePresets: true, snapshot))
             return;
@@ -473,7 +473,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         var entryName = item.Name;
         Entries.Remove(item);
-        RemoveEntryReferences(item.Entry.Id);
+        LauncherEntryReferences.RemoveEntryId(_presetFile, _settings.CustomEntryOrder, item.Entry.Id);
         if (!SaveEntryCollectionChanges(savePresets: true, snapshot))
             return;
 
@@ -495,36 +495,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         ApplyStatusText(validation);
         return null;
-    }
-
-    private void RenameEntryReferences(string oldEntryId, string newEntryId)
-    {
-        foreach (var entryIds in EntryReferenceLists())
-        {
-            for (var i = 0; i < entryIds.Count; i++)
-            {
-                if (string.Equals(entryIds[i], oldEntryId, StringComparison.Ordinal))
-                    entryIds[i] = newEntryId;
-            }
-        }
-    }
-
-    private void RemoveEntryReferences(string entryId)
-    {
-        foreach (var entryIds in EntryReferenceLists())
-        {
-            entryIds.RemoveAll(id => string.Equals(id, entryId, StringComparison.Ordinal));
-        }
-    }
-
-    private IEnumerable<List<string>> EntryReferenceLists()
-    {
-        foreach (var preset in _presetFile.Presets)
-        {
-            yield return preset.EntryIds;
-        }
-
-        yield return _settings.CustomEntryOrder;
     }
 
     private bool SaveEntryCollectionChanges(bool savePresets, LauncherEntryMutationSnapshot rollbackSnapshot)
