@@ -56,7 +56,7 @@ public sealed partial class MainWindow : Window
 
     private async void OnEntryDragPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (DataContext is not MainWindowViewModel { IsCustomSortMode: true })
+        if (DataContext is not MainWindowViewModel { IsCustomSortMode: true } viewModel)
             return;
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             return;
@@ -71,7 +71,6 @@ public sealed partial class MainWindow : Window
         data.Add(DataTransferItem.CreateText(item.Id));
         e.Handled = true;
         _activeDragEntryId = item.Id;
-        var viewModel = (MainWindowViewModel)DataContext;
         viewModel.BeginDragReorder(item.Id);
         _overlayLayer ??= OverlayLayer.GetOverlayLayer(this);
         if (_overlayLayer is not null && _dragGhost is null)
