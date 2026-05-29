@@ -56,13 +56,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private bool _requireConfirmationForLaunches;
 
-    public MainWindowViewModel(string configPath, string settingsPath, LauncherSettings settings, LauncherProcess launcherProcess)
+    public MainWindowViewModel(string configPath, string settingsPath, LauncherSettings settings, LauncherLaunchWorkflow launchWorkflow)
     {
         _configPath = configPath;
         _presetPath = LauncherPresetStore.ResolvePresetPath(configPath);
         _settingsPath = settingsPath;
         _settings = settings;
-        _launchWorkflow = new LauncherLaunchWorkflow(launcherProcess);
+        _launchWorkflow = launchWorkflow ?? throw new ArgumentNullException(nameof(launchWorkflow));
         _dragReorderWorkflow = new LauncherDragReorderWorkflow(
             _settings,
             _settingsPath,

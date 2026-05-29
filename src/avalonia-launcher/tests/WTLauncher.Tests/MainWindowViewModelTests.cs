@@ -67,7 +67,7 @@ public sealed class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
         var launcherSettings = new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["one", "two"] };
-        var viewModel = new MainWindowViewModel(config, settings, launcherSettings, new LauncherProcess())
+        var viewModel = new MainWindowViewModel(config, settings, launcherSettings, CreateLaunchWorkflow())
         {
             RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
                 new EntryDraft("three", "Three", "D:\\three", "pwsh", true)),
@@ -91,7 +91,7 @@ public sealed class MainWindowViewModelTests
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess())
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), CreateLaunchWorkflow())
         {
             RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
                 new EntryDraft("three", "Three", "D:\\three", "pwsh", true)),
@@ -127,7 +127,7 @@ public sealed class MainWindowViewModelTests
           ]
         }
         """);
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess())
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), CreateLaunchWorkflow())
         {
             RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
                 new EntryDraft("one-renamed", "One Renamed", "D:\\renamed", "opencode", false)),
@@ -323,6 +323,9 @@ public sealed class MainWindowViewModelTests
         Assert.Null(typeof(MainWindowViewModel).GetField("_launcherProcess", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
         Assert.NotNull(typeof(MainWindowViewModel).GetField("_launchWorkflow", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
         Assert.Null(typeof(MainWindowViewModel).GetMethod("BuildLaunchPlan", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
+        Assert.DoesNotContain(
+            typeof(MainWindowViewModel).GetConstructors().SelectMany(constructor => constructor.GetParameters()),
+            parameter => parameter.ParameterType == typeof(LauncherProcess));
     }
 
     [Fact]
@@ -432,7 +435,7 @@ public sealed class MainWindowViewModelTests
         }
         """);
 
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess())
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), CreateLaunchWorkflow())
         {
             RequestNewPresetAsync = _ => Task.FromResult<string?>("Project Pair"),
         };
@@ -455,7 +458,7 @@ public sealed class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
         IReadOnlyList<string>? dialogEntryIds = null;
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess())
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), CreateLaunchWorkflow())
         {
             RequestNewPresetAsync = entryIds =>
             {
@@ -531,7 +534,7 @@ public sealed class MainWindowViewModelTests
         }
         """);
 
-        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), new LauncherProcess())
+        var viewModel = new MainWindowViewModel(config, settings, new LauncherSettings(), CreateLaunchWorkflow())
         {
             RequestNewPresetAsync = _ => Task.FromResult<string?>("Project Pair"),
         };
@@ -644,7 +647,7 @@ public sealed class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["one", "two"] },
-            new LauncherProcess())
+            CreateLaunchWorkflow())
         {
             RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
                 requestCount++ == 0
@@ -1319,9 +1322,11 @@ public sealed class MainWindowViewModelTests
         string config,
         string settings,
         LauncherSettings? launcherSettings = null) =>
-        new(config, settings, launcherSettings ?? new LauncherSettings(), new LauncherProcess());
+        new(config, settings, launcherSettings ?? new LauncherSettings(), CreateLaunchWorkflow());
 
     private static List<LaunchEntry> LoadEntriesById(string config) =>
         LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
+
+    private static LauncherLaunchWorkflow CreateLaunchWorkflow() => new(_ => { });
 
 }

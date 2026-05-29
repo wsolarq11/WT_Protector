@@ -20,7 +20,7 @@ internal static class MainWindowEntryCardTestFactory
         var configPath = Path.Combine(rootPath, "config.json");
         var settingsPath = Path.Combine(rootPath, "settings.json");
         LauncherConfigStore.Save([CreateEntry("owner")], configPath);
-        return new MainWindowViewModel(configPath, settingsPath, new LauncherSettings(), new LauncherProcess());
+        return new MainWindowViewModel(configPath, settingsPath, new LauncherSettings(), CreateLaunchWorkflow());
     }
 
     public static LauncherEntryViewModel CreateEntryViewModel(MainWindowViewModel owner, string id)
@@ -40,7 +40,7 @@ internal static class MainWindowEntryCardTestFactory
             configPath,
             settingsPath,
             new LauncherSettings(),
-            new LauncherProcess());
+            CreateLaunchWorkflow());
 
         return new LauncherEntryViewModel(entry, owner);
     }
@@ -56,4 +56,6 @@ internal static class MainWindowEntryCardTestFactory
             Confirm = false,
         };
     }
+
+    private static LauncherLaunchWorkflow CreateLaunchWorkflow() => new(_ => { });
 }
