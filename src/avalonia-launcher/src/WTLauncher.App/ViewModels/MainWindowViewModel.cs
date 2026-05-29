@@ -335,7 +335,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             StatusText = "未选择启动组";
             return;
         }
-        if (SelectedPreset.IsLocked)
+        if (!LauncherPresetWorkflow.CanUpdatePreset(_presetFile, SelectedPreset.Id))
         {
             StatusText = $"系统启动组不能更新: {SelectedPreset.Name}";
             return;
@@ -723,7 +723,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool CanUpdateSelectedPreset()
     {
-        if (SelectedPreset is null || SelectedPreset.IsLocked || Entries.Count == 0)
+        if (SelectedPreset is null || Entries.Count == 0)
+            return false;
+
+        if (!LauncherPresetWorkflow.CanUpdatePreset(_presetFile, SelectedPreset.Id))
             return false;
 
         var selectedEntryIds = GetSelectedEntryIds();

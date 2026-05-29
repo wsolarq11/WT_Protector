@@ -61,6 +61,10 @@ public sealed class LauncherPresetWorkflowTests
             Preset("daily", "Daily", "one"),
             Preset("blank-manual", "Manual", locked: true));
 
+        Assert.True(LauncherPresetWorkflow.CanUpdatePreset(presetFile, "daily"));
+        Assert.False(LauncherPresetWorkflow.CanUpdatePreset(presetFile, "blank-manual"));
+        Assert.False(LauncherPresetWorkflow.CanUpdatePreset(presetFile, "missing"));
+
         var updated = LauncherPresetWorkflow.UpdatePreset(presetFile, "daily", "Daily Updated", ["one", "two"]);
         var locked = LauncherPresetWorkflow.UpdatePreset(presetFile, "blank-manual", "Changed", ["one"]);
         var missing = LauncherPresetWorkflow.UpdatePreset(presetFile, "missing", "Missing", ["one"]);

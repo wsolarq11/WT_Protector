@@ -26,7 +26,7 @@ public static class LauncherPresetWorkflow
     {
         ArgumentNullException.ThrowIfNull(presetFile);
         var preset = FindPreset(presetFile, presetId);
-        if (preset is null || preset.Locked)
+        if (preset is null || !CanUpdatePreset(preset))
             return null;
 
         preset.Name = name;
@@ -61,8 +61,18 @@ public static class LauncherPresetWorkflow
         return CanDeletePreset(presetFile, FindPreset(presetFile, presetId));
     }
 
+    public static bool CanUpdatePreset(LauncherPresetFile presetFile, string presetId)
+    {
+        ArgumentNullException.ThrowIfNull(presetFile);
+        var preset = FindPreset(presetFile, presetId);
+        return preset is not null && CanUpdatePreset(preset);
+    }
+
     private static LauncherPreset? FindPreset(LauncherPresetFile presetFile, string presetId) =>
         presetFile.Presets.FirstOrDefault(preset => preset.Id == presetId);
+
+    private static bool CanUpdatePreset(LauncherPreset target) =>
+        !target.Locked;
 
     private static bool CanDeletePreset(LauncherPresetFile presetFile, LauncherPreset? target)
     {
