@@ -272,19 +272,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var selectedPreset = SelectedPreset;
         if (selectedPreset is null)
         {
-            ApplyStatusText("未选择启动组");
+            ApplyStatusText(LauncherPresetStatus.NoPresetSelected);
             return;
         }
 
         var selection = BuildPresetSelectionPreview(GetSelectedEntryIds());
         if (selection.MissingConfigIds.Count > 0)
         {
-            ApplyStatusText($"启动组引用了不存在的启动项: {string.Join(", ", selection.MissingConfigIds)}");
+            ApplyStatusText(LauncherPresetStatus.MissingEntryReferences(selection.MissingConfigIds));
             return;
         }
 
         if (ReplaceSelection(selection.PresetIds))
-            ApplyStatusText($"已应用启动组: {selectedPreset.Name}（{selection.PresetIds.Count} 项，已保存）");
+            ApplyStatusText(LauncherPresetStatus.Applied(selectedPreset.Name, selection.PresetIds.Count));
     }
 
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
@@ -292,7 +292,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         if (SelectedCount == 0)
         {
-            StatusText = "未选择任何启动项";
+            StatusText = LauncherPresetStatus.NoEntriesSelected;
             return;
         }
 
@@ -300,14 +300,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var presetName = await RequestNewPresetAsync(entryIds).ConfigureAwait(true);
         if (presetName is null)
         {
-            StatusText = "已取消: 保存启动组";
+            StatusText = LauncherPresetStatus.SaveCanceled;
             return;
         }
 
         var name = presetName.Trim();
         if (string.IsNullOrWhiteSpace(name))
         {
-            StatusText = "启动组名称不能为空";
+            StatusText = LauncherPresetStatus.NameRequired;
             return;
         }
 
@@ -318,7 +318,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
 
         LoadPresetFile(preset.Id);
-        ApplyStatusText($"已保存启动组: {preset.Name}（{preset.EntryIds.Count} 项）");
+        ApplyStatusText(LauncherPresetStatus.Saved(preset.Name, preset.EntryIds.Count));
     }
 
     [RelayCommand(CanExecute = nameof(CanUpdateSelectedPreset))]
@@ -326,19 +326,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         if (SelectedPreset is null)
         {
-            StatusText = "未选择启动组";
+            StatusText = LauncherPresetStatus.NoPresetSelected;
             return;
         }
         if (!LauncherPresetWorkflow.CanUpdatePreset(_presetFile, SelectedPreset.Id))
         {
-            StatusText = $"系统启动组不能更新: {SelectedPreset.Name}";
+            StatusText = LauncherPresetStatus.UpdateBlocked(SelectedPreset.Name);
             return;
         }
 
         var entryIds = GetSelectedEntryIds();
         if (entryIds.Count == 0)
         {
-            StatusText = "请先勾选至少一个启动项";
+            StatusText = LauncherPresetStatus.EntrySelectionRequired;
             return;
         }
 
@@ -348,14 +348,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (preset is null)
         {
             ApplyPresetFileState(snapshot, preferredPresetId);
-            ApplyStatusText("当前启动组已不存在，请重新加载");
+            ApplyStatusText(LauncherPresetStatus.CurrentPresetMissing);
             return;
         }
         if (!SavePresetMutationOrRestore(snapshot, preferredPresetId))
             return;
 
         LoadPresetFile(preset.Id);
-        ApplyStatusText($"已更新启动组: {preset.Name}（{preset.EntryIds.Count} 项）");
+        ApplyStatusText(LauncherPresetStatus.Updated(preset.Name, preset.EntryIds.Count));
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteSelectedPreset))]
@@ -363,19 +363,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         if (SelectedPreset is null)
         {
-            StatusText = "未选择启动组";
+            StatusText = LauncherPresetStatus.NoPresetSelected;
             return;
         }
         if (!LauncherPresetWorkflow.CanDeletePreset(_presetFile, SelectedPreset.Id))
         {
-            StatusText = $"启动组不能删除: {SelectedPreset.Name}";
+            StatusText = LauncherPresetStatus.DeleteBlocked(SelectedPreset.Name);
             return;
         }
 
         var accepted = await ConfirmDeletePresetAsync(SelectedPreset).ConfigureAwait(true);
         if (!accepted)
         {
-            StatusText = $"已取消: 删除启动组 {SelectedPreset.Name}";
+            StatusText = LauncherPresetStatus.DeleteCanceled(SelectedPreset.Name);
             return;
         }
 
@@ -385,14 +385,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (preset is null)
         {
             ApplyPresetFileState(snapshot, preferredPresetId);
-            ApplyStatusText("当前启动组已不存在，请重新加载");
+            ApplyStatusText(LauncherPresetStatus.CurrentPresetMissing);
             return;
         }
         if (!SavePresetMutationOrRestore(snapshot, preferredPresetId))
             return;
 
         LoadPresetFile(fallbackPresetId);
-        ApplyStatusText($"已删除启动组: {preset.Name}");
+        ApplyStatusText(LauncherPresetStatus.Deleted(preset.Name));
     }
 
     [RelayCommand]
