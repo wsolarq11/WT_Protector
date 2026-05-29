@@ -8,7 +8,7 @@ public static class LauncherEntryDrafts
     {
         return new LaunchEntry
         {
-            Id = NormalizeId(draft.Id),
+            Id = (draft.Id ?? string.Empty).Trim(),
             Name = (draft.Name ?? string.Empty).Trim(),
             Directory = (draft.Directory ?? string.Empty).Trim(),
             Command = (draft.Command ?? string.Empty).Trim(),
@@ -37,10 +37,5 @@ public static class LauncherEntryDrafts
             return $"按钮 ID 已存在: {entry.Id}";
 
         return null;
-    }
-
-    private static string NormalizeId(string value)
-    {
-        return (value ?? string.Empty).Trim();
     }
 }
