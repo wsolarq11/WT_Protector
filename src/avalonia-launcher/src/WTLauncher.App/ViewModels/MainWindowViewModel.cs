@@ -99,17 +99,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
         new(LauncherEntryViewMode.Names, "名称墙"),
     ];
 
-    private LauncherSortModeViewModel ResolveSortMode(string? sortModeId)
-    {
-        return SortModes.FirstOrDefault(mode => mode.Id == sortModeId)
-            ?? SortModes[0];
-    }
+    private LauncherSortModeViewModel ResolveSortMode(string? sortModeId) =>
+        SortModes.FirstOrDefault(mode => mode.Id == sortModeId) ?? SortModes[0];
 
-    private LauncherDisplayModeViewModel ResolveDisplayMode(string? entryViewMode)
-    {
-        return DisplayModes.FirstOrDefault(mode => mode.Id == entryViewMode)
-            ?? DisplayModes[0];
-    }
+    private LauncherDisplayModeViewModel ResolveDisplayMode(string? entryViewMode) =>
+        DisplayModes.FirstOrDefault(mode => mode.Id == entryViewMode) ?? DisplayModes[0];
 
     private LauncherEntryViewMode CurrentEntryViewMode => SelectedDisplayMode?.Mode ?? LauncherEntryViewMode.Cards;
 
