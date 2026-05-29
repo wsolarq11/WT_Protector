@@ -76,6 +76,19 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         SetProperty(ref _isSelected, selected, nameof(IsSelected));
     }
 
+    internal void ReplaceEntryFromOwner(LaunchEntry updated, string updatedAtUtc)
+    {
+        ArgumentNullException.ThrowIfNull(updated);
+        Entry.Id = updated.Id;
+        Entry.Name = updated.Name;
+        Entry.Directory = updated.Directory;
+        Entry.Command = updated.Command;
+        Entry.Confirm = updated.Confirm;
+        Entry.UpdatedAtUtc = updatedAtUtc;
+        SetSelectionFromOwner(updated.Selected);
+        RefreshDisplay();
+    }
+
     internal void ShowDragPreviewSource() => SetDragCueState(DragCueState.Source);
 
     internal void ShowDragPreviewTarget(bool insertAfter) =>

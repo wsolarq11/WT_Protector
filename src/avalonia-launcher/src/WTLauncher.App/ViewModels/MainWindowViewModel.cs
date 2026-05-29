@@ -439,21 +439,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var oldId = item.Entry.Id;
+        var oldId = item.Id;
         var updated = CreateEntryFromDraftOrReportValidation(draft, oldId, item.Entry);
         if (updated is null)
             return;
 
-        item.Entry.Id = updated.Id;
-        item.Entry.Name = updated.Name;
-        item.Entry.Directory = updated.Directory;
-        item.Entry.Command = updated.Command;
-        item.Entry.Confirm = updated.Confirm;
-        item.SetSelectionFromOwner(updated.Selected);
-        item.Entry.UpdatedAtUtc = DateTimeOffset.UtcNow.ToString("O");
-        item.RefreshDisplay();
-        if (!string.Equals(oldId, item.Entry.Id, StringComparison.Ordinal))
-            LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, item.Entry.Id);
+        item.ReplaceEntryFromOwner(updated, DateTimeOffset.UtcNow.ToString("O"));
+        if (!string.Equals(oldId, item.Id, StringComparison.Ordinal))
+            LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, item.Id);
 
         if (!SaveEntryCollectionChanges(savePresets: true, snapshot))
             return;
