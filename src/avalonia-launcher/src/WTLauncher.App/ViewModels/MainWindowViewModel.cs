@@ -378,7 +378,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             StatusText = "未选择启动组";
             return;
         }
-        if (SelectedPreset.IsLocked || !LauncherPresetWorkflow.CanDeletePreset(_presetFile, SelectedPreset.Id))
+        if (!LauncherPresetWorkflow.CanDeletePreset(_presetFile, SelectedPreset.Id))
         {
             StatusText = $"启动组不能删除: {SelectedPreset.Name}";
             return;
@@ -771,7 +771,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool CanDeleteSelectedPreset() =>
         SelectedPreset is not null
-        && !SelectedPreset.IsLocked
         && LauncherPresetWorkflow.CanDeletePreset(_presetFile, SelectedPreset.Id);
 
     private void ApplyFilter()
