@@ -32,14 +32,15 @@ public static class LauncherConfigStore
         if (!string.IsNullOrWhiteSpace(explicitPath))
             return Path.GetFullPath(explicitPath);
 
-        foreach (var candidateRoot in new[] { currentDirectory, appBaseDirectory })
+        var candidateRoots = new[] { currentDirectory, appBaseDirectory };
+        foreach (var candidateRoot in candidateRoots)
         {
             var found = FindUpward(candidateRoot);
             if (found is not null)
                 return found;
         }
 
-        foreach (var candidateRoot in new[] { currentDirectory, appBaseDirectory })
+        foreach (var candidateRoot in candidateRoots)
         {
             var found = FindLocalConfig(candidateRoot);
             if (found is not null)
