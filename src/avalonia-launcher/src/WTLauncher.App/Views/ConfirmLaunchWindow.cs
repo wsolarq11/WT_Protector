@@ -57,13 +57,7 @@ public sealed class ConfirmLaunchWindow : Window
                 title,
                 warning.WithGridRow(1),
                 command.WithGridRow(2),
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    Spacing = 10,
-                    Children = { cancel, launch },
-                }.WithGridRow(3),
+                LauncherDialogButtons.Footer(0, cancel, launch).WithGridRow(3),
             },
         };
     }

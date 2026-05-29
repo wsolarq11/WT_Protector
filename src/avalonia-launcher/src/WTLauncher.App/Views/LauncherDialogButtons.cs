@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Layout;
 using Avalonia.Media;
 
 namespace WTLauncher.App.Views;
@@ -39,6 +40,24 @@ internal static class LauncherDialogButtons
             background: Brush.Parse("#DC2626"),
             foreground: Brushes.White,
             fontWeight: FontWeight.SemiBold);
+    }
+
+    public static StackPanel Footer(double topMargin, params Control[] buttons)
+    {
+        var footer = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Spacing = 10,
+            Margin = new Thickness(0, topMargin, 0, 0),
+        };
+
+        foreach (var button in buttons)
+        {
+            footer.Children.Add(button);
+        }
+
+        return footer;
     }
 
     private static Button Create(

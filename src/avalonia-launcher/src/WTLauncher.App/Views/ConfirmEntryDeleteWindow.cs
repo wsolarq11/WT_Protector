@@ -45,14 +45,7 @@ public sealed class ConfirmEntryDeleteWindow : Window
                         Foreground = Brush.Parse("#475569"),
                         TextWrapping = TextWrapping.Wrap,
                     },
-                    new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        HorizontalAlignment = HorizontalAlignment.Right,
-                        Spacing = 10,
-                        Margin = new Thickness(0, 24, 0, 0),
-                        Children = { cancel, delete },
-                    },
+                    LauncherDialogButtons.Footer(24, cancel, delete),
                 },
             },
         };

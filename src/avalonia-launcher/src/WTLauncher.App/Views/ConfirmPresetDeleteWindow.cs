@@ -51,14 +51,7 @@ public sealed class ConfirmPresetDeleteWindow : Window
                         Text = $"包含 {preset.EntryIds.Count} 个启动项。",
                         Foreground = Brush.Parse("#64748B"),
                     }.WithGridRow(2),
-                    new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        HorizontalAlignment = HorizontalAlignment.Right,
-                        Spacing = 10,
-                        Margin = new Thickness(0, 14, 0, 0),
-                        Children = { cancel, delete },
-                    }.WithGridRow(3),
+                    LauncherDialogButtons.Footer(14, cancel, delete).WithGridRow(3),
                 },
             },
         };

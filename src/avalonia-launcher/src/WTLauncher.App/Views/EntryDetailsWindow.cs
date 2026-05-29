@@ -49,14 +49,7 @@ public sealed class EntryDetailsWindow : Window
         var save = LauncherDialogButtons.Primary(isEdit ? "保存按钮" : "新增按钮");
         save.Click += (_, _) => Submit();
 
-        var footer = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Spacing = 10,
-            Margin = new Thickness(0, 16, 0, 0),
-            Children = { cancel, save },
-        };
+        var footer = LauncherDialogButtons.Footer(16, cancel, save);
 
         var content = new StackPanel
         {

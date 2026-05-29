@@ -67,14 +67,7 @@ public sealed class ConfirmBatchLaunchWindow : Window
                             },
                         },
                     }.WithGridRow(2),
-                    new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        HorizontalAlignment = HorizontalAlignment.Right,
-                        Spacing = 10,
-                        Margin = new Thickness(0, 18, 0, 0),
-                        Children = { cancel, launch },
-                    }.WithGridRow(3),
+                    LauncherDialogButtons.Footer(18, cancel, launch).WithGridRow(3),
                 },
             },
         };

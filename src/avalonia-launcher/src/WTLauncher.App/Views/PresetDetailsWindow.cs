@@ -59,14 +59,7 @@ public sealed class PresetDetailsWindow : Window
             Close(name);
         };
 
-        var footer = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Spacing = 10,
-            Margin = new Thickness(0, 14, 0, 0),
-            Children = { cancel, save },
-        };
+        var footer = LauncherDialogButtons.Footer(14, cancel, save);
 
         Content = new Border
         {
