@@ -74,7 +74,7 @@ public sealed class MainWindowXamlContractTests
         Assert.Contains("if (viewModel.PreviewMoveEntry", codeBehind);
         AssertInOrder(
             codeBehind,
-            "var root = viewModel.IsDetailedListMode",
+            "var root = MainWindowEntriesRootSelection.Select(",
             "MainWindowEntryCardBoundsCapture.Capture(root, this)",
             "if (viewModel.PreviewMoveEntry",
             "_reorderAnimationScheduler.Schedule(");

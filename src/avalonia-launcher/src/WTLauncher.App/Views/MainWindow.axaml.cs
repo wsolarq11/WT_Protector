@@ -172,11 +172,12 @@ public sealed partial class MainWindow : Window
             e.GetPosition(target.Card),
             target.Card.Bounds.Size,
             viewModel.IsDetailedListMode);
-        var root = viewModel.IsDetailedListMode
-            ? DetailsEntriesItemsControl
-            : viewModel.IsNamesViewMode
-                ? NamesEntriesItemsControl
-                : CardsEntriesItemsControl;
+        var root = MainWindowEntriesRootSelection.Select(
+            viewModel.IsDetailedListMode,
+            viewModel.IsNamesViewMode,
+            DetailsEntriesItemsControl,
+            NamesEntriesItemsControl,
+            CardsEntriesItemsControl);
         var before = MainWindowEntryCardBoundsCapture.Capture(root, this);
         if (viewModel.PreviewMoveEntry(draggedId, target.Entry.Id, insertAfter))
         {
