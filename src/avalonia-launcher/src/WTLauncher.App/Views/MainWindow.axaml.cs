@@ -168,10 +168,10 @@ public sealed partial class MainWindow : Window
         string draggedId,
         (LauncherEntryViewModel Entry, Control Card) target)
     {
-        var positionInCard = e.GetPosition(target.Card);
-        var insertAfter = viewModel.IsDetailedListMode
-            ? positionInCard.Y >= (target.Card.Bounds.Height * 0.5)
-            : positionInCard.X >= (target.Card.Bounds.Width * 0.5);
+        var insertAfter = MainWindowDragInsertDecision.ShouldInsertAfter(
+            e.GetPosition(target.Card),
+            target.Card.Bounds.Size,
+            viewModel.IsDetailedListMode);
         var root = viewModel.IsDetailedListMode
             ? DetailsEntriesItemsControl
             : viewModel.IsNamesViewMode
