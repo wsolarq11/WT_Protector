@@ -41,17 +41,17 @@ public static class LauncherPresetWorkflow
     {
         ArgumentNullException.ThrowIfNull(presetFile);
         var preset = FindPreset(presetFile, presetId);
+        fallbackPresetId = presetFile.DefaultPresetId;
         if (preset is null || !CanDeletePreset(presetFile, preset))
-        {
-            fallbackPresetId = presetFile.DefaultPresetId;
             return null;
-        }
 
         presetFile.Presets.Remove(preset);
         if (presetFile.DefaultPresetId == preset.Id)
-            presetFile.DefaultPresetId = presetFile.Presets.FirstOrDefault()?.Id ?? string.Empty;
+        {
+            fallbackPresetId = presetFile.Presets.FirstOrDefault()?.Id ?? string.Empty;
+            presetFile.DefaultPresetId = fallbackPresetId;
+        }
 
-        fallbackPresetId = presetFile.DefaultPresetId;
         return preset;
     }
 
