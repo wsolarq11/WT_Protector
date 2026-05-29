@@ -41,16 +41,14 @@ public static class LauncherEntryVisibility
     private static IOrderedEnumerable<TEntry> SortByUpdated<TEntry>(
         IEnumerable<TEntry> entries,
         Func<TEntry, LaunchEntry> selectEntry) =>
-        entries
-            .OrderByDescending(entry => ParseUpdatedAt(selectEntry(entry).UpdatedAtUtc))
-            .ThenBy(entry => selectEntry(entry).Name, StringComparer.CurrentCultureIgnoreCase)
-            .ThenBy(entry => selectEntry(entry).Id, StringComparer.Ordinal);
+        ThenByNameThenId(
+            entries.OrderByDescending(entry => ParseUpdatedAt(selectEntry(entry).UpdatedAtUtc)),
+            selectEntry);
 
     private static IOrderedEnumerable<TEntry> SortAlphabetically<TEntry>(
         IEnumerable<TEntry> entries,
         Func<TEntry, LaunchEntry> selectEntry) =>
-        entries
-            .OrderBy(entry => selectEntry(entry).Name, StringComparer.CurrentCultureIgnoreCase)
+        entries.OrderBy(entry => selectEntry(entry).Name, StringComparer.CurrentCultureIgnoreCase)
             .ThenBy(entry => selectEntry(entry).Id, StringComparer.Ordinal);
 
     private static IOrderedEnumerable<TEntry> SortByCustomOrder<TEntry>(
@@ -61,11 +59,17 @@ public static class LauncherEntryVisibility
     {
         LauncherEntryOrder.SyncWithEntries(customEntryOrder, allEntries.Select(entry => selectEntry(entry).Id));
         var order = LauncherEntryOrder.BuildIndex(customEntryOrder);
-        return entries
-            .OrderBy(entry => order.TryGetValue(selectEntry(entry).Id, out var index) ? index : int.MaxValue)
+        return ThenByNameThenId(
+            entries.OrderBy(entry => order.TryGetValue(selectEntry(entry).Id, out var index) ? index : int.MaxValue),
+            selectEntry);
+    }
+
+    private static IOrderedEnumerable<TEntry> ThenByNameThenId<TEntry>(
+        IOrderedEnumerable<TEntry> entries,
+        Func<TEntry, LaunchEntry> selectEntry) =>
+        entries
             .ThenBy(entry => selectEntry(entry).Name, StringComparer.CurrentCultureIgnoreCase)
             .ThenBy(entry => selectEntry(entry).Id, StringComparer.Ordinal);
-    }
 
     private static DateTimeOffset ParseUpdatedAt(string? value) =>
         DateTimeOffset.TryParse(value, out var parsed)
