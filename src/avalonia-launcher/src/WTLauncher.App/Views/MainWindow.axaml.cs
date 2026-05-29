@@ -138,18 +138,13 @@ public sealed partial class MainWindow : Window
         string draggedId,
         (LauncherEntryViewModel Entry, Control Card) target)
     {
-        var insertAfter = ShouldInsertAfter(e, viewModel, target.Card);
+        var positionInCard = e.GetPosition(target.Card);
+        var insertAfter = viewModel.IsDetailedListMode
+            ? positionInCard.Y >= (target.Card.Bounds.Height * 0.5)
+            : positionInCard.X >= (target.Card.Bounds.Width * 0.5);
         var before = CaptureEntryCardBounds();
         if (viewModel.PreviewMoveEntry(draggedId, target.Entry.Id, insertAfter))
             ScheduleReorderAnimation(before);
-    }
-
-    private static bool ShouldInsertAfter(DragEventArgs e, MainWindowViewModel viewModel, Control card)
-    {
-        var positionInCard = e.GetPosition(card);
-        return viewModel.IsDetailedListMode
-            ? positionInCard.Y >= (card.Bounds.Height * 0.5)
-            : positionInCard.X >= (card.Bounds.Width * 0.5);
     }
 
     private (LauncherEntryViewModel Entry, Control Card)? ResolveEntryCardFromDragEvent(DragEventArgs e)
