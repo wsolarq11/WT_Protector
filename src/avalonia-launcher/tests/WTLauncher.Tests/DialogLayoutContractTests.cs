@@ -77,6 +77,12 @@ public sealed class DialogLayoutContractTests
     {
         var start = source.IndexOf($"static Button {methodName}(", StringComparison.Ordinal);
         Assert.True(start >= 0, $"Expected {methodName} method declaration.");
+
+        var expressionEnd = source.IndexOf(";\n", start, StringComparison.Ordinal);
+        var blockStart = source.IndexOf('{', start);
+        if (expressionEnd > start && (blockStart < 0 || expressionEnd < blockStart))
+            return source[start..(expressionEnd + 1)];
+
         var end = source.IndexOf("\n    }\n", start, StringComparison.Ordinal);
         Assert.True(end > start, $"Expected {methodName} method to end.");
         return source[start..(end + 2)];
