@@ -2,7 +2,7 @@ namespace WTLauncher.Tests;
 
 internal static class TestRepositoryPaths
 {
-    public static string Root { get; } = FindRepositoryRoot();
+    private static string Root { get; } = FindRepositoryRoot();
 
     public static string Config(string fileName) => Path.Combine(Root, "config", fileName);
 
