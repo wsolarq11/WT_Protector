@@ -21,9 +21,14 @@ public sealed partial class MainWindow : Window
     private readonly MainWindowReorderAnimationScheduler _reorderAnimationScheduler = new();
     private string? _activeDragEntryId;
 
-    public MainWindow(MainWindowViewModel viewModel, string settingsPath, LauncherSettings settings)
+    public MainWindow()
     {
         InitializeComponent();
+    }
+
+    public MainWindow(MainWindowViewModel viewModel, string settingsPath, LauncherSettings settings)
+        : this()
+    {
         DataContext = viewModel;
         _settingsPath = settingsPath;
         _settings = settings;
