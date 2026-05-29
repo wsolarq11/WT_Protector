@@ -93,19 +93,7 @@ public sealed class LauncherConfigStoreTests
         var presetPath = Path.Combine(temp.Path, "config", "presets.json");
 
         LauncherPresetStore.Save(
-            new LauncherPresetFile
-            {
-                DefaultPresetId = "daily",
-                Presets =
-                [
-                    new LauncherPreset
-                    {
-                        Id = "daily",
-                        Name = "日常启动",
-                        EntryIds = ["one", "two"],
-                    },
-                ],
-            },
+            PresetFile("日常启动", "one", "two"),
             presetPath);
 
         var loaded = LauncherPresetStore.Load(presetPath);
@@ -131,19 +119,7 @@ public sealed class LauncherConfigStoreTests
         File.WriteAllText(presetPath, """{"schemaVersion":1,"defaultPresetId":"","presets":[]}""");
 
         LauncherPresetStore.Save(
-            new LauncherPresetFile
-            {
-                DefaultPresetId = "daily",
-                Presets =
-                [
-                    new LauncherPreset
-                    {
-                        Id = "daily",
-                        Name = "Daily",
-                        EntryIds = ["one"],
-                    },
-                ],
-            },
+            PresetFile("Daily", "one"),
             presetPath,
             backup: false);
 
@@ -172,15 +148,7 @@ public sealed class LauncherConfigStoreTests
 
         LauncherConfigStore.Save(
             [
-                new LaunchEntry
-                {
-                    Id = "demo",
-                    Name = "演示",
-                    Directory = "D:\\demo",
-                    Command = "codex",
-                    Confirm = true,
-                    Selected = true,
-                },
+                Entry(confirm: true, selected: true),
             ],
             config);
 
@@ -204,13 +172,7 @@ public sealed class LauncherConfigStoreTests
 
         LauncherConfigStore.Save(
             [
-                new LaunchEntry
-                {
-                    Id = "demo",
-                    Name = "演示",
-                    Directory = "D:\\demo",
-                    Command = "codex",
-                },
+                Entry(),
             ],
             config,
             backup: false);
@@ -296,5 +258,31 @@ public sealed class LauncherConfigStoreTests
         Assert.Equal(760d, settings.Window.Height);
         Assert.Empty(Directory.EnumerateFiles(configDir, "settings.json.tmp-*"));
     }
+
+    private static LauncherPresetFile PresetFile(string name, params string[] entryIds) =>
+        new()
+        {
+            DefaultPresetId = "daily",
+            Presets =
+            [
+                new LauncherPreset
+                {
+                    Id = "daily",
+                    Name = name,
+                    EntryIds = [.. entryIds],
+                },
+            ],
+        };
+
+    private static LaunchEntry Entry(bool confirm = false, bool selected = false) =>
+        new()
+        {
+            Id = "demo",
+            Name = "演示",
+            Directory = "D:\\demo",
+            Command = "codex",
+            Confirm = confirm,
+            Selected = selected,
+        };
 
 }
