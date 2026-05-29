@@ -767,14 +767,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void ApplyFilter()
     {
-        var source = Entries.ToList();
+        IEnumerable<LauncherEntryViewModel> source = Entries;
         var filterText = (FilterText ?? string.Empty).Trim();
-        var filtered = filterText.Length == 0
+        IEnumerable<LauncherEntryViewModel> filtered = filterText.Length == 0
             ? source
             : source.Where(entry =>
                 entry.Entry.Name.Contains(filterText, StringComparison.OrdinalIgnoreCase)
                 || entry.Entry.Directory.Contains(filterText, StringComparison.OrdinalIgnoreCase)
                 || entry.Entry.Command.Contains(filterText, StringComparison.OrdinalIgnoreCase));
+        var allEntryIds = source.Select(entry => entry.Entry.Id);
         var sorted = SelectedSortMode?.Id switch
         {
             "updated" => filtered
@@ -784,7 +785,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             "alphabetical" => filtered
                 .OrderBy(entry => entry.Entry.Name, StringComparer.CurrentCultureIgnoreCase)
                 .ThenBy(entry => entry.Entry.Id, StringComparer.Ordinal),
-            _ => SortByCustomOrder(filtered, source.Select(entry => entry.Entry.Id)),
+            _ => SortByCustomOrder(filtered, allEntryIds),
         };
 
         VisibleEntries.Clear();
