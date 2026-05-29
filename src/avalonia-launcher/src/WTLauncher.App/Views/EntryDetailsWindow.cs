@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Layout;
 using Avalonia.Media;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
@@ -35,6 +34,7 @@ public sealed class EntryDetailsWindow : Window
         {
             Content = "保存为已勾选",
             IsChecked = entry?.Selected ?? false,
+            Margin = new Thickness(0, 8, 0, 0),
         };
         _errorText = new TextBlock
         {
@@ -77,13 +77,7 @@ public sealed class EntryDetailsWindow : Window
                     Foreground = Brush.Parse("#64748B"),
                     TextWrapping = TextWrapping.Wrap,
                 },
-                new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 18,
-                    Margin = new Thickness(0, 8, 0, 0),
-                    Children = { _selectedBox },
-                },
+                _selectedBox,
                 _errorText,
                 footer,
             },
