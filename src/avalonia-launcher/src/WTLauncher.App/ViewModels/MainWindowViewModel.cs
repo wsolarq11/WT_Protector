@@ -643,8 +643,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     internal void UpdateSelection(LauncherEntryViewModel item, bool selected)
     {
-        var previousSelected = item.Entry.Selected;
-        item.Entry.Selected = selected;
+        var previousSelected = item.ReplaceEntrySelectionFromOwner(selected);
         SaveSelectionChangeOrRestore([(Entry: item, Selected: previousSelected)]);
     }
 

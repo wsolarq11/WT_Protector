@@ -76,6 +76,13 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         SetProperty(ref _isSelected, selected, nameof(IsSelected));
     }
 
+    internal bool ReplaceEntrySelectionFromOwner(bool selected)
+    {
+        var previousSelected = Entry.Selected;
+        Entry.Selected = selected;
+        return previousSelected;
+    }
+
     internal void ReplaceEntryFromOwner(LaunchEntry updated, string updatedAtUtc)
     {
         ArgumentNullException.ThrowIfNull(updated);
