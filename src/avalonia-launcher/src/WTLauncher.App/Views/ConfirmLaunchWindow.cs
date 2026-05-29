@@ -17,19 +17,8 @@ public sealed class ConfirmLaunchWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = Brushes.White;
 
-        var title = new TextBlock
-        {
-            Text = $"启动：{entry.Name}",
-            FontSize = 22,
-            FontWeight = FontWeight.SemiBold,
-            Foreground = Brush.Parse("#0F172A"),
-        };
-        var warning = new TextBlock
-        {
-            Text = "当前已开启启动确认，请确认后继续。",
-            Foreground = Brush.Parse("#475569"),
-            TextWrapping = TextWrapping.Wrap,
-        };
+        var title = LauncherDialogText.Title($"启动：{entry.Name}");
+        var warning = LauncherDialogText.Body("当前已开启启动确认，请确认后继续。");
         var command = new TextBox
         {
             Text = plan.CommandLine,

@@ -31,19 +31,8 @@ public sealed class ConfirmEntryDeleteWindow : Window
                 Spacing = 12,
                 Children =
                 {
-                    new TextBlock
-                    {
-                        Text = "确认删除启动按钮？",
-                        FontSize = 22,
-                        FontWeight = FontWeight.SemiBold,
-                        Foreground = Brush.Parse("#0F172A"),
-                    },
-                    new TextBlock
-                    {
-                        Text = $"“{entry.Name}” 会从 config\\config.json 删除，并从所有启动组里移除引用。",
-                        Foreground = Brush.Parse("#475569"),
-                        TextWrapping = TextWrapping.Wrap,
-                    },
+                    LauncherDialogText.Title("确认删除启动按钮？"),
+                    LauncherDialogText.Body($"“{entry.Name}” 会从 config\\config.json 删除，并从所有启动组里移除引用。"),
                     LauncherDialogButtons.Footer(24, cancel, delete),
                 },
             },

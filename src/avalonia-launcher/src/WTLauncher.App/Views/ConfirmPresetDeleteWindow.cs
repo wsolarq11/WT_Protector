@@ -32,24 +32,9 @@ public sealed class ConfirmPresetDeleteWindow : Window
                 RowSpacing = 12,
                 Children =
                 {
-                    new TextBlock
-                    {
-                        Text = "删除这个启动组？",
-                        FontSize = 22,
-                        FontWeight = FontWeight.SemiBold,
-                        Foreground = Brush.Parse("#0F172A"),
-                    },
-                    new TextBlock
-                    {
-                        Text = $"\"{preset.Name}\" 只会删除命名组，不会删除任何启动项。删除后可重新保存。",
-                        Foreground = Brush.Parse("#475569"),
-                        TextWrapping = TextWrapping.Wrap,
-                    }.WithGridRow(1),
-                    new TextBlock
-                    {
-                        Text = $"包含 {preset.EntryIds.Count} 个启动项。",
-                        Foreground = Brush.Parse("#64748B"),
-                    }.WithGridRow(2),
+                    LauncherDialogText.Title("删除这个启动组？"),
+                    LauncherDialogText.Body($"\"{preset.Name}\" 只会删除命名组，不会删除任何启动项。删除后可重新保存。").WithGridRow(1),
+                    LauncherDialogText.Subtle($"包含 {preset.EntryIds.Count} 个启动项。").WithGridRow(2),
                     LauncherDialogButtons.Footer(14, cancel, delete).WithGridRow(3),
                 },
             },

@@ -56,27 +56,16 @@ public sealed class EntryDetailsWindow : Window
             Spacing = 10,
             Children =
             {
-                new TextBlock
-                {
-                    Text = isEdit ? "编辑启动按钮" : "新增启动按钮",
-                    FontSize = 22,
-                    FontWeight = FontWeight.SemiBold,
-                    Foreground = Brush.Parse("#0F172A"),
-                },
-                Label("ID（稳定唯一，不要重复）"),
+                LauncherDialogText.Title(isEdit ? "编辑启动按钮" : "新增启动按钮"),
+                LauncherDialogText.Label("ID（稳定唯一，不要重复）"),
                 _idBox,
-                Label("名称"),
+                LauncherDialogText.Label("名称"),
                 _nameBox,
-                Label("目录"),
+                LauncherDialogText.Label("目录"),
                 _directoryBox,
-                Label("命令"),
+                LauncherDialogText.Label("命令"),
                 _commandBox,
-                new TextBlock
-                {
-                    Text = "启动确认由主窗口顶部开关统一控制；开启时所有启动项统一确认，关闭时所有启动项直接启动。",
-                    Foreground = Brush.Parse("#64748B"),
-                    TextWrapping = TextWrapping.Wrap,
-                },
+                LauncherDialogText.Subtle("启动确认由主窗口顶部开关统一控制；开启时所有启动项统一确认，关闭时所有启动项直接启动。"),
                 _selectedBox,
                 _errorText,
                 footer,
@@ -103,16 +92,6 @@ public sealed class EntryDetailsWindow : Window
             Text = text,
             FontSize = 14,
             Padding = new Thickness(10, 8),
-        };
-    }
-
-    private static TextBlock Label(string text)
-    {
-        return new TextBlock
-        {
-            Text = text,
-            FontWeight = FontWeight.SemiBold,
-            Foreground = Brush.Parse("#334155"),
         };
     }
 

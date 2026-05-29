@@ -33,12 +33,7 @@ public sealed class PresetDetailsWindow : Window
             TextWrapping = TextWrapping.Wrap,
         };
 
-        var summary = new TextBlock
-        {
-            Text = $"将当前 {selectedEntryIds.Count} 个勾选项保存为可复用启动组。",
-            Foreground = Brush.Parse("#475569"),
-            TextWrapping = TextWrapping.Wrap,
-        };
+        var summary = LauncherDialogText.Body($"将当前 {selectedEntryIds.Count} 个勾选项保存为可复用启动组。");
 
         var cancel = LauncherDialogButtons.Cancel();
         cancel.Click += (_, _) => Close((string?)null);
@@ -57,20 +52,9 @@ public sealed class PresetDetailsWindow : Window
                 RowSpacing = 12,
                 Children =
                 {
-                    new TextBlock
-                    {
-                        Text = "保存当前勾选为新启动组",
-                        FontSize = 22,
-                        FontWeight = FontWeight.SemiBold,
-                        Foreground = Brush.Parse("#0F172A"),
-                    },
+                    LauncherDialogText.Title("保存当前勾选为新启动组"),
                     summary.WithGridRow(1),
-                    new TextBlock
-                    {
-                        Text = "名称",
-                        FontWeight = FontWeight.SemiBold,
-                        Foreground = Brush.Parse("#334155"),
-                    }.WithGridRow(2),
+                    LauncherDialogText.Label("名称").WithGridRow(2),
                     _nameBox.WithGridRow(3),
                     _errorText.WithGridRow(4),
                     footer.WithGridRow(5),
