@@ -15,7 +15,7 @@ public static class LauncherEntryReferences
         {
             for (var i = 0; i < entryIds.Count; i++)
             {
-                if (string.Equals(entryIds[i], oldEntryId, StringComparison.Ordinal))
+                if (LauncherEntryIds.Same(entryIds[i], oldEntryId))
                     entryIds[i] = newEntryId;
             }
         }
@@ -31,7 +31,7 @@ public static class LauncherEntryReferences
 
         foreach (var entryIds in EntryReferenceLists(presetFile, customEntryOrder))
         {
-            entryIds.RemoveAll(id => string.Equals(id, entryId, StringComparison.Ordinal));
+            entryIds.RemoveAll(id => LauncherEntryIds.Same(id, entryId));
         }
     }
 

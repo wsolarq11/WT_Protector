@@ -35,7 +35,7 @@ public sealed class LauncherDragReorderSession
 
     public bool IsFor(string draggedEntryId)
     {
-        return string.Equals(DraggedEntryId, draggedEntryId, StringComparison.Ordinal);
+        return LauncherEntryIds.Same(DraggedEntryId, draggedEntryId);
     }
 
     public bool TryRecordPreview(string targetEntryId, bool insertAfter)

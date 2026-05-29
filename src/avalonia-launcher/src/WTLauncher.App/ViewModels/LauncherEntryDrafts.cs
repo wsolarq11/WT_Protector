@@ -16,7 +16,7 @@ public static class LauncherEntryDrafts
 
     public static bool HasRequiredFields(EntryDraft draft)
     {
-        return !string.IsNullOrWhiteSpace(draft.Id)
+        return LauncherEntryIds.IsUsable(draft.Id)
             && !string.IsNullOrWhiteSpace(draft.Name)
             && !string.IsNullOrWhiteSpace(draft.Directory)
             && !string.IsNullOrWhiteSpace(draft.Command);
@@ -42,7 +42,7 @@ public static class LauncherEntryDrafts
         string? originalId,
         IEnumerable<LaunchEntry> existingEntries)
     {
-        if (string.IsNullOrWhiteSpace(entry.Id))
+        if (!LauncherEntryIds.IsUsable(entry.Id))
             return "按钮 ID 不能为空";
         if (string.IsNullOrWhiteSpace(entry.Name))
             return "按钮名称不能为空";
@@ -51,8 +51,8 @@ public static class LauncherEntryDrafts
         if (string.IsNullOrWhiteSpace(entry.Command))
             return "按钮命令不能为空";
         if (existingEntries.Any(existing =>
-                !string.Equals(existing.Id, originalId, StringComparison.Ordinal)
-                && string.Equals(existing.Id, entry.Id, StringComparison.Ordinal)))
+                !LauncherEntryIds.Same(existing.Id, originalId)
+                && LauncherEntryIds.Same(existing.Id, entry.Id)))
             return $"按钮 ID 已存在: {entry.Id}";
 
         return null;

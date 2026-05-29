@@ -52,7 +52,7 @@ public sealed class LauncherDragReorderWorkflow
         }
         if (session is null)
             return false;
-        if (string.Equals(draggedEntryId, targetEntryId, StringComparison.Ordinal))
+        if (LauncherEntryIds.Same(draggedEntryId, targetEntryId))
             return false;
 
         if (!session.TryRecordPreview(targetEntryId, insertAfter))
@@ -68,7 +68,7 @@ public sealed class LauncherDragReorderWorkflow
     }
 
     private LauncherEntryViewModel? FindEntry(string entryId) =>
-        _entries.FirstOrDefault(entry => string.Equals(entry.Id, entryId, StringComparison.Ordinal));
+        _entries.FirstOrDefault(entry => LauncherEntryIds.Same(entry.Id, entryId));
 
     public void ClearHover()
     {

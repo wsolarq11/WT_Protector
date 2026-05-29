@@ -445,7 +445,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             return;
 
         item.ReplaceEntryFromOwner(updated, CurrentTimestampUtc());
-        if (!string.Equals(oldId, item.Id, StringComparison.Ordinal))
+        if (!LauncherEntryIds.Same(oldId, item.Id))
             LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, item.Id);
 
         if (!SaveEntryCollectionChanges(savePresets: true, snapshot))

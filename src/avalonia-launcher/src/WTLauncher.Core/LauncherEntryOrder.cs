@@ -8,7 +8,7 @@ public static class LauncherEntryOrder
         var knownSet = new HashSet<string>(StringComparer.Ordinal);
         foreach (var id in entryIds)
         {
-            if (!IsUsableId(id))
+            if (!LauncherEntryIds.IsUsable(id))
                 continue;
             if (knownSet.Add(id))
                 knownIds.Add(id);
@@ -17,7 +17,7 @@ public static class LauncherEntryOrder
         var seen = new HashSet<string>(StringComparer.Ordinal);
 
         customOrder.RemoveAll(id =>
-            !IsUsableId(id)
+            !LauncherEntryIds.IsUsable(id)
             || !knownSet.Contains(id)
             || !seen.Add(id));
 
@@ -36,7 +36,7 @@ public static class LauncherEntryOrder
         var index = 0;
         foreach (var id in customOrder)
         {
-            if (!IsUsableId(id))
+            if (!LauncherEntryIds.IsUsable(id))
                 continue;
 
             indexById.TryAdd(id, index);
@@ -52,11 +52,11 @@ public static class LauncherEntryOrder
         string targetEntryId,
         bool insertAfter)
     {
-        if (SameId(draggedEntryId, targetEntryId))
+        if (LauncherEntryIds.Same(draggedEntryId, targetEntryId))
             return;
 
-        customOrder.RemoveAll(id => SameId(id, draggedEntryId));
-        var targetIndex = customOrder.FindIndex(id => SameId(id, targetEntryId));
+        customOrder.RemoveAll(id => LauncherEntryIds.Same(id, draggedEntryId));
+        var targetIndex = customOrder.FindIndex(id => LauncherEntryIds.Same(id, targetEntryId));
         if (targetIndex < 0)
             targetIndex = customOrder.Count;
         if (insertAfter)
@@ -64,9 +64,4 @@ public static class LauncherEntryOrder
         targetIndex = Math.Min(targetIndex, customOrder.Count);
         customOrder.Insert(targetIndex, draggedEntryId);
     }
-
-    private static bool IsUsableId(string? id) => !string.IsNullOrWhiteSpace(id);
-
-    private static bool SameId(string? left, string? right) =>
-        string.Equals(left, right, StringComparison.Ordinal);
 }
