@@ -17,14 +17,8 @@ internal static class LauncherDialogButtons
             minWidth: minWidth);
     }
 
-    public static Button SafeDefaultCancel(double? minWidth = null)
-    {
-        return Create(
-            "取消",
-            isDefault: true,
-            isCancel: true,
-            minWidth: minWidth);
-    }
+    public static Button SafeDefaultCancel(double? minWidth = null) =>
+        Cancel(minWidth, isDefault: true);
 
     public static Button Primary(string content, double? minWidth = null)
     {

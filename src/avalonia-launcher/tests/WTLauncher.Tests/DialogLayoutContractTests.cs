@@ -43,7 +43,7 @@ public sealed class DialogLayoutContractTests
             source);
         var dialogButtons = GetDialogButtonsSource();
         Assert.Contains("isCancel: true", MethodBlock(dialogButtons, "Cancel"));
-        Assert.Contains("isCancel: true", MethodBlock(dialogButtons, "SafeDefaultCancel"));
+        Assert.Contains("Cancel(minWidth, isDefault: true)", MethodBlock(dialogButtons, "SafeDefaultCancel"));
         Assert.Contains("IsCancel = isCancel", MethodBlock(dialogButtons, "Create"));
     }
 
