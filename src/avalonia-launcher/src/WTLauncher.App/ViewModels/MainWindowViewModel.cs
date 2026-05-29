@@ -584,7 +584,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         TotalCount = Entries.Count;
-        SelectedCount = Entries.Count(entry => entry.IsSelected);
     }
 
     public void BeginDragReorder(string draggedEntryId)
