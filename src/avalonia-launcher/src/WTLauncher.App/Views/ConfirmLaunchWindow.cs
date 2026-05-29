@@ -17,11 +17,7 @@ public sealed class ConfirmLaunchWindow : Window
         MinHeight = 300;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = Brushes.White;
-        Content = BuildContent(entry, plan);
-    }
 
-    private Control BuildContent(LaunchEntry entry, LaunchPlan plan)
-    {
         var title = new TextBlock
         {
             Text = $"启动：{entry.Name}",
@@ -51,7 +47,7 @@ public sealed class ConfirmLaunchWindow : Window
         var launch = LauncherDialogButtons.Primary("确认启动");
         launch.Click += (_, _) => Close(true);
 
-        return new Grid
+        Content = new Grid
         {
             Margin = new Thickness(24),
             RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto"),
@@ -71,6 +67,4 @@ public sealed class ConfirmLaunchWindow : Window
             },
         };
     }
-
-
 }
