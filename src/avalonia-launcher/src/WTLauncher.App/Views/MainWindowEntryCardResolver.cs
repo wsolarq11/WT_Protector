@@ -7,10 +7,16 @@ namespace WTLauncher.App.Views;
 
 public static class MainWindowEntryCardResolver
 {
+    public static bool IsCard(Control control)
+    {
+        ArgumentNullException.ThrowIfNull(control);
+        return control.Classes.Contains("card");
+    }
+
     public static LauncherEntryViewModel? ResolveCard(Control control)
     {
         ArgumentNullException.ThrowIfNull(control);
-        return control.Classes.Contains("card")
+        return IsCard(control)
             ? control.DataContext as LauncherEntryViewModel
             : null;
     }

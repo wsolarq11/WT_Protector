@@ -236,19 +236,12 @@ public sealed partial class MainWindow : Window
 
     private static bool TryOpenEntryCardContextMenu(Control source)
     {
-        foreach (var ancestor in source.GetSelfAndVisualAncestors())
-        {
-            if (ancestor is Border border && border.Classes.Contains("card"))
-            {
-                if (border.ContextMenu is not ContextMenu menu)
-                    return false;
+        var resolved = MainWindowEntryCardContextMenu.ResolveFromSource(source);
+        if (resolved is null)
+            return false;
 
-                menu.Open(border);
-                return true;
-            }
-        }
-
-        return false;
+        resolved.Value.Menu.Open(resolved.Value.Card);
+        return true;
     }
 
     private void OnEntryRowDoubleTapped(object? sender, TappedEventArgs e)
