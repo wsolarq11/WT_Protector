@@ -25,32 +25,6 @@ public sealed class LauncherDragReorderWorkflow
         _applyFilter = applyFilter;
     }
 
-    public string? MoveBefore(bool isCustomSortMode, string draggedEntryId, string targetEntryId)
-    {
-        if (!isCustomSortMode)
-            return "请先切换到“自定义拖拽”排序模式";
-        if (string.Equals(draggedEntryId, targetEntryId, StringComparison.Ordinal))
-            return null;
-
-        _ensureCustomOrderContainsEntries();
-        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
-        LauncherEntryOrder.MoveRelative(
-            _settings.CustomEntryOrder,
-            draggedEntryId,
-            targetEntryId,
-            insertAfter: false);
-        var saveFailure = LauncherSettingsMutationPersistence.Save(
-            _settings,
-            _settingsPath,
-            snapshot,
-            _applyFilter);
-        if (saveFailure is not null)
-            return saveFailure;
-
-        _applyFilter();
-        return "已保存自定义拖拽排序";
-    }
-
     public void Begin(bool isCustomSortMode, string draggedEntryId)
     {
         if (!isCustomSortMode)
