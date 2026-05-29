@@ -73,7 +73,25 @@ public sealed partial class MainWindow : Window
         _activeDragEntryId = item.Id;
         var viewModel = (MainWindowViewModel)DataContext;
         viewModel.BeginDragReorder(item.Id);
-        ShowDragGhost(item, card, e.GetPosition(this));
+        _overlayLayer ??= OverlayLayer.GetOverlayLayer(this);
+        if (_overlayLayer is not null && _dragGhost is null)
+        {
+            var pointerPosition = e.GetPosition(this);
+            var ghost = MainWindowDragGhostFactory.Create(
+                item.Name,
+                item.Directory,
+                item.TitleFontSize,
+                card.Bounds.Width,
+                card.Bounds.Height,
+                pointerPosition.X,
+                pointerPosition.Y);
+
+            _dragGhost = ghost.Control;
+            _overlayLayer.Children.Add(ghost.Control);
+            Canvas.SetLeft(ghost.Control, ghost.Left);
+            Canvas.SetTop(ghost.Control, ghost.Top);
+        }
+
         var effect = await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move).ConfigureAwait(true);
         if (_overlayLayer is not null && _dragGhost is not null)
         {
@@ -177,27 +195,6 @@ public sealed partial class MainWindow : Window
             return direct;
 
         return MainWindowEntryCardResolver.ResolveFromSource(this.GetVisualAt(e.GetPosition(this)));
-    }
-
-    private void ShowDragGhost(LauncherEntryViewModel item, Control sourceCard, Point position)
-    {
-        _overlayLayer ??= OverlayLayer.GetOverlayLayer(this);
-        if (_overlayLayer is null || _dragGhost is not null)
-            return;
-
-        var ghost = MainWindowDragGhostFactory.Create(
-            item.Name,
-            item.Directory,
-            item.TitleFontSize,
-            sourceCard.Bounds.Width,
-            sourceCard.Bounds.Height,
-            position.X,
-            position.Y);
-
-        _dragGhost = ghost.Control;
-        _overlayLayer.Children.Add(ghost.Control);
-        Canvas.SetLeft(ghost.Control, ghost.Left);
-        Canvas.SetTop(ghost.Control, ghost.Top);
     }
 
     private Control? GetActiveEntriesRoot()

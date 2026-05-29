@@ -55,7 +55,11 @@ public sealed class MainWindowXamlContractTests
 
         AssertInOrder(
             codeBehind,
-            "ShowDragGhost(item, card",
+            "_overlayLayer ??= OverlayLayer.GetOverlayLayer(this);",
+            "MainWindowDragGhostFactory.Create(",
+            "_overlayLayer.Children.Add(ghost.Control)",
+            "Canvas.SetLeft(ghost.Control, ghost.Left)",
+            "Canvas.SetTop(ghost.Control, ghost.Top)",
             "DragDrop.DoDragDropAsync",
             "_overlayLayer.Children.Remove(_dragGhost)",
             "_dragGhost = null");
