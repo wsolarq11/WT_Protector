@@ -7,7 +7,7 @@ public sealed class LauncherEntryOrderTests
     [Fact]
     public void SyncWithEntriesRemovesUnknownAndDuplicateIdsThenAppendsMissingIds()
     {
-        var order = new List<string> { "two", "retired", "two", "", "one" };
+        List<string> order = ["two", "retired", "two", "", "one"];
 
         LauncherEntryOrder.SyncWithEntries(order, ["one", "two", "three", "three"]);
 
@@ -17,7 +17,7 @@ public sealed class LauncherEntryOrderTests
     [Fact]
     public void MoveRelativeMovesDraggedEntryBeforeTarget()
     {
-        var order = new List<string> { "one", "two", "three" };
+        List<string> order = ["one", "two", "three"];
 
         LauncherEntryOrder.MoveRelative(order, "three", "one", insertAfter: false);
 
@@ -36,7 +36,7 @@ public sealed class LauncherEntryOrderTests
         string second,
         string third)
     {
-        var order = new List<string> { "one", "two", "three" };
+        List<string> order = ["one", "two", "three"];
 
         LauncherEntryOrder.MoveRelative(order, "one", targetEntryId, insertAfter);
 
