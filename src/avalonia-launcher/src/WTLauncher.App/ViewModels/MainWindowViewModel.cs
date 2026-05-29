@@ -13,7 +13,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly LauncherSettings _settings;
     private readonly LauncherLaunchWorkflow _launchWorkflow;
     private LauncherPresetFile _presetFile = new();
-    private readonly LauncherDragReorderWorkflow _dragReorderWorkflow;
 
 
     [ObservableProperty]
@@ -108,34 +107,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         LauncherEntryLayoutPresentation.Refresh(Entries);
         StatusText = presetError
             ?? $"已加载 {TotalCount} 个启动项、{PresetCount} 个启动组；勾选自动保存到 config\\config.json";
-    }
-
-
-    public void BeginDragReorder(string draggedEntryId)
-    {
-        _dragReorderWorkflow.Begin(IsCustomSortMode, draggedEntryId);
-    }
-
-    public bool PreviewMoveEntry(string draggedEntryId, string targetEntryId, bool insertAfter)
-    {
-        return _dragReorderWorkflow.Preview(IsCustomSortMode, draggedEntryId, targetEntryId, insertAfter);
-    }
-
-    public void ClearDragHover()
-    {
-        _dragReorderWorkflow.ClearHover();
-    }
-
-    public void CommitDragReorder()
-    {
-        var result = _dragReorderWorkflow.Commit(IsCustomSortMode);
-        ApplyStatusText(result);
-    }
-
-    public void CancelDragReorder()
-    {
-        var result = _dragReorderWorkflow.Cancel();
-        ApplyStatusText(result);
     }
 
 
