@@ -39,6 +39,28 @@ public sealed class LauncherLaunchWorkflowTests
         Assert.Contains("two:", report.ToStatusText());
     }
 
+    [Fact]
+    public void StartBatchStartsEveryValidPlanAndReportsSuccess()
+    {
+        using var temp = new TempDirectory();
+        var startedPlans = new List<LaunchPlan>();
+        var previewPlans = new List<LaunchPlan>();
+        var workflow = new LauncherLaunchWorkflow(plan => startedPlans.Add(plan));
+
+        var report = workflow.StartBatch(
+            [
+                Entry("one", temp.Path),
+                Entry("two", temp.Path),
+            ],
+            requireConfirmation: true,
+            previewPlans.Add);
+
+        Assert.Equal("已启动 2 个勾选项", report.ToStatusText());
+        Assert.Equal(["pwsh", "pwsh"], startedPlans.Select(plan => plan.Command).ToArray());
+        Assert.All(startedPlans, plan => Assert.True(plan.RequiresConfirmation));
+        Assert.Equal(startedPlans.Select(plan => plan.CommandLine), previewPlans.Select(plan => plan.CommandLine));
+    }
+
     private static LaunchEntry Entry(string id, string directory)
     {
         return new LaunchEntry

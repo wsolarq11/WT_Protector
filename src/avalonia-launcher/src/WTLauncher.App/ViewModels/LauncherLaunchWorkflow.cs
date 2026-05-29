@@ -4,13 +4,18 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed class LauncherLaunchWorkflow
 {
-    private readonly LauncherProcess _launcherProcess;
+    private readonly Action<LaunchPlan> _start;
 
     public LauncherLaunchWorkflow(LauncherProcess launcherProcess)
     {
         ArgumentNullException.ThrowIfNull(launcherProcess);
 
-        _launcherProcess = launcherProcess;
+        _start = plan => launcherProcess.Start(plan);
+    }
+
+    public LauncherLaunchWorkflow(Action<LaunchPlan> start)
+    {
+        _start = start ?? throw new ArgumentNullException(nameof(start));
     }
 
     public LaunchPlan BuildPlan(LaunchEntry entry, bool requireConfirmation) =>
@@ -21,7 +26,7 @@ public sealed class LauncherLaunchWorkflow
 
     public void Start(LaunchPlan plan)
     {
-        _launcherProcess.Start(plan);
+        _start(plan);
     }
 
     public LauncherBatchLaunchReport StartBatch(
