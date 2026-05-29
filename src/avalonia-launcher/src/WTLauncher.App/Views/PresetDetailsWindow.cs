@@ -26,12 +26,7 @@ public sealed class PresetDetailsWindow : Window
             Padding = new Thickness(10, 8),
         };
 
-        _errorText = new TextBlock
-        {
-            Foreground = Brushes.IndianRed,
-            IsVisible = false,
-            TextWrapping = TextWrapping.Wrap,
-        };
+        _errorText = LauncherDialogText.Error();
 
         var summary = LauncherDialogText.Body($"将当前 {selectedEntryIds.Count} 个勾选项保存为可复用启动组。");
 

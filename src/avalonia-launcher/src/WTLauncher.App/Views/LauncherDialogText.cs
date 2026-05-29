@@ -50,4 +50,14 @@ internal static class LauncherDialogText
             TextWrapping = TextWrapping.Wrap,
         };
     }
+
+    public static TextBlock Error()
+    {
+        return new TextBlock
+        {
+            Foreground = Brushes.IndianRed,
+            IsVisible = false,
+            TextWrapping = TextWrapping.Wrap,
+        };
+    }
 }

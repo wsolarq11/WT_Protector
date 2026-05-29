@@ -36,12 +36,7 @@ public sealed class EntryDetailsWindow : Window
             IsChecked = entry?.Selected ?? false,
             Margin = new Thickness(0, 8, 0, 0),
         };
-        _errorText = new TextBlock
-        {
-            Foreground = Brushes.IndianRed,
-            IsVisible = false,
-            TextWrapping = TextWrapping.Wrap,
-        };
+        _errorText = LauncherDialogText.Error();
 
         var cancel = LauncherDialogButtons.Cancel();
         cancel.Click += (_, _) => Close((EntryDraft?)null);
