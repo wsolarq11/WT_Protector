@@ -12,7 +12,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly string _presetPath;
     private readonly string _settingsPath;
     private readonly LauncherSettings _settings;
-    private readonly LauncherProcess _launcherProcess;
+    private readonly LauncherLaunchWorkflow _launchWorkflow;
     private LauncherPresetFile _presetFile = new();
     private Size _cardsAvailableSize = new(900, 420);
     private readonly LauncherDragReorderWorkflow _dragReorderWorkflow;
@@ -62,7 +62,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _presetPath = LauncherPresetStore.ResolvePresetPath(configPath);
         _settingsPath = settingsPath;
         _settings = settings;
-        _launcherProcess = launcherProcess;
+        _launchWorkflow = new LauncherLaunchWorkflow(launcherProcess);
         _dragReorderWorkflow = new LauncherDragReorderWorkflow(
             _settings,
             _settingsPath,
@@ -578,9 +578,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         try
         {
+            var selectedEntries = selected.Select(ToLaunchEntry).ToList();
             if (RequireConfirmationForLaunches)
             {
-                var accepted = await ConfirmBatchLaunchAsync(selected.Select(ToLaunchEntry).ToList())
+                var accepted = await ConfirmBatchLaunchAsync(selectedEntries)
                     .ConfigureAwait(true);
                 if (!accepted)
                 {
@@ -589,22 +590,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 }
             }
 
-            var report = new LauncherBatchLaunchReport();
-            foreach (var item in selected)
-            {
-                try
-                {
-                    var plan = BuildLaunchPlan(item);
-                    DryRunText = plan.CommandLine;
-                    _launcherProcess.Start(plan);
-                    report.RecordStarted();
-                }
-                catch (Exception ex)
-                {
-                    report.RecordFailure(item.Name, ex);
-                }
-            }
-
+            var report = _launchWorkflow.StartBatch(
+                selectedEntries,
+                RequireConfirmationForLaunches,
+                plan => DryRunText = plan.CommandLine);
             StatusText = report.ToStatusText();
         }
         catch (Exception ex)
@@ -617,7 +606,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         try
         {
-            var plan = BuildLaunchPlan(item);
+            var plan = _launchWorkflow.BuildPlan(item.Entry, RequireConfirmationForLaunches);
             DryRunText = plan.CommandLine;
             StatusText = LauncherSingleLaunchStatus.Preview(item.Name, plan.RequiresConfirmation);
         }
@@ -644,7 +633,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         string? dryRunText = null;
         try
         {
-            var plan = BuildLaunchPlan(item);
+            var plan = _launchWorkflow.BuildPlan(item.Entry, RequireConfirmationForLaunches);
             dryRunText = plan.CommandLine;
             if (plan.RequiresConfirmation)
             {
@@ -657,7 +646,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 }
             }
 
-            _launcherProcess.Start(plan);
+            _launchWorkflow.Start(plan);
             DryRunText = dryRunText;
             StatusText = LauncherSingleLaunchStatus.Started(item.Name);
         }
@@ -668,12 +657,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
             StatusText = LauncherSingleLaunchStatus.Failed(item.Name, ex);
         }
     }
-
-    private LaunchPlan BuildLaunchPlan(LauncherEntryViewModel item) =>
-        LaunchArgumentBuilder.Build(
-            item.Entry,
-            validateDirectory: true,
-            requireConfirmation: RequireConfirmationForLaunches);
 
     private void NotifyDisplayModeProjectionChanged()
     {

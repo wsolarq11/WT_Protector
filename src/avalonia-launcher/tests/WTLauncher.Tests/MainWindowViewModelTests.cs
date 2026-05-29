@@ -318,6 +318,14 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void LaunchActionsUseOneTypedWorkflowField()
+    {
+        Assert.Null(typeof(MainWindowViewModel).GetField("_launcherProcess", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
+        Assert.NotNull(typeof(MainWindowViewModel).GetField("_launchWorkflow", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
+        Assert.Null(typeof(MainWindowViewModel).GetMethod("BuildLaunchPlan", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
+    }
+
+    [Fact]
     public void ApplyPresetCommandReplacesAndPersistsPortableSelection()
     {
         using var temp = new TempDirectory();
