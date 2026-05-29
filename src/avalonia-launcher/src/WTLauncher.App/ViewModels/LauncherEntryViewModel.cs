@@ -109,9 +109,7 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         _layoutDensity = density;
         OnPropertyChanged(nameof(IsCompactLayout));
         OnPropertyChanged(nameof(IsMicroLayout));
-        OnPropertyChanged(nameof(ShowDirectory));
-        OnPropertyChanged(nameof(ShowCommand));
-        OnPropertyChanged(nameof(TitleFontSize));
+        RefreshLayoutPresentation();
     }
 
     private static LauncherEntryLayoutDensity MeasureLayoutDensity(double width, double height)
