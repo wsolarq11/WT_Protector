@@ -92,18 +92,14 @@ public sealed class EntryDetailsWindow : Window
 
     private void Submit()
     {
-        var command = _commandBox.Text?.Trim() ?? string.Empty;
-        var draft = new EntryDraft(
-            _idBox.Text?.Trim() ?? string.Empty,
-            _nameBox.Text?.Trim() ?? string.Empty,
-            _directoryBox.Text?.Trim() ?? string.Empty,
-            command,
-            _selectedBox.IsChecked == true);
+        var draft = LauncherEntryDrafts.NormalizeDraft(new EntryDraft(
+            _idBox.Text ?? string.Empty,
+            _nameBox.Text ?? string.Empty,
+            _directoryBox.Text ?? string.Empty,
+            _commandBox.Text ?? string.Empty,
+            _selectedBox.IsChecked == true));
 
-        if (string.IsNullOrWhiteSpace(draft.Id)
-            || string.IsNullOrWhiteSpace(draft.Name)
-            || string.IsNullOrWhiteSpace(draft.Directory)
-            || string.IsNullOrWhiteSpace(draft.Command))
+        if (!LauncherEntryDrafts.HasRequiredFields(draft))
         {
             _errorText.Text = "ID、名称、目录、命令都必须填写。";
             _errorText.IsVisible = true;

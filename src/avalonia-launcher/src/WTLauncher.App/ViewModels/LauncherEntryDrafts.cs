@@ -4,16 +4,35 @@ namespace WTLauncher.App.ViewModels;
 
 public static class LauncherEntryDrafts
 {
+    public static EntryDraft NormalizeDraft(EntryDraft draft)
+    {
+        return new EntryDraft(
+            (draft.Id ?? string.Empty).Trim(),
+            (draft.Name ?? string.Empty).Trim(),
+            (draft.Directory ?? string.Empty).Trim(),
+            (draft.Command ?? string.Empty).Trim(),
+            draft.Selected);
+    }
+
+    public static bool HasRequiredFields(EntryDraft draft)
+    {
+        return !string.IsNullOrWhiteSpace(draft.Id)
+            && !string.IsNullOrWhiteSpace(draft.Name)
+            && !string.IsNullOrWhiteSpace(draft.Directory)
+            && !string.IsNullOrWhiteSpace(draft.Command);
+    }
+
     public static LaunchEntry CreateEntry(EntryDraft draft, LaunchEntry? previousEntry)
     {
+        var normalized = NormalizeDraft(draft);
         return new LaunchEntry
         {
-            Id = (draft.Id ?? string.Empty).Trim(),
-            Name = (draft.Name ?? string.Empty).Trim(),
-            Directory = (draft.Directory ?? string.Empty).Trim(),
-            Command = (draft.Command ?? string.Empty).Trim(),
+            Id = normalized.Id,
+            Name = normalized.Name,
+            Directory = normalized.Directory,
+            Command = normalized.Command,
             Confirm = false,
-            Selected = draft.Selected,
+            Selected = normalized.Selected,
             UpdatedAtUtc = previousEntry?.UpdatedAtUtc ?? string.Empty,
         };
     }

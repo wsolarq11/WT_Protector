@@ -6,6 +6,37 @@ namespace WTLauncher.Tests;
 public sealed class LauncherEntryDraftsTests
 {
     [Fact]
+    public void NormalizeDraftTrimsTextFieldsAndPreservesSelection()
+    {
+        var draft = LauncherEntryDrafts.NormalizeDraft(
+            new EntryDraft(" new-id ", " New Name ", " D:\\new ", " codex ", true));
+
+        Assert.Equal("new-id", draft.Id);
+        Assert.Equal("New Name", draft.Name);
+        Assert.Equal("D:\\new", draft.Directory);
+        Assert.Equal("codex", draft.Command);
+        Assert.True(draft.Selected);
+    }
+
+    [Theory]
+    [InlineData("one", "Name", "D:\\one", "pwsh", true)]
+    [InlineData("", "Name", "D:\\one", "pwsh", false)]
+    [InlineData("one", "", "D:\\one", "pwsh", false)]
+    [InlineData("one", "Name", "", "pwsh", false)]
+    [InlineData("one", "Name", "D:\\one", "", false)]
+    public void HasRequiredFieldsRequiresAllTextFields(
+        string id,
+        string name,
+        string directory,
+        string command,
+        bool expected)
+    {
+        var draft = new EntryDraft(id, name, directory, command, false);
+
+        Assert.Equal(expected, LauncherEntryDrafts.HasRequiredFields(draft));
+    }
+
+    [Fact]
     public void CreateEntryTrimsDraftFieldsAndPreservesPreviousTimestamp()
     {
         var previous = Entry(
