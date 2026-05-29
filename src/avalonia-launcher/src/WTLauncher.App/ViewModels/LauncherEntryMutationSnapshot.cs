@@ -31,15 +31,15 @@ public sealed class LauncherEntryMutationSnapshot
         string? selectedPresetId)
     {
         return new LauncherEntryMutationSnapshot(
-            entries.Select(entry => entry with { }).ToList(),
+            [.. entries.Select(entry => entry with { })],
             LauncherPresetFiles.Clone(presetFile),
-            customEntryOrder.ToList(),
+            [.. customEntryOrder],
             selectedPresetId);
     }
 
     public List<LaunchEntry> CloneEntries()
     {
-        return Entries.Select(entry => entry with { }).ToList();
+        return [.. Entries.Select(entry => entry with { })];
     }
 
     public LauncherPresetFile ClonePresetFile()
@@ -49,6 +49,6 @@ public sealed class LauncherEntryMutationSnapshot
 
     public List<string> CloneCustomEntryOrder()
     {
-        return new List<string>(CustomEntryOrder);
+        return [.. CustomEntryOrder];
     }
 }

@@ -48,7 +48,7 @@ public sealed class LauncherSettingsSnapshot
             settings.SortMode,
             settings.EntryViewMode,
             settings.RequireConfirmationForLaunches,
-            settings.CustomEntryOrder.ToList(),
+            [.. settings.CustomEntryOrder],
             window.Width,
             window.Height);
     }
@@ -77,6 +77,6 @@ public sealed class LauncherSettingsSnapshot
 
     public List<string> CloneCustomEntryOrder()
     {
-        return new List<string>(CustomEntryOrder);
+        return [.. CustomEntryOrder];
     }
 }
