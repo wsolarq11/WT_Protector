@@ -32,7 +32,7 @@ public static class LauncherConfigStore
         if (!string.IsNullOrWhiteSpace(explicitPath))
             return Path.GetFullPath(explicitPath);
 
-        var candidateRoots = new[] { currentDirectory, appBaseDirectory };
+        string?[] candidateRoots = [currentDirectory, appBaseDirectory];
         foreach (var candidateRoot in candidateRoots)
         {
             var found = FindUpward(candidateRoot);
@@ -73,14 +73,12 @@ public static class LauncherConfigStore
         if (string.IsNullOrWhiteSpace(start))
             return null;
 
-        var dir = new DirectoryInfo(Path.GetFullPath(start));
-        while (dir is not null)
+        for (var dir = new DirectoryInfo(Path.GetFullPath(start)); dir is not null; dir = dir.Parent)
         {
             var config = Path.Combine(dir.FullName, ConfigDirectoryName, ConfigFileName);
             var readme = Path.Combine(dir.FullName, "README.md");
             if (File.Exists(config) && File.Exists(readme))
                 return config;
-            dir = dir.Parent;
         }
 
         return null;
