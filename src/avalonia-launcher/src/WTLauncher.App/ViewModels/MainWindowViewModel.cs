@@ -145,15 +145,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         var snapshot = LauncherSettingsSnapshot.Capture(_settings);
         _settings.LastFilterText = value ?? string.Empty;
-        var result = SaveSettingsChange(
+        SaveSettingsChange(
             snapshot,
             snapshot =>
             {
                 _filterText = snapshot.LastFilterText;
                 OnPropertyChanged(nameof(FilterText));
                 ApplyFilter();
-            });
-        ApplySettingsChange(result, ApplyFilter);
+            },
+            ApplyFilter);
     }
 
     partial void OnSelectedSortModeChanged(LauncherSortModeViewModel? value)
@@ -165,7 +165,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var snapshot = LauncherSettingsSnapshot.Capture(_settings);
         _settings.SortMode = value.Id;
         EnsureCustomOrderContainsEntries();
-        var result = SaveSettingsChange(
+        SaveSettingsChange(
             snapshot,
             snapshot =>
             {
@@ -173,9 +173,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 OnPropertyChanged(nameof(SelectedSortMode));
                 OnPropertyChanged(nameof(IsCustomSortMode));
                 ApplyFilter();
-            });
-        ApplySettingsChange(
-            result,
+            },
             () =>
             {
                 ApplyFilter();
@@ -192,7 +190,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var snapshot = LauncherSettingsSnapshot.Capture(_settings);
         _settings.EntryViewMode = value.Id;
         LauncherEntryLayoutPresentation.Refresh(Entries);
-        var result = SaveSettingsChange(
+        SaveSettingsChange(
             snapshot,
             snapshot =>
             {
@@ -200,9 +198,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 OnPropertyChanged(nameof(SelectedDisplayMode));
                 NotifyDisplayModeProjectionChanged();
                 LauncherEntryLayoutPresentation.Refresh(Entries);
-            });
-        ApplySettingsChange(
-            result,
+            },
             () => StatusText = $"视图模式: {value.Label}（已保存）");
     }
 
@@ -211,16 +207,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var snapshot = LauncherSettingsSnapshot.Capture(_settings);
         _settings.RequireConfirmationForLaunches = value;
         RefreshLaunchConfirmationPresentation();
-        var result = SaveSettingsChange(
+        SaveSettingsChange(
             snapshot,
             snapshot =>
             {
                 _requireConfirmationForLaunches = snapshot.RequireConfirmationForLaunches;
                 OnPropertyChanged(nameof(RequireConfirmationForLaunches));
                 RefreshLaunchConfirmationPresentation();
-            });
-        ApplySettingsChange(
-            result,
+            },
             () => StatusText = value
                 ? "启动确认: 所有启动项启动前统一确认"
                 : "启动确认: 所有启动项直接启动");
@@ -935,17 +929,16 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private static string CurrentTimestampUtc() => DateTimeOffset.UtcNow.ToString("O");
 
-    private string? SaveSettingsChange(
+    private void SaveSettingsChange(
         LauncherSettingsSnapshot snapshot,
-        Action<LauncherSettingsSnapshot> onRollback) =>
-        LauncherSettingsMutationPersistence.Save(
+        Action<LauncherSettingsSnapshot> onRollback,
+        Action onSuccess)
+    {
+        var saveFailure = LauncherSettingsMutationPersistence.Save(
             _settings,
             _settingsPath,
             snapshot,
             () => onRollback(snapshot));
-
-    private void ApplySettingsChange(string? saveFailure, Action onSuccess)
-    {
         if (saveFailure is not null)
         {
             ApplyStatusText(saveFailure);
