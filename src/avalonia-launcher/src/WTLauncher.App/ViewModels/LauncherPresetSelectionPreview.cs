@@ -71,28 +71,27 @@ public sealed class LauncherPresetSelectionPreview
         var missing = presetSet.Count - matched;
         var extra = selectedSet.Count - matched;
 
-        if (missingConfigIds.Count > 0)
-        {
-            return new LauncherPresetSelectionPreview(
+        LauncherPresetSelectionPreview Create(string applyButtonText, string statusText) =>
+            new(
                 selectedSet,
                 presetSet,
                 missingConfigIds,
                 matched,
                 missing,
                 extra,
+                applyButtonText,
+                statusText);
+
+        if (missingConfigIds.Count > 0)
+        {
+            return Create(
                 "检查启动组",
                 $"启动组“{presetName}”引用了 {missingConfigIds.Count} 个不存在的启动项；请先修 config\\presets.json。");
         }
 
         if (presetSet.Count == 0)
         {
-            return new LauncherPresetSelectionPreview(
-                selectedSet,
-                presetSet,
-                missingConfigIds,
-                matched,
-                missing,
-                extra,
+            return Create(
                 extra == 0 ? "手动模式" : "清空勾选",
                 extra == 0
                     ? $"已是“{presetName}”：当前没有勾选项。"
@@ -100,13 +99,7 @@ public sealed class LauncherPresetSelectionPreview
         }
 
         var isMatched = missing == 0 && extra == 0;
-        return new LauncherPresetSelectionPreview(
-            selectedSet,
-            presetSet,
-            missingConfigIds,
-            matched,
-            missing,
-            extra,
+        return Create(
             isMatched ? "已匹配" : ApplyPresetText,
             isMatched
                 ? $"已匹配启动组“{presetName}”：{matched}/{presetSet.Count} 项。"
