@@ -599,11 +599,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _dragReorderWorkflow.Begin(IsCustomSortMode, draggedEntryId);
     }
 
-    public bool PreviewMoveEntryBefore(string draggedEntryId, string targetEntryId)
-    {
-        return PreviewMoveEntry(draggedEntryId, targetEntryId, insertAfter: false);
-    }
-
     public bool PreviewMoveEntry(string draggedEntryId, string targetEntryId, bool insertAfter)
     {
         return _dragReorderWorkflow.Preview(IsCustomSortMode, draggedEntryId, targetEntryId, insertAfter);
