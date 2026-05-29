@@ -8,7 +8,7 @@ public static class LauncherEntryOrder
         var knownSet = new HashSet<string>(StringComparer.Ordinal);
         foreach (var id in entryIds)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (!IsUsableId(id))
                 continue;
             if (knownSet.Add(id))
                 knownIds.Add(id);
@@ -17,7 +17,7 @@ public static class LauncherEntryOrder
         var seen = new HashSet<string>(StringComparer.Ordinal);
 
         customOrder.RemoveAll(id =>
-            string.IsNullOrWhiteSpace(id)
+            !IsUsableId(id)
             || !knownSet.Contains(id)
             || !seen.Add(id));
 
@@ -36,7 +36,7 @@ public static class LauncherEntryOrder
         var index = 0;
         foreach (var id in customOrder)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (!IsUsableId(id))
                 continue;
 
             indexById.TryAdd(id, index);
@@ -52,11 +52,11 @@ public static class LauncherEntryOrder
         string targetEntryId,
         bool insertAfter)
     {
-        if (string.Equals(draggedEntryId, targetEntryId, StringComparison.Ordinal))
+        if (SameId(draggedEntryId, targetEntryId))
             return;
 
-        customOrder.RemoveAll(id => string.Equals(id, draggedEntryId, StringComparison.Ordinal));
-        var targetIndex = customOrder.FindIndex(id => string.Equals(id, targetEntryId, StringComparison.Ordinal));
+        customOrder.RemoveAll(id => SameId(id, draggedEntryId));
+        var targetIndex = customOrder.FindIndex(id => SameId(id, targetEntryId));
         if (targetIndex < 0)
             targetIndex = customOrder.Count;
         if (insertAfter)
@@ -64,4 +64,9 @@ public static class LauncherEntryOrder
         targetIndex = Math.Min(targetIndex, customOrder.Count);
         customOrder.Insert(targetIndex, draggedEntryId);
     }
+
+    private static bool IsUsableId(string? id) => !string.IsNullOrWhiteSpace(id);
+
+    private static bool SameId(string? left, string? right) =>
+        string.Equals(left, right, StringComparison.Ordinal);
 }
