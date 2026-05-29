@@ -4,13 +4,9 @@ public static class LauncherPresetStatus
 {
     public static string NoPresetSelected => "未选择启动组";
 
-    public static string NoEntriesSelected => "未选择任何启动项";
-
     public static string SaveCanceled => "已取消: 保存启动组";
 
     public static string NameRequired => "启动组名称不能为空";
-
-    public static string EntrySelectionRequired => "请先勾选至少一个启动项";
 
     public static string CurrentPresetMissing => "当前启动组已不存在，请重新加载";
 

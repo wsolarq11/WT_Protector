@@ -243,13 +243,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             ApplyStatusText(
                 VisibleEntries.Count == 0
-                    ? "当前没有可勾选的可见项"
-                    : "可见项已全部勾选");
+                    ? LauncherSelectionStatus.NoVisibleEntries
+                    : LauncherSelectionStatus.VisibleAlreadySelected);
             return;
         }
 
         if (SetSelection(targets, selected: true))
-            ApplyStatusText($"已勾选可见 {targets.Count} 项（已保存）");
+            ApplyStatusText(LauncherSelectionStatus.VisibleSelected(targets.Count));
     }
 
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
@@ -258,12 +258,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var targets = GetSelectedEntries();
         if (targets.Count == 0)
         {
-            ApplyStatusText("当前没有已勾选项");
+            ApplyStatusText(LauncherSelectionStatus.NoSelectedEntriesToClear);
             return;
         }
 
         if (SetSelection(targets, selected: false))
-            ApplyStatusText($"已清空 {targets.Count} 个勾选项（已保存）");
+            ApplyStatusText(LauncherSelectionStatus.Cleared(targets.Count));
     }
 
     [RelayCommand(CanExecute = nameof(CanApplyPreset))]
@@ -292,7 +292,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         if (SelectedCount == 0)
         {
-            StatusText = LauncherPresetStatus.NoEntriesSelected;
+            StatusText = LauncherSelectionStatus.NoSelectedEntries;
             return;
         }
 
@@ -338,7 +338,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var entryIds = GetSelectedEntryIds();
         if (entryIds.Count == 0)
         {
-            StatusText = LauncherPresetStatus.EntrySelectionRequired;
+            StatusText = LauncherSelectionStatus.SelectionRequired;
             return;
         }
 
@@ -572,7 +572,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var selected = GetSelectedEntries();
         if (selected.Count == 0)
         {
-            StatusText = "未选择任何启动项";
+            StatusText = LauncherSelectionStatus.NoSelectedEntries;
             return;
         }
 
@@ -584,7 +584,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                     .ConfigureAwait(true);
                 if (!accepted)
                 {
-                    StatusText = $"已取消: 批量启动 {selected.Count} 项";
+                    StatusText = LauncherSelectionStatus.BatchLaunchCanceled(selected.Count);
                     return;
                 }
             }
@@ -609,7 +609,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusText = $"批量启动失败: {ex.Message}";
+            StatusText = LauncherSelectionStatus.BatchLaunchFailed(ex);
         }
     }
 

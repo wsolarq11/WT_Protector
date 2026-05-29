@@ -17,10 +17,8 @@ public sealed class LauncherPresetStatusTests
     public void StatusTextDescribesPresetFailuresAndCanceledActions()
     {
         Assert.Equal("未选择启动组", LauncherPresetStatus.NoPresetSelected);
-        Assert.Equal("未选择任何启动项", LauncherPresetStatus.NoEntriesSelected);
         Assert.Equal("已取消: 保存启动组", LauncherPresetStatus.SaveCanceled);
         Assert.Equal("启动组名称不能为空", LauncherPresetStatus.NameRequired);
-        Assert.Equal("请先勾选至少一个启动项", LauncherPresetStatus.EntrySelectionRequired);
         Assert.Equal("当前启动组已不存在，请重新加载", LauncherPresetStatus.CurrentPresetMissing);
         Assert.Equal("系统启动组不能更新: Daily", LauncherPresetStatus.UpdateBlocked("Daily"));
         Assert.Equal("启动组不能删除: Daily", LauncherPresetStatus.DeleteBlocked("Daily"));
