@@ -14,7 +14,7 @@ public sealed class LauncherSettings
     public string SortMode { get; set; } = LauncherEntryVisibility.CustomSortModeId;
 
     [JsonPropertyName("entryViewMode")]
-    public string EntryViewMode { get; set; } = "cards";
+    public string EntryViewMode { get; set; } = LauncherEntryViewModes.CardsId;
 
     [JsonPropertyName("requireConfirmationForLaunches")]
     public bool RequireConfirmationForLaunches { get; set; } = true;

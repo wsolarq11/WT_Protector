@@ -4,12 +4,7 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed record LauncherDisplayModeViewModel(LauncherEntryViewMode Mode, string Label)
 {
-    public string Id => Mode switch
-    {
-        LauncherEntryViewMode.Details => "details",
-        LauncherEntryViewMode.Names => "names",
-        _ => "cards",
-    };
+    public string Id => LauncherEntryViewModes.ToId(Mode);
 
     public override string ToString() => Label;
 }
