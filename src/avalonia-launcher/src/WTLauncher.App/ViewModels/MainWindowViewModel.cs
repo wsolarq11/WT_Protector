@@ -620,7 +620,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     internal void UpdateSelection(LauncherEntryViewModel item, bool selected)
     {
         var previousSelected = item.ReplaceEntrySelectionFromOwner(selected);
-        SaveSelectionChangeOrRestore([(Entry: item, Selected: previousSelected)]);
+        var snapshot = LauncherSelectionMutationSnapshot.Capture(item, previousSelected);
+        SaveSelectionChangeOrRestore(snapshot);
     }
 
     partial void OnSelectedPresetChanged(LauncherPresetViewModel? value)
@@ -738,7 +739,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool SetSelection(IReadOnlyList<LauncherEntryViewModel> entries, bool selected)
     {
-        var snapshot = CaptureSelectionSnapshot(entries);
+        var snapshot = LauncherSelectionMutationSnapshot.Capture(entries);
         foreach (var entry in entries)
         {
             entry.SetSelectionFromOwner(selected);
@@ -749,7 +750,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool ReplaceSelection(IReadOnlySet<string> selectedIds)
     {
-        var snapshot = CaptureSelectionSnapshot(Entries);
+        var snapshot = LauncherSelectionMutationSnapshot.Capture(Entries);
         foreach (var entry in Entries)
         {
             entry.SetSelectionFromOwner(selectedIds.Contains(entry.Id));
@@ -758,32 +759,16 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return SaveSelectionChangeOrRestore(snapshot);
     }
 
-    private static List<(LauncherEntryViewModel Entry, bool Selected)> CaptureSelectionSnapshot(
-        IEnumerable<LauncherEntryViewModel> entries)
-    {
-        return entries
-            .Select(entry => (Entry: entry, Selected: entry.IsSelected))
-            .ToList();
-    }
-
     private bool SaveSelectionChangeOrRestore(
-        IReadOnlyList<(LauncherEntryViewModel Entry, bool Selected)> snapshot)
+        LauncherSelectionMutationSnapshot snapshot)
     {
         RefreshSelectionState();
         if (SaveConfig())
             return true;
 
-        RestoreSelection(snapshot);
+        snapshot.Restore();
         RefreshSelectionState();
         return false;
-    }
-
-    private static void RestoreSelection(IEnumerable<(LauncherEntryViewModel Entry, bool Selected)> snapshot)
-    {
-        foreach (var (entry, selected) in snapshot)
-        {
-            entry.SetSelectionFromOwner(selected);
-        }
     }
 
     private void RefreshSelectionState()
