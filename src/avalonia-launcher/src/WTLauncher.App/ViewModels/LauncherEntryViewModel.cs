@@ -131,9 +131,7 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Directory));
         OnPropertyChanged(nameof(Command));
-        OnPropertyChanged(nameof(ShowDirectory));
-        OnPropertyChanged(nameof(ShowCommand));
-        OnPropertyChanged(nameof(TitleFontSize));
+        RefreshLayoutPresentation();
     }
 
     public void RefreshLayoutPresentation()
