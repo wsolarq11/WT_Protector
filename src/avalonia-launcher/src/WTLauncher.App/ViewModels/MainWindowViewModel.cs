@@ -499,30 +499,32 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void RenameEntryReferences(string oldEntryId, string newEntryId)
     {
-        foreach (var preset in _presetFile.Presets)
+        foreach (var entryIds in EntryReferenceLists())
         {
-            for (var i = 0; i < preset.EntryIds.Count; i++)
+            for (var i = 0; i < entryIds.Count; i++)
             {
-                if (string.Equals(preset.EntryIds[i], oldEntryId, StringComparison.Ordinal))
-                    preset.EntryIds[i] = newEntryId;
+                if (string.Equals(entryIds[i], oldEntryId, StringComparison.Ordinal))
+                    entryIds[i] = newEntryId;
             }
-        }
-
-        for (var i = 0; i < _settings.CustomEntryOrder.Count; i++)
-        {
-            if (string.Equals(_settings.CustomEntryOrder[i], oldEntryId, StringComparison.Ordinal))
-                _settings.CustomEntryOrder[i] = newEntryId;
         }
     }
 
     private void RemoveEntryReferences(string entryId)
     {
+        foreach (var entryIds in EntryReferenceLists())
+        {
+            entryIds.RemoveAll(id => string.Equals(id, entryId, StringComparison.Ordinal));
+        }
+    }
+
+    private IEnumerable<List<string>> EntryReferenceLists()
+    {
         foreach (var preset in _presetFile.Presets)
         {
-            preset.EntryIds.RemoveAll(id => string.Equals(id, entryId, StringComparison.Ordinal));
+            yield return preset.EntryIds;
         }
 
-        _settings.CustomEntryOrder.RemoveAll(id => string.Equals(id, entryId, StringComparison.Ordinal));
+        yield return _settings.CustomEntryOrder;
     }
 
     private bool SaveEntryCollectionChanges(bool savePresets, LauncherEntryMutationSnapshot rollbackSnapshot)
