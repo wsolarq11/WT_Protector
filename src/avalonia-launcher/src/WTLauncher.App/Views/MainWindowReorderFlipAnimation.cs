@@ -29,9 +29,8 @@ public static class MainWindowReorderFlipAnimation
 
         foreach (var card in cards)
         {
-            if (!card.Classes.Contains("card"))
-                continue;
-            if (card.DataContext is not LauncherEntryViewModel entry)
+            var entry = MainWindowEntryCardResolver.ResolveCard(card);
+            if (entry is null)
                 continue;
             if (!MainWindowReorderFlip.TryCalculateOffset(entry.Id, before, after, out var offset))
                 continue;

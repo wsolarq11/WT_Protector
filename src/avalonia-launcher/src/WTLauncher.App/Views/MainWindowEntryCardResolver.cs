@@ -7,6 +7,14 @@ namespace WTLauncher.App.Views;
 
 public static class MainWindowEntryCardResolver
 {
+    public static LauncherEntryViewModel? ResolveCard(Control control)
+    {
+        ArgumentNullException.ThrowIfNull(control);
+        return control.Classes.Contains("card")
+            ? control.DataContext as LauncherEntryViewModel
+            : null;
+    }
+
     public static (LauncherEntryViewModel Entry, Control Card)? ResolveFromSource(object? source)
     {
         if (source is not Visual visual)
@@ -14,11 +22,12 @@ public static class MainWindowEntryCardResolver
 
         foreach (var ancestor in visual.GetSelfAndVisualAncestors())
         {
-            if (ancestor is Control { DataContext: LauncherEntryViewModel entry } control
-                && control.Classes.Contains("card"))
-            {
+            if (ancestor is not Control control)
+                continue;
+
+            var entry = ResolveCard(control);
+            if (entry is not null)
                 return (entry, control);
-            }
         }
 
         return null;

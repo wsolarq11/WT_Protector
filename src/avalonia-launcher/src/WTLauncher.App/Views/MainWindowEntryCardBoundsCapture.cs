@@ -30,9 +30,8 @@ public static class MainWindowEntryCardBoundsCapture
         var bounds = new Dictionary<string, Rect>(StringComparer.Ordinal);
         foreach (var card in cards)
         {
-            if (!card.Classes.Contains("card"))
-                continue;
-            if (card.DataContext is not LauncherEntryViewModel entry)
+            var entry = MainWindowEntryCardResolver.ResolveCard(card);
+            if (entry is null)
                 continue;
 
             var origin = translateOrigin(card);
