@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
+using Avalonia.Media;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.Views;
@@ -43,26 +44,26 @@ public sealed class ConfirmBatchLaunchWindow : Window
                     {
                         Text = "一键启动已勾选项？",
                         FontSize = 22,
-                        FontWeight = Avalonia.Media.FontWeight.SemiBold,
+                        FontWeight = FontWeight.SemiBold,
                     },
                     new TextBlock
                     {
                         Text = message,
                         Margin = new Thickness(0, 12, 0, 14),
-                        TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                        TextWrapping = TextWrapping.Wrap,
                     }.WithGridRow(1),
                     new Border
                     {
                         BorderThickness = new Thickness(1),
                         CornerRadius = new CornerRadius(10),
-                        BorderBrush = Avalonia.Media.Brushes.LightGray,
+                        BorderBrush = Brushes.LightGray,
                         Padding = new Thickness(12),
                         Child = new ScrollViewer
                         {
                             Content = new TextBlock
                             {
                                 Text = names,
-                                TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                                TextWrapping = TextWrapping.Wrap,
                             },
                         },
                     }.WithGridRow(2),
