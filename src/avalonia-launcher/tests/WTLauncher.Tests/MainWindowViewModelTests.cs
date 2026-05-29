@@ -1301,14 +1301,27 @@ public sealed class MainWindowViewModelTests
     private static (string Config, string Settings, string Presets) CreatePortableFixture(
         TempDirectory temp,
         bool oneSelected,
-        bool twoSelected)
-    {
-        var configDir = Path.Combine(temp.Path, "config");
-        Directory.CreateDirectory(configDir);
-        var config = Path.Combine(configDir, "config.json");
-        WriteTwoEntryConfig(config, oneSelected, twoSelected);
-        return (config, Path.Combine(configDir, "settings.json"), Path.Combine(configDir, "presets.json"));
-    }
+        bool twoSelected) =>
+        CreatePortableFixture(
+            temp,
+            new LaunchEntry
+            {
+                Id = "one",
+                Name = "one",
+                Directory = "D:\\one",
+                Command = "codex",
+                Confirm = true,
+                Selected = oneSelected,
+            },
+            new LaunchEntry
+            {
+                Id = "two",
+                Name = "two",
+                Directory = "D:\\two",
+                Command = "opencode",
+                Confirm = false,
+                Selected = twoSelected,
+            });
 
     private static (string Config, string Settings, string Presets) CreatePortableFixture(
         TempDirectory temp,
@@ -1321,32 +1334,4 @@ public sealed class MainWindowViewModelTests
         return (config, Path.Combine(configDir, "settings.json"), Path.Combine(configDir, "presets.json"));
     }
 
-    private static void WriteTwoEntryConfig(string config, bool oneSelected, bool twoSelected)
-    {
-        File.WriteAllText(config, $$"""
-        [
-          {
-            "id": "one",
-            "name": "one",
-            "directory": "D:\\one",
-            "command": "codex",
-            "confirm": true,
-            "selected": {{JsonBool(oneSelected)}}
-          },
-          {
-            "id": "two",
-            "name": "two",
-            "directory": "D:\\two",
-            "command": "opencode",
-            "confirm": false,
-            "selected": {{JsonBool(twoSelected)}}
-          }
-        ]
-        """);
-    }
-
-    private static string JsonBool(bool value)
-    {
-        return value ? "true" : "false";
-    }
 }
