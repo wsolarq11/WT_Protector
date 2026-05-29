@@ -7,16 +7,13 @@ public sealed class LauncherSettingsSnapshotTests
     [Fact]
     public void CaptureDeepCopiesPortableSettingsAndRestoresAllFields()
     {
-        var settings = new LauncherSettings
-        {
-            Theme = "dark",
-            LastFilterText = "codex",
-            SortMode = "alphabetical",
-            EntryViewMode = "details",
-            RequireConfirmationForLaunches = false,
-            CustomEntryOrder = ["one", "two"],
-            Window = new LauncherWindowSettings { Width = 1200, Height = 800 },
-        };
+        var settings = Settings(
+            theme: "dark",
+            lastFilterText: "codex",
+            sortMode: "alphabetical",
+            entryViewMode: "details",
+            requireConfirmationForLaunches: false,
+            window: new LauncherWindowSettings { Width = 1200, Height = 800 });
 
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
         settings.Theme = "light";
@@ -43,15 +40,7 @@ public sealed class LauncherSettingsSnapshotTests
     [Fact]
     public void RestoreCustomEntryOrderLeavesOtherSettingsUntouched()
     {
-        var settings = new LauncherSettings
-        {
-            Theme = "light",
-            LastFilterText = "old",
-            SortMode = "custom",
-            EntryViewMode = "cards",
-            RequireConfirmationForLaunches = true,
-            CustomEntryOrder = ["one", "two"],
-        };
+        var settings = Settings(lastFilterText: "old");
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
         settings.LastFilterText = "new";
         settings.CustomEntryOrder = ["two", "one"];
@@ -61,4 +50,22 @@ public sealed class LauncherSettingsSnapshotTests
         Assert.Equal("new", settings.LastFilterText);
         Assert.Equal(["one", "two"], settings.CustomEntryOrder);
     }
+
+    private static LauncherSettings Settings(
+        string theme = "light",
+        string lastFilterText = "",
+        string sortMode = "custom",
+        string entryViewMode = "cards",
+        bool requireConfirmationForLaunches = true,
+        LauncherWindowSettings? window = null) =>
+        new()
+        {
+            Theme = theme,
+            LastFilterText = lastFilterText,
+            SortMode = sortMode,
+            EntryViewMode = entryViewMode,
+            RequireConfirmationForLaunches = requireConfirmationForLaunches,
+            CustomEntryOrder = ["one", "two"],
+            Window = window ?? new LauncherWindowSettings(),
+        };
 }
