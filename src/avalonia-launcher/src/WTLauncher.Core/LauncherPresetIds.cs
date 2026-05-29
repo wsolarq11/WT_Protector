@@ -4,6 +4,11 @@ namespace WTLauncher.Core;
 
 public static class LauncherPresetIds
 {
+    public static StringComparer Comparer => StringComparer.Ordinal;
+
+    public static bool Same(string? left, string? right) =>
+        string.Equals(left, right, StringComparison.Ordinal);
+
     public static string GenerateUnique(string name, IEnumerable<string> existingIds)
     {
         ArgumentNullException.ThrowIfNull(existingIds);
@@ -11,7 +16,7 @@ public static class LauncherPresetIds
         var baseId = Normalize(name);
         var candidate = baseId;
         var index = 2;
-        var existing = existingIds.ToHashSet(StringComparer.Ordinal);
+        var existing = existingIds.ToHashSet(Comparer);
         while (existing.Contains(candidate))
         {
             candidate = $"{baseId}-{index++}";

@@ -46,7 +46,7 @@ public static class LauncherPresetWorkflow
             return null;
 
         presetFile.Presets.Remove(preset);
-        if (presetFile.DefaultPresetId == preset.Id)
+        if (LauncherPresetIds.Same(presetFile.DefaultPresetId, preset.Id))
         {
             fallbackPresetId = presetFile.Presets.FirstOrDefault()?.Id ?? string.Empty;
             presetFile.DefaultPresetId = fallbackPresetId;
@@ -69,7 +69,7 @@ public static class LauncherPresetWorkflow
     }
 
     private static LauncherPreset? FindPreset(LauncherPresetFile presetFile, string presetId) =>
-        presetFile.Presets.FirstOrDefault(preset => preset.Id == presetId);
+        presetFile.Presets.FirstOrDefault(preset => LauncherPresetIds.Same(preset.Id, presetId));
 
     private static bool CanUpdatePreset(LauncherPreset target) =>
         !target.Locked;
@@ -80,6 +80,6 @@ public static class LauncherPresetWorkflow
             return false;
 
         return presetFile.Presets
-            .Any(preset => preset.Id != target.Id && preset.EntryIds.Count > 0);
+            .Any(preset => !LauncherPresetIds.Same(preset.Id, target.Id) && preset.EntryIds.Count > 0);
     }
 }

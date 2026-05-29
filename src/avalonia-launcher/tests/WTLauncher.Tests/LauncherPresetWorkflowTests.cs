@@ -24,6 +24,15 @@ public sealed class LauncherPresetWorkflowTests
     }
 
     [Fact]
+    public void PresetIdMatchUsesOrdinalComparison()
+    {
+        Assert.True(LauncherPresetIds.Same("daily", "daily"));
+        Assert.False(LauncherPresetIds.Same("Daily", "daily"));
+        Assert.True(LauncherPresetIds.Comparer.Equals("daily", "daily"));
+        Assert.False(LauncherPresetIds.Comparer.Equals("Daily", "daily"));
+    }
+
+    [Fact]
     public void ClonePresetFile_CreatesDeepCopyForRollback()
     {
         var original = PresetFile("daily", Preset("daily", "Daily", true, "one"));

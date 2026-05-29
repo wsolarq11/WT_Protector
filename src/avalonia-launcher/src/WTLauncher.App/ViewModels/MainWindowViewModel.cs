@@ -895,7 +895,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         var targetPresetId = preferredPresetId ?? presetFile.DefaultPresetId;
         _presetFile = presetFile;
-        SelectedPreset = Presets.FirstOrDefault(preset => preset.Id == targetPresetId)
+        SelectedPreset = Presets.FirstOrDefault(preset => LauncherPresetIds.Same(preset.Id, targetPresetId))
             ?? Presets.FirstOrDefault();
         PresetCount = Presets.Count;
         NotifyPresetManagementCommands();
