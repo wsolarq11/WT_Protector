@@ -104,7 +104,7 @@ public sealed class MainWindowViewModelTests
 
         Assert.Equal(["one", "two"], viewModel.Entries.Select(entry => entry.Id).ToArray());
         Assert.Contains("设置保存失败", viewModel.StatusText);
-        var savedEntries = LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
+        var savedEntries = LoadEntriesById(config);
         Assert.DoesNotContain(savedEntries, entry => entry.Id == "three");
         Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(config)!, "config.json.tmp-*"));
     }
@@ -139,7 +139,7 @@ public sealed class MainWindowViewModelTests
 
         Assert.Equal(["one", "two"], viewModel.Entries.Select(entry => entry.Id).ToArray());
         Assert.Contains("启动组保存失败", viewModel.StatusText);
-        var savedEntries = LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
+        var savedEntries = LoadEntriesById(config);
         Assert.Contains(savedEntries, entry => entry.Id == "one");
         Assert.DoesNotContain(savedEntries, entry => entry.Id == "one-renamed");
         Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(config)!, "config.json.tmp-*"));
@@ -340,7 +340,7 @@ public sealed class MainWindowViewModelTests
         Assert.Equal("已匹配", viewModel.ApplyPresetButtonText);
         Assert.Contains("已匹配启动组", viewModel.PresetSelectionStatusText);
         Assert.Contains("1/1", viewModel.PresetSelectionStatusText);
-        var entries = LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
+        var entries = LoadEntriesById(config);
         Assert.True(entries.Single(entry => entry.Id == "one").Selected);
         Assert.False(entries.Single(entry => entry.Id == "two").Selected);
     }
@@ -485,7 +485,7 @@ public sealed class MainWindowViewModelTests
 
         Assert.Contains("missing-entry", viewModel.StatusText);
         Assert.False(File.Exists(config + ".bak"));
-        var entries = LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
+        var entries = LoadEntriesById(config);
         Assert.False(entries.Single(entry => entry.Id == "one").Selected);
         Assert.True(entries.Single(entry => entry.Id == "two").Selected);
     }
@@ -641,7 +641,7 @@ public sealed class MainWindowViewModelTests
 
         await viewModel.AddEntryCommand.ExecuteAsync(null);
 
-        var savedEntries = LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
+        var savedEntries = LoadEntriesById(config);
         var added = savedEntries.Single(entry => entry.Id == "three");
         Assert.True(added.Selected);
         Assert.False(string.IsNullOrWhiteSpace(added.UpdatedAtUtc));
@@ -650,7 +650,7 @@ public sealed class MainWindowViewModelTests
 
         await viewModel.Entries.Single(entry => entry.Id == "one").EditCommand.ExecuteAsync(null);
 
-        savedEntries = LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
+        savedEntries = LoadEntriesById(config);
         Assert.DoesNotContain(savedEntries, entry => entry.Id == "one");
         var edited = savedEntries.Single(entry => entry.Id == "one-renamed");
         Assert.Equal("One Renamed", edited.Name);
@@ -667,7 +667,7 @@ public sealed class MainWindowViewModelTests
 
         await viewModel.Entries.Single(entry => entry.Id == "one-renamed").DeleteCommand.ExecuteAsync(null);
 
-        savedEntries = LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
+        savedEntries = LoadEntriesById(config);
         Assert.DoesNotContain(savedEntries, entry => entry.Id == "one-renamed");
         savedPresetFile = LauncherPresetStore.Load(presets);
         Assert.Empty(savedPresetFile.Presets.Single(preset => preset.Id == "daily").EntryIds);
@@ -1333,5 +1333,8 @@ public sealed class MainWindowViewModelTests
         LauncherConfigStore.Save(entries, config);
         return (config, Path.Combine(configDir, "settings.json"), Path.Combine(configDir, "presets.json"));
     }
+
+    private static List<LaunchEntry> LoadEntriesById(string config) =>
+        LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
 
 }
