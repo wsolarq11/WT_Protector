@@ -99,6 +99,7 @@ public sealed class LauncherPresetSelectionPreview
                     : $"“{presetName}”会清空当前 {extra} 个勾选项。");
         }
 
+        var isMatched = missing == 0 && extra == 0;
         return new LauncherPresetSelectionPreview(
             selectedSet,
             presetSet,
@@ -106,8 +107,8 @@ public sealed class LauncherPresetSelectionPreview
             matched,
             missing,
             extra,
-            missing == 0 && extra == 0 ? "已匹配" : ApplyPresetText,
-            missing == 0 && extra == 0
+            isMatched ? "已匹配" : ApplyPresetText,
+            isMatched
                 ? $"已匹配启动组“{presetName}”：{matched}/{presetSet.Count} 项。"
                 : $"启动组“{presetName}”：已匹配 {matched}/{presetSet.Count}，缺 {missing}，额外 {extra}；应用会替换当前勾选。");
     }
