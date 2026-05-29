@@ -4,8 +4,7 @@ public static class LauncherSettingsStore
 {
     public static LauncherSettings Load(string settingsPath)
     {
-        if (string.IsNullOrWhiteSpace(settingsPath))
-            throw new ArgumentException("Settings path is required.", nameof(settingsPath));
+        ThrowIfSettingsPathMissing(settingsPath);
         if (!File.Exists(settingsPath))
             return new LauncherSettings();
 
@@ -14,8 +13,7 @@ public static class LauncherSettingsStore
 
     public static void Save(LauncherSettings settings, string settingsPath)
     {
-        if (string.IsNullOrWhiteSpace(settingsPath))
-            throw new ArgumentException("Settings path is required.", nameof(settingsPath));
+        ThrowIfSettingsPathMissing(settingsPath);
 
         LauncherJson.Save(settings, settingsPath);
     }
@@ -23,8 +21,7 @@ public static class LauncherSettingsStore
     public static bool TrySaveWindowBounds(LauncherSettings settings, string settingsPath, double width, double height)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        if (string.IsNullOrWhiteSpace(settingsPath))
-            throw new ArgumentException("Settings path is required.", nameof(settingsPath));
+        ThrowIfSettingsPathMissing(settingsPath);
 
         var window = settings.Window ??= new LauncherWindowSettings();
         var previousWidth = window.Width;
@@ -46,5 +43,11 @@ public static class LauncherSettingsStore
             window.Height = previousHeight;
             return false;
         }
+    }
+
+    private static void ThrowIfSettingsPathMissing(string settingsPath)
+    {
+        if (string.IsNullOrWhiteSpace(settingsPath))
+            throw new ArgumentException("Settings path is required.", nameof(settingsPath));
     }
 }
