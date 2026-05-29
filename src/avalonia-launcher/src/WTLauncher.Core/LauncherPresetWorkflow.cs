@@ -25,7 +25,7 @@ public static class LauncherPresetWorkflow
         IReadOnlyList<string> entryIds)
     {
         ArgumentNullException.ThrowIfNull(presetFile);
-        var preset = presetFile.Presets.FirstOrDefault(item => item.Id == presetId);
+        var preset = FindPreset(presetFile, presetId);
         if (preset is null || preset.Locked)
             return null;
 
@@ -40,7 +40,7 @@ public static class LauncherPresetWorkflow
         out string fallbackPresetId)
     {
         ArgumentNullException.ThrowIfNull(presetFile);
-        var preset = presetFile.Presets.FirstOrDefault(item => item.Id == presetId);
+        var preset = FindPreset(presetFile, presetId);
         if (preset is null || !CanDeletePreset(presetFile, preset))
         {
             fallbackPresetId = presetFile.DefaultPresetId;
@@ -58,9 +58,11 @@ public static class LauncherPresetWorkflow
     public static bool CanDeletePreset(LauncherPresetFile presetFile, string presetId)
     {
         ArgumentNullException.ThrowIfNull(presetFile);
-        var target = presetFile.Presets.FirstOrDefault(preset => preset.Id == presetId);
-        return CanDeletePreset(presetFile, target);
+        return CanDeletePreset(presetFile, FindPreset(presetFile, presetId));
     }
+
+    private static LauncherPreset? FindPreset(LauncherPresetFile presetFile, string presetId) =>
+        presetFile.Presets.FirstOrDefault(preset => preset.Id == presetId);
 
     private static bool CanDeletePreset(LauncherPresetFile presetFile, LauncherPreset? target)
     {
