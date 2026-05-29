@@ -18,6 +18,10 @@ public sealed class ConfirmBatchLaunchWindow : Window
 
         var names = string.Join(Environment.NewLine, entries.Select(entry => "• " + entry.Name));
         var message = $"将启动 {entries.Count} 个已勾选项。";
+        var title = LauncherDialogText.Title("一键启动已勾选项？");
+        var messageText = LauncherDialogText.Body(message);
+        messageText.Margin = new Thickness(0, 12, 0, 14);
+        var namesText = LauncherDialogText.Subtle(names);
 
         var cancel = LauncherDialogButtons.Cancel(minWidth: 96);
         cancel.Click += (_, _) => Close(false);
@@ -33,18 +37,8 @@ public sealed class ConfirmBatchLaunchWindow : Window
                 RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto"),
                 Children =
                 {
-                    new TextBlock
-                    {
-                        Text = "一键启动已勾选项？",
-                        FontSize = 22,
-                        FontWeight = FontWeight.SemiBold,
-                    },
-                    new TextBlock
-                    {
-                        Text = message,
-                        Margin = new Thickness(0, 12, 0, 14),
-                        TextWrapping = TextWrapping.Wrap,
-                    }.WithGridRow(1),
+                    title,
+                    messageText.WithGridRow(1),
                     new Border
                     {
                         BorderThickness = new Thickness(1),
@@ -53,11 +47,7 @@ public sealed class ConfirmBatchLaunchWindow : Window
                         Padding = new Thickness(12),
                         Child = new ScrollViewer
                         {
-                            Content = new TextBlock
-                            {
-                                Text = names,
-                                TextWrapping = TextWrapping.Wrap,
-                            },
+                            Content = namesText,
                         },
                     }.WithGridRow(2),
                     LauncherDialogButtons.Footer(18, cancel, launch).WithGridRow(3),
