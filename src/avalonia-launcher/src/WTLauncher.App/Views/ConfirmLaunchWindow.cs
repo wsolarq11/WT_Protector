@@ -33,7 +33,7 @@ public sealed class ConfirmLaunchWindow : Window
         };
         var command = new TextBox
         {
-            Text = $"{plan.Executable} {plan.Arguments}",
+            Text = plan.CommandLine,
             IsReadOnly = true,
             FontFamily = new FontFamily("Cascadia Code, Consolas"),
             FontSize = 12,
