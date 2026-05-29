@@ -45,8 +45,8 @@ public sealed class LauncherPresetSelectionPreview
     public static LauncherPresetSelectionPreview NoPreset(int presetCount)
     {
         return new LauncherPresetSelectionPreview(
-            EmptySet(),
-            EmptySet(),
+            new HashSet<string>(StringComparer.Ordinal),
+            new HashSet<string>(StringComparer.Ordinal),
             Array.Empty<string>(),
             matchedCount: 0,
             missingCount: 0,
@@ -110,11 +110,6 @@ public sealed class LauncherPresetSelectionPreview
             missing == 0 && extra == 0
                 ? $"已匹配启动组“{presetName}”：{matched}/{presetSet.Count} 项。"
                 : $"启动组“{presetName}”：已匹配 {matched}/{presetSet.Count}，缺 {missing}，额外 {extra}；应用会替换当前勾选。");
-    }
-
-    private static HashSet<string> EmptySet()
-    {
-        return new HashSet<string>(StringComparer.Ordinal);
     }
 
     private static HashSet<string> ToOrdinalSet(IEnumerable<string> ids)

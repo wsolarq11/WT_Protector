@@ -425,7 +425,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (entry is null)
             return;
 
-        entry.UpdatedAtUtc = NowUtcText();
+        entry.UpdatedAtUtc = DateTimeOffset.UtcNow.ToString("O");
         Entries.Add(new LauncherEntryViewModel(entry, this));
         _settings.CustomEntryOrder.Add(entry.Id);
 
@@ -456,7 +456,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         item.Entry.Command = updated.Command;
         item.Entry.Confirm = updated.Confirm;
         item.SetSelectionFromOwner(updated.Selected);
-        item.Entry.UpdatedAtUtc = NowUtcText();
+        item.Entry.UpdatedAtUtc = DateTimeOffset.UtcNow.ToString("O");
         item.RefreshDisplay();
         if (!string.Equals(oldId, item.Entry.Id, StringComparison.Ordinal))
             RenameEntryReferences(oldId, item.Entry.Id);
@@ -842,8 +842,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private void EnsureCustomOrderContainsEntries() =>
         LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, Entries.Select(entry => entry.Id));
-
-    private static string NowUtcText() => DateTimeOffset.UtcNow.ToString("O");
 
     private void ApplyStatusText(string? statusText)
     {
