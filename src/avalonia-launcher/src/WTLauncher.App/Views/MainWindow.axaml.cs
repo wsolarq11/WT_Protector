@@ -173,15 +173,14 @@ public sealed partial class MainWindow : Window
         var insertAfter = viewModel.IsDetailedListMode
             ? positionInCard.Y >= (target.Card.Bounds.Height * 0.5)
             : positionInCard.X >= (target.Card.Bounds.Width * 0.5);
-        var root = GetActiveEntriesRoot();
-        Dictionary<string, Rect> before = root is null
-            ? []
-            : MainWindowEntryCardBoundsCapture.Capture(root, this);
+        var root = viewModel.IsDetailedListMode
+            ? DetailsEntriesItemsControl
+            : viewModel.IsNamesViewMode
+                ? NamesEntriesItemsControl
+                : CardsEntriesItemsControl;
+        var before = MainWindowEntryCardBoundsCapture.Capture(root, this);
         if (viewModel.PreviewMoveEntry(draggedId, target.Entry.Id, insertAfter))
         {
-            if (root is null)
-                return;
-
             _reorderAnimationScheduler.Schedule(
                 before,
                 OnEntriesLayoutUpdated,
@@ -197,20 +196,6 @@ public sealed partial class MainWindow : Window
             return direct;
 
         return MainWindowEntryCardResolver.ResolveFromSource(this.GetVisualAt(e.GetPosition(this)));
-    }
-
-    private Control? GetActiveEntriesRoot()
-    {
-        if (DataContext is not MainWindowViewModel viewModel)
-            return null;
-
-        if (viewModel.IsDetailedListMode)
-            return DetailsEntriesItemsControl;
-
-        if (viewModel.IsNamesViewMode)
-            return NamesEntriesItemsControl;
-
-        return CardsEntriesItemsControl;
     }
 
     private void OnEntriesLayoutUpdated(object? sender, EventArgs e)
