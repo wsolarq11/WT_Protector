@@ -75,7 +75,12 @@ public sealed partial class MainWindow : Window
         viewModel.BeginDragReorder(item.Id);
         ShowDragGhost(item, card, e.GetPosition(this));
         var effect = await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move).ConfigureAwait(true);
-        HideDragGhost();
+        if (_overlayLayer is not null && _dragGhost is not null)
+        {
+            _overlayLayer.Children.Remove(_dragGhost);
+            _dragGhost = null;
+        }
+
         if (_activeDragEntryId is not null)
         {
             if (effect == DragDropEffects.Move)
@@ -187,15 +192,6 @@ public sealed partial class MainWindow : Window
 
         Canvas.SetLeft(_dragGhost, left);
         Canvas.SetTop(_dragGhost, top);
-    }
-
-    private void HideDragGhost()
-    {
-        if (_overlayLayer is null || _dragGhost is null)
-            return;
-
-        _overlayLayer.Children.Remove(_dragGhost);
-        _dragGhost = null;
     }
 
     private Control? GetActiveEntriesRoot()

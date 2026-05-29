@@ -53,7 +53,12 @@ public sealed class MainWindowXamlContractTests
             "<Setter Property=\"Opacity\" Value=\"0.9\"/>",
             "<Setter Property=\"IsHitTestVisible\" Value=\"False\"/>");
 
-        AssertInOrder(codeBehind, "ShowDragGhost(item, card", "DragDrop.DoDragDropAsync", "HideDragGhost()");
+        AssertInOrder(
+            codeBehind,
+            "ShowDragGhost(item, card",
+            "DragDrop.DoDragDropAsync",
+            "_overlayLayer.Children.Remove(_dragGhost)",
+            "_dragGhost = null");
         AssertInOrder(
             codeBehind,
             "if (_activeDragEntryId is not null)",
