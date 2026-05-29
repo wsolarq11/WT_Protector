@@ -104,7 +104,11 @@ public sealed partial class MainWindow : Window
         {
             var pointerPosition = e.GetPosition(this);
             var ghostPosition = LauncherDragGhostLayoutCalculator.CalculatePosition(pointerPosition.X, pointerPosition.Y);
-            SetDragGhostPosition(ghostPosition.Left, ghostPosition.Top);
+            if (_dragGhost is not null)
+            {
+                Canvas.SetLeft(_dragGhost, ghostPosition.Left);
+                Canvas.SetTop(_dragGhost, ghostPosition.Top);
+            }
         }
 
         var resolved = ResolveEntryCardFromDragEvent(e);
@@ -192,16 +196,8 @@ public sealed partial class MainWindow : Window
 
         _dragGhost = ghost.Control;
         _overlayLayer.Children.Add(ghost.Control);
-        SetDragGhostPosition(ghost.Left, ghost.Top);
-    }
-
-    private void SetDragGhostPosition(double left, double top)
-    {
-        if (_dragGhost is null)
-            return;
-
-        Canvas.SetLeft(_dragGhost, left);
-        Canvas.SetTop(_dragGhost, top);
+        Canvas.SetLeft(ghost.Control, ghost.Left);
+        Canvas.SetTop(ghost.Control, ghost.Top);
     }
 
     private Control? GetActiveEntriesRoot()

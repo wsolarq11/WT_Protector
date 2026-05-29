@@ -63,7 +63,8 @@ public sealed class MainWindowXamlContractTests
             codeBehind,
             "if (_activeDragEntryId is not null)",
             "LauncherDragGhostLayoutCalculator.CalculatePosition",
-            "SetDragGhostPosition(ghostPosition.Left, ghostPosition.Top)");
+            "Canvas.SetLeft(_dragGhost, ghostPosition.Left)",
+            "Canvas.SetTop(_dragGhost, ghostPosition.Top)");
         Assert.Contains("private void ApplyDragReorderPreview(", codeBehind);
         Assert.Equal(1, Count(codeBehind, "viewModel.PreviewMoveEntry("));
         Assert.Contains("if (viewModel.PreviewMoveEntry", codeBehind);
