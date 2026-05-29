@@ -4,11 +4,16 @@ public static class LauncherEntryOrder
 {
     public static void SyncWithEntries(List<string> customOrder, IEnumerable<string> entryIds)
     {
-        var knownIds = entryIds
-            .Where(id => !string.IsNullOrWhiteSpace(id))
-            .Distinct(StringComparer.Ordinal)
-            .ToList();
-        var knownSet = knownIds.ToHashSet(StringComparer.Ordinal);
+        var knownIds = new List<string>();
+        var knownSet = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var id in entryIds)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                continue;
+            if (knownSet.Add(id))
+                knownIds.Add(id);
+        }
+
         var seen = new HashSet<string>(StringComparer.Ordinal);
 
         customOrder.RemoveAll(id =>
