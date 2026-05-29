@@ -62,7 +62,7 @@ public sealed class LauncherPresetSelectionPreviewTests
         bool expectedHasChanges,
         int expectedExtraCount)
     {
-        var selectedIds = hasSelection ? new[] { "one" } : Array.Empty<string>();
+        IReadOnlyList<string> selectedIds = hasSelection ? ["one"] : [];
 
         var preview = LauncherPresetSelectionPreview.ForPreset(
             "Manual",
