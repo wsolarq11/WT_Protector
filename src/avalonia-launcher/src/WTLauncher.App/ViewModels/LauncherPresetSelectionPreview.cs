@@ -1,3 +1,5 @@
+using WTLauncher.Core;
+
 namespace WTLauncher.App.ViewModels;
 
 public sealed class LauncherPresetSelectionPreview
@@ -45,8 +47,8 @@ public sealed class LauncherPresetSelectionPreview
     public static LauncherPresetSelectionPreview NoPreset(int presetCount)
     {
         return new LauncherPresetSelectionPreview(
-            new HashSet<string>(StringComparer.Ordinal),
-            new HashSet<string>(StringComparer.Ordinal),
+            new HashSet<string>(LauncherEntryIds.Comparer),
+            new HashSet<string>(LauncherEntryIds.Comparer),
             [],
             matchedCount: 0,
             missingCount: 0,
@@ -63,9 +65,9 @@ public sealed class LauncherPresetSelectionPreview
         IEnumerable<string> knownIds,
         IEnumerable<string> presetIds)
     {
-        var selectedSet = ToOrdinalSet(selectedIds);
-        var knownSet = ToOrdinalSet(knownIds);
-        var presetSet = ToOrdinalSet(presetIds);
+        var selectedSet = LauncherEntryIds.ToUsableSet(selectedIds);
+        var knownSet = LauncherEntryIds.ToUsableSet(knownIds);
+        var presetSet = LauncherEntryIds.ToUsableSet(presetIds);
         var missingConfigIds = presetSet.Where(id => !knownSet.Contains(id)).ToList();
         var matched = selectedSet.Count(presetSet.Contains);
         var missing = presetSet.Count - matched;
@@ -106,10 +108,4 @@ public sealed class LauncherPresetSelectionPreview
                 : $"启动组“{presetName}”：已匹配 {matched}/{presetSet.Count}，缺 {missing}，额外 {extra}；应用会替换当前勾选。");
     }
 
-    private static HashSet<string> ToOrdinalSet(IEnumerable<string> ids)
-    {
-        return ids
-            .Where(id => !string.IsNullOrWhiteSpace(id))
-            .ToHashSet(StringComparer.Ordinal);
-    }
 }

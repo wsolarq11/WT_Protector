@@ -5,7 +5,7 @@ public static class LauncherEntryOrder
     public static void SyncWithEntries(List<string> customOrder, IEnumerable<string> entryIds)
     {
         var knownIds = new List<string>();
-        var knownSet = new HashSet<string>(StringComparer.Ordinal);
+        var knownSet = new HashSet<string>(LauncherEntryIds.Comparer);
         foreach (var id in entryIds)
         {
             if (!LauncherEntryIds.IsUsable(id))
@@ -14,7 +14,7 @@ public static class LauncherEntryOrder
                 knownIds.Add(id);
         }
 
-        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var seen = new HashSet<string>(LauncherEntryIds.Comparer);
 
         customOrder.RemoveAll(id =>
             !LauncherEntryIds.IsUsable(id)
@@ -32,7 +32,7 @@ public static class LauncherEntryOrder
 
     public static IReadOnlyDictionary<string, int> BuildIndex(IEnumerable<string> customOrder)
     {
-        var indexById = new Dictionary<string, int>(StringComparer.Ordinal);
+        var indexById = new Dictionary<string, int>(LauncherEntryIds.Comparer);
         var index = 0;
         foreach (var id in customOrder)
         {

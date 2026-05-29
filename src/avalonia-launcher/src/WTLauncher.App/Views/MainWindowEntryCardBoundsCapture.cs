@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.VisualTree;
 using WTLauncher.App.ViewModels;
+using WTLauncher.Core;
 
 namespace WTLauncher.App.Views;
 
@@ -27,7 +28,7 @@ public static class MainWindowEntryCardBoundsCapture
         ArgumentNullException.ThrowIfNull(translateOrigin);
         ArgumentNullException.ThrowIfNull(readSize);
 
-        var bounds = new Dictionary<string, Rect>(StringComparer.Ordinal);
+        var bounds = new Dictionary<string, Rect>(LauncherEntryIds.Comparer);
         foreach (var card in cards)
         {
             var entry = MainWindowEntryCardResolver.ResolveCard(card);

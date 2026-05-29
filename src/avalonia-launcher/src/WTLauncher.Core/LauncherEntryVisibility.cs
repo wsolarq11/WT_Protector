@@ -49,7 +49,7 @@ public static class LauncherEntryVisibility
         IEnumerable<TEntry> entries,
         Func<TEntry, LaunchEntry> selectEntry) =>
         entries.OrderBy(entry => selectEntry(entry).Name, StringComparer.CurrentCultureIgnoreCase)
-            .ThenBy(entry => selectEntry(entry).Id, StringComparer.Ordinal);
+            .ThenBy(entry => selectEntry(entry).Id, LauncherEntryIds.Comparer);
 
     private static IOrderedEnumerable<TEntry> SortByCustomOrder<TEntry>(
         IEnumerable<TEntry> entries,
@@ -69,7 +69,7 @@ public static class LauncherEntryVisibility
         Func<TEntry, LaunchEntry> selectEntry) =>
         entries
             .ThenBy(entry => selectEntry(entry).Name, StringComparer.CurrentCultureIgnoreCase)
-            .ThenBy(entry => selectEntry(entry).Id, StringComparer.Ordinal);
+            .ThenBy(entry => selectEntry(entry).Id, LauncherEntryIds.Comparer);
 
     private static DateTimeOffset ParseUpdatedAt(string? value) =>
         DateTimeOffset.TryParse(value, out var parsed)

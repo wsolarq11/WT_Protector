@@ -22,4 +22,14 @@ public sealed class LauncherEntryIdsTests
         Assert.False(LauncherEntryIds.Same("One", "one"));
         Assert.False(LauncherEntryIds.Same(null, "one"));
     }
+
+    [Fact]
+    public void ToUsableSetRejectsBlankIdsAndUsesOrdinalComparer()
+    {
+        var ids = LauncherEntryIds.ToUsableSet(["one", "one", "One", "", " "]);
+
+        Assert.Equal(2, ids.Count);
+        Assert.Contains("one", ids);
+        Assert.Contains("One", ids);
+    }
 }
