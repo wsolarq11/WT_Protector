@@ -230,7 +230,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private void Refresh()
     {
         ReplaceEntries(LauncherConfigStore.Load(_configPath));
-        LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, Entries.Select(entry => entry.Id));
+        LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds());
 
         var presetError = LoadPresetFile(preferredPresetId: null);
 
@@ -758,7 +758,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     private void EnsureCustomOrderContainsEntries() =>
-        LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, Entries.Select(entry => entry.Id));
+        LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds());
 
     private void ApplyStatusText(string? statusText)
     {
@@ -842,9 +842,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return LauncherPresetSelectionPreview.ForPreset(
             SelectedPreset.Name,
             selectedEntryIds,
-            Entries.Select(entry => entry.Id),
+            GetEntryIds(),
             SelectedPreset.EntryIds);
     }
+
+    private IEnumerable<string> GetEntryIds() =>
+        Entries.Select(entry => entry.Id);
 
     private List<string> GetSelectedEntryIds() =>
         Entries
