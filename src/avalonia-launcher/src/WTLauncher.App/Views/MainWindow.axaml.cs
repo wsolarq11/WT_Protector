@@ -173,10 +173,12 @@ public sealed partial class MainWindow : Window
         var insertAfter = viewModel.IsDetailedListMode
             ? positionInCard.Y >= (target.Card.Bounds.Height * 0.5)
             : positionInCard.X >= (target.Card.Bounds.Width * 0.5);
-        var before = CaptureEntryCardBounds();
+        var root = GetActiveEntriesRoot();
+        Dictionary<string, Rect> before = root is null
+            ? []
+            : MainWindowEntryCardBoundsCapture.Capture(root, this);
         if (viewModel.PreviewMoveEntry(draggedId, target.Entry.Id, insertAfter))
         {
-            var root = GetActiveEntriesRoot();
             if (root is null)
                 return;
 
@@ -211,15 +213,6 @@ public sealed partial class MainWindow : Window
         return CardsEntriesItemsControl;
     }
 
-    private Dictionary<string, Rect> CaptureEntryCardBounds()
-    {
-        var root = GetActiveEntriesRoot();
-        if (root is null)
-            return [];
-
-        return MainWindowEntryCardBoundsCapture.Capture(root, this);
-    }
-
     private void OnEntriesLayoutUpdated(object? sender, EventArgs e)
     {
         var root = sender as Control;
@@ -232,7 +225,7 @@ public sealed partial class MainWindow : Window
         if (before is null || before.Count == 0)
             return;
 
-        var after = CaptureEntryCardBounds();
+        var after = MainWindowEntryCardBoundsCapture.Capture(root, this);
         if (after.Count == 0)
             return;
 

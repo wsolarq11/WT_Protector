@@ -74,9 +74,9 @@ public sealed class MainWindowXamlContractTests
         Assert.Contains("if (viewModel.PreviewMoveEntry", codeBehind);
         AssertInOrder(
             codeBehind,
-            "var before = CaptureEntryCardBounds();",
-            "if (viewModel.PreviewMoveEntry",
             "var root = GetActiveEntriesRoot();",
+            "MainWindowEntryCardBoundsCapture.Capture(root, this)",
+            "if (viewModel.PreviewMoveEntry",
             "_reorderAnimationScheduler.Schedule(");
         Assert.DoesNotContain("_pendingReorderAnimationAttached", codeBehind);
         Assert.DoesNotContain("_pendingReorderAnimationSnapshot", codeBehind);
