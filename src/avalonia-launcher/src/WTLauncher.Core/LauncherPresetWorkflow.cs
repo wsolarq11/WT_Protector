@@ -80,9 +80,12 @@ public static class LauncherPresetWorkflow
         presetFile.Presets.Any(preset => LauncherPresetIds.Same(preset.Id, presetFile.DefaultPresetId));
 
     private static string ResolveFallbackPresetId(LauncherPresetFile presetFile) =>
-        presetFile.Presets.FirstOrDefault(preset => preset.EntryIds.Count > 0)?.Id
+        presetFile.Presets.FirstOrDefault(HasEntryReferences)?.Id
         ?? presetFile.Presets.FirstOrDefault()?.Id
         ?? string.Empty;
+
+    private static bool HasEntryReferences(LauncherPreset preset) =>
+        preset.EntryIds.Any(LauncherEntryIds.IsUsable);
 
     private static List<string> NormalizeEntryIds(IEnumerable<string> entryIds)
     {
@@ -120,6 +123,6 @@ public static class LauncherPresetWorkflow
             return false;
 
         return presetFile.Presets
-            .Any(preset => !LauncherPresetIds.Same(preset.Id, target.Id) && preset.EntryIds.Count > 0);
+            .Any(preset => !LauncherPresetIds.Same(preset.Id, target.Id) && HasEntryReferences(preset));
     }
 }
