@@ -23,6 +23,14 @@ public sealed class LauncherPresetWorkflowTests
         Assert.Equal("project-pair-3", id);
     }
 
+    [Theory]
+    [InlineData(" Project Pair ", "Project Pair")]
+    [InlineData(null, "")]
+    public void NormalizePresetName_TrimsUserInput(string? name, string expected)
+    {
+        Assert.Equal(expected, LauncherPresetWorkflow.NormalizeName(name));
+    }
+
     [Fact]
     public void PresetIdMatchUsesOrdinalComparison()
     {
@@ -55,12 +63,21 @@ public sealed class LauncherPresetWorkflowTests
     {
         var presetFile = PresetFile(Preset("project-pair", "Existing", "one"));
 
-        var preset = LauncherPresetWorkflow.AddPreset(presetFile, "Project Pair", ["one", "two"]);
+        var preset = LauncherPresetWorkflow.AddPreset(presetFile, " Project Pair ", ["one", "two"]);
 
         Assert.Equal("project-pair-2", preset.Id);
         Assert.Equal("Project Pair", preset.Name);
         Assert.Equal(["one", "two"], preset.EntryIds);
         Assert.Equal(preset, Assert.Single(presetFile.Presets, item => item.Id == "project-pair-2"));
+    }
+
+    [Fact]
+    public void AddPreset_RejectsBlankPresetNameBeforeMutatingFile()
+    {
+        var presetFile = PresetFile(Preset("daily", "Daily", "one"));
+
+        Assert.Throws<ArgumentException>(() => LauncherPresetWorkflow.AddPreset(presetFile, " ", ["one"]));
+        Assert.Single(presetFile.Presets);
     }
 
     [Fact]
@@ -74,7 +91,7 @@ public sealed class LauncherPresetWorkflowTests
         Assert.False(LauncherPresetWorkflow.CanUpdatePreset(presetFile, "blank-manual"));
         Assert.False(LauncherPresetWorkflow.CanUpdatePreset(presetFile, "missing"));
 
-        var updated = LauncherPresetWorkflow.UpdatePreset(presetFile, "daily", "Daily Updated", ["one", "two"]);
+        var updated = LauncherPresetWorkflow.UpdatePreset(presetFile, "daily", " Daily Updated ", ["one", "two"]);
         var locked = LauncherPresetWorkflow.UpdatePreset(presetFile, "blank-manual", "Changed", ["one"]);
         var missing = LauncherPresetWorkflow.UpdatePreset(presetFile, "missing", "Missing", ["one"]);
 
@@ -84,6 +101,17 @@ public sealed class LauncherPresetWorkflowTests
         Assert.Null(locked);
         Assert.Equal("Manual", presetFile.Presets.Single(item => item.Id == "blank-manual").Name);
         Assert.Null(missing);
+    }
+
+    [Fact]
+    public void UpdatePreset_RejectsBlankPresetNameBeforeMutatingPreset()
+    {
+        var presetFile = PresetFile(Preset("daily", "Daily", "one"));
+
+        Assert.Throws<ArgumentException>(() => LauncherPresetWorkflow.UpdatePreset(presetFile, "daily", " ", ["two"]));
+        var preset = Assert.Single(presetFile.Presets);
+        Assert.Equal("Daily", preset.Name);
+        Assert.Equal(["one"], preset.EntryIds);
     }
 
     [Fact]

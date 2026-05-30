@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using WTLauncher.Core;
 
 namespace WTLauncher.App.Views;
 
@@ -66,8 +67,8 @@ public sealed class PresetDetailsWindow : Window
 
     private void Submit()
     {
-        var name = (_nameBox.Text ?? string.Empty).Trim();
-        if (string.IsNullOrWhiteSpace(name))
+        var name = LauncherPresetWorkflow.NormalizeName(_nameBox.Text);
+        if (name.Length == 0)
         {
             _errorText.Text = "请输入启动组名称。";
             _errorText.IsVisible = true;

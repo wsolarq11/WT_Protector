@@ -2,16 +2,20 @@ namespace WTLauncher.Core;
 
 public static class LauncherPresetWorkflow
 {
+    public static string NormalizeName(string? name) =>
+        (name ?? string.Empty).Trim();
+
     public static LauncherPreset AddPreset(LauncherPresetFile presetFile, string name, IReadOnlyList<string> entryIds)
     {
         ArgumentNullException.ThrowIfNull(presetFile);
-        if (string.IsNullOrWhiteSpace(name))
+        var normalizedName = NormalizeName(name);
+        if (normalizedName.Length == 0)
             throw new ArgumentException("Preset name is required.", nameof(name));
 
         var preset = new LauncherPreset
         {
-            Id = LauncherPresetIds.GenerateUnique(name, presetFile.Presets.Select(item => item.Id)),
-            Name = name,
+            Id = LauncherPresetIds.GenerateUnique(normalizedName, presetFile.Presets.Select(item => item.Id)),
+            Name = normalizedName,
             EntryIds = [.. entryIds],
         };
         presetFile.Presets.Add(preset);
@@ -29,7 +33,11 @@ public static class LauncherPresetWorkflow
         if (preset is null || !CanUpdatePreset(preset))
             return null;
 
-        preset.Name = name;
+        var normalizedName = NormalizeName(name);
+        if (normalizedName.Length == 0)
+            throw new ArgumentException("Preset name is required.", nameof(name));
+
+        preset.Name = normalizedName;
         preset.EntryIds = [.. entryIds];
         return preset;
     }

@@ -47,8 +47,8 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
-        var name = presetName.Trim();
-        if (string.IsNullOrWhiteSpace(name))
+        var name = LauncherPresetWorkflow.NormalizeName(presetName);
+        if (name.Length == 0)
         {
             StatusText = LauncherPresetStatus.NameRequired;
             return;
