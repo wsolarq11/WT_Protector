@@ -31,18 +31,15 @@ public static class LauncherEntryMutationPersistence
 
         if (savePresets)
         {
-            try
-            {
-                LauncherPresetStore.Save(presetFile, presetPath);
-            }
-            catch (Exception ex)
+            var presetSaveFailure = LauncherPresetMutationPersistence.Save(presetFile, presetPath);
+            if (presetSaveFailure is not null)
             {
                 var status = RestoreSnapshotOnPersistenceFailure(
                     rollbackSnapshot,
                     configPath,
                     presetPath,
                     restorePresets: false,
-                    currentStatus: LauncherPersistenceStatus.PresetSaveFailed(ex));
+                    currentStatus: presetSaveFailure);
                 return status;
             }
         }

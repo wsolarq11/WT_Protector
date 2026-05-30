@@ -57,15 +57,13 @@ public sealed partial class MainWindowViewModel
 
     private bool SavePresets()
     {
-        try
+        var saveFailure = LauncherPresetMutationPersistence.Save(_presetFile, _presetPath);
+        if (saveFailure is not null)
         {
-            LauncherPresetStore.Save(_presetFile, _presetPath);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            ApplyStatusText(LauncherPersistenceStatus.PresetSaveFailed(ex));
+            ApplyStatusText(saveFailure);
             return false;
         }
+
+        return true;
     }
 }
