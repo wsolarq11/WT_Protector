@@ -150,6 +150,16 @@ public sealed class LauncherPresetWorkflowTests
     }
 
     [Fact]
+    public void AddPreset_NormalizesExistingDefaultPresetReferenceBeforeFallback()
+    {
+        var presetFile = PresetFile(" Daily ", Preset("daily", "Daily", "one"));
+
+        LauncherPresetWorkflow.AddPreset(presetFile, " Project Pair ", ["two"]);
+
+        Assert.Equal("daily", presetFile.DefaultPresetId);
+    }
+
+    [Fact]
     public void AddPreset_RejectsBlankPresetNameBeforeMutatingFile()
     {
         var presetFile = PresetFile(Preset("daily", "Daily", "one"));

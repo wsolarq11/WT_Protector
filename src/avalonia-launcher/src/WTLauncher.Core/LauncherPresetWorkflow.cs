@@ -82,8 +82,12 @@ public static class LauncherPresetWorkflow
         return presetFile.Presets.FirstOrDefault(preset => LauncherPresetIds.Same(preset.Id, normalizedPresetId));
     }
 
-    private static bool HasDefaultPreset(LauncherPresetFile presetFile) =>
-        presetFile.Presets.Any(preset => LauncherPresetIds.Same(preset.Id, presetFile.DefaultPresetId));
+    private static bool HasDefaultPreset(LauncherPresetFile presetFile)
+    {
+        presetFile.DefaultPresetId = LauncherPresetIds.NormalizeReference(presetFile.DefaultPresetId);
+        return presetFile.DefaultPresetId.Length > 0
+            && presetFile.Presets.Any(preset => LauncherPresetIds.Same(preset.Id, presetFile.DefaultPresetId));
+    }
 
     private static string ResolveFallbackPresetId(LauncherPresetFile presetFile) =>
         presetFile.Presets.FirstOrDefault(HasEntryReferences)?.Id
