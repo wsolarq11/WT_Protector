@@ -69,14 +69,15 @@ public sealed partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanUpdateSelectedPreset))]
     private void UpdateSelectedPreset()
     {
-        if (SelectedPreset is null)
+        var selectedPreset = SelectedPreset;
+        if (selectedPreset is null)
         {
             StatusText = LauncherPresetStatus.NoPresetSelected;
             return;
         }
-        if (!LauncherPresetWorkflow.CanUpdatePreset(_presetFile, SelectedPreset.Id))
+        if (!LauncherPresetWorkflow.CanUpdatePreset(_presetFile, selectedPreset.Id))
         {
-            StatusText = LauncherPresetStatus.UpdateBlocked(SelectedPreset.Name);
+            StatusText = LauncherPresetStatus.UpdateBlocked(selectedPreset.Name);
             return;
         }
 
@@ -87,9 +88,9 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
-        var preferredPresetId = SelectedPreset.Id;
+        var preferredPresetId = selectedPreset.Id;
         var snapshot = LauncherPresetFiles.Clone(_presetFile);
-        var preset = LauncherPresetWorkflow.UpdatePreset(_presetFile, SelectedPreset.Id, SelectedPreset.Name, entryIds);
+        var preset = LauncherPresetWorkflow.UpdatePreset(_presetFile, selectedPreset.Id, selectedPreset.Name, entryIds);
         if (preset is null)
         {
             ApplyPresetFileState(snapshot, preferredPresetId);
@@ -106,27 +107,28 @@ public sealed partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanDeleteSelectedPreset))]
     private async Task DeleteSelectedPresetAsync()
     {
-        if (SelectedPreset is null)
+        var selectedPreset = SelectedPreset;
+        if (selectedPreset is null)
         {
             StatusText = LauncherPresetStatus.NoPresetSelected;
             return;
         }
-        if (!LauncherPresetWorkflow.CanDeletePreset(_presetFile, SelectedPreset.Id))
+        if (!LauncherPresetWorkflow.CanDeletePreset(_presetFile, selectedPreset.Id))
         {
-            StatusText = LauncherPresetStatus.DeleteBlocked(SelectedPreset.Name);
+            StatusText = LauncherPresetStatus.DeleteBlocked(selectedPreset.Name);
             return;
         }
 
-        var accepted = await ConfirmDeletePresetAsync(SelectedPreset).ConfigureAwait(true);
+        var accepted = await ConfirmDeletePresetAsync(selectedPreset).ConfigureAwait(true);
         if (!accepted)
         {
-            StatusText = LauncherPresetStatus.DeleteCanceled(SelectedPreset.Name);
+            StatusText = LauncherPresetStatus.DeleteCanceled(selectedPreset.Name);
             return;
         }
 
-        var preferredPresetId = SelectedPreset.Id;
+        var preferredPresetId = selectedPreset.Id;
         var snapshot = LauncherPresetFiles.Clone(_presetFile);
-        var preset = LauncherPresetWorkflow.DeletePreset(_presetFile, SelectedPreset.Id, out var fallbackPresetId);
+        var preset = LauncherPresetWorkflow.DeletePreset(_presetFile, selectedPreset.Id, out var fallbackPresetId);
         if (preset is null)
         {
             ApplyPresetFileState(snapshot, preferredPresetId);
@@ -147,7 +149,8 @@ public sealed partial class MainWindowViewModel
 
     private bool CanApplyPreset()
     {
-        if (SelectedPreset is null || Entries.Count == 0)
+        var selectedPreset = SelectedPreset;
+        if (selectedPreset is null || Entries.Count == 0)
             return false;
 
         return BuildPresetSelectionPreview(GetSelectedEntryIds()).HasChanges;
@@ -155,10 +158,11 @@ public sealed partial class MainWindowViewModel
 
     private bool CanUpdateSelectedPreset()
     {
-        if (SelectedPreset is null || Entries.Count == 0)
+        var selectedPreset = SelectedPreset;
+        if (selectedPreset is null || Entries.Count == 0)
             return false;
 
-        if (!LauncherPresetWorkflow.CanUpdatePreset(_presetFile, SelectedPreset.Id))
+        if (!LauncherPresetWorkflow.CanUpdatePreset(_presetFile, selectedPreset.Id))
             return false;
 
         var selectedEntryIds = GetSelectedEntryIds();
@@ -169,19 +173,20 @@ public sealed partial class MainWindowViewModel
     }
 
     private bool CanDeleteSelectedPreset() =>
-        SelectedPreset is not null
-        && LauncherPresetWorkflow.CanDeletePreset(_presetFile, SelectedPreset.Id);
+        SelectedPreset is { } selectedPreset
+        && LauncherPresetWorkflow.CanDeletePreset(_presetFile, selectedPreset.Id);
 
     private LauncherPresetSelectionPreview BuildPresetSelectionPreview(IReadOnlyList<string> selectedEntryIds)
     {
-        if (SelectedPreset is null)
+        var selectedPreset = SelectedPreset;
+        if (selectedPreset is null)
             return LauncherPresetSelectionPreview.NoPreset(PresetCount);
 
         return LauncherPresetSelectionPreview.ForPreset(
-            SelectedPreset.Name,
+            selectedPreset.Name,
             selectedEntryIds,
             GetEntryIds(),
-            SelectedPreset.EntryIds);
+            selectedPreset.EntryIds);
     }
 
     private void NotifyPresetManagementCommands()
@@ -220,8 +225,9 @@ public sealed partial class MainWindowViewModel
 
         var targetPresetId = preferredPresetId ?? presetFile.DefaultPresetId;
         _presetFile = presetFile;
-        SelectedPreset = Presets.FirstOrDefault(preset => LauncherPresetIds.Same(preset.Id, targetPresetId))
+        var selectedPreset = Presets.FirstOrDefault(preset => LauncherPresetIds.Same(preset.Id, targetPresetId))
             ?? Presets.FirstOrDefault();
+        SelectedPreset = selectedPreset;
         PresetCount = Presets.Count;
         NotifyPresetManagementCommands();
     }
