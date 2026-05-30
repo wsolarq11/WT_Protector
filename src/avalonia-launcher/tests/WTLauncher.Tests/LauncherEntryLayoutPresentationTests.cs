@@ -12,8 +12,8 @@ public sealed class LauncherEntryLayoutPresentationTests
     {
         var size = LauncherEntryLayoutPresentation.NormalizeAvailableSize(new Size(120, 80));
 
-        Assert.Equal(220, size.Width);
-        Assert.Equal(140, size.Height);
+        Assert.Equal(LauncherEntryLayoutPresentation.MinimumCardsWidth, size.Width);
+        Assert.Equal(LauncherEntryLayoutPresentation.MinimumCardsHeight, size.Height);
     }
 
     [Fact]

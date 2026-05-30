@@ -5,8 +5,8 @@ namespace WTLauncher.App.ViewModels;
 
 public static class LauncherEntryLayoutPresentation
 {
-    private const double MinimumCardsWidth = 220;
-    private const double MinimumCardsHeight = 140;
+    public const double MinimumCardsWidth = 220;
+    public const double MinimumCardsHeight = 140;
 
     public static Size NormalizeAvailableSize(Size availableSize)
     {
