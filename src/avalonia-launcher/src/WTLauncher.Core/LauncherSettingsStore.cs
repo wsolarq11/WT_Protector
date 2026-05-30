@@ -8,7 +8,9 @@ public static class LauncherSettingsStore
         if (!File.Exists(settingsPath))
             return new LauncherSettings();
 
-        return LauncherJson.Load<LauncherSettings>(settingsPath) ?? new LauncherSettings();
+        var settings = LauncherJson.Load<LauncherSettings>(settingsPath) ?? new LauncherSettings();
+        Normalize(settings);
+        return settings;
     }
 
     public static void Save(LauncherSettings settings, string settingsPath)
@@ -49,5 +51,15 @@ public static class LauncherSettingsStore
     {
         if (string.IsNullOrWhiteSpace(settingsPath))
             throw new ArgumentException("Settings path is required.", nameof(settingsPath));
+    }
+
+    private static void Normalize(LauncherSettings settings)
+    {
+        settings.Theme ??= "light";
+        settings.LastFilterText ??= string.Empty;
+        settings.SortMode ??= LauncherEntryVisibility.CustomSortModeId;
+        settings.EntryViewMode ??= LauncherEntryViewModes.CardsId;
+        settings.CustomEntryOrder ??= [];
+        settings.Window ??= new LauncherWindowSettings();
     }
 }

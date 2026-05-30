@@ -42,6 +42,32 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void SettingsStore_NormalizesNullWindowAndOrderFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
+        {
+          "theme": null,
+          "lastFilterText": null,
+          "sortMode": null,
+          "entryViewMode": null,
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": null,
+          "window": null
+        }
+        """);
+
+        var loaded = LauncherSettingsStore.Load(settings);
+
+        Assert.Equal("light", loaded.Theme);
+        Assert.Equal(string.Empty, loaded.LastFilterText);
+        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, loaded.SortMode);
+        Assert.Equal(LauncherEntryViewModes.CardsId, loaded.EntryViewMode);
+        Assert.NotNull(loaded.Window);
+        Assert.Empty(loaded.CustomEntryOrder);
+    }
+
+    [Fact]
     public void SettingsStore_TrySaveWindowBoundsPersistsPortableCloseSize()
     {
         using var temp = new TempDirectory();
