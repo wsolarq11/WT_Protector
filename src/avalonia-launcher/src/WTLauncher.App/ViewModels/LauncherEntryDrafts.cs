@@ -16,10 +16,11 @@ public static class LauncherEntryDrafts
 
     public static bool HasRequiredFields(EntryDraft draft)
     {
-        return LauncherEntryIds.IsUsable(draft.Id)
-            && !string.IsNullOrWhiteSpace(draft.Name)
-            && !string.IsNullOrWhiteSpace(draft.Directory)
-            && !string.IsNullOrWhiteSpace(draft.Command);
+        return GetRequiredFieldError(
+            draft.Id,
+            draft.Name,
+            draft.Directory,
+            draft.Command) is null;
     }
 
     public static LaunchEntry CreateEntry(EntryDraft draft, LaunchEntry? previousEntry)
@@ -42,18 +43,36 @@ public static class LauncherEntryDrafts
         string? originalId,
         IEnumerable<LaunchEntry> existingEntries)
     {
-        if (!LauncherEntryIds.IsUsable(entry.Id))
-            return "按钮 ID 不能为空";
-        if (string.IsNullOrWhiteSpace(entry.Name))
-            return "按钮名称不能为空";
-        if (string.IsNullOrWhiteSpace(entry.Directory))
-            return "按钮目录不能为空";
-        if (string.IsNullOrWhiteSpace(entry.Command))
-            return "按钮命令不能为空";
+        var requiredFieldError = GetRequiredFieldError(
+            entry.Id,
+            entry.Name,
+            entry.Directory,
+            entry.Command);
+        if (requiredFieldError is not null)
+            return requiredFieldError;
+
         if (existingEntries.Any(existing =>
                 !LauncherEntryIds.Same(existing.Id, originalId)
                 && LauncherEntryIds.Same(existing.Id, entry.Id)))
             return $"按钮 ID 已存在: {entry.Id}";
+
+        return null;
+    }
+
+    private static string? GetRequiredFieldError(
+        string? id,
+        string? name,
+        string? directory,
+        string? command)
+    {
+        if (!LauncherEntryIds.IsUsable(id))
+            return "按钮 ID 不能为空";
+        if (string.IsNullOrWhiteSpace(name))
+            return "按钮名称不能为空";
+        if (string.IsNullOrWhiteSpace(directory))
+            return "按钮目录不能为空";
+        if (string.IsNullOrWhiteSpace(command))
+            return "按钮命令不能为空";
 
         return null;
     }
