@@ -8,9 +8,9 @@ public static class LauncherEntryDrafts
     {
         return new EntryDraft(
             LauncherEntryIds.Normalize(draft.Id),
-            (draft.Name ?? string.Empty).Trim(),
-            (draft.Directory ?? string.Empty).Trim(),
-            (draft.Command ?? string.Empty).Trim(),
+            LauncherEntryText.Normalize(draft.Name),
+            LauncherEntryText.Normalize(draft.Directory),
+            LauncherEntryText.Normalize(draft.Command),
             draft.Selected);
     }
 

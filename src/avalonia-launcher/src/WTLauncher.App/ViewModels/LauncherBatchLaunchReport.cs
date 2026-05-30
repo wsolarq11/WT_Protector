@@ -1,3 +1,5 @@
+using WTLauncher.Core;
+
 namespace WTLauncher.App.ViewModels;
 
 public sealed class LauncherBatchLaunchReport
@@ -23,7 +25,7 @@ public sealed class LauncherBatchLaunchReport
 
     private static string NormalizeEntryName(string? entryName)
     {
-        var normalized = (entryName ?? string.Empty).Trim();
+        var normalized = LauncherEntryText.Normalize(entryName);
         return normalized.Length == 0 ? "(unnamed)" : normalized;
     }
 }

@@ -8,9 +8,9 @@ public static class LaunchArgumentBuilder
     {
         ArgumentNullException.ThrowIfNull(entry);
 
-        var name = (entry.Name ?? "").Trim();
-        var directory = (entry.Directory ?? "").Trim();
-        var command = (entry.Command ?? "").Trim();
+        var name = LauncherEntryText.Normalize(entry.Name);
+        var directory = LauncherEntryText.Normalize(entry.Directory);
+        var command = LauncherEntryText.Normalize(entry.Command);
 
         if (name.Length == 0)
             throw new InvalidOperationException("Launch entry name is empty.");
