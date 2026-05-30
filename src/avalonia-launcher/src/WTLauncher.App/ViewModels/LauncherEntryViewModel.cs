@@ -49,49 +49,6 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     [ObservableProperty]
     private double _nameTileHeight = 24;
 
-    private LauncherEntryLayoutDensity _layoutDensity = LauncherEntryLayoutDensity.Normal;
-    private DragCueState _dragCueState = DragCueState.None;
-
-    public bool IsDragPreviewTarget => _dragCueState is DragCueState.TargetBefore or DragCueState.TargetAfter;
-
-    public bool IsDragPreviewSource => _dragCueState == DragCueState.Source;
-
-    public bool IsDragInsertBefore => _dragCueState == DragCueState.TargetBefore;
-
-    public bool IsDragInsertAfter => _dragCueState == DragCueState.TargetAfter;
-
-    public bool IsCompactLayout => _layoutDensity is LauncherEntryLayoutDensity.Compact or LauncherEntryLayoutDensity.Micro;
-
-    public bool IsMicroLayout => _layoutDensity is LauncherEntryLayoutDensity.Micro;
-
-    public bool ShowDirectory => ShouldShowDetailText(hideWhenCardsShrink: IsMicroLayout);
-
-    public bool ShowCommand => ShouldShowDetailText(hideWhenCardsShrink: IsCompactLayout);
-
-    public double TitleFontSize => MeasureTitleFontSize();
-
-    private double MeasureTitleFontSize()
-    {
-        if (_owner.IsDetailedListMode || _owner.IsNamesViewMode)
-            return 13;
-        if (IsMicroLayout)
-            return 15;
-        if (IsCompactLayout)
-            return 16;
-
-        return 18;
-    }
-
-    private bool ShouldShowDetailText(bool hideWhenCardsShrink)
-    {
-        if (_owner.IsNamesViewMode)
-            return false;
-        if (_owner.IsDetailedListMode)
-            return true;
-
-        return !hideWhenCardsShrink;
-    }
-
     internal void SetSelectionFromOwner(bool selected)
     {
         Entry.Selected = selected;
@@ -116,53 +73,6 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         Entry.UpdatedAtUtc = updatedAtUtc;
         SetSelectionFromOwner(updated.Selected);
         RefreshDisplay();
-    }
-
-    internal void ShowDragPreviewSource() => SetDragCueState(DragCueState.Source);
-
-    internal void ShowDragPreviewTarget(bool insertAfter) =>
-        SetDragCueState(insertAfter ? DragCueState.TargetAfter : DragCueState.TargetBefore);
-
-    internal void ClearDragCue() => SetDragCueState(DragCueState.None);
-
-    private void SetDragCueState(DragCueState state)
-    {
-        if (_dragCueState == state)
-            return;
-
-        _dragCueState = state;
-        OnPropertyChanged(nameof(IsDragPreviewTarget));
-        OnPropertyChanged(nameof(IsDragPreviewSource));
-        OnPropertyChanged(nameof(IsDragInsertBefore));
-        OnPropertyChanged(nameof(IsDragInsertAfter));
-    }
-
-    partial void OnCardWidthChanged(double value) => UpdateLayoutFlags();
-
-    partial void OnCardHeightChanged(double value) => UpdateLayoutFlags();
-
-    private void UpdateLayoutFlags()
-    {
-        var density = MeasureLayoutDensity(CardWidth, CardHeight);
-
-        if (density == _layoutDensity)
-            return;
-
-        _layoutDensity = density;
-        OnPropertyChanged(nameof(IsCompactLayout));
-        OnPropertyChanged(nameof(IsMicroLayout));
-        RefreshLayoutPresentation();
-    }
-
-    private static LauncherEntryLayoutDensity MeasureLayoutDensity(double width, double height)
-    {
-        if (height <= 96 || width <= 216)
-            return LauncherEntryLayoutDensity.Micro;
-
-        if (height <= 124 || width <= 248)
-            return LauncherEntryLayoutDensity.Compact;
-
-        return LauncherEntryLayoutDensity.Normal;
     }
 
     public void RefreshDisplay()
@@ -192,19 +102,4 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     [RelayCommand]
     private Task DeleteAsync() => _owner.DeleteEntryAsync(this);
-
-    private enum DragCueState
-    {
-        None,
-        Source,
-        TargetBefore,
-        TargetAfter,
-    }
-}
-
-internal enum LauncherEntryLayoutDensity
-{
-    Normal,
-    Compact,
-    Micro,
 }
