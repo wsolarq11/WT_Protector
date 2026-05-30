@@ -17,6 +17,18 @@ public sealed partial class MainWindowViewModelTests
             })
             .ToArray();
 
+    private static (string Config, string Settings, string Presets) CreateSingleEntryFixture(TempDirectory temp) =>
+        CreatePortableFixture(
+            temp,
+            new LaunchEntry
+            {
+                Id = "one",
+                Name = "One",
+                Directory = "D:\\one",
+                Command = "codex",
+                Confirm = false,
+            });
+
     private static (string Config, string Settings, string Presets) CreatePortableFixture(
         TempDirectory temp,
         bool oneSelected,

@@ -10,16 +10,7 @@ public sealed partial class MainWindowViewModelTests
     public void CardLayoutDensitySwitchesBetweenNormalCompactAndMicro()
     {
         using var temp = new TempDirectory();
-        var (config, settings, _) = CreatePortableFixture(
-            temp,
-            new LaunchEntry
-            {
-                Id = "one",
-                Name = "One",
-                Directory = "D:\\one",
-                Command = "codex",
-                Confirm = false,
-            });
+        var (config, settings, _) = CreateSingleEntryFixture(temp);
 
         var viewModel = CreateViewModel(config, settings);
         var entry = Assert.Single(viewModel.Entries);
