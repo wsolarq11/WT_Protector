@@ -68,7 +68,19 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     public bool ShowCommand => !_owner.IsNamesViewMode && (_owner.IsDetailedListMode || !IsCompactLayout);
 
-    public double TitleFontSize => _owner.IsDetailedListMode || _owner.IsNamesViewMode ? 13 : IsMicroLayout ? 15 : IsCompactLayout ? 16 : 18;
+    public double TitleFontSize => MeasureTitleFontSize();
+
+    private double MeasureTitleFontSize()
+    {
+        if (_owner.IsDetailedListMode || _owner.IsNamesViewMode)
+            return 13;
+        if (IsMicroLayout)
+            return 15;
+        if (IsCompactLayout)
+            return 16;
+
+        return 18;
+    }
 
     internal void SetSelectionFromOwner(bool selected)
     {
