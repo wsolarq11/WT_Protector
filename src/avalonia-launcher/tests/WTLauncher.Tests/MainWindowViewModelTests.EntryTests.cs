@@ -167,6 +167,32 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(["two", "three"], savedSettings.CustomEntryOrder);
     }
 
+    [Fact]
+    public async Task DeleteEntryCancellationLeavesFilesAndReferencesUnchanged()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+        var launcherSettings = new LauncherSettings
+        {
+            SortMode = LauncherEntryVisibility.CustomSortModeId,
+            CustomEntryOrder = ["one", "two"],
+        };
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            launcherSettings,
+            vm => vm.ConfirmDeleteEntryAsync = _ => Task.FromResult(false));
+
+        await viewModel.Entries.Single(entry => entry.Id == "one").DeleteCommand.ExecuteAsync(null);
+
+        Assert.Equal(["one", "two"], viewModel.Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one", "two"], LoadEntriesById(config).Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one"], LauncherPresetStore.Load(presets).Presets.Single().EntryIds);
+        Assert.Equal(["one", "two"], launcherSettings.CustomEntryOrder);
+        Assert.Equal(LauncherEntryStatus.DeleteCanceled("one"), viewModel.StatusText);
+    }
+
     private static EntryDraft NewThreeEntryDraft() =>
         new("three", "Three", "D:\\three", "pwsh", Selected: true);
 

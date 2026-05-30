@@ -66,14 +66,10 @@ public sealed partial class MainWindowViewModel
 
     internal async Task DeleteEntryAsync(LauncherEntryViewModel item)
     {
-        var snapshot = CaptureEntryMutationSnapshot();
-        var accepted = await ConfirmDeleteEntryAsync(item).ConfigureAwait(true);
-        if (!accepted)
-        {
-            StatusText = LauncherEntryStatus.DeleteCanceled(item.Name);
+        if (!await ConfirmDeleteEntryIfRequiredAsync(item).ConfigureAwait(true))
             return;
-        }
 
+        var snapshot = CaptureEntryMutationSnapshot();
         var entryName = item.Name;
         Entries.Remove(item);
         LauncherEntryReferences.RemoveEntryId(_presetFile, _settings.CustomEntryOrder, item.Id);
@@ -81,6 +77,16 @@ public sealed partial class MainWindowViewModel
             return;
 
         ApplyStatusText(LauncherEntryStatus.Deleted(entryName));
+    }
+
+    private async Task<bool> ConfirmDeleteEntryIfRequiredAsync(LauncherEntryViewModel item)
+    {
+        var accepted = await ConfirmDeleteEntryAsync(item).ConfigureAwait(true);
+        if (accepted)
+            return true;
+
+        StatusText = LauncherEntryStatus.DeleteCanceled(item.Name);
+        return false;
     }
 
     private LaunchEntry? CreateEntryFromDraftOrReportValidation(
