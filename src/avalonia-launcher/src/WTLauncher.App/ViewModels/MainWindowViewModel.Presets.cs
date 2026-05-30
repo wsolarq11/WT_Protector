@@ -15,19 +15,30 @@ public sealed partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanApplyPreset))]
     private void ApplyPreset()
     {
-        var selectedPreset = GetSelectedPresetOrReportMissing();
-        if (selectedPreset is null)
+        if (!TryGetApplicablePresetSelection(out var selectedPreset, out var selection))
             return;
-
-        var selection = BuildPresetSelectionPreview(GetSelectedEntryIds());
-        if (selection.MissingConfigIds.Count > 0)
-        {
-            ApplyStatusText(LauncherPresetStatus.MissingEntryReferences(selection.MissingConfigIds));
-            return;
-        }
 
         if (ReplaceSelection(selection.PresetIds))
             ApplyStatusText(LauncherPresetStatus.Applied(selectedPreset.Name, selection.PresetIds.Count));
+    }
+
+    private bool TryGetApplicablePresetSelection(
+        [NotNullWhen(true)] out LauncherPresetViewModel? selectedPreset,
+        [NotNullWhen(true)] out LauncherPresetSelectionPreview? selection)
+    {
+        selectedPreset = GetSelectedPresetOrReportMissing();
+        selection = null;
+        if (selectedPreset is null)
+            return false;
+
+        selection = BuildPresetSelectionPreview(GetSelectedEntryIds());
+        if (selection.MissingConfigIds.Count > 0)
+        {
+            ApplyStatusText(LauncherPresetStatus.MissingEntryReferences(selection.MissingConfigIds));
+            return false;
+        }
+
+        return true;
     }
 
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
