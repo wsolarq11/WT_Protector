@@ -46,7 +46,7 @@ public sealed class LauncherEntryVisibilityTests
     }
 
     [Fact]
-    public void FilterAndSort_CustomSortSynchronizesOrderWithAllEntries()
+    public void FilterAndSort_CustomSortUsesExistingOrderWithoutMutatingIt()
     {
         var entries = new[]
         {
@@ -64,7 +64,7 @@ public sealed class LauncherEntryVisibilityTests
             static entry => entry);
 
         Assert.Equal(["two", "one", "three"], visible.Select(entry => entry.Id).ToArray());
-        Assert.Equal(["two", "one", "three"], customOrder);
+        Assert.Equal(["missing", "two", "two"], customOrder);
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public sealed class LauncherEntryVisibilityTests
             static entry => entry);
 
         Assert.Equal([" one ", " two ", "three"], visible.Select(entry => entry.Id).ToArray());
-        Assert.Equal(["one", "two", "three"], customOrder);
+        Assert.Equal([" one ", " two "], customOrder);
     }
 
     [Fact]

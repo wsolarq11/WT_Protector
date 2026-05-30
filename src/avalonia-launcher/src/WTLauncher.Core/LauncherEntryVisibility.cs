@@ -21,7 +21,7 @@ public static class LauncherEntryVisibility
         IEnumerable<TEntry> entries,
         string? filterText,
         string? sortModeId,
-        List<string> customEntryOrder,
+        IEnumerable<string> customEntryOrder,
         Func<TEntry, LaunchEntry> selectEntry)
     {
         ArgumentNullException.ThrowIfNull(entries);
@@ -38,7 +38,7 @@ public static class LauncherEntryVisibility
         {
             UpdatedSortModeId => SortByUpdated(filtered, selectEntry),
             AlphabeticalSortModeId => SortAlphabetically(filtered, selectEntry),
-            _ => SortByCustomOrder(filtered, source, customEntryOrder, selectEntry),
+            _ => SortByCustomOrder(filtered, customEntryOrder, selectEntry),
         };
 
         return sorted.ToList();
@@ -64,11 +64,9 @@ public static class LauncherEntryVisibility
 
     private static IOrderedEnumerable<TEntry> SortByCustomOrder<TEntry>(
         IEnumerable<TEntry> entries,
-        IEnumerable<TEntry> allEntries,
-        List<string> customEntryOrder,
+        IEnumerable<string> customEntryOrder,
         Func<TEntry, LaunchEntry> selectEntry)
     {
-        LauncherEntryOrder.SyncWithEntries(customEntryOrder, allEntries.Select(entry => selectEntry(entry).Id));
         var order = LauncherEntryOrder.BuildIndex(customEntryOrder);
         return ThenByNameThenId(
             entries.OrderBy(entry => order.TryGetValue(LauncherEntryIds.Normalize(selectEntry(entry).Id), out var index) ? index : int.MaxValue),
