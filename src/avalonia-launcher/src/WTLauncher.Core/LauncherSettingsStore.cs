@@ -59,8 +59,8 @@ public static class LauncherSettingsStore
     {
         settings.Theme ??= "light";
         settings.LastFilterText ??= string.Empty;
-        settings.SortMode ??= LauncherEntryVisibility.CustomSortModeId;
-        settings.EntryViewMode ??= LauncherEntryViewModes.CardsId;
+        settings.SortMode = LauncherEntryVisibility.NormalizeSortModeId(settings.SortMode);
+        settings.EntryViewMode = LauncherEntryViewModes.NormalizeId(settings.EntryViewMode);
         settings.CustomEntryOrder = LauncherEntryIds.ToUniqueUsableList(settings.CustomEntryOrder ?? []);
         settings.Window ??= new LauncherWindowSettings();
     }

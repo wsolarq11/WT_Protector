@@ -6,6 +6,17 @@ public static class LauncherEntryVisibility
     public const string UpdatedSortModeId = "updated";
     public const string AlphabeticalSortModeId = "alphabetical";
 
+    public static string NormalizeSortModeId(string? sortModeId)
+    {
+        var normalized = (sortModeId ?? string.Empty).Trim();
+        return normalized switch
+        {
+            UpdatedSortModeId => UpdatedSortModeId,
+            AlphabeticalSortModeId => AlphabeticalSortModeId,
+            _ => CustomSortModeId,
+        };
+    }
+
     public static IReadOnlyList<TEntry> FilterAndSort<TEntry>(
         IEnumerable<TEntry> entries,
         string? filterText,
@@ -23,7 +34,7 @@ public static class LauncherEntryVisibility
             ? source
             : source.Where(entry => MatchesFilter(selectEntry(entry), normalizedFilter));
 
-        var sorted = sortModeId switch
+        var sorted = NormalizeSortModeId(sortModeId) switch
         {
             UpdatedSortModeId => SortByUpdated(filtered, selectEntry),
             AlphabeticalSortModeId => SortAlphabetically(filtered, selectEntry),

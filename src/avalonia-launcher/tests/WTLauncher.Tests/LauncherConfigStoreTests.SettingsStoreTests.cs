@@ -112,6 +112,23 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void SettingsStore_NormalizesInvalidModeIdsFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
+        {
+          "sortMode": " missing ",
+          "entryViewMode": " missing "
+        }
+        """);
+
+        var loaded = LauncherSettingsStore.Load(settings);
+
+        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, loaded.SortMode);
+        Assert.Equal(LauncherEntryViewModes.CardsId, loaded.EntryViewMode);
+    }
+
+    [Fact]
     public void SettingsStore_RejectsNullSettingsOnSave()
     {
         using var temp = new TempDirectory();
@@ -132,8 +149,8 @@ public sealed partial class LauncherConfigStoreTests
         {
             Theme = null!,
             LastFilterText = null!,
-            SortMode = null!,
-            EntryViewMode = null!,
+            SortMode = " missing ",
+            EntryViewMode = " missing ",
             CustomEntryOrder = [null!, " one ", "one", " ", "two", " two "],
             Window = null!,
         };
