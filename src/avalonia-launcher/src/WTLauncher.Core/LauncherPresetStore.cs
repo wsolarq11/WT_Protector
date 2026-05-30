@@ -6,8 +6,7 @@ public static class LauncherPresetStore
 
     public static LauncherPresetFile Load(string presetPath)
     {
-        if (string.IsNullOrWhiteSpace(presetPath))
-            throw new ArgumentException("Preset path is required.", nameof(presetPath));
+        ThrowIfPresetPathMissing(presetPath);
         if (!File.Exists(presetPath))
             return new LauncherPresetFile();
 
@@ -20,8 +19,7 @@ public static class LauncherPresetStore
     public static void Save(LauncherPresetFile presets, string presetPath, bool backup = true)
     {
         ArgumentNullException.ThrowIfNull(presets);
-        if (string.IsNullOrWhiteSpace(presetPath))
-            throw new ArgumentException("Preset path is required.", nameof(presetPath));
+        ThrowIfPresetPathMissing(presetPath);
 
         LauncherJson.Save(LauncherPresetFiles.Clone(presets), presetPath, backup);
     }
@@ -29,5 +27,11 @@ public static class LauncherPresetStore
     public static string ResolvePresetPath(string configPath)
     {
         return LauncherConfigStore.ResolveSiblingPath(configPath, PresetsFileName);
+    }
+
+    private static void ThrowIfPresetPathMissing(string? presetPath)
+    {
+        if (string.IsNullOrWhiteSpace(presetPath))
+            throw new ArgumentException("Preset path is required.", nameof(presetPath));
     }
 }

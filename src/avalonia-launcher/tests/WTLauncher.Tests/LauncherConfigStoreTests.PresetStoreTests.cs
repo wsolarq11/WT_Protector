@@ -138,6 +138,16 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Equal("presets", exception.ParamName);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void PresetStore_RejectsBlankPresetPath(string? presetPath)
+    {
+        AssertPresetPathRequired(() => LauncherPresetStore.Load(presetPath!));
+        AssertPresetPathRequired(() => LauncherPresetStore.Save(new LauncherPresetFile(), presetPath!, backup: false));
+    }
+
     [Fact]
     public void PresetStore_NormalizesPresetDataBeforeWriting()
     {
@@ -191,5 +201,11 @@ public sealed partial class LauncherConfigStoreTests
 
         Assert.False(File.Exists(presetPath + ".bak"));
         Assert.Empty(Directory.EnumerateFiles(configDir, $"{LauncherPresetStore.PresetsFileName}.tmp-*"));
+    }
+
+    private static void AssertPresetPathRequired(Action action)
+    {
+        var exception = Assert.Throws<ArgumentException>(action);
+        Assert.Equal("presetPath", exception.ParamName);
     }
 }
