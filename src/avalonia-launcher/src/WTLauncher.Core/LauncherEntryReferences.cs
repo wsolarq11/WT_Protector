@@ -19,6 +19,8 @@ public static class LauncherEntryReferences
                 if (LauncherEntryIds.SameNormalized(entryIds[i], oldEntryId))
                     entryIds[i] = normalizedNewEntryId;
             }
+
+            NormalizeEntryIds(entryIds);
         }
     }
 
@@ -33,6 +35,7 @@ public static class LauncherEntryReferences
         foreach (var entryIds in EntryReferenceLists(presetFile, customEntryOrder))
         {
             entryIds.RemoveAll(id => LauncherEntryIds.SameNormalized(id, entryId));
+            NormalizeEntryIds(entryIds);
         }
     }
 
@@ -46,5 +49,12 @@ public static class LauncherEntryReferences
         }
 
         yield return customEntryOrder;
+    }
+
+    private static void NormalizeEntryIds(List<string> entryIds)
+    {
+        var normalized = LauncherEntryIds.ToUniqueUsableList(entryIds);
+        entryIds.Clear();
+        entryIds.AddRange(normalized);
     }
 }

@@ -18,9 +18,9 @@ public sealed class LauncherEntryReferencesTests
             oldEntryId: "one",
             newEntryId: "one-renamed");
 
-        Assert.Equal(["one-renamed", "two", "one-renamed"], presetFile.Presets[0].EntryIds);
+        Assert.Equal(["one-renamed", "two"], presetFile.Presets[0].EntryIds);
         Assert.Equal(["three"], presetFile.Presets[1].EntryIds);
-        Assert.Equal(["one-renamed", "two", "one-renamed", "three"], customEntryOrder);
+        Assert.Equal(["one-renamed", "two", "three"], customEntryOrder);
     }
 
     [Fact]
@@ -35,8 +35,8 @@ public sealed class LauncherEntryReferencesTests
             oldEntryId: "one",
             newEntryId: "one-renamed");
 
-        Assert.Equal(["one-renamed", "two", "one-renamed"], presetFile.Presets[0].EntryIds);
-        Assert.Equal(["one-renamed", "two", "one-renamed"], customEntryOrder);
+        Assert.Equal(["one-renamed", "two"], presetFile.Presets[0].EntryIds);
+        Assert.Equal(["one-renamed", "two"], customEntryOrder);
     }
 
     [Fact]
@@ -84,8 +84,8 @@ public sealed class LauncherEntryReferencesTests
             customEntryOrder,
             entryId: "one");
 
-        Assert.Equal(["two", " "], presetFile.Presets[0].EntryIds);
-        Assert.Equal(["two", " "], customEntryOrder);
+        Assert.Equal(["two"], presetFile.Presets[0].EntryIds);
+        Assert.Equal(["two"], customEntryOrder);
     }
 
     private static LauncherPresetFile PresetFile(params LauncherPreset[] presets) =>
