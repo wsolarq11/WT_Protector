@@ -4,7 +4,7 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed class LauncherPresetSelectionPreview
 {
-    private const string ApplyPresetText = "应用启动组";
+    public static string DefaultApplyButtonText => "应用启动组";
 
     private LauncherPresetSelectionPreview(
         IReadOnlySet<string> selectedIds,
@@ -53,7 +53,7 @@ public sealed class LauncherPresetSelectionPreview
             matchedCount: 0,
             missingCount: 0,
             extraCount: 0,
-            ApplyPresetText,
+            DefaultApplyButtonText,
             presetCount == 0
                 ? "暂无启动组；可以继续手动勾选。"
                 : "请选择一个启动组查看差异。");
@@ -102,7 +102,7 @@ public sealed class LauncherPresetSelectionPreview
 
         var isMatched = missing == 0 && extra == 0;
         return Create(
-            isMatched ? "已匹配" : ApplyPresetText,
+            isMatched ? "已匹配" : DefaultApplyButtonText,
             isMatched
                 ? $"已匹配启动组“{presetName}”：{matched}/{presetSet.Count} 项。"
                 : $"启动组“{presetName}”：已匹配 {matched}/{presetSet.Count}，缺 {missing}，额外 {extra}；应用会替换当前勾选。");

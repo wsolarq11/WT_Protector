@@ -11,7 +11,7 @@ public sealed class LauncherPresetSelectionPreviewTests
         var available = LauncherPresetSelectionPreview.NoPreset(presetCount: 1);
 
         Assert.False(empty.HasChanges);
-        Assert.Equal("应用启动组", empty.ApplyButtonText);
+        Assert.Equal(LauncherPresetSelectionPreview.DefaultApplyButtonText, empty.ApplyButtonText);
         Assert.Contains("暂无启动组", empty.StatusText);
         Assert.Contains("请选择一个启动组", available.StatusText);
     }
@@ -30,7 +30,7 @@ public sealed class LauncherPresetSelectionPreviewTests
         Assert.Equal(1, preview.MissingCount);
         Assert.Equal(1, preview.ExtraCount);
         Assert.Empty(preview.MissingConfigIds);
-        Assert.Equal("应用启动组", preview.ApplyButtonText);
+        Assert.Equal(LauncherPresetSelectionPreview.DefaultApplyButtonText, preview.ApplyButtonText);
         Assert.Contains("已匹配 1/2", preview.StatusText);
         Assert.Contains("缺 1", preview.StatusText);
         Assert.Contains("额外 1", preview.StatusText);

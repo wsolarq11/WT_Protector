@@ -24,7 +24,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private string _presetSelectionStatusText = LauncherMainWindowText.PresetSelectionPlaceholder;
 
     [ObservableProperty]
-    private string _applyPresetButtonText = "应用启动组";
+    private string _applyPresetButtonText = LauncherPresetSelectionPreview.DefaultApplyButtonText;
 
     [ObservableProperty]
     private int _totalCount;
