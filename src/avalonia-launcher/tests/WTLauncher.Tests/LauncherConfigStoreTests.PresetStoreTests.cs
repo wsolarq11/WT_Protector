@@ -46,6 +46,12 @@ public sealed partial class LauncherConfigStoreTests
                         Name = null!,
                         EntryIds = [" one ", null!, "one", " ", "two", " two "],
                     },
+                    new LauncherPreset
+                    {
+                        Id = " Daily ",
+                        Name = "Second",
+                        EntryIds = ["two", " three "],
+                    },
                 ],
             },
             presetPath);
@@ -53,12 +59,16 @@ public sealed partial class LauncherConfigStoreTests
         var savedJson = File.ReadAllText(presetPath);
         Assert.DoesNotContain(" Daily ", savedJson);
         Assert.DoesNotContain("null", savedJson);
+        Assert.Contains("daily-2", savedJson);
         var loaded = LauncherPresetStore.Load(presetPath);
         Assert.Equal("daily", loaded.DefaultPresetId);
-        var preset = Assert.Single(loaded.Presets);
-        Assert.Equal("daily", preset.Id);
-        Assert.Equal(string.Empty, preset.Name);
-        Assert.Equal(["one", "two"], preset.EntryIds);
+        Assert.Equal(2, loaded.Presets.Count);
+        Assert.Equal("daily", loaded.Presets[0].Id);
+        Assert.Equal(string.Empty, loaded.Presets[0].Name);
+        Assert.Equal(["one", "two"], loaded.Presets[0].EntryIds);
+        Assert.Equal("daily-2", loaded.Presets[1].Id);
+        Assert.Equal("Second", loaded.Presets[1].Name);
+        Assert.Equal(["two", "three"], loaded.Presets[1].EntryIds);
     }
 
     [Fact]
@@ -82,9 +92,9 @@ public sealed partial class LauncherConfigStoreTests
 
         var loaded = LauncherPresetStore.Load(presetPath);
 
-        Assert.Equal(string.Empty, loaded.DefaultPresetId);
+        Assert.Equal("preset", loaded.DefaultPresetId);
         var preset = Assert.Single(loaded.Presets);
-        Assert.Equal(string.Empty, preset.Id);
+        Assert.Equal("preset", preset.Id);
         Assert.Equal(string.Empty, preset.Name);
         Assert.Equal(["one"], preset.EntryIds);
     }
