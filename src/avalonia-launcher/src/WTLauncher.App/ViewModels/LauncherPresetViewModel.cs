@@ -17,9 +17,11 @@ public sealed class LauncherPresetViewModel
 
     public IReadOnlyList<string> EntryIds => Preset.EntryIds;
 
+    public int EntryCount => LauncherEntryIds.ToUsableSet(EntryIds).Count;
+
     public bool IsLocked => Preset.Locked;
 
-    public string Label => IsLocked ? $"{Name} (系统组, {EntryIds.Count}项)" : $"{Name} ({EntryIds.Count}项)";
+    public string Label => IsLocked ? $"{Name} (系统组, {EntryCount}项)" : $"{Name} ({EntryCount}项)";
 
     public override string ToString() => Label;
 }

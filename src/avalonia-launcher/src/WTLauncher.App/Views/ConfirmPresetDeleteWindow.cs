@@ -34,7 +34,7 @@ public sealed class ConfirmPresetDeleteWindow : Window
                 {
                     LauncherDialogText.Title("删除这个启动组？"),
                     LauncherDialogText.Body($"\"{preset.Name}\" 只会删除命名组，不会删除任何启动项。删除后可重新保存。").WithGridRow(1),
-                    LauncherDialogText.Subtle($"包含 {preset.EntryIds.Count} 个启动项。").WithGridRow(2),
+                    LauncherDialogText.Subtle($"包含 {preset.EntryCount} 个启动项。").WithGridRow(2),
                     LauncherDialogButtons.Footer(14, cancel, delete).WithGridRow(3),
                 },
             },
