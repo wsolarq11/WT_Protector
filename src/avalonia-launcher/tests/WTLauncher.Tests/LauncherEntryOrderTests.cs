@@ -15,6 +15,26 @@ public sealed class LauncherEntryOrderTests
     }
 
     [Fact]
+    public void SyncWithEntriesNormalizesIdsFromSettingsAndKnownEntries()
+    {
+        List<string> order = [" two ", "retired", " two ", "", " one "];
+
+        LauncherEntryOrder.SyncWithEntries(order, [" one ", "two", "three", " three "]);
+
+        Assert.Equal(["two", "one", "three"], order);
+    }
+
+    [Fact]
+    public void SyncWithEntriesNormalizesIdsBeforeFiltering()
+    {
+        List<string> order = [" two ", "retired", "two", " ", " one "];
+
+        LauncherEntryOrder.SyncWithEntries(order, [" one ", "two", " three ", "three"]);
+
+        Assert.Equal(["two", "one", "three"], order);
+    }
+
+    [Fact]
     public void MoveRelativeMovesDraggedEntryBeforeTarget()
     {
         List<string> order = ["one", "two", "three"];
@@ -22,6 +42,26 @@ public sealed class LauncherEntryOrderTests
         LauncherEntryOrder.MoveRelative(order, "three", "one", insertAfter: false);
 
         Assert.Equal(["three", "one", "two"], order);
+    }
+
+    [Fact]
+    public void MoveRelativeNormalizesDraggedAndTargetIds()
+    {
+        List<string> order = [" one ", " two ", "three"];
+
+        LauncherEntryOrder.MoveRelative(order, " three ", " one ", insertAfter: false);
+
+        Assert.Equal(["three", "one", "two"], order);
+    }
+
+    [Fact]
+    public void MoveRelativeNormalizesIdsBeforeMoving()
+    {
+        List<string> order = [" one ", "two", "three"];
+
+        LauncherEntryOrder.MoveRelative(order, " one ", " three ", insertAfter: true);
+
+        Assert.Equal(["two", "three", "one"], order);
     }
 
     [Fact]
@@ -54,9 +94,28 @@ public sealed class LauncherEntryOrderTests
     }
 
     [Fact]
+    public void BuildIndexNormalizesIdsBeforeIndexing()
+    {
+        var index = LauncherEntryOrder.BuildIndex([" two ", "one", "two"]);
+
+        Assert.Equal(0, index["two"]);
+        Assert.Equal(1, index["one"]);
+        Assert.DoesNotContain(" two ", index.Keys);
+    }
+
+    [Fact]
     public void BuildIndexUsesFirstOccurrenceForDuplicateIds()
     {
         var index = LauncherEntryOrder.BuildIndex(["two", "one", "two"]);
+
+        Assert.Equal(0, index["two"]);
+        Assert.Equal(1, index["one"]);
+    }
+
+    [Fact]
+    public void BuildIndexNormalizesKeysBeforeIndexing()
+    {
+        var index = LauncherEntryOrder.BuildIndex([" two ", "one", " two "]);
 
         Assert.Equal(0, index["two"]);
         Assert.Equal(1, index["one"]);
