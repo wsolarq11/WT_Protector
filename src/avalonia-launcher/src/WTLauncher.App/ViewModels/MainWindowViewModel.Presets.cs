@@ -232,25 +232,19 @@ public sealed partial class MainWindowViewModel
         NotifyPresetManagementCommands();
     }
 
-    private bool SavePresetMutationOrRestore(LauncherPresetFile snapshot, string? preferredPresetId)
-    {
-        if (SavePresets())
-            return true;
-
-        ApplyPresetFileState(snapshot, preferredPresetId);
-        return false;
-    }
-
     private bool SavePresetMutationAndReload(
         LauncherPresetFile snapshot,
         string? preferredPresetId,
         string? loadedPresetId)
     {
-        if (!SavePresetMutationOrRestore(snapshot, preferredPresetId))
-            return false;
+        if (SavePresets())
+        {
+            LoadPresetFile(loadedPresetId);
+            return true;
+        }
 
-        LoadPresetFile(loadedPresetId);
-        return true;
+        ApplyPresetFileState(snapshot, preferredPresetId);
+        return false;
     }
 
     private bool SavePresets()
