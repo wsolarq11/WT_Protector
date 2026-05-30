@@ -6,6 +6,7 @@ public static class LauncherPresetWorkflow
     {
         ArgumentNullException.ThrowIfNull(presetFile);
         var normalizedName = NormalizeRequiredName(name);
+        var hasDefaultPreset = TryGetDefaultPresetId(presetFile, out var defaultPresetId);
         var preset = new LauncherPreset
         {
             Id = LauncherPresetIds.GenerateUnique(normalizedName, presetFile.Presets.Select(item => item.Id)),
@@ -13,8 +14,7 @@ public static class LauncherPresetWorkflow
             EntryIds = LauncherEntryIds.ToUniqueUsableList(entryIds),
         };
         presetFile.Presets.Add(preset);
-        if (!HasDefaultPreset(presetFile))
-            presetFile.DefaultPresetId = preset.Id;
+        presetFile.DefaultPresetId = hasDefaultPreset ? defaultPresetId : preset.Id;
 
         return preset;
     }
@@ -43,16 +43,13 @@ public static class LauncherPresetWorkflow
     {
         ArgumentNullException.ThrowIfNull(presetFile);
         var preset = FindPreset(presetFile, presetId);
-        fallbackPresetId = presetFile.DefaultPresetId;
+        fallbackPresetId = ResolveDefaultPresetId(presetFile);
         if (preset is null || !CanDeletePreset(presetFile, preset))
             return null;
 
         presetFile.Presets.Remove(preset);
-        if (!HasDefaultPreset(presetFile))
-        {
-            fallbackPresetId = ResolveFallbackPresetId(presetFile);
-            presetFile.DefaultPresetId = fallbackPresetId;
-        }
+        fallbackPresetId = ResolveDefaultPresetId(presetFile);
+        presetFile.DefaultPresetId = fallbackPresetId;
 
         return preset;
     }
@@ -79,11 +76,17 @@ public static class LauncherPresetWorkflow
         return presetFile.Presets.FirstOrDefault(preset => LauncherPresetIds.Same(preset.Id, normalizedPresetId));
     }
 
-    private static bool HasDefaultPreset(LauncherPresetFile presetFile)
+    private static string ResolveDefaultPresetId(LauncherPresetFile presetFile) =>
+        TryGetDefaultPresetId(presetFile, out var defaultPresetId)
+            ? defaultPresetId
+            : ResolveFallbackPresetId(presetFile);
+
+    private static bool TryGetDefaultPresetId(LauncherPresetFile presetFile, out string defaultPresetId)
     {
-        presetFile.DefaultPresetId = LauncherPresetIds.NormalizeReference(presetFile.DefaultPresetId);
-        return presetFile.DefaultPresetId.Length > 0
-            && presetFile.Presets.Any(preset => LauncherPresetIds.Same(preset.Id, presetFile.DefaultPresetId));
+        var candidate = LauncherPresetIds.NormalizeReference(presetFile.DefaultPresetId);
+        defaultPresetId = candidate;
+        return candidate.Length > 0
+            && presetFile.Presets.Any(preset => LauncherPresetIds.Same(preset.Id, candidate));
     }
 
     private static string ResolveFallbackPresetId(LauncherPresetFile presetFile) =>
