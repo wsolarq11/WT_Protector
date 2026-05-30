@@ -14,7 +14,7 @@ public static class MainWindowDragDropDecision
 
         var canDrop = isCustomSortMode
             && hasResolvedTarget
-            && dataTransfer.Contains(DataFormat.Text);
+            && MainWindowDragEntryTransfer.ContainsEntryId(dataTransfer);
         var previewDraggedEntryId = canDrop ? activeDragEntryId : null;
 
         return new MainWindowDragOverDecision(
@@ -28,9 +28,9 @@ public static class MainWindowDragDropDecision
     {
         ArgumentNullException.ThrowIfNull(dataTransfer);
 
-        var draggedEntryId = hasResolvedTarget ? dataTransfer.TryGetText() : null;
-        if (string.IsNullOrWhiteSpace(draggedEntryId))
-            draggedEntryId = null;
+        var draggedEntryId = hasResolvedTarget
+            ? MainWindowDragEntryTransfer.TryGetEntryId(dataTransfer)
+            : null;
 
         return new MainWindowDropDecision(
             draggedEntryId is null ? DragDropEffects.None : DragDropEffects.Move,

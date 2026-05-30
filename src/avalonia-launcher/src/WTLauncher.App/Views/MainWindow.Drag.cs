@@ -30,7 +30,7 @@ public sealed partial class MainWindow
         var (item, card) = resolved.Value;
 
         var data = new DataTransfer();
-        data.Add(DataTransferItem.CreateText(item.Id));
+        MainWindowDragEntryTransfer.SetEntryId(data, item.Id);
         e.Handled = true;
         _activeDragEntryId = item.Id;
         viewModel.BeginDragReorder(item.Id);

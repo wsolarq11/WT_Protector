@@ -78,7 +78,7 @@ public sealed class MainWindowDragDropDecisionTests
     {
         var transfer = new DataTransfer();
         if (entryId.Length > 0)
-            transfer.Add(DataTransferItem.CreateText(entryId));
+            MainWindowDragEntryTransfer.SetEntryId(transfer, entryId);
 
         var decision = MainWindowDragDropDecision.EvaluateDrop(hasResolvedTarget, transfer);
 
@@ -90,7 +90,7 @@ public sealed class MainWindowDragDropDecisionTests
     private static DataTransfer EntryIdTransfer(string entryId)
     {
         var transfer = new DataTransfer();
-        transfer.Add(DataTransferItem.CreateText(entryId));
+        MainWindowDragEntryTransfer.SetEntryId(transfer, entryId);
         return transfer;
     }
 }
