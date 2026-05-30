@@ -89,13 +89,15 @@ public sealed partial class MainWindowViewModelTests
         string config,
         string settings,
         LauncherSettings? launcherSettings = null,
-        Action<MainWindowViewModel>? configure = null)
+        Action<MainWindowViewModel>? configure = null,
+        Func<DateTimeOffset>? utcNow = null)
     {
         var viewModel = new MainWindowViewModel(
             config,
             settings,
             launcherSettings ?? new LauncherSettings(),
-            CreateLaunchWorkflow());
+            CreateLaunchWorkflow(),
+            utcNow ?? SystemUtcNow);
         configure?.Invoke(viewModel);
         return viewModel;
     }
@@ -104,4 +106,6 @@ public sealed partial class MainWindowViewModelTests
         LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
 
     private static LauncherLaunchWorkflow CreateLaunchWorkflow() => new(_ => { });
+
+    private static DateTimeOffset SystemUtcNow() => DateTimeOffset.UtcNow;
 }

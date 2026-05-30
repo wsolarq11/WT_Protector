@@ -12,6 +12,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly string _settingsPath;
     private readonly LauncherSettings _settings;
     private readonly LauncherLaunchWorkflow _launchWorkflow;
+    private readonly Func<DateTimeOffset> _utcNow;
     private LauncherPresetFile _presetFile = new();
 
     [ObservableProperty]
@@ -44,13 +45,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private bool _requireConfirmationForLaunches;
 
-    public MainWindowViewModel(string configPath, string settingsPath, LauncherSettings settings, LauncherLaunchWorkflow launchWorkflow)
+    public MainWindowViewModel(
+        string configPath,
+        string settingsPath,
+        LauncherSettings settings,
+        LauncherLaunchWorkflow launchWorkflow,
+        Func<DateTimeOffset> utcNow)
     {
         _configPath = configPath;
         _presetPath = LauncherPresetStore.ResolvePresetPath(configPath);
         _settingsPath = settingsPath;
         _settings = settings;
         _launchWorkflow = launchWorkflow ?? throw new ArgumentNullException(nameof(launchWorkflow));
+        _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
         _dragReorderWorkflow = new LauncherDragReorderWorkflow(
             _settings,
             _settingsPath,

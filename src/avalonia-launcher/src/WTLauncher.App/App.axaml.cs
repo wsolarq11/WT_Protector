@@ -25,7 +25,12 @@ public sealed partial class App : Application
             var settingsPath = LauncherConfigStore.ResolveSettingsPath(configPath);
             var settings = LauncherSettingsStore.Load(settingsPath);
             var launchWorkflow = new LauncherLaunchWorkflow(new LauncherProcess());
-            var viewModel = new MainWindowViewModel(configPath, settingsPath, settings, launchWorkflow);
+            var viewModel = new MainWindowViewModel(
+                configPath,
+                settingsPath,
+                settings,
+                launchWorkflow,
+                static () => DateTimeOffset.UtcNow);
             var mainWindow = new MainWindow(viewModel, settingsPath, settings)
             {
                 Width = settings.Window.Width,

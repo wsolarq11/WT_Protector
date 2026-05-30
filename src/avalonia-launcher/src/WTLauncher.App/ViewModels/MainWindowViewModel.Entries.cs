@@ -161,5 +161,5 @@ public sealed partial class MainWindowViewModel
         TotalCount = Entries.Count;
     }
 
-    private static string CurrentTimestampUtc() => DateTimeOffset.UtcNow.ToString("O");
+    private string CurrentTimestampUtc() => _utcNow().ToString("O");
 }

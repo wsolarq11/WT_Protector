@@ -40,7 +40,12 @@ internal static class MainWindowEntryCardTestFactory
     private static MainWindowViewModel CreateOwner(string configPath, string settingsPath, LaunchEntry entry)
     {
         LauncherConfigStore.Save([entry], configPath);
-        return new MainWindowViewModel(configPath, settingsPath, new LauncherSettings(), CreateLaunchWorkflow());
+        return new MainWindowViewModel(
+            configPath,
+            settingsPath,
+            new LauncherSettings(),
+            CreateLaunchWorkflow(),
+            static () => DateTimeOffset.UtcNow);
     }
 
     private static LaunchEntry CreateEntry(string id)

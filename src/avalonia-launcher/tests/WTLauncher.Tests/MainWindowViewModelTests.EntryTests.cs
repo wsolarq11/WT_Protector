@@ -140,6 +140,11 @@ public sealed partial class MainWindowViewModelTests
         SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
 
         var requestCount = 0;
+        var timestamps = new Queue<DateTimeOffset>(
+        [
+            DateTimeOffset.Parse("2026-05-30T01:02:03Z"),
+            DateTimeOffset.Parse("2026-05-30T04:05:06Z"),
+        ]);
         var viewModel = CreateViewModel(
             config,
             settings,
@@ -155,14 +160,15 @@ public sealed partial class MainWindowViewModelTests
                         ? NewThreeEntryDraft()
                         : RenamedOneEntryDraft());
                 vm.ConfirmDeleteEntryAsync = _ => Task.FromResult(true);
-            });
+            },
+            utcNow: timestamps.Dequeue);
 
         await viewModel.AddEntryCommand.ExecuteAsync(null);
 
         var savedEntries = LoadEntriesById(config);
         var added = savedEntries.Single(entry => entry.Id == "three");
         Assert.True(added.Selected);
-        Assert.False(string.IsNullOrWhiteSpace(added.UpdatedAtUtc));
+        Assert.Equal("2026-05-30T01:02:03.0000000+00:00", added.UpdatedAtUtc);
         var savedSettings = LauncherSettingsStore.Load(settings);
         Assert.Equal(["one", "two", "three"], savedSettings.CustomEntryOrder);
 
@@ -176,7 +182,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("opencode", edited.Command);
         Assert.False(edited.Confirm);
         Assert.False(edited.Selected);
-        Assert.False(string.IsNullOrWhiteSpace(edited.UpdatedAtUtc));
+        Assert.Equal("2026-05-30T04:05:06.0000000+00:00", edited.UpdatedAtUtc);
 
         var savedPresetFile = LauncherPresetStore.Load(presets);
         Assert.Equal(["one-renamed"], savedPresetFile.Presets.Single(preset => preset.Id == "daily").EntryIds);
