@@ -94,8 +94,10 @@ public sealed partial class MainWindowViewModelTests
         var entries = NumberedEntries(6);
         var (config, settings, _) = CreatePortableFixture(temp, entries);
         var viewModel = CreateViewModel(config, settings);
+        const double availableWidth = 640;
+        const double availableHeight = 260;
 
-        viewModel.UpdateCardsAvailableSize(new Size(640, 260));
+        viewModel.UpdateCardsAvailableSize(new Size(availableWidth, availableHeight));
 
         var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
         Assert.True(first.CardWidth < 300, "expected card width to shrink below the default width");
@@ -106,13 +108,15 @@ public sealed partial class MainWindowViewModelTests
             Assert.Equal(first.CardHeight, entry.CardHeight);
         });
 
-        const double gap = 8;
-        var columns = Math.Max(1, (int)Math.Floor((640 + gap) / (first.CardWidth + gap)));
-        var rows = (int)Math.Ceiling(viewModel.VisibleEntries.Count / (double)columns);
-        var usedWidth = (columns * first.CardWidth) + ((columns - 1) * gap);
-        var usedHeight = (rows * first.CardHeight) + ((rows - 1) * gap);
-        Assert.True(usedWidth <= 640.001, $"expected cards to fit available width, got {usedWidth}");
-        Assert.True(usedHeight <= 260.001, $"expected cards to fit available height, got {usedHeight}");
+        var usage = MeasureLayoutGridUsage(
+            viewModel.VisibleEntries.Count,
+            availableWidth,
+            first.CardWidth,
+            first.CardHeight,
+            columnGap: 8,
+            rowGap: 8);
+        Assert.True(usage.UsedWidth <= availableWidth + 0.001, $"expected cards to fit available width, got {usage.UsedWidth}");
+        Assert.True(usage.UsedHeight <= availableHeight + 0.001, $"expected cards to fit available height, got {usage.UsedHeight}");
     }
 
     [Fact]
@@ -138,20 +142,24 @@ public sealed partial class MainWindowViewModelTests
         var entries = NumberedEntries(19);
         var (config, settings, _) = CreatePortableFixture(temp, entries);
         var viewModel = CreateViewModel(config, settings);
+        const double availableWidth = 892;
+        const double availableHeight = 330;
 
-        viewModel.UpdateCardsAvailableSize(new Size(892, 330));
+        viewModel.UpdateCardsAvailableSize(new Size(availableWidth, availableHeight));
 
         var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
         Assert.Equal(24, first.NameTileHeight);
         Assert.InRange(first.NameTileWidth, 132, 220);
 
-        const double gap = 6;
-        const double rowGap = 4;
-        var columns = Math.Max(1, (int)Math.Floor((892 + gap) / (first.NameTileWidth + gap)));
-        var rows = (int)Math.Ceiling(viewModel.VisibleEntries.Count / (double)columns);
-        var usedHeight = (rows * first.NameTileHeight) + ((rows - 1) * rowGap);
-        Assert.True(columns >= 4, $"expected name wall to adapt to multiple columns, got {columns}");
-        Assert.True(usedHeight <= 330.001, $"expected name wall to fit all 19 root-scale items in the available height, got {usedHeight}");
+        var usage = MeasureLayoutGridUsage(
+            viewModel.VisibleEntries.Count,
+            availableWidth,
+            first.NameTileWidth,
+            first.NameTileHeight,
+            columnGap: 6,
+            rowGap: 4);
+        Assert.True(usage.Columns >= 4, $"expected name wall to adapt to multiple columns, got {usage.Columns}");
+        Assert.True(usage.UsedHeight <= availableHeight + 0.001, $"expected name wall to fit all 19 root-scale items in the available height, got {usage.UsedHeight}");
     }
 
     [Fact]
@@ -161,18 +169,40 @@ public sealed partial class MainWindowViewModelTests
         var entries = NumberedEntries(19);
         var (config, settings, _) = CreatePortableFixture(temp, entries);
         var viewModel = CreateViewModel(config, settings);
+        const double availableWidth = 892;
+        const double availableHeight = 330;
 
-        viewModel.UpdateCardsAvailableSize(new Size(892, 330));
+        viewModel.UpdateCardsAvailableSize(new Size(availableWidth, availableHeight));
 
         var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
         Assert.True(first.CardHeight >= 96, "expected card height to stop shrinking before actions become unreachable; scrolling is the fallback");
 
-        const double gap = 8;
-        var columns = Math.Max(1, (int)Math.Floor((892 + gap) / (first.CardWidth + gap)));
-        var rows = (int)Math.Ceiling(viewModel.VisibleEntries.Count / (double)columns);
-        var usedWidth = (columns * first.CardWidth) + ((columns - 1) * gap);
-        var usedHeight = (rows * first.CardHeight) + ((rows - 1) * gap);
-        Assert.True(usedWidth <= 892.001, $"expected cards to fit minimum-window width, got {usedWidth}");
-        Assert.True(usedHeight > 330.001, $"expected min-window height to overflow so the ScrollViewer can act as fallback, got {usedHeight}");
+        var usage = MeasureLayoutGridUsage(
+            viewModel.VisibleEntries.Count,
+            availableWidth,
+            first.CardWidth,
+            first.CardHeight,
+            columnGap: 8,
+            rowGap: 8);
+        Assert.True(usage.UsedWidth <= availableWidth + 0.001, $"expected cards to fit minimum-window width, got {usage.UsedWidth}");
+        Assert.True(usage.UsedHeight > availableHeight + 0.001, $"expected min-window height to overflow so the ScrollViewer can act as fallback, got {usage.UsedHeight}");
     }
+
+    private static LayoutGridUsage MeasureLayoutGridUsage(
+        int itemCount,
+        double availableWidth,
+        double itemWidth,
+        double itemHeight,
+        double columnGap,
+        double rowGap)
+    {
+        var columns = Math.Max(1, (int)Math.Floor((availableWidth + columnGap) / (itemWidth + columnGap)));
+        var rows = (int)Math.Ceiling(itemCount / (double)columns);
+        return new LayoutGridUsage(
+            columns,
+            (columns * itemWidth) + ((columns - 1) * columnGap),
+            (rows * itemHeight) + ((rows - 1) * rowGap));
+    }
+
+    private readonly record struct LayoutGridUsage(int Columns, double UsedWidth, double UsedHeight);
 }
