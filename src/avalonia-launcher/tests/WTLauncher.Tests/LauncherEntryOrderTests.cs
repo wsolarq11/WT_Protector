@@ -65,6 +65,16 @@ public sealed class LauncherEntryOrderTests
     }
 
     [Fact]
+    public void MoveRelativeDedupesDirtyOrderBeforeMoving()
+    {
+        List<string> order = [" one ", "two", " two ", "three"];
+
+        LauncherEntryOrder.MoveRelative(order, " three ", " one ", insertAfter: false);
+
+        Assert.Equal(["three", "one", "two"], order);
+    }
+
+    [Fact]
     public void MoveRelativeIgnoresUnknownDraggedEntry()
     {
         List<string> order = ["one", "two", "three"];

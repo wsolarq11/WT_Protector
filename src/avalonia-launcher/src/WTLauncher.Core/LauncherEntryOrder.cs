@@ -69,10 +69,7 @@ public static class LauncherEntryOrder
             return;
         if (LauncherEntryIds.Same(draggedId, targetId))
             return;
-        var normalizedOrder = customOrder
-            .Select(LauncherEntryIds.Normalize)
-            .Where(LauncherEntryIds.IsUsable)
-            .ToList();
+        var normalizedOrder = LauncherEntryIds.ToUniqueUsableList(customOrder);
         if (!normalizedOrder.Any(id => LauncherEntryIds.Same(id, draggedId)))
             return;
 
