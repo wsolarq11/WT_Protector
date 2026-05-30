@@ -10,7 +10,11 @@ public sealed partial class MainWindowViewModelTests
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
-        var launcherSettings = new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["one", "two"] };
+        var launcherSettings = new LauncherSettings
+        {
+            SortMode = LauncherEntryVisibility.CustomSortModeId,
+            CustomEntryOrder = ["one", "two"],
+        };
         var viewModel = CreateViewModel(
             config,
             settings,
@@ -113,7 +117,11 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(
             config,
             settings,
-            new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["one", "two"] },
+            new LauncherSettings
+            {
+                SortMode = LauncherEntryVisibility.CustomSortModeId,
+                CustomEntryOrder = ["one", "two"],
+            },
             vm =>
             {
                 vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
