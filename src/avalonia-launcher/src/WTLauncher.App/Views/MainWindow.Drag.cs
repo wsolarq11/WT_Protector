@@ -34,31 +34,10 @@ public sealed partial class MainWindow
         e.Handled = true;
         _activeDragEntryId = item.Id;
         viewModel.BeginDragReorder(item.Id);
-        _overlayLayer ??= OverlayLayer.GetOverlayLayer(this);
-        if (_overlayLayer is not null && _dragGhost is null)
-        {
-            var pointerPosition = e.GetPosition(this);
-            var ghost = MainWindowDragGhostFactory.Create(
-                item.Name,
-                item.Directory,
-                item.TitleFontSize,
-                card.Bounds.Width,
-                card.Bounds.Height,
-                pointerPosition.X,
-                pointerPosition.Y);
-
-            _dragGhost = ghost.Control;
-            _overlayLayer.Children.Add(ghost.Control);
-            Canvas.SetLeft(ghost.Control, ghost.Left);
-            Canvas.SetTop(ghost.Control, ghost.Top);
-        }
+        ShowDragGhost(item, card, e);
 
         var effect = await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move).ConfigureAwait(true);
-        if (_overlayLayer is not null && _dragGhost is not null)
-        {
-            _overlayLayer.Children.Remove(_dragGhost);
-            _dragGhost = null;
-        }
+        HideDragGhost();
 
         if (_activeDragEntryId is not null)
         {
@@ -80,15 +59,7 @@ public sealed partial class MainWindow
         }
 
         if (_activeDragEntryId is not null)
-        {
-            var pointerPosition = e.GetPosition(this);
-            var ghostPosition = LauncherDragGhostLayoutCalculator.CalculatePosition(pointerPosition.X, pointerPosition.Y);
-            if (_dragGhost is not null)
-            {
-                Canvas.SetLeft(_dragGhost, ghostPosition.Left);
-                Canvas.SetTop(_dragGhost, ghostPosition.Top);
-            }
-        }
+            MoveDragGhost(e);
 
         var resolved = ResolveEntryCardFromDragEvent(e);
         var decision = MainWindowDragDropDecision.EvaluateDragOver(
@@ -158,6 +129,55 @@ public sealed partial class MainWindow
             return direct;
 
         return MainWindowEntryCardResolver.ResolveFromSource(this.GetVisualAt(e.GetPosition(this)));
+    }
+
+    private void ShowDragGhost(
+        LauncherEntryViewModel item,
+        Control card,
+        PointerPressedEventArgs e)
+    {
+        _overlayLayer ??= OverlayLayer.GetOverlayLayer(this);
+        if (_overlayLayer is null || _dragGhost is not null)
+            return;
+
+        var pointerPosition = e.GetPosition(this);
+        var ghost = MainWindowDragGhostFactory.Create(
+            item.Name,
+            item.Directory,
+            item.TitleFontSize,
+            card.Bounds.Width,
+            card.Bounds.Height,
+            pointerPosition.X,
+            pointerPosition.Y);
+
+        _dragGhost = ghost.Control;
+        _overlayLayer.Children.Add(_dragGhost);
+        SetDragGhostPosition(_dragGhost, ghost.Left, ghost.Top);
+    }
+
+    private void MoveDragGhost(DragEventArgs e)
+    {
+        if (_dragGhost is null)
+            return;
+
+        var pointerPosition = e.GetPosition(this);
+        var ghostPosition = LauncherDragGhostLayoutCalculator.CalculatePosition(pointerPosition.X, pointerPosition.Y);
+        SetDragGhostPosition(_dragGhost, ghostPosition.Left, ghostPosition.Top);
+    }
+
+    private static void SetDragGhostPosition(Border ghost, double left, double top)
+    {
+        Canvas.SetLeft(ghost, left);
+        Canvas.SetTop(ghost, top);
+    }
+
+    private void HideDragGhost()
+    {
+        if (_overlayLayer is null || _dragGhost is null)
+            return;
+
+        _overlayLayer.Children.Remove(_dragGhost);
+        _dragGhost = null;
     }
 
     private void OnEntriesLayoutUpdated(object? sender, EventArgs e)

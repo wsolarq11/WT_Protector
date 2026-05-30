@@ -55,20 +55,26 @@ public sealed class MainWindowXamlContractTests
 
         AssertInOrder(
             dragCodeBehind,
-            "_overlayLayer ??= OverlayLayer.GetOverlayLayer(this);",
-            "MainWindowDragGhostFactory.Create(",
-            "_overlayLayer.Children.Add(ghost.Control)",
-            "Canvas.SetLeft(ghost.Control, ghost.Left)",
-            "Canvas.SetTop(ghost.Control, ghost.Top)",
+            "ShowDragGhost(item, card, e);",
             "DragDrop.DoDragDropAsync",
-            "_overlayLayer.Children.Remove(_dragGhost)",
-            "_dragGhost = null");
+            "HideDragGhost();");
         AssertInOrder(
             dragCodeBehind,
-            "if (_activeDragEntryId is not null)",
+            "private void ShowDragGhost(",
+            "_overlayLayer ??= OverlayLayer.GetOverlayLayer(this);",
+            "MainWindowDragGhostFactory.Create(",
+            "_overlayLayer.Children.Add(_dragGhost)",
+            "SetDragGhostPosition(_dragGhost, ghost.Left, ghost.Top)");
+        AssertInOrder(
+            dragCodeBehind,
+            "private void MoveDragGhost(",
             "LauncherDragGhostLayoutCalculator.CalculatePosition",
-            "Canvas.SetLeft(_dragGhost, ghostPosition.Left)",
-            "Canvas.SetTop(_dragGhost, ghostPosition.Top)");
+            "SetDragGhostPosition(_dragGhost, ghostPosition.Left, ghostPosition.Top)");
+        AssertInOrder(
+            dragCodeBehind,
+            "private void HideDragGhost(",
+            "_overlayLayer.Children.Remove(_dragGhost)",
+            "_dragGhost = null");
         Assert.Contains("private void ApplyDragReorderPreview(", dragCodeBehind);
         Assert.Equal(1, Count(dragCodeBehind, "viewModel.PreviewMoveEntry("));
         Assert.Contains("if (viewModel.PreviewMoveEntry", dragCodeBehind);
