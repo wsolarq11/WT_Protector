@@ -14,7 +14,6 @@ public sealed partial class MainWindowViewModel
     [RelayCommand]
     private async Task AddEntryAsync()
     {
-        var snapshot = CaptureEntryMutationSnapshot();
         var draft = await RequestEntryDraftAsync(null).ConfigureAwait(true);
         if (draft is null)
         {
@@ -29,6 +28,7 @@ public sealed partial class MainWindowViewModel
         if (entry is null)
             return;
 
+        var snapshot = CaptureEntryMutationSnapshot();
         entry.UpdatedAtUtc = CurrentTimestampUtc();
         Entries.Add(new LauncherEntryViewModel(entry, this));
         _settings.CustomEntryOrder.Add(entry.Id);
@@ -41,7 +41,6 @@ public sealed partial class MainWindowViewModel
 
     internal async Task EditEntryAsync(LauncherEntryViewModel item)
     {
-        var snapshot = CaptureEntryMutationSnapshot();
         var draft = await RequestEntryDraftAsync(item.Entry).ConfigureAwait(true);
         if (draft is null)
         {
@@ -54,6 +53,7 @@ public sealed partial class MainWindowViewModel
         if (updated is null)
             return;
 
+        var snapshot = CaptureEntryMutationSnapshot();
         item.ReplaceEntryFromOwner(updated, CurrentTimestampUtc());
         if (!LauncherEntryIds.Same(oldId, item.Id))
             LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, item.Id);

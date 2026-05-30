@@ -83,6 +83,56 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task AddEntryCancellationLeavesFilesAndOrderUnchanged()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        var launcherSettings = new LauncherSettings
+        {
+            SortMode = LauncherEntryVisibility.CustomSortModeId,
+            CustomEntryOrder = ["one", "two"],
+        };
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            launcherSettings,
+            vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(null));
+
+        await viewModel.AddEntryCommand.ExecuteAsync(null);
+
+        Assert.Equal(["one", "two"], viewModel.Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one", "two"], LoadEntriesById(config).Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one", "two"], launcherSettings.CustomEntryOrder);
+        Assert.Equal(LauncherEntryStatus.AddCanceled, viewModel.StatusText);
+    }
+
+    [Fact]
+    public async Task EditEntryCancellationLeavesFilesAndReferencesUnchanged()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+        var launcherSettings = new LauncherSettings
+        {
+            SortMode = LauncherEntryVisibility.CustomSortModeId,
+            CustomEntryOrder = ["one", "two"],
+        };
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            launcherSettings,
+            vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(null));
+
+        await viewModel.Entries.Single(entry => entry.Id == "one").EditCommand.ExecuteAsync(null);
+
+        Assert.Equal(["one", "two"], viewModel.Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one", "two"], LoadEntriesById(config).Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one"], LauncherPresetStore.Load(presets).Presets.Single().EntryIds);
+        Assert.Equal(["one", "two"], launcherSettings.CustomEntryOrder);
+        Assert.Equal(LauncherEntryStatus.EditCanceled("one"), viewModel.StatusText);
+    }
+
+    [Fact]
     public async Task EntryCommandsPersistPortableConfigAndReferences()
     {
         using var temp = new TempDirectory();
