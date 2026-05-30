@@ -54,6 +54,27 @@ public sealed partial class MainWindowViewModelTests
         return (config, Path.Combine(configDir, "settings.json"), Path.Combine(configDir, "presets.json"));
     }
 
+    private static void SavePresetFile(string path, string defaultPresetId, params LauncherPreset[] presets) =>
+        LauncherPresetStore.Save(
+            new LauncherPresetFile
+            {
+                DefaultPresetId = defaultPresetId,
+                Presets = [.. presets],
+            },
+            path);
+
+    private static LauncherPreset Preset(string id, string name, params string[] entryIds) =>
+        Preset(id, name, locked: false, entryIds);
+
+    private static LauncherPreset Preset(string id, string name, bool locked, params string[] entryIds) =>
+        new()
+        {
+            Id = id,
+            Name = name,
+            EntryIds = [.. entryIds],
+            Locked = locked,
+        };
+
     private static MainWindowViewModel CreateViewModel(
         string config,
         string settings,

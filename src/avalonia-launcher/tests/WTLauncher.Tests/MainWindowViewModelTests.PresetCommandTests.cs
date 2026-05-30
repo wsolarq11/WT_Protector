@@ -9,27 +9,11 @@ public sealed partial class MainWindowViewModelTests
     {
         using var temp = new TempDirectory();
         var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
-        File.WriteAllText(presets, """
-        {
-          "schemaVersion": 1,
-          "defaultPresetId": "daily",
-          "presets": [
-            {
-              "id": "daily",
-              "name": "Daily",
-              "description": "demo preset",
-              "entryIds": ["one"]
-            },
-            {
-              "id": "blank-manual",
-              "name": "Manual",
-              "description": "locked empty preset",
-              "entryIds": [],
-              "locked": true
-            }
-          ]
-        }
-        """);
+        SavePresetFile(
+            presets,
+            "daily",
+            Preset("daily", "Daily", "one"),
+            Preset("blank-manual", "Manual", locked: true));
 
         var viewModel = CreateViewModel(
             config,
@@ -82,27 +66,11 @@ public sealed partial class MainWindowViewModelTests
     {
         using var temp = new TempDirectory();
         var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
-        File.WriteAllText(presets, """
-        {
-          "schemaVersion": 1,
-          "defaultPresetId": "daily",
-          "presets": [
-            {
-              "id": "daily",
-              "name": "Daily",
-              "description": "demo preset",
-              "entryIds": ["one"]
-            },
-            {
-              "id": "blank-manual",
-              "name": "Manual",
-              "description": "locked empty preset",
-              "entryIds": [],
-              "locked": true
-            }
-          ]
-        }
-        """);
+        SavePresetFile(
+            presets,
+            "daily",
+            Preset("daily", "Daily", "one"),
+            Preset("blank-manual", "Manual", locked: true));
 
         var viewModel = CreateViewModel(config, settings);
         var applyNotifications = 0;

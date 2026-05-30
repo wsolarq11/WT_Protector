@@ -9,20 +9,7 @@ public sealed partial class MainWindowViewModelTests
     {
         using var temp = new TempDirectory();
         var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: false, twoSelected: true);
-        File.WriteAllText(presets, """
-        {
-          "schemaVersion": 1,
-          "defaultPresetId": "daily",
-          "presets": [
-            {
-              "id": "daily",
-              "name": "Daily",
-              "description": "demo preset",
-              "entryIds": ["one"]
-            }
-          ]
-        }
-        """);
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
 
         var viewModel = CreateViewModel(config, settings);
 
@@ -54,16 +41,11 @@ public sealed partial class MainWindowViewModelTests
             defaultTemp,
             oneSelected: false,
             twoSelected: false);
-        File.WriteAllText(defaultPresets, """
-        {
-          "schemaVersion": 1,
-          "defaultPresetId": "team",
-          "presets": [
-            { "id": "daily", "name": "Daily", "entryIds": ["one"] },
-            { "id": "team", "name": "Team", "entryIds": ["two"] }
-          ]
-        }
-        """);
+        SavePresetFile(
+            defaultPresets,
+            "team",
+            Preset("daily", "Daily", "one"),
+            Preset("team", "Team", "two"));
 
         var defaultViewModel = CreateViewModel(defaultConfig, defaultSettings);
 
@@ -75,16 +57,11 @@ public sealed partial class MainWindowViewModelTests
             fallbackTemp,
             oneSelected: false,
             twoSelected: false);
-        File.WriteAllText(fallbackPresets, """
-        {
-          "schemaVersion": 1,
-          "defaultPresetId": "missing",
-          "presets": [
-            { "id": "daily", "name": "Daily", "entryIds": ["one"] },
-            { "id": "team", "name": "Team", "entryIds": ["two"] }
-          ]
-        }
-        """);
+        SavePresetFile(
+            fallbackPresets,
+            "missing",
+            Preset("daily", "Daily", "one"),
+            Preset("team", "Team", "two"));
 
         var fallbackViewModel = CreateViewModel(fallbackConfig, fallbackSettings);
 
@@ -96,20 +73,7 @@ public sealed partial class MainWindowViewModelTests
     {
         using var temp = new TempDirectory();
         var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: false, twoSelected: true);
-        File.WriteAllText(presets, """
-        {
-          "schemaVersion": 1,
-          "defaultPresetId": "broken",
-          "presets": [
-            {
-              "id": "broken",
-              "name": "Broken",
-              "description": "references a retired config id",
-              "entryIds": ["one", "missing-entry"]
-            }
-          ]
-        }
-        """);
+        SavePresetFile(presets, "broken", Preset("broken", "Broken", "one", "missing-entry"));
 
         var viewModel = CreateViewModel(config, settings);
 

@@ -9,20 +9,7 @@ public sealed partial class MainWindowViewModelTests
     {
         using var temp = new TempDirectory();
         var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
-        File.WriteAllText(presets, """
-        {
-          "schemaVersion": 1,
-          "defaultPresetId": "daily",
-          "presets": [
-            {
-              "id": "daily",
-              "name": "Daily",
-              "description": "demo preset",
-              "entryIds": ["one"]
-            }
-          ]
-        }
-        """);
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
 
         var viewModel = CreateViewModel(
             config,
