@@ -48,4 +48,23 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(["one"], dialogEntryIds);
         Assert.Equal("已取消: 保存启动组", viewModel.StatusText);
     }
+
+    [Fact]
+    public async Task LaunchGroupSaveRejectsBlankPresetNameWithoutMutatingFile()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            configure: vm => vm.RequestNewPresetAsync = _ => Task.FromResult<string?>("   "));
+
+        await viewModel.SaveSelectionAsPresetCommand.ExecuteAsync(null);
+
+        var presetFile = LauncherPresetStore.Load(presets);
+        Assert.Equal(["daily"], presetFile.Presets.Select(preset => preset.Id).ToArray());
+        Assert.Equal("启动组名称不能为空", viewModel.StatusText);
+    }
 }

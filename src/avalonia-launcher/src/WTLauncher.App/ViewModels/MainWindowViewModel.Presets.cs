@@ -40,22 +40,12 @@ public sealed partial class MainWindowViewModel
         }
 
         var entryIds = GetSelectedEntryIds();
-        var presetName = await RequestNewPresetAsync(entryIds).ConfigureAwait(true);
+        var presetName = await RequestPresetNameIfRequiredAsync(entryIds).ConfigureAwait(true);
         if (presetName is null)
-        {
-            StatusText = LauncherPresetStatus.SaveCanceled;
             return;
-        }
-
-        var name = LauncherPresetWorkflow.NormalizeName(presetName);
-        if (name.Length == 0)
-        {
-            StatusText = LauncherPresetStatus.NameRequired;
-            return;
-        }
 
         var snapshot = CapturePresetMutationSnapshot();
-        var preset = LauncherPresetWorkflow.AddPreset(_presetFile, name, entryIds);
+        var preset = LauncherPresetWorkflow.AddPreset(_presetFile, presetName, entryIds);
         if (!SavePresetMutationAndReload(snapshot, preset.Id))
             return;
 
@@ -147,6 +137,25 @@ public sealed partial class MainWindowViewModel
 
         StatusText = LauncherPresetStatus.DeleteCanceled(selectedPreset.Name);
         return false;
+    }
+
+    private async Task<string?> RequestPresetNameIfRequiredAsync(IReadOnlyList<string> entryIds)
+    {
+        var presetName = await RequestNewPresetAsync(entryIds).ConfigureAwait(true);
+        if (presetName is null)
+        {
+            StatusText = LauncherPresetStatus.SaveCanceled;
+            return null;
+        }
+
+        var normalizedName = LauncherPresetWorkflow.NormalizeName(presetName);
+        if (normalizedName.Length == 0)
+        {
+            StatusText = LauncherPresetStatus.NameRequired;
+            return null;
+        }
+
+        return normalizedName;
     }
 
     private LauncherPresetMutationSnapshot CapturePresetMutationSnapshot() =>
