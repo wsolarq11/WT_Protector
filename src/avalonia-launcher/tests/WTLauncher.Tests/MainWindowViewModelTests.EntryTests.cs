@@ -20,7 +20,7 @@ public sealed partial class MainWindowViewModelTests
             settings,
             launcherSettings,
             vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
-                new EntryDraft("three", "Three", "D:\\three", "pwsh", true)));
+                NewThreeEntryDraft()));
 
         File.Delete(config);
         Directory.CreateDirectory(config);
@@ -44,7 +44,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             configure: vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
-                new EntryDraft("three", "Three", "D:\\three", "pwsh", true)));
+                NewThreeEntryDraft()));
 
         File.Delete(settings);
         Directory.CreateDirectory(settings);
@@ -80,7 +80,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             configure: vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
-                new EntryDraft("one-renamed", "One Renamed", "D:\\renamed", "opencode", false)));
+                RenamedOneEntryDraft()));
         File.Delete(presets);
         Directory.CreateDirectory(presets);
 
@@ -126,8 +126,8 @@ public sealed partial class MainWindowViewModelTests
             {
                 vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
                     requestCount++ == 0
-                        ? new EntryDraft("three", "Three", "D:\\three", "pwsh", true)
-                        : new EntryDraft("one-renamed", "One Renamed", "D:\\renamed", "opencode", false));
+                        ? NewThreeEntryDraft()
+                        : RenamedOneEntryDraft());
                 vm.ConfirmDeleteEntryAsync = _ => Task.FromResult(true);
             });
 
@@ -166,4 +166,10 @@ public sealed partial class MainWindowViewModelTests
         savedSettings = LauncherSettingsStore.Load(settings);
         Assert.Equal(["two", "three"], savedSettings.CustomEntryOrder);
     }
+
+    private static EntryDraft NewThreeEntryDraft() =>
+        new("three", "Three", "D:\\three", "pwsh", Selected: true);
+
+    private static EntryDraft RenamedOneEntryDraft() =>
+        new("one-renamed", "One Renamed", "D:\\renamed", "opencode", Selected: false);
 }
