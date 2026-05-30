@@ -53,7 +53,7 @@ public static class LauncherPresetWorkflow
         presetFile.Presets.Remove(preset);
         if (!HasDefaultPreset(presetFile))
         {
-            fallbackPresetId = presetFile.Presets.FirstOrDefault()?.Id ?? string.Empty;
+            fallbackPresetId = ResolveFallbackPresetId(presetFile);
             presetFile.DefaultPresetId = fallbackPresetId;
         }
 
@@ -78,6 +78,11 @@ public static class LauncherPresetWorkflow
 
     private static bool HasDefaultPreset(LauncherPresetFile presetFile) =>
         presetFile.Presets.Any(preset => LauncherPresetIds.Same(preset.Id, presetFile.DefaultPresetId));
+
+    private static string ResolveFallbackPresetId(LauncherPresetFile presetFile) =>
+        presetFile.Presets.FirstOrDefault(preset => preset.EntryIds.Count > 0)?.Id
+        ?? presetFile.Presets.FirstOrDefault()?.Id
+        ?? string.Empty;
 
     private static string NormalizeRequiredName(string? name)
     {

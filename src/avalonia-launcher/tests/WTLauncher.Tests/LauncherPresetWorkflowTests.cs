@@ -173,6 +173,22 @@ public sealed class LauncherPresetWorkflowTests
         Assert.Equal("daily", presetFile.DefaultPresetId);
     }
 
+    [Fact]
+    public void DeletePreset_PrefersNonEmptyFallbackPreset()
+    {
+        var presetFile = PresetFile(
+            "daily",
+            Preset("daily", "Daily", "one"),
+            Preset("blank-manual", "Manual", locked: true),
+            Preset("secondary", "Secondary", "two"));
+
+        var deleted = LauncherPresetWorkflow.DeletePreset(presetFile, "daily", out var fallbackPresetId);
+
+        Assert.Equal("daily", deleted?.Id);
+        Assert.Equal("secondary", fallbackPresetId);
+        Assert.Equal("secondary", presetFile.DefaultPresetId);
+    }
+
     private static LauncherPresetFile PresetFile(params LauncherPreset[] presets) =>
         new()
         {
