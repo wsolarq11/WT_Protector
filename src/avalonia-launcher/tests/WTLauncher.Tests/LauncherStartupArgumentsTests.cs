@@ -13,6 +13,14 @@ public sealed class LauncherStartupArgumentsTests
     }
 
     [Fact]
+    public void ReadConfigPath_TrimsConfigPathValue()
+    {
+        var config = LauncherStartupArguments.ReadConfigPath(["--config", " config/custom.json "]);
+
+        Assert.Equal("config/custom.json", config);
+    }
+
+    [Fact]
     public void ReadConfigPath_IsCaseInsensitiveAndIgnoresMissingOrBlankValue()
     {
         Assert.Equal("config/custom.json", LauncherStartupArguments.ReadConfigPath(["--CONFIG", "config/custom.json"]));
