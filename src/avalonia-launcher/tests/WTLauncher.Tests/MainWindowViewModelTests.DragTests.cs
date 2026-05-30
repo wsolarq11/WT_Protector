@@ -9,60 +9,31 @@ public sealed partial class MainWindowViewModelTests
     public void DragPreviewReordersInMemoryAndCanBeCancelledOrCommitted()
     {
         using var temp = new TempDirectory();
-        var (config, settings, _) = CreatePortableFixture(
-            temp,
-            new LaunchEntry
-            {
-                Id = "one",
-                Name = "One",
-                Directory = "D:\\one",
-                Command = "codex",
-                Confirm = false,
-            },
-            new LaunchEntry
-            {
-                Id = "two",
-                Name = "Two",
-                Directory = "D:\\two",
-                Command = "opencode",
-                Confirm = false,
-            },
-            new LaunchEntry
-            {
-                Id = "three",
-                Name = "Three",
-                Directory = "D:\\three",
-                Command = "pwsh",
-                Confirm = false,
-            });
+        var (config, settings, _) = CreateDragFixture(temp);
 
         var viewModel = CreateViewModel(
             config,
             settings,
-            new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["one", "two", "three"] });
-        LauncherSettingsStore.Save(new LauncherSettings
-        {
-            SortMode = "custom",
-            CustomEntryOrder = ["one", "two", "three"],
-        }, settings);
+            CreateDragSettings());
+        LauncherSettingsStore.Save(CreateDragSettings(), settings);
 
-        Assert.Equal(["one", "two", "three"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
 
         viewModel.BeginDragReorder("three");
         Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
         Assert.False(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
 
-        Assert.Equal(["three", "one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(ReorderedDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         Assert.True(viewModel.Entries.Single(entry => entry.Id == "three").IsDragPreviewSource);
         var target = viewModel.Entries.Single(entry => entry.Id == "one");
         Assert.True(target.IsDragPreviewTarget);
         Assert.True(target.IsDragInsertBefore);
         Assert.False(target.IsDragInsertAfter);
-        Assert.Equal(["one", "two", "three"], LauncherSettingsStore.Load(settings).CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), LauncherSettingsStore.Load(settings).CustomEntryOrder);
 
         viewModel.CancelDragReorder();
 
-        Assert.Equal(["one", "two", "three"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         Assert.DoesNotContain(viewModel.Entries, entry =>
             entry.IsDragPreviewSource
             || entry.IsDragPreviewTarget
@@ -73,42 +44,17 @@ public sealed partial class MainWindowViewModelTests
         Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
         viewModel.CommitDragReorder();
 
-        Assert.Equal(["three", "one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(["three", "one", "two"], LauncherSettingsStore.Load(settings).CustomEntryOrder);
+        Assert.Equal(ReorderedDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(ReorderedDragOrder(), LauncherSettingsStore.Load(settings).CustomEntryOrder);
     }
 
     [Fact]
     public void CommitDragReorderRollsBackWhenSettingsSaveFails()
     {
         using var temp = new TempDirectory();
-        var (config, settings, _) = CreatePortableFixture(
-            temp,
-            new LaunchEntry
-            {
-                Id = "one",
-                Name = "One",
-                Directory = "D:\\one",
-                Command = "codex",
-                Confirm = false,
-            },
-            new LaunchEntry
-            {
-                Id = "two",
-                Name = "Two",
-                Directory = "D:\\two",
-                Command = "opencode",
-                Confirm = false,
-            },
-            new LaunchEntry
-            {
-                Id = "three",
-                Name = "Three",
-                Directory = "D:\\three",
-                Command = "pwsh",
-                Confirm = false,
-            });
+        var (config, settings, _) = CreateDragFixture(temp);
 
-        var launcherSettings = new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["one", "two", "three"] };
+        var launcherSettings = CreateDragSettings();
         var viewModel = CreateViewModel(config, settings, launcherSettings);
 
         viewModel.BeginDragReorder("three");
@@ -117,8 +63,8 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.CommitDragReorder();
 
-        Assert.Equal(["one", "two", "three"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(["one", "two", "three"], launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
         Assert.Contains("设置保存失败", viewModel.StatusText);
         Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(settings)!, "settings.json.tmp-*"));
     }
@@ -160,4 +106,30 @@ public sealed partial class MainWindowViewModelTests
         Assert.Null(typeof(LauncherEntryViewModel).GetProperty(nameof(LauncherEntryViewModel.IsDragInsertBefore))?.SetMethod);
         Assert.Null(typeof(LauncherEntryViewModel).GetProperty(nameof(LauncherEntryViewModel.IsDragInsertAfter))?.SetMethod);
     }
+
+    private static (string Config, string Settings, string Presets) CreateDragFixture(TempDirectory temp) =>
+        CreatePortableFixture(
+            temp,
+            DragEntry("one", "One", "codex"),
+            DragEntry("two", "Two", "opencode"),
+            DragEntry("three", "Three", "pwsh"));
+
+    private static LaunchEntry DragEntry(string id, string name, string command) => new()
+    {
+        Id = id,
+        Name = name,
+        Directory = $"D:\\{id}",
+        Command = command,
+        Confirm = false,
+    };
+
+    private static LauncherSettings CreateDragSettings() => new()
+    {
+        SortMode = LauncherEntryVisibility.CustomSortModeId,
+        CustomEntryOrder = [.. DefaultDragOrder()],
+    };
+
+    private static string[] DefaultDragOrder() => ["one", "two", "three"];
+
+    private static string[] ReorderedDragOrder() => ["three", "one", "two"];
 }
