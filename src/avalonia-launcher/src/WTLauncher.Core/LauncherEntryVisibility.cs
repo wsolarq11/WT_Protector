@@ -60,7 +60,7 @@ public static class LauncherEntryVisibility
         LauncherEntryOrder.SyncWithEntries(customEntryOrder, allEntries.Select(entry => selectEntry(entry).Id));
         var order = LauncherEntryOrder.BuildIndex(customEntryOrder);
         return ThenByNameThenId(
-            entries.OrderBy(entry => order.TryGetValue(selectEntry(entry).Id, out var index) ? index : int.MaxValue),
+            entries.OrderBy(entry => order.TryGetValue(LauncherEntryIds.Normalize(selectEntry(entry).Id), out var index) ? index : int.MaxValue),
             selectEntry);
     }
 

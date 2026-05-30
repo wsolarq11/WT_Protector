@@ -48,6 +48,28 @@ public sealed class LauncherEntryVisibilityTests
     }
 
     [Fact]
+    public void FilterAndSort_CustomSortNormalizesEntryIdsBeforeLookup()
+    {
+        var entries = new[]
+        {
+            Entry(" one ", "Zed"),
+            Entry(" two ", "Alpha"),
+            Entry("three", "Middle"),
+        };
+        var customOrder = new List<string> { " one ", " two " };
+
+        var visible = LauncherEntryVisibility.FilterAndSort(
+            entries,
+            null,
+            LauncherEntryVisibility.CustomSortModeId,
+            customOrder,
+            static entry => entry);
+
+        Assert.Equal([" one ", " two ", "three"], visible.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one", "two", "three"], customOrder);
+    }
+
+    [Fact]
     public void FilterAndSort_SortsAlphabeticallyThenById()
     {
         var entries = new[]
