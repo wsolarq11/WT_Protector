@@ -84,7 +84,7 @@ public sealed partial class MainWindowViewModel
             () =>
             {
                 ApplyFilter();
-                StatusText = $"排序模式: {value.Label}（已保存）";
+                StatusText = LauncherSettingsStatus.SortModeSaved(value.Label);
             });
     }
 
@@ -106,7 +106,7 @@ public sealed partial class MainWindowViewModel
                 NotifyDisplayModeProjectionChanged();
                 LauncherEntryLayoutPresentation.Refresh(Entries);
             },
-            () => StatusText = $"视图模式: {value.Label}（已保存）");
+            () => StatusText = LauncherSettingsStatus.DisplayModeSaved(value.Label));
     }
 
     private void NotifyDisplayModeProjectionChanged()

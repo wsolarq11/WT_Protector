@@ -26,9 +26,7 @@ public sealed partial class MainWindowViewModel
                 OnPropertyChanged(nameof(RequireConfirmationForLaunches));
                 RefreshLaunchConfirmationPresentation();
             },
-            () => StatusText = value
-                ? "启动确认: 所有启动项启动前统一确认"
-                : "启动确认: 所有启动项直接启动");
+            () => StatusText = LauncherSettingsStatus.LaunchConfirmationSaved(value));
     }
 
     internal void ShowDryRun(LauncherEntryViewModel item)
