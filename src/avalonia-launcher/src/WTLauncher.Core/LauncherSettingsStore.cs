@@ -64,22 +64,7 @@ public static class LauncherSettingsStore
 
     private static LauncherSettings CloneNormalized(LauncherSettings settings)
     {
-        var clone = new LauncherSettings
-        {
-            Theme = settings.Theme,
-            LastFilterText = settings.LastFilterText,
-            SortMode = settings.SortMode,
-            EntryViewMode = settings.EntryViewMode,
-            RequireConfirmationForLaunches = settings.RequireConfirmationForLaunches,
-            CustomEntryOrder = settings.CustomEntryOrder is null ? null! : [.. settings.CustomEntryOrder],
-            Window = settings.Window is null
-                ? null!
-                : new LauncherWindowSettings
-                {
-                    Width = settings.Window.Width,
-                    Height = settings.Window.Height,
-                },
-        };
+        var clone = LauncherSettingsCopies.Clone(settings);
         Normalize(clone);
         return clone;
     }
