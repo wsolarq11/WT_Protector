@@ -8,7 +8,9 @@ public sealed class LauncherSettingsSnapshot
         string sortMode,
         string entryViewMode,
         bool requireConfirmationForLaunches,
+        bool hasCustomEntryOrder,
         List<string> customEntryOrder,
+        bool hasWindow,
         double windowWidth,
         double windowHeight)
     {
@@ -17,7 +19,9 @@ public sealed class LauncherSettingsSnapshot
         SortMode = sortMode;
         EntryViewMode = entryViewMode;
         RequireConfirmationForLaunches = requireConfirmationForLaunches;
+        HasCustomEntryOrder = hasCustomEntryOrder;
         CustomEntryOrder = customEntryOrder;
+        HasWindow = hasWindow;
         WindowWidth = windowWidth;
         WindowHeight = windowHeight;
     }
@@ -32,7 +36,11 @@ public sealed class LauncherSettingsSnapshot
 
     public bool RequireConfirmationForLaunches { get; }
 
+    public bool HasCustomEntryOrder { get; }
+
     public IReadOnlyList<string> CustomEntryOrder { get; }
+
+    public bool HasWindow { get; }
 
     public double WindowWidth { get; }
 
@@ -48,7 +56,9 @@ public sealed class LauncherSettingsSnapshot
             settings.SortMode,
             settings.EntryViewMode,
             settings.RequireConfirmationForLaunches,
-            [.. settings.CustomEntryOrder],
+            settings.CustomEntryOrder is not null,
+            settings.CustomEntryOrder is null ? [] : [.. settings.CustomEntryOrder],
+            settings.Window is not null,
             window.Width,
             window.Height);
     }
@@ -61,18 +71,20 @@ public sealed class LauncherSettingsSnapshot
         settings.SortMode = SortMode;
         settings.EntryViewMode = EntryViewMode;
         settings.RequireConfirmationForLaunches = RequireConfirmationForLaunches;
-        settings.CustomEntryOrder = CloneCustomEntryOrder();
-        settings.Window = new LauncherWindowSettings
-        {
-            Width = WindowWidth,
-            Height = WindowHeight,
-        };
+        settings.CustomEntryOrder = HasCustomEntryOrder ? CloneCustomEntryOrder() : null!;
+        settings.Window = HasWindow
+            ? new LauncherWindowSettings
+            {
+                Width = WindowWidth,
+                Height = WindowHeight,
+            }
+            : null!;
     }
 
     public void RestoreCustomEntryOrder(LauncherSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        settings.CustomEntryOrder = CloneCustomEntryOrder();
+        settings.CustomEntryOrder = HasCustomEntryOrder ? CloneCustomEntryOrder() : null!;
     }
 
     public List<string> CloneCustomEntryOrder()

@@ -51,6 +51,23 @@ public sealed class LauncherSettingsSnapshotTests
         Assert.Equal(["one", "two"], settings.CustomEntryOrder);
     }
 
+    [Fact]
+    public void CaptureRestoresNullOrderAndWindowWithoutInventingDefaults()
+    {
+        var settings = Settings();
+        settings.CustomEntryOrder = null!;
+        settings.Window = null!;
+
+        var snapshot = LauncherSettingsSnapshot.Capture(settings);
+        settings.CustomEntryOrder = ["one"];
+        settings.Window = new LauncherWindowSettings { Width = 1, Height = 2 };
+
+        snapshot.Restore(settings);
+
+        Assert.Null(settings.CustomEntryOrder);
+        Assert.Null(settings.Window);
+    }
+
     private static LauncherSettings Settings(
         string theme = "light",
         string lastFilterText = "",

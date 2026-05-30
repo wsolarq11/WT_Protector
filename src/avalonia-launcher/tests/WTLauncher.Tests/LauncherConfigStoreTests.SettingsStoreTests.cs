@@ -217,4 +217,22 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Empty(Directory.EnumerateFiles(configDir, $"{LauncherConfigStore.SettingsFileName}.tmp-*"));
     }
 
+    [Fact]
+    public void SettingsStore_TrySaveWindowBoundsRestoresNullWindowOnCloseSaveFailure()
+    {
+        using var temp = new TempDirectory();
+        var configDir = ConfigDirectoryPath(temp.Path);
+        var settingsPath = Path.Combine(configDir, LauncherConfigStore.SettingsFileName);
+        var settings = new LauncherSettings
+        {
+            Window = null!,
+        };
+        Directory.CreateDirectory(settingsPath);
+
+        var saved = LauncherSettingsStore.TrySaveWindowBounds(settings, settingsPath, width: 1320, height: 840);
+
+        Assert.False(saved);
+        Assert.Null(settings.Window);
+    }
+
 }
