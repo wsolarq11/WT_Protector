@@ -98,6 +98,30 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void Load_NormalizesEntryTextFieldsFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
+        [
+          {
+            "id": "one",
+            "name": " One ",
+            "directory": " D:\\one ",
+            "command": " codex ",
+            "updatedAtUtc": " 2026-05-30T00:00:00Z "
+          }
+        ]
+        """);
+
+        var entry = Assert.Single(LauncherConfigStore.Load(config));
+
+        Assert.Equal("One", entry.Name);
+        Assert.Equal("D:\\one", entry.Directory);
+        Assert.Equal("codex", entry.Command);
+        Assert.Equal("2026-05-30T00:00:00Z", entry.UpdatedAtUtc);
+    }
+
+    [Fact]
     public void Save_RejectsNullEntryCollection()
     {
         using var temp = new TempDirectory();
@@ -120,10 +144,10 @@ public sealed partial class LauncherConfigStoreTests
             new()
             {
                 Id = " one ",
-                Name = null!,
-                Directory = null!,
-                Command = null!,
-                UpdatedAtUtc = null!,
+                Name = " One ",
+                Directory = " D:\\one ",
+                Command = " codex ",
+                UpdatedAtUtc = " 2026-05-30T00:00:00Z ",
             },
         };
 
@@ -131,11 +155,14 @@ public sealed partial class LauncherConfigStoreTests
 
         var entry = Assert.Single(LauncherConfigStore.Load(config));
         Assert.Equal("one", entry.Id);
-        Assert.Equal(string.Empty, entry.Name);
-        Assert.Equal(string.Empty, entry.Directory);
-        Assert.Equal(string.Empty, entry.Command);
-        Assert.Equal(string.Empty, entry.UpdatedAtUtc);
+        Assert.Equal("One", entry.Name);
+        Assert.Equal("D:\\one", entry.Directory);
+        Assert.Equal("codex", entry.Command);
+        Assert.Equal("2026-05-30T00:00:00Z", entry.UpdatedAtUtc);
         var savedJson = File.ReadAllText(config);
+        Assert.DoesNotContain(" One ", savedJson);
+        Assert.DoesNotContain(" D:\\\\one ", savedJson);
+        Assert.DoesNotContain(" codex ", savedJson);
         Assert.DoesNotContain("null", savedJson);
         AssertUsesRepositoryLineEndings(savedJson);
     }

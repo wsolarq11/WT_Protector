@@ -97,10 +97,13 @@ public static class LauncherConfigStore
     private static LaunchEntry Normalize(LaunchEntry entry)
     {
         entry.Id = LauncherEntryIds.Normalize(entry.Id);
-        entry.Name ??= string.Empty;
-        entry.Directory ??= string.Empty;
-        entry.Command ??= string.Empty;
-        entry.UpdatedAtUtc ??= string.Empty;
+        entry.Name = CleanText(entry.Name);
+        entry.Directory = CleanText(entry.Directory);
+        entry.Command = CleanText(entry.Command);
+        entry.UpdatedAtUtc = CleanText(entry.UpdatedAtUtc);
         return entry;
     }
+
+    private static string CleanText(string? value) =>
+        (value ?? string.Empty).Trim();
 }
