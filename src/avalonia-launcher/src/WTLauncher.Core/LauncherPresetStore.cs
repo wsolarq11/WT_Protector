@@ -32,18 +32,24 @@ public static class LauncherPresetStore
 
     private static void Normalize(LauncherPresetFile presets)
     {
-        presets.DefaultPresetId ??= string.Empty;
+        presets.DefaultPresetId = NormalizePresetId(presets.DefaultPresetId);
         presets.Presets = (presets.Presets ?? [])
             .OfType<LauncherPreset>()
             .ToList();
 
         foreach (var preset in presets.Presets)
         {
-            preset.Id ??= string.Empty;
+            preset.Id = NormalizePresetId(preset.Id);
             preset.Name ??= string.Empty;
             preset.EntryIds = (preset.EntryIds ?? [])
-                .Where(id => id is not null)
+                .Select(LauncherEntryIds.Normalize)
+                .Where(LauncherEntryIds.IsUsable)
                 .ToList();
         }
     }
+
+    private static string NormalizePresetId(string? value) =>
+        string.IsNullOrWhiteSpace(value)
+            ? string.Empty
+            : LauncherPresetIds.Normalize(value);
 }

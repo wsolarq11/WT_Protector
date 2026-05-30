@@ -56,6 +56,32 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void PresetStore_NormalizesPresetAndEntryIdsFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var presetPath = WriteConfigDirectoryFile(temp.Path, LauncherPresetStore.PresetsFileName, """
+        {
+          "schemaVersion": 1,
+          "defaultPresetId": " Daily ",
+          "presets": [
+            {
+              "id": " Daily ",
+              "name": "Daily",
+              "entryIds": [" one ", " ", "two"]
+            }
+          ]
+        }
+        """);
+
+        var loaded = LauncherPresetStore.Load(presetPath);
+
+        Assert.Equal("daily", loaded.DefaultPresetId);
+        var preset = Assert.Single(loaded.Presets);
+        Assert.Equal("daily", preset.Id);
+        Assert.Equal(["one", "two"], preset.EntryIds);
+    }
+
+    [Fact]
     public void PresetStore_CanSkipBackupForRollbackWrites()
     {
         using var temp = new TempDirectory();

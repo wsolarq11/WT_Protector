@@ -16,7 +16,10 @@ public static class LauncherConfigStore
         var entries = LauncherJson.Load<List<LaunchEntry?>>(configPath)
             ?? throw new InvalidDataException("Launcher config parsed to null.");
 
-        return entries.OfType<LaunchEntry>().ToList();
+        return entries
+            .OfType<LaunchEntry>()
+            .Select(Normalize)
+            .ToList();
     }
 
     public static void Save(IEnumerable<LaunchEntry> entries, string configPath, bool backup = true)
@@ -82,5 +85,15 @@ public static class LauncherConfigStore
         }
 
         return null;
+    }
+
+    private static LaunchEntry Normalize(LaunchEntry entry)
+    {
+        entry.Id ??= string.Empty;
+        entry.Name ??= string.Empty;
+        entry.Directory ??= string.Empty;
+        entry.Command ??= string.Empty;
+        entry.UpdatedAtUtc ??= string.Empty;
+        return entry;
     }
 }

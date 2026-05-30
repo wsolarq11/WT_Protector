@@ -53,6 +53,31 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void Load_NormalizesNullEntryFieldsFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
+        [
+          {
+            "id": null,
+            "name": null,
+            "directory": null,
+            "command": null,
+            "updatedAtUtc": null
+          }
+        ]
+        """);
+
+        var entry = Assert.Single(LauncherConfigStore.Load(config));
+
+        Assert.Equal(string.Empty, entry.Id);
+        Assert.Equal(string.Empty, entry.Name);
+        Assert.Equal(string.Empty, entry.Directory);
+        Assert.Equal(string.Empty, entry.Command);
+        Assert.Equal(string.Empty, entry.UpdatedAtUtc);
+    }
+
+    [Fact]
     public void Save_PersistsSelectionAndCreatesBackup()
     {
         using var temp = new TempDirectory();

@@ -68,6 +68,21 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void SettingsStore_NormalizesCustomEntryOrderIdsFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
+        {
+          "customEntryOrder": [" one ", null, " ", "two"]
+        }
+        """);
+
+        var loaded = LauncherSettingsStore.Load(settings);
+
+        Assert.Equal(["one", "two"], loaded.CustomEntryOrder);
+    }
+
+    [Fact]
     public void SettingsStore_TrySaveWindowBoundsPersistsPortableCloseSize()
     {
         using var temp = new TempDirectory();
