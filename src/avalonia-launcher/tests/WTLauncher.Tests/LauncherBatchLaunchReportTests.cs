@@ -30,4 +30,15 @@ public sealed class LauncherBatchLaunchReportTests
         Assert.Equal(2, report.FailedCount);
         Assert.Equal(["one: missing one", "two: missing two"], report.FailureMessages);
     }
+
+    [Fact]
+    public void ReportNormalizesFailureEntryNames()
+    {
+        var report = new LauncherBatchLaunchReport();
+
+        report.RecordFailure(" one ", new InvalidOperationException("missing one"));
+        report.RecordFailure(null!, new InvalidOperationException("missing name"));
+
+        Assert.Equal(["one: missing one", "(unnamed): missing name"], report.FailureMessages);
+    }
 }

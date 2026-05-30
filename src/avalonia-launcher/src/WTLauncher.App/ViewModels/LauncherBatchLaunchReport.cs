@@ -15,9 +15,15 @@ public sealed class LauncherBatchLaunchReport
         StartedCount++;
     }
 
-    public void RecordFailure(string entryName, Exception exception)
+    public void RecordFailure(string? entryName, Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        _failures.Add($"{entryName}: {exception.Message}");
+        _failures.Add($"{NormalizeEntryName(entryName)}: {exception.Message}");
+    }
+
+    private static string NormalizeEntryName(string? entryName)
+    {
+        var normalized = (entryName ?? string.Empty).Trim();
+        return normalized.Length == 0 ? "(unnamed)" : normalized;
     }
 }

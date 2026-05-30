@@ -41,6 +41,27 @@ public sealed class LauncherLaunchWorkflowTests
     }
 
     [Fact]
+    public void StartBatchReportsNullEntryFailureWithoutStoppingLaterEntries()
+    {
+        using var temp = new TempDirectory();
+        var startedPlans = new List<LaunchPlan>();
+        var workflow = new LauncherLaunchWorkflow(startedPlans.Add);
+
+        var report = workflow.StartBatch(
+            [
+                null!,
+                Entry("one", temp.Path),
+            ],
+            requireConfirmation: false,
+            _ => { });
+
+        Assert.Equal(1, report.StartedCount);
+        Assert.Equal(1, report.FailedCount);
+        Assert.StartsWith("(unnamed):", Assert.Single(report.FailureMessages), StringComparison.Ordinal);
+        Assert.Equal("pwsh", Assert.Single(startedPlans).Command);
+    }
+
+    [Fact]
     public void StartBatchStartsEveryValidPlanAndReportsSuccess()
     {
         using var temp = new TempDirectory();
