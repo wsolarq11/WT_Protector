@@ -87,8 +87,7 @@ public sealed partial class MainWindowViewModel
         var preset = LauncherPresetWorkflow.UpdatePreset(_presetFile, selectedPreset.Id, selectedPreset.Name, entryIds);
         if (preset is null)
         {
-            ApplyPresetFileState(snapshot, preferredPresetId);
-            ApplyStatusText(LauncherPresetStatus.CurrentPresetMissing);
+            RestorePresetSnapshotAndReportMissing(snapshot, preferredPresetId);
             return;
         }
         if (!SavePresetMutationAndReload(snapshot, preferredPresetId, preset.Id))
@@ -122,8 +121,7 @@ public sealed partial class MainWindowViewModel
         var preset = LauncherPresetWorkflow.DeletePreset(_presetFile, selectedPreset.Id, out var fallbackPresetId);
         if (preset is null)
         {
-            ApplyPresetFileState(snapshot, preferredPresetId);
-            ApplyStatusText(LauncherPresetStatus.CurrentPresetMissing);
+            RestorePresetSnapshotAndReportMissing(snapshot, preferredPresetId);
             return;
         }
         if (!SavePresetMutationAndReload(snapshot, preferredPresetId, fallbackPresetId))
@@ -139,6 +137,12 @@ public sealed partial class MainWindowViewModel
 
         StatusText = LauncherPresetStatus.NoPresetSelected;
         return null;
+    }
+
+    private void RestorePresetSnapshotAndReportMissing(LauncherPresetFile snapshot, string? preferredPresetId)
+    {
+        ApplyPresetFileState(snapshot, preferredPresetId);
+        ApplyStatusText(LauncherPresetStatus.CurrentPresetMissing);
     }
 
     partial void OnSelectedPresetChanged(LauncherPresetViewModel? value)
