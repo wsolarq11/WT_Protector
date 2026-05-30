@@ -82,27 +82,19 @@ public sealed partial class MainWindowViewModel
         RefreshSelectionState();
     }
 
-    private bool CanApplyPreset()
-    {
-        if (!TryGetSelectedPreset(out _) || Entries.Count == 0)
-            return false;
-
-        return BuildPresetSelectionPreview(GetSelectedEntryIds()).HasChanges;
-    }
+    private bool CanApplyPreset() =>
+        TryBuildPresetSelectionPreviewForCommand(out _, out var selection)
+        && selection.HasChanges;
 
     private bool CanUpdateSelectedPreset()
     {
-        if (!TryGetSelectedPreset(out var selectedPreset) || Entries.Count == 0)
+        if (!TryBuildPresetSelectionPreviewForCommand(out var selectedPreset, out var selection))
             return false;
 
         if (!LauncherPresetWorkflow.CanUpdatePreset(_presetFile, selectedPreset.Id))
             return false;
 
-        var selectedEntryIds = GetSelectedEntryIds();
-        if (selectedEntryIds.Count == 0)
-            return false;
-
-        return BuildPresetSelectionPreview(selectedEntryIds).HasChanges;
+        return selection.SelectedIds.Count > 0 && selection.HasChanges;
     }
 
     private bool CanDeleteSelectedPreset() =>
@@ -114,11 +106,31 @@ public sealed partial class MainWindowViewModel
         if (!TryGetSelectedPreset(out var selectedPreset))
             return LauncherPresetSelectionPreview.NoPreset(PresetCount);
 
+        return BuildPresetSelectionPreview(selectedPreset, selectedEntryIds);
+    }
+
+    private LauncherPresetSelectionPreview BuildPresetSelectionPreview(
+        LauncherPresetViewModel selectedPreset,
+        IReadOnlyList<string> selectedEntryIds)
+    {
         return LauncherPresetSelectionPreview.ForPreset(
             selectedPreset.Name,
             selectedEntryIds,
             GetEntryIds(),
             selectedPreset.EntryIds);
+    }
+
+    private bool TryBuildPresetSelectionPreviewForCommand(
+        [NotNullWhen(true)] out LauncherPresetViewModel? selectedPreset,
+        [NotNullWhen(true)] out LauncherPresetSelectionPreview? selection)
+    {
+        selectedPreset = null;
+        selection = null;
+        if (!TryGetSelectedPreset(out selectedPreset) || Entries.Count == 0)
+            return false;
+
+        selection = BuildPresetSelectionPreview(selectedPreset, GetSelectedEntryIds());
+        return true;
     }
 
     private void NotifyPresetManagementCommands()

@@ -89,6 +89,19 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void LaunchGroupUpdateCommandRequiresSelectedEntries()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+
+        var viewModel = CreateViewModel(config, settings);
+
+        Assert.True(viewModel.ApplyPresetCommand.CanExecute(null));
+        Assert.False(viewModel.UpdateSelectedPresetCommand.CanExecute(null));
+    }
+
+    [Fact]
     public async Task LaunchGroupDeleteCancellationLeavesPresetFileUnchanged()
     {
         using var temp = new TempDirectory();
