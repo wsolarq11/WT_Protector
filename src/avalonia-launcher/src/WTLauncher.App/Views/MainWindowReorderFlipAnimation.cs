@@ -3,7 +3,6 @@ using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Media.Transformation;
 using Avalonia.VisualTree;
-using WTLauncher.App.ViewModels;
 
 namespace WTLauncher.App.Views;
 
@@ -27,11 +26,8 @@ public static class MainWindowReorderFlipAnimation
         ArgumentNullException.ThrowIfNull(before);
         ArgumentNullException.ThrowIfNull(after);
 
-        foreach (var card in cards)
+        foreach (var (entry, card) in MainWindowEntryCardResolver.ResolveCards(cards))
         {
-            var entry = MainWindowEntryCardResolver.ResolveCard(card);
-            if (entry is null)
-                continue;
             if (!MainWindowReorderFlip.TryCalculateOffset(entry.Id, before, after, out var offset))
                 continue;
 

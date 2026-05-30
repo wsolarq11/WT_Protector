@@ -21,6 +21,24 @@ public sealed class MainWindowEntryCardResolverTests
     }
 
     [Fact]
+    public void ResolveCardsReturnsOnlyBordersBackedByLauncherEntries()
+    {
+        using var temp = new TempDirectory();
+        var owner = CreateOwner(temp.Path);
+        var first = Card(CreateEntryViewModel(owner, "first"));
+        var second = Card(CreateEntryViewModel(owner, "second"));
+        var ignoredWithoutCardClass = new Border { DataContext = CreateEntryViewModel(owner, "not-card") };
+        var ignoredWithoutEntry = new Border { Classes = { "card" }, DataContext = new object() };
+
+        var resolved = MainWindowEntryCardResolver.ResolveCards(
+            [first, ignoredWithoutCardClass, ignoredWithoutEntry, second]).ToArray();
+
+        Assert.Equal(["first", "second"], resolved.Select(item => item.Entry.Id).ToArray());
+        Assert.Same(first, resolved[0].Card);
+        Assert.Same(second, resolved[1].Card);
+    }
+
+    [Fact]
     public void ResolveFromSourceWalksVisualAncestorsToNearestCard()
     {
         using var temp = new TempDirectory();
