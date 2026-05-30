@@ -34,6 +34,9 @@ public sealed class LauncherDragReorderWorkflow
         ClearPreviewState();
 
         var source = FindEntry(draggedEntryId);
+        if (source is null)
+            return;
+
         _session = LauncherDragReorderSession.Start(
             draggedEntryId,
             LauncherSettingsSnapshot.Capture(_settings),
@@ -55,6 +58,13 @@ public sealed class LauncherDragReorderWorkflow
         if (LauncherEntryIds.Same(draggedEntryId, targetEntryId))
             return false;
 
+        var target = FindEntry(targetEntryId);
+        if (target is null)
+        {
+            session.ClearHover();
+            return false;
+        }
+
         if (!session.TryRecordPreview(targetEntryId, insertAfter))
             return false;
 
@@ -62,7 +72,6 @@ public sealed class LauncherDragReorderWorkflow
         LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, draggedEntryId, targetEntryId, insertAfter);
         _applyFilter();
 
-        var target = FindEntry(targetEntryId);
         session.SetTarget(target, insertAfter);
         return true;
     }

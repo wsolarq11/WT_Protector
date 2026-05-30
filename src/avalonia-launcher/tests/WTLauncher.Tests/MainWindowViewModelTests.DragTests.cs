@@ -70,6 +70,26 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void DragPreviewRejectsUnknownEntryIdsWithoutMutatingOrder()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreateDragFixture(temp);
+
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+
+        viewModel.BeginDragReorder("missing");
+        Assert.False(viewModel.PreviewMoveEntry("missing", "one", insertAfter: false));
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+
+        viewModel.BeginDragReorder("three");
+        Assert.False(viewModel.PreviewMoveEntry("three", "missing", insertAfter: false));
+
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+    }
+
+    [Fact]
     public void DragPreviewStateUsesOneTypedWorkflowField()
     {
         var viewModelDragFields = typeof(MainWindowViewModel)
