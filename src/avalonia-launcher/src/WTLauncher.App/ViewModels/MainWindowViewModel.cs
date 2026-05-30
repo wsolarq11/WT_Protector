@@ -15,13 +15,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private LauncherPresetFile _presetFile = new();
 
     [ObservableProperty]
-    private string _statusText = "Ready";
+    private string _statusText = LauncherMainWindowText.Ready;
 
     [ObservableProperty]
-    private string _dryRunText = "选择一个启动项查看预演命令。";
+    private string _dryRunText = LauncherMainWindowText.DryRunPlaceholder;
 
     [ObservableProperty]
-    private string _presetSelectionStatusText = "选择启动组后可查看与当前勾选的差异。";
+    private string _presetSelectionStatusText = LauncherMainWindowText.PresetSelectionPlaceholder;
 
     [ObservableProperty]
     private string _applyPresetButtonText = "应用启动组";
@@ -57,7 +57,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             Entries,
             EnsureCustomOrderContainsEntries,
             ApplyFilter);
-        ConfigPathDisplay = $"配置: {configPath} · 启动组: {_presetPath}";
+        ConfigPathDisplay = LauncherMainWindowText.ConfigPathDisplay(configPath, _presetPath);
         _filterText = settings.LastFilterText ?? string.Empty;
         _requireConfirmationForLaunches = settings.RequireConfirmationForLaunches;
         _selectedSortMode = ResolveSortMode(settings.SortMode);
@@ -87,7 +87,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ApplyFilter();
         LauncherEntryLayoutPresentation.Refresh(Entries);
         StatusText = presetError
-            ?? $"已加载 {TotalCount} 个启动项、{PresetCount} 个启动组；勾选自动保存到 config\\config.json";
+            ?? LauncherMainWindowText.Loaded(TotalCount, PresetCount);
     }
 
     private void ApplyStatusText(string? statusText)
