@@ -24,6 +24,16 @@ public sealed class LauncherEntryOrderTests
         Assert.Equal(["three", "one", "two"], order);
     }
 
+    [Fact]
+    public void MoveRelativeIgnoresUnknownDraggedEntry()
+    {
+        List<string> order = ["one", "two", "three"];
+
+        LauncherEntryOrder.MoveRelative(order, "missing", "one", insertAfter: false);
+
+        Assert.Equal(["one", "two", "three"], order);
+    }
+
     [Theory]
     [InlineData(false, "three", "two", "one", "three")]
     [InlineData(true, "three", "two", "three", "one")]

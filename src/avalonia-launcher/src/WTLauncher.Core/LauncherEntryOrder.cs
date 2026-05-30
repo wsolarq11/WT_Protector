@@ -54,6 +54,8 @@ public static class LauncherEntryOrder
     {
         if (LauncherEntryIds.Same(draggedEntryId, targetEntryId))
             return;
+        if (!customOrder.Any(id => LauncherEntryIds.Same(id, draggedEntryId)))
+            return;
 
         customOrder.RemoveAll(id => LauncherEntryIds.Same(id, draggedEntryId));
         var targetIndex = customOrder.FindIndex(id => LauncherEntryIds.Same(id, targetEntryId));
