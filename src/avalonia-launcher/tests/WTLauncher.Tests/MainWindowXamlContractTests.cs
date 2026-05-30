@@ -37,7 +37,7 @@ public sealed class MainWindowXamlContractTests
     public void MainWindow_DragReorderKeepsGhostFlipAndInsertPreviewContracts()
     {
         var xaml = File.ReadAllText(TestRepositoryPaths.MainWindowXaml);
-        var codeBehind = File.ReadAllText(TestRepositoryPaths.MainWindowCodeBehind);
+        var dragCodeBehind = File.ReadAllText(TestRepositoryPaths.MainWindowDragCodeBehind);
 
         Assert.Equal(3, Count(xaml, "Classes.drag-target=\"{Binding IsDragPreviewTarget}\""));
         Assert.Equal(3, Count(xaml, "Classes.drag-source=\"{Binding IsDragPreviewSource}\""));
@@ -54,7 +54,7 @@ public sealed class MainWindowXamlContractTests
             "<Setter Property=\"IsHitTestVisible\" Value=\"False\"/>");
 
         AssertInOrder(
-            codeBehind,
+            dragCodeBehind,
             "_overlayLayer ??= OverlayLayer.GetOverlayLayer(this);",
             "MainWindowDragGhostFactory.Create(",
             "_overlayLayer.Children.Add(ghost.Control)",
@@ -64,31 +64,31 @@ public sealed class MainWindowXamlContractTests
             "_overlayLayer.Children.Remove(_dragGhost)",
             "_dragGhost = null");
         AssertInOrder(
-            codeBehind,
+            dragCodeBehind,
             "if (_activeDragEntryId is not null)",
             "LauncherDragGhostLayoutCalculator.CalculatePosition",
             "Canvas.SetLeft(_dragGhost, ghostPosition.Left)",
             "Canvas.SetTop(_dragGhost, ghostPosition.Top)");
-        Assert.Contains("private void ApplyDragReorderPreview(", codeBehind);
-        Assert.Equal(1, Count(codeBehind, "viewModel.PreviewMoveEntry("));
-        Assert.Contains("if (viewModel.PreviewMoveEntry", codeBehind);
+        Assert.Contains("private void ApplyDragReorderPreview(", dragCodeBehind);
+        Assert.Equal(1, Count(dragCodeBehind, "viewModel.PreviewMoveEntry("));
+        Assert.Contains("if (viewModel.PreviewMoveEntry", dragCodeBehind);
         AssertInOrder(
-            codeBehind,
+            dragCodeBehind,
             "var root = MainWindowEntriesRootSelection.Select(",
             "MainWindowEntryCardBoundsCapture.Capture(root, this)",
             "if (viewModel.PreviewMoveEntry",
             "_reorderAnimationScheduler.Schedule(");
-        Assert.DoesNotContain("_pendingReorderAnimationAttached", codeBehind);
-        Assert.DoesNotContain("_pendingReorderAnimationSnapshot", codeBehind);
+        Assert.DoesNotContain("_pendingReorderAnimationAttached", dragCodeBehind);
+        Assert.DoesNotContain("_pendingReorderAnimationSnapshot", dragCodeBehind);
         AssertInOrder(
-            codeBehind,
+            dragCodeBehind,
             "_reorderAnimationScheduler.Schedule(",
             "handler => root.LayoutUpdated -= handler",
             "handler => root.LayoutUpdated += handler");
-        Assert.Contains("_reorderAnimationScheduler.Consume(", codeBehind);
-        Assert.Equal(1, Count(codeBehind, "handler => root.LayoutUpdated += handler"));
-        Assert.Equal(2, Count(codeBehind, "handler => root.LayoutUpdated -= handler"));
-        Assert.Contains("FLIP: jump back without transition", codeBehind);
+        Assert.Contains("_reorderAnimationScheduler.Consume(", dragCodeBehind);
+        Assert.Equal(1, Count(dragCodeBehind, "handler => root.LayoutUpdated += handler"));
+        Assert.Equal(2, Count(dragCodeBehind, "handler => root.LayoutUpdated -= handler"));
+        Assert.Contains("FLIP: jump back without transition", dragCodeBehind);
     }
 
     [Fact]

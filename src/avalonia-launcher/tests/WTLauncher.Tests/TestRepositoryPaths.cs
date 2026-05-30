@@ -23,6 +23,8 @@ internal static class TestRepositoryPaths
 
     public static string MainWindowCodeBehind => View("MainWindow.axaml.cs");
 
+    public static string MainWindowDragCodeBehind => View("MainWindow.Drag.cs");
+
     private static string FindRepositoryRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
