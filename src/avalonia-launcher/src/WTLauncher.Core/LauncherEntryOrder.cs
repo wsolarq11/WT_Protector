@@ -32,15 +32,10 @@ public static class LauncherEntryOrder
     public static IReadOnlyDictionary<string, int> BuildIndex(IEnumerable<string> customOrder)
     {
         var indexById = new Dictionary<string, int>(LauncherEntryIds.Comparer);
-        var index = 0;
-        foreach (var id in customOrder)
+        var ids = LauncherEntryIds.ToUniqueUsableList(customOrder);
+        for (var index = 0; index < ids.Count; index++)
         {
-            var normalized = LauncherEntryIds.Normalize(id);
-            if (!LauncherEntryIds.IsUsable(normalized))
-                continue;
-
-            if (indexById.TryAdd(normalized, index))
-                index++;
+            indexById.Add(ids[index], index);
         }
 
         return indexById;
