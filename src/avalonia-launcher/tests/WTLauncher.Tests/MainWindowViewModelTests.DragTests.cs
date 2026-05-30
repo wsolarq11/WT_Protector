@@ -110,18 +110,9 @@ public sealed partial class MainWindowViewModelTests
     private static (string Config, string Settings, string Presets) CreateDragFixture(TempDirectory temp) =>
         CreatePortableFixture(
             temp,
-            DragEntry("one", "One", "codex"),
-            DragEntry("two", "Two", "opencode"),
-            DragEntry("three", "Three", "pwsh"));
-
-    private static LaunchEntry DragEntry(string id, string name, string command) => new()
-    {
-        Id = id,
-        Name = name,
-        Directory = $"D:\\{id}",
-        Command = command,
-        Confirm = false,
-    };
+            Entry("one", "One", command: "codex"),
+            Entry("two", "Two", command: "opencode"),
+            Entry("three", "Three"));
 
     private static LauncherSettings CreateDragSettings() => new()
     {
