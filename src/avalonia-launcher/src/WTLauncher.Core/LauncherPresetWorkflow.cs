@@ -3,7 +3,7 @@ namespace WTLauncher.Core;
 public static class LauncherPresetWorkflow
 {
     public static string NormalizeName(string? name) =>
-        (name ?? string.Empty).Trim();
+        LauncherPresetNames.Normalize(name);
 
     public static LauncherPreset AddPreset(LauncherPresetFile presetFile, string name, IReadOnlyList<string> entryIds)
     {

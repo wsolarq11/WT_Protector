@@ -34,7 +34,7 @@ public static class LauncherPresetFiles
         {
             preset.Id = LauncherPresetIds.GenerateUnique(preset.Id, usedPresetIds);
             usedPresetIds.Add(preset.Id);
-            preset.Name ??= string.Empty;
+            preset.Name = LauncherPresetNames.Normalize(preset.Name);
             preset.EntryIds = LauncherEntryIds.ToUniqueUsableList(preset.EntryIds ?? []);
             normalizedPresets.Add(preset);
         }

@@ -49,7 +49,7 @@ public sealed partial class LauncherConfigStoreTests
                     new LauncherPreset
                     {
                         Id = " Daily ",
-                        Name = "Second",
+                        Name = " Second ",
                         EntryIds = ["two", " three "],
                     },
                 ],
@@ -110,7 +110,7 @@ public sealed partial class LauncherConfigStoreTests
           "presets": [
             {
               "id": " Daily ",
-              "name": "Daily",
+              "name": " Daily ",
               "entryIds": [" one ", "one", " ", "two", " two "]
             }
           ]
@@ -122,6 +122,7 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Equal("daily", loaded.DefaultPresetId);
         var preset = Assert.Single(loaded.Presets);
         Assert.Equal("daily", preset.Id);
+        Assert.Equal("Daily", preset.Name);
         Assert.Equal(["one", "two"], preset.EntryIds);
     }
 
@@ -145,7 +146,7 @@ public sealed partial class LauncherConfigStoreTests
         var dirtyPreset = new LauncherPreset
         {
             Id = " Daily ",
-            Name = null!,
+            Name = " Daily ",
             EntryIds = [null!, " one ", "one", " ", "two", " two "],
         };
         var presets = new LauncherPresetFile
@@ -160,13 +161,13 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Equal(2, presets.Presets.Count);
         Assert.Null(presets.Presets[0]);
         Assert.Equal(" Daily ", dirtyPreset.Id);
-        Assert.Null(dirtyPreset.Name);
+        Assert.Equal(" Daily ", dirtyPreset.Name);
         Assert.Equal([null!, " one ", "one", " ", "two", " two "], dirtyPreset.EntryIds);
         var loaded = LauncherPresetStore.Load(presetPath);
         Assert.Equal("daily", loaded.DefaultPresetId);
         var preset = Assert.Single(loaded.Presets);
         Assert.Equal("daily", preset.Id);
-        Assert.Equal(string.Empty, preset.Name);
+        Assert.Equal("Daily", preset.Name);
         Assert.Equal(["one", "two"], preset.EntryIds);
         var savedJson = File.ReadAllText(presetPath);
         Assert.DoesNotContain("null", savedJson);
