@@ -26,7 +26,7 @@ public sealed class LauncherSettingsSnapshot
         WindowHeight = windowHeight;
     }
 
-    public string Theme { get; }
+    private string Theme { get; }
 
     public string LastFilterText { get; }
 
@@ -36,15 +36,15 @@ public sealed class LauncherSettingsSnapshot
 
     public bool RequireConfirmationForLaunches { get; }
 
-    public bool HasCustomEntryOrder { get; }
+    private bool HasCustomEntryOrder { get; }
 
-    public IReadOnlyList<string> CustomEntryOrder { get; }
+    private IReadOnlyList<string> CustomEntryOrder { get; }
 
-    public bool HasWindow { get; }
+    private bool HasWindow { get; }
 
-    public double WindowWidth { get; }
+    private double WindowWidth { get; }
 
-    public double WindowHeight { get; }
+    private double WindowHeight { get; }
 
     public static LauncherSettingsSnapshot Capture(LauncherSettings settings)
     {
