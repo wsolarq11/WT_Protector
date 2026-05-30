@@ -11,7 +11,7 @@ public static class MainWindowEntryRowDoubleTap
             if (control is Button or CheckBox)
                 return false;
 
-            if (control is Border border && border.Classes.Contains("entry-drag-handle"))
+            if (control is Border border && border.Classes.Contains(MainWindowEntryClasses.DragHandle))
                 return false;
         }
 

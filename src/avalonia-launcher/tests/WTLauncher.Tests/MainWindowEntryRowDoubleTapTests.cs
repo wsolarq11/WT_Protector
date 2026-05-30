@@ -28,7 +28,7 @@ public sealed class MainWindowEntryRowDoubleTapTests
         var source = new TextBlock();
         var handle = new Border
         {
-            Classes = { "entry-drag-handle" },
+            Classes = { MainWindowEntryClasses.DragHandle },
             Child = source,
         };
 

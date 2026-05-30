@@ -17,7 +17,7 @@ public sealed class MainWindowEntryCardBoundsCaptureTests
         var first = Card(firstEntry);
         var second = Card(secondEntry);
         var ignoredWithoutCardClass = new Border { DataContext = CreateEntryViewModel(owner, "not-card") };
-        var ignoredWithoutEntry = new Border { Classes = { "card" }, DataContext = new object() };
+        var ignoredWithoutEntry = new Border { Classes = { MainWindowEntryClasses.Card }, DataContext = new object() };
         var ignoredWithoutOrigin = Card(CreateEntryViewModel(owner, "no-origin"));
         var origins = new Dictionary<Border, Point>
         {

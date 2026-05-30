@@ -23,7 +23,7 @@ public sealed class MainWindowDragGhostFactoryTests
         Assert.Equal(LauncherDragGhostLayoutCalculator.MinHeight, ghost.Control.Height);
         Assert.Equal(336, ghost.Left);
         Assert.Equal(256, ghost.Top);
-        Assert.Contains("card", ghost.Control.Classes);
+        Assert.Contains(MainWindowEntryClasses.Card, ghost.Control.Classes);
         Assert.False(ghost.Control.IsHitTestVisible);
         Assert.Equal(0.86, ghost.Control.Opacity);
     }

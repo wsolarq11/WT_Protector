@@ -21,7 +21,7 @@ public static class MainWindowDragGhostFactory
         {
             Width = layout.Width,
             Height = layout.Height,
-            Classes = { "card" },
+            Classes = { MainWindowEntryClasses.Card },
             Background = Brushes.White,
             BorderBrush = Brush.Parse("#38BDF8"),
             BorderThickness = new Thickness(2),

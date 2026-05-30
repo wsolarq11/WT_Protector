@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using WTLauncher.App.ViewModels;
+using WTLauncher.App.Views;
 using WTLauncher.Core;
 
 namespace WTLauncher.Tests;
@@ -10,7 +11,7 @@ internal static class MainWindowEntryCardTestFactory
     {
         return new Border
         {
-            Classes = { "card" },
+            Classes = { MainWindowEntryClasses.Card },
             DataContext = entry,
         };
     }

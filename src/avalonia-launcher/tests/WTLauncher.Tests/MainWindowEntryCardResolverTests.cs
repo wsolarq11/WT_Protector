@@ -28,7 +28,7 @@ public sealed class MainWindowEntryCardResolverTests
         var first = Card(CreateEntryViewModel(owner, "first"));
         var second = Card(CreateEntryViewModel(owner, "second"));
         var ignoredWithoutCardClass = new Border { DataContext = CreateEntryViewModel(owner, "not-card") };
-        var ignoredWithoutEntry = new Border { Classes = { "card" }, DataContext = new object() };
+        var ignoredWithoutEntry = new Border { Classes = { MainWindowEntryClasses.Card }, DataContext = new object() };
 
         var resolved = MainWindowEntryCardResolver.ResolveCards(
             [first, ignoredWithoutCardClass, ignoredWithoutEntry, second]).ToArray();
@@ -64,7 +64,7 @@ public sealed class MainWindowEntryCardResolverTests
         var source = new Button();
         var cardWithoutEntry = new Border
         {
-            Classes = { "card" },
+            Classes = { MainWindowEntryClasses.Card },
             DataContext = new object(),
             Child = source,
         };

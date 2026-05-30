@@ -28,7 +28,7 @@ public sealed class MainWindowEntryCardContextMenuTests
         var source = new Button();
         var innerCard = new Border
         {
-            Classes = { "card" },
+            Classes = { MainWindowEntryClasses.Card },
             Child = source,
         };
         var outerCard = Card(new ContextMenu(), innerCard);
@@ -48,7 +48,7 @@ public sealed class MainWindowEntryCardContextMenuTests
     private static Border Card(ContextMenu menu, Control child) =>
         new()
         {
-            Classes = { "card" },
+            Classes = { MainWindowEntryClasses.Card },
             ContextMenu = menu,
             Child = child,
         };

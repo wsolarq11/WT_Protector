@@ -8,7 +8,7 @@ public static class MainWindowEntryCardResolver
     public static bool IsCard(Control control)
     {
         ArgumentNullException.ThrowIfNull(control);
-        return control.Classes.Contains("card");
+        return control.Classes.Contains(MainWindowEntryClasses.Card);
     }
 
     public static LauncherEntryViewModel? ResolveCard(Control control)

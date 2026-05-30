@@ -16,7 +16,7 @@ public sealed class MainWindowReorderFlipAnimationTests
         var still = Card(CreateEntryViewModel(owner, "still"));
         var missingAfter = Card(CreateEntryViewModel(owner, "missing-after"));
         var notCard = new Border { DataContext = CreateEntryViewModel(owner, "not-card") };
-        var notEntry = new Border { Classes = { "card" }, DataContext = new object() };
+        var notEntry = new Border { Classes = { MainWindowEntryClasses.Card }, DataContext = new object() };
         var before = new Dictionary<string, Rect>
         {
             ["moved"] = Rect(20, 40),
