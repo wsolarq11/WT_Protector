@@ -157,6 +157,12 @@ public sealed partial class LauncherConfigStoreTests
 
         LauncherSettingsStore.Save(settings, settingsPath);
 
+        Assert.Null(settings.Theme);
+        Assert.Null(settings.LastFilterText);
+        Assert.Equal(" missing ", settings.SortMode);
+        Assert.Equal(" missing ", settings.EntryViewMode);
+        Assert.Equal([null!, " one ", "one", " ", "two", " two "], settings.CustomEntryOrder);
+        Assert.Null(settings.Window);
         var loaded = LauncherSettingsStore.Load(settingsPath);
         Assert.Equal("light", loaded.Theme);
         Assert.Equal(string.Empty, loaded.LastFilterText);

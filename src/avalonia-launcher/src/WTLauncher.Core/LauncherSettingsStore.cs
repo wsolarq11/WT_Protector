@@ -18,8 +18,7 @@ public static class LauncherSettingsStore
         ArgumentNullException.ThrowIfNull(settings);
         ThrowIfSettingsPathMissing(settingsPath);
 
-        Normalize(settings);
-        LauncherJson.Save(settings, settingsPath);
+        LauncherJson.Save(CloneNormalized(settings), settingsPath);
     }
 
     public static bool TrySaveWindowBounds(LauncherSettings settings, string settingsPath, double width, double height)
@@ -61,5 +60,27 @@ public static class LauncherSettingsStore
         settings.EntryViewMode = LauncherEntryViewModes.NormalizeId(settings.EntryViewMode);
         settings.CustomEntryOrder = LauncherEntryIds.ToUniqueUsableList(settings.CustomEntryOrder ?? []);
         settings.Window ??= new LauncherWindowSettings();
+    }
+
+    private static LauncherSettings CloneNormalized(LauncherSettings settings)
+    {
+        var clone = new LauncherSettings
+        {
+            Theme = settings.Theme,
+            LastFilterText = settings.LastFilterText,
+            SortMode = settings.SortMode,
+            EntryViewMode = settings.EntryViewMode,
+            RequireConfirmationForLaunches = settings.RequireConfirmationForLaunches,
+            CustomEntryOrder = settings.CustomEntryOrder is null ? null! : [.. settings.CustomEntryOrder],
+            Window = settings.Window is null
+                ? null!
+                : new LauncherWindowSettings
+                {
+                    Width = settings.Window.Width,
+                    Height = settings.Window.Height,
+                },
+        };
+        Normalize(clone);
+        return clone;
     }
 }
