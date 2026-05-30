@@ -15,8 +15,8 @@ public sealed partial class LauncherConfigStoreTests
             {
                 Theme = "dark",
                 LastFilterText = "爬虫",
-                SortMode = "alphabetical",
-                EntryViewMode = "details",
+                SortMode = LauncherEntryVisibility.AlphabeticalSortModeId,
+                EntryViewMode = LauncherEntryViewModes.DetailsId,
                 RequireConfirmationForLaunches = false,
                 CustomEntryOrder = ["two", "one"],
                 Window = new LauncherWindowSettings { Width = 1200, Height = 800 },
@@ -27,8 +27,8 @@ public sealed partial class LauncherConfigStoreTests
 
         Assert.Equal("dark", loaded.Theme);
         Assert.Equal("爬虫", loaded.LastFilterText);
-        Assert.Equal("alphabetical", loaded.SortMode);
-        Assert.Equal("details", loaded.EntryViewMode);
+        Assert.Equal(LauncherEntryVisibility.AlphabeticalSortModeId, loaded.SortMode);
+        Assert.Equal(LauncherEntryViewModes.DetailsId, loaded.EntryViewMode);
         Assert.False(loaded.RequireConfirmationForLaunches);
         Assert.Equal(["two", "one"], loaded.CustomEntryOrder);
         Assert.Equal(1200d, loaded.Window.Width);
