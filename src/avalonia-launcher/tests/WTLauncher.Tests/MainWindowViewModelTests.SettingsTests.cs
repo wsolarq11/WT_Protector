@@ -11,33 +11,14 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(
             temp,
-            new LaunchEntry
-            {
-                Id = "one",
-                Name = "Zulu",
-                Directory = "D:\\one",
-                Command = "codex",
-                Confirm = true,
-                UpdatedAtUtc = "2026-05-17T00:00:00Z",
-            },
-            new LaunchEntry
-            {
-                Id = "two",
-                Name = "Alpha",
-                Directory = "D:\\two",
-                Command = "opencode",
-                Confirm = false,
-                UpdatedAtUtc = "2026-05-18T00:00:00Z",
-            },
-            new LaunchEntry
-            {
-                Id = "three",
-                Name = "Mike",
-                Directory = "D:\\three",
-                Command = "pwsh",
-                Confirm = false,
-                UpdatedAtUtc = "",
-            });
+            Entry(
+                "one",
+                "Zulu",
+                command: "codex",
+                confirm: true,
+                updatedAtUtc: "2026-05-17T00:00:00Z"),
+            Entry("two", "Alpha", command: "opencode", updatedAtUtc: "2026-05-18T00:00:00Z"),
+            Entry("three", "Mike"));
 
         var viewModel = CreateViewModel(
             config,
@@ -86,22 +67,8 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(
             temp,
-            new LaunchEntry
-            {
-                Id = "one",
-                Name = "One",
-                Directory = "D:\\one",
-                Command = "codex",
-                Confirm = false,
-            },
-            new LaunchEntry
-            {
-                Id = "two",
-                Name = "Two",
-                Directory = "D:\\two",
-                Command = "opencode",
-                Confirm = false,
-            });
+            Entry("one", "One", command: "codex"),
+            Entry("two", "Two", command: "opencode"));
 
         var launcherSettings = new LauncherSettings
         {

@@ -7,27 +7,13 @@ public sealed partial class MainWindowViewModelTests
 {
     private static LaunchEntry[] NumberedEntries(int count) =>
         Enumerable.Range(1, count)
-            .Select(index => new LaunchEntry
-            {
-                Id = $"entry-{index}",
-                Name = $"Entry {index}",
-                Directory = $"D:\\entry-{index}",
-                Command = "pwsh",
-                Confirm = false,
-            })
+            .Select(index => Entry($"entry-{index}", $"Entry {index}"))
             .ToArray();
 
     private static (string Config, string Settings, string Presets) CreateSingleEntryFixture(TempDirectory temp) =>
         CreatePortableFixture(
             temp,
-            new LaunchEntry
-            {
-                Id = "one",
-                Name = "One",
-                Directory = "D:\\one",
-                Command = "codex",
-                Confirm = false,
-            });
+            Entry("one", "One", command: "codex"));
 
     private static (string Config, string Settings, string Presets) CreatePortableFixture(
         TempDirectory temp,
@@ -35,24 +21,27 @@ public sealed partial class MainWindowViewModelTests
         bool twoSelected) =>
         CreatePortableFixture(
             temp,
-            new LaunchEntry
-            {
-                Id = "one",
-                Name = "one",
-                Directory = "D:\\one",
-                Command = "codex",
-                Confirm = true,
-                Selected = oneSelected,
-            },
-            new LaunchEntry
-            {
-                Id = "two",
-                Name = "two",
-                Directory = "D:\\two",
-                Command = "opencode",
-                Confirm = false,
-                Selected = twoSelected,
-            });
+            Entry("one", "one", command: "codex", confirm: true, selected: oneSelected),
+            Entry("two", "two", command: "opencode", selected: twoSelected));
+
+    private static LaunchEntry Entry(
+        string id,
+        string? name = null,
+        string? directory = null,
+        string command = "pwsh",
+        bool confirm = false,
+        bool selected = false,
+        string updatedAtUtc = "") =>
+        new()
+        {
+            Id = id,
+            Name = name ?? id,
+            Directory = directory ?? $"D:\\{id}",
+            Command = command,
+            Confirm = confirm,
+            Selected = selected,
+            UpdatedAtUtc = updatedAtUtc,
+        };
 
     private static (string Config, string Settings, string Presets) CreatePortableFixture(
         TempDirectory temp,

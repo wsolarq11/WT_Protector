@@ -11,22 +11,12 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var entries = new[]
         {
-            new LaunchEntry
-            {
-                Id = "one",
-                Name = "one",
-                Directory = temp.Path,
-                Command = "codex --dangerously-bypass-approvals-and-sandbox",
-                Confirm = true,
-            },
-            new LaunchEntry
-            {
-                Id = "two",
-                Name = "two",
-                Directory = temp.Path,
-                Command = "pwsh",
-                Confirm = false,
-            },
+            Entry(
+                "one",
+                directory: temp.Path,
+                command: "codex --dangerously-bypass-approvals-and-sandbox",
+                confirm: true),
+            Entry("two", directory: temp.Path),
         };
         var (config, settings, _) = CreatePortableFixture(temp, entries);
 
@@ -58,14 +48,7 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(
             temp,
-            new LaunchEntry
-            {
-                Id = "one",
-                Name = "one",
-                Directory = temp.Path,
-                Command = "codex --version",
-                Confirm = true,
-            });
+            Entry("one", directory: temp.Path, command: "codex --version", confirm: true));
         var viewModel = CreateViewModel(
             config,
             settings,
@@ -90,24 +73,8 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(
             temp,
-            new LaunchEntry
-            {
-                Id = "one",
-                Name = "one",
-                Directory = Path.Combine(temp.Path, "missing-one"),
-                Command = "codex",
-                Confirm = false,
-                Selected = true,
-            },
-            new LaunchEntry
-            {
-                Id = "two",
-                Name = "two",
-                Directory = Path.Combine(temp.Path, "missing-two"),
-                Command = "opencode",
-                Confirm = false,
-                Selected = true,
-            });
+            Entry("one", directory: Path.Combine(temp.Path, "missing-one"), command: "codex", selected: true),
+            Entry("two", directory: Path.Combine(temp.Path, "missing-two"), command: "opencode", selected: true));
         var viewModel = CreateViewModel(
             config,
             settings,
