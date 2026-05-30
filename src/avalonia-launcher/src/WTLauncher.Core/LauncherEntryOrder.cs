@@ -4,28 +4,17 @@ public static class LauncherEntryOrder
 {
     public static void SyncWithEntries(List<string> customOrder, IEnumerable<string> entryIds)
     {
-        var knownIds = new List<string>();
-        var knownSet = new HashSet<string>(LauncherEntryIds.Comparer);
-        foreach (var id in entryIds)
-        {
-            var normalized = LauncherEntryIds.Normalize(id);
-            if (!LauncherEntryIds.IsUsable(normalized))
-                continue;
-            if (knownSet.Add(normalized))
-                knownIds.Add(normalized);
-        }
+        var knownIds = LauncherEntryIds.ToUniqueUsableList(entryIds);
+        var knownSet = knownIds.ToHashSet(LauncherEntryIds.Comparer);
 
         var syncedOrder = new List<string>();
         var seen = new HashSet<string>(LauncherEntryIds.Comparer);
-        foreach (var id in customOrder)
+        foreach (var id in LauncherEntryIds.ToUniqueUsableList(customOrder))
         {
-            var normalized = LauncherEntryIds.Normalize(id);
-            if (!LauncherEntryIds.IsUsable(normalized)
-                || !knownSet.Contains(normalized)
-                || !seen.Add(normalized))
+            if (!knownSet.Contains(id) || !seen.Add(id))
                 continue;
 
-            syncedOrder.Add(normalized);
+            syncedOrder.Add(id);
         }
 
         foreach (var id in knownIds)
