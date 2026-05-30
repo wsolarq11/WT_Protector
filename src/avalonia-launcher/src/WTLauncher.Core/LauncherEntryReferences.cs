@@ -15,7 +15,7 @@ public static class LauncherEntryReferences
         {
             for (var i = 0; i < entryIds.Count; i++)
             {
-                if (ReferencesEntry(entryIds[i], oldEntryId))
+                if (LauncherEntryIds.SameNormalized(entryIds[i], oldEntryId))
                     entryIds[i] = newEntryId;
             }
         }
@@ -31,14 +31,9 @@ public static class LauncherEntryReferences
 
         foreach (var entryIds in EntryReferenceLists(presetFile, customEntryOrder))
         {
-            entryIds.RemoveAll(id => ReferencesEntry(id, entryId));
+            entryIds.RemoveAll(id => LauncherEntryIds.SameNormalized(id, entryId));
         }
     }
-
-    private static bool ReferencesEntry(string? referenceEntryId, string? entryId) =>
-        LauncherEntryIds.Same(
-            LauncherEntryIds.Normalize(referenceEntryId),
-            LauncherEntryIds.Normalize(entryId));
 
     private static IEnumerable<List<string>> EntryReferenceLists(
         LauncherPresetFile presetFile,

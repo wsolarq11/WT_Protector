@@ -35,7 +35,6 @@ public static class LauncherEntryDrafts
         IEnumerable<LaunchEntry> existingEntries)
     {
         var entryId = LauncherEntryIds.Normalize(entry.Id);
-        var originalEntryId = LauncherEntryIds.Normalize(originalId);
         var requiredFieldError = GetRequiredFieldError(
             entryId,
             entry.Name,
@@ -45,8 +44,8 @@ public static class LauncherEntryDrafts
             return requiredFieldError;
 
         if (existingEntries.Any(existing =>
-                !LauncherEntryIds.Same(LauncherEntryIds.Normalize(existing.Id), originalEntryId)
-                && LauncherEntryIds.Same(LauncherEntryIds.Normalize(existing.Id), entryId)))
+                !LauncherEntryIds.SameNormalized(existing.Id, originalId)
+                && LauncherEntryIds.SameNormalized(existing.Id, entryId)))
             return LauncherEntryDraftStatus.DuplicateId(entryId);
 
         return null;

@@ -11,6 +11,9 @@ public static class LauncherEntryIds
     public static bool Same(string? left, string? right) =>
         string.Equals(left, right, StringComparison.Ordinal);
 
+    public static bool SameNormalized(string? left, string? right) =>
+        Same(Normalize(left), Normalize(right));
+
     public static HashSet<string> ToUsableSet(IEnumerable<string> ids) =>
         ids
             .Select(Normalize)
