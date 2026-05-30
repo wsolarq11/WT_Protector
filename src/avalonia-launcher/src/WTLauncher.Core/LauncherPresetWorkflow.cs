@@ -51,7 +51,7 @@ public static class LauncherPresetWorkflow
             return null;
 
         presetFile.Presets.Remove(preset);
-        if (LauncherPresetIds.Same(presetFile.DefaultPresetId, preset.Id))
+        if (!HasDefaultPreset(presetFile))
         {
             fallbackPresetId = presetFile.Presets.FirstOrDefault()?.Id ?? string.Empty;
             presetFile.DefaultPresetId = fallbackPresetId;

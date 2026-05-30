@@ -58,6 +58,7 @@ public sealed class LauncherPresetWorkflowTests
         Assert.Equal(["one"], preset.EntryIds);
         Assert.True(preset.Locked);
     }
+
     [Fact]
     public void AddPreset_AppendsUniquePresetWithSelectedEntries()
     {
@@ -155,6 +156,21 @@ public sealed class LauncherPresetWorkflowTests
         Assert.Null(locked);
         Assert.Equal("secondary", lockedFallbackId);
         Assert.Contains(presetFile.Presets, preset => preset.Id == "blank-manual");
+    }
+
+    [Fact]
+    public void DeletePreset_RepairsMissingDefaultFallback()
+    {
+        var presetFile = PresetFile(
+            "missing",
+            Preset("daily", "Daily", "one"),
+            Preset("secondary", "Secondary", "two"));
+
+        var deleted = LauncherPresetWorkflow.DeletePreset(presetFile, "secondary", out var fallbackPresetId);
+
+        Assert.Equal("secondary", deleted?.Id);
+        Assert.Equal("daily", fallbackPresetId);
+        Assert.Equal("daily", presetFile.DefaultPresetId);
     }
 
     private static LauncherPresetFile PresetFile(params LauncherPreset[] presets) =>
