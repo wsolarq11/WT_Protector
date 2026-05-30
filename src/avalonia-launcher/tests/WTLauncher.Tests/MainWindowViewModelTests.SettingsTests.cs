@@ -1,3 +1,4 @@
+using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
 namespace WTLauncher.Tests;
@@ -67,5 +68,61 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(["two", "one", "three"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         savedSettings = LauncherSettingsStore.Load(settings);
         Assert.Equal("updated", savedSettings.SortMode);
+    }
+
+    [Fact]
+    public void VisibleSettingsRollBackWhenSettingsSaveFails()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            new LaunchEntry
+            {
+                Id = "one",
+                Name = "One",
+                Directory = "D:\\one",
+                Command = "codex",
+                Confirm = false,
+            },
+            new LaunchEntry
+            {
+                Id = "two",
+                Name = "Two",
+                Directory = "D:\\two",
+                Command = "opencode",
+                Confirm = false,
+            });
+
+        var launcherSettings = new LauncherSettings
+        {
+            SortMode = "custom",
+            EntryViewMode = "cards",
+            RequireConfirmationForLaunches = true,
+            CustomEntryOrder = ["one", "two"],
+        };
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+        Directory.CreateDirectory(settings);
+
+        viewModel.FilterText = "two";
+        Assert.Equal("", viewModel.FilterText);
+        Assert.Equal("", launcherSettings.LastFilterText);
+        Assert.Equal(2, viewModel.VisibleCount);
+        Assert.Contains("设置保存失败", viewModel.StatusText);
+
+        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == "alphabetical");
+        Assert.Equal("custom", viewModel.SelectedSortMode?.Id);
+        Assert.Equal("custom", launcherSettings.SortMode);
+        Assert.Equal(["one", "two"], launcherSettings.CustomEntryOrder);
+        Assert.Contains("设置保存失败", viewModel.StatusText);
+
+        viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == "details");
+        Assert.Equal("cards", viewModel.SelectedDisplayMode?.Id);
+        Assert.Equal("cards", launcherSettings.EntryViewMode);
+        Assert.Contains("设置保存失败", viewModel.StatusText);
+
+        viewModel.RequireConfirmationForLaunches = false;
+        Assert.True(viewModel.RequireConfirmationForLaunches);
+        Assert.True(launcherSettings.RequireConfirmationForLaunches);
+        Assert.Contains("设置保存失败", viewModel.StatusText);
     }
 }
