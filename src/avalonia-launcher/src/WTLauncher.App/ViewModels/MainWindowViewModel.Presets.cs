@@ -14,7 +14,8 @@ public sealed partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanApplyPreset))]
     private void ApplyPreset()
     {
-        if (!TryGetSelectedPreset(out var selectedPreset))
+        var selectedPreset = GetSelectedPresetOrReportMissing();
+        if (selectedPreset is null)
             return;
 
         var selection = BuildPresetSelectionPreview(GetSelectedEntryIds());
@@ -64,7 +65,8 @@ public sealed partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanUpdateSelectedPreset))]
     private void UpdateSelectedPreset()
     {
-        if (!TryGetSelectedPreset(out var selectedPreset))
+        var selectedPreset = GetSelectedPresetOrReportMissing();
+        if (selectedPreset is null)
             return;
 
         if (!LauncherPresetWorkflow.CanUpdatePreset(_presetFile, selectedPreset.Id))
@@ -98,7 +100,8 @@ public sealed partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanDeleteSelectedPreset))]
     private async Task DeleteSelectedPresetAsync()
     {
-        if (!TryGetSelectedPreset(out var selectedPreset))
+        var selectedPreset = GetSelectedPresetOrReportMissing();
+        if (selectedPreset is null)
             return;
 
         if (!LauncherPresetWorkflow.CanDeletePreset(_presetFile, selectedPreset.Id))
@@ -129,17 +132,13 @@ public sealed partial class MainWindowViewModel
         ApplyStatusText(LauncherPresetStatus.Deleted(preset.Name));
     }
 
-    private bool TryGetSelectedPreset(out LauncherPresetViewModel selectedPreset)
+    private LauncherPresetViewModel? GetSelectedPresetOrReportMissing()
     {
         if (SelectedPreset is { } value)
-        {
-            selectedPreset = value;
-            return true;
-        }
+            return value;
 
-        selectedPreset = null!;
         StatusText = LauncherPresetStatus.NoPresetSelected;
-        return false;
+        return null;
     }
 
     partial void OnSelectedPresetChanged(LauncherPresetViewModel? value)
