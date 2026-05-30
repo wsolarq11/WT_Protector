@@ -25,7 +25,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("daily", viewModel.SelectedPreset?.Id);
         Assert.Single(viewModel.Presets, preset => preset.Id == "daily");
         Assert.DoesNotContain(viewModel.Presets, preset => preset.Id == "project-pair");
-        Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(presets)!, "presets.json.tmp-*"));
+        AssertNoStoreTempFiles(presets);
     }
 
     [Fact]

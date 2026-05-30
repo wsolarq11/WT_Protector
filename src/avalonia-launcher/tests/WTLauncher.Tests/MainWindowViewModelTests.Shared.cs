@@ -47,11 +47,21 @@ public sealed partial class MainWindowViewModelTests
         TempDirectory temp,
         params LaunchEntry[] entries)
     {
-        var configDir = Path.Combine(temp.Path, "config");
+        var configDir = Path.Combine(temp.Path, LauncherConfigStore.ConfigDirectoryName);
         Directory.CreateDirectory(configDir);
-        var config = Path.Combine(configDir, "config.json");
+        var config = Path.Combine(configDir, LauncherConfigStore.ConfigFileName);
         LauncherConfigStore.Save(entries, config);
-        return (config, Path.Combine(configDir, "settings.json"), Path.Combine(configDir, "presets.json"));
+        return (
+            config,
+            Path.Combine(configDir, LauncherConfigStore.SettingsFileName),
+            Path.Combine(configDir, LauncherPresetStore.PresetsFileName));
+    }
+
+    private static void AssertNoStoreTempFiles(string path)
+    {
+        var directory = Path.GetDirectoryName(path)!;
+        var fileName = Path.GetFileName(path);
+        Assert.Empty(Directory.EnumerateFiles(directory, $"{fileName}.tmp-*"));
     }
 
     private static void SavePresetFile(string path, string defaultPresetId, params LauncherPreset[] presets) =>

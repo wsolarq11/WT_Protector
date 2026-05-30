@@ -32,7 +32,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(2, viewModel.TotalCount);
         Assert.Equal(0, viewModel.SelectedCount);
         Assert.Contains("配置保存失败", viewModel.StatusText);
-        Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(config)!, "config.json.tmp-*"));
+        AssertNoStoreTempFiles(config);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Contains("设置保存失败", viewModel.StatusText);
         var savedEntries = LoadEntriesById(config);
         Assert.DoesNotContain(savedEntries, entry => entry.Id == "three");
-        Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(config)!, "config.json.tmp-*"));
+        AssertNoStoreTempFiles(config);
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public sealed partial class MainWindowViewModelTests
         var savedEntries = LoadEntriesById(config);
         Assert.Contains(savedEntries, entry => entry.Id == "one");
         Assert.DoesNotContain(savedEntries, entry => entry.Id == "one-renamed");
-        Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(config)!, "config.json.tmp-*"));
+        AssertNoStoreTempFiles(config);
     }
 
     [Fact]

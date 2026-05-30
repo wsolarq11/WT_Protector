@@ -66,7 +66,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
         Assert.Contains("设置保存失败", viewModel.StatusText);
-        Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(settings)!, "settings.json.tmp-*"));
+        AssertNoStoreTempFiles(settings);
     }
 
     [Fact]

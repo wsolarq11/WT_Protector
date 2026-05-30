@@ -57,7 +57,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(0, viewModel.SelectedCount);
         Assert.All(viewModel.Entries, entry => Assert.False(entry.IsSelected));
-        Assert.Empty(Directory.EnumerateFiles(Path.GetDirectoryName(config)!, "config.json.tmp-*"));
+        AssertNoStoreTempFiles(config);
     }
 
     [Fact]
