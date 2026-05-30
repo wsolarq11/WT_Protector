@@ -40,7 +40,7 @@ public static class LauncherPresetFiles
         }
 
         presets.Presets = normalizedPresets;
-        presets.DefaultPresetId = NormalizePresetId(presets.DefaultPresetId);
+        presets.DefaultPresetId = LauncherPresetIds.NormalizeReference(presets.DefaultPresetId);
         if (normalizedPresets.Count == 0)
         {
             presets.DefaultPresetId = string.Empty;
@@ -50,9 +50,4 @@ public static class LauncherPresetFiles
         if (!normalizedPresets.Any(preset => LauncherPresetIds.Same(preset.Id, presets.DefaultPresetId)))
             presets.DefaultPresetId = normalizedPresets[0].Id;
     }
-
-    private static string NormalizePresetId(string? value) =>
-        string.IsNullOrWhiteSpace(value)
-            ? string.Empty
-            : LauncherPresetIds.Normalize(value);
 }

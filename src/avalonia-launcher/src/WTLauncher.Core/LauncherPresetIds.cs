@@ -57,4 +57,7 @@ public static class LauncherPresetIds
         var normalized = builder.ToString().Trim('-');
         return string.IsNullOrWhiteSpace(normalized) ? "preset" : normalized;
     }
+
+    public static string NormalizeReference(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? string.Empty : Normalize(value);
 }

@@ -40,6 +40,15 @@ public sealed class LauncherPresetWorkflowTests
         Assert.False(LauncherPresetIds.Comparer.Equals("Daily", "daily"));
     }
 
+    [Theory]
+    [InlineData(" Daily ", "daily")]
+    [InlineData(null, "")]
+    [InlineData(" ", "")]
+    public void NormalizePresetReference_DoesNotGenerateIdsForBlankReferences(string? id, string expected)
+    {
+        Assert.Equal(expected, LauncherPresetIds.NormalizeReference(id));
+    }
+
     [Fact]
     public void ClonePresetFile_CreatesDeepCopyForRollback()
     {
@@ -192,6 +201,43 @@ public sealed class LauncherPresetWorkflowTests
 
         Assert.NotNull(updated);
         Assert.Equal(["one", "two"], presetFile.Presets.Single().EntryIds);
+    }
+
+    [Fact]
+    public void PresetWorkflow_NormalizesPresetIdArgumentsBeforeLookup()
+    {
+        var presetFile = PresetFile(
+            "daily",
+            Preset("daily", "Daily", "one"),
+            Preset("secondary", "Secondary", "two"));
+
+        Assert.True(LauncherPresetWorkflow.CanUpdatePreset(presetFile, " Daily "));
+        var updated = LauncherPresetWorkflow.UpdatePreset(presetFile, " Daily ", "Daily Updated", ["one"]);
+        Assert.NotNull(updated);
+        Assert.Equal("Daily Updated", presetFile.Presets[0].Name);
+
+        Assert.True(LauncherPresetWorkflow.CanDeletePreset(presetFile, " Daily "));
+        var deleted = LauncherPresetWorkflow.DeletePreset(presetFile, " Daily ", out var fallbackPresetId);
+
+        Assert.Equal("daily", deleted?.Id);
+        Assert.Equal("secondary", fallbackPresetId);
+    }
+
+    [Fact]
+    public void PresetWorkflow_DoesNotTreatBlankPresetIdAsGeneratedPresetId()
+    {
+        var presetFile = PresetFile(
+            "preset",
+            Preset("preset", "Preset", "one"),
+            Preset("secondary", "Secondary", "two"));
+
+        Assert.False(LauncherPresetWorkflow.CanUpdatePreset(presetFile, " "));
+        Assert.Null(LauncherPresetWorkflow.UpdatePreset(presetFile, " ", "Changed", ["two"]));
+        Assert.Null(LauncherPresetWorkflow.DeletePreset(presetFile, " ", out var fallbackPresetId));
+
+        Assert.Equal("preset", fallbackPresetId);
+        Assert.Equal("Preset", presetFile.Presets[0].Name);
+        Assert.Equal(["preset", "secondary"], presetFile.Presets.Select(preset => preset.Id).ToArray());
     }
 
     [Fact]

@@ -73,8 +73,14 @@ public static class LauncherPresetWorkflow
         return preset is not null && CanUpdatePreset(preset);
     }
 
-    private static LauncherPreset? FindPreset(LauncherPresetFile presetFile, string presetId) =>
-        presetFile.Presets.FirstOrDefault(preset => LauncherPresetIds.Same(preset.Id, presetId));
+    private static LauncherPreset? FindPreset(LauncherPresetFile presetFile, string presetId)
+    {
+        var normalizedPresetId = LauncherPresetIds.NormalizeReference(presetId);
+        if (normalizedPresetId.Length == 0)
+            return null;
+
+        return presetFile.Presets.FirstOrDefault(preset => LauncherPresetIds.Same(preset.Id, normalizedPresetId));
+    }
 
     private static bool HasDefaultPreset(LauncherPresetFile presetFile) =>
         presetFile.Presets.Any(preset => LauncherPresetIds.Same(preset.Id, presetFile.DefaultPresetId));
