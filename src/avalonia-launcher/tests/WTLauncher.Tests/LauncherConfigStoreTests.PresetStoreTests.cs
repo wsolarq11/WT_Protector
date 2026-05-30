@@ -142,23 +142,26 @@ public sealed partial class LauncherConfigStoreTests
     {
         using var temp = new TempDirectory();
         var presetPath = ConfigFilePath(temp.Path, LauncherPresetStore.PresetsFileName);
+        var dirtyPreset = new LauncherPreset
+        {
+            Id = " Daily ",
+            Name = null!,
+            EntryIds = [null!, " one ", "one", " ", "two", " two "],
+        };
         var presets = new LauncherPresetFile
         {
             DefaultPresetId = " Daily ",
-            Presets =
-            [
-                null!,
-                new LauncherPreset
-                {
-                    Id = " Daily ",
-                    Name = null!,
-                    EntryIds = [null!, " one ", "one", " ", "two", " two "],
-                },
-            ],
+            Presets = [null!, dirtyPreset],
         };
 
         LauncherPresetStore.Save(presets, presetPath, backup: false);
 
+        Assert.Equal(" Daily ", presets.DefaultPresetId);
+        Assert.Equal(2, presets.Presets.Count);
+        Assert.Null(presets.Presets[0]);
+        Assert.Equal(" Daily ", dirtyPreset.Id);
+        Assert.Null(dirtyPreset.Name);
+        Assert.Equal([null!, " one ", "one", " ", "two", " two "], dirtyPreset.EntryIds);
         var loaded = LauncherPresetStore.Load(presetPath);
         Assert.Equal("daily", loaded.DefaultPresetId);
         var preset = Assert.Single(loaded.Presets);

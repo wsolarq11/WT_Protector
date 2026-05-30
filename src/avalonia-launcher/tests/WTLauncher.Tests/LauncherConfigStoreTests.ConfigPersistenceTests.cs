@@ -138,21 +138,22 @@ public sealed partial class LauncherConfigStoreTests
     {
         using var temp = new TempDirectory();
         var config = ConfigFilePath(temp.Path, LauncherConfigStore.ConfigFileName);
-        var entries = new LaunchEntry[]
+        var dirtyEntry = new LaunchEntry
         {
-            null!,
-            new()
-            {
-                Id = " one ",
-                Name = " One ",
-                Directory = " D:\\one ",
-                Command = " codex ",
-                UpdatedAtUtc = " 2026-05-30T00:00:00Z ",
-            },
+            Id = " one ",
+            Name = " One ",
+            Directory = " D:\\one ",
+            Command = " codex ",
+            UpdatedAtUtc = " 2026-05-30T00:00:00Z ",
         };
+        var entries = new LaunchEntry[] { null!, dirtyEntry };
 
         LauncherConfigStore.Save(entries, config, backup: false);
 
+        Assert.Equal(" one ", dirtyEntry.Id);
+        Assert.Equal(" One ", dirtyEntry.Name);
+        Assert.Equal(" D:\\one ", dirtyEntry.Directory);
+        Assert.Equal(" codex ", dirtyEntry.Command);
         var entry = Assert.Single(LauncherConfigStore.Load(config));
         Assert.Equal("one", entry.Id);
         Assert.Equal("One", entry.Name);

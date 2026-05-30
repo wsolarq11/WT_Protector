@@ -31,7 +31,7 @@ public static class LauncherConfigStore
         LauncherJson.Save(
             entries
                 .OfType<LaunchEntry>()
-                .Select(Normalize)
+                .Select(CloneNormalized)
                 .ToList(),
             configPath,
             backup);
@@ -103,4 +103,6 @@ public static class LauncherConfigStore
         entry.UpdatedAtUtc = LauncherEntryText.Normalize(entry.UpdatedAtUtc);
         return entry;
     }
+
+    private static LaunchEntry CloneNormalized(LaunchEntry entry) => Normalize(entry with { });
 }
