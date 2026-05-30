@@ -27,9 +27,8 @@ public static class LauncherSettingsStore
         ArgumentNullException.ThrowIfNull(settings);
         ThrowIfSettingsPathMissing(settingsPath);
 
+        var snapshot = LauncherSettingsSnapshot.Capture(settings);
         var window = settings.Window ??= new LauncherWindowSettings();
-        var previousWidth = window.Width;
-        var previousHeight = window.Height;
         window.Width = width;
         window.Height = height;
 
@@ -43,8 +42,7 @@ public static class LauncherSettingsStore
         // or other path/storage exceptions depending on the underlying cause.
         catch (Exception)
         {
-            window.Width = previousWidth;
-            window.Height = previousHeight;
+            snapshot.Restore(settings);
             return false;
         }
     }

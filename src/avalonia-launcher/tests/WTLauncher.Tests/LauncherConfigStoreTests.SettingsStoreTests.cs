@@ -197,6 +197,10 @@ public sealed partial class LauncherConfigStoreTests
         var settingsPath = Path.Combine(configDir, LauncherConfigStore.SettingsFileName);
         var settings = new LauncherSettings
         {
+            Theme = null!,
+            SortMode = " missing ",
+            EntryViewMode = " missing ",
+            CustomEntryOrder = [" one ", "one"],
             Window = new LauncherWindowSettings { Width = 1180, Height = 760 },
         };
         Directory.CreateDirectory(settingsPath);
@@ -204,6 +208,10 @@ public sealed partial class LauncherConfigStoreTests
         var saved = LauncherSettingsStore.TrySaveWindowBounds(settings, settingsPath, width: 1320, height: 840);
 
         Assert.False(saved);
+        Assert.Null(settings.Theme);
+        Assert.Equal(" missing ", settings.SortMode);
+        Assert.Equal(" missing ", settings.EntryViewMode);
+        Assert.Equal([" one ", "one"], settings.CustomEntryOrder);
         Assert.Equal(1180d, settings.Window.Width);
         Assert.Equal(760d, settings.Window.Height);
         Assert.Empty(Directory.EnumerateFiles(configDir, $"{LauncherConfigStore.SettingsFileName}.tmp-*"));
