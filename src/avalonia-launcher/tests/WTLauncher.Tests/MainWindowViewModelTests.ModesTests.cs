@@ -16,10 +16,10 @@ public sealed partial class MainWindowViewModelTests
             settings,
             new LauncherSettings { SortMode = "missing", EntryViewMode = "missing" });
 
-        Assert.Equal("custom", viewModel.SelectedSortMode?.Id);
+        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, viewModel.SelectedSortMode?.Id);
         Assert.Equal(new[] { "卡片", "详细列表", "名称墙" }, viewModel.DisplayModes.Select(mode => mode.Label));
         Assert.Equal(LauncherEntryViewMode.Cards, viewModel.SelectedDisplayMode?.Mode);
-        Assert.Equal("cards", viewModel.SelectedDisplayMode?.Id);
+        Assert.Equal(LauncherEntryViewModes.CardsId, viewModel.SelectedDisplayMode?.Id);
     }
 
     [Fact]
@@ -35,11 +35,11 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(
             config,
             settings,
-            new LauncherSettings { SortMode = "custom" });
+            new LauncherSettings { SortMode = LauncherEntryVisibility.CustomSortModeId });
 
         Assert.True(viewModel.IsCustomSortMode);
 
-        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == "alphabetical");
+        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == LauncherEntryVisibility.AlphabeticalSortModeId);
 
         Assert.False(viewModel.IsCustomSortMode);
     }
@@ -61,7 +61,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.False(entry.ShowCommand);
         Assert.Equal(15, entry.TitleFontSize);
 
-        viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == "details");
+        viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == LauncherEntryViewModes.DetailsId);
 
         Assert.True(viewModel.IsDetailedListMode);
         Assert.False(viewModel.IsNamesViewMode);
@@ -69,9 +69,9 @@ public sealed partial class MainWindowViewModelTests
         Assert.True(entry.ShowDirectory);
         Assert.True(entry.ShowCommand);
         Assert.Equal(13, entry.TitleFontSize);
-        Assert.Equal("details", LauncherSettingsStore.Load(settings).EntryViewMode);
+        Assert.Equal(LauncherEntryViewModes.DetailsId, LauncherSettingsStore.Load(settings).EntryViewMode);
 
-        viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == "names");
+        viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == LauncherEntryViewModes.NamesId);
 
         Assert.False(viewModel.IsDetailedListMode);
         Assert.True(viewModel.IsNamesViewMode);
@@ -79,9 +79,9 @@ public sealed partial class MainWindowViewModelTests
         Assert.False(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
         Assert.Equal(13, entry.TitleFontSize);
-        Assert.Equal("names", LauncherSettingsStore.Load(settings).EntryViewMode);
+        Assert.Equal(LauncherEntryViewModes.NamesId, LauncherSettingsStore.Load(settings).EntryViewMode);
 
-        viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == "cards");
+        viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == LauncherEntryViewModes.CardsId);
 
         Assert.False(viewModel.IsDetailedListMode);
         Assert.False(viewModel.IsNamesViewMode);
@@ -89,7 +89,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.False(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
         Assert.Equal(15, entry.TitleFontSize);
-        Assert.Equal("cards", LauncherSettingsStore.Load(settings).EntryViewMode);
+        Assert.Equal(LauncherEntryViewModes.CardsId, LauncherSettingsStore.Load(settings).EntryViewMode);
     }
 
     [Fact]
@@ -108,11 +108,11 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(
             config,
             settings,
-            new LauncherSettings { EntryViewMode = "details" });
+            new LauncherSettings { EntryViewMode = LauncherEntryViewModes.DetailsId });
 
         Assert.Equal(new[] { "卡片", "详细列表", "名称墙" }, viewModel.DisplayModes.Select(mode => mode.Label));
         Assert.Equal(LauncherEntryViewMode.Details, viewModel.SelectedDisplayMode?.Mode);
-        Assert.Equal("details", viewModel.SelectedDisplayMode?.Id);
+        Assert.Equal(LauncherEntryViewModes.DetailsId, viewModel.SelectedDisplayMode?.Id);
         Assert.Equal(
             1,
             new[] { viewModel.IsCardsViewMode, viewModel.IsDetailedListMode, viewModel.IsNamesViewMode }.Count(value => value));

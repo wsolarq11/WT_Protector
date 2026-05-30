@@ -42,9 +42,19 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(
             config,
             settings,
-            new LauncherSettings { SortMode = "custom", CustomEntryOrder = ["three", "one", "two"] });
+            new LauncherSettings
+            {
+                SortMode = LauncherEntryVisibility.CustomSortModeId,
+                CustomEntryOrder = ["three", "one", "two"],
+            });
 
-        Assert.Equal(["custom", "updated", "alphabetical"], viewModel.SortModes.Select(mode => mode.Id).ToArray());
+        Assert.Equal(
+            [
+                LauncherEntryVisibility.CustomSortModeId,
+                LauncherEntryVisibility.UpdatedSortModeId,
+                LauncherEntryVisibility.AlphabeticalSortModeId,
+            ],
+            viewModel.SortModes.Select(mode => mode.Id).ToArray());
         Assert.Equal(["three", "one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
 
         viewModel.BeginDragReorder("two");
@@ -53,21 +63,21 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(["two", "three", "one"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         var savedSettings = LauncherSettingsStore.Load(settings);
-        Assert.Equal("custom", savedSettings.SortMode);
+        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, savedSettings.SortMode);
         Assert.Equal(["two", "three", "one"], savedSettings.CustomEntryOrder);
 
-        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == "alphabetical");
+        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == LauncherEntryVisibility.AlphabeticalSortModeId);
 
         Assert.Equal(["two", "three", "one"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         savedSettings = LauncherSettingsStore.Load(settings);
-        Assert.Equal("alphabetical", savedSettings.SortMode);
+        Assert.Equal(LauncherEntryVisibility.AlphabeticalSortModeId, savedSettings.SortMode);
         Assert.Equal(["two", "three", "one"], savedSettings.CustomEntryOrder);
 
-        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == "updated");
+        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == LauncherEntryVisibility.UpdatedSortModeId);
 
         Assert.Equal(["two", "one", "three"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         savedSettings = LauncherSettingsStore.Load(settings);
-        Assert.Equal("updated", savedSettings.SortMode);
+        Assert.Equal(LauncherEntryVisibility.UpdatedSortModeId, savedSettings.SortMode);
     }
 
     [Fact]
@@ -95,8 +105,8 @@ public sealed partial class MainWindowViewModelTests
 
         var launcherSettings = new LauncherSettings
         {
-            SortMode = "custom",
-            EntryViewMode = "cards",
+            SortMode = LauncherEntryVisibility.CustomSortModeId,
+            EntryViewMode = LauncherEntryViewModes.CardsId,
             RequireConfirmationForLaunches = true,
             CustomEntryOrder = ["one", "two"],
         };
@@ -109,15 +119,15 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(2, viewModel.VisibleCount);
         Assert.Contains("设置保存失败", viewModel.StatusText);
 
-        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == "alphabetical");
-        Assert.Equal("custom", viewModel.SelectedSortMode?.Id);
-        Assert.Equal("custom", launcherSettings.SortMode);
+        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == LauncherEntryVisibility.AlphabeticalSortModeId);
+        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, viewModel.SelectedSortMode?.Id);
+        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, launcherSettings.SortMode);
         Assert.Equal(["one", "two"], launcherSettings.CustomEntryOrder);
         Assert.Contains("设置保存失败", viewModel.StatusText);
 
-        viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == "details");
-        Assert.Equal("cards", viewModel.SelectedDisplayMode?.Id);
-        Assert.Equal("cards", launcherSettings.EntryViewMode);
+        viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == LauncherEntryViewModes.DetailsId);
+        Assert.Equal(LauncherEntryViewModes.CardsId, viewModel.SelectedDisplayMode?.Id);
+        Assert.Equal(LauncherEntryViewModes.CardsId, launcherSettings.EntryViewMode);
         Assert.Contains("设置保存失败", viewModel.StatusText);
 
         viewModel.RequireConfirmationForLaunches = false;
