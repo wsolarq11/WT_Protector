@@ -89,6 +89,32 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task BatchLaunchCancellationStopsBeforeBuildingPlans()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex", selected: true),
+            Entry("two", directory: temp.Path, command: "opencode", selected: true));
+        IReadOnlyList<string>? confirmedEntryIds = null;
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = true },
+            vm => vm.ConfirmBatchLaunchAsync = entries =>
+            {
+                confirmedEntryIds = entries.Select(entry => entry.Id).ToArray();
+                return Task.FromResult(false);
+            });
+
+        await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
+
+        Assert.Equal(["one", "two"], confirmedEntryIds);
+        Assert.Equal("选择一个启动项查看预演命令。", viewModel.DryRunText);
+        Assert.Equal("已取消: 批量启动 2 项", viewModel.StatusText);
+    }
+
+    [Fact]
     public void LaunchActionsUseOneTypedWorkflowField()
     {
         Assert.Null(typeof(MainWindowViewModel).GetField("_launcherProcess", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));

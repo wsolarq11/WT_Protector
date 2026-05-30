@@ -52,16 +52,8 @@ public sealed partial class MainWindowViewModel
         try
         {
             var selectedEntries = selected.Select(ToLaunchEntry).ToList();
-            if (RequireConfirmationForLaunches)
-            {
-                var accepted = await ConfirmBatchLaunchAsync(selectedEntries)
-                    .ConfigureAwait(true);
-                if (!accepted)
-                {
-                    StatusText = LauncherSelectionStatus.BatchLaunchCanceled(selected.Count);
-                    return;
-                }
-            }
+            if (!await ConfirmBatchLaunchIfRequiredAsync(selectedEntries).ConfigureAwait(true))
+                return;
 
             var report = _launchWorkflow.StartBatch(
                 selectedEntries,
@@ -73,6 +65,19 @@ public sealed partial class MainWindowViewModel
         {
             StatusText = LauncherSelectionStatus.BatchLaunchFailed(ex);
         }
+    }
+
+    private async Task<bool> ConfirmBatchLaunchIfRequiredAsync(IReadOnlyList<LaunchEntry> selectedEntries)
+    {
+        if (!RequireConfirmationForLaunches)
+            return true;
+
+        var accepted = await ConfirmBatchLaunchAsync(selectedEntries).ConfigureAwait(true);
+        if (accepted)
+            return true;
+
+        StatusText = LauncherSelectionStatus.BatchLaunchCanceled(selectedEntries.Count);
+        return false;
     }
 
     internal void UpdateSelection(LauncherEntryViewModel item, bool selected)
