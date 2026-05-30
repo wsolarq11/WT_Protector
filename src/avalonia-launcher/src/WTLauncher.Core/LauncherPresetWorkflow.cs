@@ -2,9 +2,6 @@ namespace WTLauncher.Core;
 
 public static class LauncherPresetWorkflow
 {
-    public static string NormalizeName(string? name) =>
-        LauncherPresetNames.Normalize(name);
-
     public static LauncherPreset AddPreset(LauncherPresetFile presetFile, string name, IReadOnlyList<string> entryIds)
     {
         ArgumentNullException.ThrowIfNull(presetFile);
@@ -99,7 +96,7 @@ public static class LauncherPresetWorkflow
 
     private static string NormalizeRequiredName(string? name)
     {
-        var normalizedName = NormalizeName(name);
+        var normalizedName = LauncherPresetNames.Normalize(name);
         if (normalizedName.Length == 0)
             throw new ArgumentException("Preset name is required.", nameof(name));
 

@@ -23,14 +23,6 @@ public sealed class LauncherPresetWorkflowTests
         Assert.Equal("project-pair-3", id);
     }
 
-    [Theory]
-    [InlineData(" Project Pair ", "Project Pair")]
-    [InlineData(null, "")]
-    public void NormalizePresetName_TrimsUserInput(string? name, string expected)
-    {
-        Assert.Equal(expected, LauncherPresetWorkflow.NormalizeName(name));
-    }
-
     [Fact]
     public void PresetIdMatchUsesOrdinalComparison()
     {
