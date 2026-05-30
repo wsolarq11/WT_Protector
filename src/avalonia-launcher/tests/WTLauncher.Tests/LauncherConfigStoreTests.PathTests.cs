@@ -24,6 +24,17 @@ public sealed partial class LauncherConfigStoreTests
         Assert.EndsWith(Path.Combine("somewhere", "config.json"), resolved);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void ConfigPathMethodsRejectBlankPath(string? configPath)
+    {
+        AssertConfigPathRequired(() => LauncherConfigStore.Load(configPath!));
+        AssertConfigPathRequired(() => LauncherConfigStore.Save([], configPath!));
+        AssertConfigPathRequired(() => LauncherConfigStore.ResolveSettingsPath(configPath!));
+    }
+
     [Fact]
     public void ResolveConfigPath_FindsConfigDirectoryUnderRepositoryRoot()
     {
@@ -88,5 +99,11 @@ public sealed partial class LauncherConfigStoreTests
         var presets = LauncherPresetStore.ResolvePresetPath(config);
 
         Assert.EndsWith(Path.Combine("portable-root", "config", LauncherPresetStore.PresetsFileName), presets);
+    }
+
+    private static void AssertConfigPathRequired(Action action)
+    {
+        var exception = Assert.Throws<ArgumentException>(action);
+        Assert.Equal("configPath", exception.ParamName);
     }
 }

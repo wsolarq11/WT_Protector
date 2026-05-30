@@ -8,8 +8,7 @@ public static class LauncherConfigStore
 
     public static IReadOnlyList<LaunchEntry> Load(string configPath)
     {
-        if (string.IsNullOrWhiteSpace(configPath))
-            throw new ArgumentException("Config path is required.", nameof(configPath));
+        ThrowIfConfigPathMissing(configPath);
         if (!File.Exists(configPath))
             throw new FileNotFoundException("Launcher config not found.", configPath);
 
@@ -25,8 +24,7 @@ public static class LauncherConfigStore
     public static void Save(IEnumerable<LaunchEntry> entries, string configPath, bool backup = true)
     {
         ArgumentNullException.ThrowIfNull(entries);
-        if (string.IsNullOrWhiteSpace(configPath))
-            throw new ArgumentException("Config path is required.", nameof(configPath));
+        ThrowIfConfigPathMissing(configPath);
 
         LauncherJson.Save(
             entries
@@ -70,12 +68,17 @@ public static class LauncherConfigStore
 
     internal static string ResolveSiblingPath(string configPath, string fileName)
     {
-        if (string.IsNullOrWhiteSpace(configPath))
-            throw new ArgumentException("Config path is required.", nameof(configPath));
+        ThrowIfConfigPathMissing(configPath);
 
         var directory = Path.GetDirectoryName(Path.GetFullPath(configPath.Trim()))
             ?? throw new InvalidOperationException("Config path must have a parent directory.");
         return Path.Combine(directory, fileName);
+    }
+
+    private static void ThrowIfConfigPathMissing(string? configPath)
+    {
+        if (string.IsNullOrWhiteSpace(configPath))
+            throw new ArgumentException("Config path is required.", nameof(configPath));
     }
 
     private static string? FindUpward(string? start)
