@@ -36,6 +36,24 @@ public sealed class LauncherEntryDraftsTests
         Assert.Equal(expected, LauncherEntryDrafts.HasRequiredFields(draft));
     }
 
+    [Theory]
+    [InlineData("", "Name", "D:\\one", "pwsh", "按钮 ID 不能为空")]
+    [InlineData("one", "", "D:\\one", "pwsh", "按钮名称不能为空")]
+    [InlineData("one", "Name", "", "pwsh", "按钮目录不能为空")]
+    [InlineData("one", "Name", "D:\\one", "", "按钮命令不能为空")]
+    [InlineData("one", "Name", "D:\\one", "pwsh", null)]
+    public void GetRequiredFieldErrorReportsTheFirstMissingField(
+        string id,
+        string name,
+        string directory,
+        string command,
+        string? expected)
+    {
+        var draft = new EntryDraft(id, name, directory, command, false);
+
+        Assert.Equal(expected, LauncherEntryDrafts.GetRequiredFieldError(draft));
+    }
+
     [Fact]
     public void CreateEntryTrimsDraftFieldsAndPreservesPreviousTimestamp()
     {

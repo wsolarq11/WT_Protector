@@ -16,11 +16,7 @@ public static class LauncherEntryDrafts
 
     public static bool HasRequiredFields(EntryDraft draft)
     {
-        return GetRequiredFieldError(
-            draft.Id,
-            draft.Name,
-            draft.Directory,
-            draft.Command) is null;
+        return GetRequiredFieldError(draft) is null;
     }
 
     public static LaunchEntry CreateEntry(EntryDraft draft, LaunchEntry? previousEntry)
@@ -57,6 +53,15 @@ public static class LauncherEntryDrafts
             return $"按钮 ID 已存在: {entry.Id}";
 
         return null;
+    }
+
+    public static string? GetRequiredFieldError(EntryDraft draft)
+    {
+        return GetRequiredFieldError(
+            draft.Id,
+            draft.Name,
+            draft.Directory,
+            draft.Command);
     }
 
     private static string? GetRequiredFieldError(

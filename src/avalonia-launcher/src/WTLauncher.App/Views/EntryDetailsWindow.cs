@@ -99,9 +99,10 @@ public sealed class EntryDetailsWindow : Window
             _commandBox.Text ?? string.Empty,
             _selectedBox.IsChecked == true));
 
-        if (!LauncherEntryDrafts.HasRequiredFields(draft))
+        var requiredFieldError = LauncherEntryDrafts.GetRequiredFieldError(draft);
+        if (requiredFieldError is not null)
         {
-            _errorText.Text = "ID、名称、目录、命令都必须填写。";
+            _errorText.Text = requiredFieldError;
             _errorText.IsVisible = true;
             return;
         }
