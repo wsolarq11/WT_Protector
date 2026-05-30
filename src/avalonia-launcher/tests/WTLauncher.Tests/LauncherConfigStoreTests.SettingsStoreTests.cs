@@ -1,0 +1,85 @@
+using WTLauncher.Core;
+
+namespace WTLauncher.Tests;
+
+public sealed partial class LauncherConfigStoreTests
+{
+    [Fact]
+    public void SettingsStore_RoundTripsPortableSettings()
+    {
+        using var temp = new TempDirectory();
+        var settings = Path.Combine(temp.Path, "config", "settings.json");
+
+        LauncherSettingsStore.Save(
+            new LauncherSettings
+            {
+                Theme = "dark",
+                LastFilterText = "爬虫",
+                SortMode = "alphabetical",
+                EntryViewMode = "details",
+                RequireConfirmationForLaunches = false,
+                CustomEntryOrder = ["two", "one"],
+                Window = new LauncherWindowSettings { Width = 1200, Height = 800 },
+            },
+            settings);
+
+        var loaded = LauncherSettingsStore.Load(settings);
+
+        Assert.Equal("dark", loaded.Theme);
+        Assert.Equal("爬虫", loaded.LastFilterText);
+        Assert.Equal("alphabetical", loaded.SortMode);
+        Assert.Equal("details", loaded.EntryViewMode);
+        Assert.False(loaded.RequireConfirmationForLaunches);
+        Assert.Equal(["two", "one"], loaded.CustomEntryOrder);
+        Assert.Equal(1200d, loaded.Window.Width);
+        Assert.Equal(800d, loaded.Window.Height);
+        var savedJson = File.ReadAllText(settings);
+        Assert.Contains("爬虫", savedJson);
+        Assert.Contains("alphabetical", savedJson);
+        Assert.Contains("details", savedJson);
+        Assert.Contains("requireConfirmationForLaunches", savedJson);
+        AssertUsesRepositoryLineEndings(savedJson);
+    }
+
+    [Fact]
+    public void SettingsStore_TrySaveWindowBoundsPersistsPortableCloseSize()
+    {
+        using var temp = new TempDirectory();
+        var settingsPath = Path.Combine(temp.Path, "config", "settings.json");
+        var settings = new LauncherSettings
+        {
+            Window = new LauncherWindowSettings { Width = 1180, Height = 760 },
+        };
+
+        var saved = LauncherSettingsStore.TrySaveWindowBounds(settings, settingsPath, width: 1320, height: 840);
+
+        Assert.True(saved);
+        Assert.Equal(1320d, settings.Window.Width);
+        Assert.Equal(840d, settings.Window.Height);
+        var loaded = LauncherSettingsStore.Load(settingsPath);
+        Assert.Equal(1320d, loaded.Window.Width);
+        Assert.Equal(840d, loaded.Window.Height);
+    }
+
+    [Fact]
+    public void SettingsStore_TrySaveWindowBoundsReturnsFalseAndRollsBackOnCloseSaveFailure()
+    {
+        using var temp = new TempDirectory();
+        var configDir = Path.Combine(temp.Path, "config");
+        Directory.CreateDirectory(configDir);
+        var settingsPath = Path.Combine(configDir, "settings.json");
+        var settings = new LauncherSettings
+        {
+            Window = new LauncherWindowSettings { Width = 1180, Height = 760 },
+        };
+        Directory.CreateDirectory(settingsPath);
+
+        var saved = LauncherSettingsStore.TrySaveWindowBounds(settings, settingsPath, width: 1320, height: 840);
+
+        Assert.False(saved);
+        Assert.Equal(1180d, settings.Window.Width);
+        Assert.Equal(760d, settings.Window.Height);
+        Assert.Empty(Directory.EnumerateFiles(configDir, "settings.json.tmp-*"));
+    }
+
+}
