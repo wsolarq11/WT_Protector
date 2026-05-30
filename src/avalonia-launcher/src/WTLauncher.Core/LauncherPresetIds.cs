@@ -16,7 +16,9 @@ public static class LauncherPresetIds
         var baseId = Normalize(name);
         var candidate = baseId;
         var index = 2;
-        var existing = existingIds.ToHashSet(Comparer);
+        var existing = existingIds
+            .Select(Normalize)
+            .ToHashSet(Comparer);
         while (existing.Contains(candidate))
         {
             candidate = $"{baseId}-{index++}";

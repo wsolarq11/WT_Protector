@@ -18,7 +18,7 @@ public sealed class LauncherPresetWorkflowTests
     [Fact]
     public void GenerateUniquePresetId_AppendsStableNumericSuffix()
     {
-        var id = LauncherPresetIds.GenerateUnique("Project Pair", ["project-pair", "project-pair-2"]);
+        var id = LauncherPresetIds.GenerateUnique("Project Pair", [" Project Pair ", "project-pair-2"]);
 
         Assert.Equal("project-pair-3", id);
     }
