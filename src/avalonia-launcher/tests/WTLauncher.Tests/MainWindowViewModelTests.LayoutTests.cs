@@ -121,9 +121,11 @@ public sealed partial class MainWindowViewModelTests
         viewModel.UpdateCardsAvailableSize(new Size(900, 520));
 
         var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
-        const double goldenRatio = 21d / 13d;
         var actualRatio = first.CardWidth / first.CardHeight;
-        Assert.InRange(actualRatio, goldenRatio - 0.02, goldenRatio + 0.02);
+        Assert.InRange(
+            actualRatio,
+            LauncherEntryLayoutCalculator.CardGoldenRatio - 0.02,
+            LauncherEntryLayoutCalculator.CardGoldenRatio + 0.02);
     }
 
     [Fact]
@@ -139,16 +141,19 @@ public sealed partial class MainWindowViewModelTests
         viewModel.UpdateCardsAvailableSize(new Size(availableWidth, availableHeight));
 
         var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
-        Assert.Equal(24, first.NameTileHeight);
-        Assert.InRange(first.NameTileWidth, 132, 220);
+        Assert.Equal(LauncherEntryLayoutCalculator.NameTileHeight, first.NameTileHeight);
+        Assert.InRange(
+            first.NameTileWidth,
+            LauncherEntryLayoutCalculator.NameTileMinWidth,
+            LauncherEntryLayoutCalculator.NameTilePreferredMaxWidth);
 
         var usage = MeasureLayoutGridUsage(
             viewModel.VisibleEntries.Count,
             availableWidth,
             first.NameTileWidth,
             first.NameTileHeight,
-            columnGap: 6,
-            rowGap: 4);
+            columnGap: LauncherEntryLayoutCalculator.NameTileGap,
+            rowGap: LauncherEntryLayoutCalculator.NameTileRowGap);
         Assert.True(usage.Columns >= 4, $"expected name wall to adapt to multiple columns, got {usage.Columns}");
         Assert.True(usage.UsedHeight <= availableHeight + 0.001, $"expected name wall to fit all 19 root-scale items in the available height, got {usage.UsedHeight}");
     }
@@ -166,7 +171,9 @@ public sealed partial class MainWindowViewModelTests
         viewModel.UpdateCardsAvailableSize(new Size(availableWidth, availableHeight));
 
         var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
-        Assert.True(first.CardHeight >= 96, "expected card height to stop shrinking before actions become unreachable; scrolling is the fallback");
+        Assert.True(
+            first.CardHeight >= LauncherEntryLayoutCalculator.CardMinHeight,
+            "expected card height to stop shrinking before actions become unreachable; scrolling is the fallback");
 
         var usage = MeasureLayoutGridUsage(
             viewModel.VisibleEntries.Count,

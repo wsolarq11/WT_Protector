@@ -9,9 +9,11 @@ public sealed class LauncherEntryLayoutCalculatorTests
     {
         var layout = LauncherEntryLayoutCalculator.Calculate(900, 520, 6);
 
-        const double goldenRatio = 21d / 13d;
         var actualRatio = layout.CardWidth / layout.CardHeight;
-        Assert.InRange(actualRatio, goldenRatio - 0.02, goldenRatio + 0.02);
+        Assert.InRange(
+            actualRatio,
+            LauncherEntryLayoutCalculator.CardGoldenRatio - 0.02,
+            LauncherEntryLayoutCalculator.CardGoldenRatio + 0.02);
     }
 
     [Fact]
@@ -19,9 +21,9 @@ public sealed class LauncherEntryLayoutCalculatorTests
     {
         var layout = LauncherEntryLayoutCalculator.Calculate(892, 330, 19);
 
-        Assert.True(layout.CardHeight >= 96);
+        Assert.True(layout.CardHeight >= LauncherEntryLayoutCalculator.CardMinHeight);
         var rows = (int)Math.Ceiling(19 / 4d);
-        var usedHeight = (rows * layout.CardHeight) + ((rows - 1) * 8);
+        var usedHeight = (rows * layout.CardHeight) + ((rows - 1) * LauncherEntryLayoutCalculator.CardGap);
         Assert.True(usedHeight > 330.001);
     }
 
@@ -30,14 +32,19 @@ public sealed class LauncherEntryLayoutCalculatorTests
     {
         var layout = LauncherEntryLayoutCalculator.Calculate(892, 330, 19);
 
-        Assert.Equal(24, layout.NameTileHeight);
-        Assert.InRange(layout.NameTileWidth, 132, 220);
+        Assert.Equal(LauncherEntryLayoutCalculator.NameTileHeight, layout.NameTileHeight);
+        Assert.InRange(
+            layout.NameTileWidth,
+            LauncherEntryLayoutCalculator.NameTileMinWidth,
+            LauncherEntryLayoutCalculator.NameTilePreferredMaxWidth);
 
-        const double gap = 6;
-        const double rowGap = 4;
-        var columns = Math.Max(1, (int)Math.Floor((892 + gap) / (layout.NameTileWidth + gap)));
+        var columns = Math.Max(
+            1,
+            (int)Math.Floor(
+                (892 + LauncherEntryLayoutCalculator.NameTileGap)
+                / (layout.NameTileWidth + LauncherEntryLayoutCalculator.NameTileGap)));
         var rows = (int)Math.Ceiling(19 / (double)columns);
-        var usedHeight = (rows * layout.NameTileHeight) + ((rows - 1) * rowGap);
+        var usedHeight = (rows * layout.NameTileHeight) + ((rows - 1) * LauncherEntryLayoutCalculator.NameTileRowGap);
         Assert.True(columns >= 4);
         Assert.True(usedHeight <= 330.001);
     }

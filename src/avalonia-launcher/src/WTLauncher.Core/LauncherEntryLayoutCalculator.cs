@@ -2,6 +2,16 @@ namespace WTLauncher.Core;
 
 public static class LauncherEntryLayoutCalculator
 {
+    public const double CardGap = 8;
+    public const double CardMinWidth = 200;
+    public const double CardMinHeight = 96;
+    public const double CardGoldenRatio = 21d / 13d;
+    public const double NameTileGap = 6;
+    public const double NameTileHeight = 24;
+    public const double NameTileRowGap = 4;
+    public const double NameTileMinWidth = 132;
+    public const double NameTilePreferredMaxWidth = 220;
+
     public static (
         double CardWidth,
         double CardHeight,
@@ -19,36 +29,32 @@ public static class LauncherEntryLayoutCalculator
 
     private static (double Width, double Height) CalculateCardLayout(double availableWidth, double availableHeight, int count)
     {
-        const double gap = 8;
         const double rhythmUnit = 13;
         const double goldenWidthUnits = 21;
         const double goldenHeightUnits = 13;
-        const double goldenCardRatio = goldenWidthUnits / goldenHeightUnits;
         const double preferredWidth = rhythmUnit * goldenWidthUnits;
         const double preferredHeight = rhythmUnit * goldenHeightUnits;
-        const double minWidth = 200;
-        const double minHeight = 96;
 
-        var bestWidth = Math.Max(minWidth, availableWidth);
-        var bestHeight = Math.Max(minHeight, availableHeight);
+        var bestWidth = Math.Max(CardMinWidth, availableWidth);
+        var bestHeight = Math.Max(CardMinHeight, availableHeight);
         var bestScore = double.NegativeInfinity;
 
         for (var columns = 1; columns <= count; columns++)
         {
             var rows = (int)Math.Ceiling(count / (double)columns);
-            var width = (availableWidth - ((columns - 1) * gap)) / columns;
-            var height = (availableHeight - ((rows - 1) * gap)) / rows;
+            var width = (availableWidth - ((columns - 1) * CardGap)) / columns;
+            var height = (availableHeight - ((rows - 1) * CardGap)) / rows;
             if (width <= 0 || height <= 0)
                 continue;
 
-            if (width < minWidth)
+            if (width < CardMinWidth)
                 continue;
 
-            var effectiveHeight = Math.Max(minHeight, height);
-            var shapedHeight = Math.Max(minHeight, Math.Min(effectiveHeight, width / goldenCardRatio));
+            var effectiveHeight = Math.Max(CardMinHeight, height);
+            var shapedHeight = Math.Max(CardMinHeight, Math.Min(effectiveHeight, width / CardGoldenRatio));
             var scale = Math.Min(width / preferredWidth, shapedHeight / preferredHeight);
-            var shapePenalty = Math.Abs((width / shapedHeight) - goldenCardRatio);
-            var overflowRatio = height < minHeight ? (minHeight / height) : 1;
+            var shapePenalty = Math.Abs((width / shapedHeight) - CardGoldenRatio);
+            var overflowRatio = height < CardMinHeight ? (CardMinHeight / height) : 1;
             var overflowPenalty = (overflowRatio - 1) * 0.18;
             var score = scale - (shapePenalty * 0.08) - overflowPenalty;
             if (score > bestScore)
@@ -59,30 +65,25 @@ public static class LauncherEntryLayoutCalculator
             }
         }
 
-        return (Math.Max(minWidth, Math.Floor(bestWidth)), Math.Max(minHeight, Math.Floor(bestHeight)));
+        return (Math.Max(CardMinWidth, Math.Floor(bestWidth)), Math.Max(CardMinHeight, Math.Floor(bestHeight)));
     }
 
     private static (double Width, double Height) CalculateNameTileLayout(double availableWidth, double availableHeight, int count)
     {
-        const double gap = 6;
-        const double rowHeight = 24;
-        const double rowGap = 4;
-        const double minWidth = 132;
-        const double preferredMaxWidth = 220;
-
-        var maxColumns = Math.Max(1, (int)Math.Floor((availableWidth + gap) / (minWidth + gap)));
-        var rowsFit = Math.Max(1, (int)Math.Floor((availableHeight + rowGap) / (rowHeight + rowGap)));
+        var maxColumns = Math.Max(1, (int)Math.Floor((availableWidth + NameTileGap) / (NameTileMinWidth + NameTileGap)));
+        var rowsFit = Math.Max(1, (int)Math.Floor((availableHeight + NameTileRowGap) / (NameTileHeight + NameTileRowGap)));
         var columnsNeededToFitHeight = (int)Math.Ceiling(count / (double)rowsFit);
-        var columnsNeededToAvoidSparseRows = (int)Math.Ceiling((availableWidth + gap) / (preferredMaxWidth + gap));
+        var columnsNeededToAvoidSparseRows = (int)Math.Ceiling(
+            (availableWidth + NameTileGap) / (NameTilePreferredMaxWidth + NameTileGap));
         var columns = Math.Clamp(
             Math.Max(columnsNeededToFitHeight, columnsNeededToAvoidSparseRows),
             1,
             maxColumns);
 
-        if (availableWidth >= (minWidth * 2) + gap)
+        if (availableWidth >= (NameTileMinWidth * 2) + NameTileGap)
             columns = Math.Max(2, columns);
 
-        var width = Math.Max(minWidth, Math.Floor((availableWidth - ((columns - 1) * gap)) / columns));
-        return (width, rowHeight);
+        var width = Math.Max(NameTileMinWidth, Math.Floor((availableWidth - ((columns - 1) * NameTileGap)) / columns));
+        return (width, NameTileHeight);
     }
 }
