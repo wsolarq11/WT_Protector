@@ -72,6 +72,26 @@ public sealed class LauncherPresetWorkflowTests
     }
 
     [Fact]
+    public void AddPreset_UsesNewPresetAsDefaultWhenCurrentDefaultIsMissing()
+    {
+        var presetFile = PresetFile("missing", Preset("daily", "Daily", "one"));
+
+        var preset = LauncherPresetWorkflow.AddPreset(presetFile, " Project Pair ", ["one", "two"]);
+
+        Assert.Equal(preset.Id, presetFile.DefaultPresetId);
+    }
+
+    [Fact]
+    public void AddPreset_KeepsExistingDefaultPreset()
+    {
+        var presetFile = PresetFile("daily", Preset("daily", "Daily", "one"));
+
+        LauncherPresetWorkflow.AddPreset(presetFile, " Project Pair ", ["one", "two"]);
+
+        Assert.Equal("daily", presetFile.DefaultPresetId);
+    }
+
+    [Fact]
     public void AddPreset_RejectsBlankPresetNameBeforeMutatingFile()
     {
         var presetFile = PresetFile(Preset("daily", "Daily", "one"));

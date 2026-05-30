@@ -16,6 +16,9 @@ public static class LauncherPresetWorkflow
             EntryIds = [.. entryIds],
         };
         presetFile.Presets.Add(preset);
+        if (!HasDefaultPreset(presetFile))
+            presetFile.DefaultPresetId = preset.Id;
+
         return preset;
     }
 
@@ -72,6 +75,9 @@ public static class LauncherPresetWorkflow
 
     private static LauncherPreset? FindPreset(LauncherPresetFile presetFile, string presetId) =>
         presetFile.Presets.FirstOrDefault(preset => LauncherPresetIds.Same(preset.Id, presetId));
+
+    private static bool HasDefaultPreset(LauncherPresetFile presetFile) =>
+        presetFile.Presets.Any(preset => LauncherPresetIds.Same(preset.Id, presetFile.DefaultPresetId));
 
     private static string NormalizeRequiredName(string? name)
     {
