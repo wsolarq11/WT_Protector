@@ -55,7 +55,7 @@ public sealed class LauncherDragReorderWorkflow
         }
         if (session is null)
             return false;
-        if (LauncherEntryIds.Same(draggedEntryId, targetEntryId))
+        if (LauncherEntryIds.SameNormalized(draggedEntryId, targetEntryId))
             return false;
 
         var target = FindEntry(targetEntryId);
@@ -77,7 +77,7 @@ public sealed class LauncherDragReorderWorkflow
     }
 
     private LauncherEntryViewModel? FindEntry(string entryId) =>
-        _entries.FirstOrDefault(entry => LauncherEntryIds.Same(entry.Id, entryId));
+        _entries.FirstOrDefault(entry => LauncherEntryIds.SameNormalized(entry.Id, entryId));
 
     public void ClearHover()
     {

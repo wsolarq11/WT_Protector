@@ -35,12 +35,12 @@ public sealed class LauncherDragReorderSession
 
     public bool IsFor(string draggedEntryId)
     {
-        return LauncherEntryIds.Same(DraggedEntryId, draggedEntryId);
+        return LauncherEntryIds.SameNormalized(DraggedEntryId, draggedEntryId);
     }
 
     public bool TryRecordPreview(string targetEntryId, bool insertAfter)
     {
-        var nextPreview = new LauncherDragInsertPreview(targetEntryId, insertAfter);
+        var nextPreview = new LauncherDragInsertPreview(LauncherEntryIds.Normalize(targetEntryId), insertAfter);
         if (_lastPreview == nextPreview)
             return false;
 

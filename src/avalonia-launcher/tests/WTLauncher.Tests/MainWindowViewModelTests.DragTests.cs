@@ -90,6 +90,29 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void DragPreviewMatchesConfigEntryIdsAfterNormalization()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry(" one ", "One", command: "codex"),
+            Entry(" two ", "Two", command: "opencode"),
+            Entry(" three ", "Three"));
+        var launcherSettings = new LauncherSettings
+        {
+            SortMode = LauncherEntryVisibility.CustomSortModeId,
+            CustomEntryOrder = [" one ", " two ", " three "],
+        };
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+
+        viewModel.BeginDragReorder("three");
+        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
+
+        Assert.Equal([" three ", " one ", " two "], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["three", "one", "two"], launcherSettings.CustomEntryOrder);
+    }
+
+    [Fact]
     public void DragPreviewStateUsesOneTypedWorkflowField()
     {
         var viewModelDragFields = typeof(MainWindowViewModel)

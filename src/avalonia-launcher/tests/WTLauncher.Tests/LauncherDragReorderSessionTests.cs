@@ -11,7 +11,7 @@ public sealed class LauncherDragReorderSessionTests
         var session = StartSession();
 
         Assert.True(session.TryRecordPreview("one", insertAfter: false));
-        Assert.False(session.TryRecordPreview("one", insertAfter: false));
+        Assert.False(session.TryRecordPreview(" one ", insertAfter: false));
         Assert.True(session.TryRecordPreview("one", insertAfter: true));
         Assert.True(session.TryRecordPreview("two", insertAfter: true));
     }
@@ -29,12 +29,12 @@ public sealed class LauncherDragReorderSessionTests
     }
 
     [Fact]
-    public void IsForUsesOrdinalEntryIdMatch()
+    public void IsForNormalizesEntryIdBeforeOrdinalMatch()
     {
-        var session = StartSession("Three");
+        var session = StartSession(" three ");
 
-        Assert.True(session.IsFor("Three"));
-        Assert.False(session.IsFor("three"));
+        Assert.True(session.IsFor("three"));
+        Assert.False(session.IsFor("Three"));
     }
 
     private static LauncherDragReorderSession StartSession(string draggedEntryId = "three")
