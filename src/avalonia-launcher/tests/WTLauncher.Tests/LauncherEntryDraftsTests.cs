@@ -89,6 +89,24 @@ public sealed class LauncherEntryDraftsTests
             LauncherEntryDrafts.ValidateEntry(duplicateOther, originalId: "one", existingEntries: existing));
     }
 
+    [Fact]
+    public void ValidateEntryNormalizesIdsBeforeCheckingDuplicates()
+    {
+        var existing = new[]
+        {
+            Entry(" one ", "One", "D:\\one"),
+            Entry(" two ", "Two", "D:\\two", "codex"),
+        };
+
+        var sameAsOriginal = Entry(" one ", "Renamed", "D:\\new", "opencode");
+        var duplicateOther = Entry(" two ", "Renamed", "D:\\new", "opencode");
+
+        Assert.Null(LauncherEntryDrafts.ValidateEntry(sameAsOriginal, originalId: "one", existingEntries: existing));
+        Assert.Equal(
+            LauncherEntryDraftStatus.DuplicateId("two"),
+            LauncherEntryDrafts.ValidateEntry(duplicateOther, originalId: "one", existingEntries: existing));
+    }
+
     private static LaunchEntry Entry(
         string id,
         string name,

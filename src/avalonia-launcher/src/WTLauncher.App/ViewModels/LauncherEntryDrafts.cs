@@ -7,7 +7,7 @@ public static class LauncherEntryDrafts
     public static EntryDraft NormalizeDraft(EntryDraft draft)
     {
         return new EntryDraft(
-            (draft.Id ?? string.Empty).Trim(),
+            LauncherEntryIds.Normalize(draft.Id),
             (draft.Name ?? string.Empty).Trim(),
             (draft.Directory ?? string.Empty).Trim(),
             (draft.Command ?? string.Empty).Trim(),
@@ -34,8 +34,10 @@ public static class LauncherEntryDrafts
         string? originalId,
         IEnumerable<LaunchEntry> existingEntries)
     {
+        var entryId = LauncherEntryIds.Normalize(entry.Id);
+        var originalEntryId = LauncherEntryIds.Normalize(originalId);
         var requiredFieldError = GetRequiredFieldError(
-            entry.Id,
+            entryId,
             entry.Name,
             entry.Directory,
             entry.Command);
@@ -43,9 +45,9 @@ public static class LauncherEntryDrafts
             return requiredFieldError;
 
         if (existingEntries.Any(existing =>
-                !LauncherEntryIds.Same(existing.Id, originalId)
-                && LauncherEntryIds.Same(existing.Id, entry.Id)))
-            return LauncherEntryDraftStatus.DuplicateId(entry.Id);
+                !LauncherEntryIds.Same(LauncherEntryIds.Normalize(existing.Id), originalEntryId)
+                && LauncherEntryIds.Same(LauncherEntryIds.Normalize(existing.Id), entryId)))
+            return LauncherEntryDraftStatus.DuplicateId(entryId);
 
         return null;
     }
