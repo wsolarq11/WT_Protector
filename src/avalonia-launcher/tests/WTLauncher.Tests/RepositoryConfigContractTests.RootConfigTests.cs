@@ -112,7 +112,7 @@ public sealed partial class RepositoryConfigContractTests
         });
 
         var root = document.RootElement;
-        Assert.Equal("light", root.GetProperty("theme").GetString());
+        Assert.Equal(LauncherSettings.DefaultTheme, root.GetProperty("theme").GetString());
         Assert.Equal("", root.GetProperty("lastFilterText").GetString());
         Assert.Equal("custom", root.GetProperty("sortMode").GetString());
         Assert.Equal("cards", root.GetProperty("entryViewMode").GetString());
@@ -128,7 +128,7 @@ public sealed partial class RepositoryConfigContractTests
         });
 
         var window = root.GetProperty("window");
-        Assert.Equal(1180d, window.GetProperty("width").GetDouble());
-        Assert.Equal(760d, window.GetProperty("height").GetDouble());
+        Assert.Equal(LauncherWindowSettings.DefaultWidth, window.GetProperty("width").GetDouble());
+        Assert.Equal(LauncherWindowSettings.DefaultHeight, window.GetProperty("height").GetDouble());
     }
 }

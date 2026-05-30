@@ -4,8 +4,10 @@ namespace WTLauncher.Core;
 
 public sealed class LauncherSettings
 {
+    public const string DefaultTheme = "light";
+
     [JsonPropertyName("theme")]
-    public string Theme { get; set; } = "light";
+    public string Theme { get; set; } = DefaultTheme;
 
     [JsonPropertyName("lastFilterText")]
     public string LastFilterText { get; set; } = "";
@@ -28,9 +30,13 @@ public sealed class LauncherSettings
 
 public sealed class LauncherWindowSettings
 {
+    public const double DefaultWidth = 1180;
+
+    public const double DefaultHeight = 760;
+
     [JsonPropertyName("width")]
-    public double Width { get; set; } = 1180;
+    public double Width { get; set; } = DefaultWidth;
 
     [JsonPropertyName("height")]
-    public double Height { get; set; } = 760;
+    public double Height { get; set; } = DefaultHeight;
 }

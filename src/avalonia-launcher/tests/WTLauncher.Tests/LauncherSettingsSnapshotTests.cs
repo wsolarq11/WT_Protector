@@ -16,7 +16,7 @@ public sealed class LauncherSettingsSnapshotTests
             window: new LauncherWindowSettings { Width = 1200, Height = 800 });
 
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
-        settings.Theme = "light";
+        settings.Theme = LauncherSettings.DefaultTheme;
         settings.LastFilterText = "";
         settings.SortMode = LauncherEntryVisibility.UpdatedSortModeId;
         settings.EntryViewMode = LauncherEntryViewModes.NamesId;
@@ -69,7 +69,7 @@ public sealed class LauncherSettingsSnapshotTests
     }
 
     private static LauncherSettings Settings(
-        string theme = "light",
+        string theme = LauncherSettings.DefaultTheme,
         string lastFilterText = "",
         string sortMode = LauncherEntryVisibility.CustomSortModeId,
         string entryViewMode = LauncherEntryViewModes.CardsId,

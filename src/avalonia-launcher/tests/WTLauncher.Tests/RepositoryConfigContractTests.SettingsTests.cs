@@ -11,13 +11,13 @@ public sealed partial class RepositoryConfigContractTests
 
         var settings = LauncherSettingsStore.Load(settingsPath);
 
-        Assert.Equal("light", settings.Theme);
+        Assert.Equal(LauncherSettings.DefaultTheme, settings.Theme);
         Assert.Equal("", settings.LastFilterText);
         Assert.Equal("custom", settings.SortMode);
         Assert.Equal("cards", settings.EntryViewMode);
         Assert.True(settings.RequireConfirmationForLaunches);
         Assert.NotEmpty(settings.CustomEntryOrder);
-        Assert.Equal(1180d, settings.Window.Width);
-        Assert.Equal(760d, settings.Window.Height);
+        Assert.Equal(LauncherWindowSettings.DefaultWidth, settings.Window.Width);
+        Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window.Height);
     }
 }
