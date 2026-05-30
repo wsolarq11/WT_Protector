@@ -108,12 +108,8 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
-        var accepted = await ConfirmDeletePresetAsync(selectedPreset).ConfigureAwait(true);
-        if (!accepted)
-        {
-            StatusText = LauncherPresetStatus.DeleteCanceled(selectedPreset.Name);
+        if (!await ConfirmDeletePresetIfRequiredAsync(selectedPreset).ConfigureAwait(true))
             return;
-        }
 
         var snapshot = CapturePresetMutationSnapshot();
         var preset = LauncherPresetWorkflow.DeletePreset(_presetFile, selectedPreset.Id, out var fallbackPresetId);
@@ -141,6 +137,16 @@ public sealed partial class MainWindowViewModel
     {
         selectedPreset = SelectedPreset;
         return selectedPreset is not null;
+    }
+
+    private async Task<bool> ConfirmDeletePresetIfRequiredAsync(LauncherPresetViewModel selectedPreset)
+    {
+        var accepted = await ConfirmDeletePresetAsync(selectedPreset).ConfigureAwait(true);
+        if (accepted)
+            return true;
+
+        StatusText = LauncherPresetStatus.DeleteCanceled(selectedPreset.Name);
+        return false;
     }
 
     private LauncherPresetMutationSnapshot CapturePresetMutationSnapshot() =>

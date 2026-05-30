@@ -87,4 +87,27 @@ public sealed partial class MainWindowViewModelTests
         Assert.True(updateNotifications > 0);
         Assert.True(deleteNotifications > 0);
     }
+
+    [Fact]
+    public async Task LaunchGroupDeleteCancellationLeavesPresetFileUnchanged()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
+        SavePresetFile(
+            presets,
+            "daily",
+            Preset("daily", "Daily", "one"),
+            Preset("secondary", "Secondary", "two"));
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            configure: vm => vm.ConfirmDeletePresetAsync = _ => Task.FromResult(false));
+
+        await viewModel.DeleteSelectedPresetCommand.ExecuteAsync(null);
+
+        var presetFile = LauncherPresetStore.Load(presets);
+        Assert.Equal(["daily", "secondary"], presetFile.Presets.Select(preset => preset.Id).ToArray());
+        Assert.Equal("daily", viewModel.SelectedPreset?.Id);
+        Assert.Equal("已取消: 删除启动组 Daily", viewModel.StatusText);
+    }
 }
