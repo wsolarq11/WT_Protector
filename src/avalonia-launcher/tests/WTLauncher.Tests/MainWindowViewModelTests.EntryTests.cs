@@ -63,19 +63,7 @@ public sealed partial class MainWindowViewModelTests
     {
         using var temp = new TempDirectory();
         var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
-        File.WriteAllText(presets, """
-        {
-          "schemaVersion": 1,
-          "defaultPresetId": "daily",
-          "presets": [
-            {
-              "id": "daily",
-              "name": "Daily",
-              "entryIds": ["one"]
-            }
-          ]
-        }
-        """);
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
         var viewModel = CreateViewModel(
             config,
             settings,
@@ -99,19 +87,7 @@ public sealed partial class MainWindowViewModelTests
     {
         using var temp = new TempDirectory();
         var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
-        File.WriteAllText(presets, """
-        {
-          "schemaVersion": 1,
-          "defaultPresetId": "daily",
-          "presets": [
-            {
-              "id": "daily",
-              "name": "Daily",
-              "entryIds": ["one"]
-            }
-          ]
-        }
-        """);
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
 
         var requestCount = 0;
         var viewModel = CreateViewModel(
