@@ -19,24 +19,6 @@ public sealed class LauncherEntryDraftsTests
     }
 
     [Theory]
-    [InlineData("one", "Name", "D:\\one", "pwsh", true)]
-    [InlineData("", "Name", "D:\\one", "pwsh", false)]
-    [InlineData("one", "", "D:\\one", "pwsh", false)]
-    [InlineData("one", "Name", "", "pwsh", false)]
-    [InlineData("one", "Name", "D:\\one", "", false)]
-    public void HasRequiredFieldsRequiresAllTextFields(
-        string id,
-        string name,
-        string directory,
-        string command,
-        bool expected)
-    {
-        var draft = new EntryDraft(id, name, directory, command, false);
-
-        Assert.Equal(expected, LauncherEntryDrafts.HasRequiredFields(draft));
-    }
-
-    [Theory]
     [InlineData("", "Name", "D:\\one", "pwsh", "按钮 ID 不能为空")]
     [InlineData("one", "", "D:\\one", "pwsh", "按钮名称不能为空")]
     [InlineData("one", "Name", "", "pwsh", "按钮目录不能为空")]

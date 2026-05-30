@@ -14,11 +14,6 @@ public static class LauncherEntryDrafts
             draft.Selected);
     }
 
-    public static bool HasRequiredFields(EntryDraft draft)
-    {
-        return GetRequiredFieldError(draft) is null;
-    }
-
     public static LaunchEntry CreateEntry(EntryDraft draft, LaunchEntry? previousEntry)
     {
         var normalized = NormalizeDraft(draft);
