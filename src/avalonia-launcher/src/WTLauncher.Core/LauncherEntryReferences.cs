@@ -11,12 +11,13 @@ public static class LauncherEntryReferences
         ArgumentNullException.ThrowIfNull(presetFile);
         ArgumentNullException.ThrowIfNull(customEntryOrder);
 
+        var normalizedNewEntryId = LauncherEntryIds.Normalize(newEntryId);
         foreach (var entryIds in EntryReferenceLists(presetFile, customEntryOrder))
         {
             for (var i = 0; i < entryIds.Count; i++)
             {
                 if (LauncherEntryIds.SameNormalized(entryIds[i], oldEntryId))
-                    entryIds[i] = newEntryId;
+                    entryIds[i] = normalizedNewEntryId;
             }
         }
     }

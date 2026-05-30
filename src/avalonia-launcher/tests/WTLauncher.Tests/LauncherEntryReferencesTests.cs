@@ -40,6 +40,22 @@ public sealed class LauncherEntryReferencesTests
     }
 
     [Fact]
+    public void RenameEntryIdNormalizesReplacementId()
+    {
+        var presetFile = PresetFile(Preset("daily", "one"));
+        var customEntryOrder = new List<string> { "one" };
+
+        LauncherEntryReferences.RenameEntryId(
+            presetFile,
+            customEntryOrder,
+            oldEntryId: "one",
+            newEntryId: " one-renamed ");
+
+        Assert.Equal(["one-renamed"], presetFile.Presets[0].EntryIds);
+        Assert.Equal(["one-renamed"], customEntryOrder);
+    }
+
+    [Fact]
     public void RemoveEntryIdRemovesPresetsAndCustomOrderReferences()
     {
         var presetFile = PresetFile(
