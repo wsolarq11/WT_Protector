@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.Input;
 using WTLauncher.Core;
 
@@ -132,11 +133,17 @@ public sealed partial class MainWindowViewModel
 
     private LauncherPresetViewModel? GetSelectedPresetOrReportMissing()
     {
-        if (SelectedPreset is { } value)
-            return value;
+        if (TryGetSelectedPreset(out var selectedPreset))
+            return selectedPreset;
 
         StatusText = LauncherPresetStatus.NoPresetSelected;
         return null;
+    }
+
+    private bool TryGetSelectedPreset([NotNullWhen(true)] out LauncherPresetViewModel? selectedPreset)
+    {
+        selectedPreset = SelectedPreset;
+        return selectedPreset is not null;
     }
 
     private void RestorePresetSnapshotAndReportMissing(LauncherPresetFile snapshot, string? preferredPresetId)
@@ -152,8 +159,7 @@ public sealed partial class MainWindowViewModel
 
     private bool CanApplyPreset()
     {
-        var selectedPreset = SelectedPreset;
-        if (selectedPreset is null || Entries.Count == 0)
+        if (!TryGetSelectedPreset(out _) || Entries.Count == 0)
             return false;
 
         return BuildPresetSelectionPreview(GetSelectedEntryIds()).HasChanges;
@@ -161,8 +167,7 @@ public sealed partial class MainWindowViewModel
 
     private bool CanUpdateSelectedPreset()
     {
-        var selectedPreset = SelectedPreset;
-        if (selectedPreset is null || Entries.Count == 0)
+        if (!TryGetSelectedPreset(out var selectedPreset) || Entries.Count == 0)
             return false;
 
         if (!LauncherPresetWorkflow.CanUpdatePreset(_presetFile, selectedPreset.Id))
@@ -176,13 +181,12 @@ public sealed partial class MainWindowViewModel
     }
 
     private bool CanDeleteSelectedPreset() =>
-        SelectedPreset is { } selectedPreset
+        TryGetSelectedPreset(out var selectedPreset)
         && LauncherPresetWorkflow.CanDeletePreset(_presetFile, selectedPreset.Id);
 
     private LauncherPresetSelectionPreview BuildPresetSelectionPreview(IReadOnlyList<string> selectedEntryIds)
     {
-        var selectedPreset = SelectedPreset;
-        if (selectedPreset is null)
+        if (!TryGetSelectedPreset(out var selectedPreset))
             return LauncherPresetSelectionPreview.NoPreset(PresetCount);
 
         return LauncherPresetSelectionPreview.ForPreset(
