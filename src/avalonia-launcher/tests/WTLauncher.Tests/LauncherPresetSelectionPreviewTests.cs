@@ -53,6 +53,23 @@ public sealed class LauncherPresetSelectionPreviewTests
         Assert.Contains("已匹配启动组", preview.StatusText);
     }
 
+    [Fact]
+    public void ForPresetNormalizesIdsBeforeComparing()
+    {
+        var preview = LauncherPresetSelectionPreview.ForPreset(
+            "Daily",
+            selectedIds: [" one "],
+            knownIds: ["one"],
+            presetIds: [" one ", "one", " "]);
+
+        Assert.False(preview.HasChanges);
+        Assert.Empty(preview.MissingConfigIds);
+        Assert.Equal(1, preview.MatchedCount);
+        Assert.Equal(0, preview.MissingCount);
+        Assert.Equal(0, preview.ExtraCount);
+        Assert.Equal("已匹配", preview.ApplyButtonText);
+    }
+
     [Theory]
     [InlineData(false, "手动模式", false, 0)]
     [InlineData(true, "清空勾选", true, 1)]

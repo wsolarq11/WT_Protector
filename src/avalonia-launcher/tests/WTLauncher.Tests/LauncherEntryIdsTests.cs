@@ -15,6 +15,13 @@ public sealed class LauncherEntryIdsTests
     }
 
     [Fact]
+    public void NormalizeTrimsEntryIds()
+    {
+        Assert.Equal("one", LauncherEntryIds.Normalize(" one "));
+        Assert.Equal(string.Empty, LauncherEntryIds.Normalize(null));
+    }
+
+    [Fact]
     public void SameUsesOrdinalEntryIdMatch()
     {
         Assert.True(LauncherEntryIds.Same("one", "one"));
@@ -24,9 +31,9 @@ public sealed class LauncherEntryIdsTests
     }
 
     [Fact]
-    public void ToUsableSetRejectsBlankIdsAndUsesOrdinalComparer()
+    public void ToUsableSetTrimsRejectsBlankIdsAndUsesOrdinalComparer()
     {
-        var ids = LauncherEntryIds.ToUsableSet(["one", "one", "One", "", " "]);
+        var ids = LauncherEntryIds.ToUsableSet(["one", " one ", " One ", "", " "]);
 
         Assert.Equal(2, ids.Count);
         Assert.Contains("one", ids);

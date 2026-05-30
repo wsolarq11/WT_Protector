@@ -95,7 +95,7 @@ public static class LauncherPresetWorkflow
         var seen = new HashSet<string>(LauncherEntryIds.Comparer);
         foreach (var entryId in entryIds)
         {
-            var trimmed = (entryId ?? string.Empty).Trim();
+            var trimmed = LauncherEntryIds.Normalize(entryId);
             if (!LauncherEntryIds.IsUsable(trimmed))
                 continue;
             if (seen.Add(trimmed))
