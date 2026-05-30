@@ -113,6 +113,15 @@ public sealed class LauncherEntryOrderTests
     }
 
     [Fact]
+    public void BuildIndexDoesNotCountDuplicateRows()
+    {
+        var index = LauncherEntryOrder.BuildIndex(["two", "two", "one"]);
+
+        Assert.Equal(0, index["two"]);
+        Assert.Equal(1, index["one"]);
+    }
+
+    [Fact]
     public void BuildIndexNormalizesKeysBeforeIndexing()
     {
         var index = LauncherEntryOrder.BuildIndex([" two ", "one", " two "]);

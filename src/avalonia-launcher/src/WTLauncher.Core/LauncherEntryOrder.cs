@@ -50,8 +50,8 @@ public static class LauncherEntryOrder
             if (!LauncherEntryIds.IsUsable(normalized))
                 continue;
 
-            indexById.TryAdd(normalized, index);
-            index++;
+            if (indexById.TryAdd(normalized, index))
+                index++;
         }
 
         return indexById;
