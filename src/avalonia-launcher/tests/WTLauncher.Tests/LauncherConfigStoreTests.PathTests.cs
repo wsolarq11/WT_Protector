@@ -61,9 +61,29 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void ResolveSettingsPath_TrimsConfigPath()
+    {
+        var config = $" {Path.Combine("portable-root", "config", "config.json")} ";
+
+        var settings = LauncherConfigStore.ResolveSettingsPath(config);
+
+        Assert.EndsWith(Path.Combine("portable-root", "config", LauncherConfigStore.SettingsFileName), settings);
+    }
+
+    [Fact]
     public void ResolvePresetPath_StaysBesideResolvedConfig()
     {
         var config = Path.Combine("portable-root", "config", "config.json");
+
+        var presets = LauncherPresetStore.ResolvePresetPath(config);
+
+        Assert.EndsWith(Path.Combine("portable-root", "config", LauncherPresetStore.PresetsFileName), presets);
+    }
+
+    [Fact]
+    public void ResolvePresetPath_TrimsConfigPath()
+    {
+        var config = $" {Path.Combine("portable-root", "config", "config.json")} ";
 
         var presets = LauncherPresetStore.ResolvePresetPath(config);
 

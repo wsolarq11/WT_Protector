@@ -63,7 +63,7 @@ public static class LauncherConfigStore
         if (string.IsNullOrWhiteSpace(configPath))
             throw new ArgumentException("Config path is required.", nameof(configPath));
 
-        var directory = Path.GetDirectoryName(Path.GetFullPath(configPath))
+        var directory = Path.GetDirectoryName(Path.GetFullPath(configPath.Trim()))
             ?? throw new InvalidOperationException("Config path must have a parent directory.");
         return Path.Combine(directory, fileName);
     }
