@@ -15,8 +15,10 @@ public static class LauncherSettingsStore
 
     public static void Save(LauncherSettings settings, string settingsPath)
     {
+        ArgumentNullException.ThrowIfNull(settings);
         ThrowIfSettingsPathMissing(settingsPath);
 
+        Normalize(settings);
         LauncherJson.Save(settings, settingsPath);
     }
 

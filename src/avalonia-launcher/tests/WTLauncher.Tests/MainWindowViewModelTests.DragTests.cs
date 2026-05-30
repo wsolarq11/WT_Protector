@@ -108,7 +108,7 @@ public sealed partial class MainWindowViewModelTests
         viewModel.BeginDragReorder("three");
         Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
 
-        Assert.Equal([" three ", " one ", " two "], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["three", "one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         Assert.Equal(["three", "one", "two"], launcherSettings.CustomEntryOrder);
     }
 

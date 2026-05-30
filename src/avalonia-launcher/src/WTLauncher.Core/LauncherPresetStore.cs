@@ -19,9 +19,11 @@ public static class LauncherPresetStore
 
     public static void Save(LauncherPresetFile presets, string presetPath, bool backup = true)
     {
+        ArgumentNullException.ThrowIfNull(presets);
         if (string.IsNullOrWhiteSpace(presetPath))
             throw new ArgumentException("Preset path is required.", nameof(presetPath));
 
+        Normalize(presets);
         LauncherJson.Save(presets, presetPath, backup);
     }
 

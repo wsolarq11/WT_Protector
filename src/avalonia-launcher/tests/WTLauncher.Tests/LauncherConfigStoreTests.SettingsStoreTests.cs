@@ -42,6 +42,35 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void SettingsStore_NormalizesDirtySettingsBeforeWriting()
+    {
+        using var temp = new TempDirectory();
+        var settings = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
+
+        LauncherSettingsStore.Save(
+            new LauncherSettings
+            {
+                Theme = null!,
+                LastFilterText = null!,
+                SortMode = null!,
+                EntryViewMode = null!,
+                CustomEntryOrder = [" one ", null!, " "],
+                Window = null!,
+            },
+            settings);
+
+        var savedJson = File.ReadAllText(settings);
+        Assert.DoesNotContain("null", savedJson);
+        var loaded = LauncherSettingsStore.Load(settings);
+        Assert.Equal("light", loaded.Theme);
+        Assert.Equal(string.Empty, loaded.LastFilterText);
+        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, loaded.SortMode);
+        Assert.Equal(LauncherEntryViewModes.CardsId, loaded.EntryViewMode);
+        Assert.Equal(["one"], loaded.CustomEntryOrder);
+        Assert.NotNull(loaded.Window);
+    }
+
+    [Fact]
     public void SettingsStore_NormalizesNullWindowAndOrderFromConfig()
     {
         using var temp = new TempDirectory();
@@ -80,6 +109,47 @@ public sealed partial class LauncherConfigStoreTests
         var loaded = LauncherSettingsStore.Load(settings);
 
         Assert.Equal(["one", "two"], loaded.CustomEntryOrder);
+    }
+
+    [Fact]
+    public void SettingsStore_RejectsNullSettingsOnSave()
+    {
+        using var temp = new TempDirectory();
+        var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
+
+        var exception = Assert.Throws<ArgumentNullException>(
+            () => LauncherSettingsStore.Save(null!, settingsPath));
+
+        Assert.Equal("settings", exception.ParamName);
+    }
+
+    [Fact]
+    public void SettingsStore_NormalizesSettingsDataBeforeWriting()
+    {
+        using var temp = new TempDirectory();
+        var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
+        var settings = new LauncherSettings
+        {
+            Theme = null!,
+            LastFilterText = null!,
+            SortMode = null!,
+            EntryViewMode = null!,
+            CustomEntryOrder = [null!, " one ", " ", "two"],
+            Window = null!,
+        };
+
+        LauncherSettingsStore.Save(settings, settingsPath);
+
+        var loaded = LauncherSettingsStore.Load(settingsPath);
+        Assert.Equal("light", loaded.Theme);
+        Assert.Equal(string.Empty, loaded.LastFilterText);
+        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, loaded.SortMode);
+        Assert.Equal(LauncherEntryViewModes.CardsId, loaded.EntryViewMode);
+        Assert.Equal(["one", "two"], loaded.CustomEntryOrder);
+        Assert.NotNull(loaded.Window);
+        var savedJson = File.ReadAllText(settingsPath);
+        Assert.DoesNotContain("null", savedJson);
+        AssertUsesRepositoryLineEndings(savedJson);
     }
 
     [Fact]

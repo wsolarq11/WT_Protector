@@ -24,10 +24,17 @@ public static class LauncherConfigStore
 
     public static void Save(IEnumerable<LaunchEntry> entries, string configPath, bool backup = true)
     {
+        ArgumentNullException.ThrowIfNull(entries);
         if (string.IsNullOrWhiteSpace(configPath))
             throw new ArgumentException("Config path is required.", nameof(configPath));
 
-        LauncherJson.Save(entries.ToList(), configPath, backup);
+        LauncherJson.Save(
+            entries
+                .OfType<LaunchEntry>()
+                .Select(Normalize)
+                .ToList(),
+            configPath,
+            backup);
     }
 
     public static string ResolveConfigPath(string? explicitPath, string? currentDirectory = null, string? appBaseDirectory = null)

@@ -98,6 +98,49 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void Save_RejectsNullEntryCollection()
+    {
+        using var temp = new TempDirectory();
+        var config = ConfigFilePath(temp.Path, LauncherConfigStore.ConfigFileName);
+
+        var exception = Assert.Throws<ArgumentNullException>(
+            () => LauncherConfigStore.Save(null!, config, backup: false));
+
+        Assert.Equal("entries", exception.ParamName);
+    }
+
+    [Fact]
+    public void Save_NormalizesEntryDataBeforeWriting()
+    {
+        using var temp = new TempDirectory();
+        var config = ConfigFilePath(temp.Path, LauncherConfigStore.ConfigFileName);
+        var entries = new LaunchEntry[]
+        {
+            null!,
+            new()
+            {
+                Id = " one ",
+                Name = null!,
+                Directory = null!,
+                Command = null!,
+                UpdatedAtUtc = null!,
+            },
+        };
+
+        LauncherConfigStore.Save(entries, config, backup: false);
+
+        var entry = Assert.Single(LauncherConfigStore.Load(config));
+        Assert.Equal("one", entry.Id);
+        Assert.Equal(string.Empty, entry.Name);
+        Assert.Equal(string.Empty, entry.Directory);
+        Assert.Equal(string.Empty, entry.Command);
+        Assert.Equal(string.Empty, entry.UpdatedAtUtc);
+        var savedJson = File.ReadAllText(config);
+        Assert.DoesNotContain("null", savedJson);
+        AssertUsesRepositoryLineEndings(savedJson);
+    }
+
+    [Fact]
     public void Save_PersistsSelectionAndCreatesBackup()
     {
         using var temp = new TempDirectory();
@@ -117,6 +160,37 @@ public sealed partial class LauncherConfigStoreTests
         AssertUsesRepositoryLineEndings(savedJson);
         Assert.True(File.Exists(config + ".bak"));
         Assert.Empty(Directory.EnumerateFiles(configDir, $"{LauncherConfigStore.ConfigFileName}.tmp-*"));
+    }
+
+    [Fact]
+    public void Save_NormalizesDirtyEntriesBeforeWriting()
+    {
+        using var temp = new TempDirectory();
+        var config = WriteEmptyLauncherConfig(temp.Path);
+
+        LauncherConfigStore.Save(
+            [
+                null!,
+                new LaunchEntry
+                {
+                    Id = " one ",
+                    Name = null!,
+                    Directory = null!,
+                    Command = null!,
+                    UpdatedAtUtc = null!,
+                },
+            ],
+            config);
+
+        var savedJson = File.ReadAllText(config);
+        Assert.DoesNotContain(" one ", savedJson);
+        Assert.DoesNotContain("null", savedJson);
+        var entry = Assert.Single(LauncherConfigStore.Load(config));
+        Assert.Equal("one", entry.Id);
+        Assert.Equal(string.Empty, entry.Name);
+        Assert.Equal(string.Empty, entry.Directory);
+        Assert.Equal(string.Empty, entry.Command);
+        Assert.Equal(string.Empty, entry.UpdatedAtUtc);
     }
 
     [Fact]
