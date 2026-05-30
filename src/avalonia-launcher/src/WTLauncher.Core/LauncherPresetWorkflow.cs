@@ -13,7 +13,7 @@ public static class LauncherPresetWorkflow
         {
             Id = LauncherPresetIds.GenerateUnique(normalizedName, presetFile.Presets.Select(item => item.Id)),
             Name = normalizedName,
-            EntryIds = [.. entryIds],
+            EntryIds = NormalizeEntryIds(entryIds),
         };
         presetFile.Presets.Add(preset);
         if (!HasDefaultPreset(presetFile))
@@ -35,7 +35,7 @@ public static class LauncherPresetWorkflow
 
         var normalizedName = NormalizeRequiredName(name);
         preset.Name = normalizedName;
-        preset.EntryIds = [.. entryIds];
+        preset.EntryIds = NormalizeEntryIds(entryIds);
         return preset;
     }
 
@@ -83,6 +83,24 @@ public static class LauncherPresetWorkflow
         presetFile.Presets.FirstOrDefault(preset => preset.EntryIds.Count > 0)?.Id
         ?? presetFile.Presets.FirstOrDefault()?.Id
         ?? string.Empty;
+
+    private static List<string> NormalizeEntryIds(IEnumerable<string> entryIds)
+    {
+        ArgumentNullException.ThrowIfNull(entryIds);
+
+        var normalized = new List<string>();
+        var seen = new HashSet<string>(LauncherEntryIds.Comparer);
+        foreach (var entryId in entryIds)
+        {
+            var trimmed = (entryId ?? string.Empty).Trim();
+            if (!LauncherEntryIds.IsUsable(trimmed))
+                continue;
+            if (seen.Add(trimmed))
+                normalized.Add(trimmed);
+        }
+
+        return normalized;
+    }
 
     private static string NormalizeRequiredName(string? name)
     {

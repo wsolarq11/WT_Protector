@@ -73,6 +73,16 @@ public sealed class LauncherPresetWorkflowTests
     }
 
     [Fact]
+    public void AddPreset_TrimsAndDedupesEntryIds()
+    {
+        var presetFile = PresetFile();
+
+        var preset = LauncherPresetWorkflow.AddPreset(presetFile, "Project Pair", [" one ", "one", "", "two", "two"]);
+
+        Assert.Equal(["one", "two"], preset.EntryIds);
+    }
+
+    [Fact]
     public void AddPreset_UsesNewPresetAsDefaultWhenCurrentDefaultIsMissing()
     {
         var presetFile = PresetFile("missing", Preset("daily", "Daily", "one"));
@@ -133,6 +143,17 @@ public sealed class LauncherPresetWorkflowTests
         var preset = Assert.Single(presetFile.Presets);
         Assert.Equal("Daily", preset.Name);
         Assert.Equal(["one"], preset.EntryIds);
+    }
+
+    [Fact]
+    public void UpdatePreset_TrimsAndDedupesEntryIds()
+    {
+        var presetFile = PresetFile(Preset("daily", "Daily", "one"));
+
+        var updated = LauncherPresetWorkflow.UpdatePreset(presetFile, "daily", "Daily Updated", [" one ", "one", "", "two", "two"]);
+
+        Assert.NotNull(updated);
+        Assert.Equal(["one", "two"], presetFile.Presets.Single().EntryIds);
     }
 
     [Fact]
