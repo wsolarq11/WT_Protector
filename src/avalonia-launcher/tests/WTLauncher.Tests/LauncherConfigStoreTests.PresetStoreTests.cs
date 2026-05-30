@@ -28,6 +28,34 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void PresetStore_NormalizesNullPresetDataFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var presetPath = WriteConfigDirectoryFile(temp.Path, LauncherPresetStore.PresetsFileName, """
+        {
+          "schemaVersion": 1,
+          "defaultPresetId": null,
+          "presets": [
+            null,
+            {
+              "id": null,
+              "name": null,
+              "entryIds": [null, "one"]
+            }
+          ]
+        }
+        """);
+
+        var loaded = LauncherPresetStore.Load(presetPath);
+
+        Assert.Equal(string.Empty, loaded.DefaultPresetId);
+        var preset = Assert.Single(loaded.Presets);
+        Assert.Equal(string.Empty, preset.Id);
+        Assert.Equal(string.Empty, preset.Name);
+        Assert.Equal(["one"], preset.EntryIds);
+    }
+
+    [Fact]
     public void PresetStore_CanSkipBackupForRollbackWrites()
     {
         using var temp = new TempDirectory();
