@@ -76,7 +76,7 @@ public sealed class LauncherPresetWorkflowTests
     {
         var presetFile = PresetFile(Preset("daily", "Daily", "one"));
 
-        Assert.Throws<ArgumentException>(() => LauncherPresetWorkflow.AddPreset(presetFile, " ", ["one"]));
+        AssertPresetNameRequired(() => LauncherPresetWorkflow.AddPreset(presetFile, " ", ["one"]));
         Assert.Single(presetFile.Presets);
     }
 
@@ -108,7 +108,7 @@ public sealed class LauncherPresetWorkflowTests
     {
         var presetFile = PresetFile(Preset("daily", "Daily", "one"));
 
-        Assert.Throws<ArgumentException>(() => LauncherPresetWorkflow.UpdatePreset(presetFile, "daily", " ", ["two"]));
+        AssertPresetNameRequired(() => LauncherPresetWorkflow.UpdatePreset(presetFile, "daily", " ", ["two"]));
         var preset = Assert.Single(presetFile.Presets);
         Assert.Equal("Daily", preset.Name);
         Assert.Equal(["one"], preset.EntryIds);
@@ -162,4 +162,9 @@ public sealed class LauncherPresetWorkflowTests
             Locked = locked,
         };
 
+    private static void AssertPresetNameRequired(Action action)
+    {
+        var exception = Assert.Throws<ArgumentException>(action);
+        Assert.Equal("name", exception.ParamName);
+    }
 }

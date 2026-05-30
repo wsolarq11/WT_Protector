@@ -8,10 +8,7 @@ public static class LauncherPresetWorkflow
     public static LauncherPreset AddPreset(LauncherPresetFile presetFile, string name, IReadOnlyList<string> entryIds)
     {
         ArgumentNullException.ThrowIfNull(presetFile);
-        var normalizedName = NormalizeName(name);
-        if (normalizedName.Length == 0)
-            throw new ArgumentException("Preset name is required.", nameof(name));
-
+        var normalizedName = NormalizeRequiredName(name);
         var preset = new LauncherPreset
         {
             Id = LauncherPresetIds.GenerateUnique(normalizedName, presetFile.Presets.Select(item => item.Id)),
@@ -33,10 +30,7 @@ public static class LauncherPresetWorkflow
         if (preset is null || !CanUpdatePreset(preset))
             return null;
 
-        var normalizedName = NormalizeName(name);
-        if (normalizedName.Length == 0)
-            throw new ArgumentException("Preset name is required.", nameof(name));
-
+        var normalizedName = NormalizeRequiredName(name);
         preset.Name = normalizedName;
         preset.EntryIds = [.. entryIds];
         return preset;
@@ -78,6 +72,15 @@ public static class LauncherPresetWorkflow
 
     private static LauncherPreset? FindPreset(LauncherPresetFile presetFile, string presetId) =>
         presetFile.Presets.FirstOrDefault(preset => LauncherPresetIds.Same(preset.Id, presetId));
+
+    private static string NormalizeRequiredName(string? name)
+    {
+        var normalizedName = NormalizeName(name);
+        if (normalizedName.Length == 0)
+            throw new ArgumentException("Preset name is required.", nameof(name));
+
+        return normalizedName;
+    }
 
     private static bool CanUpdatePreset(LauncherPreset target) =>
         !target.Locked;
