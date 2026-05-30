@@ -30,7 +30,7 @@ public static class LauncherConfigStore
     public static string ResolveConfigPath(string? explicitPath, string? currentDirectory = null, string? appBaseDirectory = null)
     {
         if (!string.IsNullOrWhiteSpace(explicitPath))
-            return Path.GetFullPath(explicitPath);
+            return Path.GetFullPath(explicitPath.Trim());
 
         string?[] candidateRoots = [currentDirectory, appBaseDirectory];
         foreach (var candidateRoot in candidateRoots)

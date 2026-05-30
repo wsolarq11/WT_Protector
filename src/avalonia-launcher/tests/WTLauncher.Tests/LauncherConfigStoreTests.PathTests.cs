@@ -15,6 +15,16 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void ResolveConfigPath_TrimsExplicitPath()
+    {
+        var explicitPath = $" {Path.Combine("somewhere", "config.json")} ";
+
+        var resolved = LauncherConfigStore.ResolveConfigPath(explicitPath, currentDirectory: "ignored", appBaseDirectory: "ignored");
+
+        Assert.EndsWith(Path.Combine("somewhere", "config.json"), resolved);
+    }
+
+    [Fact]
     public void ResolveConfigPath_FindsConfigDirectoryUnderRepositoryRoot()
     {
         using var temp = new TempDirectory();
