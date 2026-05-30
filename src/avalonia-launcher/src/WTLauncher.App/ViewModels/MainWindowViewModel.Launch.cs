@@ -51,16 +51,8 @@ public sealed partial class MainWindowViewModel
         {
             var plan = _launchWorkflow.BuildPlan(item.Entry, RequireConfirmationForLaunches);
             dryRunText = plan.CommandLine;
-            if (plan.RequiresConfirmation)
-            {
-                var accepted = await ConfirmLaunchAsync(item.Entry, plan).ConfigureAwait(true);
-                if (!accepted)
-                {
-                    DryRunText = dryRunText;
-                    StatusText = LauncherSingleLaunchStatus.Canceled(item.Name);
-                    return;
-                }
-            }
+            if (!await ConfirmSingleLaunchIfRequiredAsync(item, plan).ConfigureAwait(true))
+                return;
 
             _launchWorkflow.Start(plan);
             DryRunText = dryRunText;
@@ -72,6 +64,20 @@ public sealed partial class MainWindowViewModel
                 DryRunText = dryRunText;
             StatusText = LauncherSingleLaunchStatus.Failed(item.Name, ex);
         }
+    }
+
+    private async Task<bool> ConfirmSingleLaunchIfRequiredAsync(LauncherEntryViewModel item, LaunchPlan plan)
+    {
+        if (!plan.RequiresConfirmation)
+            return true;
+
+        var accepted = await ConfirmLaunchAsync(item.Entry, plan).ConfigureAwait(true);
+        if (accepted)
+            return true;
+
+        DryRunText = plan.CommandLine;
+        StatusText = LauncherSingleLaunchStatus.Canceled(item.Name);
+        return false;
     }
 
     private void RefreshLaunchConfirmationPresentation()

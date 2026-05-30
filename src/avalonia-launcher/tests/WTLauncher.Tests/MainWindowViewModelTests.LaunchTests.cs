@@ -68,6 +68,31 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task SingleLaunchStartsAfterConfirmationAcceptsPlan()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex --version", confirm: true));
+        LaunchPlan? confirmedPlan = null;
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = true },
+            vm => vm.ConfirmLaunchAsync = (_, plan) =>
+            {
+                confirmedPlan = plan;
+                return Task.FromResult(true);
+            });
+
+        await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
+
+        Assert.NotNull(confirmedPlan);
+        Assert.Equal(confirmedPlan!.CommandLine, viewModel.DryRunText);
+        Assert.Equal("已启动: one", viewModel.StatusText);
+    }
+
+    [Fact]
     public async Task BatchLaunchReportsPerEntryPlanFailuresWithoutStartingProcesses()
     {
         using var temp = new TempDirectory();
