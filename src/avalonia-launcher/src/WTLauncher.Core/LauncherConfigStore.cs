@@ -5,6 +5,7 @@ public static class LauncherConfigStore
     public const string ConfigDirectoryName = "config";
     public const string ConfigFileName = "config.json";
     public const string SettingsFileName = "settings.json";
+    public const string RepositoryMarkerFileName = "README.md";
 
     public static IReadOnlyList<LaunchEntry> Load(string configPath)
     {
@@ -53,12 +54,12 @@ public static class LauncherConfigStore
             if (string.IsNullOrWhiteSpace(candidateRoot))
                 continue;
 
-            var config = Path.Combine(Path.GetFullPath(candidateRoot), ConfigDirectoryName, ConfigFileName);
+            var config = BuildConfigPath(candidateRoot);
             if (File.Exists(config))
                 return config;
         }
 
-        return Path.GetFullPath(Path.Combine(currentDirectory ?? Environment.CurrentDirectory, ConfigDirectoryName, ConfigFileName));
+        return BuildConfigPath(currentDirectory ?? Environment.CurrentDirectory);
     }
 
     public static string ResolveSettingsPath(string configPath)
@@ -88,14 +89,19 @@ public static class LauncherConfigStore
 
         for (var dir = new DirectoryInfo(Path.GetFullPath(start)); dir is not null; dir = dir.Parent)
         {
-            var config = Path.Combine(dir.FullName, ConfigDirectoryName, ConfigFileName);
-            var readme = Path.Combine(dir.FullName, "README.md");
-            if (File.Exists(config) && File.Exists(readme))
+            var config = BuildConfigPath(dir.FullName);
+            if (File.Exists(config) && File.Exists(BuildRepositoryMarkerPath(dir.FullName)))
                 return config;
         }
 
         return null;
     }
+
+    private static string BuildConfigPath(string root) =>
+        Path.Combine(Path.GetFullPath(root), ConfigDirectoryName, ConfigFileName);
+
+    private static string BuildRepositoryMarkerPath(string root) =>
+        Path.Combine(Path.GetFullPath(root), RepositoryMarkerFileName);
 
     private static LaunchEntry Normalize(LaunchEntry entry)
     {
