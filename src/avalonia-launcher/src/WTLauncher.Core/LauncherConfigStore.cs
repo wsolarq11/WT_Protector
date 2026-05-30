@@ -89,7 +89,7 @@ public static class LauncherConfigStore
 
     private static LaunchEntry Normalize(LaunchEntry entry)
     {
-        entry.Id ??= string.Empty;
+        entry.Id = LauncherEntryIds.Normalize(entry.Id);
         entry.Name ??= string.Empty;
         entry.Directory ??= string.Empty;
         entry.Command ??= string.Empty;
