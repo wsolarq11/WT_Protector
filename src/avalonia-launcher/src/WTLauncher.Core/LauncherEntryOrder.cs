@@ -69,21 +69,22 @@ public static class LauncherEntryOrder
             return;
         if (LauncherEntryIds.Same(draggedId, targetId))
             return;
-        if (!customOrder.Any(id => SameNormalized(id, draggedId)))
+        var normalizedOrder = customOrder
+            .Select(LauncherEntryIds.Normalize)
+            .Where(LauncherEntryIds.IsUsable)
+            .ToList();
+        if (!normalizedOrder.Any(id => LauncherEntryIds.Same(id, draggedId)))
             return;
 
-        customOrder.RemoveAll(id => SameNormalized(id, draggedId));
-        var targetIndex = customOrder.FindIndex(id => SameNormalized(id, targetId));
+        normalizedOrder.RemoveAll(id => LauncherEntryIds.Same(id, draggedId));
+        var targetIndex = normalizedOrder.FindIndex(id => LauncherEntryIds.Same(id, targetId));
         if (targetIndex < 0)
-            targetIndex = customOrder.Count;
+            targetIndex = normalizedOrder.Count;
         if (insertAfter)
             targetIndex++;
-        targetIndex = Math.Min(targetIndex, customOrder.Count);
-        customOrder.Insert(targetIndex, draggedId);
+        targetIndex = Math.Min(targetIndex, normalizedOrder.Count);
+        normalizedOrder.Insert(targetIndex, draggedId);
+        customOrder.Clear();
+        customOrder.AddRange(normalizedOrder);
     }
-
-    private static bool SameNormalized(string? left, string? right) =>
-        LauncherEntryIds.Same(
-            LauncherEntryIds.Normalize(left),
-            LauncherEntryIds.Normalize(right));
 }
