@@ -33,10 +33,12 @@ public sealed partial class MainWindowViewModel
     ];
 
     private LauncherSortModeViewModel ResolveSortMode(string? sortModeId) =>
-        SortModes.FirstOrDefault(mode => mode.Id == sortModeId) ?? SortModes[0];
+        SortModes.FirstOrDefault(mode => mode.Id == LauncherEntryVisibility.NormalizeSortModeId(sortModeId))
+        ?? SortModes[0];
 
     private LauncherDisplayModeViewModel ResolveDisplayMode(string? entryViewMode) =>
-        DisplayModes.FirstOrDefault(mode => mode.Id == entryViewMode) ?? DisplayModes[0];
+        DisplayModes.FirstOrDefault(mode => mode.Id == LauncherEntryViewModes.NormalizeId(entryViewMode))
+        ?? DisplayModes[0];
 
     private LauncherEntryViewMode CurrentEntryViewMode => SelectedDisplayMode?.Mode ?? LauncherEntryViewMode.Cards;
 

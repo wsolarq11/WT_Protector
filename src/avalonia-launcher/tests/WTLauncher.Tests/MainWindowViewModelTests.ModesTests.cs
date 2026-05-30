@@ -23,6 +23,25 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void SavedModeIdsUseCoreNormalizationRules()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        var launcherSettings = new LauncherSettings
+        {
+            SortMode = $" {LauncherEntryVisibility.UpdatedSortModeId} ",
+            EntryViewMode = $" {LauncherEntryViewModes.DetailsId} ",
+        };
+
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+
+        Assert.Equal(LauncherEntryVisibility.UpdatedSortModeId, viewModel.SelectedSortMode?.Id);
+        Assert.Equal(LauncherEntryVisibility.UpdatedSortModeId, launcherSettings.SortMode);
+        Assert.Equal(LauncherEntryViewModes.DetailsId, viewModel.SelectedDisplayMode?.Id);
+        Assert.Equal(LauncherEntryViewModes.DetailsId, launcherSettings.EntryViewMode);
+    }
+
+    [Fact]
     public void SortModeUsesSelectedModeAsOnlyCustomSortState()
     {
         Assert.Null(typeof(MainWindowViewModel).GetProperty(nameof(MainWindowViewModel.IsCustomSortMode))?.SetMethod);
