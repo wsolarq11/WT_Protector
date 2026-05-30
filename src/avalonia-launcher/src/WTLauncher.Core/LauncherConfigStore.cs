@@ -13,10 +13,10 @@ public static class LauncherConfigStore
         if (!File.Exists(configPath))
             throw new FileNotFoundException("Launcher config not found.", configPath);
 
-        var entries = LauncherJson.Load<List<LaunchEntry>>(configPath)
+        var entries = LauncherJson.Load<List<LaunchEntry?>>(configPath)
             ?? throw new InvalidDataException("Launcher config parsed to null.");
 
-        return entries;
+        return entries.OfType<LaunchEntry>().ToList();
     }
 
     public static void Save(IEnumerable<LaunchEntry> entries, string configPath, bool backup = true)

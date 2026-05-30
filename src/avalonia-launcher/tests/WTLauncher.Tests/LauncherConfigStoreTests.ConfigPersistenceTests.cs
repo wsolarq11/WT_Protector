@@ -32,6 +32,27 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void Load_IgnoresNullEntryRowsFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
+        [
+          null,
+          {
+            "id": "demo",
+            "name": "demo",
+            "directory": "D:\\demo",
+            "command": "codex"
+          }
+        ]
+        """);
+
+        var entry = Assert.Single(LauncherConfigStore.Load(config));
+
+        Assert.Equal("demo", entry.Id);
+    }
+
+    [Fact]
     public void Save_PersistsSelectionAndCreatesBackup()
     {
         using var temp = new TempDirectory();
