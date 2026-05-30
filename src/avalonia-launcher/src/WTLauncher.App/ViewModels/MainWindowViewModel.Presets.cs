@@ -54,10 +54,9 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
-        var preferredPresetId = SelectedPreset?.Id;
-        var snapshot = LauncherPresetFiles.Clone(_presetFile);
+        var snapshot = CapturePresetMutationSnapshot();
         var preset = LauncherPresetWorkflow.AddPreset(_presetFile, name, entryIds);
-        if (!SavePresetMutationAndReload(snapshot, preferredPresetId, preset.Id))
+        if (!SavePresetMutationAndReload(snapshot, preset.Id))
             return;
 
         ApplyStatusText(LauncherPresetStatus.Saved(preset.Name, preset.EntryIds.Count));
@@ -83,15 +82,14 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
-        var preferredPresetId = selectedPreset.Id;
-        var snapshot = LauncherPresetFiles.Clone(_presetFile);
+        var snapshot = CapturePresetMutationSnapshot();
         var preset = LauncherPresetWorkflow.UpdatePreset(_presetFile, selectedPreset.Id, selectedPreset.Name, entryIds);
         if (preset is null)
         {
-            RestorePresetSnapshotAndReportMissing(snapshot, preferredPresetId);
+            RestorePresetSnapshotAndReportMissing(snapshot);
             return;
         }
-        if (!SavePresetMutationAndReload(snapshot, preferredPresetId, preset.Id))
+        if (!SavePresetMutationAndReload(snapshot, preset.Id))
             return;
 
         ApplyStatusText(LauncherPresetStatus.Updated(preset.Name, preset.EntryIds.Count));
@@ -117,15 +115,14 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
-        var preferredPresetId = selectedPreset.Id;
-        var snapshot = LauncherPresetFiles.Clone(_presetFile);
+        var snapshot = CapturePresetMutationSnapshot();
         var preset = LauncherPresetWorkflow.DeletePreset(_presetFile, selectedPreset.Id, out var fallbackPresetId);
         if (preset is null)
         {
-            RestorePresetSnapshotAndReportMissing(snapshot, preferredPresetId);
+            RestorePresetSnapshotAndReportMissing(snapshot);
             return;
         }
-        if (!SavePresetMutationAndReload(snapshot, preferredPresetId, fallbackPresetId))
+        if (!SavePresetMutationAndReload(snapshot, fallbackPresetId))
             return;
 
         ApplyStatusText(LauncherPresetStatus.Deleted(preset.Name));
@@ -146,9 +143,12 @@ public sealed partial class MainWindowViewModel
         return selectedPreset is not null;
     }
 
-    private void RestorePresetSnapshotAndReportMissing(LauncherPresetFile snapshot, string? preferredPresetId)
+    private LauncherPresetMutationSnapshot CapturePresetMutationSnapshot() =>
+        LauncherPresetMutationSnapshot.Capture(_presetFile, SelectedPreset?.Id);
+
+    private void RestorePresetSnapshotAndReportMissing(LauncherPresetMutationSnapshot snapshot)
     {
-        ApplyPresetFileState(snapshot, preferredPresetId);
+        ApplyPresetFileState(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
         ApplyStatusText(LauncherPresetStatus.CurrentPresetMissing);
     }
 

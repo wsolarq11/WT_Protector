@@ -41,8 +41,7 @@ public sealed partial class MainWindowViewModel
     }
 
     private bool SavePresetMutationAndReload(
-        LauncherPresetFile snapshot,
-        string? preferredPresetId,
+        LauncherPresetMutationSnapshot snapshot,
         string? loadedPresetId)
     {
         if (SavePresets())
@@ -51,7 +50,7 @@ public sealed partial class MainWindowViewModel
             return true;
         }
 
-        ApplyPresetFileState(snapshot, preferredPresetId);
+        ApplyPresetFileState(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
         return false;
     }
 
