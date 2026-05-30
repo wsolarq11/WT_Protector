@@ -34,8 +34,8 @@ public sealed class LauncherSettingsMutationPersistenceTests
         var settings = Settings();
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
         settings.LastFilterText = "new";
-        settings.SortMode = "updated";
-        settings.EntryViewMode = "names";
+        settings.SortMode = LauncherEntryVisibility.UpdatedSortModeId;
+        settings.EntryViewMode = LauncherEntryViewModes.NamesId;
         settings.RequireConfirmationForLaunches = false;
         settings.CustomEntryOrder = ["two", "one"];
         string? rollbackFilterText = null;
@@ -49,8 +49,8 @@ public sealed class LauncherSettingsMutationPersistenceTests
         Assert.Contains("设置保存失败", saveFailure);
         Assert.Equal("old", rollbackFilterText);
         Assert.Equal("old", settings.LastFilterText);
-        Assert.Equal("custom", settings.SortMode);
-        Assert.Equal("cards", settings.EntryViewMode);
+        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, settings.SortMode);
+        Assert.Equal(LauncherEntryViewModes.CardsId, settings.EntryViewMode);
         Assert.True(settings.RequireConfirmationForLaunches);
         Assert.Equal(["one", "two"], settings.CustomEntryOrder);
     }
@@ -60,8 +60,8 @@ public sealed class LauncherSettingsMutationPersistenceTests
         return new LauncherSettings
         {
             LastFilterText = "old",
-            SortMode = "custom",
-            EntryViewMode = "cards",
+            SortMode = LauncherEntryVisibility.CustomSortModeId,
+            EntryViewMode = LauncherEntryViewModes.CardsId,
             RequireConfirmationForLaunches = true,
             CustomEntryOrder = ["one", "two"],
         };

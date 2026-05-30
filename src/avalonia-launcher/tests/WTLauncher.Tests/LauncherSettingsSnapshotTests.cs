@@ -10,16 +10,16 @@ public sealed class LauncherSettingsSnapshotTests
         var settings = Settings(
             theme: "dark",
             lastFilterText: "codex",
-            sortMode: "alphabetical",
-            entryViewMode: "details",
+            sortMode: LauncherEntryVisibility.AlphabeticalSortModeId,
+            entryViewMode: LauncherEntryViewModes.DetailsId,
             requireConfirmationForLaunches: false,
             window: new LauncherWindowSettings { Width = 1200, Height = 800 });
 
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
         settings.Theme = "light";
         settings.LastFilterText = "";
-        settings.SortMode = "updated";
-        settings.EntryViewMode = "names";
+        settings.SortMode = LauncherEntryVisibility.UpdatedSortModeId;
+        settings.EntryViewMode = LauncherEntryViewModes.NamesId;
         settings.RequireConfirmationForLaunches = true;
         settings.CustomEntryOrder[0] = "changed";
         settings.Window.Width = 1;
@@ -29,8 +29,8 @@ public sealed class LauncherSettingsSnapshotTests
 
         Assert.Equal("dark", settings.Theme);
         Assert.Equal("codex", settings.LastFilterText);
-        Assert.Equal("alphabetical", settings.SortMode);
-        Assert.Equal("details", settings.EntryViewMode);
+        Assert.Equal(LauncherEntryVisibility.AlphabeticalSortModeId, settings.SortMode);
+        Assert.Equal(LauncherEntryViewModes.DetailsId, settings.EntryViewMode);
         Assert.False(settings.RequireConfirmationForLaunches);
         Assert.Equal(["one", "two"], settings.CustomEntryOrder);
         Assert.Equal(1200d, settings.Window.Width);
@@ -54,8 +54,8 @@ public sealed class LauncherSettingsSnapshotTests
     private static LauncherSettings Settings(
         string theme = "light",
         string lastFilterText = "",
-        string sortMode = "custom",
-        string entryViewMode = "cards",
+        string sortMode = LauncherEntryVisibility.CustomSortModeId,
+        string entryViewMode = LauncherEntryViewModes.CardsId,
         bool requireConfirmationForLaunches = true,
         LauncherWindowSettings? window = null) =>
         new()
