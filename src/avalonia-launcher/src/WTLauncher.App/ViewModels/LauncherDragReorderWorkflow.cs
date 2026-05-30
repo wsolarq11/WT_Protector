@@ -96,7 +96,7 @@ public sealed class LauncherDragReorderWorkflow
             return saveFailure;
 
         ClearPreviewState();
-        return "已保存自定义拖拽排序";
+        return LauncherDragReorderStatus.Saved;
     }
 
     public string? Cancel()
@@ -108,7 +108,7 @@ public sealed class LauncherDragReorderWorkflow
         session.Snapshot.RestoreCustomEntryOrder(_settings);
         _applyFilter();
         ClearPreviewState();
-        return "已取消: 拖拽排序";
+        return LauncherDragReorderStatus.Canceled;
     }
 
     private void ClearPreviewState()
