@@ -20,13 +20,10 @@ public static class LauncherEntryMutationPersistence
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(beforeSaveSettings);
 
-        try
+        var configSaveFailure = LauncherConfigMutationPersistence.Save(entries, configPath);
+        if (configSaveFailure is not null)
         {
-            LauncherConfigStore.Save(entries, configPath);
-        }
-        catch (Exception ex)
-        {
-            return LauncherPersistenceStatus.ConfigSaveFailed(ex);
+            return configSaveFailure;
         }
 
         if (savePresets)

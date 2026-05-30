@@ -98,16 +98,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool SaveConfig()
     {
-        try
+        var saveFailure = LauncherConfigMutationPersistence.Save(Entries.Select(ToLaunchEntry), _configPath);
+        if (saveFailure is not null)
         {
-            LauncherConfigStore.Save(Entries.Select(ToLaunchEntry), _configPath);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            ApplyStatusText(LauncherPersistenceStatus.ConfigSaveFailed(ex));
+            ApplyStatusText(saveFailure);
             return false;
         }
+
+        return true;
     }
 
     private static LaunchEntry ToLaunchEntry(LauncherEntryViewModel entry) => entry.Entry;
