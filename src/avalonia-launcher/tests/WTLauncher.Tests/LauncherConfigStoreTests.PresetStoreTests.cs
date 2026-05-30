@@ -8,7 +8,7 @@ public sealed partial class LauncherConfigStoreTests
     public void PresetStore_RoundTripsHumanReadableLaunchGroups()
     {
         using var temp = new TempDirectory();
-        var presetPath = Path.Combine(temp.Path, "config", "presets.json");
+        var presetPath = ConfigFilePath(temp.Path, LauncherPresetStore.PresetsFileName);
 
         LauncherPresetStore.Save(
             PresetFile("日常启动", "one", "two"),
@@ -31,10 +31,11 @@ public sealed partial class LauncherConfigStoreTests
     public void PresetStore_CanSkipBackupForRollbackWrites()
     {
         using var temp = new TempDirectory();
-        var configDir = Path.Combine(temp.Path, "config");
-        Directory.CreateDirectory(configDir);
-        var presetPath = Path.Combine(configDir, "presets.json");
-        File.WriteAllText(presetPath, """{"schemaVersion":1,"defaultPresetId":"","presets":[]}""");
+        var presetPath = WriteConfigDirectoryFile(
+            temp.Path,
+            LauncherPresetStore.PresetsFileName,
+            """{"schemaVersion":1,"defaultPresetId":"","presets":[]}""");
+        var configDir = Path.GetDirectoryName(presetPath)!;
 
         LauncherPresetStore.Save(
             PresetFile("Daily", "one"),
@@ -42,6 +43,6 @@ public sealed partial class LauncherConfigStoreTests
             backup: false);
 
         Assert.False(File.Exists(presetPath + ".bak"));
-        Assert.Empty(Directory.EnumerateFiles(configDir, "presets.json.tmp-*"));
+        Assert.Empty(Directory.EnumerateFiles(configDir, $"{LauncherPresetStore.PresetsFileName}.tmp-*"));
     }
 }

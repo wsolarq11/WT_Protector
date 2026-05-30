@@ -19,10 +19,7 @@ public sealed partial class LauncherConfigStoreTests
     {
         using var temp = new TempDirectory();
         File.WriteAllText(Path.Combine(temp.Path, "README.md"), "demo");
-        var configDir = Path.Combine(temp.Path, "config");
-        Directory.CreateDirectory(configDir);
-        var config = Path.Combine(configDir, "config.json");
-        File.WriteAllText(config, "[]");
+        var config = WriteEmptyLauncherConfig(temp.Path);
 
         var nested = Path.Combine(temp.Path, "src", "avalonia-launcher");
         Directory.CreateDirectory(nested);
@@ -36,10 +33,7 @@ public sealed partial class LauncherConfigStoreTests
     {
         using var temp = new TempDirectory();
         var appDir = Path.Combine(temp.Path, "publish");
-        var configDir = Path.Combine(appDir, "config");
-        Directory.CreateDirectory(configDir);
-        var config = Path.Combine(configDir, "config.json");
-        File.WriteAllText(config, "[]");
+        var config = WriteEmptyLauncherConfig(appDir);
 
         var resolved = LauncherConfigStore.ResolveConfigPath(null, currentDirectory: null, appBaseDirectory: appDir);
 
@@ -53,7 +47,7 @@ public sealed partial class LauncherConfigStoreTests
 
         var settings = LauncherConfigStore.ResolveSettingsPath(config);
 
-        Assert.EndsWith(Path.Combine("portable-root", "config", "settings.json"), settings);
+        Assert.EndsWith(Path.Combine("portable-root", "config", LauncherConfigStore.SettingsFileName), settings);
     }
 
     [Fact]
@@ -63,6 +57,6 @@ public sealed partial class LauncherConfigStoreTests
 
         var presets = LauncherPresetStore.ResolvePresetPath(config);
 
-        Assert.EndsWith(Path.Combine("portable-root", "config", "presets.json"), presets);
+        Assert.EndsWith(Path.Combine("portable-root", "config", LauncherPresetStore.PresetsFileName), presets);
     }
 }

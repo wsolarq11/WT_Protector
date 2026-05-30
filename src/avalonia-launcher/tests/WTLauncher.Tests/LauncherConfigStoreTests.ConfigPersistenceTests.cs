@@ -8,10 +8,7 @@ public sealed partial class LauncherConfigStoreTests
     public void Load_ReadsRootConfigShape()
     {
         using var temp = new TempDirectory();
-        var configDir = Path.Combine(temp.Path, "config");
-        Directory.CreateDirectory(configDir);
-        var config = Path.Combine(configDir, "config.json");
-        File.WriteAllText(config, """
+        var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
         [
           {
             "id": "demo",
@@ -38,10 +35,8 @@ public sealed partial class LauncherConfigStoreTests
     public void Save_PersistsSelectionAndCreatesBackup()
     {
         using var temp = new TempDirectory();
-        var configDir = Path.Combine(temp.Path, "config");
-        Directory.CreateDirectory(configDir);
-        var config = Path.Combine(configDir, "config.json");
-        File.WriteAllText(config, "[]");
+        var config = WriteEmptyLauncherConfig(temp.Path);
+        var configDir = Path.GetDirectoryName(config)!;
 
         LauncherConfigStore.Save(
             [
@@ -55,17 +50,15 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Contains("演示", savedJson);
         AssertUsesRepositoryLineEndings(savedJson);
         Assert.True(File.Exists(config + ".bak"));
-        Assert.Empty(Directory.EnumerateFiles(configDir, "config.json.tmp-*"));
+        Assert.Empty(Directory.EnumerateFiles(configDir, $"{LauncherConfigStore.ConfigFileName}.tmp-*"));
     }
 
     [Fact]
     public void Save_CanSkipBackupForRollbackWrites()
     {
         using var temp = new TempDirectory();
-        var configDir = Path.Combine(temp.Path, "config");
-        Directory.CreateDirectory(configDir);
-        var config = Path.Combine(configDir, "config.json");
-        File.WriteAllText(config, "[]");
+        var config = WriteEmptyLauncherConfig(temp.Path);
+        var configDir = Path.GetDirectoryName(config)!;
 
         LauncherConfigStore.Save(
             [
@@ -75,6 +68,6 @@ public sealed partial class LauncherConfigStoreTests
             backup: false);
 
         Assert.False(File.Exists(config + ".bak"));
-        Assert.Empty(Directory.EnumerateFiles(configDir, "config.json.tmp-*"));
+        Assert.Empty(Directory.EnumerateFiles(configDir, $"{LauncherConfigStore.ConfigFileName}.tmp-*"));
     }
 }

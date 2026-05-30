@@ -8,7 +8,7 @@ public sealed partial class LauncherConfigStoreTests
     public void SettingsStore_RoundTripsPortableSettings()
     {
         using var temp = new TempDirectory();
-        var settings = Path.Combine(temp.Path, "config", "settings.json");
+        var settings = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
 
         LauncherSettingsStore.Save(
             new LauncherSettings
@@ -45,7 +45,7 @@ public sealed partial class LauncherConfigStoreTests
     public void SettingsStore_TrySaveWindowBoundsPersistsPortableCloseSize()
     {
         using var temp = new TempDirectory();
-        var settingsPath = Path.Combine(temp.Path, "config", "settings.json");
+        var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
         var settings = new LauncherSettings
         {
             Window = new LauncherWindowSettings { Width = 1180, Height = 760 },
@@ -65,9 +65,8 @@ public sealed partial class LauncherConfigStoreTests
     public void SettingsStore_TrySaveWindowBoundsReturnsFalseAndRollsBackOnCloseSaveFailure()
     {
         using var temp = new TempDirectory();
-        var configDir = Path.Combine(temp.Path, "config");
-        Directory.CreateDirectory(configDir);
-        var settingsPath = Path.Combine(configDir, "settings.json");
+        var configDir = ConfigDirectoryPath(temp.Path);
+        var settingsPath = Path.Combine(configDir, LauncherConfigStore.SettingsFileName);
         var settings = new LauncherSettings
         {
             Window = new LauncherWindowSettings { Width = 1180, Height = 760 },
@@ -79,7 +78,7 @@ public sealed partial class LauncherConfigStoreTests
         Assert.False(saved);
         Assert.Equal(1180d, settings.Window.Width);
         Assert.Equal(760d, settings.Window.Height);
-        Assert.Empty(Directory.EnumerateFiles(configDir, "settings.json.tmp-*"));
+        Assert.Empty(Directory.EnumerateFiles(configDir, $"{LauncherConfigStore.SettingsFileName}.tmp-*"));
     }
 
 }

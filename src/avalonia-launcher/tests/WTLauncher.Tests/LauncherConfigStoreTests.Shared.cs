@@ -30,6 +30,26 @@ public sealed partial class LauncherConfigStoreTests
             Selected = selected,
         };
 
+    private static string ConfigDirectoryPath(string root)
+    {
+        var configDir = Path.Combine(root, LauncherConfigStore.ConfigDirectoryName);
+        Directory.CreateDirectory(configDir);
+        return configDir;
+    }
+
+    private static string ConfigFilePath(string root, string fileName) =>
+        Path.Combine(ConfigDirectoryPath(root), fileName);
+
+    private static string WriteConfigDirectoryFile(string root, string fileName, string content)
+    {
+        var path = ConfigFilePath(root, fileName);
+        File.WriteAllText(path, content);
+        return path;
+    }
+
+    private static string WriteEmptyLauncherConfig(string root) =>
+        WriteConfigDirectoryFile(root, LauncherConfigStore.ConfigFileName, "[]");
+
     private static void AssertUsesRepositoryLineEndings(string text)
     {
         Assert.EndsWith("\n", text, StringComparison.Ordinal);
