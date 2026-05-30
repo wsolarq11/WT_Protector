@@ -44,7 +44,7 @@ public sealed partial class LauncherConfigStoreTests
                     {
                         Id = " Daily ",
                         Name = null!,
-                        EntryIds = [" one ", null!, " "],
+                        EntryIds = [" one ", null!, "one", " ", "two", " two "],
                     },
                 ],
             },
@@ -58,7 +58,7 @@ public sealed partial class LauncherConfigStoreTests
         var preset = Assert.Single(loaded.Presets);
         Assert.Equal("daily", preset.Id);
         Assert.Equal(string.Empty, preset.Name);
-        Assert.Equal(["one"], preset.EntryIds);
+        Assert.Equal(["one", "two"], preset.EntryIds);
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public sealed partial class LauncherConfigStoreTests
             {
               "id": " Daily ",
               "name": "Daily",
-              "entryIds": [" one ", " ", "two"]
+              "entryIds": [" one ", "one", " ", "two", " two "]
             }
           ]
         }
@@ -142,7 +142,7 @@ public sealed partial class LauncherConfigStoreTests
                 {
                     Id = " Daily ",
                     Name = null!,
-                    EntryIds = [null!, " one ", " ", "two"],
+                    EntryIds = [null!, " one ", "one", " ", "two", " two "],
                 },
             ],
         };

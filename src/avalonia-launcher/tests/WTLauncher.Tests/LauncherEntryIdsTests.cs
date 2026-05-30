@@ -47,4 +47,12 @@ public sealed class LauncherEntryIdsTests
         Assert.Contains("one", ids);
         Assert.Contains("One", ids);
     }
+
+    [Fact]
+    public void ToUniqueUsableListTrimsRejectsBlankIdsAndDedupesInOrder()
+    {
+        var ids = LauncherEntryIds.ToUniqueUsableList([" one ", "one", " ", null!, "two", " two ", "One"]);
+
+        Assert.Equal(["one", "two", "One"], ids);
+    }
 }

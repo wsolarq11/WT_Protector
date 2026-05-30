@@ -61,10 +61,7 @@ public static class LauncherSettingsStore
         settings.LastFilterText ??= string.Empty;
         settings.SortMode ??= LauncherEntryVisibility.CustomSortModeId;
         settings.EntryViewMode ??= LauncherEntryViewModes.CardsId;
-        settings.CustomEntryOrder = (settings.CustomEntryOrder ?? [])
-            .Select(LauncherEntryIds.Normalize)
-            .Where(LauncherEntryIds.IsUsable)
-            .ToList();
+        settings.CustomEntryOrder = LauncherEntryIds.ToUniqueUsableList(settings.CustomEntryOrder ?? []);
         settings.Window ??= new LauncherWindowSettings();
     }
 }

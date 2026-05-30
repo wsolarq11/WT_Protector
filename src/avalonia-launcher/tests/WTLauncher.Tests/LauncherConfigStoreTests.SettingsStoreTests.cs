@@ -54,7 +54,7 @@ public sealed partial class LauncherConfigStoreTests
                 LastFilterText = null!,
                 SortMode = null!,
                 EntryViewMode = null!,
-                CustomEntryOrder = [" one ", null!, " "],
+                CustomEntryOrder = [" one ", null!, "one", " ", "two", " two "],
                 Window = null!,
             },
             settings);
@@ -66,7 +66,7 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Equal(string.Empty, loaded.LastFilterText);
         Assert.Equal(LauncherEntryVisibility.CustomSortModeId, loaded.SortMode);
         Assert.Equal(LauncherEntryViewModes.CardsId, loaded.EntryViewMode);
-        Assert.Equal(["one"], loaded.CustomEntryOrder);
+        Assert.Equal(["one", "two"], loaded.CustomEntryOrder);
         Assert.NotNull(loaded.Window);
     }
 
@@ -102,7 +102,7 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
-          "customEntryOrder": [" one ", null, " ", "two"]
+          "customEntryOrder": [" one ", null, "one", " ", "two", " two "]
         }
         """);
 
@@ -134,7 +134,7 @@ public sealed partial class LauncherConfigStoreTests
             LastFilterText = null!,
             SortMode = null!,
             EntryViewMode = null!,
-            CustomEntryOrder = [null!, " one ", " ", "two"],
+            CustomEntryOrder = [null!, " one ", "one", " ", "two", " two "],
             Window = null!,
         };
 

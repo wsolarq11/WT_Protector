@@ -43,10 +43,7 @@ public static class LauncherPresetStore
         {
             preset.Id = NormalizePresetId(preset.Id);
             preset.Name ??= string.Empty;
-            preset.EntryIds = (preset.EntryIds ?? [])
-                .Select(LauncherEntryIds.Normalize)
-                .Where(LauncherEntryIds.IsUsable)
-                .ToList();
+            preset.EntryIds = LauncherEntryIds.ToUniqueUsableList(preset.EntryIds ?? []);
         }
     }
 
