@@ -1,5 +1,6 @@
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
+using static WTLauncher.Tests.LauncherPersistenceTestFixtures;
 
 namespace WTLauncher.Tests;
 
@@ -26,13 +27,4 @@ public sealed class LauncherConfigMutationPersistenceTests
 
         Assert.Contains("配置保存失败", saveFailure);
     }
-
-    private static LaunchEntry Entry(string id) =>
-        new()
-        {
-            Id = id,
-            Name = id,
-            Directory = $"D:\\{id}",
-            Command = "pwsh",
-        };
 }

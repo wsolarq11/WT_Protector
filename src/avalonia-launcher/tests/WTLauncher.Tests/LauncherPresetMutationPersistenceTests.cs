@@ -1,5 +1,6 @@
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
+using static WTLauncher.Tests.LauncherPersistenceTestFixtures;
 
 namespace WTLauncher.Tests;
 
@@ -10,7 +11,7 @@ public sealed class LauncherPresetMutationPersistenceTests
     {
         using var temp = new TempDirectory();
         var presetPath = Path.Combine(temp.Path, "presets.json");
-        var presetFile = PresetFile(Preset("daily", "Daily", "one"));
+        var presetFile = PresetFile(NamedPreset("daily", "Daily", "one"));
 
         var saveFailure = LauncherPresetMutationPersistence.Save(presetFile, presetPath);
 
@@ -27,23 +28,9 @@ public sealed class LauncherPresetMutationPersistenceTests
         Directory.CreateDirectory(presetPath);
 
         var saveFailure = LauncherPresetMutationPersistence.Save(
-            PresetFile(Preset("daily", "Daily", "one")),
+            PresetFile(NamedPreset("daily", "Daily", "one")),
             presetPath);
 
         Assert.Contains("启动组保存失败", saveFailure);
     }
-
-    private static LauncherPresetFile PresetFile(params LauncherPreset[] presets) =>
-        new()
-        {
-            Presets = [.. presets],
-        };
-
-    private static LauncherPreset Preset(string id, string name, params string[] entryIds) =>
-        new()
-        {
-            Id = id,
-            Name = name,
-            EntryIds = [.. entryIds],
-        };
 }

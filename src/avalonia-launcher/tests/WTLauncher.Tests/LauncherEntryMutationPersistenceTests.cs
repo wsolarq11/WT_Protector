@@ -1,5 +1,6 @@
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
+using static WTLauncher.Tests.LauncherPersistenceTestFixtures;
 
 namespace WTLauncher.Tests;
 
@@ -16,7 +17,7 @@ public sealed class LauncherEntryMutationPersistenceTests
         var saveFailure = LauncherEntryMutationPersistence.Save(
             entries: [Entry("mutated")],
             configPath: temp.Path,
-            presetFile: Presets("mutated", "mutated"),
+            presetFile: PresetFile("mutated", Preset("mutated", "mutated")),
             presetPath: presetPath,
             settings: new LauncherSettings(),
             settingsPath: settingsPath,
@@ -43,7 +44,7 @@ public sealed class LauncherEntryMutationPersistenceTests
         var saveFailure = LauncherEntryMutationPersistence.Save(
             entries: [Entry("mutated")],
             configPath: configPath,
-            presetFile: Presets("mutated", "mutated"),
+            presetFile: PresetFile("mutated", Preset("mutated", "mutated")),
             presetPath: temp.Path,
             settings: new LauncherSettings(),
             settingsPath: settingsPath,
@@ -63,14 +64,14 @@ public sealed class LauncherEntryMutationPersistenceTests
         var configPath = Path.Combine(temp.Path, "config.json");
         var presetPath = Path.Combine(temp.Path, "presets.json");
         LauncherConfigStore.Save([Entry("one")], configPath);
-        LauncherPresetStore.Save(Presets("daily", "one"), presetPath);
+        LauncherPresetStore.Save(PresetFile("daily", Preset("daily", "one")), presetPath);
         var snapshot = Snapshot();
         var beforeSettingsSaveCalled = false;
 
         var saveFailure = LauncherEntryMutationPersistence.Save(
             entries: [Entry("mutated")],
             configPath: configPath,
-            presetFile: Presets("mutated", "mutated"),
+            presetFile: PresetFile("mutated", Preset("mutated", "mutated")),
             presetPath: presetPath,
             settings: new LauncherSettings(),
             settingsPath: temp.Path,
@@ -90,37 +91,8 @@ public sealed class LauncherEntryMutationPersistenceTests
     {
         return LauncherEntryMutationSnapshot.Capture(
             [Entry("one")],
-            Presets("daily", "one"),
+            PresetFile("daily", Preset("daily", "one")),
             customEntryOrder: ["one"],
             selectedPresetId: "daily");
-    }
-
-    private static LaunchEntry Entry(string id)
-    {
-        return new LaunchEntry
-        {
-            Id = id,
-            Name = id,
-            Directory = $"D:\\{id}",
-            Command = "pwsh",
-            Confirm = false,
-        };
-    }
-
-    private static LauncherPresetFile Presets(string presetId, string entryId)
-    {
-        return new LauncherPresetFile
-        {
-            DefaultPresetId = presetId,
-            Presets =
-            [
-                new LauncherPreset
-                {
-                    Id = presetId,
-                    Name = presetId,
-                    EntryIds = [entryId],
-                },
-            ],
-        };
     }
 }
