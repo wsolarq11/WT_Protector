@@ -15,29 +15,29 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(config, settings);
         var entry = Assert.Single(viewModel.Entries);
 
-        entry.CardWidth = 210;
-        entry.CardHeight = 90;
+        entry.CardWidth = LauncherEntryViewModel.MicroLayoutMaxWidth;
+        entry.CardHeight = LauncherEntryViewModel.MicroLayoutMaxHeight;
         Assert.True(entry.IsMicroLayout);
         Assert.True(entry.IsCompactLayout);
         Assert.False(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
-        Assert.Equal(15, entry.TitleFontSize);
+        Assert.Equal(LauncherEntryViewModel.MicroTitleFontSize, entry.TitleFontSize);
 
-        entry.CardWidth = 240;
-        entry.CardHeight = 110;
+        entry.CardWidth = LauncherEntryViewModel.CompactLayoutMaxWidth;
+        entry.CardHeight = LauncherEntryViewModel.CompactLayoutMaxHeight;
         Assert.False(entry.IsMicroLayout);
         Assert.True(entry.IsCompactLayout);
         Assert.True(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
-        Assert.Equal(16, entry.TitleFontSize);
+        Assert.Equal(LauncherEntryViewModel.CompactTitleFontSize, entry.TitleFontSize);
 
-        entry.CardWidth = 280;
-        entry.CardHeight = 140;
+        entry.CardWidth = LauncherEntryViewModel.CompactLayoutMaxWidth + 1;
+        entry.CardHeight = LauncherEntryViewModel.CompactLayoutMaxHeight + 1;
         Assert.False(entry.IsMicroLayout);
         Assert.False(entry.IsCompactLayout);
         Assert.True(entry.ShowDirectory);
         Assert.True(entry.ShowCommand);
-        Assert.Equal(18, entry.TitleFontSize);
+        Assert.Equal(LauncherEntryViewModel.NormalTitleFontSize, entry.TitleFontSize);
     }
 
     [Fact]
@@ -104,8 +104,8 @@ public sealed partial class MainWindowViewModelTests
             availableWidth,
             first.CardWidth,
             first.CardHeight,
-            columnGap: 8,
-            rowGap: 8);
+            columnGap: LauncherEntryLayoutCalculator.CardGap,
+            rowGap: LauncherEntryLayoutCalculator.CardGap);
         Assert.True(usage.UsedWidth <= availableWidth + 0.001, $"expected cards to fit available width, got {usage.UsedWidth}");
         Assert.True(usage.UsedHeight <= availableHeight + 0.001, $"expected cards to fit available height, got {usage.UsedHeight}");
     }
@@ -180,8 +180,8 @@ public sealed partial class MainWindowViewModelTests
             availableWidth,
             first.CardWidth,
             first.CardHeight,
-            columnGap: 8,
-            rowGap: 8);
+            columnGap: LauncherEntryLayoutCalculator.CardGap,
+            rowGap: LauncherEntryLayoutCalculator.CardGap);
         Assert.True(usage.UsedWidth <= availableWidth + 0.001, $"expected cards to fit minimum-window width, got {usage.UsedWidth}");
         Assert.True(usage.UsedHeight > availableHeight + 0.001, $"expected min-window height to overflow so the ScrollViewer can act as fallback, got {usage.UsedHeight}");
     }

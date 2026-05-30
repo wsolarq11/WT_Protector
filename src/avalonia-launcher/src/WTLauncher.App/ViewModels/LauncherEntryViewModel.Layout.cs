@@ -2,6 +2,15 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class LauncherEntryViewModel
 {
+    public const double MicroLayoutMaxWidth = 216;
+    public const double MicroLayoutMaxHeight = 96;
+    public const double CompactLayoutMaxWidth = 248;
+    public const double CompactLayoutMaxHeight = 124;
+    public const double ScanningTitleFontSize = 13;
+    public const double MicroTitleFontSize = 15;
+    public const double CompactTitleFontSize = 16;
+    public const double NormalTitleFontSize = 18;
+
     private LauncherEntryLayoutDensity _layoutDensity = LauncherEntryLayoutDensity.Normal;
 
     public bool IsCompactLayout => _layoutDensity is LauncherEntryLayoutDensity.Compact or LauncherEntryLayoutDensity.Micro;
@@ -21,13 +30,13 @@ public sealed partial class LauncherEntryViewModel
     private double MeasureTitleFontSize()
     {
         if (_owner.IsDetailedListMode || _owner.IsNamesViewMode)
-            return 13;
+            return ScanningTitleFontSize;
         if (IsMicroLayout)
-            return 15;
+            return MicroTitleFontSize;
         if (IsCompactLayout)
-            return 16;
+            return CompactTitleFontSize;
 
-        return 18;
+        return NormalTitleFontSize;
     }
 
     private bool ShouldShowDetailText(bool hideWhenCardsShrink)
@@ -55,10 +64,10 @@ public sealed partial class LauncherEntryViewModel
 
     private static LauncherEntryLayoutDensity MeasureLayoutDensity(double width, double height)
     {
-        if (height <= 96 || width <= 216)
+        if (height <= MicroLayoutMaxHeight || width <= MicroLayoutMaxWidth)
             return LauncherEntryLayoutDensity.Micro;
 
-        if (height <= 124 || width <= 248)
+        if (height <= CompactLayoutMaxHeight || width <= CompactLayoutMaxWidth)
             return LauncherEntryLayoutDensity.Compact;
 
         return LauncherEntryLayoutDensity.Normal;
