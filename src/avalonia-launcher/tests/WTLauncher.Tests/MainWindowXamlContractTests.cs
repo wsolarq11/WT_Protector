@@ -57,7 +57,17 @@ public sealed class MainWindowXamlContractTests
             dragCodeBehind,
             "ShowDragGhost(item, card, e);",
             "DragDrop.DoDragDropAsync",
-            "HideDragGhost();");
+            "finally",
+            "HideDragGhost();",
+            "FinishDragReorder(viewModel, effect);",
+            "_activeDragEntryId = null;");
+        AssertInOrder(
+            dragCodeBehind,
+            "private void FinishDragReorder(",
+            "if (_activeDragEntryId is null)",
+            "return;",
+            "viewModel.CommitDragReorder();",
+            "viewModel.CancelDragReorder();");
         AssertInOrder(
             dragCodeBehind,
             "private void ShowDragGhost(",

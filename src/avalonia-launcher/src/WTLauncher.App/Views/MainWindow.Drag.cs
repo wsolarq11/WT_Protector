@@ -36,17 +36,28 @@ public sealed partial class MainWindow
         viewModel.BeginDragReorder(item.Id);
         ShowDragGhost(item, card, e);
 
-        var effect = await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move).ConfigureAwait(true);
-        HideDragGhost();
-
-        if (_activeDragEntryId is not null)
+        var effect = DragDropEffects.None;
+        try
         {
-            if (effect == DragDropEffects.Move)
-                viewModel.CommitDragReorder();
-            else
-                viewModel.CancelDragReorder();
+            effect = await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move).ConfigureAwait(true);
         }
-        _activeDragEntryId = null;
+        finally
+        {
+            HideDragGhost();
+            FinishDragReorder(viewModel, effect);
+            _activeDragEntryId = null;
+        }
+    }
+
+    private void FinishDragReorder(MainWindowViewModel viewModel, DragDropEffects effect)
+    {
+        if (_activeDragEntryId is null)
+            return;
+
+        if (effect == DragDropEffects.Move)
+            viewModel.CommitDragReorder();
+        else
+            viewModel.CancelDragReorder();
     }
 
     private void OnEntryDragOver(object? sender, DragEventArgs e)
