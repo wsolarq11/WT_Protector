@@ -12,8 +12,10 @@ public sealed class LaunchArgumentBuilderTests
 
         var plan = LaunchArgumentBuilder.Build(entry, requireConfirmation: false);
 
-        Assert.Equal("wt.exe", plan.Executable);
-        Assert.Equal($"-d {LaunchArgumentBuilder.QuoteArgument(temp.Path)} pwsh -NoExit -Command \"codex --version\"", plan.Arguments);
+        Assert.Equal(LaunchArgumentBuilder.TerminalExecutable, plan.Executable);
+        Assert.Equal(
+            $"{LaunchArgumentBuilder.WorkingDirectoryOption} {LaunchArgumentBuilder.QuoteArgument(temp.Path)} {LaunchArgumentBuilder.ShellCommandPrefix} \"codex --version\"",
+            plan.Arguments);
         Assert.False(plan.RequiresConfirmation);
     }
 

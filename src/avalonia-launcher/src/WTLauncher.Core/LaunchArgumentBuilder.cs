@@ -4,6 +4,10 @@ namespace WTLauncher.Core;
 
 public static class LaunchArgumentBuilder
 {
+    public const string TerminalExecutable = "wt.exe";
+    public const string WorkingDirectoryOption = "-d";
+    public const string ShellCommandPrefix = "pwsh -NoExit -Command";
+
     public static LaunchPlan Build(LaunchEntry entry, bool validateDirectory = true, bool requireConfirmation = true)
     {
         ArgumentNullException.ThrowIfNull(entry);
@@ -21,9 +25,9 @@ public static class LaunchArgumentBuilder
         if (command.Length == 0)
             throw new InvalidOperationException($"Launch entry '{name}' has an empty command.");
 
-        var arguments = $"-d {QuoteArgument(directory)} pwsh -NoExit -Command {QuoteArgument(command)}";
+        var arguments = $"{WorkingDirectoryOption} {QuoteArgument(directory)} {ShellCommandPrefix} {QuoteArgument(command)}";
         return new LaunchPlan(
-            "wt.exe",
+            TerminalExecutable,
             arguments,
             directory,
             command,

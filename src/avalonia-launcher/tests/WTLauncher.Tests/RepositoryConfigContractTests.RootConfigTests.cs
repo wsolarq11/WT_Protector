@@ -21,9 +21,12 @@ public sealed partial class RepositoryConfigContractTests
         foreach (var entry in entries)
         {
             var plan = LaunchArgumentBuilder.Build(entry, validateDirectory: false, requireConfirmation: false);
-            Assert.Equal("wt.exe", plan.Executable);
-            Assert.StartsWith("-d ", plan.Arguments, StringComparison.Ordinal);
-            Assert.Contains(" pwsh -NoExit -Command ", plan.Arguments, StringComparison.Ordinal);
+            Assert.Equal(LaunchArgumentBuilder.TerminalExecutable, plan.Executable);
+            Assert.StartsWith($"{LaunchArgumentBuilder.WorkingDirectoryOption} ", plan.Arguments, StringComparison.Ordinal);
+            Assert.Contains(
+                $" {LaunchArgumentBuilder.ShellCommandPrefix} ",
+                plan.Arguments,
+                StringComparison.Ordinal);
             Assert.False(plan.RequiresConfirmation);
         }
     }

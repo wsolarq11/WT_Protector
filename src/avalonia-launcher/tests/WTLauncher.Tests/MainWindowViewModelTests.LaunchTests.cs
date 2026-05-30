@@ -63,7 +63,10 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
 
         Assert.Equal(1, confirmCalls);
-        Assert.StartsWith("wt.exe -d ", viewModel.DryRunText, StringComparison.Ordinal);
+        Assert.StartsWith(
+            $"{LaunchArgumentBuilder.TerminalExecutable} {LaunchArgumentBuilder.WorkingDirectoryOption} ",
+            viewModel.DryRunText,
+            StringComparison.Ordinal);
         Assert.Equal("已取消: one", viewModel.StatusText);
     }
 
