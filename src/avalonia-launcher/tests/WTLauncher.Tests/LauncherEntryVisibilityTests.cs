@@ -26,6 +26,26 @@ public sealed class LauncherEntryVisibilityTests
     }
 
     [Fact]
+    public void FilterAndSort_ToleratesNullTextFieldsFromConfig()
+    {
+        var entries = new[]
+        {
+            Entry("one", name: null!, directory: null!, command: null!),
+            Entry("two", "Two", directory: "D:\\two", command: "codex"),
+        };
+        var customOrder = new List<string> { "one", "two" };
+
+        var visible = LauncherEntryVisibility.FilterAndSort(
+            entries,
+            "codex",
+            LauncherEntryVisibility.AlphabeticalSortModeId,
+            customOrder,
+            static entry => entry);
+
+        Assert.Equal(["two"], visible.Select(entry => entry.Id).ToArray());
+    }
+
+    [Fact]
     public void FilterAndSort_CustomSortSynchronizesOrderWithAllEntries()
     {
         var entries = new[]

@@ -34,9 +34,9 @@ public static class LauncherEntryVisibility
     }
 
     private static bool MatchesFilter(LaunchEntry entry, string filterText) =>
-        entry.Name.Contains(filterText, StringComparison.OrdinalIgnoreCase)
-        || entry.Directory.Contains(filterText, StringComparison.OrdinalIgnoreCase)
-        || entry.Command.Contains(filterText, StringComparison.OrdinalIgnoreCase);
+        Text(entry.Name).Contains(filterText, StringComparison.OrdinalIgnoreCase)
+        || Text(entry.Directory).Contains(filterText, StringComparison.OrdinalIgnoreCase)
+        || Text(entry.Command).Contains(filterText, StringComparison.OrdinalIgnoreCase);
 
     private static IOrderedEnumerable<TEntry> SortByUpdated<TEntry>(
         IEnumerable<TEntry> entries,
@@ -48,7 +48,7 @@ public static class LauncherEntryVisibility
     private static IOrderedEnumerable<TEntry> SortAlphabetically<TEntry>(
         IEnumerable<TEntry> entries,
         Func<TEntry, LaunchEntry> selectEntry) =>
-        entries.OrderBy(entry => selectEntry(entry).Name, StringComparer.CurrentCultureIgnoreCase)
+        entries.OrderBy(entry => Text(selectEntry(entry).Name), StringComparer.CurrentCultureIgnoreCase)
             .ThenBy(entry => selectEntry(entry).Id, LauncherEntryIds.Comparer);
 
     private static IOrderedEnumerable<TEntry> SortByCustomOrder<TEntry>(
@@ -68,8 +68,10 @@ public static class LauncherEntryVisibility
         IOrderedEnumerable<TEntry> entries,
         Func<TEntry, LaunchEntry> selectEntry) =>
         entries
-            .ThenBy(entry => selectEntry(entry).Name, StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(entry => Text(selectEntry(entry).Name), StringComparer.CurrentCultureIgnoreCase)
             .ThenBy(entry => selectEntry(entry).Id, LauncherEntryIds.Comparer);
+
+    private static string Text(string? value) => value ?? string.Empty;
 
     private static DateTimeOffset ParseUpdatedAt(string? value) =>
         DateTimeOffset.TryParse(value, out var parsed)
