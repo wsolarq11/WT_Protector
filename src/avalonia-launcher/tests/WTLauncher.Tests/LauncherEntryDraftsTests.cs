@@ -19,11 +19,7 @@ public sealed class LauncherEntryDraftsTests
     }
 
     [Theory]
-    [InlineData("", "Name", "D:\\one", "pwsh", "按钮 ID 不能为空")]
-    [InlineData("one", "", "D:\\one", "pwsh", "按钮名称不能为空")]
-    [InlineData("one", "Name", "", "pwsh", "按钮目录不能为空")]
-    [InlineData("one", "Name", "D:\\one", "", "按钮命令不能为空")]
-    [InlineData("one", "Name", "D:\\one", "pwsh", null)]
+    [MemberData(nameof(RequiredFieldCases))]
     public void GetRequiredFieldErrorReportsTheFirstMissingField(
         string id,
         string name,
@@ -60,10 +56,7 @@ public sealed class LauncherEntryDraftsTests
     }
 
     [Theory]
-    [InlineData("", "Name", "D:\\one", "pwsh", "按钮 ID 不能为空")]
-    [InlineData("one", "", "D:\\one", "pwsh", "按钮名称不能为空")]
-    [InlineData("one", "Name", "", "pwsh", "按钮目录不能为空")]
-    [InlineData("one", "Name", "D:\\one", "", "按钮命令不能为空")]
+    [MemberData(nameof(BlankRequiredFieldCases))]
     public void ValidateEntryRejectsRequiredBlankFields(
         string id,
         string name,
@@ -116,4 +109,16 @@ public sealed class LauncherEntryDraftsTests
             UpdatedAtUtc = updatedAtUtc,
         };
     }
+
+    public static IEnumerable<object?[]> RequiredFieldCases()
+    {
+        yield return ["", "Name", "D:\\one", "pwsh", "按钮 ID 不能为空"];
+        yield return ["one", "", "D:\\one", "pwsh", "按钮名称不能为空"];
+        yield return ["one", "Name", "", "pwsh", "按钮目录不能为空"];
+        yield return ["one", "Name", "D:\\one", "", "按钮命令不能为空"];
+        yield return ["one", "Name", "D:\\one", "pwsh", null];
+    }
+
+    public static IEnumerable<object?[]> BlankRequiredFieldCases() =>
+        RequiredFieldCases().Where(testCase => testCase[4] is not null);
 }
