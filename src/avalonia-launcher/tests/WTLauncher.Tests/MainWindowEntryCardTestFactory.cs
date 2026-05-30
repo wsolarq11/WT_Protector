@@ -17,10 +17,10 @@ internal static class MainWindowEntryCardTestFactory
 
     public static MainWindowViewModel CreateOwner(string rootPath)
     {
-        var configPath = Path.Combine(rootPath, "config.json");
-        var settingsPath = Path.Combine(rootPath, "settings.json");
-        LauncherConfigStore.Save([CreateEntry("owner")], configPath);
-        return new MainWindowViewModel(configPath, settingsPath, new LauncherSettings(), CreateLaunchWorkflow());
+        return CreateOwner(
+            Path.Combine(rootPath, "config.json"),
+            Path.Combine(rootPath, "settings.json"),
+            CreateEntry("owner"));
     }
 
     public static LauncherEntryViewModel CreateEntryViewModel(MainWindowViewModel owner, string id)
@@ -34,15 +34,13 @@ internal static class MainWindowEntryCardTestFactory
         var settingsPath = Path.Combine(rootPath, $"{id}-settings.json");
         var entry = CreateEntry(id);
 
+        return new LauncherEntryViewModel(entry, CreateOwner(configPath, settingsPath, entry));
+    }
+
+    private static MainWindowViewModel CreateOwner(string configPath, string settingsPath, LaunchEntry entry)
+    {
         LauncherConfigStore.Save([entry], configPath);
-
-        var owner = new MainWindowViewModel(
-            configPath,
-            settingsPath,
-            new LauncherSettings(),
-            CreateLaunchWorkflow());
-
-        return new LauncherEntryViewModel(entry, owner);
+        return new MainWindowViewModel(configPath, settingsPath, new LauncherSettings(), CreateLaunchWorkflow());
     }
 
     private static LaunchEntry CreateEntry(string id)
