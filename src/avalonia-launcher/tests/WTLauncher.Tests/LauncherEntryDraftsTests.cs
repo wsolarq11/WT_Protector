@@ -85,7 +85,7 @@ public sealed class LauncherEntryDraftsTests
 
         Assert.Null(LauncherEntryDrafts.ValidateEntry(sameAsOriginal, originalId: "one", existingEntries: existing));
         Assert.Equal(
-            "按钮 ID 已存在: two",
+            LauncherEntryDraftStatus.DuplicateId("two"),
             LauncherEntryDrafts.ValidateEntry(duplicateOther, originalId: "one", existingEntries: existing));
     }
 
@@ -112,10 +112,10 @@ public sealed class LauncherEntryDraftsTests
 
     public static IEnumerable<object?[]> RequiredFieldCases()
     {
-        yield return ["", "Name", "D:\\one", "pwsh", "按钮 ID 不能为空"];
-        yield return ["one", "", "D:\\one", "pwsh", "按钮名称不能为空"];
-        yield return ["one", "Name", "", "pwsh", "按钮目录不能为空"];
-        yield return ["one", "Name", "D:\\one", "", "按钮命令不能为空"];
+        yield return ["", "Name", "D:\\one", "pwsh", LauncherEntryDraftStatus.IdRequired];
+        yield return ["one", "", "D:\\one", "pwsh", LauncherEntryDraftStatus.NameRequired];
+        yield return ["one", "Name", "", "pwsh", LauncherEntryDraftStatus.DirectoryRequired];
+        yield return ["one", "Name", "D:\\one", "", LauncherEntryDraftStatus.CommandRequired];
         yield return ["one", "Name", "D:\\one", "pwsh", null];
     }
 

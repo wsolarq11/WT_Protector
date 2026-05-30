@@ -45,7 +45,7 @@ public static class LauncherEntryDrafts
         if (existingEntries.Any(existing =>
                 !LauncherEntryIds.Same(existing.Id, originalId)
                 && LauncherEntryIds.Same(existing.Id, entry.Id)))
-            return $"按钮 ID 已存在: {entry.Id}";
+            return LauncherEntryDraftStatus.DuplicateId(entry.Id);
 
         return null;
     }
@@ -66,13 +66,13 @@ public static class LauncherEntryDrafts
         string? command)
     {
         if (!LauncherEntryIds.IsUsable(id))
-            return "按钮 ID 不能为空";
+            return LauncherEntryDraftStatus.IdRequired;
         if (string.IsNullOrWhiteSpace(name))
-            return "按钮名称不能为空";
+            return LauncherEntryDraftStatus.NameRequired;
         if (string.IsNullOrWhiteSpace(directory))
-            return "按钮目录不能为空";
+            return LauncherEntryDraftStatus.DirectoryRequired;
         if (string.IsNullOrWhiteSpace(command))
-            return "按钮命令不能为空";
+            return LauncherEntryDraftStatus.CommandRequired;
 
         return null;
     }
