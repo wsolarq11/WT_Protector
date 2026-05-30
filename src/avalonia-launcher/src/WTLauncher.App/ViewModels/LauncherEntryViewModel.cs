@@ -64,9 +64,9 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     public bool IsMicroLayout => _layoutDensity is LauncherEntryLayoutDensity.Micro;
 
-    public bool ShowDirectory => !_owner.IsNamesViewMode && (_owner.IsDetailedListMode || !IsMicroLayout);
+    public bool ShowDirectory => ShouldShowDetailText(hideWhenCardsShrink: IsMicroLayout);
 
-    public bool ShowCommand => !_owner.IsNamesViewMode && (_owner.IsDetailedListMode || !IsCompactLayout);
+    public bool ShowCommand => ShouldShowDetailText(hideWhenCardsShrink: IsCompactLayout);
 
     public double TitleFontSize => MeasureTitleFontSize();
 
@@ -80,6 +80,16 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
             return 16;
 
         return 18;
+    }
+
+    private bool ShouldShowDetailText(bool hideWhenCardsShrink)
+    {
+        if (_owner.IsNamesViewMode)
+            return false;
+        if (_owner.IsDetailedListMode)
+            return true;
+
+        return !hideWhenCardsShrink;
     }
 
     internal void SetSelectionFromOwner(bool selected)
