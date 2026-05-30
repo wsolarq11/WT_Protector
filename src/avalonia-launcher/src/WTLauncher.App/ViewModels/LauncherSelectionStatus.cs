@@ -21,9 +21,26 @@ public static class LauncherSelectionStatus
     public static string BatchLaunchCanceled(int entryCount) =>
         $"已取消: 批量启动 {entryCount} 项";
 
+    public static string BatchLaunchCompleted(LauncherBatchLaunchReport report)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        return report.FailedCount == 0
+            ? $"已启动 {report.StartedCount} 个勾选项"
+            : $"已启动 {report.StartedCount} 个勾选项，{report.FailedCount} 个失败：{FormatBatchFailures(report.FailureMessages)}";
+    }
+
     public static string BatchLaunchFailed(Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
         return $"批量启动失败: {exception.Message}";
+    }
+
+    private static string FormatBatchFailures(IReadOnlyList<string> failures)
+    {
+        var preview = string.Join("；", failures.Take(3));
+        if (failures.Count > 3)
+            preview += $"；…另有 {failures.Count - 3} 项";
+
+        return preview;
     }
 }

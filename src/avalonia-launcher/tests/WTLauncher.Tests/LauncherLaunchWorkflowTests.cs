@@ -34,9 +34,10 @@ public sealed class LauncherLaunchWorkflowTests
             plan => plannedCommands.Add(plan.CommandLine));
 
         Assert.Empty(plannedCommands);
-        Assert.Contains("已启动 0 个勾选项，2 个失败", report.ToStatusText());
-        Assert.Contains("one:", report.ToStatusText());
-        Assert.Contains("two:", report.ToStatusText());
+        Assert.Equal(0, report.StartedCount);
+        Assert.Equal(2, report.FailedCount);
+        Assert.Contains(report.FailureMessages, failure => failure.StartsWith("one:", StringComparison.Ordinal));
+        Assert.Contains(report.FailureMessages, failure => failure.StartsWith("two:", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -55,7 +56,8 @@ public sealed class LauncherLaunchWorkflowTests
             requireConfirmation: true,
             previewPlans.Add);
 
-        Assert.Equal("已启动 2 个勾选项", report.ToStatusText());
+        Assert.Equal(2, report.StartedCount);
+        Assert.Equal(0, report.FailedCount);
         Assert.Equal(["pwsh", "pwsh"], startedPlans.Select(plan => plan.Command).ToArray());
         Assert.All(startedPlans, plan => Assert.True(plan.RequiresConfirmation));
         Assert.Equal(startedPlans.Select(plan => plan.CommandLine), previewPlans.Select(plan => plan.CommandLine));

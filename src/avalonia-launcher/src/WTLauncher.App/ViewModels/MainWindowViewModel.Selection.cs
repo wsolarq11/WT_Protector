@@ -67,7 +67,7 @@ public sealed partial class MainWindowViewModel
                 selectedEntries,
                 RequireConfirmationForLaunches,
                 plan => DryRunText = plan.CommandLine);
-            StatusText = report.ToStatusText();
+            StatusText = LauncherSelectionStatus.BatchLaunchCompleted(report);
         }
         catch (Exception ex)
         {

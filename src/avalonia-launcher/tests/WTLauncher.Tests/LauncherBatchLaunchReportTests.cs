@@ -5,29 +5,29 @@ namespace WTLauncher.Tests;
 public sealed class LauncherBatchLaunchReportTests
 {
     [Fact]
-    public void ToStatusTextReportsStartedCountWhenNoFailures()
+    public void ReportTracksStartedCount()
     {
         var report = new LauncherBatchLaunchReport();
 
         report.RecordStarted();
         report.RecordStarted();
 
-        Assert.Equal("已启动 2 个勾选项", report.ToStatusText());
+        Assert.Equal(2, report.StartedCount);
+        Assert.Equal(0, report.FailedCount);
+        Assert.Empty(report.FailureMessages);
     }
 
     [Fact]
-    public void ToStatusTextLimitsFailurePreview()
+    public void ReportTracksFailureMessages()
     {
         var report = new LauncherBatchLaunchReport();
 
         report.RecordStarted();
         report.RecordFailure("one", new InvalidOperationException("missing one"));
         report.RecordFailure("two", new InvalidOperationException("missing two"));
-        report.RecordFailure("three", new InvalidOperationException("missing three"));
-        report.RecordFailure("four", new InvalidOperationException("missing four"));
 
-        Assert.Equal(
-            "已启动 1 个勾选项，4 个失败：one: missing one；two: missing two；three: missing three；…另有 1 项",
-            report.ToStatusText());
+        Assert.Equal(1, report.StartedCount);
+        Assert.Equal(2, report.FailedCount);
+        Assert.Equal(["one: missing one", "two: missing two"], report.FailureMessages);
     }
 }
