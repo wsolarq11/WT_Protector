@@ -55,10 +55,9 @@ public sealed partial class MainWindowViewModel
         var preferredPresetId = SelectedPreset?.Id;
         var snapshot = LauncherPresetFiles.Clone(_presetFile);
         var preset = LauncherPresetWorkflow.AddPreset(_presetFile, name, entryIds);
-        if (!SavePresetMutationOrRestore(snapshot, preferredPresetId))
+        if (!SavePresetMutationAndReload(snapshot, preferredPresetId, preset.Id))
             return;
 
-        LoadPresetFile(preset.Id);
         ApplyStatusText(LauncherPresetStatus.Saved(preset.Name, preset.EntryIds.Count));
     }
 
@@ -90,10 +89,9 @@ public sealed partial class MainWindowViewModel
             ApplyStatusText(LauncherPresetStatus.CurrentPresetMissing);
             return;
         }
-        if (!SavePresetMutationOrRestore(snapshot, preferredPresetId))
+        if (!SavePresetMutationAndReload(snapshot, preferredPresetId, preset.Id))
             return;
 
-        LoadPresetFile(preset.Id);
         ApplyStatusText(LauncherPresetStatus.Updated(preset.Name, preset.EntryIds.Count));
     }
 
@@ -125,10 +123,9 @@ public sealed partial class MainWindowViewModel
             ApplyStatusText(LauncherPresetStatus.CurrentPresetMissing);
             return;
         }
-        if (!SavePresetMutationOrRestore(snapshot, preferredPresetId))
+        if (!SavePresetMutationAndReload(snapshot, preferredPresetId, fallbackPresetId))
             return;
 
-        LoadPresetFile(fallbackPresetId);
         ApplyStatusText(LauncherPresetStatus.Deleted(preset.Name));
     }
 
@@ -242,6 +239,18 @@ public sealed partial class MainWindowViewModel
 
         ApplyPresetFileState(snapshot, preferredPresetId);
         return false;
+    }
+
+    private bool SavePresetMutationAndReload(
+        LauncherPresetFile snapshot,
+        string? preferredPresetId,
+        string? loadedPresetId)
+    {
+        if (!SavePresetMutationOrRestore(snapshot, preferredPresetId))
+            return false;
+
+        LoadPresetFile(loadedPresetId);
+        return true;
     }
 
     private bool SavePresets()
