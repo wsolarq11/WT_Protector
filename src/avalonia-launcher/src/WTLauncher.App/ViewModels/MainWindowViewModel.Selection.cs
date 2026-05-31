@@ -45,12 +45,14 @@ public sealed partial class MainWindowViewModel
         await LaunchBatchAsync(
             GetSelectedEntries(),
             LauncherSelectionStatus.NoSelectedEntries,
+            LauncherSelectionStatus.BatchLaunchCanceled,
             LauncherSelectionStatus.BatchLaunchCompleted).ConfigureAwait(true);
     }
 
     private async Task LaunchBatchAsync(
         IReadOnlyList<LauncherEntryViewModel> entries,
         string emptyStatus,
+        Func<int, string> canceledStatus,
         Func<LauncherBatchLaunchReport, string> completedStatus)
     {
         if (entries.Count == 0)
@@ -67,7 +69,7 @@ public sealed partial class MainWindowViewModel
                 selectedEntries,
                 RequireConfirmationForLaunches);
             if (preflight.Report.FailedCount == 0 &&
-                !await ConfirmBatchLaunchIfRequiredAsync(preflight.Items).ConfigureAwait(true))
+                !await ConfirmBatchLaunchIfRequiredAsync(preflight.Items, canceledStatus).ConfigureAwait(true))
                 return;
 
             var report = _launchWorkflow.StartBatch(preflight);
@@ -81,7 +83,9 @@ public sealed partial class MainWindowViewModel
         }
     }
 
-    private async Task<bool> ConfirmBatchLaunchIfRequiredAsync(IReadOnlyList<LauncherBatchLaunchItem> items)
+    private async Task<bool> ConfirmBatchLaunchIfRequiredAsync(
+        IReadOnlyList<LauncherBatchLaunchItem> items,
+        Func<int, string> canceledStatus)
     {
         if (!RequireConfirmationForLaunches)
             return true;
@@ -90,7 +94,7 @@ public sealed partial class MainWindowViewModel
         if (accepted)
             return true;
 
-        StatusText = LauncherSelectionStatus.BatchLaunchCanceled(items.Count);
+        StatusText = canceledStatus(items.Count);
         return false;
     }
 

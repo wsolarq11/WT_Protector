@@ -22,6 +22,9 @@ public static class LauncherPresetStatus
     public static string Launched(string presetName, LauncherBatchLaunchReport report) =>
         $"启动组“{presetName}”: {LauncherSelectionStatus.BatchLaunchCompleted(report, "启动项")}";
 
+    public static string LaunchCanceled(string presetName, int entryCount) =>
+        $"已取消: 启动组 {presetName}（{entryCount} 项）";
+
     public static string Saved(string presetName, int entryCount) =>
         $"已保存启动组: {presetName}（{entryCount} 项）";
 

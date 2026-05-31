@@ -159,7 +159,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(["one", "two"], confirmedItems!.Select(item => item.Entry.Id).ToArray());
         Assert.All(confirmedItems, item => Assert.Contains("wt.exe", item.Plan.CommandLine));
         Assert.Empty(startedPlans);
-        Assert.Equal("已取消: 批量启动 2 项", viewModel.StatusText);
+        Assert.Equal("已取消: 启动组 Daily（2 项）", viewModel.StatusText);
         var entries = LoadEntriesById(config);
         Assert.All(entries, entry => Assert.False(entry.Selected));
     }

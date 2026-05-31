@@ -30,6 +30,7 @@ public sealed partial class MainWindowViewModel
         await LaunchBatchAsync(
             GetPresetEntries(selectedPreset.EntryIds),
             LauncherPresetStatus.NoPresetEntries(selectedPreset.Name),
+            count => LauncherPresetStatus.LaunchCanceled(selectedPreset.Name, count),
             report => LauncherPresetStatus.Launched(selectedPreset.Name, report)).ConfigureAwait(true);
     }
 
