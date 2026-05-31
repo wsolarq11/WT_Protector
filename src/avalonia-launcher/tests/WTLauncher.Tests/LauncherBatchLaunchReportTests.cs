@@ -5,17 +5,26 @@ namespace WTLauncher.Tests;
 public sealed class LauncherBatchLaunchReportTests
 {
     [Fact]
-    public void ReportTracksStartedCount()
+    public void ReportTracksRequestedCount()
     {
         var report = new LauncherBatchLaunchReport();
 
-        report.RecordStarted();
-        report.RecordStarted();
+        report.RecordRequested();
+        report.RecordRequested();
 
-        Assert.Equal(2, report.StartedCount);
+        Assert.Equal(2, report.RequestedCount);
         Assert.Equal(0, report.FailedCount);
         Assert.Equal(0, report.SkippedCount);
         Assert.Empty(report.FailureMessages);
+    }
+
+    [Fact]
+    public void ReportUsesRequestedLaunchLanguage()
+    {
+        Assert.NotNull(typeof(LauncherBatchLaunchReport).GetProperty(nameof(LauncherBatchLaunchReport.RequestedCount)));
+        Assert.NotNull(typeof(LauncherBatchLaunchReport).GetMethod(nameof(LauncherBatchLaunchReport.RecordRequested)));
+        Assert.Null(typeof(LauncherBatchLaunchReport).GetProperty("StartedCount"));
+        Assert.Null(typeof(LauncherBatchLaunchReport).GetMethod("RecordStarted"));
     }
 
     [Fact]
@@ -23,11 +32,11 @@ public sealed class LauncherBatchLaunchReportTests
     {
         var report = new LauncherBatchLaunchReport();
 
-        report.RecordStarted();
+        report.RecordRequested();
         report.RecordFailure("one", new InvalidOperationException("missing one"));
         report.RecordFailure("two", new InvalidOperationException("missing two"));
 
-        Assert.Equal(1, report.StartedCount);
+        Assert.Equal(1, report.RequestedCount);
         Assert.Equal(2, report.FailedCount);
         Assert.Equal(0, report.SkippedCount);
         Assert.Equal(["one: missing one", "two: missing two"], report.FailureMessages);

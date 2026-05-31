@@ -6,7 +6,7 @@ public sealed class LauncherBatchLaunchReport
 {
     private readonly List<string> _failures = [];
 
-    public int StartedCount { get; private set; }
+    public int RequestedCount { get; private set; }
 
     public int FailedCount => _failures.Count;
 
@@ -22,9 +22,9 @@ public sealed class LauncherBatchLaunchReport
         LastCommandLine = plan.CommandLine;
     }
 
-    public void RecordStarted()
+    public void RecordRequested()
     {
-        StartedCount++;
+        RequestedCount++;
     }
 
     public void RecordSkipped(int count)

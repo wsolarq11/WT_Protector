@@ -32,7 +32,7 @@ public sealed class LauncherLaunchWorkflowTests
             requireConfirmation: false);
 
         Assert.Null(report.LastCommandLine);
-        Assert.Equal(0, report.StartedCount);
+        Assert.Equal(0, report.RequestedCount);
         Assert.Equal(2, report.FailedCount);
         Assert.Equal(0, report.SkippedCount);
         Assert.Contains(report.FailureMessages, failure => failure.StartsWith("one:", StringComparison.Ordinal));
@@ -55,7 +55,7 @@ public sealed class LauncherLaunchWorkflowTests
         Assert.Equal("one", item.Entry.Id);
         Assert.True(item.Plan.RequiresConfirmation);
         Assert.Equal(0, preflight.Report.FailedCount);
-        Assert.Equal(0, preflight.Report.StartedCount);
+        Assert.Equal(0, preflight.Report.RequestedCount);
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public sealed class LauncherLaunchWorkflowTests
 
         Assert.Empty(startedPlans);
         Assert.Null(report.LastCommandLine);
-        Assert.Equal(0, report.StartedCount);
+        Assert.Equal(0, report.RequestedCount);
         Assert.Equal(1, report.FailedCount);
         Assert.Equal(1, report.SkippedCount);
         Assert.Contains(report.FailureMessages, failure => failure.StartsWith("missing:", StringComparison.Ordinal));
@@ -103,7 +103,7 @@ public sealed class LauncherLaunchWorkflowTests
             ],
             requireConfirmation: false);
 
-        Assert.Equal(0, report.StartedCount);
+        Assert.Equal(0, report.RequestedCount);
         Assert.Equal(1, report.FailedCount);
         Assert.Equal(0, report.SkippedCount);
         Assert.Contains("one: blocked", Assert.Single(report.FailureMessages), StringComparison.Ordinal);
@@ -131,7 +131,7 @@ public sealed class LauncherLaunchWorkflowTests
             requireConfirmation: false);
 
         Assert.Equal(2, attempted.Count);
-        Assert.Equal(1, report.StartedCount);
+        Assert.Equal(1, report.RequestedCount);
         Assert.Equal(1, report.FailedCount);
         Assert.Equal(1, report.SkippedCount);
         Assert.Contains("two: blocked", Assert.Single(report.FailureMessages), StringComparison.Ordinal);
@@ -151,7 +151,7 @@ public sealed class LauncherLaunchWorkflowTests
             ],
             requireConfirmation: true);
 
-        Assert.Equal(2, report.StartedCount);
+        Assert.Equal(2, report.RequestedCount);
         Assert.Equal(0, report.FailedCount);
         Assert.Equal(0, report.SkippedCount);
         Assert.Equal(["pwsh", "pwsh"], startedPlans.Select(plan => plan.Command).ToArray());

@@ -13,7 +13,7 @@ public static class LauncherSingleLaunchStatus
     public static string Canceled(string entryName) =>
         $"已取消: {entryName}";
 
-    public static string Started(string entryName) =>
+    public static string Requested(string entryName) =>
         $"已请求启动: {entryName}";
 
     public static string Failed(string entryName, Exception exception)

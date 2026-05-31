@@ -12,7 +12,7 @@ public static class LauncherBatchLaunchReceiptText
         var lines = new List<string>
         {
             "启动回执",
-            $"已请求启动 {report.StartedCount} 项，失败 {report.FailedCount} 项，未启动 {report.SkippedCount} 项",
+            $"已请求启动 {report.RequestedCount} 项，失败 {report.FailedCount} 项，未启动 {report.SkippedCount} 项",
         };
 
         AppendPlanLines(lines, preflight.Items, report);
@@ -39,10 +39,10 @@ public static class LauncherBatchLaunchReceiptText
 
     private static string StatusFor(int index, LauncherBatchLaunchReport report)
     {
-        if (report.FailedCount > 0 && report.LastCommandLine is not null && index == report.StartedCount)
+        if (report.FailedCount > 0 && report.LastCommandLine is not null && index == report.RequestedCount)
             return "启动失败";
 
-        return index < report.StartedCount ? "已请求" : "未启动";
+        return index < report.RequestedCount ? "已请求" : "未启动";
     }
 
     private static void AppendFailureLines(List<string> lines, IReadOnlyList<string> failures)

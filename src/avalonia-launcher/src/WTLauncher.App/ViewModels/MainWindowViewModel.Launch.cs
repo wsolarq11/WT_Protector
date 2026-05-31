@@ -60,7 +60,7 @@ public sealed partial class MainWindowViewModel
 
             _launchWorkflow.Start(plan);
             DryRunText = dryRunText;
-            StatusText = LauncherSingleLaunchStatus.Started(item.Name);
+            StatusText = LauncherSingleLaunchStatus.Requested(item.Name);
         }
         catch (Exception ex)
         {

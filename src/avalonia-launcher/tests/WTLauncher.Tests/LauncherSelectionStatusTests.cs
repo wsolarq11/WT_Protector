@@ -21,10 +21,10 @@ public sealed class LauncherSelectionStatusTests
     {
         var exception = new InvalidOperationException("boom");
         var success = new LauncherBatchLaunchReport();
-        success.RecordStarted();
-        success.RecordStarted();
+        success.RecordRequested();
+        success.RecordRequested();
         var failures = new LauncherBatchLaunchReport();
-        failures.RecordStarted();
+        failures.RecordRequested();
         failures.RecordFailure("one", new InvalidOperationException("missing one"));
         failures.RecordFailure("two", new InvalidOperationException("missing two"));
         failures.RecordFailure("three", new InvalidOperationException("missing three"));

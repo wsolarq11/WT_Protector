@@ -78,7 +78,7 @@ public sealed class LauncherLaunchWorkflow
             {
                 report.RecordPlan(item.Plan);
                 Start(item.Plan);
-                report.RecordStarted();
+                report.RecordRequested();
             }
             catch (Exception ex)
             {
