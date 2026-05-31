@@ -87,9 +87,7 @@ public sealed class LauncherEntryOrderTests
     [Theory]
     [InlineData(false, "three", "two", "one", "three")]
     [InlineData(true, "three", "two", "three", "one")]
-    [InlineData(false, "missing", "two", "three", "one")]
-    [InlineData(true, "missing", "two", "three", "one")]
-    public void MoveRelativeSupportsBeforeAfterAndMissingTargetFallback(
+    public void MoveRelativeSupportsBeforeAndAfterTarget(
         bool insertAfter,
         string targetEntryId,
         string first,
@@ -101,6 +99,18 @@ public sealed class LauncherEntryOrderTests
         LauncherEntryOrder.MoveRelative(order, "one", targetEntryId, insertAfter);
 
         Assert.Equal([first, second, third], order);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void MoveRelativeIgnoresMissingTarget(bool insertAfter)
+    {
+        List<string> order = ["one", "two", "three"];
+
+        LauncherEntryOrder.MoveRelative(order, "one", "missing", insertAfter);
+
+        Assert.Equal(["one", "two", "three"], order);
     }
 
     [Fact]

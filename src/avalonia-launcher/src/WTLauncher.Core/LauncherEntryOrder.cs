@@ -51,16 +51,18 @@ public static class LauncherEntryOrder
         var targetId = LauncherEntryIds.Normalize(targetEntryId);
         if (!LauncherEntryIds.IsUsable(draggedId))
             return;
+        if (!LauncherEntryIds.IsUsable(targetId))
+            return;
         if (LauncherEntryIds.Same(draggedId, targetId))
             return;
         var normalizedOrder = LauncherEntryIds.ToUniqueUsableList(customOrder);
         if (!normalizedOrder.Any(id => LauncherEntryIds.Same(id, draggedId)))
             return;
+        if (!normalizedOrder.Any(id => LauncherEntryIds.Same(id, targetId)))
+            return;
 
         normalizedOrder.RemoveAll(id => LauncherEntryIds.Same(id, draggedId));
         var targetIndex = normalizedOrder.FindIndex(id => LauncherEntryIds.Same(id, targetId));
-        if (targetIndex < 0)
-            targetIndex = normalizedOrder.Count;
         if (insertAfter)
             targetIndex++;
         targetIndex = Math.Min(targetIndex, normalizedOrder.Count);
