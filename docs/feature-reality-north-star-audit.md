@@ -111,7 +111,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: users often launch a repeated slice of workspaces together.
 - Current data owner: `selected` in `config/config.json`.
-- Evidence: selection changes are saved, batch launch uses selected entries, tests cover selection outcomes and batch confirmation/cancellation, and `LauncherLaunchWorkflow.StartBatch` now preflights every selected launch plan before starting any external process. If an external start still fails after earlier starts, the workflow records the failure and stops the remaining starts instead of compounding side effects.
+- Evidence: selection changes are saved, batch launch uses selected entries, tests cover selection outcomes and batch confirmation/cancellation, and `LauncherLaunchWorkflow.PreflightBatch` now prepares every selected launch plan before confirmation or external process start. The batch confirmation receives the generated `LaunchPlan` items, and if an external start still fails after earlier starts, the workflow records the failure and stops the remaining starts instead of compounding side effects.
 - Verdict: strong, and locally north-star as the bridge from the retired HTA one-click flow.
 - Remaining gap: `selected` is stateful UI memory; presets are the cleaner long-term object for named intent. Once an external process has started, the app cannot honestly guarantee zero side effects if a later external start fails; that is a property of launching real processes, not a missing fallback branch.
 
@@ -267,11 +267,11 @@ This section checks the user's full objective against current evidence instead o
   - Evidence: this audit rejects speculative plugin marketplace, local web server, split-pane editor, installer/update channel, and workflow graph features until they beat the current local gate.
   - Status: currently preserved.
 - Requirement: 100% confidence and 0% side effects.
-  - Evidence: current tests and gate prove batch preflight-before-launch, abort-after-first-start-failure, rollback-aware JSON persistence, and native publish smoke. They cannot prove that starting arbitrary external processes has zero side effects.
+- Evidence: current tests and gate prove batch preflight-before-confirmation, exact generated command confirmation, abort-after-first-start-failure, rollback-aware JSON persistence, and native publish smoke. They cannot prove that starting arbitrary external processes has zero side effects.
   - Status: impossible as an absolute claim; mitigated where the repository owns the boundary.
 
 ## Final answer
 
-The current project is already a north-star implementation for the narrow domain of a portable Windows Terminal workspace launcher. The strongest mappings are launch entries, named presets, global launch confirmation, portable settings, JSON persistence/rollback, batch preflight-before-launch, abort-after-first-start-failure, and the native verify/publish gate.
+The current project is already a north-star implementation for the narrow domain of a portable Windows Terminal workspace launcher. The strongest mappings are launch entries, named presets, global launch confirmation, portable settings, JSON persistence/rollback, batch preflight-before-confirmation, exact generated command confirmation, abort-after-first-start-failure, and the native verify/publish gate.
 
 It is not a broad-domain north star for every launcher or automation product. GitHub market evidence contradicts that broad claim. Building import/export, status history, distribution/update, split panes, or a plugin system now would be speculative unless a real workflow beats the current small local contract.

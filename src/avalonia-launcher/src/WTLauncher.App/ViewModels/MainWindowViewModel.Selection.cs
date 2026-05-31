@@ -5,7 +5,7 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
-    public Func<IReadOnlyList<LaunchEntry>, Task<bool>> ConfirmBatchLaunchAsync { get; set; } =
+    public Func<IReadOnlyList<LauncherBatchLaunchItem>, Task<bool>> ConfirmBatchLaunchAsync { get; set; } =
         static _ => Task.FromResult(false);
 
     [RelayCommand]
@@ -53,12 +53,14 @@ public sealed partial class MainWindowViewModel
         try
         {
             var selectedEntries = selected.Select(ToLaunchEntry).ToList();
-            if (!await ConfirmBatchLaunchIfRequiredAsync(selectedEntries).ConfigureAwait(true))
-                return;
-
-            var report = _launchWorkflow.StartBatch(
+            var preflight = _launchWorkflow.PreflightBatch(
                 selectedEntries,
                 RequireConfirmationForLaunches);
+            if (preflight.Report.FailedCount == 0 &&
+                !await ConfirmBatchLaunchIfRequiredAsync(preflight.Items).ConfigureAwait(true))
+                return;
+
+            var report = _launchWorkflow.StartBatch(preflight);
             if (report.LastCommandLine is not null)
                 DryRunText = report.LastCommandLine;
             StatusText = LauncherSelectionStatus.BatchLaunchCompleted(report);
@@ -69,16 +71,16 @@ public sealed partial class MainWindowViewModel
         }
     }
 
-    private async Task<bool> ConfirmBatchLaunchIfRequiredAsync(IReadOnlyList<LaunchEntry> selectedEntries)
+    private async Task<bool> ConfirmBatchLaunchIfRequiredAsync(IReadOnlyList<LauncherBatchLaunchItem> items)
     {
         if (!RequireConfirmationForLaunches)
             return true;
 
-        var accepted = await ConfirmBatchLaunchAsync(selectedEntries).ConfigureAwait(true);
+        var accepted = await ConfirmBatchLaunchAsync(items).ConfigureAwait(true);
         if (accepted)
             return true;
 
-        StatusText = LauncherSelectionStatus.BatchLaunchCanceled(selectedEntries.Count);
+        StatusText = LauncherSelectionStatus.BatchLaunchCanceled(items.Count);
         return false;
     }
 

@@ -81,7 +81,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("not claim broad launcher/platform north-star status", audit);
         Assert.Contains("cannot honestly claim broad launcher supremacy", audit);
         Assert.Contains("docs/feature-reality-north-star-audit.md", readme);
-        Assert.Contains("Batch launch preflights every selected item before starting anything", readme);
+        Assert.Contains("Batch launch preflights every selected item before confirmation or process start", readme);
         Assert.Contains("Cards / Details", readme);
         Assert.Contains("Names", readme);
     }

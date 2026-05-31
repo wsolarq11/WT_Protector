@@ -160,6 +160,31 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task BatchLaunchPlanFailureSkipsConfirmation()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: Path.Combine(temp.Path, "missing-one"), command: "codex", selected: true));
+        var confirmCalls = 0;
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = true },
+            vm => vm.ConfirmBatchLaunchAsync = _ =>
+            {
+                confirmCalls++;
+                return Task.FromResult(true);
+            });
+
+        await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
+
+        Assert.Equal(0, confirmCalls);
+        Assert.Equal("选择一个启动项查看预演命令。", viewModel.DryRunText);
+        Assert.Contains("已启动 0 个勾选项，1 个失败", viewModel.StatusText);
+    }
+
+    [Fact]
     public async Task BatchLaunchDuringDragPreviewDiscardsPreviewOrder()
     {
         using var temp = new TempDirectory();
@@ -182,27 +207,29 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task BatchLaunchCancellationStopsBeforeBuildingPlans()
+    public async Task BatchLaunchCancellationReceivesPreflightedPlansAndStopsBeforeStart()
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(
             temp,
             Entry("one", directory: temp.Path, command: "codex", selected: true),
             Entry("two", directory: temp.Path, command: "opencode", selected: true));
-        IReadOnlyList<string>? confirmedEntryIds = null;
+        IReadOnlyList<LauncherBatchLaunchItem>? confirmedItems = null;
         var viewModel = CreateViewModel(
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            vm => vm.ConfirmBatchLaunchAsync = entries =>
+            vm => vm.ConfirmBatchLaunchAsync = items =>
             {
-                confirmedEntryIds = entries.Select(entry => entry.Id).ToArray();
+                confirmedItems = items.ToArray();
                 return Task.FromResult(false);
             });
 
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 
-        Assert.Equal(["one", "two"], confirmedEntryIds);
+        Assert.NotNull(confirmedItems);
+        Assert.Equal(["one", "two"], confirmedItems!.Select(item => item.Entry.Id).ToArray());
+        Assert.All(confirmedItems, item => Assert.Contains("wt.exe", item.Plan.CommandLine));
         Assert.Equal("选择一个启动项查看预演命令。", viewModel.DryRunText);
         Assert.Equal("已取消: 批量启动 2 项", viewModel.StatusText);
     }

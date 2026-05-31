@@ -40,6 +40,25 @@ public sealed class LauncherLaunchWorkflowTests
     }
 
     [Fact]
+    public void PreflightBatchBuildsPlansWithoutStartingProcesses()
+    {
+        using var temp = new TempDirectory();
+        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+
+        var preflight = workflow.PreflightBatch(
+            [
+                Entry("one", temp.Path),
+            ],
+            requireConfirmation: true);
+
+        var item = Assert.Single(preflight.Items);
+        Assert.Equal("one", item.Entry.Id);
+        Assert.True(item.Plan.RequiresConfirmation);
+        Assert.Equal(0, preflight.Report.FailedCount);
+        Assert.Equal(0, preflight.Report.StartedCount);
+    }
+
+    [Fact]
     public void StartBatchPreflightsAllPlansBeforeStartingAnyProcess()
     {
         using var temp = new TempDirectory();

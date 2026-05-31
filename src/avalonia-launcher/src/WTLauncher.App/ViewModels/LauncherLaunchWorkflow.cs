@@ -32,18 +32,23 @@ public sealed class LauncherLaunchWorkflow
 
     public LauncherBatchLaunchReport StartBatch(
         IEnumerable<LaunchEntry> entries,
+        bool requireConfirmation) =>
+        StartBatch(PreflightBatch(entries, requireConfirmation));
+
+    public LauncherBatchLaunchPreflight PreflightBatch(
+        IEnumerable<LaunchEntry> entries,
         bool requireConfirmation)
     {
         ArgumentNullException.ThrowIfNull(entries);
 
         var report = new LauncherBatchLaunchReport();
-        var plans = new List<(string EntryName, LaunchPlan Plan)>();
+        var items = new List<LauncherBatchLaunchItem>();
         foreach (var entry in entries)
         {
             ArgumentNullException.ThrowIfNull(entry);
             try
             {
-                plans.Add((entry.Name, BuildPlan(entry, requireConfirmation)));
+                items.Add(new LauncherBatchLaunchItem(entry, BuildPlan(entry, requireConfirmation)));
             }
             catch (Exception ex)
             {
@@ -51,25 +56,34 @@ public sealed class LauncherLaunchWorkflow
             }
         }
 
+        return new LauncherBatchLaunchPreflight(items, report);
+    }
+
+    public LauncherBatchLaunchReport StartBatch(LauncherBatchLaunchPreflight preflight)
+    {
+        ArgumentNullException.ThrowIfNull(preflight);
+
+        var items = preflight.Items;
+        var report = preflight.Report;
         if (report.FailedCount > 0)
         {
-            report.RecordSkipped(plans.Count);
+            report.RecordSkipped(items.Count);
             return report;
         }
 
-        for (var index = 0; index < plans.Count; index++)
+        for (var index = 0; index < items.Count; index++)
         {
-            var (entryName, plan) = plans[index];
+            var item = items[index];
             try
             {
-                report.RecordPlan(plan);
-                Start(plan);
+                report.RecordPlan(item.Plan);
+                Start(item.Plan);
                 report.RecordStarted();
             }
             catch (Exception ex)
             {
-                report.RecordFailure(entryName, ex);
-                report.RecordSkipped(plans.Count - index - 1);
+                report.RecordFailure(item.Entry.Name, ex);
+                report.RecordSkipped(items.Count - index - 1);
                 break;
             }
         }
