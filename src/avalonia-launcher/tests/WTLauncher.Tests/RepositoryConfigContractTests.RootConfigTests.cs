@@ -43,6 +43,10 @@ public sealed partial class RepositoryConfigContractTests
         var entries = document.RootElement.EnumerateArray().ToList();
         Assert.All(entries, entry =>
         {
+            AssertJsonPropertyNames(
+                entry,
+                ["id", "name", "directory", "command", "selected", "updatedAtUtc"],
+                "config entry");
             Assert.False(
                 entry.TryGetProperty("confirm", out _),
                 "Active config entries must not carry the obsolete per-entry confirm field; settings.json owns launch confirmation.");
@@ -64,6 +68,7 @@ public sealed partial class RepositoryConfigContractTests
         });
 
         var root = document.RootElement;
+        AssertJsonPropertyNames(root, ["schemaVersion", "defaultPresetId", "presets"], "presets.json");
         Assert.Equal(1, root.GetProperty("schemaVersion").GetInt32());
         var defaultPresetId = root.GetProperty("defaultPresetId").GetString();
         Assert.False(string.IsNullOrWhiteSpace(defaultPresetId));
@@ -72,6 +77,7 @@ public sealed partial class RepositoryConfigContractTests
 
         foreach (var preset in root.GetProperty("presets").EnumerateArray())
         {
+            AssertJsonPropertyNames(preset, ["id", "name", "entryIds", "locked"], "preset");
             var id = preset.GetProperty("id").GetString();
             var name = preset.GetProperty("name").GetString();
             Assert.False(string.IsNullOrWhiteSpace(id));
@@ -118,6 +124,10 @@ public sealed partial class RepositoryConfigContractTests
         });
 
         var root = document.RootElement;
+        AssertJsonPropertyNames(
+            root,
+            ["lastFilterText", "sortMode", "entryViewMode", "requireConfirmationForLaunches", "customEntryOrder", "window"],
+            "settings.json");
         Assert.False(
             root.TryGetProperty("theme", out _),
             "settings.json must not carry unused theme state; no active UI behavior reads it.");
@@ -136,7 +146,17 @@ public sealed partial class RepositoryConfigContractTests
         });
 
         var window = root.GetProperty("window");
+        AssertJsonPropertyNames(window, ["width", "height"], "settings.json window");
         Assert.Equal(LauncherWindowSettings.DefaultWidth, window.GetProperty("width").GetDouble());
         Assert.Equal(LauncherWindowSettings.DefaultHeight, window.GetProperty("height").GetDouble());
+    }
+
+    private static void AssertJsonPropertyNames(JsonElement element, string[] expectedNames, string context)
+    {
+        var actualNames = element.EnumerateObject().Select(property => property.Name).ToArray();
+        var unexpectedNames = actualNames.Except(expectedNames, StringComparer.Ordinal).ToArray();
+        Assert.True(
+            unexpectedNames.Length == 0,
+            $"{context} has unexpected JSON fields: {string.Join(", ", unexpectedNames)}");
     }
 }

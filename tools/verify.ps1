@@ -13,11 +13,11 @@ function Add-Check([string]$Name, [object]$Detail) {
 }
 
 function Assert-OnlyJsonKeys([object]$Object, [string[]]$AllowedKeys, [string]$Context) {
-    $allowed = @{}
-    foreach ($key in $AllowedKeys) { $allowed[$key] = $true }
+    $allowed = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+    foreach ($key in $AllowedKeys) { [void]$allowed.Add($key) }
 
     foreach ($key in @($Object.PSObject.Properties.Name)) {
-        if (-not $allowed.ContainsKey($key)) {
+        if (-not $allowed.Contains($key)) {
             throw "$Context has unknown field: $key"
         }
     }
