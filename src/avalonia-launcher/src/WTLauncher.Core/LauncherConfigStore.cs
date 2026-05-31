@@ -16,10 +16,7 @@ public static class LauncherConfigStore
         var entries = LauncherJson.Load<List<LaunchEntry?>>(configPath)
             ?? throw new InvalidDataException("Launcher config parsed to null.");
 
-        return entries
-            .OfType<LaunchEntry>()
-            .Select(Normalize)
-            .ToList();
+        return NormalizeEntries(entries);
     }
 
     public static void Save(IEnumerable<LaunchEntry> entries, string configPath, bool backup = true)
@@ -28,10 +25,7 @@ public static class LauncherConfigStore
         ThrowIfConfigPathMissing(configPath);
 
         LauncherJson.Save(
-            entries
-                .OfType<LaunchEntry>()
-                .Select(CloneNormalized)
-                .ToList(),
+            CloneNormalizedEntries(entries),
             configPath,
             backup);
     }
@@ -102,6 +96,35 @@ public static class LauncherConfigStore
 
     private static string BuildRepositoryMarkerPath(string root) =>
         Path.Combine(Path.GetFullPath(root), RepositoryMarkerFileName);
+
+    private static List<LaunchEntry> NormalizeEntries(IEnumerable<LaunchEntry?> entries)
+    {
+        var normalized = new List<LaunchEntry>();
+        var index = 0;
+        foreach (var entry in entries)
+        {
+            normalized.Add(Normalize(RequireEntry(entry, index)));
+            index++;
+        }
+
+        return normalized;
+    }
+
+    private static List<LaunchEntry> CloneNormalizedEntries(IEnumerable<LaunchEntry> entries)
+    {
+        var normalized = new List<LaunchEntry>();
+        var index = 0;
+        foreach (var entry in entries)
+        {
+            normalized.Add(CloneNormalized(RequireEntry(entry, index)));
+            index++;
+        }
+
+        return normalized;
+    }
+
+    private static LaunchEntry RequireEntry(LaunchEntry? entry, int index) =>
+        entry ?? throw new InvalidDataException($"Launcher config entry {index} is null.");
 
     private static LaunchEntry Normalize(LaunchEntry entry)
     {

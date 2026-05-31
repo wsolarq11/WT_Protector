@@ -53,7 +53,7 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void Load_IgnoresNullEntryRowsFromConfig()
+    public void Load_RejectsNullEntryRowsFromConfig()
     {
         using var temp = new TempDirectory();
         var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
@@ -68,9 +68,9 @@ public sealed partial class LauncherConfigStoreTests
         ]
         """);
 
-        var entry = Assert.Single(LauncherConfigStore.Load(config));
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherConfigStore.Load(config));
 
-        Assert.Equal("demo", entry.Id);
+        Assert.Equal("Launcher config entry 0 is null.", exception.Message);
     }
 
     [Fact]
@@ -167,7 +167,7 @@ public sealed partial class LauncherConfigStoreTests
             Command = " codex ",
             UpdatedAtUtc = " 2026-05-30T00:00:00Z ",
         };
-        var entries = new LaunchEntry[] { null!, dirtyEntry };
+        var entries = new[] { dirtyEntry };
 
         LauncherConfigStore.Save(entries, config, backup: false);
 
@@ -188,6 +188,18 @@ public sealed partial class LauncherConfigStoreTests
         Assert.DoesNotContain("\"confirm\"", savedJson);
         Assert.DoesNotContain("null", savedJson);
         AssertUsesRepositoryLineEndings(savedJson);
+    }
+
+    [Fact]
+    public void Save_RejectsNullEntryRows()
+    {
+        using var temp = new TempDirectory();
+        var config = ConfigFilePath(temp.Path, LauncherConfigStore.ConfigFileName);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => LauncherConfigStore.Save([null!], config, backup: false));
+
+        Assert.Equal("Launcher config entry 0 is null.", exception.Message);
     }
 
     [Fact]
@@ -220,7 +232,6 @@ public sealed partial class LauncherConfigStoreTests
 
         LauncherConfigStore.Save(
             [
-                null!,
                 new LaunchEntry
                 {
                     Id = " one ",
