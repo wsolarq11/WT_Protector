@@ -104,7 +104,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: one known workspace should open with one explicit action.
 - Current data owner: `LaunchPlan` built from the selected entry and global confirmation setting.
-- Evidence: launch workflow tests cover confirm/cancel paths, dry-run text, process handoff, honest `已请求启动` status wording, and transient single-launch request receipts.
+- Evidence: launch workflow tests cover confirm/cancel paths, dry-run text, process handoff, honest `已请求启动` status wording, and transient single-launch request/failure receipts.
 - Verdict: north-star for explicit local launching.
 - Remaining gap: launch request success still cannot prove terminal-session health after `wt.exe` accepts the process start request.
 
@@ -276,7 +276,7 @@ This section checks the user's full objective against current evidence instead o
   - Evidence: this audit rejects speculative plugin marketplace, local web server, split-pane editor, installer/update channel, and workflow graph features until they beat the current local gate.
   - Status: currently preserved.
 - Requirement: 100% confidence and 0% side effects.
-- Evidence: current tests and gate prove batch preflight-before-confirmation, side-effect-free current-group preview, exact generated command confirmation, transient single-launch receipts plus batch receipts for requested/failed/skipped plans, abort-after-first-start-failure, rollback-aware JSON persistence, and native publish smoke. They cannot prove that starting arbitrary external processes has zero side effects.
+- Evidence: current tests and gate prove batch preflight-before-confirmation, side-effect-free current-group preview, exact generated command confirmation, transient single-launch request/failure receipts plus batch receipts for requested/failed/skipped plans, abort-after-first-start-failure, rollback-aware JSON persistence, and native publish smoke. They cannot prove that starting arbitrary external processes has zero side effects.
   - Status: impossible as an absolute claim; mitigated where the repository owns the boundary.
 
 ## Final answer

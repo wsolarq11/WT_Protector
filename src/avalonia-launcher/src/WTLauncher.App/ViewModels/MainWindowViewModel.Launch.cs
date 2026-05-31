@@ -50,11 +50,10 @@ public sealed partial class MainWindowViewModel
     internal async Task LaunchAsync(LauncherEntryViewModel item)
     {
         DiscardDragReorderPreview();
-        string? dryRunText = null;
+        LaunchPlan? plan = null;
         try
         {
-            var plan = _launchWorkflow.BuildPlan(item.Entry, RequireConfirmationForLaunches);
-            dryRunText = plan.CommandLine;
+            plan = _launchWorkflow.BuildPlan(item.Entry, RequireConfirmationForLaunches);
             if (!await ConfirmSingleLaunchIfRequiredAsync(item, plan).ConfigureAwait(true))
                 return;
 
@@ -64,8 +63,9 @@ public sealed partial class MainWindowViewModel
         }
         catch (Exception ex)
         {
-            if (dryRunText is not null)
-                DryRunText = dryRunText;
+            DryRunText = plan is null
+                ? LauncherSingleLaunchReceiptText.Failed(item.Name, ex)
+                : LauncherSingleLaunchReceiptText.Failed(item.Name, plan, ex);
             StatusText = LauncherSingleLaunchStatus.Failed(item.Name, ex);
         }
     }

@@ -121,6 +121,53 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("已请求启动: one", viewModel.StatusText);
     }
 
+
+    [Fact]
+    public async Task SingleLaunchPlanFailureShowsReceiptWithoutStartingProcess()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: Path.Combine(temp.Path, "missing"), command: "codex"));
+        var startedPlans = new List<LaunchPlan>();
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = false },
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+
+        await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
+
+        Assert.Empty(startedPlans);
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("启动失败: one", viewModel.DryRunText);
+        Assert.Contains("directory does not exist", viewModel.DryRunText);
+        Assert.DoesNotContain(LaunchArgumentBuilder.TerminalExecutable, viewModel.DryRunText);
+        Assert.Contains("启动失败: one", viewModel.StatusText);
+    }
+
+    [Fact]
+    public async Task SingleLaunchStartFailureShowsCommandReceipt()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex"));
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = false },
+            launchWorkflow: new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("blocked")));
+
+        await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
+
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("启动失败: one", viewModel.DryRunText);
+        Assert.Contains("codex", viewModel.DryRunText);
+        Assert.Contains("错误: blocked", viewModel.DryRunText);
+        Assert.Equal("启动失败: one — blocked", viewModel.StatusText);
+    }
+
     [Fact]
     public void DryRunDuringDragPreviewDiscardsPreviewOrder()
     {
