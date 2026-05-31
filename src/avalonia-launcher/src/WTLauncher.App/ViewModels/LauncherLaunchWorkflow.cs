@@ -26,6 +26,7 @@ public sealed class LauncherLaunchWorkflow
 
     public void Start(LaunchPlan plan)
     {
+        ArgumentNullException.ThrowIfNull(plan);
         _start(plan);
     }
 
@@ -38,6 +39,7 @@ public sealed class LauncherLaunchWorkflow
         var report = new LauncherBatchLaunchReport();
         foreach (var entry in entries)
         {
+            ArgumentNullException.ThrowIfNull(entry);
             try
             {
                 var plan = BuildPlan(entry, requireConfirmation);
