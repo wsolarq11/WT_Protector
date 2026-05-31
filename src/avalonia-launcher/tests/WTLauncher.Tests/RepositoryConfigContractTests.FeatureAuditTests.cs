@@ -21,7 +21,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("## Feature mapping audit", audit);
         Assert.Contains("## Objective completion audit", audit);
         Assert.Contains("## Final answer", audit);
-        Assert.Equal(20, CountFeatureHeadings(audit));
+        Assert.Equal(21, CountFeatureHeadings(audit));
         AssertFeatureSectionsUseCompleteAuditShape(audit);
 
         foreach (var expectedMapping in new[]
@@ -34,6 +34,7 @@ public sealed partial class RepositoryConfigContractTests
             "Named launch groups / presets",
             "First-class preset actions",
             "Preset-vs-selection preview",
+            "Preset launch plan preview",
             "Add/edit/delete launcher buttons",
             "Custom order and drag reorder",
             "Sort modes",
@@ -79,15 +80,19 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("\"100% confidence and 0% side effects\"", audit);
         Assert.Contains("preflight everything local before launching", audit);
         Assert.Contains("Live GitHub repository search/API checks were refreshed on 2026-06-01", audit);
-        Assert.Contains("updated 2026-05-31T13:24:27Z", audit);
+        Assert.Contains("updated 2026-05-31T16:46:25Z", audit);
         Assert.Contains("updated 2026-05-31T15:02:11Z", audit);
         AssertObjectiveCompletionAuditPreservesOriginalScope(audit);
         Assert.Contains("not claim broad launcher/platform north-star status", audit);
         Assert.Contains("cannot honestly claim broad launcher supremacy", audit);
         Assert.Contains("Named presets can now launch directly from `config/presets.json` without rewriting checkbox state first", audit);
+        Assert.Contains("Current-group preview uses the same preflight output and formatter", audit);
+        Assert.Contains("side-effect-free current-group preview", audit);
         Assert.Contains("preserving the preset name in cancellation and unexpected-failure status", audit);
         Assert.Contains("docs/feature-reality-north-star-audit.md", readme);
         Assert.Contains("Selected-item and current-group batch launch preflight every target before confirmation or process start", readme);
+        Assert.Contains("预演当前组", readme);
+        Assert.Contains("without starting processes or rewriting checkbox selection", readme);
         Assert.Contains("launches the selected preset entries directly without rewriting checkbox state first", readme);
         Assert.Contains("Cards / Details", readme);
         Assert.Contains("Names", readme);
@@ -112,7 +117,7 @@ public sealed partial class RepositoryConfigContractTests
             .Skip(1)
             .ToArray();
 
-        Assert.Equal(20, sections.Length);
+        Assert.Equal(21, sections.Length);
         foreach (var section in sections)
         {
             Assert.Contains("- Real problem:", section);

@@ -46,14 +46,14 @@ Current external references were spot-checked on 2026-06-01 before making the no
 
 Live GitHub repository search/API checks were refreshed on 2026-06-01. The result is blunt: a universal "stronger than any similar GitHub project" claim is not provable, and in the broad launcher market it is false. Flow Launcher and Wox are mature broad launchers with thousands of stars, plugin ecosystems, package channels, and community proof. WT Launcher should not fight them as a generic launcher. That would be stupid scope creep.
 
-The relevant fight is narrower: portable Windows Terminal workspace launching with inspectable entries, named launch groups, explicit launch confirmation, rollback-aware JSON persistence, and a native repo gate.
+The relevant fight is narrower: portable Windows Terminal workspace launching with inspectable entries, named launch groups, side-effect-free plan preview, explicit launch confirmation, rollback-aware JSON persistence, and a native repo gate.
 
 Representative GitHub yardsticks:
 
 - <https://github.com/SyDroX/dev-layout> — direct Windows Terminal workspace launcher; PowerShell, 0 stars, updated 2026-05-27. Strong for fixed Claude Code multi-repo layout, session resume, and `cd` blocking. Weaker than WT Launcher on editable portable UI entries, named launch groups, repository-level native gate, and rollback-aware config persistence.
 - <https://github.com/augustdragon/terminal-manager> — direct Windows Terminal profile/session manager; TypeScript, 0 stars, updated 2026-05-17. Stronger than WT Launcher for WT profile editing, split-pane session groups, import/export, and WT `settings.json` sync. Heavier stack, local web server, more moving parts, and it mutates Windows Terminal settings by design. This is a different tradeoff, not a small-and-beautiful local config launcher.
 - <https://github.com/joyahmed/devgo-app> — WSL-first developer launcher; C#, 2 stars, updated 2026-05-24. Strong for WSL + VS Code + tmux workflows and installer ambition. README still lists keyboard shortcuts and rough edges as in-progress, so it is not stronger on the current WT Launcher axis of verified portable launch groups.
-- <https://github.com/Flow-Launcher/Flow.Launcher> — broad Windows launcher; C#, 14,841 stars, updated 2026-05-31T13:24:27Z. Stronger in broad market proof, plugins, search, packaging, and community. Not the same narrow product.
+- <https://github.com/Flow-Launcher/Flow.Launcher> — broad Windows launcher; C#, 14,842 stars, updated 2026-05-31T16:46:25Z. Stronger in broad market proof, plugins, search, packaging, and community. Not the same narrow product.
 - <https://github.com/Wox-launcher/Wox> — broad cross-platform launcher; Go, 26,979 stars, updated 2026-05-31T15:02:11Z. Stronger in broad market proof, cross-platform packaging, plugin/theme stores, and AI/MCP direction. Not the same narrow product.
 
 Conclusion from the GitHub snapshot: WT Launcher can honestly claim a north-star shape only for the narrow, local, portable Windows Terminal workspace-launcher slice. It cannot honestly claim broad launcher supremacy.
@@ -67,6 +67,7 @@ open known local workspaces quickly
   + keep launch entries portable and reviewable
   + save repeated subsets as named launch groups
   + preserve one explicit launch boundary
+  + preview generated group commands without process start
   + keep UI preferences local and inspectable
   + prove the app through one native gate
 ```
@@ -111,7 +112,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: users often launch a repeated slice of workspaces together.
 - Current data owner: `selected` in `config/config.json`.
-- Evidence: selection changes are saved, batch launch uses selected entries, tests cover selection outcomes and batch confirmation/cancellation, and `LauncherLaunchWorkflow.PreflightBatch` now prepares every selected launch plan before confirmation or external process start. The batch confirmation receives the generated `LaunchPlan` items, and if an external start still fails after earlier starts, the workflow records the failure and stops the remaining starts instead of compounding side effects. Named presets can now launch directly from `config/presets.json` without rewriting checkbox state first, and confirmation-cancel/failure tests prove that direct preset launch receives preflighted generated command lines before any process start while preserving the preset name in cancellation and unexpected-failure status.
+- Evidence: selection changes are saved, batch launch uses selected entries, tests cover selection outcomes and batch confirmation/cancellation, and `LauncherLaunchWorkflow.PreflightBatch` now prepares every selected launch plan before confirmation or external process start. The batch confirmation receives the generated `LaunchPlan` items, and if an external start still fails after earlier starts, the workflow records the failure and stops the remaining starts instead of compounding side effects. Named presets can now launch directly from `config/presets.json` without rewriting checkbox state first, and confirmation-cancel/failure tests prove that direct preset launch receives preflighted generated command lines before any process start while preserving the preset name in cancellation and unexpected-failure status. Current-group preview uses the same preflight output and formatter, then writes only transient dry-run/status text instead of starting processes or persisting checkbox state.
 - Verdict: strong, and locally north-star as the bridge from the retired HTA one-click flow.
 - Remaining gap: `selected` remains stateful UI memory for ad-hoc batches; direct preset launch is the cleaner path for named intent. Once an external process has started, the app cannot honestly guarantee zero side effects if a later external start fails; that is a property of launching real processes, not a missing fallback branch.
 
@@ -139,7 +140,15 @@ It is not a general launcher/automation north star. That broader domain includes
 - Verdict: north-star. It solves the real "what will change?" problem without a second persistent model.
 - Remaining gap: visual screenshot receipts are useful only after UI-heavy changes.
 
-### 9. Add/edit/delete launcher buttons
+### 9. Preset launch plan preview
+
+- Real problem: launching a saved group is the highest-risk routine action; users need to inspect the exact generated `wt.exe` commands without rewriting selection or starting external processes.
+- Current data owner: `config/presets.json` owns desired group membership; `LaunchPlan` owns generated command lines; `DryRunText` is transient UI output, not persisted state.
+- Evidence: `PreviewSelectedPresetCommand` calls the same `LauncherLaunchWorkflow.PreflightBatch` path as launch, formats plans through `LauncherBatchLaunchPlanText`, starts no process, and preserves checkbox state; tests cover successful preview and plan-failure preview.
+- Verdict: north-star for the repo-owned side-effect boundary. It converts the impossible "0% side effects after launch" demand into a true pre-launch no-side-effect inspection path.
+- Remaining gap: once the user chooses real launch, arbitrary external commands still have side effects outside this app's control.
+
+### 10. Add/edit/delete launcher buttons
 
 - Real problem: the launcher must stay maintainable without manual JSON edits for common entry changes.
 - Current data owner: `config/config.json`, with preset/settings references updated or rolled back together.
@@ -147,7 +156,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Verdict: strong.
 - Remaining gap: no bulk import; that would be overbuilding until a real import workload exists.
 
-### 10. Custom order and drag reorder
+### 11. Custom order and drag reorder
 
 - Real problem: users build spatial memory; alphabetical order is not always the fastest launch order.
 - Current data owner: `settings.json` `customEntryOrder`; drag session is a single transient object.
@@ -155,7 +164,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Verdict: north-star for mouse-first local use.
 - Remaining gap: none proven. Non-drag reorder now uses the same data owner and persistence path as drag reorder.
 
-### 11. Sort modes
+### 12. Sort modes
 
 - Real problem: users need different scan modes: custom memory order, newest updated, or alphabetic lookup.
 - Current data owner: `settings.json` `sortMode`.
@@ -163,7 +172,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Verdict: north-star; three modes are enough and not a framework.
 - Remaining gap: none proven.
 
-### 12. View modes: Cards / Details / Names
+### 13. View modes: Cards / Details / Names
 
 - Real problem: one layout cannot solve readable actions, dense field scanning, and overview at the same time.
 - Current data owner: `settings.json` `entryViewMode`.
@@ -171,7 +180,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Verdict: north-star data model; README needed to name the already-implemented `Names` mode explicitly.
 - Remaining gap: screenshot-backed comfort pass only after visual changes.
 
-### 13. Adaptive card sizing and density
+### 14. Adaptive card sizing and density
 
 - Real problem: fixed cards waste space on large windows and become unusable on small windows.
 - Current data owner: `LauncherEntryLayoutDensity`, derived from available size and visible entry count.
@@ -179,7 +188,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Verdict: strong, close to north-star.
 - Remaining gap: exact visual comfort is partly perceptual; tests prove structure, not taste.
 
-### 14. Global launch confirmation
+### 15. Global launch confirmation
 
 - Real problem: launch safety should have one visible rule; per-command "danger" guesses create false confidence and hidden branches.
 - Current data owner: `settings.json` `requireConfirmationForLaunches`.
@@ -187,7 +196,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Verdict: north-star. One switch is simpler and safer than command-classification theater.
 - Remaining gap: none proven.
 
-### 15. Portable settings
+### 16. Portable settings
 
 - Real problem: UI preferences should move with the repo and stay reviewable, not hide in AppData or registry.
 - Current data owner: `config/settings.json`.
@@ -195,7 +204,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Verdict: north-star for this local tool.
 - Remaining gap: no cross-machine path normalization; this is fine because launch directories are machine-local facts.
 
-### 16. JSON persistence, backup, and rollback compensation
+### 17. JSON persistence, backup, and rollback compensation
 
 - Real problem: config edits must not leave half-written JSON or half-applied multi-file state.
 - Current data owner: config/preset/settings stores plus mutation snapshots.
@@ -203,7 +212,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Verdict: north-star for a single-process local app.
 - Remaining gap: no file locking or merge resolution for concurrent external edits; that is not a current requirement.
 
-### 17. Core/App/Tests separation
+### 18. Core/App/Tests separation
 
 - Real problem: launch argument rules and config behavior must be testable without opening the GUI.
 - Current data owner: Core owns pure records/rules; App owns ViewModels/Views; Tests own behavior contracts.
@@ -211,7 +220,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Verdict: north-star for maintainability.
 - Remaining gap: none proven.
 
-### 18. Self-contained win-x64 publish and native gate
+### 19. Self-contained win-x64 publish and native gate
 
 - Real problem: a desktop launcher is only real if it can be restored, tested, published, and smoke-started.
 - Current data owner: `tools/verify.ps1`, `src/avalonia-launcher/verify.ps1`, and ignored publish artifacts.
@@ -219,7 +228,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Verdict: north-star for repo-local Windows release proof.
 - Remaining gap: no installer/update channel; that belongs to distribution scope, not current launcher correctness.
 
-### 19. Retired legacy surfaces
+### 20. Retired legacy surfaces
 
 - Real problem: two active UI lines create duplicate truth and slow failure.
 - Current data owner: Avalonia mainline; retired HTA/WinForms are archive/reference only.
@@ -227,7 +236,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Verdict: north-star. The old line is retired instead of kept alive by compatibility branches.
 - Remaining gap: none proven.
 
-### 20. Design benchmark and giants-shoulders library
+### 21. Design benchmark and giants-shoulders library
 
 - Real problem: UI/product decisions should not be made from vibes or copied frameworks.
 - Current data owner: `DESIGN.md`, `docs/design-benchmark-digest.md`, and `docs/giants-shoulders/`.
@@ -252,7 +261,7 @@ Do not build these preemptively. They become work only when the real user proble
 This section checks the user's full objective against current evidence instead of redefining success around the work already done.
 
 - Requirement: evaluate every active feature.
-  - Evidence: the 20 feature sections above cover every active feature mapping documented in `README.md` and the current Avalonia mainline scope.
+  - Evidence: the 21 feature sections above cover every active feature mapping documented in `README.md` and the current Avalonia mainline scope.
   - Status: proven for the current repository scope.
 - Requirement: decide whether each feature is battle-practice or market-proven north-star.
   - Evidence: every feature section has a real problem, data owner, evidence, verdict, and remaining gap; the GitHub snapshot separates narrow direct competitors from broad launchers.
@@ -267,11 +276,11 @@ This section checks the user's full objective against current evidence instead o
   - Evidence: this audit rejects speculative plugin marketplace, local web server, split-pane editor, installer/update channel, and workflow graph features until they beat the current local gate.
   - Status: currently preserved.
 - Requirement: 100% confidence and 0% side effects.
-- Evidence: current tests and gate prove batch preflight-before-confirmation, exact generated command confirmation, abort-after-first-start-failure, rollback-aware JSON persistence, and native publish smoke. They cannot prove that starting arbitrary external processes has zero side effects.
+- Evidence: current tests and gate prove batch preflight-before-confirmation, side-effect-free current-group preview, exact generated command confirmation, abort-after-first-start-failure, rollback-aware JSON persistence, and native publish smoke. They cannot prove that starting arbitrary external processes has zero side effects.
   - Status: impossible as an absolute claim; mitigated where the repository owns the boundary.
 
 ## Final answer
 
-The current project is already a north-star implementation for the narrow domain of a portable Windows Terminal workspace launcher. The strongest mappings are launch entries, named presets, global launch confirmation, portable settings, JSON persistence/rollback, batch preflight-before-confirmation, exact generated command confirmation, abort-after-first-start-failure, and the native verify/publish gate.
+The current project is already a north-star implementation for the narrow domain of a portable Windows Terminal workspace launcher. The strongest mappings are launch entries, named presets, side-effect-free current-group preview, global launch confirmation, portable settings, JSON persistence/rollback, batch preflight-before-confirmation, exact generated command confirmation, abort-after-first-start-failure, and the native verify/publish gate.
 
 It is not a broad-domain north star for every launcher or automation product. GitHub market evidence contradicts that broad claim. Building import/export, status history, distribution/update, split panes, or a plugin system now would be speculative unless a real workflow beats the current small local contract.
