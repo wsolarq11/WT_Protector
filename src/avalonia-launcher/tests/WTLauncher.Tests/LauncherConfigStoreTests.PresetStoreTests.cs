@@ -39,7 +39,6 @@ public sealed partial class LauncherConfigStoreTests
                 DefaultPresetId = " Daily ",
                 Presets =
                 [
-                    null!,
                     new LauncherPreset
                     {
                         Id = " Daily ",
@@ -72,6 +71,25 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void PresetStore_RejectsNullPresetRowsFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var presetPath = WriteConfigDirectoryFile(temp.Path, LauncherPresetStore.PresetsFileName, """
+        {
+          "schemaVersion": 1,
+          "defaultPresetId": null,
+          "presets": [
+            null
+          ]
+        }
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherPresetStore.Load(presetPath));
+
+        Assert.Equal("Launcher preset 0 is null.", exception.Message);
+    }
+
+    [Fact]
     public void PresetStore_NormalizesNullPresetDataFromConfig()
     {
         using var temp = new TempDirectory();
@@ -80,7 +98,6 @@ public sealed partial class LauncherConfigStoreTests
           "schemaVersion": 1,
           "defaultPresetId": null,
           "presets": [
-            null,
             {
               "id": null,
               "name": null,
@@ -162,14 +179,13 @@ public sealed partial class LauncherConfigStoreTests
         var presets = new LauncherPresetFile
         {
             DefaultPresetId = " Daily ",
-            Presets = [null!, dirtyPreset],
+            Presets = [dirtyPreset],
         };
 
         LauncherPresetStore.Save(presets, presetPath, backup: false);
 
         Assert.Equal(" Daily ", presets.DefaultPresetId);
-        Assert.Equal(2, presets.Presets.Count);
-        Assert.Null(presets.Presets[0]);
+        Assert.Single(presets.Presets);
         Assert.Equal(" Daily ", dirtyPreset.Id);
         Assert.Equal(" Daily ", dirtyPreset.Name);
         Assert.Equal([null!, " one ", "one", " ", "two", " two "], dirtyPreset.EntryIds);
@@ -182,6 +198,22 @@ public sealed partial class LauncherConfigStoreTests
         var savedJson = File.ReadAllText(presetPath);
         Assert.DoesNotContain("null", savedJson);
         AssertUsesRepositoryLineEndings(savedJson);
+    }
+
+    [Fact]
+    public void PresetStore_RejectsNullPresetRowsBeforeWriting()
+    {
+        using var temp = new TempDirectory();
+        var presetPath = ConfigFilePath(temp.Path, LauncherPresetStore.PresetsFileName);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherPresetStore.Save(
+                new LauncherPresetFile { Presets = [null!] },
+                presetPath,
+                backup: false));
+
+        Assert.Equal("Launcher preset 0 is null.", exception.Message);
+        Assert.False(File.Exists(presetPath));
     }
 
     [Fact]

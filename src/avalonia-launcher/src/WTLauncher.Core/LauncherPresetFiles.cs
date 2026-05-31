@@ -10,16 +10,7 @@ public static class LauncherPresetFiles
         {
             SchemaVersion = presetFile.SchemaVersion,
             DefaultPresetId = presetFile.DefaultPresetId,
-            Presets = (presetFile.Presets ?? [])
-                .OfType<LauncherPreset>()
-                .Select(preset => new LauncherPreset
-                {
-                    Id = preset.Id,
-                    Name = preset.Name,
-                    EntryIds = [.. (preset.EntryIds ?? [])],
-                    Locked = preset.Locked,
-                })
-                .ToList(),
+            Presets = ClonePresets(presetFile.Presets ?? []),
         };
 
         Normalize(clone);
@@ -30,13 +21,16 @@ public static class LauncherPresetFiles
     {
         var normalizedPresets = new List<LauncherPreset>();
         var usedPresetIds = new List<string>();
-        foreach (var preset in (presets.Presets ?? []).OfType<LauncherPreset>())
+        var index = 0;
+        foreach (var presetRow in presets.Presets ?? [])
         {
+            var preset = RequirePreset(presetRow, index);
             preset.Id = LauncherPresetIds.GenerateUnique(preset.Id, usedPresetIds);
             usedPresetIds.Add(preset.Id);
             preset.Name = LauncherPresetNames.Normalize(preset.Name);
             preset.EntryIds = LauncherEntryIds.ToUniqueUsableList(preset.EntryIds ?? []);
             normalizedPresets.Add(preset);
+            index++;
         }
 
         presets.Presets = normalizedPresets;
@@ -50,4 +44,27 @@ public static class LauncherPresetFiles
         if (!normalizedPresets.Any(preset => LauncherPresetIds.Same(preset.Id, presets.DefaultPresetId)))
             presets.DefaultPresetId = normalizedPresets[0].Id;
     }
+
+    private static List<LauncherPreset> ClonePresets(IEnumerable<LauncherPreset> presets)
+    {
+        var clone = new List<LauncherPreset>();
+        var index = 0;
+        foreach (var presetRow in presets)
+        {
+            var preset = RequirePreset(presetRow, index);
+            clone.Add(new LauncherPreset
+            {
+                Id = preset.Id,
+                Name = preset.Name,
+                EntryIds = [.. (preset.EntryIds ?? [])],
+                Locked = preset.Locked,
+            });
+            index++;
+        }
+
+        return clone;
+    }
+
+    private static LauncherPreset RequirePreset(LauncherPreset? preset, int index) =>
+        preset ?? throw new InvalidDataException($"Launcher preset {index} is null.");
 }
