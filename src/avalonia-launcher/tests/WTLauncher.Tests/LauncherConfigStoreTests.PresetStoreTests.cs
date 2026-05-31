@@ -29,6 +29,30 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void PresetStore_RejectsUnknownPresetFieldsFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var presetPath = WriteConfigDirectoryFile(temp.Path, LauncherPresetStore.PresetsFileName, """
+        {
+          "schemaVersion": 1,
+          "defaultPresetId": "daily",
+          "presets": [
+            {
+              "id": "daily",
+              "name": "Daily",
+              "entryIds": ["one"],
+              "shortcut": "Ctrl+1"
+            }
+          ]
+        }
+        """);
+
+        var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherPresetStore.Load(presetPath));
+
+        Assert.Contains("shortcut", exception.Message);
+    }
+
+    [Fact]
     public void PresetStore_RejectsInvalidPresetRowsBeforeWriting()
     {
         using var temp = new TempDirectory();

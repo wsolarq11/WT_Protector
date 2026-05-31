@@ -49,7 +49,9 @@ Fields:
 - `selected` — persistent checkbox state used by the one-click/batch launch flow.
 - `updatedAtUtc` — optional ISO-8601 UTC timestamp refreshed when the app adds or edits a button, and used by the “更新时间” sort mode.
 
-Older config files may still contain an obsolete per-entry `confirm` key; the current app ignores it and normal saves drop it. Launch confirmation has one authority: `settings.json` → `requireConfirmationForLaunches`.
+Active config entries must not contain the obsolete per-entry `confirm` key. Launch confirmation has one authority: `settings.json` → `requireConfirmationForLaunches`.
+
+All active JSON files reject unknown keys instead of silently carrying dead settings or typo fields.
 
 Named launch groups live beside the launch config:
 

@@ -30,7 +30,7 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void Load_IgnoresObsoleteConfirmFieldFromConfig()
+    public void Load_RejectsObsoleteConfirmFieldFromConfig()
     {
         using var temp = new TempDirectory();
         var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
@@ -46,10 +46,9 @@ public sealed partial class LauncherConfigStoreTests
         ]
         """);
 
-        var entry = Assert.Single(LauncherConfigStore.Load(config));
+        var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherConfigStore.Load(config));
 
-        Assert.Equal("demo", entry.Id);
-        Assert.True(entry.Selected);
+        Assert.Contains("confirm", exception.Message);
     }
 
     [Fact]

@@ -12,6 +12,17 @@ function Add-Check([string]$Name, [object]$Detail) {
     $checks.Add([pscustomobject]@{ name = $Name; detail = $Detail }) | Out-Null
 }
 
+function Assert-OnlyJsonKeys([object]$Object, [string[]]$AllowedKeys, [string]$Context) {
+    $allowed = @{}
+    foreach ($key in $AllowedKeys) { $allowed[$key] = $true }
+
+    foreach ($key in @($Object.PSObject.Properties.Name)) {
+        if (-not $allowed.ContainsKey($key)) {
+            throw "$Context has unknown field: $key"
+        }
+    }
+}
+
 $gitattributesPath = Join-Path $root '.gitattributes'
 if (-not (Test-Path -LiteralPath $gitattributesPath)) { throw 'Missing .gitattributes line-ending policy' }
 $gitattributes = Get-Content -Raw -Encoding UTF8 -LiteralPath $gitattributesPath
@@ -75,6 +86,7 @@ $seenIds = @{}
 $selectedFields = 0
 $idx = 0
 foreach ($item in $configItems) {
+    Assert-OnlyJsonKeys $item @('id', 'name', 'directory', 'command', 'selected', 'updatedAtUtc') "Config item $idx"
     foreach ($field in @('id', 'name', 'directory', 'command')) {
         if ([string]::IsNullOrWhiteSpace([string]$item.$field)) {
             throw "Config item $idx is missing field: $field"
@@ -108,6 +120,7 @@ $presetPath = Join-Path (Split-Path -Parent $rootConfigPath) 'presets.json'
 if (-not (Test-Path -LiteralPath $presetPath)) { throw "Missing portable launcher presets: $presetPath" }
 $presetDoc = Get-Content -Raw -Encoding UTF8 -LiteralPath $presetPath | ConvertFrom-Json
 if ($null -eq $presetDoc) { throw "Presets parsed to null: $presetPath" }
+Assert-OnlyJsonKeys $presetDoc @('schemaVersion', 'defaultPresetId', 'presets') 'presets.json'
 if ([int]$presetDoc.schemaVersion -ne 1) { throw "Unsupported presets schemaVersion: $($presetDoc.schemaVersion)" }
 $defaultPresetId = [string]$presetDoc.defaultPresetId
 if ([string]::IsNullOrWhiteSpace($defaultPresetId)) { throw 'presets.json defaultPresetId is required' }
@@ -118,6 +131,7 @@ $nonEmptyPresetCount = 0
 foreach ($preset in @($presetDoc.presets)) {
     $presetCount++
     $presetId = [string]$preset.id
+    Assert-OnlyJsonKeys $preset @('id', 'name', 'entryIds', 'locked') "Preset $presetCount"
     if ([string]::IsNullOrWhiteSpace($presetId)) { throw "Preset $presetCount is missing id" }
     if ([string]::IsNullOrWhiteSpace([string]$preset.name)) { throw "Preset $presetId is missing name" }
     if ($presetSeen.ContainsKey($presetId)) { throw "Duplicate preset id: $presetId" }
@@ -155,7 +169,10 @@ $settingsPath = Get-LauncherSettingsPath
 if (-not (Test-Path -LiteralPath $settingsPath)) { throw "Missing portable settings: $settingsPath" }
 $settings = Get-Content -Raw -Encoding UTF8 -LiteralPath $settingsPath | ConvertFrom-Json
 if ($null -eq $settings) { throw "Settings parsed to null: $settingsPath" }
-if ($settings.PSObject.Properties.Name -contains 'theme') { throw 'settings.json must not carry unused theme state' }
+Assert-OnlyJsonKeys $settings @('lastFilterText', 'sortMode', 'entryViewMode', 'requireConfirmationForLaunches', 'customEntryOrder', 'window') 'settings.json'
+if ($null -ne $settings.window) {
+    Assert-OnlyJsonKeys $settings.window @('width', 'height') 'settings.json window'
+}
 $settingsOrder = @($settings.customEntryOrder)
 $settingsOrderSeen = @{}
 foreach ($id in $settingsOrder) {

@@ -88,6 +88,22 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void SettingsStore_RejectsUnusedThemeFieldFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
+        {
+          "theme": "light",
+          "customEntryOrder": []
+        }
+        """);
+
+        var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherSettingsStore.Load(settings));
+
+        Assert.Contains("theme", exception.Message);
+    }
+
+    [Fact]
     public void SettingsStore_RejectsNullSettingsFromConfig()
     {
         using var temp = new TempDirectory();
