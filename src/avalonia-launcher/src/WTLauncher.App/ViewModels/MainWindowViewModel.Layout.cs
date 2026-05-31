@@ -143,6 +143,12 @@ public sealed partial class MainWindowViewModel
         LauncherEntryLayoutPresentation.ApplyCardSize(Entries, VisibleEntries, _cardsAvailableSize);
     }
 
+    public bool TrySaveWindowBounds(double width, double height)
+    {
+        DiscardDragReorderPreview();
+        return LauncherSettingsStore.TrySaveWindowBounds(_settings, _settingsPath, width, height);
+    }
+
     private void EnsureCustomOrderContainsEntries() =>
         LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds());
 

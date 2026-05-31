@@ -102,4 +102,24 @@ public sealed partial class MainWindowViewModelTests
         Assert.True(launcherSettings.RequireConfirmationForLaunches);
         Assert.Contains("设置保存失败", viewModel.StatusText);
     }
+
+    [Fact]
+    public void WindowBoundsSaveDuringDragPreviewDiscardsPreviewOrder()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreateDragFixture(temp);
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+
+        StartDefaultDragPreview(viewModel, launcherSettings);
+
+        Assert.True(viewModel.TrySaveWindowBounds(width: 1320, height: 840));
+
+        var savedSettings = LauncherSettingsStore.Load(settings);
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), savedSettings.CustomEntryOrder);
+        Assert.Equal(1320d, savedSettings.Window.Width);
+        Assert.Equal(840d, savedSettings.Window.Height);
+        AssertNoDragCues(viewModel);
+    }
 }

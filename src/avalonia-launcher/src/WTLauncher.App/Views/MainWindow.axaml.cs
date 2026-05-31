@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Input;
 using WTLauncher.App.ViewModels;
-using WTLauncher.Core;
 
 namespace WTLauncher.App.Views;
 
@@ -11,20 +10,16 @@ public sealed partial class MainWindow : Window
 {
     private const double CardsRegionHorizontalChromeWidth = 48;
     private const double CardsRegionVerticalChromeHeight = 270;
-    private string? _settingsPath;
-    private LauncherSettings? _settings;
 
     public MainWindow()
     {
         InitializeComponent();
     }
 
-    public MainWindow(MainWindowViewModel viewModel, string settingsPath, LauncherSettings settings)
+    public MainWindow(MainWindowViewModel viewModel)
         : this()
     {
         DataContext = viewModel;
-        _settingsPath = settingsPath;
-        _settings = settings;
         viewModel.ConfirmLaunchAsync = (entry, plan) => new ConfirmLaunchWindow(entry, plan).ShowDialog<bool>(this);
         viewModel.ConfirmBatchLaunchAsync = entries => new ConfirmBatchLaunchWindow(entries).ShowDialog<bool>(this);
         viewModel.RequestNewPresetAsync = selectedEntryIds =>
@@ -82,13 +77,12 @@ public sealed partial class MainWindow : Window
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
-        if (_settings is null || _settingsPath is null)
+        if (DataContext is not MainWindowViewModel viewModel)
             return;
 
-        if (LauncherSettingsStore.TrySaveWindowBounds(_settings, _settingsPath, Width, Height))
+        if (viewModel.TrySaveWindowBounds(Width, Height))
             return;
 
-        if (DataContext is MainWindowViewModel viewModel)
-            viewModel.StatusText = "窗口尺寸保存失败；下次将使用上次保存的尺寸";
+        viewModel.StatusText = "窗口尺寸保存失败；下次将使用上次保存的尺寸";
     }
 }

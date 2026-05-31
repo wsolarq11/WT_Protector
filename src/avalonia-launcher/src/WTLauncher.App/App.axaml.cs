@@ -31,7 +31,7 @@ public sealed partial class App : Application
                 settings,
                 launchWorkflow,
                 static () => DateTimeOffset.UtcNow);
-            var mainWindow = new MainWindow(viewModel, settingsPath, settings)
+            var mainWindow = new MainWindow(viewModel)
             {
                 Width = settings.Window.Width,
                 Height = settings.Window.Height,
