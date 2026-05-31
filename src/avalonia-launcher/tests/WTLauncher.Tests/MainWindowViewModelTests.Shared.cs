@@ -89,13 +89,14 @@ public sealed partial class MainWindowViewModelTests
         string settings,
         LauncherSettings? launcherSettings = null,
         Action<MainWindowViewModel>? configure = null,
-        Func<DateTimeOffset>? utcNow = null)
+        Func<DateTimeOffset>? utcNow = null,
+        LauncherLaunchWorkflow? launchWorkflow = null)
     {
         var viewModel = new MainWindowViewModel(
             config,
             settings,
             launcherSettings ?? new LauncherSettings(),
-            CreateLaunchWorkflow(),
+            launchWorkflow ?? CreateLaunchWorkflow(),
             utcNow ?? SystemUtcNow);
         configure?.Invoke(viewModel);
         return viewModel;

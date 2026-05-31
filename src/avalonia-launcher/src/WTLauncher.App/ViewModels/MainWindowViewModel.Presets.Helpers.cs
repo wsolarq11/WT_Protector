@@ -88,6 +88,11 @@ public sealed partial class MainWindowViewModel
         TryBuildPresetSelectionPreviewForCommand(out _, out var selection)
         && selection.HasChanges;
 
+    private bool CanLaunchSelectedPreset() =>
+        TryBuildPresetSelectionPreviewForCommand(out _, out var selection)
+        && selection.MissingConfigIds.Count == 0
+        && selection.PresetIds.Count > 0;
+
     private bool CanUpdateSelectedPreset()
     {
         if (!TryBuildPresetSelectionPreviewForCommand(out var selectedPreset, out var selection))
@@ -135,9 +140,18 @@ public sealed partial class MainWindowViewModel
         return true;
     }
 
+    private List<LauncherEntryViewModel> GetPresetEntries(IEnumerable<string> entryIds)
+    {
+        var entriesById = Entries.ToDictionary(entry => entry.Id, LauncherEntryIds.Comparer);
+        return LauncherEntryIds.ToUniqueUsableList(entryIds)
+            .Select(id => entriesById[id])
+            .ToList();
+    }
+
     private void NotifyPresetManagementCommands()
     {
         SaveSelectionAsPresetCommand.NotifyCanExecuteChanged();
+        LaunchSelectedPresetCommand.NotifyCanExecuteChanged();
         UpdateSelectedPresetCommand.NotifyCanExecuteChanged();
         DeleteSelectedPresetCommand.NotifyCanExecuteChanged();
     }

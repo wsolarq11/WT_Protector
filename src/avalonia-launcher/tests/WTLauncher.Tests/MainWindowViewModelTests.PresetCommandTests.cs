@@ -1,3 +1,4 @@
+using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
 namespace WTLauncher.Tests;
@@ -99,6 +100,44 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.True(viewModel.ApplyPresetCommand.CanExecute(null));
         Assert.False(viewModel.UpdateSelectedPresetCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task LaunchSelectedPresetStartsPresetEntriesWithoutPersistingSelection()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex", selected: false),
+            Entry("two", directory: temp.Path, command: "opencode", selected: false));
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one", "two"));
+        var startedPlans = new List<LaunchPlan>();
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = false },
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+
+        Assert.True(viewModel.LaunchSelectedPresetCommand.CanExecute(null));
+
+        await viewModel.LaunchSelectedPresetCommand.ExecuteAsync(null);
+
+        Assert.Equal(["codex", "opencode"], startedPlans.Select(plan => plan.Command).ToArray());
+        Assert.Equal("启动组“Daily”: 已启动 2 个启动项", viewModel.StatusText);
+        var entries = LoadEntriesById(config);
+        Assert.All(entries, entry => Assert.False(entry.Selected));
+    }
+
+    [Fact]
+    public void BrokenPresetCannotLaunch()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        SavePresetFile(presets, "broken", Preset("broken", "Broken", "one", "missing-entry"));
+
+        var viewModel = CreateViewModel(config, settings);
+
+        Assert.False(viewModel.LaunchSelectedPresetCommand.CanExecute(null));
     }
 
     [Fact]

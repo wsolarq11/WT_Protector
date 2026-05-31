@@ -42,17 +42,27 @@ public sealed partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private async Task LaunchSelectedAsync()
     {
-        var selected = GetSelectedEntries();
-        if (selected.Count == 0)
+        await LaunchBatchAsync(
+            GetSelectedEntries(),
+            LauncherSelectionStatus.NoSelectedEntries,
+            LauncherSelectionStatus.BatchLaunchCompleted).ConfigureAwait(true);
+    }
+
+    private async Task LaunchBatchAsync(
+        IReadOnlyList<LauncherEntryViewModel> entries,
+        string emptyStatus,
+        Func<LauncherBatchLaunchReport, string> completedStatus)
+    {
+        if (entries.Count == 0)
         {
-            StatusText = LauncherSelectionStatus.NoSelectedEntries;
+            StatusText = emptyStatus;
             return;
         }
 
         DiscardDragReorderPreview();
         try
         {
-            var selectedEntries = selected.Select(ToLaunchEntry).ToList();
+            var selectedEntries = entries.Select(ToLaunchEntry).ToList();
             var preflight = _launchWorkflow.PreflightBatch(
                 selectedEntries,
                 RequireConfirmationForLaunches);
@@ -63,7 +73,7 @@ public sealed partial class MainWindowViewModel
             var report = _launchWorkflow.StartBatch(preflight);
             if (report.LastCommandLine is not null)
                 DryRunText = report.LastCommandLine;
-            StatusText = LauncherSelectionStatus.BatchLaunchCompleted(report);
+            StatusText = completedStatus(report);
         }
         catch (Exception ex)
         {

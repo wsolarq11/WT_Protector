@@ -13,8 +13,14 @@ public static class LauncherPresetStatus
     public static string MissingEntryReferences(IEnumerable<string> entryIds) =>
         $"启动组引用了不存在的启动项: {string.Join(", ", entryIds)}";
 
+    public static string NoPresetEntries(string presetName) =>
+        $"启动组“{presetName}”没有启动项";
+
     public static string Applied(string presetName, int entryCount) =>
         $"已应用启动组: {presetName}（{entryCount} 项，已保存）";
+
+    public static string Launched(string presetName, LauncherBatchLaunchReport report) =>
+        $"启动组“{presetName}”: {LauncherSelectionStatus.BatchLaunchCompleted(report, "启动项")}";
 
     public static string Saved(string presetName, int entryCount) =>
         $"已保存启动组: {presetName}（{entryCount} 项）";

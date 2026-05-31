@@ -21,6 +21,18 @@ public sealed partial class MainWindowViewModel
             ApplyStatusText(LauncherPresetStatus.Applied(selectedPreset.Name, selection.PresetIds.Count));
     }
 
+    [RelayCommand(CanExecute = nameof(CanLaunchSelectedPreset))]
+    private async Task LaunchSelectedPresetAsync()
+    {
+        if (!TryGetApplicablePresetSelection(out var selectedPreset, out _))
+            return;
+
+        await LaunchBatchAsync(
+            GetPresetEntries(selectedPreset.EntryIds),
+            LauncherPresetStatus.NoPresetEntries(selectedPreset.Name),
+            report => LauncherPresetStatus.Launched(selectedPreset.Name, report)).ConfigureAwait(true);
+    }
+
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private async Task SaveSelectionAsPresetAsync()
     {

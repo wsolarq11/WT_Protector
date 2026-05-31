@@ -111,15 +111,15 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: users often launch a repeated slice of workspaces together.
 - Current data owner: `selected` in `config/config.json`.
-- Evidence: selection changes are saved, batch launch uses selected entries, tests cover selection outcomes and batch confirmation/cancellation, and `LauncherLaunchWorkflow.PreflightBatch` now prepares every selected launch plan before confirmation or external process start. The batch confirmation receives the generated `LaunchPlan` items, and if an external start still fails after earlier starts, the workflow records the failure and stops the remaining starts instead of compounding side effects.
+- Evidence: selection changes are saved, batch launch uses selected entries, tests cover selection outcomes and batch confirmation/cancellation, and `LauncherLaunchWorkflow.PreflightBatch` now prepares every selected launch plan before confirmation or external process start. The batch confirmation receives the generated `LaunchPlan` items, and if an external start still fails after earlier starts, the workflow records the failure and stops the remaining starts instead of compounding side effects. Named presets can now launch directly from `config/presets.json` without rewriting checkbox state first.
 - Verdict: strong, and locally north-star as the bridge from the retired HTA one-click flow.
-- Remaining gap: `selected` is stateful UI memory; presets are the cleaner long-term object for named intent. Once an external process has started, the app cannot honestly guarantee zero side effects if a later external start fails; that is a property of launching real processes, not a missing fallback branch.
+- Remaining gap: `selected` remains stateful UI memory for ad-hoc batches; direct preset launch is the cleaner path for named intent. Once an external process has started, the app cannot honestly guarantee zero side effects if a later external start fails; that is a property of launching real processes, not a missing fallback branch.
 
 ### 6. Named launch groups / presets
 
 - Real problem: repeated subsets should be named, portable, inspectable objects instead of fragile transient checkbox state.
 - Current data owner: `config/presets.json`, referencing stable entry ids.
-- Evidence: preset schema is documented, validated by `tools/verify.ps1`, and covered by store/workflow/ViewModel tests.
+- Evidence: preset schema is documented, validated by `tools/verify.ps1`, and covered by store/workflow/ViewModel tests. The selected preset can be launched directly, preserving current checkbox state instead of forcing a selection rewrite before launch.
 - Verdict: north-star. This is the best current data-structure move in the project.
 - Remaining gap: no external import/export yet; not needed for the current local workflow.
 

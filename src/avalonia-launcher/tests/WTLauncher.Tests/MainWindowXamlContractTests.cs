@@ -21,6 +21,8 @@ public sealed class MainWindowXamlContractTests
         Assert.Contains("ItemsSource=\"{Binding DisplayModes}\"", controlGrid);
         Assert.Contains("ItemsSource=\"{Binding Presets}\"", controlGrid);
         Assert.Contains("Content=\"{Binding ApplyPresetButtonText}\"", controlGrid);
+        Assert.Contains("Content=\"启动当前组\"", controlGrid);
+        Assert.Contains("Command=\"{Binding LaunchSelectedPresetCommand}\"", controlGrid);
     }
 
     [Fact]

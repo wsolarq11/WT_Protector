@@ -173,7 +173,7 @@ Important risks:
 - `directory` must exist before the launcher starts an item.
 - Batch launch preflights every selected item before confirmation or process start; the confirmation dialog shows generated `wt.exe` command lines. If any local launch plan is invalid, no process starts. If an external start fails after earlier starts, remaining items are skipped and reported.
 - Command text is quoted before being passed to `wt.exe`, but it is still a shell command; review entries before launching.
-- Applying a preset only rewrites checkbox state; launching remains a separate explicit action.
+- Applying a preset only rewrites checkbox state; "启动当前组" launches the selected preset entries directly without rewriting checkbox state first.
 - The root `config/` directory is the canonical source.
 - JSON saves are written through temporary files, normal config/preset writes keep `.bak` backups, and failed multi-file entry edits attempt to roll back both memory and already-written portable files.
 - Using the app can legitimately dirty tracked `config/config.json`, `config/presets.json`, and `config/settings.json`; review that user/app working set before committing or reverting it.
@@ -194,6 +194,7 @@ The Avalonia mainline supports:
 - add/edit/delete launch buttons inside the app, with every editable field saved back to portable config;
 - named launch groups/presets that replace the saved selection through explicit apply;
 - first-class launch group actions: save current selection as a new group, update the current group from current selection, and delete editable groups;
+- direct launch of the current group without rewriting checkbox selection first;
 - live preset-vs-selection difference feedback before applying a launch group, with no-op apply disabled when already matched;
 - three persisted sort modes: `自定义拖拽`, `更新时间`, and `首字母顺序`;
 - global launch confirmation;
