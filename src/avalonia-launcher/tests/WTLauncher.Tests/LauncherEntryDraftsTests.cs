@@ -18,6 +18,32 @@ public sealed class LauncherEntryDraftsTests
         Assert.True(draft.Selected);
     }
 
+    [Fact]
+    public void TryNormalizeRequiredDraftReturnsNormalizedDraftWhenRequiredFieldsExist()
+    {
+        var accepted = LauncherEntryDrafts.TryNormalizeRequiredDraft(
+            new EntryDraft(" new-id ", " New Name ", " D:\\new ", " codex ", true),
+            out var draft,
+            out var requiredFieldError);
+
+        Assert.True(accepted);
+        Assert.Null(requiredFieldError);
+        Assert.Equal(new EntryDraft("new-id", "New Name", "D:\\new", "codex", true), draft);
+    }
+
+    [Fact]
+    public void TryNormalizeRequiredDraftReportsErrorAfterNormalization()
+    {
+        var accepted = LauncherEntryDrafts.TryNormalizeRequiredDraft(
+            new EntryDraft(" new-id ", "   ", " D:\\new ", " codex ", true),
+            out var draft,
+            out var requiredFieldError);
+
+        Assert.False(accepted);
+        Assert.Equal(LauncherEntryDraftStatus.NameRequired, requiredFieldError);
+        Assert.Equal(new EntryDraft("new-id", "", "D:\\new", "codex", true), draft);
+    }
+
     [Theory]
     [MemberData(nameof(RequiredFieldCases))]
     public void GetRequiredFieldErrorReportsTheFirstMissingField(

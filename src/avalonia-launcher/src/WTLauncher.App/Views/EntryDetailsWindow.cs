@@ -92,15 +92,14 @@ public sealed class EntryDetailsWindow : Window
 
     private void Submit()
     {
-        var draft = LauncherEntryDrafts.NormalizeDraft(new EntryDraft(
+        var rawDraft = new EntryDraft(
             _idBox.Text ?? string.Empty,
             _nameBox.Text ?? string.Empty,
             _directoryBox.Text ?? string.Empty,
             _commandBox.Text ?? string.Empty,
-            _selectedBox.IsChecked == true));
+            _selectedBox.IsChecked == true);
 
-        var requiredFieldError = LauncherEntryDrafts.GetRequiredFieldError(draft);
-        if (requiredFieldError is not null)
+        if (!LauncherEntryDrafts.TryNormalizeRequiredDraft(rawDraft, out var draft, out var requiredFieldError))
         {
             _errorText.Text = requiredFieldError;
             _errorText.IsVisible = true;

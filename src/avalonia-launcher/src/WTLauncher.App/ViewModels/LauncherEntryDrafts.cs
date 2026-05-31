@@ -14,6 +14,16 @@ public static class LauncherEntryDrafts
             draft.Selected);
     }
 
+    public static bool TryNormalizeRequiredDraft(
+        EntryDraft draft,
+        out EntryDraft normalized,
+        out string? requiredFieldError)
+    {
+        normalized = NormalizeDraft(draft);
+        requiredFieldError = GetRequiredFieldError(normalized);
+        return requiredFieldError is null;
+    }
+
     public static LaunchEntry CreateEntry(EntryDraft draft, LaunchEntry? previousEntry)
     {
         var normalized = NormalizeDraft(draft);
