@@ -129,7 +129,10 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.LaunchSelectedPresetCommand.ExecuteAsync(null);
 
         Assert.Equal(["codex", "opencode"], startedPlans.Select(plan => plan.Command).ToArray());
-        Assert.Equal("启动组“Daily”: 已启动 2 个启动项", viewModel.StatusText);
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("• 已请求: one", viewModel.DryRunText);
+        Assert.Contains("• 已请求: two", viewModel.DryRunText);
+        Assert.Equal("启动组“Daily”: 已请求启动 2 个启动项", viewModel.StatusText);
         var entries = LoadEntriesById(config);
         Assert.All(entries, entry => Assert.False(entry.Selected));
     }

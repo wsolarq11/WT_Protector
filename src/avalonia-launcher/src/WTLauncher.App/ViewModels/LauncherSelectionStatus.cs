@@ -31,8 +31,8 @@ public static class LauncherSelectionStatus
         ArgumentNullException.ThrowIfNull(report);
         ArgumentException.ThrowIfNullOrWhiteSpace(itemLabel);
         return report.FailedCount == 0
-            ? $"已启动 {report.StartedCount} 个{itemLabel}"
-            : $"已启动 {report.StartedCount} 个{itemLabel}，{report.FailedCount} 个失败{FormatSkipped(report)}：{FormatBatchFailures(report.FailureMessages)}";
+            ? $"已请求启动 {report.StartedCount} 个{itemLabel}"
+            : $"已请求启动 {report.StartedCount} 个{itemLabel}，{report.FailedCount} 个失败{FormatSkipped(report)}：{FormatBatchFailures(report.FailureMessages)}";
     }
 
     private static string FormatSkipped(LauncherBatchLaunchReport report) =>

@@ -91,7 +91,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.NotNull(confirmedPlan);
         Assert.Equal(confirmedPlan!.CommandLine, viewModel.DryRunText);
-        Assert.Equal("已启动: one", viewModel.StatusText);
+        Assert.Equal("已请求启动: one", viewModel.StatusText);
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
-        Assert.Equal("已启动: one", viewModel.StatusText);
+        Assert.Equal("已请求启动: one", viewModel.StatusText);
     }
 
     [Fact]
@@ -153,8 +153,11 @@ public sealed partial class MainWindowViewModelTests
 
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 
-        Assert.Equal("选择一个启动项查看预演命令。", viewModel.DryRunText);
-        Assert.Contains("已启动 0 个勾选项，2 个失败", viewModel.StatusText);
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("已请求启动 0 项，失败 2 项，未启动 0 项", viewModel.DryRunText);
+        Assert.Contains("one:", viewModel.DryRunText);
+        Assert.Contains("two:", viewModel.DryRunText);
+        Assert.Contains("已请求启动 0 个勾选项，2 个失败", viewModel.StatusText);
         Assert.Contains("one:", viewModel.StatusText);
         Assert.Contains("two:", viewModel.StatusText);
     }
@@ -180,8 +183,9 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 
         Assert.Equal(0, confirmCalls);
-        Assert.Equal("选择一个启动项查看预演命令。", viewModel.DryRunText);
-        Assert.Contains("已启动 0 个勾选项，1 个失败", viewModel.StatusText);
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("已请求启动 0 项，失败 1 项，未启动 0 项", viewModel.DryRunText);
+        Assert.Contains("已请求启动 0 个勾选项，1 个失败", viewModel.StatusText);
     }
 
     [Fact]
@@ -203,7 +207,10 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
-        Assert.Equal("已启动 1 个勾选项", viewModel.StatusText);
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("• 已请求: one", viewModel.DryRunText);
+        Assert.Contains("codex", viewModel.DryRunText);
+        Assert.Equal("已请求启动 1 个勾选项", viewModel.StatusText);
     }
 
     [Fact]

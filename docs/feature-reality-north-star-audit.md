@@ -104,15 +104,15 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: one known workspace should open with one explicit action.
 - Current data owner: `LaunchPlan` built from the selected entry and global confirmation setting.
-- Evidence: launch workflow tests cover confirm/cancel paths, dry-run text, and process handoff.
+- Evidence: launch workflow tests cover confirm/cancel paths, dry-run text, process handoff, and honest `已请求启动` status wording.
 - Verdict: north-star for explicit local launching.
-- Remaining gap: launch success only means `wt.exe` process start was requested; no terminal-session health/status receipt exists.
+- Remaining gap: launch request success still cannot prove terminal-session health after `wt.exe` accepts the process start request.
 
 ### 5. Persistent checkbox selection and batch launch
 
 - Real problem: users often launch a repeated slice of workspaces together.
 - Current data owner: `selected` in `config/config.json`.
-- Evidence: selection changes are saved, batch launch uses selected entries, tests cover selection outcomes and batch confirmation/cancellation, and `LauncherLaunchWorkflow.PreflightBatch` now prepares every selected launch plan before confirmation or external process start. The batch confirmation receives the generated `LaunchPlan` items, and if an external start still fails after earlier starts, the workflow records the failure and stops the remaining starts instead of compounding side effects. Named presets can now launch directly from `config/presets.json` without rewriting checkbox state first, and confirmation-cancel/failure tests prove that direct preset launch receives preflighted generated command lines before any process start while preserving the preset name in cancellation and unexpected-failure status. Current-group preview uses the same preflight output and formatter, then writes only transient dry-run/status text instead of starting processes or persisting checkbox state.
+- Evidence: selection changes are saved, batch launch uses selected entries, tests cover selection outcomes and batch confirmation/cancellation, and `LauncherLaunchWorkflow.PreflightBatch` now prepares every selected launch plan before confirmation or external process start. The batch confirmation receives the generated `LaunchPlan` items, and if an external start still fails after earlier starts, the workflow records the failure and stops the remaining starts instead of compounding side effects. Named presets can now launch directly from `config/presets.json` without rewriting checkbox state first, and confirmation-cancel/failure tests prove that direct preset launch receives preflighted generated command lines before any process start while preserving the preset name in cancellation and unexpected-failure status. Current-group preview uses the same preflight output and formatter, then writes only transient dry-run/status text instead of starting processes or persisting checkbox state. Batch launch writes a transient `启动回执` that lists requested, failed, and skipped plans, and UI status says `已请求启动` instead of pretending the terminal session completed healthy.
 - Verdict: strong, and locally north-star as the bridge from the retired HTA one-click flow.
 - Remaining gap: `selected` remains stateful UI memory for ad-hoc batches; direct preset launch is the cleaner path for named intent. Once an external process has started, the app cannot honestly guarantee zero side effects if a later external start fails; that is a property of launching real processes, not a missing fallback branch.
 
@@ -249,7 +249,7 @@ It is not a general launcher/automation north star. That broader domain includes
 These are not defects in the current narrow product. They are the reasons not to claim "best launcher/automation tool in the whole domain":
 
 1. no first-class import/export ecosystem for entries or groups;
-2. no run history/status receipt model separated from desired config;
+2. no persisted run history or terminal-session health model separated from desired config; transient launch receipts exist for requested/failed/skipped plans;
 3. no installer/update/signing channel;
 4. no screenshot-backed comfort receipt for visual taste after future visual-heavy layout changes.
 5. no honest way to prove "stronger than every GitHub similar project" or "0% side effects" for real process launch behavior.
@@ -267,7 +267,7 @@ This section checks the user's full objective against current evidence instead o
   - Evidence: every feature section has a real problem, data owner, evidence, verdict, and remaining gap; the GitHub snapshot separates narrow direct competitors from broad launchers.
   - Status: proven as an audit, not as a universal supremacy claim.
 - Requirement: current ability is already unimprovable.
-  - Evidence: the broad-domain gap list still names import/export, run history/status, distribution/update, visual receipts, and external side-effect limits.
+  - Evidence: the broad-domain gap list still names import/export, persisted terminal-session health/history, distribution/update, visual receipts, and external side-effect limits.
   - Status: contradicted. There are possible improvements, but most are intentionally not current work until real demand appears.
 - Requirement: stronger than any similar GitHub project.
   - Evidence: Flow Launcher and Wox have far stronger broad-market proof; Terminal Manager has stronger WT profile/split-pane/import-export scope; WT Launcher is stronger only in the narrower portable config + named group + native gate slice.
@@ -276,11 +276,11 @@ This section checks the user's full objective against current evidence instead o
   - Evidence: this audit rejects speculative plugin marketplace, local web server, split-pane editor, installer/update channel, and workflow graph features until they beat the current local gate.
   - Status: currently preserved.
 - Requirement: 100% confidence and 0% side effects.
-- Evidence: current tests and gate prove batch preflight-before-confirmation, side-effect-free current-group preview, exact generated command confirmation, abort-after-first-start-failure, rollback-aware JSON persistence, and native publish smoke. They cannot prove that starting arbitrary external processes has zero side effects.
+- Evidence: current tests and gate prove batch preflight-before-confirmation, side-effect-free current-group preview, exact generated command confirmation, transient launch receipts for requested/failed/skipped plans, abort-after-first-start-failure, rollback-aware JSON persistence, and native publish smoke. They cannot prove that starting arbitrary external processes has zero side effects.
   - Status: impossible as an absolute claim; mitigated where the repository owns the boundary.
 
 ## Final answer
 
-The current project is already a north-star implementation for the narrow domain of a portable Windows Terminal workspace launcher. The strongest mappings are launch entries, named presets, side-effect-free current-group preview, global launch confirmation, portable settings, JSON persistence/rollback, batch preflight-before-confirmation, exact generated command confirmation, abort-after-first-start-failure, and the native verify/publish gate.
+The current project is already a north-star implementation for the narrow domain of a portable Windows Terminal workspace launcher. The strongest mappings are launch entries, named presets, side-effect-free current-group preview, honest requested-start wording, transient batch launch receipts, global launch confirmation, portable settings, JSON persistence/rollback, batch preflight-before-confirmation, exact generated command confirmation, abort-after-first-start-failure, and the native verify/publish gate.
 
 It is not a broad-domain north star for every launcher or automation product. GitHub market evidence contradicts that broad claim. Building import/export, status history, distribution/update, split panes, or a plugin system now would be speculative unless a real workflow beats the current small local contract.

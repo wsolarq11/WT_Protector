@@ -32,9 +32,9 @@ public sealed class LauncherSelectionStatusTests
         failures.RecordSkipped(2);
 
         Assert.Equal("已取消: 批量启动 2 项", LauncherSelectionStatus.BatchLaunchCanceled(2));
-        Assert.Equal("已启动 2 个勾选项", LauncherSelectionStatus.BatchLaunchCompleted(success));
+        Assert.Equal("已请求启动 2 个勾选项", LauncherSelectionStatus.BatchLaunchCompleted(success));
         Assert.Equal(
-            "已启动 1 个勾选项，4 个失败，2 个未启动：one: missing one；two: missing two；three: missing three；…另有 1 项",
+            "已请求启动 1 个勾选项，4 个失败，2 个未启动：one: missing one；two: missing two；three: missing three；…另有 1 项",
             LauncherSelectionStatus.BatchLaunchCompleted(failures));
         Assert.Equal("批量启动失败: boom", LauncherSelectionStatus.BatchLaunchFailed(exception));
     }

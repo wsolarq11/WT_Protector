@@ -75,8 +75,7 @@ public sealed partial class MainWindowViewModel
                 return;
 
             var report = _launchWorkflow.StartBatch(preflight);
-            if (report.LastCommandLine is not null)
-                DryRunText = report.LastCommandLine;
+            DryRunText = LauncherBatchLaunchReceiptText.Format(preflight, report);
             StatusText = completedStatus(report);
         }
         catch (Exception ex)
