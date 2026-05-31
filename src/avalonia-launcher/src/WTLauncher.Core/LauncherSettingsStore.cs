@@ -8,7 +8,8 @@ public static class LauncherSettingsStore
         if (!File.Exists(settingsPath))
             return new LauncherSettings();
 
-        var settings = LauncherJson.Load<LauncherSettings>(settingsPath) ?? new LauncherSettings();
+        var settings = LauncherJson.Load<LauncherSettings>(settingsPath)
+            ?? throw new InvalidDataException("Launcher settings parsed to null.");
         Normalize(settings);
         return settings;
     }
