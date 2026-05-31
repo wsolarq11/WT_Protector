@@ -95,6 +95,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("config-save failures during select-all/clear/checkbox mutation", audit);
         Assert.Contains("Applying a preset has a failure contract too", audit);
         Assert.Contains("roll back memory/file state on preset save failures", audit);
+        Assert.Contains("reject missing default-preset state before delete mutation", audit);
         Assert.Contains("discards uncommitted drag-sort preview state first", audit);
         Assert.Contains("ghost order cannot become a hidden source of truth", audit);
         Assert.Contains("missing, unknown, or wrong-case JSON fields now fail fast", audit);
