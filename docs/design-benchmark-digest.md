@@ -38,7 +38,7 @@ Purpose: convert 12 external first-class design benchmarks into WT Launcher acce
 - `src/avalonia-launcher/src/WTLauncher.App/Views/MainWindow.axaml` owns the visual surface and XAML style tokens.
 - `src/avalonia-launcher/src/WTLauncher.Core/LauncherDragGhostLayoutCalculator.cs` owns drag ghost size and pointer-follow geometry.
 - `src/avalonia-launcher/src/WTLauncher.App/ViewModels/MainWindowViewModel.cs` owns view state, layout inputs, selection, presets, and entry mutation orchestration.
-- `src/avalonia-launcher/tests/WTLauncher.Tests/*` locks core contracts for drag preview, details/names/cards modes, sizing fallback, and persistence.
+- `src/avalonia-launcher/tests/WTLauncher.Tests/*` locks core contracts for drag preview, context-menu reorder alternatives, details/names/cards modes, sizing fallback, and persistence.
 - `tools/verify.ps1` and `tools/build-release.ps1` remain the release judge; screenshots/manual inspection are useful receipts but not replacements for the gate.
 
 ## Optional visual receipts

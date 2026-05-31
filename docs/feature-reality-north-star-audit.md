@@ -37,7 +37,7 @@ Current external references were spot-checked on 2026-05-31 before making the no
 - VS Code still separates user/workspace settings and multi-root workspace files, which supports portable, human-readable context objects instead of hidden local state.
 - Raycast Quicklinks still solve the same frequent-action problem by opening URLs, file paths, and deeplinks instantly; current v2 Quicklinks also include tags, pinning, and dynamic placeholders, which is exactly why this repo must not claim broad launcher/platform north-star status.
 - Docker Compose profiles remain a named-subset model for activating only the needed services, which maps cleanly to WT Launcher's named presets.
-- WCAG 2.2 includes Dragging Movements as a Level AA criterion; this keeps the non-drag reorder/accessibility gap real instead of cosmetic.
+- WCAG 2.2 includes Dragging Movements as a Level AA criterion; this makes non-drag reorder a real accessibility contract, not cosmetic polish.
 - Kubernetes continues to separate desired object data from observed status; WT Launcher has desired config/preset/settings objects but no run-history/status object yet.
 
 ## Core judgement
@@ -133,9 +133,9 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: users build spatial memory; alphabetical order is not always the fastest launch order.
 - Current data owner: `settings.json` `customEntryOrder`; drag session is a single transient object.
-- Evidence: drag reorder session/workflow tests cover preview, commit, cancel, rollback, and single-session ownership.
+- Evidence: drag reorder session/workflow tests cover preview, commit, cancel, rollback, and single-session ownership; context-menu `上移排序` / `下移排序` commands persist the same `customEntryOrder` without creating a second reorder model.
 - Verdict: north-star for mouse-first local use.
-- Remaining gap: non-drag reorder alternatives are not as first-class as drag; keyboard/menu reorder would improve accessibility if this becomes a real blocker.
+- Remaining gap: none proven. Non-drag reorder now uses the same data owner and persistence path as drag reorder.
 
 ### 11. Sort modes
 
@@ -224,8 +224,7 @@ These are not defects in the current narrow product. They are the reasons not to
 1. no first-class import/export ecosystem for entries or groups;
 2. no run history/status receipt model separated from desired config;
 3. no installer/update/signing channel;
-4. no full keyboard reorder path with the same convenience as drag;
-5. no screenshot-backed comfort receipt for visual taste after future UI-heavy changes.
+4. no screenshot-backed comfort receipt for visual taste after future visual-heavy layout changes.
 
 Do not build these preemptively. They become work only when the real user problem appears.
 

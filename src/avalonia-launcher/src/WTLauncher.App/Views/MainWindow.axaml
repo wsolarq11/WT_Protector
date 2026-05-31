@@ -433,6 +433,10 @@
                               Command="{Binding LaunchCommand}"/>
                     <MenuItem Header="预演"
                               Command="{Binding DryRunCommand}"/>
+                    <MenuItem Header="上移排序"
+                              Command="{Binding MoveUpCommand}"/>
+                    <MenuItem Header="下移排序"
+                              Command="{Binding MoveDownCommand}"/>
                     <MenuItem Header="编辑"
                               Command="{Binding EditCommand}"/>
                     <MenuItem Header="删除"
@@ -561,6 +565,10 @@
                                   Command="{Binding LaunchCommand}"/>
                         <MenuItem Header="预演"
                                   Command="{Binding DryRunCommand}"/>
+                        <MenuItem Header="上移排序"
+                                  Command="{Binding MoveUpCommand}"/>
+                        <MenuItem Header="下移排序"
+                                  Command="{Binding MoveDownCommand}"/>
                         <MenuItem Header="编辑"
                                   Command="{Binding EditCommand}"/>
                         <MenuItem Header="删除"
@@ -670,6 +678,10 @@
                               Command="{Binding LaunchCommand}"/>
                     <MenuItem Header="预演"
                               Command="{Binding DryRunCommand}"/>
+                    <MenuItem Header="上移排序"
+                              Command="{Binding MoveUpCommand}"/>
+                    <MenuItem Header="下移排序"
+                              Command="{Binding MoveDownCommand}"/>
                     <MenuItem Header="编辑"
                               Command="{Binding EditCommand}"/>
                     <MenuItem Header="删除"

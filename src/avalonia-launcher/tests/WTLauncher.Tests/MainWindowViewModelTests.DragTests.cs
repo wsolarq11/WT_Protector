@@ -66,6 +66,65 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void MenuReorderMovesOneStepAndPersistsCustomOrderWithoutDragSession()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreateDragFixture(temp);
+
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+        LauncherSettingsStore.Save(CreateDragSettings(), settings);
+
+        var three = viewModel.VisibleEntries.Single(entry => entry.Id == "three");
+        Assert.True(three.MoveUpCommand.CanExecute(null));
+
+        three.MoveUpCommand.Execute(null);
+
+        Assert.Equal(["one", "three", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one", "three", "two"], launcherSettings.CustomEntryOrder);
+        Assert.Equal(["one", "three", "two"], LauncherSettingsStore.Load(settings).CustomEntryOrder);
+        Assert.Contains("已保存自定义排序", viewModel.StatusText);
+        AssertNoDragCues(viewModel);
+        Assert.False(viewModel.VisibleEntries.First().MoveUpCommand.CanExecute(null));
+        Assert.False(viewModel.VisibleEntries.Last().MoveDownCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void MenuReorderIsUnavailableOutsideCustomSortMode()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreateDragFixture(temp);
+
+        var launcherSettings = CreateDragSettings();
+        launcherSettings.SortMode = LauncherEntryVisibility.AlphabeticalSortModeId;
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+
+        Assert.All(viewModel.VisibleEntries, entry =>
+        {
+            Assert.False(entry.MoveUpCommand.CanExecute(null));
+            Assert.False(entry.MoveDownCommand.CanExecute(null));
+        });
+    }
+
+    [Fact]
+    public void MenuReorderRollsBackWhenSettingsSaveFails()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreateDragFixture(temp);
+
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+        Directory.CreateDirectory(settings);
+
+        viewModel.VisibleEntries.Single(entry => entry.Id == "three").MoveUpCommand.Execute(null);
+
+        Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Contains("设置保存失败", viewModel.StatusText);
+        AssertNoStoreTempFiles(settings);
+    }
+
+    [Fact]
     public void DragPreviewRejectsUnknownEntryIdsWithoutMutatingOrder()
     {
         using var temp = new TempDirectory();

@@ -186,6 +186,7 @@ The Avalonia mainline supports:
 - single launch and batch launch;
 - adaptive card sizing so the visible buttons shrink to fit the current window region instead of forcing a second scroll path;
 - custom-order dragging with a cursor-following ghost and live reorder preview so the redistribution is visible before drop;
+- context-menu `上移排序` / `下移排序` actions so reorder is not trapped behind drag gestures;
 - three density states (Normal / Compact / Micro) that keep card content readable while the scroll view remains the fallback;
 - a Cards / Details (“详细列表”) / Names (“名称墙”) view mode toggle for readable actions, dense scanning, and overview;
 - header actions for selecting all visible items or clearing the saved selection;
@@ -203,4 +204,4 @@ The Avalonia mainline supports:
 
 Known remaining work:
 
-- repeat screenshot-backed comfort passes only after UI changes, without weakening the root `tools/verify.ps1` gate.
+- none for the current launcher scope. For future visual-heavy layout changes, repeat screenshot-backed comfort passes without weakening the root `tools/verify.ps1` gate.

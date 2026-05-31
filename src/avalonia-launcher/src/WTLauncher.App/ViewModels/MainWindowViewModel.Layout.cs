@@ -136,6 +136,7 @@ public sealed partial class MainWindowViewModel
 
         VisibleCount = VisibleEntries.Count;
         LauncherEntryLayoutPresentation.ApplyCardSize(Entries, VisibleEntries, _cardsAvailableSize);
+        RefreshReorderCommandState();
     }
 
     public void UpdateCardsAvailableSize(Size availableSize)

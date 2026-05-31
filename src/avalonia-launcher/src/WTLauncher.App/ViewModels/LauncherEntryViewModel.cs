@@ -101,4 +101,20 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     [RelayCommand]
     private Task DeleteAsync() => _owner.DeleteEntryAsync(this);
+
+    [RelayCommand(CanExecute = nameof(CanMoveUp))]
+    private void MoveUp() => _owner.MoveEntryUp(this);
+
+    private bool CanMoveUp() => _owner.CanMoveEntryUp(this);
+
+    [RelayCommand(CanExecute = nameof(CanMoveDown))]
+    private void MoveDown() => _owner.MoveEntryDown(this);
+
+    private bool CanMoveDown() => _owner.CanMoveEntryDown(this);
+
+    internal void RefreshReorderCommands()
+    {
+        MoveUpCommand.NotifyCanExecuteChanged();
+        MoveDownCommand.NotifyCanExecuteChanged();
+    }
 }

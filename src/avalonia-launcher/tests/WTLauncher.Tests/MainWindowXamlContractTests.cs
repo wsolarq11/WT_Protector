@@ -121,6 +121,25 @@ public sealed class MainWindowXamlContractTests
     }
 
     [Fact]
+    public void MainWindow_ContextMenusExposeNonDragReorderCommands()
+    {
+        var xaml = File.ReadAllText(TestRepositoryPaths.MainWindowXaml);
+
+        Assert.Equal(3, Count(xaml, "Header=\"上移排序\""));
+        Assert.Equal(3, Count(xaml, "Header=\"下移排序\""));
+        Assert.Equal(3, Count(xaml, "Command=\"{Binding MoveUpCommand}\""));
+        Assert.Equal(3, Count(xaml, "Command=\"{Binding MoveDownCommand}\""));
+        AssertInOrder(
+            xaml,
+            "Header=\"启动\"",
+            "Header=\"预演\"",
+            "Header=\"上移排序\"",
+            "Header=\"下移排序\"",
+            "Header=\"编辑\"",
+            "Header=\"删除\"");
+    }
+
+    [Fact]
     public void MainWindow_DragHandlesExposeAccessibilityLabel()
     {
         var xaml = File.ReadAllText(TestRepositoryPaths.MainWindowXaml);
