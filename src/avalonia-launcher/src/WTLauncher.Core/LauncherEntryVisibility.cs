@@ -39,7 +39,7 @@ public static class LauncherEntryVisibility
         {
             UpdatedSortModeId => SortByUpdated(filtered, selectEntry),
             AlphabeticalSortModeId => SortAlphabetically(filtered, selectEntry),
-            _ => SortByCustomOrder(filtered, customEntryOrder, selectEntry),
+            _ => SortByCustomOrder(source, filtered, customEntryOrder, selectEntry),
         };
 
         return sorted.ToList();
@@ -70,14 +70,40 @@ public static class LauncherEntryVisibility
             .ThenBy(entry => RequireEntryId(selectEntry(entry)), LauncherEntryIds.Comparer);
 
     private static IOrderedEnumerable<TEntry> SortByCustomOrder<TEntry>(
+        IReadOnlyList<TEntry> source,
         IEnumerable<TEntry> entries,
         IEnumerable<string> customEntryOrder,
         Func<TEntry, LaunchEntry> selectEntry)
     {
         var order = LauncherEntryOrder.BuildIndex(customEntryOrder);
+        ValidateCustomOrder(source, order, selectEntry);
         return ThenByNameThenId(
-            entries.OrderBy(entry => order.TryGetValue(RequireEntryId(selectEntry(entry)), out var index) ? index : int.MaxValue),
+            entries.OrderBy(entry => order[RequireEntryId(selectEntry(entry))]),
             selectEntry);
+    }
+
+    private static void ValidateCustomOrder<TEntry>(
+        IReadOnlyList<TEntry> entries,
+        IReadOnlyDictionary<string, int> customOrder,
+        Func<TEntry, LaunchEntry> selectEntry)
+    {
+        var entryIds = entries
+            .Select(entry => RequireEntryId(selectEntry(entry)))
+            .ToHashSet(LauncherEntryIds.Comparer);
+
+        foreach (var entryId in entryIds)
+        {
+            if (!customOrder.ContainsKey(entryId))
+                throw new InvalidDataException(
+                    $"Launcher custom order is missing entry id for projection: {entryId}.");
+        }
+
+        foreach (var entryId in customOrder.Keys)
+        {
+            if (!entryIds.Contains(entryId))
+                throw new InvalidDataException(
+                    $"Launcher custom order references missing entry id for projection: {entryId}.");
+        }
     }
 
     private static IOrderedEnumerable<TEntry> ThenByNameThenId<TEntry>(

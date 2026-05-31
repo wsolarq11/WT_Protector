@@ -67,7 +67,7 @@ public sealed class LauncherEntryVisibilityTests
             Entry("two", "Two"),
             Entry("three", "Three"),
         };
-        var customOrder = new List<string> { "missing", "two" };
+        var customOrder = new List<string> { "two", "one", "three" };
 
         var visible = LauncherEntryVisibility.FilterAndSort(
             entries,
@@ -77,7 +77,52 @@ public sealed class LauncherEntryVisibilityTests
             static entry => entry);
 
         Assert.Equal(["two", "one", "three"], visible.Select(entry => entry.Id).ToArray());
-        Assert.Equal(["missing", "two"], customOrder);
+        Assert.Equal(["two", "one", "three"], customOrder);
+    }
+
+    [Fact]
+    public void FilterAndSort_CustomSortRejectsMissingEntryIdsBeforeProjection()
+    {
+        var entries = new[]
+        {
+            Entry("one", "One"),
+            Entry("two", "Two"),
+            Entry("three", "Three"),
+        };
+        var customOrder = new List<string> { "two", "one" };
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherEntryVisibility.FilterAndSort(
+                entries,
+                null,
+                LauncherEntryVisibility.CustomSortModeId,
+                customOrder,
+                static entry => entry));
+
+        Assert.Equal("Launcher custom order is missing entry id for projection: three.", exception.Message);
+        Assert.Equal(["two", "one"], customOrder);
+    }
+
+    [Fact]
+    public void FilterAndSort_CustomSortRejectsUnknownOrderIdsBeforeProjection()
+    {
+        var entries = new[]
+        {
+            Entry("one", "One"),
+            Entry("two", "Two"),
+        };
+        var customOrder = new List<string> { "two", "one", "missing" };
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherEntryVisibility.FilterAndSort(
+                entries,
+                null,
+                LauncherEntryVisibility.CustomSortModeId,
+                customOrder,
+                static entry => entry));
+
+        Assert.Equal("Launcher custom order references missing entry id for projection: missing.", exception.Message);
+        Assert.Equal(["two", "one", "missing"], customOrder);
     }
 
     [Fact]
@@ -111,7 +156,7 @@ public sealed class LauncherEntryVisibilityTests
             Entry(" two ", "Alpha"),
             Entry("three", "Middle"),
         };
-        var customOrder = new List<string> { " one ", " two " };
+        var customOrder = new List<string> { " one ", " two ", "three" };
 
         var visible = LauncherEntryVisibility.FilterAndSort(
             entries,
@@ -121,7 +166,7 @@ public sealed class LauncherEntryVisibilityTests
             static entry => entry);
 
         Assert.Equal([" one ", " two ", "three"], visible.Select(entry => entry.Id).ToArray());
-        Assert.Equal([" one ", " two "], customOrder);
+        Assert.Equal([" one ", " two ", "three"], customOrder);
     }
 
     [Fact]
