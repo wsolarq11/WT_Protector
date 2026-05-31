@@ -74,6 +74,17 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void Load_RejectsNullConfigDocument()
+    {
+        using var temp = new TempDirectory();
+        var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, "null");
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherConfigStore.Load(config));
+
+        Assert.Equal("Launcher config parsed to null.", exception.Message);
+    }
+
+    [Fact]
     public void Load_NormalizesNullEntryFieldsFromConfig()
     {
         using var temp = new TempDirectory();

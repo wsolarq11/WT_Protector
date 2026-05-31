@@ -90,6 +90,17 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void PresetStore_RejectsNullPresetDocument()
+    {
+        using var temp = new TempDirectory();
+        var presetPath = WriteConfigDirectoryFile(temp.Path, LauncherPresetStore.PresetsFileName, "null");
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherPresetStore.Load(presetPath));
+
+        Assert.Equal("Launcher presets parsed to null.", exception.Message);
+    }
+
+    [Fact]
     public void PresetStore_NormalizesNullPresetDataFromConfig()
     {
         using var temp = new TempDirectory();

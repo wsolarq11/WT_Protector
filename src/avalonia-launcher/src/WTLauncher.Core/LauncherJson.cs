@@ -22,6 +22,14 @@ internal static class LauncherJson
         return JsonSerializer.Deserialize<T>(stream, Options);
     }
 
+    public static T LoadRequired<T>(string path, string documentName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(documentName);
+
+        return Load<T>(path)
+            ?? throw new InvalidDataException($"{documentName} parsed to null.");
+    }
+
     public static void Save<T>(T value, string path, bool backup = false)
     {
         var fullPath = Path.GetFullPath(path);

@@ -10,8 +10,7 @@ public static class LauncherPresetStore
         if (!File.Exists(presetPath))
             return new LauncherPresetFile();
 
-        var presets = LauncherJson.Load<LauncherPresetFile>(presetPath)
-            ?? throw new InvalidDataException("Launcher presets parsed to null.");
+        var presets = LauncherJson.LoadRequired<LauncherPresetFile>(presetPath, "Launcher presets");
         LauncherPresetFiles.Normalize(presets);
         return presets;
     }
