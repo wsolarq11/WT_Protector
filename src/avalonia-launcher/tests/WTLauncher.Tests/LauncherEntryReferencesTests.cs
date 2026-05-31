@@ -56,6 +56,42 @@ public sealed class LauncherEntryReferencesTests
     }
 
     [Fact]
+    public void RenameEntryIdRejectsBlankSourceBeforeMutatingReferences()
+    {
+        var presetFile = PresetFile(Preset("daily", "one", " "));
+        var customEntryOrder = new List<string> { "one", " " };
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryReferences.RenameEntryId(
+                presetFile,
+                customEntryOrder,
+                oldEntryId: " ",
+                newEntryId: "one-renamed"));
+
+        Assert.Equal("oldEntryId", exception.ParamName);
+        Assert.Equal(["one", " "], presetFile.Presets[0].EntryIds);
+        Assert.Equal(["one", " "], customEntryOrder);
+    }
+
+    [Fact]
+    public void RenameEntryIdRejectsBlankReplacementBeforeMutatingReferences()
+    {
+        var presetFile = PresetFile(Preset("daily", "one"));
+        var customEntryOrder = new List<string> { "one" };
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryReferences.RenameEntryId(
+                presetFile,
+                customEntryOrder,
+                oldEntryId: "one",
+                newEntryId: " "));
+
+        Assert.Equal("newEntryId", exception.ParamName);
+        Assert.Equal(["one"], presetFile.Presets[0].EntryIds);
+        Assert.Equal(["one"], customEntryOrder);
+    }
+
+    [Fact]
     public void RemoveEntryIdRemovesPresetsAndCustomOrderReferences()
     {
         var presetFile = PresetFile(

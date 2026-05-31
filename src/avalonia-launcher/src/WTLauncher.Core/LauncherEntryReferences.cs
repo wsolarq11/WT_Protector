@@ -11,12 +11,13 @@ public static class LauncherEntryReferences
         ArgumentNullException.ThrowIfNull(presetFile);
         ArgumentNullException.ThrowIfNull(customEntryOrder);
 
-        var normalizedNewEntryId = LauncherEntryIds.Normalize(newEntryId);
+        var normalizedOldEntryId = RequireEntryId(oldEntryId, nameof(oldEntryId));
+        var normalizedNewEntryId = RequireEntryId(newEntryId, nameof(newEntryId));
         foreach (var entryIds in EntryReferenceLists(presetFile, customEntryOrder))
         {
             for (var i = 0; i < entryIds.Count; i++)
             {
-                if (LauncherEntryIds.SameNormalized(entryIds[i], oldEntryId))
+                if (LauncherEntryIds.SameNormalized(entryIds[i], normalizedOldEntryId))
                     entryIds[i] = normalizedNewEntryId;
             }
 
@@ -56,5 +57,14 @@ public static class LauncherEntryReferences
         var normalized = LauncherEntryIds.ToUniqueUsableList(entryIds);
         entryIds.Clear();
         entryIds.AddRange(normalized);
+    }
+
+    private static string RequireEntryId(string? entryId, string paramName)
+    {
+        var normalized = LauncherEntryIds.Normalize(entryId);
+        if (!LauncherEntryIds.IsUsable(normalized))
+            throw new ArgumentException("Entry id is required.", paramName);
+
+        return normalized;
     }
 }
