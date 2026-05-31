@@ -62,7 +62,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _settings,
             _settingsPath,
             Entries,
-            EnsureCustomOrderContainsEntries,
             ApplyFilter);
         ConfigPathDisplay = LauncherMainWindowText.ConfigPathDisplay(configPath, _presetPath);
         _filterText = settings.LastFilterText ?? string.Empty;

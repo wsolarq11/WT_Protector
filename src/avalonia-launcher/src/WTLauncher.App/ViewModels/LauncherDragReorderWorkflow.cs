@@ -7,7 +7,6 @@ public sealed class LauncherDragReorderWorkflow
     private readonly LauncherSettings _settings;
     private readonly string _settingsPath;
     private readonly IReadOnlyList<LauncherEntryViewModel> _entries;
-    private readonly Action _ensureCustomOrderContainsEntries;
     private readonly Action _applyFilter;
     private LauncherDragReorderSession? _session;
 
@@ -15,13 +14,11 @@ public sealed class LauncherDragReorderWorkflow
         LauncherSettings settings,
         string settingsPath,
         IReadOnlyList<LauncherEntryViewModel> entries,
-        Action ensureCustomOrderContainsEntries,
         Action applyFilter)
     {
         _settings = settings;
         _settingsPath = settingsPath;
         _entries = entries;
-        _ensureCustomOrderContainsEntries = ensureCustomOrderContainsEntries;
         _applyFilter = applyFilter;
     }
 
@@ -32,7 +29,7 @@ public sealed class LauncherDragReorderWorkflow
         if (!isCustomSortMode)
             return;
 
-        _ensureCustomOrderContainsEntries();
+        EnsureCustomOrderContainsEntries();
 
         var source = FindEntry(draggedEntryId);
         if (source is null)
@@ -69,7 +66,7 @@ public sealed class LauncherDragReorderWorkflow
         if (!session.TryRecordPreview(targetEntryId, insertAfter))
             return false;
 
-        _ensureCustomOrderContainsEntries();
+        EnsureCustomOrderContainsEntries();
         LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, draggedEntryId, targetEntryId, insertAfter);
         _applyFilter();
 
@@ -79,6 +76,9 @@ public sealed class LauncherDragReorderWorkflow
 
     private LauncherEntryViewModel? FindEntry(string entryId) =>
         _entries.FirstOrDefault(entry => LauncherEntryIds.SameNormalized(entry.Id, entryId));
+
+    private void EnsureCustomOrderContainsEntries() =>
+        LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, _entries.Select(entry => entry.Id));
 
     public void ClearHover()
     {
