@@ -80,6 +80,23 @@ public sealed class LauncherSingleLaunchReceiptTextTests
         Assert.Contains("错误: blocked", receipt);
     }
 
+    [Fact]
+    public void ConfirmationFailedReceiptIncludesCommandLineAndFailure()
+    {
+        using var temp = new TempDirectory();
+        var plan = Plan(temp.Path, "pwsh");
+
+        var receipt = LauncherSingleLaunchReceiptText.ConfirmationFailed(
+            "one",
+            plan,
+            new InvalidOperationException("dialog unavailable"));
+
+        Assert.Contains("启动回执", receipt);
+        Assert.Contains("启动确认失败: one", receipt);
+        Assert.Contains(plan.CommandLine, receipt);
+        Assert.Contains("错误: dialog unavailable", receipt);
+    }
+
     private static LaunchPlan Plan(string directory, string command) =>
         LaunchArgumentBuilder.Build(
             new LaunchEntry

@@ -26,6 +26,19 @@ public static class LauncherSingleLaunchReceiptText
             plan.CommandLine);
     }
 
+    public static string ConfirmationFailed(string entryName, LaunchPlan plan, Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        ArgumentNullException.ThrowIfNull(exception);
+
+        return string.Join(
+            Environment.NewLine,
+            "启动回执",
+            $"启动确认失败: {NormalizeName(entryName)}",
+            plan.CommandLine,
+            $"错误: {exception.Message}");
+    }
+
     public static string Failed(string entryName, Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);

@@ -79,6 +79,31 @@ public sealed class LauncherBatchLaunchReceiptTextTests
         Assert.DoesNotContain("should not start", receipt);
     }
 
+    [Fact]
+    public void ConfirmationFailedReceiptMarksEveryPlanAsNotStarted()
+    {
+        using var temp = new TempDirectory();
+        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+        var preflight = workflow.PreflightBatch(
+            [
+                Entry("one", temp.Path),
+                Entry("two", temp.Path),
+            ],
+            requireConfirmation: true);
+
+        var receipt = LauncherBatchLaunchReceiptText.ConfirmationFailed(
+            preflight.Items,
+            new InvalidOperationException("dialog unavailable"));
+
+        Assert.Contains("启动回执", receipt);
+        Assert.Contains("启动确认失败: dialog unavailable", receipt);
+        Assert.Contains("已请求启动 0 项，未启动 2 项", receipt);
+        Assert.Contains("• 未启动: one", receipt);
+        Assert.Contains("• 未启动: two", receipt);
+        Assert.Equal(2, Count(receipt, LaunchArgumentBuilder.TerminalExecutable));
+        Assert.DoesNotContain("should not start", receipt);
+    }
+
     private static LaunchEntry Entry(string id, string directory) =>
         new()
         {

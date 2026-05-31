@@ -69,6 +69,33 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task SingleLaunchConfirmationFailureShowsCommandReceiptAndStartsNothing()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex --version"));
+        var startedPlans = new List<LaunchPlan>();
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = true },
+            vm => vm.ConfirmLaunchAsync = (_, _) =>
+                throw new InvalidOperationException("dialog unavailable"),
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+
+        await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
+
+        Assert.Empty(startedPlans);
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("启动确认失败: one", viewModel.DryRunText);
+        Assert.Contains(LaunchArgumentBuilder.TerminalExecutable, viewModel.DryRunText);
+        Assert.Contains("codex --version", viewModel.DryRunText);
+        Assert.Contains("错误: dialog unavailable", viewModel.DryRunText);
+        Assert.Equal("启动失败: one — dialog unavailable", viewModel.StatusText);
+    }
+
+    [Fact]
     public async Task SingleLaunchStartsAfterConfirmationAcceptsPlan()
     {
         using var temp = new TempDirectory();
@@ -293,6 +320,36 @@ public sealed partial class MainWindowViewModelTests
         Assert.Contains("• 未启动: one", viewModel.DryRunText);
         Assert.Contains("• 未启动: two", viewModel.DryRunText);
         Assert.Equal("已取消: 批量启动 2 项", viewModel.StatusText);
+    }
+
+    [Fact]
+    public async Task BatchLaunchConfirmationFailureShowsPreflightReceiptAndStartsNothing()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex", selected: true),
+            Entry("two", directory: temp.Path, command: "opencode", selected: true));
+        var startedPlans = new List<LaunchPlan>();
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = true },
+            vm => vm.ConfirmBatchLaunchAsync = _ =>
+                throw new InvalidOperationException("dialog unavailable"),
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+
+        await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
+
+        Assert.Empty(startedPlans);
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("启动确认失败: dialog unavailable", viewModel.DryRunText);
+        Assert.Contains("已请求启动 0 项，未启动 2 项", viewModel.DryRunText);
+        Assert.Contains("• 未启动: one", viewModel.DryRunText);
+        Assert.Contains("• 未启动: two", viewModel.DryRunText);
+        Assert.Contains("codex", viewModel.DryRunText);
+        Assert.Contains("opencode", viewModel.DryRunText);
+        Assert.Equal("批量启动失败: dialog unavailable", viewModel.StatusText);
     }
 
     [Fact]

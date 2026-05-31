@@ -247,6 +247,11 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.LaunchSelectedPresetCommand.ExecuteAsync(null);
 
         Assert.Empty(startedPlans);
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("启动确认失败: dialog unavailable", viewModel.DryRunText);
+        Assert.Contains("已请求启动 0 项，未启动 1 项", viewModel.DryRunText);
+        Assert.Contains("• 未启动: one", viewModel.DryRunText);
+        Assert.Contains(LaunchArgumentBuilder.TerminalExecutable, viewModel.DryRunText);
         Assert.Equal("启动组“Daily”启动失败: dialog unavailable", viewModel.StatusText);
         var entries = LoadEntriesById(config);
         Assert.All(entries, entry => Assert.False(entry.Selected));

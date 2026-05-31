@@ -30,15 +30,26 @@ public static class LauncherBatchLaunchReceiptText
             $"已取消: 已请求启动 0 项，未启动 {items.Count} 项",
         };
 
-        if (items.Count > 0)
+        AppendUnstartedPlanLines(lines, items);
+
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    public static string ConfirmationFailed(
+        IReadOnlyList<LauncherBatchLaunchItem> items,
+        Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(exception);
+
+        var lines = new List<string>
         {
-            lines.Add("");
-            foreach (var item in items)
-            {
-                lines.Add($"• 未启动: {item.Entry.Name}");
-                lines.Add(item.Plan.CommandLine);
-            }
-        }
+            "启动回执",
+            $"启动确认失败: {exception.Message}",
+            $"已请求启动 0 项，未启动 {items.Count} 项",
+        };
+
+        AppendUnstartedPlanLines(lines, items);
 
         return string.Join(Environment.NewLine, lines);
     }
@@ -76,5 +87,20 @@ public static class LauncherBatchLaunchReceiptText
         lines.Add("");
         lines.Add("失败:");
         lines.AddRange(failures.Select(failure => $"- {failure}"));
+    }
+
+    private static void AppendUnstartedPlanLines(
+        List<string> lines,
+        IReadOnlyList<LauncherBatchLaunchItem> items)
+    {
+        if (items.Count == 0)
+            return;
+
+        lines.Add("");
+        foreach (var item in items)
+        {
+            lines.Add($"• 未启动: {item.Entry.Name}");
+            lines.Add(item.Plan.CommandLine);
+        }
     }
 }

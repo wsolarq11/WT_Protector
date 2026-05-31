@@ -71,7 +71,10 @@ public sealed partial class MainWindowViewModel
                 selectedEntries,
                 RequireConfirmationForLaunches);
             if (preflight.Report.FailedCount == 0 &&
-                !await ConfirmBatchLaunchIfRequiredAsync(preflight.Items, canceledStatus).ConfigureAwait(true))
+                !await ConfirmBatchLaunchIfRequiredAsync(
+                    preflight.Items,
+                    canceledStatus,
+                    failedStatus).ConfigureAwait(true))
                 return;
 
             var report = _launchWorkflow.StartBatch(preflight);
@@ -86,12 +89,24 @@ public sealed partial class MainWindowViewModel
 
     private async Task<bool> ConfirmBatchLaunchIfRequiredAsync(
         IReadOnlyList<LauncherBatchLaunchItem> items,
-        Func<int, string> canceledStatus)
+        Func<int, string> canceledStatus,
+        Func<Exception, string> failedStatus)
     {
         if (!RequireConfirmationForLaunches)
             return true;
 
-        var accepted = await ConfirmBatchLaunchAsync(items).ConfigureAwait(true);
+        bool accepted;
+        try
+        {
+            accepted = await ConfirmBatchLaunchAsync(items).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            DryRunText = LauncherBatchLaunchReceiptText.ConfirmationFailed(items, ex);
+            StatusText = failedStatus(ex);
+            return false;
+        }
+
         if (accepted)
             return true;
 

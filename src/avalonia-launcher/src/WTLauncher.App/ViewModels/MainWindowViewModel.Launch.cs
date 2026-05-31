@@ -75,7 +75,18 @@ public sealed partial class MainWindowViewModel
         if (!plan.RequiresConfirmation)
             return true;
 
-        var accepted = await ConfirmLaunchAsync(item.Entry, plan).ConfigureAwait(true);
+        bool accepted;
+        try
+        {
+            accepted = await ConfirmLaunchAsync(item.Entry, plan).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            DryRunText = LauncherSingleLaunchReceiptText.ConfirmationFailed(item.Name, plan, ex);
+            StatusText = LauncherSingleLaunchStatus.Failed(item.Name, ex);
+            return false;
+        }
+
         if (accepted)
             return true;
 
