@@ -6,7 +6,7 @@ public static class LauncherSettingsStore
     {
         ThrowIfSettingsPathMissing(settingsPath);
         if (!File.Exists(settingsPath))
-            return new LauncherSettings();
+            throw new FileNotFoundException("Launcher settings not found.", settingsPath);
 
         var settings = LauncherJson.LoadRequired<LauncherSettings>(settingsPath, "Launcher settings");
         Normalize(settings);

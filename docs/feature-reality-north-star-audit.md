@@ -208,7 +208,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: config edits must not leave half-written JSON or half-applied multi-file state.
 - Current data owner: config/preset/settings stores plus mutation snapshots.
-- Evidence: store tests cover temp writes, `.bak` backups, skip-backup rollback writes, multi-file rollback failure statuses, and fail-fast rejection of missing, unknown, or wrong-case JSON fields.
+- Evidence: store tests cover temp writes, `.bak` backups, skip-backup rollback writes, multi-file rollback failure statuses, and fail-fast rejection of missing files plus missing, unknown, or wrong-case JSON fields.
 - Verdict: north-star for a single-process local app.
 - Remaining gap: no file locking or merge resolution for concurrent external edits; that is not a current requirement.
 

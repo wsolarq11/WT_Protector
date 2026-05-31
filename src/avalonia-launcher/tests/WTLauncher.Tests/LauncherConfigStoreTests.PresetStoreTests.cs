@@ -91,6 +91,18 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void PresetStore_RejectsMissingPresetFile()
+    {
+        using var temp = new TempDirectory();
+        var presetPath = ConfigFilePath(temp.Path, LauncherPresetStore.PresetsFileName);
+
+        var exception = Assert.Throws<FileNotFoundException>(() => LauncherPresetStore.Load(presetPath));
+
+        Assert.Equal("Launcher presets not found.", exception.Message);
+        Assert.Equal(presetPath, exception.FileName);
+    }
+
+    [Fact]
     public void PresetStore_RejectsInvalidPresetRowsBeforeWriting()
     {
         using var temp = new TempDirectory();
