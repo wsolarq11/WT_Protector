@@ -52,7 +52,7 @@ public sealed partial class MainWindowViewModel
 
     partial void OnFilterTextChanged(string value)
     {
-        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
+        var snapshot = CaptureSettingsMutationSnapshot();
         _settings.LastFilterText = value ?? string.Empty;
         SaveSettingsChange(
             snapshot,
@@ -71,7 +71,7 @@ public sealed partial class MainWindowViewModel
         if (value is null)
             return;
 
-        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
+        var snapshot = CaptureSettingsMutationSnapshot();
         _settings.SortMode = value.Id;
         EnsureCustomOrderContainsEntries();
         SaveSettingsChange(
@@ -96,7 +96,7 @@ public sealed partial class MainWindowViewModel
         if (value is null)
             return;
 
-        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
+        var snapshot = CaptureSettingsMutationSnapshot();
         _settings.EntryViewMode = value.Id;
         LauncherEntryLayoutPresentation.Refresh(Entries);
         SaveSettingsChange(

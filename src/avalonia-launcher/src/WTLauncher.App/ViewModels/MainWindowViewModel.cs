@@ -115,6 +115,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return true;
     }
 
+    private LauncherSettingsSnapshot CaptureSettingsMutationSnapshot()
+    {
+        _dragReorderWorkflow.Cancel();
+        return LauncherSettingsSnapshot.Capture(_settings);
+    }
+
     private static LaunchEntry ToLaunchEntry(LauncherEntryViewModel entry) => entry.Entry;
 
     private void SaveSettingsChange(

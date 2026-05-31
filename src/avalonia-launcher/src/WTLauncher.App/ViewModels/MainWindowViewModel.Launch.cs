@@ -15,7 +15,7 @@ public sealed partial class MainWindowViewModel
 
     partial void OnRequireConfirmationForLaunchesChanged(bool value)
     {
-        var snapshot = LauncherSettingsSnapshot.Capture(_settings);
+        var snapshot = CaptureSettingsMutationSnapshot();
         _settings.RequireConfirmationForLaunches = value;
         RefreshLaunchConfirmationPresentation();
         SaveSettingsChange(

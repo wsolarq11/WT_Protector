@@ -114,6 +114,30 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void SettingsSaveDuringDragPreviewDoesNotCommitPreviewOrder()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreateDragFixture(temp);
+
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+
+        viewModel.BeginDragReorder("three");
+        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
+        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+
+        viewModel.FilterText = "one";
+
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), LauncherSettingsStore.Load(settings).CustomEntryOrder);
+        Assert.DoesNotContain(viewModel.Entries, entry =>
+            entry.IsDragPreviewSource
+            || entry.IsDragPreviewTarget
+            || entry.IsDragInsertBefore
+            || entry.IsDragInsertAfter);
+    }
+
+    [Fact]
     public void DragPreviewMatchesConfigEntryIdsAfterNormalization()
     {
         using var temp = new TempDirectory();
