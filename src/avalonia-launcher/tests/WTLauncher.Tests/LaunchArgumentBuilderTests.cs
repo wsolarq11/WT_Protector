@@ -10,7 +10,7 @@ public sealed class LaunchArgumentBuilderTests
         using var temp = new TempDirectory();
         var entry = Entry(temp.Path, command: "codex --version");
 
-        var plan = LaunchArgumentBuilder.Build(entry, requireConfirmation: false);
+        var plan = LaunchArgumentBuilder.Build(entry, validateDirectory: true, requireConfirmation: false);
 
         Assert.Equal(LaunchArgumentBuilder.TerminalExecutable, plan.Executable);
         Assert.Equal(
@@ -27,22 +27,22 @@ public sealed class LaunchArgumentBuilderTests
             temp.Path,
             command: "codex --dangerously-bypass-approvals-and-sandbox");
 
-        var directPlan = LaunchArgumentBuilder.Build(entry, requireConfirmation: false);
-        var confirmedPlan = LaunchArgumentBuilder.Build(entry, requireConfirmation: true);
+        var directPlan = LaunchArgumentBuilder.Build(entry, validateDirectory: true, requireConfirmation: false);
+        var confirmedPlan = LaunchArgumentBuilder.Build(entry, validateDirectory: true, requireConfirmation: true);
 
         Assert.False(directPlan.RequiresConfirmation);
         Assert.True(confirmedPlan.RequiresConfirmation);
     }
 
     [Fact]
-    public void Build_DefaultsToConfirmationWhenNoGlobalOverrideIsProvided()
+    public void Build_UsesDirectoryValidationParameter()
     {
-        using var temp = new TempDirectory();
-        var entry = Entry(temp.Path, name: "plain");
+        var missingDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var entry = Entry(missingDirectory, name: "missing");
 
-        var plan = LaunchArgumentBuilder.Build(entry);
+        var plan = LaunchArgumentBuilder.Build(entry, validateDirectory: false, requireConfirmation: false);
 
-        Assert.True(plan.RequiresConfirmation);
+        Assert.Equal(missingDirectory, plan.WorkingDirectory);
     }
 
     [Theory]
@@ -56,13 +56,20 @@ public sealed class LaunchArgumentBuilderTests
     }
 
     [Fact]
+    public void QuoteArgument_RejectsNullArgument()
+    {
+        Assert.Throws<ArgumentNullException>(() => LaunchArgumentBuilder.QuoteArgument(null!));
+    }
+
+    [Fact]
     public void Build_RejectsMissingDirectoryWhenValidationEnabled()
     {
         var entry = Entry(
             Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")),
             name: "missing");
 
-        Assert.Throws<InvalidOperationException>(() => LaunchArgumentBuilder.Build(entry));
+        Assert.Throws<InvalidOperationException>(() =>
+            LaunchArgumentBuilder.Build(entry, validateDirectory: true, requireConfirmation: false));
     }
 
     private static LaunchEntry Entry(

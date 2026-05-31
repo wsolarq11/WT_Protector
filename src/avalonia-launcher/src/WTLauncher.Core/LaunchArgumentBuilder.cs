@@ -8,7 +8,7 @@ public static class LaunchArgumentBuilder
     public const string WorkingDirectoryOption = "-d";
     public const string ShellCommandPrefix = "pwsh -NoExit -Command";
 
-    public static LaunchPlan Build(LaunchEntry entry, bool validateDirectory = true, bool requireConfirmation = true)
+    public static LaunchPlan Build(LaunchEntry entry, bool validateDirectory, bool requireConfirmation)
     {
         ArgumentNullException.ThrowIfNull(entry);
 
@@ -34,9 +34,9 @@ public static class LaunchArgumentBuilder
             requireConfirmation);
     }
 
-    public static string QuoteArgument(string? value)
+    public static string QuoteArgument(string value)
     {
-        value ??= "";
+        ArgumentNullException.ThrowIfNull(value);
         var quoted = new StringBuilder();
         quoted.Append('"');
 
