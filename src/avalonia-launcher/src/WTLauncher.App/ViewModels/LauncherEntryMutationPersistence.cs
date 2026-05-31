@@ -12,13 +12,11 @@ public static class LauncherEntryMutationPersistence
         LauncherSettings settings,
         string settingsPath,
         bool savePresets,
-        LauncherEntryMutationSnapshot? rollbackSnapshot,
-        Action beforeSaveSettings)
+        LauncherEntryMutationSnapshot? rollbackSnapshot)
     {
         ArgumentNullException.ThrowIfNull(entries);
         ArgumentNullException.ThrowIfNull(presetFile);
         ArgumentNullException.ThrowIfNull(settings);
-        ArgumentNullException.ThrowIfNull(beforeSaveSettings);
 
         var configSaveFailure = LauncherConfigMutationPersistence.Save(entries, configPath);
         if (configSaveFailure is not null)
@@ -41,7 +39,6 @@ public static class LauncherEntryMutationPersistence
             }
         }
 
-        beforeSaveSettings();
         try
         {
             LauncherSettingsStore.Save(settings, settingsPath);

@@ -112,6 +112,7 @@ public sealed partial class MainWindowViewModel
     private bool SaveEntryCollectionChanges(bool savePresets, LauncherEntryMutationSnapshot rollbackSnapshot)
     {
         TotalCount = Entries.Count;
+        EnsureCustomOrderContainsEntries();
 
         var saveFailure = LauncherEntryMutationPersistence.Save(
             Entries.Select(ToLaunchEntry),
@@ -121,8 +122,7 @@ public sealed partial class MainWindowViewModel
             _settings,
             _settingsPath,
             savePresets,
-            rollbackSnapshot,
-            EnsureCustomOrderContainsEntries);
+            rollbackSnapshot);
 
         if (saveFailure is not null)
         {
