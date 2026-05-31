@@ -160,7 +160,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: users build spatial memory; alphabetical order is not always the fastest launch order.
 - Current data owner: `settings.json` `customEntryOrder`; drag session is a single transient object.
-- Evidence: drag reorder session/workflow tests cover preview, commit, cancel, rollback, and single-session ownership; context-menu `上移排序` / `下移排序` commands persist the same `customEntryOrder` without creating a second reorder model, and when invoked during a drag preview they discard the preview before resolving targets so ghost order cannot become a hidden source of truth.
+- Evidence: drag reorder session/workflow tests cover preview, commit, cancel, rollback, single-session ownership, and invalid move/custom-order rejection before mutation; context-menu `上移排序` / `下移排序` commands persist the same `customEntryOrder` without creating a second reorder model, and when invoked during a drag preview they discard the preview before resolving targets so ghost order cannot become a hidden source of truth.
 - Verdict: north-star for mouse-first local use.
 - Remaining gap: none proven. Non-drag reorder now uses the same data owner and persistence path as drag reorder.
 

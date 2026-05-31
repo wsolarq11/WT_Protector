@@ -47,22 +47,26 @@ public static class LauncherEntryOrder
         string targetEntryId,
         bool insertAfter)
     {
-        var draggedId = LauncherEntryIds.Normalize(draggedEntryId);
-        var targetId = LauncherEntryIds.Normalize(targetEntryId);
-        if (!LauncherEntryIds.IsUsable(draggedId))
-            return false;
-        if (!LauncherEntryIds.IsUsable(targetId))
-            return false;
+        var draggedId = RequireEntryId(draggedEntryId, nameof(draggedEntryId));
+        var targetId = RequireEntryId(targetEntryId, nameof(targetEntryId));
         if (LauncherEntryIds.Same(draggedId, targetId))
             return false;
-        var normalizedOrder = LauncherEntryIds.ToUniqueUsableList(customOrder);
-        if (!normalizedOrder.Any(id => LauncherEntryIds.Same(id, draggedId)))
-            return false;
-        if (!normalizedOrder.Any(id => LauncherEntryIds.Same(id, targetId)))
-            return false;
 
-        normalizedOrder.RemoveAll(id => LauncherEntryIds.Same(id, draggedId));
+        var normalizedOrder = NormalizeRequiredOrder(customOrder);
+        var draggedIndex = normalizedOrder.FindIndex(id => LauncherEntryIds.Same(id, draggedId));
+        if (draggedIndex < 0)
+            throw new ArgumentException(
+                $"Dragged entry id is not in custom order: {draggedId}.",
+                nameof(draggedEntryId));
+
         var targetIndex = normalizedOrder.FindIndex(id => LauncherEntryIds.Same(id, targetId));
+        if (targetIndex < 0)
+            throw new ArgumentException(
+                $"Target entry id is not in custom order: {targetId}.",
+                nameof(targetEntryId));
+
+        normalizedOrder.RemoveAt(draggedIndex);
+        targetIndex = normalizedOrder.FindIndex(id => LauncherEntryIds.Same(id, targetId));
         if (insertAfter)
             targetIndex++;
         targetIndex = Math.Min(targetIndex, normalizedOrder.Count);
@@ -70,5 +74,37 @@ public static class LauncherEntryOrder
         customOrder.Clear();
         customOrder.AddRange(normalizedOrder);
         return true;
+    }
+
+    private static string RequireEntryId(string entryId, string paramName)
+    {
+        var normalized = LauncherEntryIds.Normalize(entryId);
+        if (!LauncherEntryIds.IsUsable(normalized))
+            throw new ArgumentException("Entry id is required.", paramName);
+
+        return normalized;
+    }
+
+    private static List<string> NormalizeRequiredOrder(List<string> customOrder)
+    {
+        ArgumentNullException.ThrowIfNull(customOrder);
+
+        var normalized = new List<string>(customOrder.Count);
+        var seen = new HashSet<string>(LauncherEntryIds.Comparer);
+        for (var i = 0; i < customOrder.Count; i++)
+        {
+            var entryId = LauncherEntryIds.Normalize(customOrder[i]);
+            if (!LauncherEntryIds.IsUsable(entryId))
+                throw new ArgumentException($"Custom entry order {i} is empty.", nameof(customOrder));
+
+            if (!seen.Add(entryId))
+                throw new ArgumentException(
+                    $"Custom entry order {i} is duplicate: {entryId}.",
+                    nameof(customOrder));
+
+            normalized.Add(entryId);
+        }
+
+        return normalized;
     }
 }

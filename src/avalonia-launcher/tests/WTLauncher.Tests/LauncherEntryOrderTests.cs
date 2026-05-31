@@ -68,24 +68,38 @@ public sealed class LauncherEntryOrderTests
     }
 
     [Fact]
-    public void MoveRelativeDedupesDirtyOrderBeforeMoving()
+    public void MoveRelativeRejectsDuplicateCustomOrderBeforeMutatingOrder()
     {
         List<string> order = [" one ", "two", " two ", "three"];
 
-        var moved = LauncherEntryOrder.MoveRelative(order, " three ", " one ", insertAfter: false);
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryOrder.MoveRelative(order, " three ", " one ", insertAfter: false));
 
-        Assert.True(moved);
-        Assert.Equal(["three", "one", "two"], order);
+        Assert.Equal("customOrder", exception.ParamName);
+        Assert.Equal([" one ", "two", " two ", "three"], order);
     }
 
     [Fact]
-    public void MoveRelativeIgnoresUnknownDraggedEntry()
+    public void MoveRelativeRejectsBlankCustomOrderBeforeMutatingOrder()
+    {
+        List<string> order = ["one", " ", "two"];
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryOrder.MoveRelative(order, "two", "one", insertAfter: false));
+
+        Assert.Equal("customOrder", exception.ParamName);
+        Assert.Equal(["one", " ", "two"], order);
+    }
+
+    [Fact]
+    public void MoveRelativeRejectsUnknownDraggedEntryBeforeMutatingOrder()
     {
         List<string> order = ["one", "two", "three"];
 
-        var moved = LauncherEntryOrder.MoveRelative(order, "missing", "one", insertAfter: false);
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryOrder.MoveRelative(order, "missing", "one", insertAfter: false));
 
-        Assert.False(moved);
+        Assert.Equal("draggedEntryId", exception.ParamName);
         Assert.Equal(["one", "two", "three"], order);
     }
 
@@ -110,13 +124,14 @@ public sealed class LauncherEntryOrderTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void MoveRelativeIgnoresMissingTarget(bool insertAfter)
+    public void MoveRelativeRejectsMissingTargetBeforeMutatingOrder(bool insertAfter)
     {
         List<string> order = ["one", "two", "three"];
 
-        var moved = LauncherEntryOrder.MoveRelative(order, "one", "missing", insertAfter);
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryOrder.MoveRelative(order, "one", "missing", insertAfter));
 
-        Assert.False(moved);
+        Assert.Equal("targetEntryId", exception.ParamName);
         Assert.Equal(["one", "two", "three"], order);
     }
 
