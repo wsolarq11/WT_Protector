@@ -10,7 +10,6 @@ internal static class LauncherJson
 
     private static readonly JsonSerializerOptions Options = new()
     {
-        PropertyNameCaseInsensitive = true,
         ReadCommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,

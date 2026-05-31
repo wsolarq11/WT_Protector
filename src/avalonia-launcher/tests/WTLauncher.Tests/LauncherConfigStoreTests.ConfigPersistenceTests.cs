@@ -52,6 +52,26 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void Load_RejectsWrongCaseEntryFieldsFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
+        [
+          {
+            "Id": "demo",
+            "name": "demo",
+            "directory": "D:\\demo",
+            "command": "codex"
+          }
+        ]
+        """);
+
+        var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherConfigStore.Load(config));
+
+        Assert.Contains("Id", exception.Message);
+    }
+
+    [Fact]
     public void Load_RejectsNullEntryRowsFromConfig()
     {
         using var temp = new TempDirectory();

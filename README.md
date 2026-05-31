@@ -51,7 +51,7 @@ Fields:
 
 Active config entries must not contain the obsolete per-entry `confirm` key. Launch confirmation has one authority: `settings.json` → `requireConfirmationForLaunches`.
 
-All active JSON files reject unknown keys instead of silently carrying dead settings or typo fields.
+All active JSON files require exact camelCase keys and reject unknown keys instead of silently carrying dead settings or typo fields.
 
 Named launch groups live beside the launch config:
 

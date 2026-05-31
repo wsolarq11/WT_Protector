@@ -192,7 +192,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: launch safety should have one visible rule; per-command "danger" guesses create false confidence and hidden branches.
 - Current data owner: `settings.json` `requireConfirmationForLaunches`.
-- Evidence: launch confirmation tests cover saved setting, confirmation/cancel, and `LaunchPlan.RequiresConfirmation`; unknown JSON fields now fail fast, so obsolete per-entry `confirm` cannot silently compete with the global setting.
+- Evidence: launch confirmation tests cover saved setting, confirmation/cancel, and `LaunchPlan.RequiresConfirmation`; unknown or wrong-case JSON fields now fail fast, so obsolete per-entry `confirm` cannot silently compete with the global setting.
 - Verdict: north-star. One switch is simpler and safer than command-classification theater.
 - Remaining gap: none proven.
 
@@ -208,7 +208,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: config edits must not leave half-written JSON or half-applied multi-file state.
 - Current data owner: config/preset/settings stores plus mutation snapshots.
-- Evidence: store tests cover temp writes, `.bak` backups, skip-backup rollback writes, multi-file rollback failure statuses, and fail-fast rejection of unknown JSON fields.
+- Evidence: store tests cover temp writes, `.bak` backups, skip-backup rollback writes, multi-file rollback failure statuses, and fail-fast rejection of unknown or wrong-case JSON fields.
 - Verdict: north-star for a single-process local app.
 - Remaining gap: no file locking or merge resolution for concurrent external edits; that is not a current requirement.
 

@@ -104,6 +104,22 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void SettingsStore_RejectsWrongCaseSettingFieldsFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
+        {
+          "SortMode": "custom",
+          "customEntryOrder": []
+        }
+        """);
+
+        var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherSettingsStore.Load(settings));
+
+        Assert.Contains("SortMode", exception.Message);
+    }
+
+    [Fact]
     public void SettingsStore_RejectsNullSettingsFromConfig()
     {
         using var temp = new TempDirectory();
