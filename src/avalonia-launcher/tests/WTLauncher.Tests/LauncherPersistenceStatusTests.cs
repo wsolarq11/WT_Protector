@@ -10,7 +10,6 @@ public sealed class LauncherPersistenceStatusTests
         var exception = new InvalidOperationException("disk blocked");
 
         Assert.Equal("配置保存失败: disk blocked", LauncherPersistenceStatus.ConfigSaveFailed(exception));
-        Assert.Equal("启动组加载失败: disk blocked", LauncherPersistenceStatus.PresetLoadFailed(exception));
         Assert.Equal("启动组保存失败: disk blocked", LauncherPersistenceStatus.PresetSaveFailed(exception));
         Assert.Equal("设置保存失败: disk blocked", LauncherPersistenceStatus.SettingsSaveFailed(exception));
     }

@@ -4,23 +4,10 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
-    private string? LoadPresetFile(string? preferredPresetId)
+    private void LoadPresetFile(string? preferredPresetId)
     {
-        LauncherPresetFile presetFile;
-        string? error;
-        try
-        {
-            presetFile = LauncherPresetStore.Load(_presetPath);
-            error = null;
-        }
-        catch (Exception ex)
-        {
-            presetFile = new LauncherPresetFile();
-            error = LauncherPersistenceStatus.PresetLoadFailed(ex);
-        }
-
+        var presetFile = LauncherPresetStore.Load(_presetPath);
         ApplyPresetFileState(presetFile, preferredPresetId);
-        return error;
     }
 
     private void ApplyPresetFileState(LauncherPresetFile presetFile, string? preferredPresetId)

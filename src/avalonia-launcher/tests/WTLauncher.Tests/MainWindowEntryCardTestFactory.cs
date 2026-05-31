@@ -41,6 +41,22 @@ internal static class MainWindowEntryCardTestFactory
     private static MainWindowViewModel CreateOwner(string configPath, string settingsPath, LaunchEntry entry)
     {
         LauncherConfigStore.Save([entry], configPath, backup: true);
+        LauncherPresetStore.Save(
+            new LauncherPresetFile
+            {
+                DefaultPresetId = "default",
+                Presets =
+                [
+                    new LauncherPreset
+                    {
+                        Id = "default",
+                        Name = "Default",
+                        EntryIds = [entry.Id],
+                    },
+                ],
+            },
+            LauncherPresetStore.ResolvePresetPath(configPath),
+            backup: false);
         return new MainWindowViewModel(
             configPath,
             settingsPath,

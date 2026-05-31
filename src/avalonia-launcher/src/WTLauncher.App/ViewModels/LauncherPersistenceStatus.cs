@@ -5,9 +5,6 @@ public static class LauncherPersistenceStatus
     public static string ConfigSaveFailed(Exception exception) =>
         Failed("配置保存失败", exception);
 
-    public static string PresetLoadFailed(Exception exception) =>
-        Failed("启动组加载失败", exception);
-
     public static string PresetSaveFailed(Exception exception) =>
         Failed("启动组保存失败", exception);
 

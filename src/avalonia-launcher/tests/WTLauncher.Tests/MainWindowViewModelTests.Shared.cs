@@ -48,11 +48,16 @@ public sealed partial class MainWindowViewModelTests
         var configDir = Path.Combine(temp.Path, LauncherConfigStore.ConfigDirectoryName);
         Directory.CreateDirectory(configDir);
         var config = Path.Combine(configDir, LauncherConfigStore.ConfigFileName);
+        var presets = Path.Combine(configDir, LauncherPresetStore.PresetsFileName);
         LauncherConfigStore.Save(entries, config, backup: true);
+        SavePresetFile(
+            presets,
+            "default",
+            Preset("default", "Default", entries.Select(entry => entry.Id).ToArray()));
         return (
             config,
             Path.Combine(configDir, LauncherConfigStore.SettingsFileName),
-            Path.Combine(configDir, LauncherPresetStore.PresetsFileName));
+            presets);
     }
 
     private static void AssertNoStoreTempFiles(string path)
@@ -70,7 +75,7 @@ public sealed partial class MainWindowViewModelTests
                 Presets = [.. presets],
             },
             path,
-            backup: true);
+            backup: false);
 
     private static LauncherPreset Preset(string id, string name, params string[] entryIds) =>
         Preset(id, name, locked: false, entryIds);

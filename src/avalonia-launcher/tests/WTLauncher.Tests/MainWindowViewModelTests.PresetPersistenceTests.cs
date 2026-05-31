@@ -5,6 +5,19 @@ namespace WTLauncher.Tests;
 public sealed partial class MainWindowViewModelTests
 {
     [Fact]
+    public void MissingPresetFileFailsBeforeViewModelStateIsBuilt()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
+        File.Delete(presets);
+
+        var exception = Assert.Throws<FileNotFoundException>(() => CreateViewModel(config, settings));
+
+        Assert.Equal("Launcher presets not found.", exception.Message);
+        Assert.Equal(presets, exception.FileName);
+    }
+
+    [Fact]
     public async Task LaunchGroupSaveRollsBackInMemoryStateWhenPersistFails()
     {
         using var temp = new TempDirectory();

@@ -87,13 +87,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ReplaceEntries(LauncherConfigStore.Load(_configPath));
         LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds());
 
-        var presetError = LoadPresetFile(preferredPresetId: null);
+        LoadPresetFile(preferredPresetId: null);
 
         RefreshSelectionState();
         ApplyFilter();
         LauncherEntryLayoutPresentation.Refresh(Entries);
-        StatusText = presetError
-            ?? LauncherMainWindowText.Loaded(TotalCount, PresetCount);
+        StatusText = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
     }
 
     private void ApplyStatusText(string? statusText)
