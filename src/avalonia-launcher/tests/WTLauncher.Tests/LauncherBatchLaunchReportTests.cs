@@ -37,8 +37,19 @@ public sealed class LauncherBatchLaunchReportTests
         var report = new LauncherBatchLaunchReport();
 
         report.RecordFailure(" one ", new InvalidOperationException("missing one"));
-        report.RecordFailure(null!, new InvalidOperationException("missing name"));
+        report.RecordFailure("", new InvalidOperationException("missing name"));
 
         Assert.Equal(["one: missing one", "(unnamed): missing name"], report.FailureMessages);
+    }
+
+    [Fact]
+    public void ReportRejectsNullFailureEntryName()
+    {
+        var report = new LauncherBatchLaunchReport();
+
+        var exception = Assert.Throws<ArgumentNullException>(() =>
+            report.RecordFailure(null!, new InvalidOperationException("missing name")));
+
+        Assert.Equal("entryName", exception.ParamName);
     }
 }

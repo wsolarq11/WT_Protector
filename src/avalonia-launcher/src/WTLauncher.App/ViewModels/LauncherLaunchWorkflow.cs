@@ -49,7 +49,7 @@ public sealed class LauncherLaunchWorkflow
             }
             catch (Exception ex)
             {
-                report.RecordFailure(entry?.Name, ex);
+                report.RecordFailure(entry.Name, ex);
             }
         }
 
