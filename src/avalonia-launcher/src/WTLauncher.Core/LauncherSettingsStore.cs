@@ -58,7 +58,7 @@ public static class LauncherSettingsStore
         settings.LastFilterText ??= string.Empty;
         settings.SortMode = LauncherEntryVisibility.NormalizeSortModeId(settings.SortMode);
         settings.EntryViewMode = LauncherEntryViewModes.NormalizeId(settings.EntryViewMode);
-        settings.CustomEntryOrder = LauncherEntryIds.ToUniqueUsableList(settings.CustomEntryOrder ?? []);
+        settings.CustomEntryOrder = RequireCustomEntryOrder(settings.CustomEntryOrder);
         settings.Window ??= new LauncherWindowSettings();
     }
 
@@ -67,5 +67,27 @@ public static class LauncherSettingsStore
         var clone = LauncherSettingsCopies.Clone(settings);
         Normalize(clone);
         return clone;
+    }
+
+    private static List<string> RequireCustomEntryOrder(IReadOnlyList<string>? customEntryOrder)
+    {
+        if (customEntryOrder is null)
+            throw new InvalidDataException("Launcher settings customEntryOrder is null.");
+
+        var normalized = new List<string>(customEntryOrder.Count);
+        var seen = new HashSet<string>(LauncherEntryIds.Comparer);
+        for (var i = 0; i < customEntryOrder.Count; i++)
+        {
+            var entryId = LauncherEntryIds.Normalize(customEntryOrder[i]);
+            if (entryId.Length == 0)
+                throw new InvalidDataException($"Launcher settings customEntryOrder[{i}] is empty.");
+
+            if (!seen.Add(entryId))
+                throw new InvalidDataException($"Launcher settings customEntryOrder[{i}] is duplicate: {entryId}.");
+
+            normalized.Add(entryId);
+        }
+
+        return normalized;
     }
 }

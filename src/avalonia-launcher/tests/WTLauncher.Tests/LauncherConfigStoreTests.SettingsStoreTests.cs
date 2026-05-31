@@ -54,7 +54,7 @@ public sealed partial class LauncherConfigStoreTests
                 LastFilterText = null!,
                 SortMode = null!,
                 EntryViewMode = null!,
-                CustomEntryOrder = [" one ", null!, "one", " ", "two", " two "],
+                CustomEntryOrder = [" one ", "two "],
                 Window = null!,
             },
             settings);
@@ -71,7 +71,7 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void SettingsStore_NormalizesNullWindowAndOrderFromConfig()
+    public void SettingsStore_RejectsNullCustomEntryOrderFromConfig()
     {
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
@@ -86,14 +86,9 @@ public sealed partial class LauncherConfigStoreTests
         }
         """);
 
-        var loaded = LauncherSettingsStore.Load(settings);
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherSettingsStore.Load(settings));
 
-        Assert.Equal(LauncherSettings.DefaultTheme, loaded.Theme);
-        Assert.Equal(string.Empty, loaded.LastFilterText);
-        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, loaded.SortMode);
-        Assert.Equal(LauncherEntryViewModes.CardsId, loaded.EntryViewMode);
-        Assert.NotNull(loaded.Window);
-        Assert.Empty(loaded.CustomEntryOrder);
+        Assert.Equal("Launcher settings customEntryOrder is null.", exception.Message);
     }
 
     [Fact]
@@ -108,18 +103,48 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void SettingsStore_NormalizesCustomEntryOrderIdsFromConfig()
+    public void SettingsStore_TrimsCustomEntryOrderIdsFromConfig()
     {
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
-          "customEntryOrder": [" one ", null, "one", " ", "two", " two "]
+          "customEntryOrder": [" one ", "two "]
         }
         """);
 
         var loaded = LauncherSettingsStore.Load(settings);
 
         Assert.Equal(["one", "two"], loaded.CustomEntryOrder);
+    }
+
+    [Fact]
+    public void SettingsStore_RejectsDuplicateCustomEntryOrderIdsFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
+        {
+          "customEntryOrder": ["one", " two ", "one"]
+        }
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherSettingsStore.Load(settings));
+
+        Assert.Equal("Launcher settings customEntryOrder[2] is duplicate: one.", exception.Message);
+    }
+
+    [Fact]
+    public void SettingsStore_RejectsBlankCustomEntryOrderIdsFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
+        {
+          "customEntryOrder": ["one", " ", "two"]
+        }
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherSettingsStore.Load(settings));
+
+        Assert.Equal("Launcher settings customEntryOrder[1] is empty.", exception.Message);
     }
 
     [Fact]
@@ -167,7 +192,7 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void SettingsStore_NormalizesSettingsDataBeforeWriting()
+    public void SettingsStore_TrimsSettingsDataBeforeWriting()
     {
         using var temp = new TempDirectory();
         var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
@@ -177,7 +202,7 @@ public sealed partial class LauncherConfigStoreTests
             LastFilterText = null!,
             SortMode = null!,
             EntryViewMode = null!,
-            CustomEntryOrder = [null!, " one ", "one", " ", "two", " two "],
+            CustomEntryOrder = [" one ", "two "],
             Window = null!,
         };
 
@@ -187,7 +212,7 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Null(settings.LastFilterText);
         Assert.Null(settings.SortMode);
         Assert.Null(settings.EntryViewMode);
-        Assert.Equal([null!, " one ", "one", " ", "two", " two "], settings.CustomEntryOrder);
+        Assert.Equal([" one ", "two "], settings.CustomEntryOrder);
         Assert.Null(settings.Window);
         var loaded = LauncherSettingsStore.Load(settingsPath);
         Assert.Equal(LauncherSettings.DefaultTheme, loaded.Theme);
@@ -217,6 +242,24 @@ public sealed partial class LauncherConfigStoreTests
                 settingsPath));
 
         Assert.Equal("Unknown launcher sort mode: missing.", exception.Message);
+        Assert.False(File.Exists(settingsPath));
+    }
+
+    [Fact]
+    public void SettingsStore_RejectsNullCustomEntryOrderBeforeWriting()
+    {
+        using var temp = new TempDirectory();
+        var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherSettingsStore.Save(
+                new LauncherSettings
+                {
+                    CustomEntryOrder = null!,
+                },
+                settingsPath));
+
+        Assert.Equal("Launcher settings customEntryOrder is null.", exception.Message);
         Assert.False(File.Exists(settingsPath));
     }
 
@@ -255,7 +298,7 @@ public sealed partial class LauncherConfigStoreTests
             Theme = null!,
             SortMode = LauncherEntryVisibility.CustomSortModeId,
             EntryViewMode = LauncherEntryViewModes.CardsId,
-            CustomEntryOrder = [" one ", "one"],
+            CustomEntryOrder = ["one", "two"],
             Window = new LauncherWindowSettings
             {
                 Width = LauncherWindowSettings.DefaultWidth,
@@ -270,7 +313,7 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Null(settings.Theme);
         Assert.Equal(LauncherEntryVisibility.CustomSortModeId, settings.SortMode);
         Assert.Equal(LauncherEntryViewModes.CardsId, settings.EntryViewMode);
-        Assert.Equal([" one ", "one"], settings.CustomEntryOrder);
+        Assert.Equal(["one", "two"], settings.CustomEntryOrder);
         Assert.Equal(LauncherWindowSettings.DefaultWidth, settings.Window.Width);
         Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window.Height);
         Assert.Empty(Directory.EnumerateFiles(configDir, $"{LauncherConfigStore.SettingsFileName}.tmp-*"));
