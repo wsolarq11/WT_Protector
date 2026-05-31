@@ -103,6 +103,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("invalid move/custom-order rejection before mutation or sort projection", audit);
         Assert.Contains("missing, unknown, or wrong-case JSON fields now fail fast", audit);
         Assert.Contains("missing `entryIds` rejection", audit);
+        Assert.Contains("invalid preset references rejected before label/preview/launch projection", audit);
         Assert.Contains("propagates missing or failed `presets.json`", audit);
         Assert.Contains("instead of synthesizing a second empty preset truth", audit);
         Assert.Contains("null settings fields, blank mode ids, and non-positive persisted window dimensions now fail fast", audit);

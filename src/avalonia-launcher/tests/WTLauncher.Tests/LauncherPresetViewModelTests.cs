@@ -6,13 +6,13 @@ namespace WTLauncher.Tests;
 public sealed class LauncherPresetViewModelTests
 {
     [Fact]
-    public void EntryCountUsesNormalizedUsableEntryIds()
+    public void EntryCountUsesNormalizedEntryIds()
     {
         var preset = new LauncherPreset
         {
             Id = "daily",
             Name = "Daily",
-            EntryIds = ["one", " one ", "two", " "],
+            EntryIds = [" one ", "two"],
         };
 
         var viewModel = new LauncherPresetViewModel(preset);
@@ -22,18 +22,37 @@ public sealed class LauncherPresetViewModelTests
     }
 
     [Fact]
-    public void LockedLabelUsesNormalizedEntryCount()
+    public void EntryCountRejectsInvalidPresetReferences()
     {
         var preset = new LauncherPreset
         {
             Id = "daily",
             Name = "Daily",
-            EntryIds = ["one", "one", ""],
+            EntryIds = ["one", " one "],
+        };
+
+        var viewModel = new LauncherPresetViewModel(preset);
+
+        var exception = Assert.Throws<ArgumentException>(() => viewModel.EntryCount);
+
+        Assert.Equal("EntryIds", exception.ParamName);
+    }
+
+    [Fact]
+    public void LockedLabelRejectsInvalidPresetReferences()
+    {
+        var preset = new LauncherPreset
+        {
+            Id = "daily",
+            Name = "Daily",
+            EntryIds = ["one", ""],
             Locked = true,
         };
 
         var viewModel = new LauncherPresetViewModel(preset);
 
-        Assert.Equal("Daily (系统组, 1项)", viewModel.Label);
+        var exception = Assert.Throws<ArgumentException>(() => viewModel.Label);
+
+        Assert.Equal("EntryIds", exception.ParamName);
     }
 }

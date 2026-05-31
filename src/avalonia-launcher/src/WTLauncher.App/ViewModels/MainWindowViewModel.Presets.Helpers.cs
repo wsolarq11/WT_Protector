@@ -163,7 +163,7 @@ public sealed partial class MainWindowViewModel
     private List<LauncherEntryViewModel> GetPresetEntries(IEnumerable<string> entryIds)
     {
         var entriesById = Entries.ToDictionary(entry => entry.Id, LauncherEntryIds.Comparer);
-        return LauncherEntryIds.ToUniqueUsableList(entryIds)
+        return LauncherEntryIds.ToRequiredUniqueList(entryIds, nameof(entryIds))
             .Select(id => entriesById[id])
             .ToList();
     }

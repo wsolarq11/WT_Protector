@@ -65,9 +65,9 @@ public sealed class LauncherPresetSelectionPreview
         IEnumerable<string> knownIds,
         IEnumerable<string> presetIds)
     {
-        var selectedSet = LauncherEntryIds.ToUsableSet(selectedIds);
-        var knownSet = LauncherEntryIds.ToUsableSet(knownIds);
-        var presetSet = LauncherEntryIds.ToUsableSet(presetIds);
+        var selectedSet = LauncherEntryIds.ToRequiredSet(selectedIds, nameof(selectedIds));
+        var knownSet = LauncherEntryIds.ToRequiredSet(knownIds, nameof(knownIds));
+        var presetSet = LauncherEntryIds.ToRequiredSet(presetIds, nameof(presetIds));
         var missingConfigIds = presetSet.Where(id => !knownSet.Contains(id)).ToList();
         var matched = selectedSet.Count(presetSet.Contains);
         var missing = presetSet.Count - matched;

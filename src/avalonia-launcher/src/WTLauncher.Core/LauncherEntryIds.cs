@@ -32,4 +32,30 @@ public static class LauncherEntryIds
 
     public static HashSet<string> ToUsableSet(IEnumerable<string> ids) =>
         ToUniqueUsableList(ids).ToHashSet(Comparer);
+
+    public static List<string> ToRequiredUniqueList(IEnumerable<string> ids, string paramName)
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+
+        var list = new List<string>();
+        var seen = new HashSet<string>(Comparer);
+        var index = 0;
+        foreach (var id in ids)
+        {
+            var normalized = Normalize(id);
+            if (!IsUsable(normalized))
+                throw new ArgumentException($"Entry id {index} is required.", paramName);
+
+            if (!seen.Add(normalized))
+                throw new ArgumentException($"Entry id {index} is duplicate: {normalized}.", paramName);
+
+            list.Add(normalized);
+            index++;
+        }
+
+        return list;
+    }
+
+    public static HashSet<string> ToRequiredSet(IEnumerable<string> ids, string paramName) =>
+        ToRequiredUniqueList(ids, paramName).ToHashSet(Comparer);
 }

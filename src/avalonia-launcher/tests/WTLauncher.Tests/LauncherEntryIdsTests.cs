@@ -55,4 +55,30 @@ public sealed class LauncherEntryIdsTests
 
         Assert.Equal(["one", "two", "One"], ids);
     }
+
+    [Fact]
+    public void ToRequiredUniqueListRejectsBlankIds()
+    {
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryIds.ToRequiredUniqueList(["one", " "], "ids"));
+
+        Assert.Equal("ids", exception.ParamName);
+    }
+
+    [Fact]
+    public void ToRequiredUniqueListRejectsDuplicateIds()
+    {
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryIds.ToRequiredUniqueList(["one", " one "], "ids"));
+
+        Assert.Equal("ids", exception.ParamName);
+    }
+
+    [Fact]
+    public void ToRequiredUniqueListNormalizesValidIdsInOrder()
+    {
+        var ids = LauncherEntryIds.ToRequiredUniqueList([" one ", "Two"], "ids");
+
+        Assert.Equal(["one", "Two"], ids);
+    }
 }

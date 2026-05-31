@@ -60,7 +60,7 @@ public sealed class LauncherPresetSelectionPreviewTests
             "Daily",
             selectedIds: [" one "],
             knownIds: ["one"],
-            presetIds: [" one ", "one", " "]);
+            presetIds: [" one "]);
 
         Assert.False(preview.HasChanges);
         Assert.Empty(preview.MissingConfigIds);
@@ -68,6 +68,32 @@ public sealed class LauncherPresetSelectionPreviewTests
         Assert.Equal(0, preview.MissingCount);
         Assert.Equal(0, preview.ExtraCount);
         Assert.Equal("已匹配", preview.ApplyButtonText);
+    }
+
+    [Fact]
+    public void ForPresetRejectsInvalidPresetIdsBeforeComparing()
+    {
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherPresetSelectionPreview.ForPreset(
+                "Daily",
+                selectedIds: ["one"],
+                knownIds: ["one"],
+                presetIds: ["one", " one "]));
+
+        Assert.Equal("presetIds", exception.ParamName);
+    }
+
+    [Fact]
+    public void ForPresetRejectsInvalidKnownIdsBeforeComparing()
+    {
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherPresetSelectionPreview.ForPreset(
+                "Daily",
+                selectedIds: ["one"],
+                knownIds: ["one", " "],
+                presetIds: ["one"]));
+
+        Assert.Equal("knownIds", exception.ParamName);
     }
 
     [Theory]
@@ -93,13 +119,13 @@ public sealed class LauncherPresetSelectionPreviewTests
     }
 
     [Fact]
-    public void ForPresetDedupesAndReportsMissingConfigIds()
+    public void ForPresetReportsMissingConfigIds()
     {
         var preview = LauncherPresetSelectionPreview.ForPreset(
             "Broken",
             selectedIds: [],
             knownIds: ["known"],
-            presetIds: ["missing", "missing", "", " "]);
+            presetIds: ["missing"]);
 
         Assert.True(preview.HasChanges);
         Assert.Equal(["missing"], preview.MissingConfigIds);

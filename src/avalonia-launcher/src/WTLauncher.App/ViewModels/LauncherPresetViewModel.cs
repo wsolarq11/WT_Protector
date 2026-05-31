@@ -17,7 +17,7 @@ public sealed class LauncherPresetViewModel
 
     public IReadOnlyList<string> EntryIds => Preset.EntryIds;
 
-    public int EntryCount => LauncherEntryIds.ToUsableSet(EntryIds).Count;
+    public int EntryCount => LauncherEntryIds.ToRequiredUniqueList(EntryIds, nameof(EntryIds)).Count;
 
     public bool IsLocked => Preset.Locked;
 
