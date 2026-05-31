@@ -13,16 +13,11 @@ public static class LauncherEntryReferences
 
         var normalizedOldEntryId = RequireEntryId(oldEntryId, nameof(oldEntryId));
         var normalizedNewEntryId = RequireEntryId(newEntryId, nameof(newEntryId));
-        foreach (var entryIds in EntryReferenceLists(presetFile, customEntryOrder))
-        {
-            for (var i = 0; i < entryIds.Count; i++)
-            {
-                if (LauncherEntryIds.SameNormalized(entryIds[i], normalizedOldEntryId))
-                    entryIds[i] = normalizedNewEntryId;
-            }
+        var updates = EntryReferenceLists(presetFile, customEntryOrder)
+            .Select(entryIds => (Target: entryIds, EntryIds: RenameReferences(entryIds, normalizedOldEntryId, normalizedNewEntryId)))
+            .ToList();
 
-            NormalizeEntryIds(entryIds);
-        }
+        ApplyUpdates(updates);
     }
 
     public static void RemoveEntryId(
@@ -34,11 +29,33 @@ public static class LauncherEntryReferences
         ArgumentNullException.ThrowIfNull(customEntryOrder);
 
         var normalizedEntryId = RequireEntryId(entryId, nameof(entryId));
-        foreach (var entryIds in EntryReferenceLists(presetFile, customEntryOrder))
+        var updates = EntryReferenceLists(presetFile, customEntryOrder)
+            .Select(entryIds => (Target: entryIds, EntryIds: RemoveReferences(entryIds, normalizedEntryId)))
+            .ToList();
+
+        ApplyUpdates(updates);
+    }
+
+    private static List<string> RenameReferences(
+        IEnumerable<string> entryIds,
+        string oldEntryId,
+        string newEntryId)
+    {
+        var normalized = LauncherEntryIds.ToRequiredUniqueList(entryIds, nameof(entryIds));
+        for (var i = 0; i < normalized.Count; i++)
         {
-            entryIds.RemoveAll(id => LauncherEntryIds.SameNormalized(id, normalizedEntryId));
-            NormalizeEntryIds(entryIds);
+            if (LauncherEntryIds.Same(normalized[i], oldEntryId))
+                normalized[i] = newEntryId;
         }
+
+        return LauncherEntryIds.ToRequiredUniqueList(normalized, nameof(entryIds));
+    }
+
+    private static List<string> RemoveReferences(IEnumerable<string> entryIds, string entryId)
+    {
+        return LauncherEntryIds.ToRequiredUniqueList(entryIds, nameof(entryIds))
+            .Where(id => !LauncherEntryIds.Same(id, entryId))
+            .ToList();
     }
 
     private static IEnumerable<List<string>> EntryReferenceLists(
@@ -53,11 +70,13 @@ public static class LauncherEntryReferences
         yield return customEntryOrder;
     }
 
-    private static void NormalizeEntryIds(List<string> entryIds)
+    private static void ApplyUpdates(IEnumerable<(List<string> Target, List<string> EntryIds)> updates)
     {
-        var normalized = LauncherEntryIds.ToUniqueUsableList(entryIds);
-        entryIds.Clear();
-        entryIds.AddRange(normalized);
+        foreach (var update in updates)
+        {
+            update.Target.Clear();
+            update.Target.AddRange(update.EntryIds);
+        }
     }
 
     private static string RequireEntryId(string? entryId, string paramName)

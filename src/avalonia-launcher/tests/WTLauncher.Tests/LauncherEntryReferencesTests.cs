@@ -8,9 +8,9 @@ public sealed class LauncherEntryReferencesTests
     public void RenameEntryIdUpdatesPresetsAndCustomOrder()
     {
         var presetFile = PresetFile(
-            Preset("daily", "one", "two", "one"),
+            Preset("daily", "one", "two"),
             Preset("manual", "three"));
-        var customEntryOrder = new List<string> { "one", "two", "one", "three" };
+        var customEntryOrder = new List<string> { "one", "two", "three" };
 
         LauncherEntryReferences.RenameEntryId(
             presetFile,
@@ -26,8 +26,8 @@ public sealed class LauncherEntryReferencesTests
     [Fact]
     public void RenameEntryIdMatchesTrimmedReferences()
     {
-        var presetFile = PresetFile(Preset("daily", " one ", "two", "one"));
-        var customEntryOrder = new List<string> { " one ", "two", "one" };
+        var presetFile = PresetFile(Preset("daily", " one ", "two"));
+        var customEntryOrder = new List<string> { " one ", "two" };
 
         LauncherEntryReferences.RenameEntryId(
             presetFile,
@@ -95,9 +95,9 @@ public sealed class LauncherEntryReferencesTests
     public void RemoveEntryIdRemovesPresetsAndCustomOrderReferences()
     {
         var presetFile = PresetFile(
-            Preset("daily", "one", "two", "one"),
+            Preset("daily", "one", "two"),
             Preset("manual", "three"));
-        var customEntryOrder = new List<string> { "one", "two", "one", "three" };
+        var customEntryOrder = new List<string> { "one", "two", "three" };
 
         LauncherEntryReferences.RemoveEntryId(
             presetFile,
@@ -112,8 +112,8 @@ public sealed class LauncherEntryReferencesTests
     [Fact]
     public void RemoveEntryIdMatchesTrimmedReferences()
     {
-        var presetFile = PresetFile(Preset("daily", " one ", "two", "one", " "));
-        var customEntryOrder = new List<string> { " one ", "two", "one", " " };
+        var presetFile = PresetFile(Preset("daily", " one ", "two"));
+        var customEntryOrder = new List<string> { " one ", "two" };
 
         LauncherEntryReferences.RemoveEntryId(
             presetFile,
@@ -122,6 +122,60 @@ public sealed class LauncherEntryReferencesTests
 
         Assert.Equal(["two"], presetFile.Presets[0].EntryIds);
         Assert.Equal(["two"], customEntryOrder);
+    }
+
+    [Fact]
+    public void RenameEntryIdRejectsDuplicateReferencesBeforeMutatingReferences()
+    {
+        var presetFile = PresetFile(Preset("daily", "one", " one "));
+        var customEntryOrder = new List<string> { "one", "two" };
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryReferences.RenameEntryId(
+                presetFile,
+                customEntryOrder,
+                oldEntryId: "one",
+                newEntryId: "one-renamed"));
+
+        Assert.Equal("entryIds", exception.ParamName);
+        Assert.Equal(["one", " one "], presetFile.Presets[0].EntryIds);
+        Assert.Equal(["one", "two"], customEntryOrder);
+    }
+
+    [Fact]
+    public void RenameEntryIdRejectsBlankReferencesBeforeMutatingAnyReferences()
+    {
+        var presetFile = PresetFile(Preset("daily", "one"));
+        var customEntryOrder = new List<string> { "one", " " };
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryReferences.RenameEntryId(
+                presetFile,
+                customEntryOrder,
+                oldEntryId: "one",
+                newEntryId: "one-renamed"));
+
+        Assert.Equal("entryIds", exception.ParamName);
+        Assert.Equal(["one"], presetFile.Presets[0].EntryIds);
+        Assert.Equal(["one", " "], customEntryOrder);
+    }
+
+    [Fact]
+    public void RenameEntryIdRejectsResultingDuplicateReferencesBeforeMutatingReferences()
+    {
+        var presetFile = PresetFile(Preset("daily", "one", "two"));
+        var customEntryOrder = new List<string> { "one", "two" };
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryReferences.RenameEntryId(
+                presetFile,
+                customEntryOrder,
+                oldEntryId: "one",
+                newEntryId: "two"));
+
+        Assert.Equal("entryIds", exception.ParamName);
+        Assert.Equal(["one", "two"], presetFile.Presets[0].EntryIds);
+        Assert.Equal(["one", "two"], customEntryOrder);
     }
 
     [Fact]
@@ -139,6 +193,23 @@ public sealed class LauncherEntryReferencesTests
         Assert.Equal("entryId", exception.ParamName);
         Assert.Equal(["one", " "], presetFile.Presets[0].EntryIds);
         Assert.Equal(["one", " "], customEntryOrder);
+    }
+
+    [Fact]
+    public void RemoveEntryIdRejectsDuplicateReferencesBeforeMutatingReferences()
+    {
+        var presetFile = PresetFile(Preset("daily", "one", "two"));
+        var customEntryOrder = new List<string> { "one", " two ", "two" };
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryReferences.RemoveEntryId(
+                presetFile,
+                customEntryOrder,
+                entryId: "one"));
+
+        Assert.Equal("entryIds", exception.ParamName);
+        Assert.Equal(["one", "two"], presetFile.Presets[0].EntryIds);
+        Assert.Equal(["one", " two ", "two"], customEntryOrder);
     }
 
     private static LauncherPresetFile PresetFile(params LauncherPreset[] presets) =>

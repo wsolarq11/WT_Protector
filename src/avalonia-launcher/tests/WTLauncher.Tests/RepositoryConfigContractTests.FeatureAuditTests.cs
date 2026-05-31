@@ -93,7 +93,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("side-effect-free current-group preview", audit);
         Assert.Contains("preserving the preset name in cancellation and unexpected-failure status", audit);
         Assert.Contains("config-save failures during select-all/clear/checkbox mutation", audit);
-        Assert.Contains("blank id rejection before reference rename/remove mutation", audit);
+        Assert.Contains("blank/duplicate reference rejection before reference rename/remove mutation", audit);
         Assert.Contains("Applying a preset has a failure contract too", audit);
         Assert.Contains("roll back memory/file state on preset save failures", audit);
         Assert.Contains("reject blank preset entry ids before add/update mutation", audit);
