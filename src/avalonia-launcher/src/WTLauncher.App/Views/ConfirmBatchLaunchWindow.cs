@@ -16,9 +16,7 @@ public sealed class ConfirmBatchLaunchWindow : Window
         MinHeight = 340;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
-        var plans = string.Join(
-            Environment.NewLine + Environment.NewLine,
-            items.Select(item => $"• {item.Entry.Name}{Environment.NewLine}{item.Plan.CommandLine}"));
+        var plans = LauncherBatchLaunchPlanText.Format(items);
         var message = $"将启动 {items.Count} 个已勾选项。请确认实际 wt.exe 命令。";
         var title = LauncherDialogText.Title("一键启动已勾选项？");
         var messageText = LauncherDialogText.Body(message);

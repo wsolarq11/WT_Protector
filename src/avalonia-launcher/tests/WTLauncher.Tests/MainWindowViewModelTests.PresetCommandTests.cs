@@ -75,11 +75,13 @@ public sealed partial class MainWindowViewModelTests
 
         var viewModel = CreateViewModel(config, settings);
         var applyNotifications = 0;
+        var previewNotifications = 0;
         var launchNotifications = 0;
         var updateNotifications = 0;
         var deleteNotifications = 0;
 
         viewModel.ApplyPresetCommand.CanExecuteChanged += (_, _) => applyNotifications++;
+        viewModel.PreviewSelectedPresetCommand.CanExecuteChanged += (_, _) => previewNotifications++;
         viewModel.LaunchSelectedPresetCommand.CanExecuteChanged += (_, _) => launchNotifications++;
         viewModel.UpdateSelectedPresetCommand.CanExecuteChanged += (_, _) => updateNotifications++;
         viewModel.DeleteSelectedPresetCommand.CanExecuteChanged += (_, _) => deleteNotifications++;
@@ -87,6 +89,7 @@ public sealed partial class MainWindowViewModelTests
         viewModel.SelectedPreset = viewModel.Presets.Single(preset => preset.Id == "blank-manual");
 
         Assert.True(applyNotifications > 0);
+        Assert.True(previewNotifications > 0);
         Assert.True(launchNotifications > 0);
         Assert.True(updateNotifications > 0);
         Assert.True(deleteNotifications > 0);
@@ -127,6 +130,60 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(["codex", "opencode"], startedPlans.Select(plan => plan.Command).ToArray());
         Assert.Equal("启动组“Daily”: 已启动 2 个启动项", viewModel.StatusText);
+        var entries = LoadEntriesById(config);
+        Assert.All(entries, entry => Assert.False(entry.Selected));
+    }
+
+    [Fact]
+    public void PreviewSelectedPresetShowsGeneratedCommandLinesWithoutStartingOrPersistingSelection()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex", selected: false),
+            Entry("two", directory: temp.Path, command: "opencode", selected: false));
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one", "two"));
+        var startedPlans = new List<LaunchPlan>();
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = true },
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+
+        viewModel.PreviewSelectedPresetCommand.Execute(null);
+
+        Assert.Empty(startedPlans);
+        Assert.Contains("• one", viewModel.DryRunText);
+        Assert.Contains("• two", viewModel.DryRunText);
+        Assert.Contains("wt.exe", viewModel.DryRunText);
+        Assert.Contains("codex", viewModel.DryRunText);
+        Assert.Contains("opencode", viewModel.DryRunText);
+        Assert.Equal("预演启动组: Daily（2 项）", viewModel.StatusText);
+        var entries = LoadEntriesById(config);
+        Assert.All(entries, entry => Assert.False(entry.Selected));
+    }
+
+    [Fact]
+    public void PreviewSelectedPresetReportsPlanFailuresWithoutStartingOrPersistingSelection()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: Path.Combine(temp.Path, "missing"), command: "codex", selected: false));
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+        var startedPlans = new List<LaunchPlan>();
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = false },
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+
+        viewModel.PreviewSelectedPresetCommand.Execute(null);
+
+        Assert.Empty(startedPlans);
+        Assert.Contains("one:", viewModel.DryRunText);
+        Assert.Contains("directory does not exist", viewModel.DryRunText);
+        Assert.Equal("启动组“Daily”预演失败: 1 个失败", viewModel.StatusText);
         var entries = LoadEntriesById(config);
         Assert.All(entries, entry => Assert.False(entry.Selected));
     }
@@ -197,6 +254,7 @@ public sealed partial class MainWindowViewModelTests
 
         var viewModel = CreateViewModel(config, settings);
 
+        Assert.False(viewModel.PreviewSelectedPresetCommand.CanExecute(null));
         Assert.False(viewModel.LaunchSelectedPresetCommand.CanExecute(null));
     }
 

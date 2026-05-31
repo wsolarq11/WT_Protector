@@ -65,9 +65,11 @@ public sealed class DialogLayoutContractTests
     public void BatchLaunchConfirmationShowsPreflightedCommandLines()
     {
         var source = File.ReadAllText(TestRepositoryPaths.View("ConfirmBatchLaunchWindow.cs"));
+        var formatter = File.ReadAllText(TestRepositoryPaths.ViewModel("LauncherBatchLaunchPlanText.cs"));
 
         Assert.Contains("IReadOnlyList<LauncherBatchLaunchItem> items", source);
-        Assert.Contains("item.Plan.CommandLine", source);
+        Assert.Contains("LauncherBatchLaunchPlanText.Format(items)", source);
+        Assert.Contains("item.Plan.CommandLine", formatter);
         Assert.Contains("请确认实际 wt.exe 命令", source);
         Assert.Contains("Text = plans", source);
         Assert.Contains("IsReadOnly = true", source);

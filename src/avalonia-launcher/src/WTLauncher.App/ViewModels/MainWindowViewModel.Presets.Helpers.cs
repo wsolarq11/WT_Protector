@@ -151,6 +151,7 @@ public sealed partial class MainWindowViewModel
     private void NotifyPresetManagementCommands()
     {
         SaveSelectionAsPresetCommand.NotifyCanExecuteChanged();
+        PreviewSelectedPresetCommand.NotifyCanExecuteChanged();
         LaunchSelectedPresetCommand.NotifyCanExecuteChanged();
         UpdateSelectedPresetCommand.NotifyCanExecuteChanged();
         DeleteSelectedPresetCommand.NotifyCanExecuteChanged();

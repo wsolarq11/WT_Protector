@@ -19,6 +19,21 @@ public static class LauncherPresetStatus
     public static string Applied(string presetName, int entryCount) =>
         $"已应用启动组: {presetName}（{entryCount} 项，已保存）";
 
+    public static string Previewed(string presetName, int entryCount) =>
+        $"预演启动组: {presetName}（{entryCount} 项）";
+
+    public static string PreviewFailed(string presetName, LauncherBatchLaunchReport report)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        return $"启动组“{presetName}”预演失败: {report.FailedCount} 个失败";
+    }
+
+    public static string PreviewFailed(string presetName, Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+        return $"启动组“{presetName}”预演失败: {exception.Message}";
+    }
+
     public static string Launched(string presetName, LauncherBatchLaunchReport report) =>
         $"启动组“{presetName}”: {LauncherSelectionStatus.BatchLaunchCompleted(report, "启动项")}";
 

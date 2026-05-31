@@ -19,6 +19,15 @@ internal static class TestRepositoryPaths
         "Views",
         fileName);
 
+    public static string ViewModel(string fileName) => Path.Combine(
+        Root,
+        "src",
+        "avalonia-launcher",
+        "src",
+        "WTLauncher.App",
+        "ViewModels",
+        fileName);
+
     public static string MainWindowXaml => View("MainWindow.axaml");
 
     public static string MainWindowCodeBehind => View("MainWindow.axaml.cs");
