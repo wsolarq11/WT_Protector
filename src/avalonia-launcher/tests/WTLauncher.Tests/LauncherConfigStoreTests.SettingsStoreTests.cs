@@ -123,20 +123,35 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void SettingsStore_NormalizesInvalidModeIdsFromConfig()
+    public void SettingsStore_RejectsUnknownSortModeFromConfig()
     {
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
           "sortMode": " missing ",
+          "entryViewMode": "cards"
+        }
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherSettingsStore.Load(settings));
+
+        Assert.Equal("Unknown launcher sort mode: missing.", exception.Message);
+    }
+
+    [Fact]
+    public void SettingsStore_RejectsUnknownEntryViewModeFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
+        {
+          "sortMode": "custom",
           "entryViewMode": " missing "
         }
         """);
 
-        var loaded = LauncherSettingsStore.Load(settings);
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherSettingsStore.Load(settings));
 
-        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, loaded.SortMode);
-        Assert.Equal(LauncherEntryViewModes.CardsId, loaded.EntryViewMode);
+        Assert.Equal("Unknown launcher entry view mode: missing.", exception.Message);
     }
 
     [Fact]
@@ -160,8 +175,8 @@ public sealed partial class LauncherConfigStoreTests
         {
             Theme = null!,
             LastFilterText = null!,
-            SortMode = " missing ",
-            EntryViewMode = " missing ",
+            SortMode = null!,
+            EntryViewMode = null!,
             CustomEntryOrder = [null!, " one ", "one", " ", "two", " two "],
             Window = null!,
         };
@@ -170,8 +185,8 @@ public sealed partial class LauncherConfigStoreTests
 
         Assert.Null(settings.Theme);
         Assert.Null(settings.LastFilterText);
-        Assert.Equal(" missing ", settings.SortMode);
-        Assert.Equal(" missing ", settings.EntryViewMode);
+        Assert.Null(settings.SortMode);
+        Assert.Null(settings.EntryViewMode);
         Assert.Equal([null!, " one ", "one", " ", "two", " two "], settings.CustomEntryOrder);
         Assert.Null(settings.Window);
         var loaded = LauncherSettingsStore.Load(settingsPath);
@@ -184,6 +199,25 @@ public sealed partial class LauncherConfigStoreTests
         var savedJson = File.ReadAllText(settingsPath);
         Assert.DoesNotContain("null", savedJson);
         AssertUsesRepositoryLineEndings(savedJson);
+    }
+
+    [Fact]
+    public void SettingsStore_RejectsUnknownModeIdsBeforeWriting()
+    {
+        using var temp = new TempDirectory();
+        var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherSettingsStore.Save(
+                new LauncherSettings
+                {
+                    SortMode = " missing ",
+                    EntryViewMode = LauncherEntryViewModes.CardsId,
+                },
+                settingsPath));
+
+        Assert.Equal("Unknown launcher sort mode: missing.", exception.Message);
+        Assert.False(File.Exists(settingsPath));
     }
 
     [Fact]
@@ -219,8 +253,8 @@ public sealed partial class LauncherConfigStoreTests
         var settings = new LauncherSettings
         {
             Theme = null!,
-            SortMode = " missing ",
-            EntryViewMode = " missing ",
+            SortMode = LauncherEntryVisibility.CustomSortModeId,
+            EntryViewMode = LauncherEntryViewModes.CardsId,
             CustomEntryOrder = [" one ", "one"],
             Window = new LauncherWindowSettings
             {
@@ -234,8 +268,8 @@ public sealed partial class LauncherConfigStoreTests
 
         Assert.False(saved);
         Assert.Null(settings.Theme);
-        Assert.Equal(" missing ", settings.SortMode);
-        Assert.Equal(" missing ", settings.EntryViewMode);
+        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, settings.SortMode);
+        Assert.Equal(LauncherEntryViewModes.CardsId, settings.EntryViewMode);
         Assert.Equal([" one ", "one"], settings.CustomEntryOrder);
         Assert.Equal(LauncherWindowSettings.DefaultWidth, settings.Window.Width);
         Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window.Height);

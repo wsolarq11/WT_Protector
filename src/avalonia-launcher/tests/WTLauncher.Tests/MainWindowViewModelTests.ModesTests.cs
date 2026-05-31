@@ -6,20 +6,18 @@ namespace WTLauncher.Tests;
 public sealed partial class MainWindowViewModelTests
 {
     [Fact]
-    public void SavedUnknownModesFallbackToDefaultModes()
+    public void UnknownModeIdsFailBeforeViewModelStateIsBuilt()
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
 
-        var viewModel = CreateViewModel(
-            config,
-            settings,
-            new LauncherSettings { SortMode = "missing", EntryViewMode = "missing" });
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            CreateViewModel(
+                config,
+                settings,
+                new LauncherSettings { SortMode = "missing", EntryViewMode = "cards" }));
 
-        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, viewModel.SelectedSortMode?.Id);
-        Assert.Equal(new[] { "卡片", "详细列表", "名称墙" }, viewModel.DisplayModes.Select(mode => mode.Label));
-        Assert.Equal(LauncherEntryViewMode.Cards, viewModel.SelectedDisplayMode?.Mode);
-        Assert.Equal(LauncherEntryViewModes.CardsId, viewModel.SelectedDisplayMode?.Id);
+        Assert.Equal("Unknown launcher sort mode: missing.", exception.Message);
     }
 
     [Fact]

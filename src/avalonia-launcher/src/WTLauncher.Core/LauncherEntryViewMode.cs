@@ -18,16 +18,19 @@ public static class LauncherEntryViewModes
         var normalized = (entryViewMode ?? string.Empty).Trim();
         return normalized switch
         {
+            "" => CardsId,
+            CardsId => CardsId,
             DetailsId => DetailsId,
             NamesId => NamesId,
-            _ => CardsId,
+            _ => throw new InvalidDataException($"Unknown launcher entry view mode: {normalized}."),
         };
     }
 
     public static string ToId(LauncherEntryViewMode mode) => mode switch
     {
+        LauncherEntryViewMode.Cards => CardsId,
         LauncherEntryViewMode.Details => DetailsId,
         LauncherEntryViewMode.Names => NamesId,
-        _ => CardsId,
+        _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, "Unknown launcher entry view mode."),
     };
 }
