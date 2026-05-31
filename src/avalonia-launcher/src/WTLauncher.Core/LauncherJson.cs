@@ -30,7 +30,7 @@ internal static class LauncherJson
             ?? throw new InvalidDataException($"{documentName} parsed to null.");
     }
 
-    public static void Save<T>(T value, string path, bool backup = false)
+    public static void Save<T>(T value, string path, bool backup)
     {
         var fullPath = Path.GetFullPath(path);
         var directory = Path.GetDirectoryName(fullPath);

@@ -10,7 +10,7 @@ public static class LauncherConfigMutationPersistence
 
         try
         {
-            LauncherConfigStore.Save(entries, configPath);
+            LauncherConfigStore.Save(entries, configPath, backup: true);
             return null;
         }
         catch (Exception ex)

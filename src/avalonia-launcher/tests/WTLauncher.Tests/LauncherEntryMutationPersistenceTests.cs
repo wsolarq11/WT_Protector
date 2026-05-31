@@ -35,7 +35,7 @@ public sealed class LauncherEntryMutationPersistenceTests
         using var temp = new TempDirectory();
         var configPath = Path.Combine(temp.Path, "config.json");
         var settingsPath = Path.Combine(temp.Path, "settings.json");
-        LauncherConfigStore.Save([Entry("one")], configPath);
+        LauncherConfigStore.Save([Entry("one")], configPath, backup: true);
         var snapshot = Snapshot();
 
         var saveFailure = LauncherEntryMutationPersistence.Save(
@@ -58,8 +58,8 @@ public sealed class LauncherEntryMutationPersistenceTests
         using var temp = new TempDirectory();
         var configPath = Path.Combine(temp.Path, "config.json");
         var presetPath = Path.Combine(temp.Path, "presets.json");
-        LauncherConfigStore.Save([Entry("one")], configPath);
-        LauncherPresetStore.Save(PresetFile("daily", Preset("daily", "one")), presetPath);
+        LauncherConfigStore.Save([Entry("one")], configPath, backup: true);
+        LauncherPresetStore.Save(PresetFile("daily", Preset("daily", "one")), presetPath, backup: true);
         var snapshot = Snapshot();
 
         var saveFailure = LauncherEntryMutationPersistence.Save(

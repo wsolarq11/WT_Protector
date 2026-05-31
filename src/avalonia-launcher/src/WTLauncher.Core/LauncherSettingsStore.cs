@@ -18,7 +18,7 @@ public static class LauncherSettingsStore
         ArgumentNullException.ThrowIfNull(settings);
         ThrowIfSettingsPathMissing(settingsPath);
 
-        LauncherJson.Save(CloneNormalized(settings), settingsPath);
+        LauncherJson.Save(CloneNormalized(settings), settingsPath, backup: false);
     }
 
     public static bool TrySaveWindowBounds(LauncherSettings settings, string settingsPath, double width, double height)

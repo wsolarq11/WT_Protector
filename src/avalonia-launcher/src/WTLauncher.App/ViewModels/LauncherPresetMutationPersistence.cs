@@ -10,7 +10,7 @@ public static class LauncherPresetMutationPersistence
 
         try
         {
-            LauncherPresetStore.Save(presetFile, presetPath);
+            LauncherPresetStore.Save(presetFile, presetPath, backup: true);
             return null;
         }
         catch (Exception ex)

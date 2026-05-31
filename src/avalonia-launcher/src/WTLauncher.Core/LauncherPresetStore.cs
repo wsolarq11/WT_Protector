@@ -15,7 +15,7 @@ public static class LauncherPresetStore
         return presets;
     }
 
-    public static void Save(LauncherPresetFile presets, string presetPath, bool backup = true)
+    public static void Save(LauncherPresetFile presets, string presetPath, bool backup)
     {
         ArgumentNullException.ThrowIfNull(presets);
         ThrowIfPresetPathMissing(presetPath);

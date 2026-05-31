@@ -224,7 +224,8 @@ public sealed partial class LauncherConfigStoreTests
             [
                 Entry(selected: true),
             ],
-            config);
+            config,
+            backup: true);
 
         var entry = Assert.Single(LauncherConfigStore.Load(config));
         Assert.True(entry.Selected);
@@ -252,7 +253,8 @@ public sealed partial class LauncherConfigStoreTests
                     UpdatedAtUtc = null!,
                 },
             ],
-            config);
+            config,
+            backup: true);
 
         var savedJson = File.ReadAllText(config);
         Assert.DoesNotContain(" one ", savedJson);

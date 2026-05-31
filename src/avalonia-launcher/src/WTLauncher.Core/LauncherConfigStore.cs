@@ -18,7 +18,7 @@ public static class LauncherConfigStore
         return NormalizeEntries(entries);
     }
 
-    public static void Save(IEnumerable<LaunchEntry> entries, string configPath, bool backup = true)
+    public static void Save(IEnumerable<LaunchEntry> entries, string configPath, bool backup)
     {
         ArgumentNullException.ThrowIfNull(entries);
         ThrowIfConfigPathMissing(configPath);

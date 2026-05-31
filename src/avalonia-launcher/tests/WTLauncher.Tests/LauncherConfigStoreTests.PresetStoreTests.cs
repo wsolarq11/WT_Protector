@@ -12,7 +12,8 @@ public sealed partial class LauncherConfigStoreTests
 
         LauncherPresetStore.Save(
             PresetFile("日常启动", "one", "two"),
-            presetPath);
+            presetPath,
+            backup: true);
 
         var loaded = LauncherPresetStore.Load(presetPath);
 
@@ -53,7 +54,8 @@ public sealed partial class LauncherConfigStoreTests
                     },
                 ],
             },
-            presetPath);
+            presetPath,
+            backup: true);
 
         var savedJson = File.ReadAllText(presetPath);
         Assert.DoesNotContain(" Daily ", savedJson);

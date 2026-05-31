@@ -43,7 +43,7 @@ public sealed partial class LauncherConfigStoreTests
     public void ConfigPathMethodsRejectBlankPath(string? configPath)
     {
         AssertConfigPathRequired(() => LauncherConfigStore.Load(configPath!));
-        AssertConfigPathRequired(() => LauncherConfigStore.Save([], configPath!));
+        AssertConfigPathRequired(() => LauncherConfigStore.Save([], configPath!, backup: false));
         AssertConfigPathRequired(() => LauncherConfigStore.ResolveSettingsPath(configPath!));
     }
 

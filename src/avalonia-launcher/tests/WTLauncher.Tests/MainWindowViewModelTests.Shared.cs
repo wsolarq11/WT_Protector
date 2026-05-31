@@ -48,7 +48,7 @@ public sealed partial class MainWindowViewModelTests
         var configDir = Path.Combine(temp.Path, LauncherConfigStore.ConfigDirectoryName);
         Directory.CreateDirectory(configDir);
         var config = Path.Combine(configDir, LauncherConfigStore.ConfigFileName);
-        LauncherConfigStore.Save(entries, config);
+        LauncherConfigStore.Save(entries, config, backup: true);
         return (
             config,
             Path.Combine(configDir, LauncherConfigStore.SettingsFileName),
@@ -69,7 +69,8 @@ public sealed partial class MainWindowViewModelTests
                 DefaultPresetId = defaultPresetId,
                 Presets = [.. presets],
             },
-            path);
+            path,
+            backup: true);
 
     private static LauncherPreset Preset(string id, string name, params string[] entryIds) =>
         Preset(id, name, locked: false, entryIds);
