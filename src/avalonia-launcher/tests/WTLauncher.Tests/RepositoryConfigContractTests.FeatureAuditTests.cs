@@ -18,6 +18,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("## Fresh external yardstick spot-check", audit);
         Assert.Contains("## Current GitHub similar-project snapshot", audit);
         Assert.Contains("## Feature mapping audit", audit);
+        Assert.Contains("## Objective completion audit", audit);
         Assert.Contains("## Final answer", audit);
         Assert.Equal(20, CountFeatureHeadings(audit));
         AssertFeatureSectionsUseCompleteAuditShape(audit);
@@ -76,6 +77,7 @@ public sealed partial class RepositoryConfigContractTests
 
         Assert.Contains("\"100% confidence and 0% side effects\"", audit);
         Assert.Contains("preflight everything local before launching", audit);
+        AssertObjectiveCompletionAuditPreservesOriginalScope(audit);
         Assert.Contains("not claim broad launcher/platform north-star status", audit);
         Assert.Contains("cannot honestly claim broad launcher supremacy", audit);
         Assert.Contains("docs/feature-reality-north-star-audit.md", readme);
@@ -111,6 +113,25 @@ public sealed partial class RepositoryConfigContractTests
             Assert.Contains("- Evidence:", section);
             Assert.Contains("- Verdict:", section);
             Assert.Contains("- Remaining gap:", section);
+        }
+    }
+
+    private static void AssertObjectiveCompletionAuditPreservesOriginalScope(string audit)
+    {
+        foreach (var requiredLine in new[]
+        {
+            "- Requirement: evaluate every active feature.",
+            "- Requirement: decide whether each feature is battle-practice or market-proven north-star.",
+            "- Requirement: current ability is already unimprovable.",
+            "- Requirement: stronger than any similar GitHub project.",
+            "- Requirement: remain small and beautiful.",
+            "- Requirement: 100% confidence and 0% side effects.",
+            "- Status: contradicted. There are possible improvements",
+            "- Status: false for broad launcher scope",
+            "- Status: impossible as an absolute claim; mitigated where the repository owns the boundary.",
+        })
+        {
+            Assert.Contains(requiredLine, audit);
         }
     }
 }

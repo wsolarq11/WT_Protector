@@ -247,6 +247,29 @@ These are not defects in the current narrow product. They are the reasons not to
 
 Do not build these preemptively. They become work only when the real user problem appears.
 
+## Objective completion audit
+
+This section checks the user's full objective against current evidence instead of redefining success around the work already done.
+
+- Requirement: evaluate every active feature.
+  - Evidence: the 20 feature sections above cover every active feature mapping documented in `README.md` and the current Avalonia mainline scope.
+  - Status: proven for the current repository scope.
+- Requirement: decide whether each feature is battle-practice or market-proven north-star.
+  - Evidence: every feature section has a real problem, data owner, evidence, verdict, and remaining gap; the GitHub snapshot separates narrow direct competitors from broad launchers.
+  - Status: proven as an audit, not as a universal supremacy claim.
+- Requirement: current ability is already unimprovable.
+  - Evidence: the broad-domain gap list still names import/export, run history/status, distribution/update, visual receipts, and external side-effect limits.
+  - Status: contradicted. There are possible improvements, but most are intentionally not current work until real demand appears.
+- Requirement: stronger than any similar GitHub project.
+  - Evidence: Flow Launcher and Wox have far stronger broad-market proof; Terminal Manager has stronger WT profile/split-pane/import-export scope; WT Launcher is stronger only in the narrower portable config + named group + native gate slice.
+  - Status: false for broad launcher scope; supported only for the narrow local Windows Terminal workspace-launcher slice.
+- Requirement: remain small and beautiful.
+  - Evidence: this audit rejects speculative plugin marketplace, local web server, split-pane editor, installer/update channel, and workflow graph features until they beat the current local gate.
+  - Status: currently preserved.
+- Requirement: 100% confidence and 0% side effects.
+  - Evidence: current tests and gate prove batch preflight-before-launch, abort-after-first-start-failure, rollback-aware JSON persistence, and native publish smoke. They cannot prove that starting arbitrary external processes has zero side effects.
+  - Status: impossible as an absolute claim; mitigated where the repository owns the boundary.
+
 ## Final answer
 
 The current project is already a north-star implementation for the narrow domain of a portable Windows Terminal workspace launcher. The strongest mappings are launch entries, named presets, global launch confirmation, portable settings, JSON persistence/rollback, batch preflight-before-launch, abort-after-first-start-failure, and the native verify/publish gate.
