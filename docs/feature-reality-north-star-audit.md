@@ -144,7 +144,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: launching a saved group is the highest-risk routine action; users need to inspect the exact generated `wt.exe` commands without rewriting selection or starting external processes.
 - Current data owner: `config/presets.json` owns desired group membership; `LaunchPlan` owns generated command lines; `DryRunText` is transient UI output, not persisted state.
-- Evidence: `PreviewSelectedPresetCommand` calls the same `LauncherLaunchWorkflow.PreflightBatch` path as launch, formats plans through `LauncherBatchLaunchPlanText`, starts no process, and preserves checkbox state; tests cover successful preview and plan-failure preview.
+- Evidence: `PreviewSelectedPresetCommand` calls the same `LauncherLaunchWorkflow.PreflightBatch` path as launch, formats plans through `LauncherBatchLaunchPlanText`, starts no process, and preserves checkbox state; tests cover successful preview and mixed valid/invalid plan-failure preview, including valid generated command lines marked as not started plus the failure list.
 - Verdict: north-star for the repo-owned side-effect boundary. It converts the impossible "0% side effects after launch" demand into a true pre-launch no-side-effect inspection path.
 - Remaining gap: once the user chooses real launch, arbitrary external commands still have side effects outside this app's control.
 
@@ -276,7 +276,7 @@ This section checks the user's full objective against current evidence instead o
   - Evidence: this audit rejects speculative plugin marketplace, local web server, split-pane editor, installer/update channel, and workflow graph features until they beat the current local gate.
   - Status: currently preserved.
 - Requirement: 100% confidence and 0% side effects.
-- Evidence: current tests and gate prove batch preflight-before-confirmation, side-effect-free current-group preview, exact generated command confirmation, transient single-launch canceled/request/failure receipts plus batch receipts for canceled/requested/failed/skipped plans, abort-after-first-start-failure, rollback-aware JSON persistence, and native publish smoke. They cannot prove that starting arbitrary external processes has zero side effects.
+- Evidence: current tests and gate prove batch preflight-before-confirmation, side-effect-free current-group preview with valid plans visible even when another plan fails preflight, exact generated command confirmation, transient single-launch canceled/request/failure receipts plus batch receipts for canceled/requested/failed/skipped plans, abort-after-first-start-failure, rollback-aware JSON persistence, and native publish smoke. They cannot prove that starting arbitrary external processes has zero side effects.
   - Status: impossible as an absolute claim; mitigated where the repository owns the boundary.
 
 ## Final answer

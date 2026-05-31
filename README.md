@@ -173,7 +173,7 @@ Important risks:
 - `directory` must exist before the launcher starts an item.
 - Selected-item and current-group batch launch preflight every target before confirmation or process start; the confirmation dialog shows generated `wt.exe` command lines. If any local launch plan is invalid, no process starts. If an external start fails after earlier starts, remaining items are skipped and reported.
 - Single and batch launch write transient `启动回执` text for canceled, requested, or failed launch attempts; batch receipts show requested, failed, and skipped plans; `已请求启动` means `wt.exe` process start was requested, not that the terminal session finished healthy.
-- "预演当前组" runs the same current-group preflight and shows generated `wt.exe` command lines without starting processes or rewriting checkbox selection.
+- "预演当前组" runs the same current-group preflight and shows generated `wt.exe` command lines without starting processes or rewriting checkbox selection; if any plan is invalid, the preview still shows every valid generated command line as not started plus the failure list.
 - Command text is quoted before being passed to `wt.exe`, but it is still a shell command; review entries before launching.
 - Applying a preset only rewrites checkbox state; "启动当前组" launches the selected preset entries directly without rewriting checkbox state first.
 - The root `config/` directory is the canonical source.

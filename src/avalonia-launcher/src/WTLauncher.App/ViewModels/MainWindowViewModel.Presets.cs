@@ -56,7 +56,7 @@ public sealed partial class MainWindowViewModel
                 RequireConfirmationForLaunches);
             if (preflight.Report.FailedCount > 0)
             {
-                DryRunText = string.Join(Environment.NewLine, preflight.Report.FailureMessages);
+                DryRunText = LauncherBatchLaunchPlanText.FailedPreflight(preflight);
                 StatusText = LauncherPresetStatus.PreviewFailed(selectedPreset.Name, preflight.Report);
                 return;
             }

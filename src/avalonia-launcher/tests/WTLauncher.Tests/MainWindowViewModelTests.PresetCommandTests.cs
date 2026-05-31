@@ -172,8 +172,9 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, presets) = CreatePortableFixture(
             temp,
-            Entry("one", directory: Path.Combine(temp.Path, "missing"), command: "codex", selected: false));
-        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+            Entry("one", directory: Path.Combine(temp.Path, "missing"), command: "codex", selected: false),
+            Entry("two", directory: temp.Path, command: "opencode", selected: false));
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one", "two"));
         var startedPlans = new List<LaunchPlan>();
         var viewModel = CreateViewModel(
             config,
@@ -184,6 +185,10 @@ public sealed partial class MainWindowViewModelTests
         viewModel.PreviewSelectedPresetCommand.Execute(null);
 
         Assert.Empty(startedPlans);
+        Assert.Contains("预演回执", viewModel.DryRunText);
+        Assert.Contains("预演失败: 失败 1 项，未启动 1 项", viewModel.DryRunText);
+        Assert.Contains("• 未启动: two", viewModel.DryRunText);
+        Assert.Contains("opencode", viewModel.DryRunText);
         Assert.Contains("one:", viewModel.DryRunText);
         Assert.Contains("directory does not exist", viewModel.DryRunText);
         Assert.Equal("启动组“Daily”预演失败: 1 个失败", viewModel.StatusText);
