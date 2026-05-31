@@ -128,11 +128,7 @@ public sealed partial class MainWindowViewModelTests
         var expectedOrder = DefaultDragOrder().Concat(["four"]).ToArray();
         Assert.Equal(expectedOrder, launcherSettings.CustomEntryOrder);
         Assert.Equal(expectedOrder, LauncherSettingsStore.Load(settings).CustomEntryOrder);
-        Assert.DoesNotContain(viewModel.Entries, entry =>
-            entry.IsDragPreviewSource
-            || entry.IsDragPreviewTarget
-            || entry.IsDragInsertBefore
-            || entry.IsDragInsertAfter);
+        AssertNoDragCues(viewModel);
     }
 
     [Fact]

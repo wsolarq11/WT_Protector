@@ -76,11 +76,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.DoesNotContain(viewModel.Entries, entry =>
-            entry.IsDragPreviewSource
-            || entry.IsDragPreviewTarget
-            || entry.IsDragInsertBefore
-            || entry.IsDragInsertAfter);
+        AssertNoDragCues(viewModel);
     }
 
     [Fact]

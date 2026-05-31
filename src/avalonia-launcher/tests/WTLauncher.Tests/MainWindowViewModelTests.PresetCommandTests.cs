@@ -149,11 +149,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.DoesNotContain(viewModel.Entries, entry =>
-            entry.IsDragPreviewSource
-            || entry.IsDragPreviewTarget
-            || entry.IsDragInsertBefore
-            || entry.IsDragInsertAfter);
+        AssertNoDragCues(viewModel);
         var presetFile = LauncherPresetStore.Load(presets);
         Assert.DoesNotContain(presetFile.Presets, preset => preset.Id == "daily");
         Assert.Equal("secondary", viewModel.SelectedPreset?.Id);

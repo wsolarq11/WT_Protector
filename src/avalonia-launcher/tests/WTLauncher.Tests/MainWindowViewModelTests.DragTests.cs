@@ -34,11 +34,7 @@ public sealed partial class MainWindowViewModelTests
         viewModel.CancelDragReorder();
 
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.DoesNotContain(viewModel.Entries, entry =>
-            entry.IsDragPreviewSource
-            || entry.IsDragPreviewTarget
-            || entry.IsDragInsertBefore
-            || entry.IsDragInsertAfter);
+        AssertNoDragCues(viewModel);
 
         viewModel.BeginDragReorder("three");
         Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
@@ -106,11 +102,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.DoesNotContain(viewModel.Entries, entry =>
-            entry.IsDragPreviewSource
-            || entry.IsDragPreviewTarget
-            || entry.IsDragInsertBefore
-            || entry.IsDragInsertAfter);
+        AssertNoDragCues(viewModel);
     }
 
     [Fact]
@@ -130,11 +122,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), LauncherSettingsStore.Load(settings).CustomEntryOrder);
-        Assert.DoesNotContain(viewModel.Entries, entry =>
-            entry.IsDragPreviewSource
-            || entry.IsDragPreviewTarget
-            || entry.IsDragInsertBefore
-            || entry.IsDragInsertAfter);
+        AssertNoDragCues(viewModel);
     }
 
     [Fact]
@@ -154,11 +142,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.DoesNotContain(viewModel.Entries, entry =>
-            entry.IsDragPreviewSource
-            || entry.IsDragPreviewTarget
-            || entry.IsDragInsertBefore
-            || entry.IsDragInsertAfter);
+        AssertNoDragCues(viewModel);
     }
 
     [Fact]
@@ -238,4 +222,13 @@ public sealed partial class MainWindowViewModelTests
     private static string[] DefaultDragOrder() => ["one", "two", "three"];
 
     private static string[] ReorderedDragOrder() => ["three", "one", "two"];
+
+    private static void AssertNoDragCues(MainWindowViewModel viewModel) =>
+        Assert.DoesNotContain(viewModel.Entries, HasDragCue);
+
+    private static bool HasDragCue(LauncherEntryViewModel entry) =>
+        entry.IsDragPreviewSource
+        || entry.IsDragPreviewTarget
+        || entry.IsDragInsertBefore
+        || entry.IsDragInsertAfter;
 }
