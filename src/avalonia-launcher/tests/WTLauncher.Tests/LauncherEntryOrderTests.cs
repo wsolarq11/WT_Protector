@@ -138,7 +138,7 @@ public sealed class LauncherEntryOrderTests
     [Fact]
     public void BuildIndexNormalizesIdsBeforeIndexing()
     {
-        var index = LauncherEntryOrder.BuildIndex([" two ", "one", "two"]);
+        var index = LauncherEntryOrder.BuildIndex([" two ", "one"]);
 
         Assert.Equal(0, index["two"]);
         Assert.Equal(1, index["one"]);
@@ -146,27 +146,27 @@ public sealed class LauncherEntryOrderTests
     }
 
     [Fact]
-    public void BuildIndexUsesFirstOccurrenceForDuplicateIds()
+    public void BuildIndexRejectsDuplicateIds()
     {
-        var index = LauncherEntryOrder.BuildIndex(["two", "one", "two"]);
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryOrder.BuildIndex(["two", "one", "two"]));
 
-        Assert.Equal(0, index["two"]);
-        Assert.Equal(1, index["one"]);
+        Assert.Equal("customOrder", exception.ParamName);
     }
 
     [Fact]
-    public void BuildIndexDoesNotCountDuplicateRows()
+    public void BuildIndexRejectsBlankIds()
     {
-        var index = LauncherEntryOrder.BuildIndex(["two", "two", "one"]);
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryOrder.BuildIndex(["two", " ", "one"]));
 
-        Assert.Equal(0, index["two"]);
-        Assert.Equal(1, index["one"]);
+        Assert.Equal("customOrder", exception.ParamName);
     }
 
     [Fact]
     public void BuildIndexNormalizesKeysBeforeIndexing()
     {
-        var index = LauncherEntryOrder.BuildIndex([" two ", "one", " two "]);
+        var index = LauncherEntryOrder.BuildIndex([" two ", "one"]);
 
         Assert.Equal(0, index["two"]);
         Assert.Equal(1, index["one"]);

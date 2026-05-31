@@ -32,7 +32,7 @@ public static class LauncherEntryOrder
     public static IReadOnlyDictionary<string, int> BuildIndex(IEnumerable<string> customOrder)
     {
         var indexById = new Dictionary<string, int>(LauncherEntryIds.Comparer);
-        var ids = LauncherEntryIds.ToUniqueUsableList(customOrder);
+        var ids = NormalizeRequiredOrder(customOrder, nameof(customOrder));
         for (var index = 0; index < ids.Count; index++)
         {
             indexById.Add(ids[index], index);
@@ -52,7 +52,7 @@ public static class LauncherEntryOrder
         if (LauncherEntryIds.Same(draggedId, targetId))
             return false;
 
-        var normalizedOrder = NormalizeRequiredOrder(customOrder);
+        var normalizedOrder = NormalizeRequiredOrder(customOrder, nameof(customOrder));
         var draggedIndex = normalizedOrder.FindIndex(id => LauncherEntryIds.Same(id, draggedId));
         if (draggedIndex < 0)
             throw new ArgumentException(
@@ -85,24 +85,26 @@ public static class LauncherEntryOrder
         return normalized;
     }
 
-    private static List<string> NormalizeRequiredOrder(List<string> customOrder)
+    private static List<string> NormalizeRequiredOrder(IEnumerable<string> customOrder, string paramName)
     {
         ArgumentNullException.ThrowIfNull(customOrder);
 
-        var normalized = new List<string>(customOrder.Count);
+        var normalized = new List<string>();
         var seen = new HashSet<string>(LauncherEntryIds.Comparer);
-        for (var i = 0; i < customOrder.Count; i++)
+        var index = 0;
+        foreach (var rawEntryId in customOrder)
         {
-            var entryId = LauncherEntryIds.Normalize(customOrder[i]);
+            var entryId = LauncherEntryIds.Normalize(rawEntryId);
             if (!LauncherEntryIds.IsUsable(entryId))
-                throw new ArgumentException($"Custom entry order {i} is empty.", nameof(customOrder));
+                throw new ArgumentException($"Custom entry order {index} is empty.", paramName);
 
             if (!seen.Add(entryId))
                 throw new ArgumentException(
-                    $"Custom entry order {i} is duplicate: {entryId}.",
-                    nameof(customOrder));
+                    $"Custom entry order {index} is duplicate: {entryId}.",
+                    paramName);
 
             normalized.Add(entryId);
+            index++;
         }
 
         return normalized;

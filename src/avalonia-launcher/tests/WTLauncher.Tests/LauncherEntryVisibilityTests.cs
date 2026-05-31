@@ -54,7 +54,7 @@ public sealed class LauncherEntryVisibilityTests
             Entry("two", "Two"),
             Entry("three", "Three"),
         };
-        var customOrder = new List<string> { "missing", "two", "two" };
+        var customOrder = new List<string> { "missing", "two" };
 
         var visible = LauncherEntryVisibility.FilterAndSort(
             entries,
@@ -64,7 +64,29 @@ public sealed class LauncherEntryVisibilityTests
             static entry => entry);
 
         Assert.Equal(["two", "one", "three"], visible.Select(entry => entry.Id).ToArray());
-        Assert.Equal(["missing", "two", "two"], customOrder);
+        Assert.Equal(["missing", "two"], customOrder);
+    }
+
+    [Fact]
+    public void FilterAndSort_CustomSortRejectsDuplicateOrderBeforeProjection()
+    {
+        var entries = new[]
+        {
+            Entry("one", "One"),
+            Entry("two", "Two"),
+        };
+        var customOrder = new List<string> { "two", " two " };
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryVisibility.FilterAndSort(
+                entries,
+                null,
+                LauncherEntryVisibility.CustomSortModeId,
+                customOrder,
+                static entry => entry));
+
+        Assert.Equal("customOrder", exception.ParamName);
+        Assert.Equal(["two", " two "], customOrder);
     }
 
     [Fact]
