@@ -31,6 +31,7 @@ public sealed partial class MainWindowViewModel
 
     internal void ShowDryRun(LauncherEntryViewModel item)
     {
+        DiscardDragReorderPreview();
         try
         {
             var plan = _launchWorkflow.BuildPlan(item.Entry, RequireConfirmationForLaunches);
@@ -46,6 +47,7 @@ public sealed partial class MainWindowViewModel
 
     internal async Task LaunchAsync(LauncherEntryViewModel item)
     {
+        DiscardDragReorderPreview();
         string? dryRunText = null;
         try
         {

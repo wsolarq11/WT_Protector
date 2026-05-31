@@ -96,6 +96,54 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task SingleLaunchDuringDragPreviewDiscardsPreviewOrder()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex"),
+            Entry("two", directory: temp.Path, command: "opencode"),
+            Entry("three", directory: temp.Path, command: "pwsh"));
+        var launcherSettings = CreateDragSettings();
+        launcherSettings.RequireConfirmationForLaunches = false;
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+
+        viewModel.BeginDragReorder("three");
+        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
+        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+
+        await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
+
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        AssertNoDragCues(viewModel);
+        Assert.Equal("已启动: one", viewModel.StatusText);
+    }
+
+    [Fact]
+    public void DryRunDuringDragPreviewDiscardsPreviewOrder()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex"),
+            Entry("two", directory: temp.Path, command: "opencode"),
+            Entry("three", directory: temp.Path, command: "pwsh"));
+        var launcherSettings = CreateDragSettings();
+        launcherSettings.RequireConfirmationForLaunches = false;
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+
+        viewModel.BeginDragReorder("three");
+        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
+        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+
+        viewModel.Entries.Single(entry => entry.Id == "one").DryRunCommand.Execute(null);
+
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        AssertNoDragCues(viewModel);
+        Assert.Equal("预演: one", viewModel.StatusText);
+    }
+
+    [Fact]
     public async Task BatchLaunchReportsPerEntryPlanFailuresWithoutStartingProcesses()
     {
         using var temp = new TempDirectory();
@@ -114,6 +162,30 @@ public sealed partial class MainWindowViewModelTests
         Assert.Contains("已启动 0 个勾选项，2 个失败", viewModel.StatusText);
         Assert.Contains("one:", viewModel.StatusText);
         Assert.Contains("two:", viewModel.StatusText);
+    }
+
+    [Fact]
+    public async Task BatchLaunchDuringDragPreviewDiscardsPreviewOrder()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex", selected: true),
+            Entry("two", directory: temp.Path, command: "opencode"),
+            Entry("three", directory: temp.Path, command: "pwsh"));
+        var launcherSettings = CreateDragSettings();
+        launcherSettings.RequireConfirmationForLaunches = false;
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+
+        viewModel.BeginDragReorder("three");
+        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
+        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+
+        await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
+
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        AssertNoDragCues(viewModel);
+        Assert.Equal("已启动 1 个勾选项", viewModel.StatusText);
     }
 
     [Fact]

@@ -49,6 +49,7 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
+        DiscardDragReorderPreview();
         try
         {
             var selectedEntries = selected.Select(ToLaunchEntry).ToList();
