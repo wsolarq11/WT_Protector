@@ -12,11 +12,12 @@ public static class LauncherEntryMutationPersistence
         LauncherSettings settings,
         string settingsPath,
         bool savePresets,
-        LauncherEntryMutationSnapshot? rollbackSnapshot)
+        LauncherEntryMutationSnapshot rollbackSnapshot)
     {
         ArgumentNullException.ThrowIfNull(entries);
         ArgumentNullException.ThrowIfNull(presetFile);
         ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(rollbackSnapshot);
 
         var configSaveFailure = LauncherConfigMutationPersistence.Save(entries, configPath);
         if (configSaveFailure is not null)
@@ -29,13 +30,12 @@ public static class LauncherEntryMutationPersistence
             var presetSaveFailure = LauncherPresetMutationPersistence.Save(presetFile, presetPath);
             if (presetSaveFailure is not null)
             {
-                var status = RestoreSnapshotOnPersistenceFailure(
+                return RestoreSnapshotOnPersistenceFailure(
                     rollbackSnapshot,
                     configPath,
                     presetPath,
                     restorePresets: false,
                     currentStatus: presetSaveFailure);
-                return status;
             }
         }
 
@@ -45,28 +45,24 @@ public static class LauncherEntryMutationPersistence
         }
         catch (Exception ex)
         {
-            var status = RestoreSnapshotOnPersistenceFailure(
+            return RestoreSnapshotOnPersistenceFailure(
                 rollbackSnapshot,
                 configPath,
                 presetPath,
                 restorePresets: savePresets,
                 currentStatus: LauncherPersistenceStatus.SettingsSaveFailed(ex));
-            return status;
         }
 
         return null;
     }
 
     private static string RestoreSnapshotOnPersistenceFailure(
-        LauncherEntryMutationSnapshot? snapshot,
+        LauncherEntryMutationSnapshot snapshot,
         string configPath,
         string presetPath,
         bool restorePresets,
         string currentStatus)
     {
-        if (snapshot is null)
-            return currentStatus;
-
         var restoreErrors = new List<string>();
         try
         {

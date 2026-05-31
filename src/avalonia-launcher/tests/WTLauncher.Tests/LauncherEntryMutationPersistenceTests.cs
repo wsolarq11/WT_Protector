@@ -12,6 +12,7 @@ public sealed class LauncherEntryMutationPersistenceTests
         using var temp = new TempDirectory();
         var presetPath = Path.Combine(temp.Path, "presets.json");
         var settingsPath = Path.Combine(temp.Path, "settings.json");
+        var snapshot = Snapshot();
 
         var saveFailure = LauncherEntryMutationPersistence.Save(
             entries: [Entry("mutated")],
@@ -21,7 +22,7 @@ public sealed class LauncherEntryMutationPersistenceTests
             settings: new LauncherSettings(),
             settingsPath: settingsPath,
             savePresets: true,
-            rollbackSnapshot: null);
+            rollbackSnapshot: snapshot);
 
         Assert.Contains("配置保存失败", saveFailure);
         Assert.False(File.Exists(presetPath));
