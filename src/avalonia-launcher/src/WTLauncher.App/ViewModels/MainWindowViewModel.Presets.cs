@@ -38,7 +38,7 @@ public sealed partial class MainWindowViewModel
 
         var snapshot = CapturePresetMutationSnapshot();
         var preset = LauncherPresetWorkflow.AddPreset(_presetFile, presetName, entryIds);
-        if (!SavePresetMutationAndReload(snapshot, preset.Id))
+        if (!SavePresetMutationAndApply(snapshot, preset.Id))
             return;
 
         ApplyStatusText(LauncherPresetStatus.Saved(preset.Name, preset.EntryIds.Count));
@@ -71,7 +71,7 @@ public sealed partial class MainWindowViewModel
             RestorePresetSnapshotAndReportMissing(snapshot);
             return;
         }
-        if (!SavePresetMutationAndReload(snapshot, preset.Id))
+        if (!SavePresetMutationAndApply(snapshot, preset.Id))
             return;
 
         ApplyStatusText(LauncherPresetStatus.Updated(preset.Name, preset.EntryIds.Count));
@@ -101,7 +101,7 @@ public sealed partial class MainWindowViewModel
             RestorePresetSnapshotAndReportMissing(snapshot);
             return;
         }
-        if (!SavePresetMutationAndReload(snapshot, fallbackPresetId))
+        if (!SavePresetMutationAndApply(snapshot, fallbackPresetId))
             return;
 
         ApplyStatusText(LauncherPresetStatus.Deleted(preset.Name));

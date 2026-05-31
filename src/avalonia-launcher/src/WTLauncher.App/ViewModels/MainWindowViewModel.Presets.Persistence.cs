@@ -40,29 +40,19 @@ public sealed partial class MainWindowViewModel
         NotifyPresetManagementCommands();
     }
 
-    private bool SavePresetMutationAndReload(
+    private bool SavePresetMutationAndApply(
         LauncherPresetMutationSnapshot snapshot,
-        string? loadedPresetId)
-    {
-        if (SavePresets())
-        {
-            LoadPresetFile(loadedPresetId);
-            return true;
-        }
-
-        ApplyPresetFileState(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
-        return false;
-    }
-
-    private bool SavePresets()
+        string? selectedPresetId)
     {
         var saveFailure = LauncherPresetMutationPersistence.Save(_presetFile, _presetPath);
         if (saveFailure is not null)
         {
             ApplyStatusText(saveFailure);
+            ApplyPresetFileState(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
             return false;
         }
 
+        ApplyPresetFileState(_presetFile, selectedPresetId);
         return true;
     }
 }
