@@ -21,6 +21,7 @@ public sealed partial class MainWindowViewModel
 
     private void MoveEntryRelative(LauncherEntryViewModel entry, int targetOffset, bool insertAfter)
     {
+        var snapshot = CaptureSettingsMutationSnapshot();
         if (!TryResolveVisibleMoveTarget(entry, targetOffset, out var target))
         {
             StatusText = LauncherDragReorderStatus.MoveUnavailable;
@@ -28,7 +29,6 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
-        var snapshot = CaptureSettingsMutationSnapshot();
         EnsureCustomOrderContainsEntries();
         if (!LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, entry.Id, target.Id, insertAfter))
         {

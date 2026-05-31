@@ -125,6 +125,25 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void MenuReorderDuringDragPreviewResolvesAgainstCommittedOrder()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreateDragFixture(temp);
+
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+
+        StartDefaultDragPreview(viewModel, launcherSettings);
+
+        viewModel.Entries.Single(entry => entry.Id == "three").MoveDownCommand.Execute(null);
+
+        Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(LauncherDragReorderStatus.MoveUnavailable, viewModel.StatusText);
+        AssertNoDragCues(viewModel);
+    }
+
+    [Fact]
     public void DragPreviewRejectsUnknownEntryIdsWithoutMutatingOrder()
     {
         using var temp = new TempDirectory();

@@ -96,6 +96,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("Applying a preset has a failure contract too", audit);
         Assert.Contains("roll back memory/file state on preset save failures", audit);
         Assert.Contains("discards uncommitted drag-sort preview state first", audit);
+        Assert.Contains("ghost order cannot become a hidden source of truth", audit);
         Assert.Contains("docs/feature-reality-north-star-audit.md", readme);
         Assert.Contains("Selected-item and current-group batch launch preflight every target before confirmation or process start", readme);
         Assert.Contains("Single and batch launch write transient `启动回执` text for canceled, requested, or failed launch attempts", readme);
@@ -106,6 +107,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("Checkbox-selection and preset-apply config save failures", readme);
         Assert.Contains("launch-group save/update/delete writes attempt to roll back", readme);
         Assert.Contains("a ghost reorder is never silently saved by a launch-group action", readme);
+        Assert.Contains("resolves against the last committed order", readme);
         Assert.Contains("Cards / Details", readme);
         Assert.Contains("Names", readme);
         Assert.Contains("Current gate state:", readme);
