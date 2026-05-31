@@ -176,6 +176,7 @@ Important risks:
 - "预演当前组" runs the same current-group preflight and shows generated `wt.exe` command lines without starting processes or rewriting checkbox selection; if any plan is invalid, the preview still shows every valid generated command line as not started plus the failure list.
 - Command text is quoted before being passed to `wt.exe`, but it is still a shell command; review entries before launching.
 - Applying a preset only rewrites checkbox state; "启动当前组" launches the selected preset entries directly without rewriting checkbox state first.
+- Applying, previewing, or launching a preset discards any uncommitted drag-sort preview first; a ghost reorder is never silently saved by a launch-group action.
 - The root `config/` directory is the canonical source.
 - JSON saves are written through temporary files, normal config/preset writes keep `.bak` backups, and failed multi-file entry edits or launch-group save/update/delete writes attempt to roll back both memory and already-written portable files.
 - Checkbox-selection and preset-apply config save failures stay visible as `配置保存失败` and roll back both in-memory selection and the tracked config file instead of reporting a successful apply/select/clear action.

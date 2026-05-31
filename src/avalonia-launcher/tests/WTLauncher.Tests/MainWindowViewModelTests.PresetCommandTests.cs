@@ -141,6 +141,36 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task LaunchSelectedPresetDuringDragPreviewDiscardsPreviewOrder()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(
+            temp,
+            Entry("one", "One", directory: temp.Path, command: "codex"),
+            Entry("two", "Two", directory: temp.Path, command: "opencode"),
+            Entry("three", "Three", directory: temp.Path));
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one", "two"));
+        var launcherSettings = CreateDragSettings();
+        launcherSettings.RequireConfirmationForLaunches = false;
+        var startedPlans = new List<LaunchPlan>();
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            launcherSettings,
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+
+        StartDefaultDragPreview(viewModel, launcherSettings);
+
+        await viewModel.LaunchSelectedPresetCommand.ExecuteAsync(null);
+
+        Assert.Equal(["codex", "opencode"], startedPlans.Select(plan => plan.Command).ToArray());
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        AssertNoDragCues(viewModel);
+        Assert.All(LoadEntriesById(config), entry => Assert.False(entry.Selected));
+    }
+
+    [Fact]
     public void PreviewSelectedPresetShowsGeneratedCommandLinesWithoutStartingOrPersistingSelection()
     {
         using var temp = new TempDirectory();
@@ -167,6 +197,36 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("预演启动组: Daily（2 项）", viewModel.StatusText);
         var entries = LoadEntriesById(config);
         Assert.All(entries, entry => Assert.False(entry.Selected));
+    }
+
+    [Fact]
+    public void PreviewSelectedPresetDuringDragPreviewDiscardsPreviewOrder()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(
+            temp,
+            Entry("one", "One", directory: temp.Path, command: "codex"),
+            Entry("two", "Two", directory: temp.Path, command: "opencode"),
+            Entry("three", "Three", directory: temp.Path));
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one", "two"));
+        var launcherSettings = CreateDragSettings();
+        var startedPlans = new List<LaunchPlan>();
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            launcherSettings,
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+
+        StartDefaultDragPreview(viewModel, launcherSettings);
+
+        viewModel.PreviewSelectedPresetCommand.Execute(null);
+
+        Assert.Empty(startedPlans);
+        Assert.Contains("wt.exe", viewModel.DryRunText);
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        AssertNoDragCues(viewModel);
+        Assert.All(LoadEntriesById(config), entry => Assert.False(entry.Selected));
     }
 
     [Fact]

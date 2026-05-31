@@ -57,6 +57,25 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void ApplyPresetDuringDragPreviewDiscardsPreviewOrder()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreateDragFixture(temp);
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+
+        StartDefaultDragPreview(viewModel, launcherSettings);
+
+        viewModel.ApplyPresetCommand.Execute(null);
+
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        AssertNoDragCues(viewModel);
+        Assert.Equal(["one"], LoadEntriesById(config).Where(entry => entry.Selected).Select(entry => entry.Id).ToArray());
+    }
+
+    [Fact]
     public void PresetLoadingPrefersConfiguredDefaultPreset()
     {
         using var defaultTemp = new TempDirectory();
