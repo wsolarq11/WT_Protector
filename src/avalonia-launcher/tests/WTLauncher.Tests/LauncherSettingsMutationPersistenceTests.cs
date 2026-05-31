@@ -49,6 +49,26 @@ public sealed class LauncherSettingsMutationPersistenceTests
         Assert.Equal(["one", "two"], settings.CustomEntryOrder);
     }
 
+    [Fact]
+    public void SaveRejectsInvalidSettingsInsteadOfReturningSaveStatus()
+    {
+        using var temp = new TempDirectory();
+        var settingsPath = Path.Combine(temp.Path, "settings.json");
+        var settings = Settings();
+        var snapshot = LauncherSettingsSnapshot.Capture(settings);
+        settings.SortMode = "missing";
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherSettingsMutationPersistence.Save(
+                settings,
+                settingsPath,
+                snapshot));
+
+        Assert.Equal("Unknown launcher sort mode: missing.", exception.Message);
+        Assert.Equal("missing", settings.SortMode);
+        Assert.False(File.Exists(settingsPath));
+    }
+
     private static LauncherSettings Settings()
     {
         return new LauncherSettings

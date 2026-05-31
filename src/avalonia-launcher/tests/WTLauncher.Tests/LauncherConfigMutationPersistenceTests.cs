@@ -27,4 +27,19 @@ public sealed class LauncherConfigMutationPersistenceTests
 
         Assert.Contains("配置保存失败", saveFailure);
     }
+
+    [Fact]
+    public void SaveRejectsInvalidEntryDataInsteadOfReturningSaveStatus()
+    {
+        using var temp = new TempDirectory();
+        var configPath = Path.Combine(temp.Path, "config.json");
+        var entry = Entry("one");
+        entry.Name = null!;
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherConfigMutationPersistence.Save([entry], configPath));
+
+        Assert.Equal("Launcher config entry 0 name is null.", exception.Message);
+        Assert.False(File.Exists(configPath));
+    }
 }

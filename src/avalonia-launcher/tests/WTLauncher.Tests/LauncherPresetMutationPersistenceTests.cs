@@ -33,4 +33,19 @@ public sealed class LauncherPresetMutationPersistenceTests
 
         Assert.Contains("启动组保存失败", saveFailure);
     }
+
+    [Fact]
+    public void SaveRejectsInvalidPresetDataInsteadOfReturningSaveStatus()
+    {
+        using var temp = new TempDirectory();
+        var presetPath = Path.Combine(temp.Path, "presets.json");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherPresetMutationPersistence.Save(
+                PresetFile("missing", NamedPreset("daily", "Daily", "one")),
+                presetPath));
+
+        Assert.Equal("Launcher preset default id does not match any preset: missing.", exception.Message);
+        Assert.False(File.Exists(presetPath));
+    }
 }
