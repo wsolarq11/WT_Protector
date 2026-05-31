@@ -53,6 +53,44 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void PresetStore_RejectsMissingEntryIdsFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var presetPath = WriteConfigDirectoryFile(temp.Path, LauncherPresetStore.PresetsFileName, """
+        {
+          "schemaVersion": 1,
+          "defaultPresetId": "daily",
+          "presets": [
+            {
+              "id": "daily",
+              "name": "Daily"
+            }
+          ]
+        }
+        """);
+
+        var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherPresetStore.Load(presetPath));
+
+        Assert.Contains("entryIds", exception.Message);
+    }
+
+    [Fact]
+    public void PresetStore_RejectsMissingSchemaVersionFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var presetPath = WriteConfigDirectoryFile(temp.Path, LauncherPresetStore.PresetsFileName, """
+        {
+          "defaultPresetId": "daily",
+          "presets": []
+        }
+        """);
+
+        var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherPresetStore.Load(presetPath));
+
+        Assert.Contains("schemaVersion", exception.Message);
+    }
+
+    [Fact]
     public void PresetStore_RejectsInvalidPresetRowsBeforeWriting()
     {
         using var temp = new TempDirectory();

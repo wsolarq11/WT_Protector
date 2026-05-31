@@ -120,6 +120,47 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void SettingsStore_RejectsMissingWindowFieldFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
+        {
+          "lastFilterText": "",
+          "sortMode": "custom",
+          "entryViewMode": "cards",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": []
+        }
+        """);
+
+        var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherSettingsStore.Load(settings));
+
+        Assert.Contains("window", exception.Message);
+    }
+
+    [Fact]
+    public void SettingsStore_RejectsMissingWindowWidthFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
+        {
+          "lastFilterText": "",
+          "sortMode": "custom",
+          "entryViewMode": "cards",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": [],
+          "window": {
+            "height": 760
+          }
+        }
+        """);
+
+        var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherSettingsStore.Load(settings));
+
+        Assert.Contains("width", exception.Message);
+    }
+
+    [Fact]
     public void SettingsStore_RejectsNullSettingsFromConfig()
     {
         using var temp = new TempDirectory();
@@ -136,7 +177,15 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
-          "customEntryOrder": [" one ", "two "]
+          "lastFilterText": "",
+          "sortMode": "custom",
+          "entryViewMode": "cards",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": [" one ", "two "],
+          "window": {
+            "width": 1180,
+            "height": 760
+          }
         }
         """);
 
@@ -151,7 +200,15 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
-          "customEntryOrder": ["one", " two ", "one"]
+          "lastFilterText": "",
+          "sortMode": "custom",
+          "entryViewMode": "cards",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": ["one", " two ", "one"],
+          "window": {
+            "width": 1180,
+            "height": 760
+          }
         }
         """);
 
@@ -166,7 +223,15 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
-          "customEntryOrder": ["one", " ", "two"]
+          "lastFilterText": "",
+          "sortMode": "custom",
+          "entryViewMode": "cards",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": ["one", " ", "two"],
+          "window": {
+            "width": 1180,
+            "height": 760
+          }
         }
         """);
 
@@ -181,8 +246,15 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
+          "lastFilterText": "",
           "sortMode": " missing ",
-          "entryViewMode": "cards"
+          "entryViewMode": "cards",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": [],
+          "window": {
+            "width": 1180,
+            "height": 760
+          }
         }
         """);
 
@@ -197,8 +269,15 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
+          "lastFilterText": "",
           "sortMode": "custom",
-          "entryViewMode": " missing "
+          "entryViewMode": " missing ",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": [],
+          "window": {
+            "width": 1180,
+            "height": 760
+          }
         }
         """);
 

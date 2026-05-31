@@ -61,7 +61,8 @@ public sealed partial class LauncherConfigStoreTests
             "Id": "demo",
             "name": "demo",
             "directory": "D:\\demo",
-            "command": "codex"
+            "command": "codex",
+            "selected": true
           }
         ]
         """);
@@ -69,6 +70,26 @@ public sealed partial class LauncherConfigStoreTests
         var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherConfigStore.Load(config));
 
         Assert.Contains("Id", exception.Message);
+    }
+
+    [Fact]
+    public void Load_RejectsMissingSelectedFieldFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
+        [
+          {
+            "id": "demo",
+            "name": "demo",
+            "directory": "D:\\demo",
+            "command": "codex"
+          }
+        ]
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherConfigStore.Load(config));
+
+        Assert.Equal("Launcher config entry 0 selected is missing.", exception.Message);
     }
 
     [Fact]
@@ -82,7 +103,8 @@ public sealed partial class LauncherConfigStoreTests
             "id": "demo",
             "name": "demo",
             "directory": "D:\\demo",
-            "command": "codex"
+            "command": "codex",
+            "selected": true
           }
         ]
         """);
@@ -114,6 +136,7 @@ public sealed partial class LauncherConfigStoreTests
             "name": null,
             "directory": null,
             "command": null,
+            "selected": true,
             "updatedAtUtc": null
           }
         ]
@@ -134,7 +157,8 @@ public sealed partial class LauncherConfigStoreTests
             "id": " one ",
             "name": "One",
             "directory": "D:\\one",
-            "command": "codex"
+            "command": "codex",
+            "selected": true
           }
         ]
         """);
@@ -154,7 +178,8 @@ public sealed partial class LauncherConfigStoreTests
             "id": "one",
             "name": " ",
             "directory": "D:\\one",
-            "command": "codex"
+            "command": "codex",
+            "selected": true
           }
         ]
         """);
@@ -174,13 +199,15 @@ public sealed partial class LauncherConfigStoreTests
             "id": "one",
             "name": "One",
             "directory": "D:\\one",
-            "command": "codex"
+            "command": "codex",
+            "selected": true
           },
           {
             "id": " one ",
             "name": "Duplicate",
             "directory": "D:\\duplicate",
-            "command": "pwsh"
+            "command": "pwsh",
+            "selected": false
           }
         ]
         """);
@@ -201,6 +228,7 @@ public sealed partial class LauncherConfigStoreTests
             "name": " One ",
             "directory": " D:\\one ",
             "command": " codex ",
+            "selected": true,
             "updatedAtUtc": " 2026-05-30T00:00:00Z "
           }
         ]

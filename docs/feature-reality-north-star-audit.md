@@ -120,7 +120,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: repeated subsets should be named, portable, inspectable objects instead of fragile transient checkbox state.
 - Current data owner: `config/presets.json`, referencing stable entry ids.
-- Evidence: preset schema is documented, validated by `tools/verify.ps1`, and covered by store/workflow/ViewModel tests. The selected preset can be launched directly, preserving current checkbox state instead of forcing a selection rewrite before launch, while still sharing the same preflight/confirmation path as selected-item batch launch. Applying, previewing, or launching a preset also discards uncommitted drag-sort preview state first, so a visual ghost order is not silently persisted by a launch-group action. Applying a preset has a failure contract too: config backup/write failures leave the preset selection and config file unchanged and report `配置保存失败` instead of claiming the group was applied.
+- Evidence: preset schema is documented, validated by `tools/verify.ps1`, and covered by store/workflow/ViewModel tests, including missing `entryIds` rejection. The selected preset can be launched directly, preserving current checkbox state instead of forcing a selection rewrite before launch, while still sharing the same preflight/confirmation path as selected-item batch launch. Applying, previewing, or launching a preset also discards uncommitted drag-sort preview state first, so a visual ghost order is not silently persisted by a launch-group action. Applying a preset has a failure contract too: config backup/write failures leave the preset selection and config file unchanged and report `配置保存失败` instead of claiming the group was applied.
 - Verdict: north-star. This is the best current data-structure move in the project.
 - Remaining gap: no external import/export yet; not needed for the current local workflow.
 
@@ -192,7 +192,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: launch safety should have one visible rule; per-command "danger" guesses create false confidence and hidden branches.
 - Current data owner: `settings.json` `requireConfirmationForLaunches`.
-- Evidence: launch confirmation tests cover saved setting, confirmation/cancel, and `LaunchPlan.RequiresConfirmation`; unknown or wrong-case JSON fields now fail fast, so obsolete per-entry `confirm` cannot silently compete with the global setting.
+- Evidence: launch confirmation tests cover saved setting, confirmation/cancel, and `LaunchPlan.RequiresConfirmation`; missing, unknown, or wrong-case JSON fields now fail fast, so obsolete per-entry `confirm` cannot silently compete with the global setting.
 - Verdict: north-star. One switch is simpler and safer than command-classification theater.
 - Remaining gap: none proven.
 
@@ -208,7 +208,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: config edits must not leave half-written JSON or half-applied multi-file state.
 - Current data owner: config/preset/settings stores plus mutation snapshots.
-- Evidence: store tests cover temp writes, `.bak` backups, skip-backup rollback writes, multi-file rollback failure statuses, and fail-fast rejection of unknown or wrong-case JSON fields.
+- Evidence: store tests cover temp writes, `.bak` backups, skip-backup rollback writes, multi-file rollback failure statuses, and fail-fast rejection of missing, unknown, or wrong-case JSON fields.
 - Verdict: north-star for a single-process local app.
 - Remaining gap: no file locking or merge resolution for concurrent external edits; that is not a current requirement.
 

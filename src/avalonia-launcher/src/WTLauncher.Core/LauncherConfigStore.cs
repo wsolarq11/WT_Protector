@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace WTLauncher.Core;
 
 public static class LauncherConfigStore
@@ -13,6 +15,7 @@ public static class LauncherConfigStore
         if (!File.Exists(configPath))
             throw new FileNotFoundException("Launcher config not found.", configPath);
 
+        RequireEntrySelectionFields(configPath);
         var entries = LauncherJson.LoadRequired<List<LaunchEntry?>>(configPath, "Launcher config");
 
         return NormalizeEntries(entries);
@@ -101,6 +104,30 @@ public static class LauncherConfigStore
 
     private static string BuildRepositoryMarkerPath(string root) =>
         Path.Combine(Path.GetFullPath(root), RepositoryMarkerFileName);
+
+    private static void RequireEntrySelectionFields(string configPath)
+    {
+        using var document = JsonDocument.Parse(File.ReadAllText(configPath), new JsonDocumentOptions
+        {
+            AllowTrailingCommas = true,
+            CommentHandling = JsonCommentHandling.Skip,
+        });
+
+        if (document.RootElement.ValueKind != JsonValueKind.Array)
+            return;
+
+        var index = 0;
+        foreach (var entry in document.RootElement.EnumerateArray())
+        {
+            if (entry.ValueKind == JsonValueKind.Object &&
+                !entry.TryGetProperty("selected", out _))
+            {
+                throw new InvalidDataException($"Launcher config entry {index} selected is missing.");
+            }
+
+            index++;
+        }
+    }
 
     private static List<LaunchEntry> NormalizeEntries(IEnumerable<LaunchEntry?> entries)
     {
