@@ -178,16 +178,11 @@ public sealed partial class MainWindowViewModelTests
             .Select(field => field.Name)
             .Order(StringComparer.Ordinal)
             .ToArray();
-        var workflowCallbackFields = typeof(LauncherDragReorderWorkflow)
-            .GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            .Where(field => field.FieldType == typeof(Action))
-            .Select(field => field.Name)
-            .Order(StringComparer.Ordinal)
-            .ToArray();
-
         Assert.Equal(["_dragReorderWorkflow"], viewModelDragFields);
         Assert.Equal(["_session"], workflowDragFields);
-        Assert.Equal(["_applyFilter"], workflowCallbackFields);
+        Assert.DoesNotContain(
+            typeof(LauncherDragReorderWorkflow).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance),
+            field => field.FieldType == typeof(Action));
     }
 
     [Fact]

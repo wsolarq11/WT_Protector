@@ -61,8 +61,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _dragReorderWorkflow = new LauncherDragReorderWorkflow(
             _settings,
             _settingsPath,
-            Entries,
-            ApplyFilter);
+            Entries);
         ConfigPathDisplay = LauncherMainWindowText.ConfigPathDisplay(configPath, _presetPath);
         _filterText = settings.LastFilterText ?? string.Empty;
         _requireConfirmationForLaunches = settings.RequireConfirmationForLaunches;
@@ -115,8 +114,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return true;
     }
 
-    private void DiscardDragReorderPreview() =>
-        _dragReorderWorkflow.Cancel();
+    private void DiscardDragReorderPreview()
+    {
+        var result = _dragReorderWorkflow.Cancel();
+        if (result.RefreshEntries)
+            ApplyFilter();
+    }
 
     private LauncherSettingsSnapshot CaptureSettingsMutationSnapshot()
     {

@@ -7,71 +7,70 @@ public sealed class LauncherDragReorderWorkflow
     private readonly LauncherSettings _settings;
     private readonly string _settingsPath;
     private readonly IReadOnlyList<LauncherEntryViewModel> _entries;
-    private readonly Action _applyFilter;
     private LauncherDragReorderSession? _session;
 
     public LauncherDragReorderWorkflow(
         LauncherSettings settings,
         string settingsPath,
-        IReadOnlyList<LauncherEntryViewModel> entries,
-        Action applyFilter)
+        IReadOnlyList<LauncherEntryViewModel> entries)
     {
         _settings = settings;
         _settingsPath = settingsPath;
         _entries = entries;
-        _applyFilter = applyFilter;
     }
 
-    public void Begin(bool isCustomSortMode, string draggedEntryId)
+    public bool Begin(bool isCustomSortMode, string draggedEntryId)
     {
-        TryRestorePreviewState();
+        var refreshEntries = TryRestorePreviewState();
 
         if (!isCustomSortMode)
-            return;
+            return refreshEntries;
 
         EnsureCustomOrderContainsEntries();
 
         var source = FindEntry(draggedEntryId);
         if (source is null)
-            return;
+            return refreshEntries;
 
         _session = LauncherDragReorderSession.Start(
             draggedEntryId,
             LauncherSettingsSnapshot.Capture(_settings),
             source);
+        return refreshEntries;
     }
 
-    public bool Preview(bool isCustomSortMode, string draggedEntryId, string targetEntryId, bool insertAfter)
+    public (bool Accepted, bool RefreshEntries) Preview(bool isCustomSortMode, string draggedEntryId, string targetEntryId, bool insertAfter)
     {
         if (!isCustomSortMode)
-            return false;
+            return (false, false);
+
+        var refreshEntries = false;
         var session = _session;
         if (session is null || !session.IsFor(draggedEntryId))
         {
-            Begin(isCustomSortMode, draggedEntryId);
+            refreshEntries = Begin(isCustomSortMode, draggedEntryId);
             session = _session;
         }
         if (session is null)
-            return false;
+            return (false, refreshEntries);
         if (LauncherEntryIds.SameNormalized(draggedEntryId, targetEntryId))
-            return false;
+            return (false, refreshEntries);
 
         var target = FindEntry(targetEntryId);
         if (target is null)
         {
             session.ClearHover();
-            return false;
+            return (false, refreshEntries);
         }
 
         if (!session.TryRecordPreview(targetEntryId, insertAfter))
-            return false;
+            return (false, refreshEntries);
 
         EnsureCustomOrderContainsEntries();
         LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, draggedEntryId, targetEntryId, insertAfter);
-        _applyFilter();
 
         session.SetTarget(target, insertAfter);
-        return true;
+        return (true, true);
     }
 
     private LauncherEntryViewModel? FindEntry(string entryId) =>
@@ -85,12 +84,12 @@ public sealed class LauncherDragReorderWorkflow
         _session?.ClearHover();
     }
 
-    public string? Commit(bool isCustomSortMode)
+    public (string? Status, bool RefreshEntries) Commit(bool isCustomSortMode)
     {
         if (!isCustomSortMode)
-            return null;
+            return (null, false);
         if (_session is null)
-            return null;
+            return (null, false);
 
         var session = _session;
         var saveFailure = LauncherSettingsMutationPersistence.Save(
@@ -99,21 +98,20 @@ public sealed class LauncherDragReorderWorkflow
             session.Snapshot);
         if (saveFailure is not null)
         {
-            _applyFilter();
             ClearPreviewState();
-            return saveFailure;
+            return (saveFailure, true);
         }
 
         ClearPreviewState();
-        return LauncherDragReorderStatus.Saved;
+        return (LauncherDragReorderStatus.Saved, false);
     }
 
-    public string? Cancel()
+    public (string? Status, bool RefreshEntries) Cancel()
     {
         if (!TryRestorePreviewState())
-            return null;
+            return (null, false);
 
-        return LauncherDragReorderStatus.Canceled;
+        return (LauncherDragReorderStatus.Canceled, true);
     }
 
     private bool TryRestorePreviewState()
@@ -123,7 +121,6 @@ public sealed class LauncherDragReorderWorkflow
             return false;
 
         session.Snapshot.RestoreCustomEntryOrder(_settings);
-        _applyFilter();
         ClearPreviewState();
         return true;
     }

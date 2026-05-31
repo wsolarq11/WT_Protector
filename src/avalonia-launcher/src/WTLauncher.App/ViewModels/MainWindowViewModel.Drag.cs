@@ -6,12 +6,17 @@ public sealed partial class MainWindowViewModel
 
     public void BeginDragReorder(string draggedEntryId)
     {
-        _dragReorderWorkflow.Begin(IsCustomSortMode, draggedEntryId);
+        if (_dragReorderWorkflow.Begin(IsCustomSortMode, draggedEntryId))
+            ApplyFilter();
     }
 
     public bool PreviewMoveEntry(string draggedEntryId, string targetEntryId, bool insertAfter)
     {
-        return _dragReorderWorkflow.Preview(IsCustomSortMode, draggedEntryId, targetEntryId, insertAfter);
+        var result = _dragReorderWorkflow.Preview(IsCustomSortMode, draggedEntryId, targetEntryId, insertAfter);
+        if (result.RefreshEntries)
+            ApplyFilter();
+
+        return result.Accepted;
     }
 
     public void ClearDragHover()
@@ -22,12 +27,16 @@ public sealed partial class MainWindowViewModel
     public void CommitDragReorder()
     {
         var result = _dragReorderWorkflow.Commit(IsCustomSortMode);
-        ApplyStatusText(result);
+        if (result.RefreshEntries)
+            ApplyFilter();
+        ApplyStatusText(result.Status);
     }
 
     public void CancelDragReorder()
     {
         var result = _dragReorderWorkflow.Cancel();
-        ApplyStatusText(result);
+        if (result.RefreshEntries)
+            ApplyFilter();
+        ApplyStatusText(result.Status);
     }
 }
