@@ -34,6 +34,29 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void ApplyPresetRollsBackFileAndStatusWhenConfigBackupFails()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: false, twoSelected: true);
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+
+        var viewModel = CreateViewModel(config, settings);
+        Directory.CreateDirectory(config + ".bak");
+
+        viewModel.ApplyPresetCommand.Execute(null);
+
+        Assert.Equal(1, viewModel.SelectedCount);
+        Assert.False(viewModel.Entries.Single(entry => entry.Id == "one").IsSelected);
+        Assert.True(viewModel.Entries.Single(entry => entry.Id == "two").IsSelected);
+        var entries = LoadEntriesById(config);
+        Assert.False(entries.Single(entry => entry.Id == "one").Selected);
+        Assert.True(entries.Single(entry => entry.Id == "two").Selected);
+        Assert.Contains("配置保存失败", viewModel.StatusText);
+        Assert.DoesNotContain("已应用", viewModel.StatusText);
+        AssertNoStoreTempFiles(config);
+    }
+
+    [Fact]
     public void PresetLoadingPrefersConfiguredDefaultPreset()
     {
         using var defaultTemp = new TempDirectory();

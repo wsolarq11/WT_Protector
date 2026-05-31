@@ -178,6 +178,7 @@ Important risks:
 - Applying a preset only rewrites checkbox state; "启动当前组" launches the selected preset entries directly without rewriting checkbox state first.
 - The root `config/` directory is the canonical source.
 - JSON saves are written through temporary files, normal config/preset writes keep `.bak` backups, and failed multi-file entry edits attempt to roll back both memory and already-written portable files.
+- Checkbox-selection and preset-apply config save failures stay visible as `配置保存失败` and roll back both in-memory selection and the tracked config file instead of reporting a successful apply/select/clear action.
 - Add/edit/delete and launch-group dialogs fail visibly and leave portable files unchanged if the dialog boundary itself is unavailable.
 - Deleting the current launch group selects the next default/current group explicitly and reports that group in status text instead of hiding the fallback selection.
 - Using the app can legitimately dirty tracked `config/config.json`, `config/presets.json`, and `config/settings.json`; review that user/app working set before committing or reverting it.
