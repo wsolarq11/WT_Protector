@@ -54,15 +54,17 @@ public sealed partial class MainWindowViewModel
     {
         var snapshot = CaptureSettingsMutationSnapshot();
         _settings.LastFilterText = value ?? string.Empty;
-        SaveSettingsChange(
-            snapshot,
-            snapshot =>
-            {
-                _filterText = snapshot.LastFilterText;
-                OnPropertyChanged(nameof(FilterText));
-                ApplyFilter();
-            },
-            ApplyFilter);
+        var saveFailure = SaveSettingsChange(snapshot);
+        if (saveFailure is not null)
+        {
+            _filterText = snapshot.LastFilterText;
+            OnPropertyChanged(nameof(FilterText));
+            ApplyFilter();
+            ApplyStatusText(saveFailure);
+            return;
+        }
+
+        ApplyFilter();
     }
 
     partial void OnSelectedSortModeChanged(LauncherSortModeViewModel? value)
@@ -74,20 +76,19 @@ public sealed partial class MainWindowViewModel
         var snapshot = CaptureSettingsMutationSnapshot();
         _settings.SortMode = value.Id;
         EnsureCustomOrderContainsEntries();
-        SaveSettingsChange(
-            snapshot,
-            snapshot =>
-            {
-                _selectedSortMode = ResolveSortMode(snapshot.SortMode);
-                OnPropertyChanged(nameof(SelectedSortMode));
-                OnPropertyChanged(nameof(IsCustomSortMode));
-                ApplyFilter();
-            },
-            () =>
-            {
-                ApplyFilter();
-                StatusText = LauncherSettingsStatus.SortModeSaved(value.Label);
-            });
+        var saveFailure = SaveSettingsChange(snapshot);
+        if (saveFailure is not null)
+        {
+            _selectedSortMode = ResolveSortMode(snapshot.SortMode);
+            OnPropertyChanged(nameof(SelectedSortMode));
+            OnPropertyChanged(nameof(IsCustomSortMode));
+            ApplyFilter();
+            ApplyStatusText(saveFailure);
+            return;
+        }
+
+        ApplyFilter();
+        StatusText = LauncherSettingsStatus.SortModeSaved(value.Label);
     }
 
     partial void OnSelectedDisplayModeChanged(LauncherDisplayModeViewModel? value)
@@ -99,16 +100,18 @@ public sealed partial class MainWindowViewModel
         var snapshot = CaptureSettingsMutationSnapshot();
         _settings.EntryViewMode = value.Id;
         LauncherEntryLayoutPresentation.Refresh(Entries);
-        SaveSettingsChange(
-            snapshot,
-            snapshot =>
-            {
-                _selectedDisplayMode = ResolveDisplayMode(snapshot.EntryViewMode);
-                OnPropertyChanged(nameof(SelectedDisplayMode));
-                NotifyDisplayModeProjectionChanged();
-                LauncherEntryLayoutPresentation.Refresh(Entries);
-            },
-            () => StatusText = LauncherSettingsStatus.DisplayModeSaved(value.Label));
+        var saveFailure = SaveSettingsChange(snapshot);
+        if (saveFailure is not null)
+        {
+            _selectedDisplayMode = ResolveDisplayMode(snapshot.EntryViewMode);
+            OnPropertyChanged(nameof(SelectedDisplayMode));
+            NotifyDisplayModeProjectionChanged();
+            LauncherEntryLayoutPresentation.Refresh(Entries);
+            ApplyStatusText(saveFailure);
+            return;
+        }
+
+        StatusText = LauncherSettingsStatus.DisplayModeSaved(value.Label);
     }
 
     private void NotifyDisplayModeProjectionChanged()

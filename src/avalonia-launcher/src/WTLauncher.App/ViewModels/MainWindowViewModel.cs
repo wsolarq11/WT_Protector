@@ -126,23 +126,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private static LaunchEntry ToLaunchEntry(LauncherEntryViewModel entry) => entry.Entry;
 
-    private void SaveSettingsChange(
-        LauncherSettingsSnapshot snapshot,
-        Action<LauncherSettingsSnapshot> onRollback,
-        Action onSuccess)
-    {
-        var saveFailure = LauncherSettingsMutationPersistence.Save(
+    private string? SaveSettingsChange(LauncherSettingsSnapshot snapshot) =>
+        LauncherSettingsMutationPersistence.Save(
             _settings,
             _settingsPath,
             snapshot);
-        if (saveFailure is not null)
-        {
-            onRollback(snapshot);
-            ApplyStatusText(saveFailure);
-            return;
-        }
-
-        onSuccess();
-    }
 
 }

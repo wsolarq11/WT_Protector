@@ -18,15 +18,17 @@ public sealed partial class MainWindowViewModel
         var snapshot = CaptureSettingsMutationSnapshot();
         _settings.RequireConfirmationForLaunches = value;
         RefreshLaunchConfirmationPresentation();
-        SaveSettingsChange(
-            snapshot,
-            snapshot =>
-            {
-                _requireConfirmationForLaunches = snapshot.RequireConfirmationForLaunches;
-                OnPropertyChanged(nameof(RequireConfirmationForLaunches));
-                RefreshLaunchConfirmationPresentation();
-            },
-            () => StatusText = LauncherSettingsStatus.LaunchConfirmationSaved(value));
+        var saveFailure = SaveSettingsChange(snapshot);
+        if (saveFailure is not null)
+        {
+            _requireConfirmationForLaunches = snapshot.RequireConfirmationForLaunches;
+            OnPropertyChanged(nameof(RequireConfirmationForLaunches));
+            RefreshLaunchConfirmationPresentation();
+            ApplyStatusText(saveFailure);
+            return;
+        }
+
+        StatusText = LauncherSettingsStatus.LaunchConfirmationSaved(value);
     }
 
     internal void ShowDryRun(LauncherEntryViewModel item)
