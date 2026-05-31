@@ -112,7 +112,7 @@ public static class LauncherPresetWorkflow
         ?? string.Empty;
 
     private static bool HasEntryReferences(LauncherPreset preset) =>
-        preset.EntryIds.Any(LauncherEntryIds.IsUsable);
+        LauncherEntryIds.ToRequiredUniqueList(preset.EntryIds, nameof(preset.EntryIds)).Count > 0;
 
     private static string NormalizeRequiredName(string? name)
     {

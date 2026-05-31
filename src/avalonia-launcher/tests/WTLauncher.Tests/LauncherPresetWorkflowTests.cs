@@ -377,16 +377,18 @@ public sealed class LauncherPresetWorkflowTests
     }
 
     [Fact]
-    public void DeletePreset_IgnoresBlankFallbackReferences()
+    public void DeletePreset_RejectsBlankFallbackReferencesBeforeMutatingPresetFile()
     {
         var presetFile = PresetFile(
             "daily",
             Preset("daily", "Daily", "one"),
             Preset("blank", "Blank", " "));
 
-        Assert.False(LauncherPresetWorkflow.CanDeletePreset(presetFile, "daily"));
-        Assert.Null(LauncherPresetWorkflow.DeletePreset(presetFile, "daily", out var fallbackPresetId));
-        Assert.Equal("daily", fallbackPresetId);
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherPresetWorkflow.DeletePreset(presetFile, "daily", out _));
+
+        Assert.Equal("EntryIds", exception.ParamName);
+        Assert.Equal("daily", presetFile.DefaultPresetId);
         Assert.Equal(["daily", "blank"], presetFile.Presets.Select(preset => preset.Id).ToArray());
     }
 
