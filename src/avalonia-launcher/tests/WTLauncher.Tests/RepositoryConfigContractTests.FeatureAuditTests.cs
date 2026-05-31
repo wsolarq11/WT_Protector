@@ -113,7 +113,8 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("propagates missing or failed `presets.json`", audit);
         Assert.Contains("instead of synthesizing a second empty preset truth", audit);
         Assert.Contains("reject missing or unknown mode ids", audit);
-        Assert.Contains("null settings fields, missing/blank mode ids, invalid in-memory settings during close-time window save", audit);
+        Assert.Contains("null settings fields, null saved filter state at ViewModel construction", audit);
+        Assert.Contains("missing/blank mode ids, invalid in-memory settings during close-time window save", audit);
         Assert.Contains("invalid in-memory settings during close-time window save", audit);
         Assert.Contains("non-positive persisted window dimensions now fail fast", audit);
         Assert.Contains("missing files plus missing, null, blank mode, non-positive window geometry, unknown, or wrong-case JSON fields", audit);

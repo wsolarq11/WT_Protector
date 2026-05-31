@@ -52,6 +52,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         LauncherLaunchWorkflow launchWorkflow,
         Func<DateTimeOffset> utcNow)
     {
+        ArgumentNullException.ThrowIfNull(settings);
         _configPath = configPath;
         _presetPath = LauncherPresetStore.ResolvePresetPath(configPath);
         _settingsPath = settingsPath;
@@ -63,7 +64,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _settingsPath,
             Entries);
         ConfigPathDisplay = LauncherMainWindowText.ConfigPathDisplay(configPath, _presetPath);
-        _filterText = settings.LastFilterText ?? string.Empty;
+        _filterText = RequireSettingsText(settings.LastFilterText, "lastFilterText");
         _requireConfirmationForLaunches = settings.RequireConfirmationForLaunches;
         _selectedSortMode = ResolveSortMode(settings.SortMode);
         _settings.SortMode = _selectedSortMode.Id;
@@ -127,6 +128,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     private static LaunchEntry ToLaunchEntry(LauncherEntryViewModel entry) => entry.Entry;
+
+    private static string RequireSettingsText(string? value, string fieldName) =>
+        value ?? throw new InvalidDataException($"Launcher settings {fieldName} is null.");
 
     private string? SaveSettingsChange(LauncherSettingsSnapshot snapshot) =>
         LauncherSettingsMutationPersistence.Save(

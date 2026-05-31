@@ -22,6 +22,22 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void ConstructorRejectsNullSavedFilterInsteadOfInventingEmptyFilter()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            CreateViewModel(
+                config,
+                settings,
+                new LauncherSettings { LastFilterText = null! }));
+
+        Assert.Equal("Launcher settings lastFilterText is null.", exception.Message);
+        Assert.False(File.Exists(settings));
+    }
+
+    [Fact]
     public void FilterTextPersistsPortableSettingsAndFiltersVisibleEntries()
     {
         using var temp = new TempDirectory();
