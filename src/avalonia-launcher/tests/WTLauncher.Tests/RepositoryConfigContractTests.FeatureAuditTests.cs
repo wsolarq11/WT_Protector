@@ -88,12 +88,13 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("Named presets can now launch directly from `config/presets.json` without rewriting checkbox state first", audit);
         Assert.Contains("Current-group preview uses the same preflight output and formatter", audit);
         Assert.Contains("transient `启动回执`", audit);
+        Assert.Contains("transient single-launch request receipts", audit);
         Assert.Contains("honest requested-start wording", audit);
         Assert.Contains("side-effect-free current-group preview", audit);
         Assert.Contains("preserving the preset name in cancellation and unexpected-failure status", audit);
         Assert.Contains("docs/feature-reality-north-star-audit.md", readme);
         Assert.Contains("Selected-item and current-group batch launch preflight every target before confirmation or process start", readme);
-        Assert.Contains("Batch launch writes a transient `启动回执`", readme);
+        Assert.Contains("Single and batch launch write transient `启动回执`", readme);
         Assert.Contains("已请求启动", readme);
         Assert.Contains("预演当前组", readme);
         Assert.Contains("without starting processes or rewriting checkbox selection", readme);
@@ -144,7 +145,7 @@ public sealed partial class RepositoryConfigContractTests
             "- Requirement: 100% confidence and 0% side effects.",
             "- Status: contradicted. There are possible improvements",
             "- Status: false for broad launcher scope",
-            "transient launch receipts for requested/failed/skipped plans",
+            "transient single-launch receipts plus batch receipts",
             "- Status: impossible as an absolute claim; mitigated where the repository owns the boundary.",
         })
         {

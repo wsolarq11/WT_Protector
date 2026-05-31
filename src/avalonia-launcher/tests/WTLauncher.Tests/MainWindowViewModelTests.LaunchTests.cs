@@ -90,7 +90,9 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
 
         Assert.NotNull(confirmedPlan);
-        Assert.Equal(confirmedPlan!.CommandLine, viewModel.DryRunText);
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("已请求启动: one", viewModel.DryRunText);
+        Assert.Contains(confirmedPlan!.CommandLine, viewModel.DryRunText);
         Assert.Equal("已请求启动: one", viewModel.StatusText);
     }
 
@@ -113,6 +115,9 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("已请求启动: one", viewModel.DryRunText);
+        Assert.Contains("codex", viewModel.DryRunText);
         Assert.Equal("已请求启动: one", viewModel.StatusText);
     }
 
