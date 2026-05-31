@@ -61,6 +61,19 @@ public sealed class DialogLayoutContractTests
         Assert.Contains("isDefault: true", MethodSource(dialogButtons, "Primary"));
     }
 
+    [Fact]
+    public void BatchLaunchConfirmationShowsPreflightedCommandLines()
+    {
+        var source = File.ReadAllText(TestRepositoryPaths.View("ConfirmBatchLaunchWindow.cs"));
+
+        Assert.Contains("IReadOnlyList<LauncherBatchLaunchItem> items", source);
+        Assert.Contains("item.Plan.CommandLine", source);
+        Assert.Contains("请确认实际 wt.exe 命令", source);
+        Assert.Contains("Text = plans", source);
+        Assert.Contains("IsReadOnly = true", source);
+        Assert.DoesNotContain("IReadOnlyList<LaunchEntry>", source);
+    }
+
     [Theory]
     [InlineData("ConfirmEntryDeleteWindow.cs")]
     [InlineData("ConfirmPresetDeleteWindow.cs")]
