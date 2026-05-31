@@ -7,12 +7,10 @@ public static class LauncherSettingsMutationPersistence
     public static string? Save(
         LauncherSettings settings,
         string settingsPath,
-        LauncherSettingsSnapshot snapshot,
-        Action onRollback)
+        LauncherSettingsSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(snapshot);
-        ArgumentNullException.ThrowIfNull(onRollback);
 
         try
         {
@@ -22,7 +20,6 @@ public static class LauncherSettingsMutationPersistence
         catch (Exception ex)
         {
             snapshot.Restore(settings);
-            onRollback();
             return LauncherPersistenceStatus.SettingsSaveFailed(ex);
         }
     }

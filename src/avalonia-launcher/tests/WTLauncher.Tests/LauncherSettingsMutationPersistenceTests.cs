@@ -13,22 +13,19 @@ public sealed class LauncherSettingsMutationPersistenceTests
         var settings = Settings();
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
         settings.LastFilterText = "new";
-        var rollbackCalled = false;
 
         var saveFailure = LauncherSettingsMutationPersistence.Save(
             settings,
             settingsPath,
-            snapshot,
-            () => rollbackCalled = true);
+            snapshot);
 
         Assert.Null(saveFailure);
-        Assert.False(rollbackCalled);
         Assert.Equal("new", settings.LastFilterText);
         Assert.Equal("new", LauncherSettingsStore.Load(settingsPath).LastFilterText);
     }
 
     [Fact]
-    public void SaveRestoresSnapshotBeforeRollbackCallbackWhenSaveFails()
+    public void SaveRestoresSnapshotWhenSaveFails()
     {
         using var temp = new TempDirectory();
         var settings = Settings();
@@ -38,16 +35,13 @@ public sealed class LauncherSettingsMutationPersistenceTests
         settings.EntryViewMode = LauncherEntryViewModes.NamesId;
         settings.RequireConfirmationForLaunches = false;
         settings.CustomEntryOrder = ["two", "one"];
-        string? rollbackFilterText = null;
 
         var saveFailure = LauncherSettingsMutationPersistence.Save(
             settings: settings,
             settingsPath: temp.Path,
-            snapshot: snapshot,
-            onRollback: () => rollbackFilterText = settings.LastFilterText);
+            snapshot: snapshot);
 
         Assert.Contains("设置保存失败", saveFailure);
-        Assert.Equal("old", rollbackFilterText);
         Assert.Equal("old", settings.LastFilterText);
         Assert.Equal(LauncherEntryVisibility.CustomSortModeId, settings.SortMode);
         Assert.Equal(LauncherEntryViewModes.CardsId, settings.EntryViewMode);

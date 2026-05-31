@@ -96,14 +96,13 @@ public sealed class LauncherDragReorderWorkflow
         var saveFailure = LauncherSettingsMutationPersistence.Save(
             _settings,
             _settingsPath,
-            session.Snapshot,
-            () =>
-            {
-                _applyFilter();
-                ClearPreviewState();
-            });
+            session.Snapshot);
         if (saveFailure is not null)
+        {
+            _applyFilter();
+            ClearPreviewState();
             return saveFailure;
+        }
 
         ClearPreviewState();
         return LauncherDragReorderStatus.Saved;

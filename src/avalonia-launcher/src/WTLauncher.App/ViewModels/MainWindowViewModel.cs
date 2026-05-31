@@ -135,10 +135,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var saveFailure = LauncherSettingsMutationPersistence.Save(
             _settings,
             _settingsPath,
-            snapshot,
-            () => onRollback(snapshot));
+            snapshot);
         if (saveFailure is not null)
         {
+            onRollback(snapshot);
             ApplyStatusText(saveFailure);
             return;
         }
