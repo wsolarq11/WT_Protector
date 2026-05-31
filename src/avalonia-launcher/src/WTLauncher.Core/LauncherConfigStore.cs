@@ -105,10 +105,11 @@ public static class LauncherConfigStore
     private static List<LaunchEntry> NormalizeEntries(IEnumerable<LaunchEntry?> entries)
     {
         var normalized = new List<LaunchEntry>();
+        var seenIds = new HashSet<string>(LauncherEntryIds.Comparer);
         var index = 0;
         foreach (var entry in entries)
         {
-            normalized.Add(Normalize(RequireEntry(entry, index)));
+            normalized.Add(Normalize(RequireEntry(entry, index), index, seenIds));
             index++;
         }
 
@@ -118,10 +119,11 @@ public static class LauncherConfigStore
     private static List<LaunchEntry> CloneNormalizedEntries(IEnumerable<LaunchEntry> entries)
     {
         var normalized = new List<LaunchEntry>();
+        var seenIds = new HashSet<string>(LauncherEntryIds.Comparer);
         var index = 0;
         foreach (var entry in entries)
         {
-            normalized.Add(CloneNormalized(RequireEntry(entry, index)));
+            normalized.Add(CloneNormalized(RequireEntry(entry, index), index, seenIds));
             index++;
         }
 
@@ -131,15 +133,51 @@ public static class LauncherConfigStore
     private static LaunchEntry RequireEntry(LaunchEntry? entry, int index) =>
         entry ?? throw new InvalidDataException($"Launcher config entry {index} is null.");
 
-    private static LaunchEntry Normalize(LaunchEntry entry)
+    private static LaunchEntry Normalize(LaunchEntry entry, int index, HashSet<string> seenIds)
     {
-        entry.Id = LauncherEntryIds.Normalize(entry.Id);
-        entry.Name = LauncherEntryText.Normalize(entry.Name);
-        entry.Directory = LauncherEntryText.Normalize(entry.Directory);
-        entry.Command = LauncherEntryText.Normalize(entry.Command);
-        entry.UpdatedAtUtc = LauncherEntryText.Normalize(entry.UpdatedAtUtc);
+        entry.Id = RequireEntryId(entry.Id, index, seenIds);
+        entry.Name = RequireEntryText(entry.Name, index, "name");
+        entry.Directory = RequireEntryText(entry.Directory, index, "directory");
+        entry.Command = RequireEntryText(entry.Command, index, "command");
+        entry.UpdatedAtUtc = NormalizeOptionalEntryText(entry.UpdatedAtUtc, index, "updatedAtUtc");
         return entry;
     }
 
-    private static LaunchEntry CloneNormalized(LaunchEntry entry) => Normalize(entry with { });
+    private static LaunchEntry CloneNormalized(LaunchEntry entry, int index, HashSet<string> seenIds) =>
+        Normalize(entry with { }, index, seenIds);
+
+    private static string RequireEntryId(string? id, int index, HashSet<string> seenIds)
+    {
+        if (id is null)
+            throw new InvalidDataException($"Launcher config entry {index} id is null.");
+
+        var normalized = LauncherEntryIds.Normalize(id);
+        if (normalized.Length == 0)
+            throw new InvalidDataException($"Launcher config entry {index} id is empty.");
+
+        if (!seenIds.Add(normalized))
+            throw new InvalidDataException($"Launcher config entry {index} id is duplicate: {normalized}.");
+
+        return normalized;
+    }
+
+    private static string RequireEntryText(string? value, int index, string fieldName)
+    {
+        if (value is null)
+            throw new InvalidDataException($"Launcher config entry {index} {fieldName} is null.");
+
+        var normalized = LauncherEntryText.Normalize(value);
+        if (normalized.Length == 0)
+            throw new InvalidDataException($"Launcher config entry {index} {fieldName} is empty.");
+
+        return normalized;
+    }
+
+    private static string NormalizeOptionalEntryText(string? value, int index, string fieldName)
+    {
+        if (value is null)
+            throw new InvalidDataException($"Launcher config entry {index} {fieldName} is null.");
+
+        return LauncherEntryText.Normalize(value);
+    }
 }

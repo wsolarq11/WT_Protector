@@ -85,7 +85,7 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void Load_NormalizesNullEntryFieldsFromConfig()
+    public void Load_RejectsNullEntryFieldsFromConfig()
     {
         using var temp = new TempDirectory();
         var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
@@ -100,13 +100,9 @@ public sealed partial class LauncherConfigStoreTests
         ]
         """);
 
-        var entry = Assert.Single(LauncherConfigStore.Load(config));
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherConfigStore.Load(config));
 
-        Assert.Equal(string.Empty, entry.Id);
-        Assert.Equal(string.Empty, entry.Name);
-        Assert.Equal(string.Empty, entry.Directory);
-        Assert.Equal(string.Empty, entry.Command);
-        Assert.Equal(string.Empty, entry.UpdatedAtUtc);
+        Assert.Equal("Launcher config entry 0 id is null.", exception.Message);
     }
 
     [Fact]
@@ -127,6 +123,52 @@ public sealed partial class LauncherConfigStoreTests
         var entry = Assert.Single(LauncherConfigStore.Load(config));
 
         Assert.Equal("one", entry.Id);
+    }
+
+    [Fact]
+    public void Load_RejectsBlankEntryFieldsFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
+        [
+          {
+            "id": "one",
+            "name": " ",
+            "directory": "D:\\one",
+            "command": "codex"
+          }
+        ]
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherConfigStore.Load(config));
+
+        Assert.Equal("Launcher config entry 0 name is empty.", exception.Message);
+    }
+
+    [Fact]
+    public void Load_RejectsDuplicateEntryIdsFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
+        [
+          {
+            "id": "one",
+            "name": "One",
+            "directory": "D:\\one",
+            "command": "codex"
+          },
+          {
+            "id": " one ",
+            "name": "Duplicate",
+            "directory": "D:\\duplicate",
+            "command": "pwsh"
+          }
+        ]
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherConfigStore.Load(config));
+
+        Assert.Equal("Launcher config entry 1 id is duplicate: one.", exception.Message);
     }
 
     [Fact]
@@ -237,34 +279,53 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void Save_NormalizesDirtyEntriesBeforeWriting()
+    public void Save_RejectsNullEntryFieldsBeforeWriting()
     {
         using var temp = new TempDirectory();
         var config = WriteEmptyLauncherConfig(temp.Path);
 
-        LauncherConfigStore.Save(
-            [
-                new LaunchEntry
-                {
-                    Id = " one ",
-                    Name = null!,
-                    Directory = null!,
-                    Command = null!,
-                    UpdatedAtUtc = null!,
-                },
-            ],
-            config,
-            backup: true);
+        var exception = Assert.Throws<InvalidDataException>(
+            () => LauncherConfigStore.Save(
+                [
+                    new LaunchEntry
+                    {
+                        Id = " one ",
+                        Name = null!,
+                        Directory = null!,
+                        Command = null!,
+                        UpdatedAtUtc = null!,
+                    },
+                ],
+                config,
+                backup: true));
 
-        var savedJson = File.ReadAllText(config);
-        Assert.DoesNotContain(" one ", savedJson);
-        Assert.DoesNotContain("null", savedJson);
-        var entry = Assert.Single(LauncherConfigStore.Load(config));
-        Assert.Equal("one", entry.Id);
-        Assert.Equal(string.Empty, entry.Name);
-        Assert.Equal(string.Empty, entry.Directory);
-        Assert.Equal(string.Empty, entry.Command);
-        Assert.Equal(string.Empty, entry.UpdatedAtUtc);
+        Assert.Equal("Launcher config entry 0 name is null.", exception.Message);
+        Assert.Equal("[]", File.ReadAllText(config));
+    }
+
+    [Fact]
+    public void Save_RejectsDuplicateEntryIdsBeforeWriting()
+    {
+        using var temp = new TempDirectory();
+        var config = WriteEmptyLauncherConfig(temp.Path);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => LauncherConfigStore.Save(
+                [
+                    Entry(),
+                    new LaunchEntry
+                    {
+                        Id = " demo ",
+                        Name = "Duplicate",
+                        Directory = "D:\\duplicate",
+                        Command = "pwsh",
+                    },
+                ],
+                config,
+                backup: false));
+
+        Assert.Equal("Launcher config entry 1 id is duplicate: demo.", exception.Message);
+        Assert.Equal("[]", File.ReadAllText(config));
     }
 
     [Fact]
