@@ -1,6 +1,6 @@
 # Feature reality and north-star audit
 
-Reviewed on: 2026-05-31
+Reviewed on: 2026-06-01
 
 Purpose: evaluate whether each active WT Launcher feature mapping solves a real user problem and whether the implementation is already a domain north star. This is an audit document, not marketing copy.
 
@@ -33,7 +33,7 @@ The external yardstick remains the source-tracked benchmark set in `docs/design-
 
 ## Fresh external yardstick spot-check
 
-Current external references were spot-checked on 2026-05-31 before making the north-star judgment:
+Current external references were spot-checked on 2026-06-01 before making the north-star judgment:
 
 - Microsoft Windows Terminal still treats `wt.exe` as an explicit command line with `-d` / `--startingDirectory` for the starting folder, which matches this repo's `directory` + `command` entry contract.
 - VS Code still separates user/workspace settings and multi-root workspace files, which supports portable, human-readable context objects instead of hidden local state.
@@ -44,7 +44,7 @@ Current external references were spot-checked on 2026-05-31 before making the no
 
 ## Current GitHub similar-project snapshot
 
-Live GitHub repository search was also spot-checked on 2026-05-31. The result is blunt: a universal "stronger than any similar GitHub project" claim is not provable, and in the broad launcher market it is false. Flow Launcher and Wox are mature broad launchers with thousands of stars, plugin ecosystems, package channels, and community proof. WT Launcher should not fight them as a generic launcher. That would be stupid scope creep.
+Live GitHub repository search/API checks were refreshed on 2026-06-01. The result is blunt: a universal "stronger than any similar GitHub project" claim is not provable, and in the broad launcher market it is false. Flow Launcher and Wox are mature broad launchers with thousands of stars, plugin ecosystems, package channels, and community proof. WT Launcher should not fight them as a generic launcher. That would be stupid scope creep.
 
 The relevant fight is narrower: portable Windows Terminal workspace launching with inspectable entries, named launch groups, explicit launch confirmation, rollback-aware JSON persistence, and a native repo gate.
 
@@ -53,8 +53,8 @@ Representative GitHub yardsticks:
 - <https://github.com/SyDroX/dev-layout> — direct Windows Terminal workspace launcher; PowerShell, 0 stars, updated 2026-05-27. Strong for fixed Claude Code multi-repo layout, session resume, and `cd` blocking. Weaker than WT Launcher on editable portable UI entries, named launch groups, repository-level native gate, and rollback-aware config persistence.
 - <https://github.com/augustdragon/terminal-manager> — direct Windows Terminal profile/session manager; TypeScript, 0 stars, updated 2026-05-17. Stronger than WT Launcher for WT profile editing, split-pane session groups, import/export, and WT `settings.json` sync. Heavier stack, local web server, more moving parts, and it mutates Windows Terminal settings by design. This is a different tradeoff, not a small-and-beautiful local config launcher.
 - <https://github.com/joyahmed/devgo-app> — WSL-first developer launcher; C#, 2 stars, updated 2026-05-24. Strong for WSL + VS Code + tmux workflows and installer ambition. README still lists keyboard shortcuts and rough edges as in-progress, so it is not stronger on the current WT Launcher axis of verified portable launch groups.
-- <https://github.com/Flow-Launcher/Flow.Launcher> — broad Windows launcher; C#, 14,841 stars, updated 2026-05-31. Stronger in broad market proof, plugins, search, packaging, and community. Not the same narrow product.
-- <https://github.com/Wox-launcher/Wox> — broad cross-platform launcher; Go, 26,979 stars, updated 2026-05-31. Stronger in broad market proof, cross-platform packaging, plugin/theme stores, and AI/MCP direction. Not the same narrow product.
+- <https://github.com/Flow-Launcher/Flow.Launcher> — broad Windows launcher; C#, 14,841 stars, updated 2026-05-31T13:24:27Z. Stronger in broad market proof, plugins, search, packaging, and community. Not the same narrow product.
+- <https://github.com/Wox-launcher/Wox> — broad cross-platform launcher; Go, 26,979 stars, updated 2026-05-31T15:02:11Z. Stronger in broad market proof, cross-platform packaging, plugin/theme stores, and AI/MCP direction. Not the same narrow product.
 
 Conclusion from the GitHub snapshot: WT Launcher can honestly claim a north-star shape only for the narrow, local, portable Windows Terminal workspace-launcher slice. It cannot honestly claim broad launcher supremacy.
 
