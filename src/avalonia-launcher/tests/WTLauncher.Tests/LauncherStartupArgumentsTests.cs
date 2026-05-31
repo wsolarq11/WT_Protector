@@ -21,11 +21,25 @@ public sealed class LauncherStartupArgumentsTests
     }
 
     [Fact]
-    public void ReadConfigPath_IsCaseInsensitiveAndIgnoresMissingOrBlankValue()
+    public void ReadConfigPath_IsCaseInsensitive()
     {
         Assert.Equal("config/custom.json", LauncherStartupArguments.ReadConfigPath(["--CONFIG", "config/custom.json"]));
-        Assert.Null(LauncherStartupArguments.ReadConfigPath(["--config"]));
-        Assert.Null(LauncherStartupArguments.ReadConfigPath(["--config", "  "]));
         Assert.Null(LauncherStartupArguments.ReadConfigPath(null));
+    }
+
+    [Fact]
+    public void ReadConfigPath_RejectsMissingConfigValue()
+    {
+        AssertMissingConfigValue(["--config"]);
+        AssertMissingConfigValue(["--config", "  "]);
+        AssertMissingConfigValue(["--config", "--theme"]);
+    }
+
+    private static void AssertMissingConfigValue(string[] args)
+    {
+        var exception = Assert.Throws<ArgumentException>(() => LauncherStartupArguments.ReadConfigPath(args));
+
+        Assert.Equal("args", exception.ParamName);
+        Assert.StartsWith("Config path value is required after --config.", exception.Message);
     }
 }
