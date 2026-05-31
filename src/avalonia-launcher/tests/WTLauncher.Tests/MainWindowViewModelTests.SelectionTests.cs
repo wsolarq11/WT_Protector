@@ -61,6 +61,29 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void SelectionChangeDuringDragPreviewDiscardsPreviewOrder()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreateDragFixture(temp);
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+
+        viewModel.BeginDragReorder("three");
+        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
+        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+
+        viewModel.Entries.Single(entry => entry.Id == "two").IsSelected = true;
+
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.DoesNotContain(viewModel.Entries, entry =>
+            entry.IsDragPreviewSource
+            || entry.IsDragPreviewTarget
+            || entry.IsDragInsertBefore
+            || entry.IsDragInsertAfter);
+    }
+
+    [Fact]
     public void SelectionRollbackUsesTypedSnapshot()
     {
         Assert.Null(typeof(MainWindowViewModel).GetMethod("CaptureSelectionSnapshot", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static));

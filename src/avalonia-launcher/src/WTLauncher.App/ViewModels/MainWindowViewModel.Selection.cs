@@ -83,7 +83,7 @@ public sealed partial class MainWindowViewModel
     internal void UpdateSelection(LauncherEntryViewModel item, bool selected)
     {
         var previousSelected = item.ReplaceEntrySelectionFromOwner(selected);
-        var snapshot = LauncherSelectionMutationSnapshot.Capture(item, previousSelected);
+        var snapshot = CaptureSelectionMutationSnapshot(item, previousSelected);
         SaveSelectionChangeOrRestore(snapshot);
     }
 
@@ -91,7 +91,7 @@ public sealed partial class MainWindowViewModel
 
     private bool SetSelection(IReadOnlyList<LauncherEntryViewModel> entries, bool selected)
     {
-        var snapshot = LauncherSelectionMutationSnapshot.Capture(entries);
+        var snapshot = CaptureSelectionMutationSnapshot(entries);
         foreach (var entry in entries)
         {
             entry.SetSelectionFromOwner(selected);
@@ -102,13 +102,28 @@ public sealed partial class MainWindowViewModel
 
     private bool ReplaceSelection(IReadOnlySet<string> selectedIds)
     {
-        var snapshot = LauncherSelectionMutationSnapshot.Capture(Entries);
+        var snapshot = CaptureSelectionMutationSnapshot(Entries);
         foreach (var entry in Entries)
         {
             entry.SetSelectionFromOwner(selectedIds.Contains(entry.Id));
         }
 
         return SaveSelectionChangeOrRestore(snapshot);
+    }
+
+    private LauncherSelectionMutationSnapshot CaptureSelectionMutationSnapshot(
+        LauncherEntryViewModel item,
+        bool previousSelected)
+    {
+        DiscardDragReorderPreview();
+        return LauncherSelectionMutationSnapshot.Capture(item, previousSelected);
+    }
+
+    private LauncherSelectionMutationSnapshot CaptureSelectionMutationSnapshot(
+        IEnumerable<LauncherEntryViewModel> entries)
+    {
+        DiscardDragReorderPreview();
+        return LauncherSelectionMutationSnapshot.Capture(entries);
     }
 
     private bool SaveSelectionChangeOrRestore(
