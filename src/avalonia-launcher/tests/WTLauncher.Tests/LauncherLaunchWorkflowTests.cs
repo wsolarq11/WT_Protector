@@ -23,17 +23,15 @@ public sealed class LauncherLaunchWorkflowTests
     public void StartBatchReportsPlanFailuresWithoutStartingProcesses()
     {
         var workflow = new LauncherLaunchWorkflow(new LauncherProcess());
-        var plannedCommands = new List<string>();
 
         var report = workflow.StartBatch(
             [
                 Entry("one", "D:\\missing-one"),
                 Entry("two", "D:\\missing-two"),
             ],
-            requireConfirmation: false,
-            plan => plannedCommands.Add(plan.CommandLine));
+            requireConfirmation: false);
 
-        Assert.Empty(plannedCommands);
+        Assert.Null(report.LastCommandLine);
         Assert.Equal(0, report.StartedCount);
         Assert.Equal(2, report.FailedCount);
         Assert.Contains(report.FailureMessages, failure => failure.StartsWith("one:", StringComparison.Ordinal));
@@ -52,13 +50,31 @@ public sealed class LauncherLaunchWorkflowTests
                 null!,
                 Entry("one", temp.Path),
             ],
-            requireConfirmation: false,
-            _ => { });
+            requireConfirmation: false);
 
         Assert.Equal(1, report.StartedCount);
         Assert.Equal(1, report.FailedCount);
         Assert.StartsWith("(unnamed):", Assert.Single(report.FailureMessages), StringComparison.Ordinal);
         Assert.Equal("pwsh", Assert.Single(startedPlans).Command);
+        Assert.Equal(Assert.Single(startedPlans).CommandLine, report.LastCommandLine);
+    }
+
+    [Fact]
+    public void StartBatchKeepsLastCommandLineWhenStartFails()
+    {
+        using var temp = new TempDirectory();
+        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("blocked"));
+
+        var report = workflow.StartBatch(
+            [
+                Entry("one", temp.Path),
+            ],
+            requireConfirmation: false);
+
+        Assert.Equal(0, report.StartedCount);
+        Assert.Equal(1, report.FailedCount);
+        Assert.Contains("one: blocked", Assert.Single(report.FailureMessages), StringComparison.Ordinal);
+        Assert.Contains("pwsh", report.LastCommandLine);
     }
 
     [Fact]
@@ -66,7 +82,6 @@ public sealed class LauncherLaunchWorkflowTests
     {
         using var temp = new TempDirectory();
         var startedPlans = new List<LaunchPlan>();
-        var previewPlans = new List<LaunchPlan>();
         var workflow = new LauncherLaunchWorkflow(plan => startedPlans.Add(plan));
 
         var report = workflow.StartBatch(
@@ -74,14 +89,13 @@ public sealed class LauncherLaunchWorkflowTests
                 Entry("one", temp.Path),
                 Entry("two", temp.Path),
             ],
-            requireConfirmation: true,
-            previewPlans.Add);
+            requireConfirmation: true);
 
         Assert.Equal(2, report.StartedCount);
         Assert.Equal(0, report.FailedCount);
         Assert.Equal(["pwsh", "pwsh"], startedPlans.Select(plan => plan.Command).ToArray());
         Assert.All(startedPlans, plan => Assert.True(plan.RequiresConfirmation));
-        Assert.Equal(startedPlans.Select(plan => plan.CommandLine), previewPlans.Select(plan => plan.CommandLine));
+        Assert.Equal(startedPlans.Last().CommandLine, report.LastCommandLine);
     }
 
     private static LaunchEntry Entry(string id, string directory)

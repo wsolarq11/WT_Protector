@@ -58,8 +58,9 @@ public sealed partial class MainWindowViewModel
 
             var report = _launchWorkflow.StartBatch(
                 selectedEntries,
-                RequireConfirmationForLaunches,
-                plan => DryRunText = plan.CommandLine);
+                RequireConfirmationForLaunches);
+            if (report.LastCommandLine is not null)
+                DryRunText = report.LastCommandLine;
             StatusText = LauncherSelectionStatus.BatchLaunchCompleted(report);
         }
         catch (Exception ex)

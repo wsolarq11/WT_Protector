@@ -31,11 +31,9 @@ public sealed class LauncherLaunchWorkflow
 
     public LauncherBatchLaunchReport StartBatch(
         IEnumerable<LaunchEntry> entries,
-        bool requireConfirmation,
-        Action<LaunchPlan> onPlanBuilt)
+        bool requireConfirmation)
     {
         ArgumentNullException.ThrowIfNull(entries);
-        ArgumentNullException.ThrowIfNull(onPlanBuilt);
 
         var report = new LauncherBatchLaunchReport();
         foreach (var entry in entries)
@@ -43,7 +41,7 @@ public sealed class LauncherLaunchWorkflow
             try
             {
                 var plan = BuildPlan(entry, requireConfirmation);
-                onPlanBuilt(plan);
+                report.RecordPlan(plan);
                 Start(plan);
                 report.RecordStarted();
             }

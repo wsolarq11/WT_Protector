@@ -87,4 +87,4 @@ The codebase is organized in five logical layers. Each layer depends only on the
 
 - One source per state: view modes, sort mode, drag session, card density each have a single owner
 - Core never references Avalonia or CommunityToolkit.Mvvm
-- All public workflow methods accept `Action<>` / `Func<>` callbacks instead of depending on shared mutable state
+- Workflows return explicit result data; UI callbacks stay at the window/dialog seam

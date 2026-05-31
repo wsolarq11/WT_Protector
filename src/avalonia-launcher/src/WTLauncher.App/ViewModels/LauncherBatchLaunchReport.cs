@@ -10,7 +10,15 @@ public sealed class LauncherBatchLaunchReport
 
     public int FailedCount => _failures.Count;
 
+    public string? LastCommandLine { get; private set; }
+
     public IReadOnlyList<string> FailureMessages => _failures;
+
+    public void RecordPlan(LaunchPlan plan)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        LastCommandLine = plan.CommandLine;
+    }
 
     public void RecordStarted()
     {
