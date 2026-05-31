@@ -10,7 +10,7 @@ public sealed class LauncherDragReorderSession
     private LauncherDragReorderSession(
         string draggedEntryId,
         LauncherSettingsSnapshot snapshot,
-        LauncherEntryViewModel? source)
+        LauncherEntryViewModel source)
     {
         DraggedEntryId = draggedEntryId;
         Snapshot = snapshot;
@@ -21,15 +21,17 @@ public sealed class LauncherDragReorderSession
 
     public LauncherSettingsSnapshot Snapshot { get; }
 
-    public LauncherEntryViewModel? Source { get; }
+    public LauncherEntryViewModel Source { get; }
 
     public static LauncherDragReorderSession Start(
         string draggedEntryId,
         LauncherSettingsSnapshot snapshot,
-        LauncherEntryViewModel? source)
+        LauncherEntryViewModel source)
     {
+        ArgumentNullException.ThrowIfNull(source);
+
         var session = new LauncherDragReorderSession(draggedEntryId, snapshot, source);
-        source?.ShowDragPreviewSource();
+        source.ShowDragPreviewSource();
         return session;
     }
 
@@ -48,17 +50,17 @@ public sealed class LauncherDragReorderSession
         return true;
     }
 
-    public void SetTarget(LauncherEntryViewModel? target, bool insertAfter)
+    public void SetTarget(LauncherEntryViewModel target, bool insertAfter)
     {
         if (ReferenceEquals(_target, target))
         {
-            _target?.ShowDragPreviewTarget(insertAfter);
+            _target.ShowDragPreviewTarget(insertAfter);
             return;
         }
 
         ClearTarget();
         _target = target;
-        _target?.ShowDragPreviewTarget(insertAfter);
+        _target.ShowDragPreviewTarget(insertAfter);
     }
 
     public void ClearHover()
@@ -70,7 +72,7 @@ public sealed class LauncherDragReorderSession
     public void Clear()
     {
         ClearHover();
-        Source?.ClearDragCue();
+        Source.ClearDragCue();
     }
 
     private void ClearTarget()

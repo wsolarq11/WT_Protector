@@ -39,9 +39,10 @@ public sealed class LauncherDragReorderSessionTests
 
     private static LauncherDragReorderSession StartSession(string draggedEntryId = "three")
     {
+        using var temp = new TempDirectory();
         return LauncherDragReorderSession.Start(
             draggedEntryId,
             LauncherSettingsSnapshot.Capture(new LauncherSettings()),
-            source: null);
+            MainWindowEntryCardTestFactory.CreateEntryViewModel(temp.Path, draggedEntryId));
     }
 }
