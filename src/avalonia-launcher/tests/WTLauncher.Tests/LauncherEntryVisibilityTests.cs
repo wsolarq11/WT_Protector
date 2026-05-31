@@ -26,7 +26,7 @@ public sealed class LauncherEntryVisibilityTests
     }
 
     [Fact]
-    public void FilterAndSort_ToleratesNullTextFieldsFromConfig()
+    public void FilterAndSort_RejectsNullTextFieldsBeforeProjection()
     {
         var entries = new[]
         {
@@ -35,14 +35,15 @@ public sealed class LauncherEntryVisibilityTests
         };
         var customOrder = new List<string> { "one", "two" };
 
-        var visible = LauncherEntryVisibility.FilterAndSort(
-            entries,
-            "codex",
-            LauncherEntryVisibility.AlphabeticalSortModeId,
-            customOrder,
-            static entry => entry);
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherEntryVisibility.FilterAndSort(
+                entries,
+                "codex",
+                LauncherEntryVisibility.AlphabeticalSortModeId,
+                customOrder,
+                static entry => entry));
 
-        Assert.Equal(["two"], visible.Select(entry => entry.Id).ToArray());
+        Assert.Equal("Launcher entry name is required for projection.", exception.Message);
     }
 
     [Fact]
@@ -109,6 +110,26 @@ public sealed class LauncherEntryVisibilityTests
 
         Assert.Equal([" one ", " two ", "three"], visible.Select(entry => entry.Id).ToArray());
         Assert.Equal([" one ", " two "], customOrder);
+    }
+
+    [Fact]
+    public void FilterAndSort_RejectsBlankEntryIdsBeforeProjection()
+    {
+        var entries = new[]
+        {
+            Entry("one", "One"),
+            Entry(" ", "Two"),
+        };
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherEntryVisibility.FilterAndSort(
+                entries,
+                null,
+                LauncherEntryVisibility.AlphabeticalSortModeId,
+                [],
+                static entry => entry));
+
+        Assert.Equal("Launcher entry id is required for projection.", exception.Message);
     }
 
     [Fact]
