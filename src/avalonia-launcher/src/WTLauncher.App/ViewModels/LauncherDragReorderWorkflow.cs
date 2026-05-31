@@ -27,11 +27,12 @@ public sealed class LauncherDragReorderWorkflow
 
     public void Begin(bool isCustomSortMode, string draggedEntryId)
     {
+        TryRestorePreviewState();
+
         if (!isCustomSortMode)
             return;
 
         _ensureCustomOrderContainsEntries();
-        ClearPreviewState();
 
         var source = FindEntry(draggedEntryId);
         if (source is null)
@@ -110,14 +111,22 @@ public sealed class LauncherDragReorderWorkflow
 
     public string? Cancel()
     {
+        if (!TryRestorePreviewState())
+            return null;
+
+        return LauncherDragReorderStatus.Canceled;
+    }
+
+    private bool TryRestorePreviewState()
+    {
         var session = _session;
         if (session is null)
-            return null;
+            return false;
 
         session.Snapshot.RestoreCustomEntryOrder(_settings);
         _applyFilter();
         ClearPreviewState();
-        return LauncherDragReorderStatus.Canceled;
+        return true;
     }
 
     private void ClearPreviewState()

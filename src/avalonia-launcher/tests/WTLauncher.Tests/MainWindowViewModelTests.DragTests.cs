@@ -90,6 +90,30 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void DragPreviewRestoresPreviousOrderWhenNextDragSourceIsUnknown()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreateDragFixture(temp);
+
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+
+        viewModel.BeginDragReorder("three");
+        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
+        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+
+        viewModel.BeginDragReorder("missing");
+
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.DoesNotContain(viewModel.Entries, entry =>
+            entry.IsDragPreviewSource
+            || entry.IsDragPreviewTarget
+            || entry.IsDragInsertBefore
+            || entry.IsDragInsertAfter);
+    }
+
+    [Fact]
     public void DragPreviewMatchesConfigEntryIdsAfterNormalization()
     {
         using var temp = new TempDirectory();
