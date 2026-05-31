@@ -69,7 +69,6 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         Entry.Name = updated.Name;
         Entry.Directory = updated.Directory;
         Entry.Command = updated.Command;
-        Entry.Confirm = updated.Confirm;
         Entry.UpdatedAtUtc = updatedAtUtc;
         SetSelectionFromOwner(updated.Selected);
         RefreshDisplay();

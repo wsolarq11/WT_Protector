@@ -43,6 +43,9 @@ public sealed partial class RepositoryConfigContractTests
         var entries = document.RootElement.EnumerateArray().ToList();
         Assert.All(entries, entry =>
         {
+            Assert.False(
+                entry.TryGetProperty("confirm", out _),
+                "Active config entries must not carry the obsolete per-entry confirm field; settings.json owns launch confirmation.");
             Assert.True(entry.TryGetProperty("selected", out var selected), "Every entry must declare the portable selected checkbox state.");
             Assert.True(
                 selected.ValueKind is JsonValueKind.True or JsonValueKind.False,

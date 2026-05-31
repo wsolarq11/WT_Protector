@@ -4,7 +4,6 @@
     "name": "启动脚本",
     "directory": "D:\\<USER>\\Desktop\\启动脚本",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
-    "confirm": true,
     "selected": true
   },
   {
@@ -12,7 +11,6 @@
     "name": "opencode_WT_Protector",
     "directory": "D:\\<PROJECT_ROOT>\\WT_Protector",
     "command": "opencode",
-    "confirm": false,
     "selected": true
   },
   {
@@ -20,7 +18,6 @@
     "name": "codex_temp",
     "directory": "D:\\<USER>\\Desktop\\temp_codex",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
-    "confirm": true,
     "selected": false
   },
   {
@@ -28,7 +25,6 @@
     "name": "poollink",
     "directory": "D:\\<USER>\\Desktop\\poollink",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
-    "confirm": true,
     "selected": false
   },
   {
@@ -36,7 +32,6 @@
     "name": "gh_mirror_gui",
     "directory": "D:\\<USER>\\Desktop\\!_Projects\\gh_mirror_gui",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
-    "confirm": true,
     "selected": false
   },
   {
@@ -44,7 +39,6 @@
     "name": "Soft_Install",
     "directory": "D:\\<USER>\\Desktop\\Soft_Install",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
-    "confirm": true,
     "selected": false
   },
   {
@@ -52,7 +46,6 @@
     "name": "FolderSizeMonitor",
     "directory": "D:\\<USER>\\Desktop\\FolderSizeMonitor",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
-    "confirm": true,
     "selected": false
   },
   {
@@ -60,7 +53,6 @@
     "name": "在线安装Bat_20260320",
     "directory": "D:\\<USER>\\Desktop\\在线安装Bat_20260320",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
-    "confirm": true,
     "selected": false
   },
   {
@@ -68,7 +60,6 @@
     "name": "Data_Acquisition_and_Analysis",
     "directory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\Data_Acquisition_and_Analysis",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
-    "confirm": true,
     "selected": false
   },
   {
@@ -76,7 +67,6 @@
     "name": "phoenix-crawler",
     "directory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
-    "confirm": true,
     "selected": false
   },
   {
@@ -84,7 +74,6 @@
     "name": "codex-control-plane-private",
     "directory": "C:\\<USER>\\codex-control-plane-private",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
-    "confirm": true,
     "selected": false
   },
   {
@@ -92,7 +81,6 @@
     "name": "wsl_codex_launcher",
     "directory": "D:\\<PROJECT_ROOT>\\wsl_codex_launcher",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
-    "confirm": true,
     "selected": false
   },
   {
@@ -100,7 +88,6 @@
     "name": "usage-observatory",
     "directory": "D:\\<PROJECT_ROOT>\\usage-observatory",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
-    "confirm": true,
     "selected": false
   },
   {
@@ -108,7 +95,6 @@
     "name": "clashverge_proxyrules_analysis",
     "directory": "D:\\<PROJECT_ROOT>\\clashverge_proxyrules_analysis",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
-    "confirm": true,
     "selected": false
   },
   {
@@ -116,7 +102,6 @@
     "name": "WT_Protector",
     "directory": "D:\\<PROJECT_ROOT>\\WT_Protector",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
-    "confirm": true,
     "selected": false
   },
   {
@@ -124,7 +109,6 @@
     "name": "CLAUDE_Data_Acquisition_and_Analysis",
     "directory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\Data_Acquisition_and_Analysis",
     "command": "claude --dangerously-skip-permissions",
-    "confirm": true,
     "selected": false
   },
   {
@@ -132,7 +116,6 @@
     "name": "CLAUDE_phoenix-crawler",
     "directory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
     "command": "claude --dangerously-skip-permissions",
-    "confirm": true,
     "selected": false
   },
   {
@@ -140,7 +123,6 @@
     "name": "SystemPerformanceLab_20260504",
     "directory": "D:\\<USER>\\Desktop\\SystemPerformanceLab_20260504",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
-    "confirm": true,
     "selected": false
   },
   {
@@ -148,7 +130,6 @@
     "name": "CLAUDE_temp",
     "directory": "D:\\<USER>\\Desktop\\temp",
     "command": "claude --dangerously-skip-permissions",
-    "confirm": true,
     "selected": false
   }
 ]

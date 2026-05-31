@@ -15,7 +15,6 @@ public sealed partial class MainWindowViewModelTests
                 "one",
                 "Zulu",
                 command: "codex",
-                confirm: true,
                 updatedAtUtc: "2026-05-17T00:00:00Z"),
             Entry("two", "Alpha", command: "opencode", updatedAtUtc: "2026-05-18T00:00:00Z"),
             Entry("three", "Mike"));

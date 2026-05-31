@@ -15,7 +15,6 @@ public sealed partial class LauncherConfigStoreTests
             "name": "demo",
             "directory": "D:\\demo",
             "command": "codex",
-            "confirm": true,
             "selected": true
           }
         ]
@@ -27,7 +26,29 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Equal("demo", entry.Name);
         Assert.Equal("D:\\demo", entry.Directory);
         Assert.Equal("codex", entry.Command);
-        Assert.True(entry.Confirm);
+        Assert.True(entry.Selected);
+    }
+
+    [Fact]
+    public void Load_IgnoresObsoleteConfirmFieldFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
+        [
+          {
+            "id": "demo",
+            "name": "demo",
+            "directory": "D:\\demo",
+            "command": "codex",
+            "confirm": false,
+            "selected": true
+          }
+        ]
+        """);
+
+        var entry = Assert.Single(LauncherConfigStore.Load(config));
+
+        Assert.Equal("demo", entry.Id);
         Assert.True(entry.Selected);
     }
 
@@ -164,6 +185,7 @@ public sealed partial class LauncherConfigStoreTests
         Assert.DoesNotContain(" One ", savedJson);
         Assert.DoesNotContain(" D:\\\\one ", savedJson);
         Assert.DoesNotContain(" codex ", savedJson);
+        Assert.DoesNotContain("\"confirm\"", savedJson);
         Assert.DoesNotContain("null", savedJson);
         AssertUsesRepositoryLineEndings(savedJson);
     }
@@ -177,7 +199,7 @@ public sealed partial class LauncherConfigStoreTests
 
         LauncherConfigStore.Save(
             [
-                Entry(confirm: true, selected: true),
+                Entry(selected: true),
             ],
             config);
 

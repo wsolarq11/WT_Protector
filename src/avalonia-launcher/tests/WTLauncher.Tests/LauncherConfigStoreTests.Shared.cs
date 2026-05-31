@@ -19,14 +19,13 @@ public sealed partial class LauncherConfigStoreTests
             ],
         };
 
-    private static LaunchEntry Entry(bool confirm = false, bool selected = false) =>
+    private static LaunchEntry Entry(bool selected = false) =>
         new()
         {
             Id = "demo",
             Name = "演示",
             Directory = "D:\\demo",
             Command = "codex",
-            Confirm = confirm,
             Selected = selected,
         };
 

@@ -33,7 +33,6 @@ public static class LauncherEntryDrafts
             Name = normalized.Name,
             Directory = normalized.Directory,
             Command = normalized.Command,
-            Confirm = false,
             Selected = normalized.Selected,
             UpdatedAtUtc = previousEntry?.UpdatedAtUtc ?? string.Empty,
         };

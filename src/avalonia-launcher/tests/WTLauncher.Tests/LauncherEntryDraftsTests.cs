@@ -65,7 +65,6 @@ public sealed class LauncherEntryDraftsTests
             "old",
             "Old",
             "D:\\old",
-            confirm: true,
             updatedAtUtc: "2026-05-20T00:00:00Z");
 
         var entry = LauncherEntryDrafts.CreateEntry(
@@ -76,7 +75,6 @@ public sealed class LauncherEntryDraftsTests
         Assert.Equal("New Name", entry.Name);
         Assert.Equal("D:\\new", entry.Directory);
         Assert.Equal("codex", entry.Command);
-        Assert.False(entry.Confirm);
         Assert.True(entry.Selected);
         Assert.Equal(previous.UpdatedAtUtc, entry.UpdatedAtUtc);
     }
@@ -138,7 +136,6 @@ public sealed class LauncherEntryDraftsTests
         string name,
         string directory,
         string command = "pwsh",
-        bool confirm = false,
         bool selected = false,
         string updatedAtUtc = "")
     {
@@ -148,7 +145,6 @@ public sealed class LauncherEntryDraftsTests
             Name = name,
             Directory = directory,
             Command = command,
-            Confirm = confirm,
             Selected = selected,
             UpdatedAtUtc = updatedAtUtc,
         };

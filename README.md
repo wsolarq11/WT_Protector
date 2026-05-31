@@ -33,7 +33,6 @@ Each active config file is a JSON array of launch items:
     "name": "example",
     "directory": "D:\\path\\to\\workspace",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
-    "confirm": true,
     "selected": false,
     "updatedAtUtc": "2026-05-18T09:30:00.0000000Z"
   }
@@ -46,9 +45,10 @@ Fields:
 - `name` — display name in the launcher UI.
 - `directory` — working directory passed to `wt.exe -d`.
 - `command` — command passed to `pwsh -NoExit -Command`.
-- `confirm` — legacy compatibility field retained in the JSON shape; current launch confirmation is controlled by the global UI setting.
 - `selected` — persistent checkbox state used by the one-click/batch launch flow.
 - `updatedAtUtc` — optional ISO-8601 UTC timestamp refreshed when the app adds or edits a button, and used by the “更新时间” sort mode.
+
+Older config files may still contain an obsolete per-entry `confirm` key; the current app ignores it and normal saves drop it. Launch confirmation has one authority: `settings.json` → `requireConfirmationForLaunches`.
 
 Named launch groups live beside the launch config:
 

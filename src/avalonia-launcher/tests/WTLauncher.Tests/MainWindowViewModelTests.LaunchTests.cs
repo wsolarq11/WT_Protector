@@ -14,8 +14,7 @@ public sealed partial class MainWindowViewModelTests
             Entry(
                 "one",
                 directory: temp.Path,
-                command: "codex --dangerously-bypass-approvals-and-sandbox",
-                confirm: true),
+                command: "codex --dangerously-bypass-approvals-and-sandbox"),
             Entry("two", directory: temp.Path),
         };
         var (config, settings, _) = CreatePortableFixture(temp, entries);
@@ -48,7 +47,7 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(
             temp,
-            Entry("one", directory: temp.Path, command: "codex --version", confirm: true));
+            Entry("one", directory: temp.Path, command: "codex --version"));
         var viewModel = CreateViewModel(
             config,
             settings,
@@ -76,7 +75,7 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(
             temp,
-            Entry("one", directory: temp.Path, command: "codex --version", confirm: true));
+            Entry("one", directory: temp.Path, command: "codex --version"));
         LaunchPlan? confirmedPlan = null;
         var viewModel = CreateViewModel(
             config,

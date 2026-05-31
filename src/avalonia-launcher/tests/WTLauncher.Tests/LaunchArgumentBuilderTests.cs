@@ -20,13 +20,12 @@ public sealed class LaunchArgumentBuilderTests
     }
 
     [Fact]
-    public void Build_UsesOnlyLaunchConfirmationOverride()
+    public void Build_UsesLaunchConfirmationParameter()
     {
         using var temp = new TempDirectory();
         var entry = Entry(
             temp.Path,
-            command: "codex --dangerously-bypass-approvals-and-sandbox",
-            confirm: true);
+            command: "codex --dangerously-bypass-approvals-and-sandbox");
 
         var directPlan = LaunchArgumentBuilder.Build(entry, requireConfirmation: false);
         var confirmedPlan = LaunchArgumentBuilder.Build(entry, requireConfirmation: true);
@@ -39,7 +38,7 @@ public sealed class LaunchArgumentBuilderTests
     public void Build_DefaultsToConfirmationWhenNoGlobalOverrideIsProvided()
     {
         using var temp = new TempDirectory();
-        var entry = Entry(temp.Path, name: "plain", confirm: true);
+        var entry = Entry(temp.Path, name: "plain");
 
         var plan = LaunchArgumentBuilder.Build(entry);
 
@@ -69,15 +68,13 @@ public sealed class LaunchArgumentBuilderTests
     private static LaunchEntry Entry(
         string directory,
         string name = "demo",
-        string command = "pwsh",
-        bool confirm = false)
+        string command = "pwsh")
     {
         return new LaunchEntry
         {
             Name = name,
             Directory = directory,
             Command = command,
-            Confirm = confirm,
         };
     }
 

@@ -57,7 +57,6 @@ internal static class MainWindowEntryCardTestFactory
             Name = id,
             Directory = $"D:\\{id}",
             Command = "pwsh",
-            Confirm = false,
         };
     }
 

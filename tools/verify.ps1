@@ -80,6 +80,9 @@ foreach ($item in $configItems) {
             throw "Config item $idx is missing field: $field"
         }
     }
+    if ($item.PSObject.Properties.Name -contains 'confirm') {
+        throw "Config item $idx must not use obsolete per-entry confirm field; settings.json requireConfirmationForLaunches is the single authority"
+    }
     if (-not ($item.PSObject.Properties.Name -contains 'selected')) {
         throw "Config item $idx is missing persistent selected field"
     }

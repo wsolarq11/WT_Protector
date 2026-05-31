@@ -201,7 +201,6 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("One Renamed", edited.Name);
         Assert.Equal("D:\\renamed", edited.Directory);
         Assert.Equal("opencode", edited.Command);
-        Assert.False(edited.Confirm);
         Assert.False(edited.Selected);
         Assert.Equal("2026-05-30T04:05:06.0000000+00:00", edited.UpdatedAtUtc);
 

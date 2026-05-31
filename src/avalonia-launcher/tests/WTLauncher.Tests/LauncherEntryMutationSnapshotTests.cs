@@ -8,7 +8,7 @@ public sealed class LauncherEntryMutationSnapshotTests
     [Fact]
     public void CaptureDeepCopiesMutableEntryPresetAndOrderState()
     {
-        var entry = Entry(confirm: true, selected: true, updatedAtUtc: "2026-05-20T00:00:00Z");
+        var entry = Entry(selected: true, updatedAtUtc: "2026-05-20T00:00:00Z");
         var presetFile = PresetFile();
         var order = new List<string> { "one" };
 
@@ -24,7 +24,6 @@ public sealed class LauncherEntryMutationSnapshotTests
         Assert.Equal("One", snapshotEntry.Name);
         Assert.Equal("D:\\one", snapshotEntry.Directory);
         Assert.Equal("pwsh", snapshotEntry.Command);
-        Assert.True(snapshotEntry.Confirm);
         Assert.True(snapshotEntry.Selected);
         Assert.Equal("2026-05-20T00:00:00Z", snapshotEntry.UpdatedAtUtc);
         Assert.Equal("one", Assert.Single(snapshot.PresetFile.Presets[0].EntryIds));
@@ -53,7 +52,6 @@ public sealed class LauncherEntryMutationSnapshotTests
     }
 
     private static LaunchEntry Entry(
-        bool confirm = false,
         bool selected = false,
         string updatedAtUtc = "") =>
         new()
@@ -62,7 +60,6 @@ public sealed class LauncherEntryMutationSnapshotTests
             Name = "One",
             Directory = "D:\\one",
             Command = "pwsh",
-            Confirm = confirm,
             Selected = selected,
             UpdatedAtUtc = updatedAtUtc,
         };

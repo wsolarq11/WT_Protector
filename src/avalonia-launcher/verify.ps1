@@ -40,7 +40,7 @@ if ($isWindowsPlatform) {
     Remove-Item -LiteralPath $smokeRoot -Recurse -Force -ErrorAction SilentlyContinue
     $smokeConfig = Join-Path $smokeRoot 'config\config.json'
     New-Item -ItemType Directory -Path (Split-Path -Parent $smokeConfig) -Force | Out-Null
-    Set-Content -Encoding UTF8 -LiteralPath $smokeConfig -Value '[{"id":"smoke","name":"smoke","directory":".","command":"echo smoke","confirm":false,"selected":false}]'
+    Set-Content -Encoding UTF8 -LiteralPath $smokeConfig -Value '[{"id":"smoke","name":"smoke","directory":".","command":"echo smoke","selected":false}]'
     $smokeProcess = Start-Process -FilePath $exe -ArgumentList @('--config', $smokeConfig) -WorkingDirectory $smokeRoot -WindowStyle Hidden -PassThru
     $smokeExitedGracefully = $true
     try {

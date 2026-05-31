@@ -21,7 +21,7 @@ public sealed partial class MainWindowViewModelTests
         bool twoSelected) =>
         CreatePortableFixture(
             temp,
-            Entry("one", "one", command: "codex", confirm: true, selected: oneSelected),
+            Entry("one", "one", command: "codex", selected: oneSelected),
             Entry("two", "two", command: "opencode", selected: twoSelected));
 
     private static LaunchEntry Entry(
@@ -29,7 +29,6 @@ public sealed partial class MainWindowViewModelTests
         string? name = null,
         string? directory = null,
         string command = "pwsh",
-        bool confirm = false,
         bool selected = false,
         string updatedAtUtc = "") =>
         new()
@@ -38,7 +37,6 @@ public sealed partial class MainWindowViewModelTests
             Name = name ?? id,
             Directory = directory ?? $"D:\\{id}",
             Command = command,
-            Confirm = confirm,
             Selected = selected,
             UpdatedAtUtc = updatedAtUtc,
         };

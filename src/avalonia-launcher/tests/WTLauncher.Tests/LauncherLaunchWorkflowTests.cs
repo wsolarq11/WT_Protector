@@ -92,7 +92,6 @@ public sealed class LauncherLaunchWorkflowTests
             Name = id,
             Directory = directory,
             Command = "pwsh",
-            Confirm = false,
         };
     }
 }
