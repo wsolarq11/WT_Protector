@@ -119,11 +119,11 @@ public sealed class LauncherPresetWorkflowTests
     }
 
     [Fact]
-    public void AddPreset_TrimsAndDedupesEntryIds()
+    public void AddPreset_TrimsEntryIds()
     {
         var presetFile = PresetFile();
 
-        var preset = LauncherPresetWorkflow.AddPreset(presetFile, "Project Pair", [" one ", "one", "two", "two"]);
+        var preset = LauncherPresetWorkflow.AddPreset(presetFile, "Project Pair", [" one ", "two "]);
 
         Assert.Equal(["one", "two"], preset.EntryIds);
     }
@@ -135,6 +135,19 @@ public sealed class LauncherPresetWorkflowTests
 
         var exception = Assert.Throws<ArgumentException>(() =>
             LauncherPresetWorkflow.AddPreset(presetFile, "Project Pair", ["one", " "]));
+
+        Assert.Equal("entryIds", exception.ParamName);
+        Assert.Equal("daily", presetFile.DefaultPresetId);
+        Assert.Equal(["daily"], presetFile.Presets.Select(preset => preset.Id).ToArray());
+    }
+
+    [Fact]
+    public void AddPreset_RejectsDuplicateEntryIdsBeforeMutatingFile()
+    {
+        var presetFile = PresetFile("daily", Preset("daily", "Daily", "one"));
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherPresetWorkflow.AddPreset(presetFile, "Project Pair", ["one", " one "]));
 
         Assert.Equal("entryIds", exception.ParamName);
         Assert.Equal("daily", presetFile.DefaultPresetId);
@@ -218,11 +231,11 @@ public sealed class LauncherPresetWorkflowTests
     }
 
     [Fact]
-    public void UpdatePreset_TrimsAndDedupesEntryIds()
+    public void UpdatePreset_TrimsEntryIds()
     {
         var presetFile = PresetFile(Preset("daily", "Daily", "one"));
 
-        var updated = LauncherPresetWorkflow.UpdatePreset(presetFile, "daily", "Daily Updated", [" one ", "one", "two", "two"]);
+        var updated = LauncherPresetWorkflow.UpdatePreset(presetFile, "daily", "Daily Updated", [" one ", "two "]);
 
         Assert.NotNull(updated);
         Assert.Equal(["one", "two"], presetFile.Presets.Single().EntryIds);
@@ -235,6 +248,20 @@ public sealed class LauncherPresetWorkflowTests
 
         var exception = Assert.Throws<ArgumentException>(() =>
             LauncherPresetWorkflow.UpdatePreset(presetFile, "daily", "Daily Updated", [" "]));
+
+        Assert.Equal("entryIds", exception.ParamName);
+        var preset = Assert.Single(presetFile.Presets);
+        Assert.Equal("Daily", preset.Name);
+        Assert.Equal(["one"], preset.EntryIds);
+    }
+
+    [Fact]
+    public void UpdatePreset_RejectsDuplicateEntryIdsBeforeMutatingPreset()
+    {
+        var presetFile = PresetFile(Preset("daily", "Daily", "one"));
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherPresetWorkflow.UpdatePreset(presetFile, "daily", "Daily Updated", ["one", " one "]));
 
         Assert.Equal("entryIds", exception.ParamName);
         var preset = Assert.Single(presetFile.Presets);

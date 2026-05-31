@@ -123,23 +123,7 @@ public static class LauncherPresetWorkflow
     }
 
     private static List<string> NormalizeRequiredEntryIds(IReadOnlyList<string> entryIds)
-    {
-        ArgumentNullException.ThrowIfNull(entryIds);
-
-        var normalized = new List<string>();
-        var seen = new HashSet<string>(LauncherEntryIds.Comparer);
-        for (var i = 0; i < entryIds.Count; i++)
-        {
-            var entryId = LauncherEntryIds.Normalize(entryIds[i]);
-            if (!LauncherEntryIds.IsUsable(entryId))
-                throw new ArgumentException($"Entry id {i} is required.", nameof(entryIds));
-
-            if (seen.Add(entryId))
-                normalized.Add(entryId);
-        }
-
-        return normalized;
-    }
+        => LauncherEntryIds.ToRequiredUniqueList(entryIds, nameof(entryIds));
 
     private static bool CanUpdatePreset(LauncherPreset target) =>
         !target.Locked;
