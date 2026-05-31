@@ -75,16 +75,19 @@ public sealed partial class MainWindowViewModelTests
 
         var viewModel = CreateViewModel(config, settings);
         var applyNotifications = 0;
+        var launchNotifications = 0;
         var updateNotifications = 0;
         var deleteNotifications = 0;
 
         viewModel.ApplyPresetCommand.CanExecuteChanged += (_, _) => applyNotifications++;
+        viewModel.LaunchSelectedPresetCommand.CanExecuteChanged += (_, _) => launchNotifications++;
         viewModel.UpdateSelectedPresetCommand.CanExecuteChanged += (_, _) => updateNotifications++;
         viewModel.DeleteSelectedPresetCommand.CanExecuteChanged += (_, _) => deleteNotifications++;
 
         viewModel.SelectedPreset = viewModel.Presets.Single(preset => preset.Id == "blank-manual");
 
         Assert.True(applyNotifications > 0);
+        Assert.True(launchNotifications > 0);
         Assert.True(updateNotifications > 0);
         Assert.True(deleteNotifications > 0);
     }
@@ -124,6 +127,39 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(["codex", "opencode"], startedPlans.Select(plan => plan.Command).ToArray());
         Assert.Equal("启动组“Daily”: 已启动 2 个启动项", viewModel.StatusText);
+        var entries = LoadEntriesById(config);
+        Assert.All(entries, entry => Assert.False(entry.Selected));
+    }
+
+    [Fact]
+    public async Task LaunchSelectedPresetCancellationReceivesPreflightedPlansAndStartsNothing()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex", selected: false),
+            Entry("two", directory: temp.Path, command: "opencode", selected: false));
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one", "two"));
+        var startedPlans = new List<LaunchPlan>();
+        IReadOnlyList<LauncherBatchLaunchItem>? confirmedItems = null;
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = true },
+            vm => vm.ConfirmBatchLaunchAsync = items =>
+            {
+                confirmedItems = items.ToArray();
+                return Task.FromResult(false);
+            },
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+
+        await viewModel.LaunchSelectedPresetCommand.ExecuteAsync(null);
+
+        Assert.NotNull(confirmedItems);
+        Assert.Equal(["one", "two"], confirmedItems!.Select(item => item.Entry.Id).ToArray());
+        Assert.All(confirmedItems, item => Assert.Contains("wt.exe", item.Plan.CommandLine));
+        Assert.Empty(startedPlans);
+        Assert.Equal("已取消: 批量启动 2 项", viewModel.StatusText);
         var entries = LoadEntriesById(config);
         Assert.All(entries, entry => Assert.False(entry.Selected));
     }

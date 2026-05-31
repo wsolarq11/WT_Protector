@@ -82,7 +82,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("cannot honestly claim broad launcher supremacy", audit);
         Assert.Contains("Named presets can now launch directly from `config/presets.json` without rewriting checkbox state first", audit);
         Assert.Contains("docs/feature-reality-north-star-audit.md", readme);
-        Assert.Contains("Batch launch preflights every selected item before confirmation or process start", readme);
+        Assert.Contains("Selected-item and current-group batch launch preflight every target before confirmation or process start", readme);
         Assert.Contains("launches the selected preset entries directly without rewriting checkbox state first", readme);
         Assert.Contains("Cards / Details", readme);
         Assert.Contains("Names", readme);
