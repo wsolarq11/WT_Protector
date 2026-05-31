@@ -31,8 +31,14 @@ public static class LauncherConfigStore
 
     public static string ResolveConfigPath(string? explicitPath, string? currentDirectory = null, string? appBaseDirectory = null)
     {
-        if (!string.IsNullOrWhiteSpace(explicitPath))
-            return Path.GetFullPath(explicitPath.Trim());
+        if (explicitPath is not null)
+        {
+            var trimmedExplicitPath = explicitPath.Trim();
+            if (trimmedExplicitPath.Length == 0)
+                throw new ArgumentException("Explicit config path is required.", nameof(explicitPath));
+
+            return Path.GetFullPath(trimmedExplicitPath);
+        }
 
         string?[] candidateRoots = [currentDirectory, appBaseDirectory];
         foreach (var candidateRoot in candidateRoots)

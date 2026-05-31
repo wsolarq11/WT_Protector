@@ -25,6 +25,18 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void ResolveConfigPath_RejectsBlankExplicitPath(string explicitPath)
+    {
+        var exception = Assert.Throws<ArgumentException>(
+            () => LauncherConfigStore.ResolveConfigPath(explicitPath, currentDirectory: "ignored", appBaseDirectory: "ignored"));
+
+        Assert.Equal("explicitPath", exception.ParamName);
+        Assert.StartsWith("Explicit config path is required.", exception.Message);
+    }
+
+    [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData(" ")]
