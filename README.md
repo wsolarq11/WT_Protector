@@ -111,6 +111,14 @@ From the repository root:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\run.ps1
 ```
 
+Optional explicit config path:
+
+```powershell
+.\src\avalonia-launcher\artifacts\publish\win-x64\WTLauncher.App.exe --config .\config\config.json
+```
+
+Startup arguments are intentionally strict: the app accepts only one optional `--config <path>` pair and rejects unknown or duplicate arguments instead of silently choosing the wrong config.
+
 The app reads root `config/config.json`, applies/edits/previews named launch groups from `config/presets.json`, persists selected checkboxes back to `config/config.json`, and stores portable UI preferences in `config/settings.json`. It does not use AppData or the registry for launcher state.
 
 ## Build and verification

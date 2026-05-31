@@ -113,7 +113,8 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("non-positive persisted window dimensions now fail fast", audit);
         Assert.Contains("missing files plus missing, null, blank mode, non-positive window geometry, unknown, or wrong-case JSON fields", audit);
         Assert.Contains("unused `theme` state was removed", audit);
-        Assert.Contains("startup arguments reject duplicate `--config` instead of silently choosing one", audit);
+        Assert.Contains("startup arguments reject unknown or duplicate `--config` inputs instead of silently choosing one", audit);
+        Assert.Contains("accepts only one optional `--config <path>` pair", readme);
         Assert.Contains("docs/feature-reality-north-star-audit.md", readme);
         Assert.Contains("portable UI preferences such as filter text", readme);
         Assert.DoesNotContain("portable UI preferences such as theme", readme);

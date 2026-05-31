@@ -7,7 +7,7 @@ public sealed class LauncherStartupArgumentsTests
     [Fact]
     public void ReadConfigPath_ReturnsValueAfterConfigFlag()
     {
-        var config = LauncherStartupArguments.ReadConfigPath(["--ignored-option", "value", "--config", "D:\\portable\\config.json"]);
+        var config = LauncherStartupArguments.ReadConfigPath(["--config", "D:\\portable\\config.json"]);
 
         Assert.Equal("D:\\portable\\config.json", config);
     }
@@ -40,10 +40,20 @@ public sealed class LauncherStartupArgumentsTests
     {
         var exception = Assert.Throws<ArgumentException>(() =>
             LauncherStartupArguments.ReadConfigPath(
-                ["--config", "config/first.json", "--ignored-option", "x", "--config", "config/second.json"]));
+                ["--config", "config/first.json", "--CONFIG", "config/second.json"]));
 
         Assert.Equal("args", exception.ParamName);
         Assert.StartsWith("Config path flag must appear at most once.", exception.Message);
+    }
+
+    [Fact]
+    public void ReadConfigPath_RejectsUnknownStartupArguments()
+    {
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherStartupArguments.ReadConfigPath(["--ignored-option", "value"]));
+
+        Assert.Equal("args", exception.ParamName);
+        Assert.StartsWith("Unknown startup argument: --ignored-option.", exception.Message);
     }
 
     private static void AssertMissingConfigValue(string[] args)

@@ -10,8 +10,9 @@ public static class LauncherStartupArguments
         string? configPath = null;
         for (var i = 0; i < args.Count; i++)
         {
-            if (!string.Equals(args[i], "--config", StringComparison.OrdinalIgnoreCase))
-                continue;
+            var arg = args[i];
+            if (!string.Equals(arg, "--config", StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException($"Unknown startup argument: {arg}.", nameof(args));
 
             if (configPath is not null)
                 throw new ArgumentException("Config path flag must appear at most once.", nameof(args));
@@ -19,7 +20,7 @@ public static class LauncherStartupArguments
             if (i + 1 >= args.Count)
                 throw new ArgumentException("Config path value is required after --config.", nameof(args));
 
-            configPath = args[i + 1].Trim();
+            configPath = args[++i].Trim();
             if (configPath.Length == 0 || configPath.StartsWith("--", StringComparison.Ordinal))
                 throw new ArgumentException("Config path value is required after --config.", nameof(args));
         }
