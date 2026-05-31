@@ -10,11 +10,12 @@ public static class LauncherPresetWorkflow
         var defaultPresetId = hasExistingPresets
             ? RequireDefaultPresetId(presetFile)
             : string.Empty;
+        var normalizedEntryIds = NormalizeRequiredEntryIds(entryIds);
         var preset = new LauncherPreset
         {
             Id = LauncherPresetIds.GenerateUnique(normalizedName, presetFile.Presets.Select(item => item.Id)),
             Name = normalizedName,
-            EntryIds = LauncherEntryIds.ToUniqueUsableList(entryIds),
+            EntryIds = normalizedEntryIds,
         };
         presetFile.Presets.Add(preset);
         presetFile.DefaultPresetId = hasExistingPresets ? defaultPresetId : preset.Id;
@@ -34,8 +35,9 @@ public static class LauncherPresetWorkflow
             return null;
 
         var normalizedName = NormalizeRequiredName(name);
+        var normalizedEntryIds = NormalizeRequiredEntryIds(entryIds);
         preset.Name = normalizedName;
-        preset.EntryIds = LauncherEntryIds.ToUniqueUsableList(entryIds);
+        preset.EntryIds = normalizedEntryIds;
         return preset;
     }
 
@@ -118,6 +120,25 @@ public static class LauncherPresetWorkflow
             throw new ArgumentException("Preset name is required.", nameof(name));
 
         return normalizedName;
+    }
+
+    private static List<string> NormalizeRequiredEntryIds(IReadOnlyList<string> entryIds)
+    {
+        ArgumentNullException.ThrowIfNull(entryIds);
+
+        var normalized = new List<string>();
+        var seen = new HashSet<string>(LauncherEntryIds.Comparer);
+        for (var i = 0; i < entryIds.Count; i++)
+        {
+            var entryId = LauncherEntryIds.Normalize(entryIds[i]);
+            if (!LauncherEntryIds.IsUsable(entryId))
+                throw new ArgumentException($"Entry id {i} is required.", nameof(entryIds));
+
+            if (seen.Add(entryId))
+                normalized.Add(entryId);
+        }
+
+        return normalized;
     }
 
     private static bool CanUpdatePreset(LauncherPreset target) =>
