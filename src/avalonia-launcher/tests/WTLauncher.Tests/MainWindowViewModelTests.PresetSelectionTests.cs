@@ -34,7 +34,7 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public void PresetLoadingPrefersDefaultAndFallsBackToFirstPreset()
+    public void PresetLoadingPrefersConfiguredDefaultPreset()
     {
         using var defaultTemp = new TempDirectory();
         var (defaultConfig, defaultSettings, defaultPresets) = CreatePortableFixture(
@@ -51,21 +51,6 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(["daily", "team"], defaultViewModel.Presets.Select(preset => preset.Id).ToArray());
         Assert.Equal("team", defaultViewModel.SelectedPreset?.Id);
-
-        using var fallbackTemp = new TempDirectory();
-        var (fallbackConfig, fallbackSettings, fallbackPresets) = CreatePortableFixture(
-            fallbackTemp,
-            oneSelected: false,
-            twoSelected: false);
-        SavePresetFile(
-            fallbackPresets,
-            "missing",
-            Preset("daily", "Daily", "one"),
-            Preset("team", "Team", "two"));
-
-        var fallbackViewModel = CreateViewModel(fallbackConfig, fallbackSettings);
-
-        Assert.Equal("daily", fallbackViewModel.SelectedPreset?.Id);
     }
 
     [Fact]

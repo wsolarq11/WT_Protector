@@ -11,7 +11,7 @@ public static class LauncherPresetStore
             return new LauncherPresetFile();
 
         var presets = LauncherJson.LoadRequired<LauncherPresetFile>(presetPath, "Launcher presets");
-        LauncherPresetFiles.Normalize(presets);
+        LauncherPresetFiles.Validate(presets);
         return presets;
     }
 

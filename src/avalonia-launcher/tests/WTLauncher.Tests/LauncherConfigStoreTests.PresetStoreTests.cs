@@ -29,47 +29,31 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void PresetStore_NormalizesDirtyPresetsBeforeWriting()
+    public void PresetStore_RejectsInvalidPresetRowsBeforeWriting()
     {
         using var temp = new TempDirectory();
-        var presetPath = WriteConfigDirectoryFile(temp.Path, LauncherPresetStore.PresetsFileName, """{"schemaVersion":1,"defaultPresetId":"","presets":[]}""");
+        var presetPath = ConfigFilePath(temp.Path, LauncherPresetStore.PresetsFileName);
 
-        LauncherPresetStore.Save(
-            new LauncherPresetFile
-            {
-                DefaultPresetId = " Daily ",
-                Presets =
-                [
-                    new LauncherPreset
-                    {
-                        Id = " Daily ",
-                        Name = null!,
-                        EntryIds = [" one ", null!, "one", " ", "two", " two "],
-                    },
-                    new LauncherPreset
-                    {
-                        Id = " Daily ",
-                        Name = " Second ",
-                        EntryIds = ["two", " three "],
-                    },
-                ],
-            },
-            presetPath,
-            backup: true);
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherPresetStore.Save(
+                new LauncherPresetFile
+                {
+                    DefaultPresetId = "daily",
+                    Presets =
+                    [
+                        new LauncherPreset
+                        {
+                            Id = "daily",
+                            Name = null!,
+                            EntryIds = ["one"],
+                        },
+                    ],
+                },
+                presetPath,
+                backup: true));
 
-        var savedJson = File.ReadAllText(presetPath);
-        Assert.DoesNotContain(" Daily ", savedJson);
-        Assert.DoesNotContain("null", savedJson);
-        Assert.Contains("daily-2", savedJson);
-        var loaded = LauncherPresetStore.Load(presetPath);
-        Assert.Equal("daily", loaded.DefaultPresetId);
-        Assert.Equal(2, loaded.Presets.Count);
-        Assert.Equal("daily", loaded.Presets[0].Id);
-        Assert.Equal(string.Empty, loaded.Presets[0].Name);
-        Assert.Equal(["one", "two"], loaded.Presets[0].EntryIds);
-        Assert.Equal("daily-2", loaded.Presets[1].Id);
-        Assert.Equal("Second", loaded.Presets[1].Name);
-        Assert.Equal(["two", "three"], loaded.Presets[1].EntryIds);
+        Assert.Equal("Launcher preset 0 name is empty.", exception.Message);
+        Assert.False(File.Exists(presetPath));
     }
 
     [Fact]
@@ -103,7 +87,30 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void PresetStore_NormalizesNullPresetDataFromConfig()
+    public void PresetStore_RejectsMissingDefaultPresetFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var presetPath = WriteConfigDirectoryFile(temp.Path, LauncherPresetStore.PresetsFileName, """
+        {
+          "schemaVersion": 1,
+          "defaultPresetId": "missing",
+          "presets": [
+            {
+              "id": "daily",
+              "name": "Daily",
+              "entryIds": ["one"]
+            }
+          ]
+        }
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherPresetStore.Load(presetPath));
+
+        Assert.Equal("Launcher preset default id does not match any preset: missing.", exception.Message);
+    }
+
+    [Fact]
+    public void PresetStore_RejectsNullPresetDataFromConfig()
     {
         using var temp = new TempDirectory();
         var presetPath = WriteConfigDirectoryFile(temp.Path, LauncherPresetStore.PresetsFileName, """
@@ -120,17 +127,13 @@ public sealed partial class LauncherConfigStoreTests
         }
         """);
 
-        var loaded = LauncherPresetStore.Load(presetPath);
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherPresetStore.Load(presetPath));
 
-        Assert.Equal("preset", loaded.DefaultPresetId);
-        var preset = Assert.Single(loaded.Presets);
-        Assert.Equal("preset", preset.Id);
-        Assert.Equal(string.Empty, preset.Name);
-        Assert.Equal(["one"], preset.EntryIds);
+        Assert.Equal("Launcher preset 0 id is empty.", exception.Message);
     }
 
     [Fact]
-    public void PresetStore_NormalizesPresetAndEntryIdsFromConfig()
+    public void PresetStore_TrimsPresetAndEntryIdsFromConfig()
     {
         using var temp = new TempDirectory();
         var presetPath = WriteConfigDirectoryFile(temp.Path, LauncherPresetStore.PresetsFileName, """
@@ -141,7 +144,7 @@ public sealed partial class LauncherConfigStoreTests
             {
               "id": " Daily ",
               "name": " Daily ",
-              "entryIds": [" one ", "one", " ", "two", " two "]
+              "entryIds": [" one ", "two "]
             }
           ]
         }
@@ -179,7 +182,7 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void PresetStore_NormalizesPresetDataBeforeWriting()
+    public void PresetStore_TrimsPresetDataBeforeWriting()
     {
         using var temp = new TempDirectory();
         var presetPath = ConfigFilePath(temp.Path, LauncherPresetStore.PresetsFileName);
@@ -187,7 +190,7 @@ public sealed partial class LauncherConfigStoreTests
         {
             Id = " Daily ",
             Name = " Daily ",
-            EntryIds = [null!, " one ", "one", " ", "two", " two "],
+            EntryIds = [" one ", "two "],
         };
         var presets = new LauncherPresetFile
         {
@@ -201,7 +204,7 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Single(presets.Presets);
         Assert.Equal(" Daily ", dirtyPreset.Id);
         Assert.Equal(" Daily ", dirtyPreset.Name);
-        Assert.Equal([null!, " one ", "one", " ", "two", " two "], dirtyPreset.EntryIds);
+        Assert.Equal([" one ", "two "], dirtyPreset.EntryIds);
         var loaded = LauncherPresetStore.Load(presetPath);
         Assert.Equal("daily", loaded.DefaultPresetId);
         var preset = Assert.Single(loaded.Presets);

@@ -16,6 +16,7 @@ internal static class LauncherPersistenceTestFixtures
     public static LauncherPresetFile PresetFile(params LauncherPreset[] presets) =>
         new()
         {
+            DefaultPresetId = presets.FirstOrDefault()?.Id ?? string.Empty,
             Presets = [.. presets],
         };
 

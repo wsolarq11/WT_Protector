@@ -61,7 +61,7 @@ public sealed class LauncherPresetWorkflowTests
     }
 
     [Fact]
-    public void ClonePresetFile_NormalizesDirtyPresetDataWithoutMutatingSource()
+    public void ClonePresetFile_RejectsInvalidPresetData()
     {
         var original = new LauncherPresetFile
         {
@@ -72,29 +72,24 @@ public sealed class LauncherPresetWorkflowTests
                 {
                     Id = " Daily ",
                     Name = null!,
-                    EntryIds = [" one ", null!, "one", " "],
+                    EntryIds = ["one"],
                 },
                 new LauncherPreset
                 {
                     Id = " Daily ",
                     Name = "Second",
-                    EntryIds = null!,
+                    EntryIds = ["two"],
                 },
             ],
         };
 
-        var clone = LauncherPresetFiles.Clone(original);
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherPresetFiles.Clone(original));
 
+        Assert.Equal("Launcher preset 0 name is empty.", exception.Message);
         Assert.Equal(" Daily ", original.DefaultPresetId);
         Assert.Equal(2, original.Presets.Count);
         Assert.Null(original.Presets[0].Name);
-        Assert.Null(original.Presets[1].EntryIds);
-        Assert.Equal("daily", clone.DefaultPresetId);
-        Assert.Equal(["daily", "daily-2"], clone.Presets.Select(preset => preset.Id).ToArray());
-        Assert.Equal(string.Empty, clone.Presets[0].Name);
-        Assert.Equal(["one"], clone.Presets[0].EntryIds);
-        Assert.Equal("Second", clone.Presets[1].Name);
-        Assert.Empty(clone.Presets[1].EntryIds);
+        Assert.Equal(["two"], original.Presets[1].EntryIds);
     }
 
     [Fact]
