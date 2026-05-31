@@ -27,7 +27,7 @@ public static class LauncherSettingsStore
         ThrowIfSettingsPathMissing(settingsPath);
 
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
-        var window = settings.Window ??= new LauncherWindowSettings();
+        var window = RequireWindow(settings.Window);
         window.Width = width;
         window.Height = height;
 
@@ -54,11 +54,11 @@ public static class LauncherSettingsStore
 
     private static void Normalize(LauncherSettings settings)
     {
-        settings.LastFilterText ??= string.Empty;
-        settings.SortMode = LauncherEntryVisibility.NormalizeSortModeId(settings.SortMode);
-        settings.EntryViewMode = LauncherEntryViewModes.NormalizeId(settings.EntryViewMode);
+        settings.LastFilterText = RequireNullableText(settings.LastFilterText, "lastFilterText");
+        settings.SortMode = NormalizeRequiredMode(settings.SortMode, "sortMode", LauncherEntryVisibility.NormalizeSortModeId);
+        settings.EntryViewMode = NormalizeRequiredMode(settings.EntryViewMode, "entryViewMode", LauncherEntryViewModes.NormalizeId);
         settings.CustomEntryOrder = RequireCustomEntryOrder(settings.CustomEntryOrder);
-        settings.Window ??= new LauncherWindowSettings();
+        settings.Window = RequireWindow(settings.Window);
     }
 
     private static LauncherSettings CloneNormalized(LauncherSettings settings)
@@ -89,4 +89,24 @@ public static class LauncherSettingsStore
 
         return normalized;
     }
+
+    private static string RequireNullableText(string? value, string fieldName) =>
+        value ?? throw new InvalidDataException($"Launcher settings {fieldName} is null.");
+
+    private static string NormalizeRequiredMode(
+        string? value,
+        string fieldName,
+        Func<string?, string> normalize)
+    {
+        if (value is null)
+            throw new InvalidDataException($"Launcher settings {fieldName} is null.");
+
+        if (string.IsNullOrWhiteSpace(value))
+            throw new InvalidDataException($"Launcher settings {fieldName} is empty.");
+
+        return normalize(value);
+    }
+
+    private static LauncherWindowSettings RequireWindow(LauncherWindowSettings? window) =>
+        window ?? throw new InvalidDataException("Launcher settings window is null.");
 }

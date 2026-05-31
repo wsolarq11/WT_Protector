@@ -101,13 +101,15 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("missing `entryIds` rejection", audit);
         Assert.Contains("propagates missing or failed `presets.json`", audit);
         Assert.Contains("instead of synthesizing a second empty preset truth", audit);
-        Assert.Contains("fail-fast rejection of missing files plus missing, unknown, or wrong-case JSON fields", audit);
+        Assert.Contains("null settings fields and blank mode ids now fail fast", audit);
+        Assert.Contains("missing files plus missing, null, blank mode, unknown, or wrong-case JSON fields", audit);
         Assert.Contains("unused `theme` state was removed", audit);
         Assert.Contains("docs/feature-reality-north-star-audit.md", readme);
         Assert.Contains("portable UI preferences such as filter text", readme);
         Assert.DoesNotContain("portable UI preferences such as theme", readme);
         Assert.Contains("must not contain the obsolete per-entry `confirm` key", readme);
         Assert.Contains("must exist, require the documented camelCase keys", readme);
+        Assert.Contains("reject missing, null, blank mode, or unknown keys", readme);
         Assert.Contains("does not replace a failed or missing `presets.json` with an empty launch-group model", readme);
         Assert.DoesNotContain("current app ignores it", readme);
         Assert.Contains("Selected-item and current-group batch launch preflight every target before confirmation or process start", readme);

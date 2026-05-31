@@ -41,7 +41,7 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void SettingsStore_NormalizesDirtySettingsBeforeWriting()
+    public void SettingsStore_TrimsDirtyModeAndOrderBeforeWriting()
     {
         using var temp = new TempDirectory();
         var settings = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
@@ -49,22 +49,114 @@ public sealed partial class LauncherConfigStoreTests
         LauncherSettingsStore.Save(
             new LauncherSettings
             {
-                LastFilterText = null!,
-                SortMode = null!,
-                EntryViewMode = null!,
+                LastFilterText = "爬虫",
+                SortMode = " custom ",
+                EntryViewMode = " cards ",
                 CustomEntryOrder = [" one ", "two "],
-                Window = null!,
+                Window = new LauncherWindowSettings(),
             },
             settings);
 
         var savedJson = File.ReadAllText(settings);
         Assert.DoesNotContain("null", savedJson);
         var loaded = LauncherSettingsStore.Load(settings);
-        Assert.Equal(string.Empty, loaded.LastFilterText);
+        Assert.Equal("爬虫", loaded.LastFilterText);
         Assert.Equal(LauncherEntryVisibility.CustomSortModeId, loaded.SortMode);
         Assert.Equal(LauncherEntryViewModes.CardsId, loaded.EntryViewMode);
         Assert.Equal(["one", "two"], loaded.CustomEntryOrder);
         Assert.NotNull(loaded.Window);
+    }
+
+    [Fact]
+    public void SettingsStore_RejectsNullLastFilterTextFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
+        {
+          "lastFilterText": null,
+          "sortMode": "custom",
+          "entryViewMode": "cards",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": [],
+          "window": {
+            "width": 1180,
+            "height": 760
+          }
+        }
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherSettingsStore.Load(settings));
+
+        Assert.Equal("Launcher settings lastFilterText is null.", exception.Message);
+    }
+
+    [Fact]
+    public void SettingsStore_RejectsNullSortModeFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
+        {
+          "lastFilterText": "",
+          "sortMode": null,
+          "entryViewMode": "cards",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": [],
+          "window": {
+            "width": 1180,
+            "height": 760
+          }
+        }
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherSettingsStore.Load(settings));
+
+        Assert.Equal("Launcher settings sortMode is null.", exception.Message);
+    }
+
+    [Fact]
+    public void SettingsStore_RejectsBlankSortModeFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
+        {
+          "lastFilterText": "",
+          "sortMode": " ",
+          "entryViewMode": "cards",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": [],
+          "window": {
+            "width": 1180,
+            "height": 760
+          }
+        }
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherSettingsStore.Load(settings));
+
+        Assert.Equal("Launcher settings sortMode is empty.", exception.Message);
+    }
+
+    [Fact]
+    public void SettingsStore_RejectsNullEntryViewModeFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
+        {
+          "lastFilterText": "",
+          "sortMode": "custom",
+          "entryViewMode": null,
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": [],
+          "window": {
+            "width": 1180,
+            "height": 760
+          }
+        }
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherSettingsStore.Load(settings));
+
+        Assert.Equal("Launcher settings entryViewMode is null.", exception.Message);
     }
 
     [Fact]
@@ -73,12 +165,15 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
-          "lastFilterText": null,
-          "sortMode": null,
-          "entryViewMode": null,
+          "lastFilterText": "",
+          "sortMode": "custom",
+          "entryViewMode": "cards",
           "requireConfirmationForLaunches": true,
           "customEntryOrder": null,
-          "window": null
+          "window": {
+            "width": 1180,
+            "height": 760
+          }
         }
         """);
 
@@ -158,6 +253,26 @@ public sealed partial class LauncherConfigStoreTests
         var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherSettingsStore.Load(settings));
 
         Assert.Contains("width", exception.Message);
+    }
+
+    [Fact]
+    public void SettingsStore_RejectsNullWindowFromConfig()
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
+        {
+          "lastFilterText": "",
+          "sortMode": "custom",
+          "entryViewMode": "cards",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": [],
+          "window": null
+        }
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherSettingsStore.Load(settings));
+
+        Assert.Equal("Launcher settings window is null.", exception.Message);
     }
 
     [Fact]
@@ -311,35 +426,25 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void SettingsStore_TrimsSettingsDataBeforeWriting()
+    public void SettingsStore_RejectsNullSettingsFieldsBeforeWriting()
     {
         using var temp = new TempDirectory();
         var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
-        var settings = new LauncherSettings
-        {
-            LastFilterText = null!,
-            SortMode = null!,
-            EntryViewMode = null!,
-            CustomEntryOrder = [" one ", "two "],
-            Window = null!,
-        };
 
-        LauncherSettingsStore.Save(settings, settingsPath);
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherSettingsStore.Save(
+                new LauncherSettings
+                {
+                    LastFilterText = null!,
+                    SortMode = LauncherEntryVisibility.CustomSortModeId,
+                    EntryViewMode = LauncherEntryViewModes.CardsId,
+                    CustomEntryOrder = [],
+                    Window = new LauncherWindowSettings(),
+                },
+                settingsPath));
 
-        Assert.Null(settings.LastFilterText);
-        Assert.Null(settings.SortMode);
-        Assert.Null(settings.EntryViewMode);
-        Assert.Equal([" one ", "two "], settings.CustomEntryOrder);
-        Assert.Null(settings.Window);
-        var loaded = LauncherSettingsStore.Load(settingsPath);
-        Assert.Equal(string.Empty, loaded.LastFilterText);
-        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, loaded.SortMode);
-        Assert.Equal(LauncherEntryViewModes.CardsId, loaded.EntryViewMode);
-        Assert.Equal(["one", "two"], loaded.CustomEntryOrder);
-        Assert.NotNull(loaded.Window);
-        var savedJson = File.ReadAllText(settingsPath);
-        Assert.DoesNotContain("null", savedJson);
-        AssertUsesRepositoryLineEndings(savedJson);
+        Assert.Equal("Launcher settings lastFilterText is null.", exception.Message);
+        Assert.False(File.Exists(settingsPath));
     }
 
     [Fact]
@@ -434,20 +539,19 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void SettingsStore_TrySaveWindowBoundsRestoresNullWindowOnCloseSaveFailure()
+    public void SettingsStore_TrySaveWindowBoundsRejectsNullWindow()
     {
         using var temp = new TempDirectory();
-        var configDir = ConfigDirectoryPath(temp.Path);
-        var settingsPath = Path.Combine(configDir, LauncherConfigStore.SettingsFileName);
+        var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
         var settings = new LauncherSettings
         {
             Window = null!,
         };
-        Directory.CreateDirectory(settingsPath);
 
-        var saved = LauncherSettingsStore.TrySaveWindowBounds(settings, settingsPath, width: 1320, height: 840);
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherSettingsStore.TrySaveWindowBounds(settings, settingsPath, width: 1320, height: 840));
 
-        Assert.False(saved);
+        Assert.Equal("Launcher settings window is null.", exception.Message);
         Assert.Null(settings.Window);
     }
 

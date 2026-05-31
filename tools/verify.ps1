@@ -170,9 +170,11 @@ if (-not (Test-Path -LiteralPath $settingsPath)) { throw "Missing portable setti
 $settings = Get-Content -Raw -Encoding UTF8 -LiteralPath $settingsPath | ConvertFrom-Json
 if ($null -eq $settings) { throw "Settings parsed to null: $settingsPath" }
 Assert-OnlyJsonKeys $settings @('lastFilterText', 'sortMode', 'entryViewMode', 'requireConfirmationForLaunches', 'customEntryOrder', 'window') 'settings.json'
-if ($null -ne $settings.window) {
-    Assert-OnlyJsonKeys $settings.window @('width', 'height') 'settings.json window'
-}
+if ($null -eq $settings.lastFilterText) { throw 'settings.json lastFilterText is required' }
+if (-not ($settings.lastFilterText -is [string])) { throw 'settings.json lastFilterText must be string' }
+if ($null -eq $settings.customEntryOrder) { throw 'settings.json customEntryOrder is required' }
+if ($null -eq $settings.window) { throw 'settings.json window is required' }
+Assert-OnlyJsonKeys $settings.window @('width', 'height') 'settings.json window'
 $settingsOrder = @($settings.customEntryOrder)
 $settingsOrderSeen = @{}
 foreach ($id in $settingsOrder) {
