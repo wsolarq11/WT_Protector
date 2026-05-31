@@ -101,6 +101,10 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("launches the selected preset entries directly without rewriting checkbox state first", readme);
         Assert.Contains("Cards / Details", readme);
         Assert.Contains("Names", readme);
+        Assert.Contains("Current gate state:", readme);
+        Assert.Contains("no current native-gate blocker is known after a fresh `tools/verify.ps1` PASS", readme);
+        Assert.Contains("not a claim that the launcher is unimprovable", readme);
+        Assert.DoesNotContain("none for the current launcher scope", readme);
     }
 
     private static int CountFeatureHeadings(string text) =>

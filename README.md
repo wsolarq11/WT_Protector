@@ -208,6 +208,8 @@ The Avalonia mainline supports:
 - Core/App/Tests separation around launch argument rules and config behavior;
 - self-contained `win-x64` publish through `dotnet publish`.
 
-Known remaining work:
+Current gate state:
 
-- none for the current launcher scope. For future visual-heavy layout changes, repeat screenshot-backed comfort passes without weakening the root `tools/verify.ps1` gate.
+- no current native-gate blocker is known after a fresh `tools/verify.ps1` PASS;
+- this is not a claim that the launcher is unimprovable, stronger than every GitHub alternative, or capable of 0% side effects after starting arbitrary external processes;
+- for future visual-heavy layout changes, repeat screenshot-backed comfort passes without weakening the root `tools/verify.ps1` gate.
