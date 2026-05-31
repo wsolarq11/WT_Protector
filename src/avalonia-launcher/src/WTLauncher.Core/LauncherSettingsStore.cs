@@ -27,6 +27,9 @@ public static class LauncherSettingsStore
         ThrowIfSettingsPathMissing(settingsPath);
 
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
+        ValidateWindowSize(width, "width");
+        ValidateWindowSize(height, "height");
+
         var window = RequireWindow(settings.Window);
         window.Width = width;
         window.Height = height;
@@ -58,7 +61,7 @@ public static class LauncherSettingsStore
         settings.SortMode = NormalizeRequiredMode(settings.SortMode, "sortMode", LauncherEntryVisibility.NormalizeSortModeId);
         settings.EntryViewMode = NormalizeRequiredMode(settings.EntryViewMode, "entryViewMode", LauncherEntryViewModes.NormalizeId);
         settings.CustomEntryOrder = RequireCustomEntryOrder(settings.CustomEntryOrder);
-        settings.Window = RequireWindow(settings.Window);
+        settings.Window = NormalizeWindow(RequireWindow(settings.Window));
     }
 
     private static LauncherSettings CloneNormalized(LauncherSettings settings)
@@ -109,4 +112,17 @@ public static class LauncherSettingsStore
 
     private static LauncherWindowSettings RequireWindow(LauncherWindowSettings? window) =>
         window ?? throw new InvalidDataException("Launcher settings window is null.");
+
+    private static LauncherWindowSettings NormalizeWindow(LauncherWindowSettings window)
+    {
+        ValidateWindowSize(window.Width, "width");
+        ValidateWindowSize(window.Height, "height");
+        return window;
+    }
+
+    private static void ValidateWindowSize(double value, string fieldName)
+    {
+        if (!double.IsFinite(value) || value <= 0)
+            throw new InvalidDataException($"Launcher settings window {fieldName} must be positive.");
+    }
 }

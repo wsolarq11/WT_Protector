@@ -23,6 +23,14 @@ function Assert-OnlyJsonKeys([object]$Object, [string[]]$AllowedKeys, [string]$C
     }
 }
 
+function Assert-PositiveJsonNumber([object]$Value, [string]$Context) {
+    if ($null -eq $Value) { throw "$Context is required" }
+    $number = [double]$Value
+    if ([double]::IsNaN($number) -or [double]::IsInfinity($number) -or $number -le 0) {
+        throw "$Context must be positive"
+    }
+}
+
 $gitattributesPath = Join-Path $root '.gitattributes'
 if (-not (Test-Path -LiteralPath $gitattributesPath)) { throw 'Missing .gitattributes line-ending policy' }
 $gitattributes = Get-Content -Raw -Encoding UTF8 -LiteralPath $gitattributesPath
@@ -175,6 +183,8 @@ if (-not ($settings.lastFilterText -is [string])) { throw 'settings.json lastFil
 if ($null -eq $settings.customEntryOrder) { throw 'settings.json customEntryOrder is required' }
 if ($null -eq $settings.window) { throw 'settings.json window is required' }
 Assert-OnlyJsonKeys $settings.window @('width', 'height') 'settings.json window'
+Assert-PositiveJsonNumber $settings.window.width 'settings.json window width'
+Assert-PositiveJsonNumber $settings.window.height 'settings.json window height'
 $settingsOrder = @($settings.customEntryOrder)
 $settingsOrderSeen = @{}
 foreach ($id in $settingsOrder) {

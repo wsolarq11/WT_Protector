@@ -275,6 +275,56 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Equal("Launcher settings window is null.", exception.Message);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void SettingsStore_RejectsNonPositiveWindowWidthFromConfig(double width)
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, $$"""
+        {
+          "lastFilterText": "",
+          "sortMode": "custom",
+          "entryViewMode": "cards",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": [],
+          "window": {
+            "width": {{width}},
+            "height": 760
+          }
+        }
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherSettingsStore.Load(settings));
+
+        Assert.Equal("Launcher settings window width must be positive.", exception.Message);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void SettingsStore_RejectsNonPositiveWindowHeightFromConfig(double height)
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, $$"""
+        {
+          "lastFilterText": "",
+          "sortMode": "custom",
+          "entryViewMode": "cards",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": [],
+          "window": {
+            "width": 1180,
+            "height": {{height}}
+          }
+        }
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherSettingsStore.Load(settings));
+
+        Assert.Equal("Launcher settings window height must be positive.", exception.Message);
+    }
+
     [Fact]
     public void SettingsStore_RejectsNullSettingsFromConfig()
     {
@@ -447,6 +497,28 @@ public sealed partial class LauncherConfigStoreTests
         Assert.False(File.Exists(settingsPath));
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    public void SettingsStore_RejectsInvalidWindowWidthBeforeWriting(double width)
+    {
+        using var temp = new TempDirectory();
+        var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherSettingsStore.Save(
+                new LauncherSettings
+                {
+                    Window = new LauncherWindowSettings { Width = width, Height = 760 },
+                },
+                settingsPath));
+
+        Assert.Equal("Launcher settings window width must be positive.", exception.Message);
+        Assert.False(File.Exists(settingsPath));
+    }
+
     [Fact]
     public void SettingsStore_RejectsUnknownModeIdsBeforeWriting()
     {
@@ -553,6 +625,32 @@ public sealed partial class LauncherConfigStoreTests
 
         Assert.Equal("Launcher settings window is null.", exception.Message);
         Assert.Null(settings.Window);
+    }
+
+    [Theory]
+    [InlineData(0, 840)]
+    [InlineData(1320, 0)]
+    [InlineData(double.NaN, 840)]
+    public void SettingsStore_TrySaveWindowBoundsRejectsInvalidDimensions(double width, double height)
+    {
+        using var temp = new TempDirectory();
+        var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
+        var settings = new LauncherSettings
+        {
+            Window = new LauncherWindowSettings
+            {
+                Width = LauncherWindowSettings.DefaultWidth,
+                Height = LauncherWindowSettings.DefaultHeight,
+            },
+        };
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherSettingsStore.TrySaveWindowBounds(settings, settingsPath, width, height));
+
+        Assert.Contains("must be positive", exception.Message);
+        Assert.Equal(LauncherWindowSettings.DefaultWidth, settings.Window.Width);
+        Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window.Height);
+        Assert.False(File.Exists(settingsPath));
     }
 
 }
