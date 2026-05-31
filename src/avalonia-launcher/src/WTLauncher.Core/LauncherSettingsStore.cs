@@ -27,16 +27,16 @@ public static class LauncherSettingsStore
         ThrowIfSettingsPathMissing(settingsPath);
 
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
-        ValidateWindowSize(width, "width");
-        ValidateWindowSize(height, "height");
-
-        var window = RequireWindow(settings.Window);
+        var next = LauncherSettingsCopies.Clone(settings);
+        var window = RequireWindow(next.Window);
         window.Width = width;
         window.Height = height;
+        var normalized = CloneNormalized(next);
 
         try
         {
-            Save(settings, settingsPath);
+            LauncherJson.Save(normalized, settingsPath, backup: false);
+            LauncherSettingsCopies.CopyTo(normalized, settings);
             return true;
         }
         // Close-time bounds persistence must not leave unsaved sizes in memory.

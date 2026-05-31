@@ -611,6 +611,30 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void SettingsStore_TrySaveWindowBoundsRejectsInvalidSettingsBeforeWriteCatch()
+    {
+        using var temp = new TempDirectory();
+        var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
+        var settings = new LauncherSettings
+        {
+            CustomEntryOrder = ["one", "one"],
+            Window = new LauncherWindowSettings
+            {
+                Width = LauncherWindowSettings.DefaultWidth,
+                Height = LauncherWindowSettings.DefaultHeight,
+            },
+        };
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherSettingsStore.TrySaveWindowBounds(settings, settingsPath, width: 1320, height: 840));
+
+        Assert.Equal("Launcher settings customEntryOrder[1] is duplicate: one.", exception.Message);
+        Assert.Equal(LauncherWindowSettings.DefaultWidth, settings.Window.Width);
+        Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window.Height);
+        Assert.False(File.Exists(settingsPath));
+    }
+
+    [Fact]
     public void SettingsStore_TrySaveWindowBoundsRejectsNullWindow()
     {
         using var temp = new TempDirectory();
