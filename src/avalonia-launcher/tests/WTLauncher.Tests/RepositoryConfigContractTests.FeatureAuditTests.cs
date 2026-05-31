@@ -101,6 +101,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("discards uncommitted drag-sort preview state first", audit);
         Assert.Contains("ghost order cannot become a hidden source of truth", audit);
         Assert.Contains("invalid move/custom-order rejection before mutation or sort projection", audit);
+        Assert.Contains("custom-order sync rejection of invalid order or known ids before mutation", audit);
         Assert.Contains("missing, unknown, or wrong-case JSON fields now fail fast", audit);
         Assert.Contains("missing `entryIds` rejection", audit);
         Assert.Contains("invalid preset references rejected before label/preview/launch projection", audit);

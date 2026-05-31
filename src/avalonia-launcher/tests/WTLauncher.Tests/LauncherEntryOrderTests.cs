@@ -5,11 +5,11 @@ namespace WTLauncher.Tests;
 public sealed class LauncherEntryOrderTests
 {
     [Fact]
-    public void SyncWithEntriesRemovesUnknownAndDuplicateIdsThenAppendsMissingIds()
+    public void SyncWithEntriesRemovesUnknownIdsThenAppendsMissingIds()
     {
-        List<string> order = ["two", "retired", "two", "", "one"];
+        List<string> order = ["two", "retired", "one"];
 
-        LauncherEntryOrder.SyncWithEntries(order, ["one", "two", "three", "three"]);
+        LauncherEntryOrder.SyncWithEntries(order, ["one", "two", "three"]);
 
         Assert.Equal(["two", "one", "three"], order);
     }
@@ -17,21 +17,59 @@ public sealed class LauncherEntryOrderTests
     [Fact]
     public void SyncWithEntriesNormalizesIdsFromSettingsAndKnownEntries()
     {
-        List<string> order = [" two ", "retired", " two ", "", " one "];
+        List<string> order = [" two ", "retired", " one "];
 
-        LauncherEntryOrder.SyncWithEntries(order, [" one ", "two", "three", " three "]);
+        LauncherEntryOrder.SyncWithEntries(order, [" one ", "two", " three "]);
 
         Assert.Equal(["two", "one", "three"], order);
     }
 
     [Fact]
-    public void SyncWithEntriesNormalizesIdsBeforeFiltering()
+    public void SyncWithEntriesRejectsBlankCustomOrderBeforeMutatingOrder()
     {
-        List<string> order = [" two ", "retired", "two", " ", " one "];
+        List<string> order = ["one", " ", "two"];
 
-        LauncherEntryOrder.SyncWithEntries(order, [" one ", "two", " three ", "three"]);
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryOrder.SyncWithEntries(order, ["one", "two"]));
 
-        Assert.Equal(["two", "one", "three"], order);
+        Assert.Equal("customOrder", exception.ParamName);
+        Assert.Equal(["one", " ", "two"], order);
+    }
+
+    [Fact]
+    public void SyncWithEntriesRejectsDuplicateCustomOrderBeforeMutatingOrder()
+    {
+        List<string> order = ["one", " two ", "two"];
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryOrder.SyncWithEntries(order, ["one", "two"]));
+
+        Assert.Equal("customOrder", exception.ParamName);
+        Assert.Equal(["one", " two ", "two"], order);
+    }
+
+    [Fact]
+    public void SyncWithEntriesRejectsBlankKnownEntryIdsBeforeMutatingOrder()
+    {
+        List<string> order = ["one"];
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryOrder.SyncWithEntries(order, ["one", " ", "two"]));
+
+        Assert.Equal("entryIds", exception.ParamName);
+        Assert.Equal(["one"], order);
+    }
+
+    [Fact]
+    public void SyncWithEntriesRejectsDuplicateKnownEntryIdsBeforeMutatingOrder()
+    {
+        List<string> order = ["one"];
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryOrder.SyncWithEntries(order, ["one", " two ", "two"]));
+
+        Assert.Equal("entryIds", exception.ParamName);
+        Assert.Equal(["one"], order);
     }
 
     [Fact]
