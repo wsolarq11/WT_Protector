@@ -27,4 +27,15 @@ public sealed class LauncherPresetStatusTests
             "启动组引用了不存在的启动项: one, two",
             LauncherPresetStatus.MissingEntryReferences(["one", "two"]));
     }
+
+    [Fact]
+    public void StatusTextDescribesPresetDialogFailures()
+    {
+        var exception = new InvalidOperationException("dialog unavailable");
+
+        Assert.Equal("保存启动组对话框失败: dialog unavailable", LauncherPresetStatus.SaveDialogFailed(exception));
+        Assert.Equal(
+            "删除启动组确认失败: Daily — dialog unavailable",
+            LauncherPresetStatus.DeleteConfirmationFailed("Daily", exception));
+    }
 }

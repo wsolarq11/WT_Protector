@@ -60,6 +60,26 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task LaunchGroupSaveDialogFailureLeavesPresetFileUnchanged()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            configure: vm => vm.RequestNewPresetAsync = _ =>
+                throw new InvalidOperationException("dialog unavailable"));
+
+        await viewModel.SaveSelectionAsPresetCommand.ExecuteAsync(null);
+
+        var presetFile = LauncherPresetStore.Load(presets);
+        Assert.Equal(["daily"], presetFile.Presets.Select(preset => preset.Id).ToArray());
+        Assert.Equal("daily", viewModel.SelectedPreset?.Id);
+        Assert.Equal("保存启动组对话框失败: dialog unavailable", viewModel.StatusText);
+    }
+
+    [Fact]
     public async Task LaunchGroupSaveRejectsBlankPresetNameWithoutMutatingFile()
     {
         using var temp = new TempDirectory();

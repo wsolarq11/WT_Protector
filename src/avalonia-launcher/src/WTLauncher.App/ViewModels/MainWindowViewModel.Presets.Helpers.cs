@@ -41,7 +41,17 @@ public sealed partial class MainWindowViewModel
 
     private async Task<bool> ConfirmDeletePresetIfRequiredAsync(LauncherPresetViewModel selectedPreset)
     {
-        var accepted = await ConfirmDeletePresetAsync(selectedPreset).ConfigureAwait(true);
+        bool accepted;
+        try
+        {
+            accepted = await ConfirmDeletePresetAsync(selectedPreset).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            StatusText = LauncherPresetStatus.DeleteConfirmationFailed(selectedPreset.Name, ex);
+            return false;
+        }
+
         if (accepted)
             return true;
 
@@ -51,7 +61,17 @@ public sealed partial class MainWindowViewModel
 
     private async Task<string?> RequestPresetNameIfRequiredAsync(IReadOnlyList<string> entryIds)
     {
-        var presetName = await RequestNewPresetAsync(entryIds).ConfigureAwait(true);
+        string? presetName;
+        try
+        {
+            presetName = await RequestNewPresetAsync(entryIds).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            StatusText = LauncherPresetStatus.SaveDialogFailed(ex);
+            return null;
+        }
+
         if (presetName is null)
         {
             StatusText = LauncherPresetStatus.SaveCanceled;

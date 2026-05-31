@@ -128,7 +128,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: a named group must be created, updated, and deleted inside the app, otherwise users fall back to hand-editing JSON.
 - Current data owner: `config/presets.json`.
-- Evidence: ViewModel commands save current selection as a new group, update current group, delete editable groups, preserve locked groups, and report the new current launch group after deletion instead of hiding fallback selection.
+- Evidence: ViewModel commands save current selection as a new group, update current group, delete editable groups, preserve locked groups, report dialog-boundary failures without mutating portable files, and report the new current launch group after deletion instead of hiding fallback selection.
 - Verdict: north-star inside this scope.
 - Remaining gap: no conflict UI for simultaneous external JSON edits; current repo-local app does not need multi-writer machinery.
 
@@ -152,7 +152,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: the launcher must stay maintainable without manual JSON edits for common entry changes.
 - Current data owner: `config/config.json`, with preset/settings references updated or rolled back together.
-- Evidence: entry mutation tests cover add/edit/delete, failed save rollback, preset/settings coordination, and status text.
+- Evidence: entry mutation tests cover add/edit/delete, dialog-boundary failure without file mutation, failed save rollback, preset/settings coordination, and status text.
 - Verdict: strong.
 - Remaining gap: no bulk import; that would be overbuilding until a real import workload exists.
 

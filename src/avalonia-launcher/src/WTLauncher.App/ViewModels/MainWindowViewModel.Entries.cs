@@ -15,7 +15,17 @@ public sealed partial class MainWindowViewModel
     private async Task AddEntryAsync()
     {
         DiscardDragReorderPreview();
-        var draft = await RequestEntryDraftAsync(null).ConfigureAwait(true);
+        EntryDraft? draft;
+        try
+        {
+            draft = await RequestEntryDraftAsync(null).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            StatusText = LauncherEntryStatus.AddDialogFailed(ex);
+            return;
+        }
+
         if (draft is null)
         {
             StatusText = LauncherEntryStatus.AddCanceled;
@@ -43,7 +53,17 @@ public sealed partial class MainWindowViewModel
     internal async Task EditEntryAsync(LauncherEntryViewModel item)
     {
         DiscardDragReorderPreview();
-        var draft = await RequestEntryDraftAsync(item.Entry).ConfigureAwait(true);
+        EntryDraft? draft;
+        try
+        {
+            draft = await RequestEntryDraftAsync(item.Entry).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            StatusText = LauncherEntryStatus.EditDialogFailed(item.Name, ex);
+            return;
+        }
+
         if (draft is null)
         {
             StatusText = LauncherEntryStatus.EditCanceled(item.Name);
@@ -84,7 +104,17 @@ public sealed partial class MainWindowViewModel
 
     private async Task<bool> ConfirmDeleteEntryIfRequiredAsync(LauncherEntryViewModel item)
     {
-        var accepted = await ConfirmDeleteEntryAsync(item).ConfigureAwait(true);
+        bool accepted;
+        try
+        {
+            accepted = await ConfirmDeleteEntryAsync(item).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            StatusText = LauncherEntryStatus.DeleteConfirmationFailed(item.Name, ex);
+            return false;
+        }
+
         if (accepted)
             return true;
 

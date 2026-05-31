@@ -308,6 +308,36 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task LaunchGroupDeleteConfirmationFailureLeavesPresetFileUnchanged()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreateDragFixture(temp);
+        SavePresetFile(
+            presets,
+            "daily",
+            Preset("daily", "Daily", "one"),
+            Preset("secondary", "Secondary", "two"));
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            launcherSettings,
+            configure: vm => vm.ConfirmDeletePresetAsync = _ =>
+                throw new InvalidOperationException("dialog unavailable"));
+
+        StartDefaultDragPreview(viewModel, launcherSettings);
+
+        await viewModel.DeleteSelectedPresetCommand.ExecuteAsync(null);
+
+        var presetFile = LauncherPresetStore.Load(presets);
+        Assert.Equal(["daily", "secondary"], presetFile.Presets.Select(preset => preset.Id).ToArray());
+        Assert.Equal("daily", viewModel.SelectedPreset?.Id);
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        AssertNoDragCues(viewModel);
+        Assert.Equal("删除启动组确认失败: Daily — dialog unavailable", viewModel.StatusText);
+    }
+
+    [Fact]
     public async Task LaunchGroupDeleteDuringDragPreviewDiscardsPreviewOrder()
     {
         using var temp = new TempDirectory();

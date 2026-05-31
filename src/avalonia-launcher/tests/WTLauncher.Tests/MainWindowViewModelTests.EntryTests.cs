@@ -106,6 +106,42 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task EntryDialogFailuresLeaveFilesAndReferencesUnchanged()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreateDragFixture(temp);
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            launcherSettings,
+            vm =>
+            {
+                vm.RequestEntryDraftAsync = _ => throw new InvalidOperationException("dialog unavailable");
+                vm.ConfirmDeleteEntryAsync = _ => throw new InvalidOperationException("dialog unavailable");
+            });
+
+        StartDefaultDragPreview(viewModel, launcherSettings);
+        await viewModel.AddEntryCommand.ExecuteAsync(null);
+
+        Assert.Equal("新增按钮对话框失败: dialog unavailable", viewModel.StatusText);
+        AssertNoEntryMutation(config, presets, launcherSettings, viewModel);
+
+        StartDefaultDragPreview(viewModel, launcherSettings);
+        await viewModel.Entries.Single(entry => entry.Id == "one").EditCommand.ExecuteAsync(null);
+
+        Assert.Equal("编辑 One 对话框失败: dialog unavailable", viewModel.StatusText);
+        AssertNoEntryMutation(config, presets, launcherSettings, viewModel);
+
+        StartDefaultDragPreview(viewModel, launcherSettings);
+        await viewModel.Entries.Single(entry => entry.Id == "one").DeleteCommand.ExecuteAsync(null);
+
+        Assert.Equal("删除确认失败: One — dialog unavailable", viewModel.StatusText);
+        AssertNoEntryMutation(config, presets, launcherSettings, viewModel);
+    }
+
+    [Fact]
     public async Task AddEntryDuringDragPreviewDoesNotCommitPreviewOrder()
     {
         using var temp = new TempDirectory();
@@ -242,6 +278,19 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
         Assert.Equal(LauncherEntryStatus.DeleteCanceled("One"), viewModel.StatusText);
+    }
+
+    private static void AssertNoEntryMutation(
+        string config,
+        string presets,
+        LauncherSettings launcherSettings,
+        MainWindowViewModel viewModel)
+    {
+        Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), LauncherConfigStore.Load(config).Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one"], LauncherPresetStore.Load(presets).Presets.Single().EntryIds);
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        AssertNoDragCues(viewModel);
     }
 
     private static EntryDraft NewThreeEntryDraft() =>

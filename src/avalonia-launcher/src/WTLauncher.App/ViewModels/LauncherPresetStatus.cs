@@ -6,6 +6,9 @@ public static class LauncherPresetStatus
 
     public static string SaveCanceled => "已取消: 保存启动组";
 
+    public static string SaveDialogFailed(Exception exception) =>
+        $"保存启动组对话框失败: {exception.Message}";
+
     public static string NameRequired => "启动组名称不能为空";
 
     public static string CurrentPresetMissing => "当前启动组已不存在，请重新加载";
@@ -60,6 +63,9 @@ public static class LauncherPresetStatus
 
     public static string DeleteCanceled(string presetName) =>
         $"已取消: 删除启动组 {presetName}";
+
+    public static string DeleteConfirmationFailed(string presetName, Exception exception) =>
+        $"删除启动组确认失败: {presetName} — {exception.Message}";
 
     public static string Deleted(string presetName, string selectedPresetName) =>
         $"已删除启动组: {presetName}；当前启动组: {selectedPresetName}";

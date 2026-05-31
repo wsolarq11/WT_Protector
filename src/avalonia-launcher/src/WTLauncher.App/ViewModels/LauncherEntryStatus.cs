@@ -4,11 +4,20 @@ public static class LauncherEntryStatus
 {
     public static string AddCanceled => "已取消: 新增按钮";
 
+    public static string AddDialogFailed(Exception exception) =>
+        $"新增按钮对话框失败: {exception.Message}";
+
     public static string EditCanceled(string entryName) =>
         $"已取消: 编辑 {entryName}";
 
+    public static string EditDialogFailed(string entryName, Exception exception) =>
+        $"编辑 {entryName} 对话框失败: {exception.Message}";
+
     public static string DeleteCanceled(string entryName) =>
         $"已取消: 删除 {entryName}";
+
+    public static string DeleteConfirmationFailed(string entryName, Exception exception) =>
+        $"删除确认失败: {entryName} — {exception.Message}";
 
     public static string Added(string entryName) =>
         $"已新增按钮: {entryName}（已保存）";

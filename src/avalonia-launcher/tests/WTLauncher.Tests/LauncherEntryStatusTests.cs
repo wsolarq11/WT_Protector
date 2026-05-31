@@ -13,6 +13,16 @@ public sealed class LauncherEntryStatusTests
     }
 
     [Fact]
+    public void StatusTextDescribesEntryDialogFailures()
+    {
+        var exception = new InvalidOperationException("dialog unavailable");
+
+        Assert.Equal("新增按钮对话框失败: dialog unavailable", LauncherEntryStatus.AddDialogFailed(exception));
+        Assert.Equal("编辑 One 对话框失败: dialog unavailable", LauncherEntryStatus.EditDialogFailed("One", exception));
+        Assert.Equal("删除确认失败: One — dialog unavailable", LauncherEntryStatus.DeleteConfirmationFailed("One", exception));
+    }
+
+    [Fact]
     public void StatusTextDescribesSavedEntryActions()
     {
         Assert.Equal("已新增按钮: One（已保存）", LauncherEntryStatus.Added("One"));
