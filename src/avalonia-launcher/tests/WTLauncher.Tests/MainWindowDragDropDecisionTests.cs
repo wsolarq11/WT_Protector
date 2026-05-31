@@ -21,15 +21,17 @@ public sealed class MainWindowDragDropDecisionTests
     }
 
     [Theory]
-    [InlineData(false, true, true)]
-    [InlineData(true, false, true)]
-    [InlineData(true, true, false)]
+    [InlineData(false, true, "three")]
+    [InlineData(true, false, "three")]
+    [InlineData(true, true, null)]
+    [InlineData(true, true, "")]
+    [InlineData(true, true, "   ")]
     public void EvaluateDragOverRejectsMoveWhenRequiredInputsAreMissing(
         bool isCustomSortMode,
         bool hasResolvedTarget,
-        bool hasTextTransfer)
+        string? entryId)
     {
-        var transfer = hasTextTransfer ? EntryIdTransfer("three") : new DataTransfer();
+        var transfer = entryId is null ? new DataTransfer() : EntryIdTransfer(entryId);
 
         var decision = MainWindowDragDropDecision.EvaluateDragOver(
             isCustomSortMode,

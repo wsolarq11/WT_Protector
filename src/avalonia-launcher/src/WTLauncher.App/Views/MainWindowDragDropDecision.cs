@@ -12,9 +12,10 @@ public static class MainWindowDragDropDecision
     {
         ArgumentNullException.ThrowIfNull(dataTransfer);
 
+        var hasUsableEntryId = MainWindowDragEntryTransfer.TryGetEntryId(dataTransfer) is not null;
         var canDrop = isCustomSortMode
             && hasResolvedTarget
-            && MainWindowDragEntryTransfer.ContainsEntryId(dataTransfer);
+            && hasUsableEntryId;
         var previewDraggedEntryId = canDrop ? activeDragEntryId : null;
 
         return new MainWindowDragOverDecision(

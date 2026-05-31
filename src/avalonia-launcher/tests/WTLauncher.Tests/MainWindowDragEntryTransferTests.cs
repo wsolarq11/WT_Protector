@@ -12,8 +12,7 @@ public sealed class MainWindowDragEntryTransferTests
 
         MainWindowDragEntryTransfer.SetEntryId(transfer, " one ");
 
-        Assert.True(MainWindowDragEntryTransfer.ContainsEntryId(transfer));
-        Assert.Equal(" one ", MainWindowDragEntryTransfer.TryGetEntryId(transfer));
+        Assert.Equal("one", MainWindowDragEntryTransfer.TryGetEntryId(transfer));
     }
 
     [Theory]
