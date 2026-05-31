@@ -25,6 +25,12 @@ public static class LauncherPresetStatus
     public static string LaunchCanceled(string presetName, int entryCount) =>
         $"已取消: 启动组 {presetName}（{entryCount} 项）";
 
+    public static string LaunchFailed(string presetName, Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+        return $"启动组“{presetName}”启动失败: {exception.Message}";
+    }
+
     public static string Saved(string presetName, int entryCount) =>
         $"已保存启动组: {presetName}（{entryCount} 项）";
 

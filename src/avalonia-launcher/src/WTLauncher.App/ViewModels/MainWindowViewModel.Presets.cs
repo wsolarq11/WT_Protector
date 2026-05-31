@@ -31,6 +31,7 @@ public sealed partial class MainWindowViewModel
             GetPresetEntries(selectedPreset.EntryIds),
             LauncherPresetStatus.NoPresetEntries(selectedPreset.Name),
             count => LauncherPresetStatus.LaunchCanceled(selectedPreset.Name, count),
+            ex => LauncherPresetStatus.LaunchFailed(selectedPreset.Name, ex),
             report => LauncherPresetStatus.Launched(selectedPreset.Name, report)).ConfigureAwait(true);
     }
 

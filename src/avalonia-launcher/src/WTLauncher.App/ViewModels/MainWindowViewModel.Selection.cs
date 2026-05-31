@@ -46,6 +46,7 @@ public sealed partial class MainWindowViewModel
             GetSelectedEntries(),
             LauncherSelectionStatus.NoSelectedEntries,
             LauncherSelectionStatus.BatchLaunchCanceled,
+            LauncherSelectionStatus.BatchLaunchFailed,
             LauncherSelectionStatus.BatchLaunchCompleted).ConfigureAwait(true);
     }
 
@@ -53,6 +54,7 @@ public sealed partial class MainWindowViewModel
         IReadOnlyList<LauncherEntryViewModel> entries,
         string emptyStatus,
         Func<int, string> canceledStatus,
+        Func<Exception, string> failedStatus,
         Func<LauncherBatchLaunchReport, string> completedStatus)
     {
         if (entries.Count == 0)
@@ -79,7 +81,7 @@ public sealed partial class MainWindowViewModel
         }
         catch (Exception ex)
         {
-            StatusText = LauncherSelectionStatus.BatchLaunchFailed(ex);
+            StatusText = failedStatus(ex);
         }
     }
 

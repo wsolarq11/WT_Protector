@@ -165,6 +165,30 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task LaunchSelectedPresetConfirmationFailurePreservesPresetNameAndStartsNothing()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex", selected: false));
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+        var startedPlans = new List<LaunchPlan>();
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = true },
+            vm => vm.ConfirmBatchLaunchAsync = _ => throw new InvalidOperationException("dialog unavailable"),
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+
+        await viewModel.LaunchSelectedPresetCommand.ExecuteAsync(null);
+
+        Assert.Empty(startedPlans);
+        Assert.Equal("启动组“Daily”启动失败: dialog unavailable", viewModel.StatusText);
+        var entries = LoadEntriesById(config);
+        Assert.All(entries, entry => Assert.False(entry.Selected));
+    }
+
+    [Fact]
     public void BrokenPresetCannotLaunch()
     {
         using var temp = new TempDirectory();
