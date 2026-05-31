@@ -39,8 +39,9 @@ public sealed class LauncherEntryOrderTests
     {
         List<string> order = ["one", "two", "three"];
 
-        LauncherEntryOrder.MoveRelative(order, "three", "one", insertAfter: false);
+        var moved = LauncherEntryOrder.MoveRelative(order, "three", "one", insertAfter: false);
 
+        Assert.True(moved);
         Assert.Equal(["three", "one", "two"], order);
     }
 
@@ -49,8 +50,9 @@ public sealed class LauncherEntryOrderTests
     {
         List<string> order = [" one ", " two ", "three"];
 
-        LauncherEntryOrder.MoveRelative(order, " three ", " one ", insertAfter: false);
+        var moved = LauncherEntryOrder.MoveRelative(order, " three ", " one ", insertAfter: false);
 
+        Assert.True(moved);
         Assert.Equal(["three", "one", "two"], order);
     }
 
@@ -59,8 +61,9 @@ public sealed class LauncherEntryOrderTests
     {
         List<string> order = [" one ", "two", "three"];
 
-        LauncherEntryOrder.MoveRelative(order, " one ", " three ", insertAfter: true);
+        var moved = LauncherEntryOrder.MoveRelative(order, " one ", " three ", insertAfter: true);
 
+        Assert.True(moved);
         Assert.Equal(["two", "three", "one"], order);
     }
 
@@ -69,8 +72,9 @@ public sealed class LauncherEntryOrderTests
     {
         List<string> order = [" one ", "two", " two ", "three"];
 
-        LauncherEntryOrder.MoveRelative(order, " three ", " one ", insertAfter: false);
+        var moved = LauncherEntryOrder.MoveRelative(order, " three ", " one ", insertAfter: false);
 
+        Assert.True(moved);
         Assert.Equal(["three", "one", "two"], order);
     }
 
@@ -79,8 +83,9 @@ public sealed class LauncherEntryOrderTests
     {
         List<string> order = ["one", "two", "three"];
 
-        LauncherEntryOrder.MoveRelative(order, "missing", "one", insertAfter: false);
+        var moved = LauncherEntryOrder.MoveRelative(order, "missing", "one", insertAfter: false);
 
+        Assert.False(moved);
         Assert.Equal(["one", "two", "three"], order);
     }
 
@@ -96,8 +101,9 @@ public sealed class LauncherEntryOrderTests
     {
         List<string> order = ["one", "two", "three"];
 
-        LauncherEntryOrder.MoveRelative(order, "one", targetEntryId, insertAfter);
+        var moved = LauncherEntryOrder.MoveRelative(order, "one", targetEntryId, insertAfter);
 
+        Assert.True(moved);
         Assert.Equal([first, second, third], order);
     }
 
@@ -108,8 +114,9 @@ public sealed class LauncherEntryOrderTests
     {
         List<string> order = ["one", "two", "three"];
 
-        LauncherEntryOrder.MoveRelative(order, "one", "missing", insertAfter);
+        var moved = LauncherEntryOrder.MoveRelative(order, "one", "missing", insertAfter);
 
+        Assert.False(moved);
         Assert.Equal(["one", "two", "three"], order);
     }
 

@@ -67,7 +67,8 @@ public sealed class LauncherDragReorderWorkflow
             return (false, refreshEntries);
 
         EnsureCustomOrderContainsEntries();
-        LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, draggedEntryId, targetEntryId, insertAfter);
+        if (!LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, draggedEntryId, targetEntryId, insertAfter))
+            return (false, refreshEntries);
 
         session.SetTarget(target, insertAfter);
         return (true, true);

@@ -41,7 +41,7 @@ public static class LauncherEntryOrder
         return indexById;
     }
 
-    public static void MoveRelative(
+    public static bool MoveRelative(
         List<string> customOrder,
         string draggedEntryId,
         string targetEntryId,
@@ -50,16 +50,16 @@ public static class LauncherEntryOrder
         var draggedId = LauncherEntryIds.Normalize(draggedEntryId);
         var targetId = LauncherEntryIds.Normalize(targetEntryId);
         if (!LauncherEntryIds.IsUsable(draggedId))
-            return;
+            return false;
         if (!LauncherEntryIds.IsUsable(targetId))
-            return;
+            return false;
         if (LauncherEntryIds.Same(draggedId, targetId))
-            return;
+            return false;
         var normalizedOrder = LauncherEntryIds.ToUniqueUsableList(customOrder);
         if (!normalizedOrder.Any(id => LauncherEntryIds.Same(id, draggedId)))
-            return;
+            return false;
         if (!normalizedOrder.Any(id => LauncherEntryIds.Same(id, targetId)))
-            return;
+            return false;
 
         normalizedOrder.RemoveAll(id => LauncherEntryIds.Same(id, draggedId));
         var targetIndex = normalizedOrder.FindIndex(id => LauncherEntryIds.Same(id, targetId));
@@ -69,5 +69,6 @@ public static class LauncherEntryOrder
         normalizedOrder.Insert(targetIndex, draggedId);
         customOrder.Clear();
         customOrder.AddRange(normalizedOrder);
+        return true;
     }
 }
