@@ -16,8 +16,7 @@ public sealed partial class MainWindowViewModelTests
             settings,
             configure: vm => vm.RequestNewPresetAsync = _ => Task.FromResult<string?>("Project Pair"));
 
-        File.Delete(presets);
-        Directory.CreateDirectory(presets);
+        Directory.CreateDirectory(presets + ".bak");
 
         await viewModel.SaveSelectionAsPresetCommand.ExecuteAsync(null);
 
@@ -25,6 +24,62 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("daily", viewModel.SelectedPreset?.Id);
         Assert.Single(viewModel.Presets, preset => preset.Id == "daily");
         Assert.DoesNotContain(viewModel.Presets, preset => preset.Id == "project-pair");
+        var presetFile = LauncherPresetStore.Load(presets);
+        Assert.Equal(["daily"], presetFile.Presets.Select(preset => preset.Id).ToArray());
+        Assert.Contains("启动组保存失败", viewModel.StatusText);
+        Assert.DoesNotContain("已保存启动组", viewModel.StatusText);
+        AssertNoStoreTempFiles(presets);
+    }
+
+    [Fact]
+    public void LaunchGroupUpdateRollsBackInMemoryStateWhenPersistFails()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+        var viewModel = CreateViewModel(config, settings);
+
+        viewModel.Entries.Single(entry => entry.Id == "two").IsSelected = true;
+        Directory.CreateDirectory(presets + ".bak");
+
+        viewModel.UpdateSelectedPresetCommand.Execute(null);
+
+        Assert.Equal("daily", viewModel.SelectedPreset?.Id);
+        var preset = Assert.Single(viewModel.Presets, preset => preset.Id == "daily");
+        Assert.Equal(["one"], preset.EntryIds);
+        var presetFile = LauncherPresetStore.Load(presets);
+        Assert.Equal(["one"], presetFile.Presets.Single(preset => preset.Id == "daily").EntryIds);
+        Assert.Contains("启动组保存失败", viewModel.StatusText);
+        Assert.DoesNotContain("已更新启动组", viewModel.StatusText);
+        AssertNoStoreTempFiles(presets);
+    }
+
+    [Fact]
+    public async Task LaunchGroupDeleteRollsBackInMemoryStateWhenPersistFails()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
+        SavePresetFile(
+            presets,
+            "daily",
+            Preset("daily", "Daily", "one"),
+            Preset("secondary", "Secondary", "two"));
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            configure: vm => vm.ConfirmDeletePresetAsync = _ => Task.FromResult(true));
+
+        Directory.CreateDirectory(presets + ".bak");
+
+        await viewModel.DeleteSelectedPresetCommand.ExecuteAsync(null);
+
+        Assert.Equal("daily", viewModel.SelectedPreset?.Id);
+        Assert.Equal(["daily", "secondary"], viewModel.Presets.Select(preset => preset.Id).ToArray());
+        var presetFile = LauncherPresetStore.Load(presets);
+        Assert.Equal("daily", presetFile.DefaultPresetId);
+        Assert.Equal(["daily", "secondary"], presetFile.Presets.Select(preset => preset.Id).ToArray());
+        Assert.Contains("启动组保存失败", viewModel.StatusText);
+        Assert.DoesNotContain("已删除启动组", viewModel.StatusText);
         AssertNoStoreTempFiles(presets);
     }
 
