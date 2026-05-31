@@ -39,12 +39,15 @@ public sealed class LauncherBatchLaunchReport
     {
         ArgumentNullException.ThrowIfNull(entryName);
         ArgumentNullException.ThrowIfNull(exception);
-        _failures.Add($"{NormalizeEntryName(entryName)}: {exception.Message}");
+        _failures.Add($"{RequireEntryName(entryName)}: {exception.Message}");
     }
 
-    private static string NormalizeEntryName(string entryName)
+    private static string RequireEntryName(string entryName)
     {
         var normalized = LauncherEntryText.Normalize(entryName);
-        return normalized.Length == 0 ? "(unnamed)" : normalized;
+        if (normalized.Length == 0)
+            throw new ArgumentException("Entry name is required for batch launch report.", nameof(entryName));
+
+        return normalized;
     }
 }

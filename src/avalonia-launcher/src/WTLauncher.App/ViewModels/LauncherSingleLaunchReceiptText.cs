@@ -11,7 +11,7 @@ public static class LauncherSingleLaunchReceiptText
         return string.Join(
             Environment.NewLine,
             "启动回执",
-            $"已请求启动: {NormalizeName(entryName)}",
+            $"已请求启动: {RequireName(entryName)}",
             plan.CommandLine);
     }
 
@@ -22,7 +22,7 @@ public static class LauncherSingleLaunchReceiptText
         return string.Join(
             Environment.NewLine,
             "启动回执",
-            $"已取消: {NormalizeName(entryName)}",
+            $"已取消: {RequireName(entryName)}",
             plan.CommandLine);
     }
 
@@ -34,7 +34,7 @@ public static class LauncherSingleLaunchReceiptText
         return string.Join(
             Environment.NewLine,
             "启动回执",
-            $"启动确认失败: {NormalizeName(entryName)}",
+            $"启动确认失败: {RequireName(entryName)}",
             plan.CommandLine,
             $"错误: {exception.Message}");
     }
@@ -46,7 +46,7 @@ public static class LauncherSingleLaunchReceiptText
         return string.Join(
             Environment.NewLine,
             "启动回执",
-            $"启动失败: {NormalizeName(entryName)}",
+            $"启动失败: {RequireName(entryName)}",
             $"错误: {exception.Message}");
     }
 
@@ -58,16 +58,19 @@ public static class LauncherSingleLaunchReceiptText
         return string.Join(
             Environment.NewLine,
             "启动回执",
-            $"启动失败: {NormalizeName(entryName)}",
+            $"启动失败: {RequireName(entryName)}",
             plan.CommandLine,
             $"错误: {exception.Message}");
     }
 
-    private static string NormalizeName(string entryName)
+    private static string RequireName(string entryName)
     {
         ArgumentNullException.ThrowIfNull(entryName);
 
         var normalizedName = LauncherEntryText.Normalize(entryName);
-        return normalizedName.Length == 0 ? "(unnamed)" : normalizedName;
+        if (normalizedName.Length == 0)
+            throw new ArgumentException("Entry name is required for single launch receipt.", nameof(entryName));
+
+        return normalizedName;
     }
 }

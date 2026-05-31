@@ -28,14 +28,15 @@ public sealed class LauncherSingleLaunchReceiptTextTests
     }
 
     [Fact]
-    public void RequestedReceiptNormalizesEmptyName()
+    public void RequestedReceiptRejectsEmptyName()
     {
         using var temp = new TempDirectory();
         var plan = Plan(temp.Path, "pwsh");
 
-        var receipt = LauncherSingleLaunchReceiptText.Requested(" ", plan);
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherSingleLaunchReceiptText.Requested(" ", plan));
 
-        Assert.Contains("已请求启动: (unnamed)", receipt);
+        Assert.Equal("entryName", exception.ParamName);
     }
 
     [Fact]
