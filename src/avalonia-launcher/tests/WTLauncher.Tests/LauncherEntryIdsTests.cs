@@ -39,24 +39,6 @@ public sealed class LauncherEntryIdsTests
     }
 
     [Fact]
-    public void ToUsableSetTrimsRejectsBlankIdsAndUsesOrdinalComparer()
-    {
-        var ids = LauncherEntryIds.ToUsableSet(["one", " one ", " One ", "", " "]);
-
-        Assert.Equal(2, ids.Count);
-        Assert.Contains("one", ids);
-        Assert.Contains("One", ids);
-    }
-
-    [Fact]
-    public void ToUniqueUsableListTrimsRejectsBlankIdsAndDedupesInOrder()
-    {
-        var ids = LauncherEntryIds.ToUniqueUsableList([" one ", "one", " ", null!, "two", " two ", "One"]);
-
-        Assert.Equal(["one", "two", "One"], ids);
-    }
-
-    [Fact]
     public void ToRequiredUniqueListRejectsBlankIds()
     {
         var exception = Assert.Throws<ArgumentException>(() =>

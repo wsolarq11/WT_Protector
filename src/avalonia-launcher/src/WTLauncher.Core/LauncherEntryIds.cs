@@ -14,25 +14,6 @@ public static class LauncherEntryIds
     public static bool SameNormalized(string? left, string? right) =>
         Same(Normalize(left), Normalize(right));
 
-    public static List<string> ToUniqueUsableList(IEnumerable<string> ids)
-    {
-        ArgumentNullException.ThrowIfNull(ids);
-
-        var list = new List<string>();
-        var seen = new HashSet<string>(Comparer);
-        foreach (var id in ids)
-        {
-            var normalized = Normalize(id);
-            if (IsUsable(normalized) && seen.Add(normalized))
-                list.Add(normalized);
-        }
-
-        return list;
-    }
-
-    public static HashSet<string> ToUsableSet(IEnumerable<string> ids) =>
-        ToUniqueUsableList(ids).ToHashSet(Comparer);
-
     public static List<string> ToRequiredUniqueList(IEnumerable<string> ids, string paramName)
     {
         ArgumentNullException.ThrowIfNull(ids);
