@@ -13,7 +13,6 @@ public sealed partial class LauncherConfigStoreTests
         LauncherSettingsStore.Save(
             new LauncherSettings
             {
-                Theme = "dark",
                 LastFilterText = "爬虫",
                 SortMode = LauncherEntryVisibility.AlphabeticalSortModeId,
                 EntryViewMode = LauncherEntryViewModes.DetailsId,
@@ -25,7 +24,6 @@ public sealed partial class LauncherConfigStoreTests
 
         var loaded = LauncherSettingsStore.Load(settings);
 
-        Assert.Equal("dark", loaded.Theme);
         Assert.Equal("爬虫", loaded.LastFilterText);
         Assert.Equal(LauncherEntryVisibility.AlphabeticalSortModeId, loaded.SortMode);
         Assert.Equal(LauncherEntryViewModes.DetailsId, loaded.EntryViewMode);
@@ -38,6 +36,7 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Contains("alphabetical", savedJson);
         Assert.Contains("details", savedJson);
         Assert.Contains("requireConfirmationForLaunches", savedJson);
+        Assert.DoesNotContain("theme", savedJson);
         AssertUsesRepositoryLineEndings(savedJson);
     }
 
@@ -50,7 +49,6 @@ public sealed partial class LauncherConfigStoreTests
         LauncherSettingsStore.Save(
             new LauncherSettings
             {
-                Theme = null!,
                 LastFilterText = null!,
                 SortMode = null!,
                 EntryViewMode = null!,
@@ -62,7 +60,6 @@ public sealed partial class LauncherConfigStoreTests
         var savedJson = File.ReadAllText(settings);
         Assert.DoesNotContain("null", savedJson);
         var loaded = LauncherSettingsStore.Load(settings);
-        Assert.Equal(LauncherSettings.DefaultTheme, loaded.Theme);
         Assert.Equal(string.Empty, loaded.LastFilterText);
         Assert.Equal(LauncherEntryVisibility.CustomSortModeId, loaded.SortMode);
         Assert.Equal(LauncherEntryViewModes.CardsId, loaded.EntryViewMode);
@@ -76,7 +73,6 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
-          "theme": null,
           "lastFilterText": null,
           "sortMode": null,
           "entryViewMode": null,
@@ -198,7 +194,6 @@ public sealed partial class LauncherConfigStoreTests
         var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
         var settings = new LauncherSettings
         {
-            Theme = null!,
             LastFilterText = null!,
             SortMode = null!,
             EntryViewMode = null!,
@@ -208,14 +203,12 @@ public sealed partial class LauncherConfigStoreTests
 
         LauncherSettingsStore.Save(settings, settingsPath);
 
-        Assert.Null(settings.Theme);
         Assert.Null(settings.LastFilterText);
         Assert.Null(settings.SortMode);
         Assert.Null(settings.EntryViewMode);
         Assert.Equal([" one ", "two "], settings.CustomEntryOrder);
         Assert.Null(settings.Window);
         var loaded = LauncherSettingsStore.Load(settingsPath);
-        Assert.Equal(LauncherSettings.DefaultTheme, loaded.Theme);
         Assert.Equal(string.Empty, loaded.LastFilterText);
         Assert.Equal(LauncherEntryVisibility.CustomSortModeId, loaded.SortMode);
         Assert.Equal(LauncherEntryViewModes.CardsId, loaded.EntryViewMode);
@@ -295,7 +288,6 @@ public sealed partial class LauncherConfigStoreTests
         var settingsPath = Path.Combine(configDir, LauncherConfigStore.SettingsFileName);
         var settings = new LauncherSettings
         {
-            Theme = null!,
             SortMode = LauncherEntryVisibility.CustomSortModeId,
             EntryViewMode = LauncherEntryViewModes.CardsId,
             CustomEntryOrder = ["one", "two"],
@@ -310,7 +302,6 @@ public sealed partial class LauncherConfigStoreTests
         var saved = LauncherSettingsStore.TrySaveWindowBounds(settings, settingsPath, width: 1320, height: 840);
 
         Assert.False(saved);
-        Assert.Null(settings.Theme);
         Assert.Equal(LauncherEntryVisibility.CustomSortModeId, settings.SortMode);
         Assert.Equal(LauncherEntryViewModes.CardsId, settings.EntryViewMode);
         Assert.Equal(["one", "two"], settings.CustomEntryOrder);

@@ -7,7 +7,6 @@ internal static class LauncherSettingsCopies
         ArgumentNullException.ThrowIfNull(settings);
         return new LauncherSettings
         {
-            Theme = settings.Theme,
             LastFilterText = settings.LastFilterText,
             SortMode = settings.SortMode,
             EntryViewMode = settings.EntryViewMode,
@@ -21,7 +20,6 @@ internal static class LauncherSettingsCopies
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(target);
-        target.Theme = source.Theme;
         target.LastFilterText = source.LastFilterText;
         target.SortMode = source.SortMode;
         target.EntryViewMode = source.EntryViewMode;

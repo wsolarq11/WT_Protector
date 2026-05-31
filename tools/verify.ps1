@@ -155,6 +155,7 @@ $settingsPath = Get-LauncherSettingsPath
 if (-not (Test-Path -LiteralPath $settingsPath)) { throw "Missing portable settings: $settingsPath" }
 $settings = Get-Content -Raw -Encoding UTF8 -LiteralPath $settingsPath | ConvertFrom-Json
 if ($null -eq $settings) { throw "Settings parsed to null: $settingsPath" }
+if ($settings.PSObject.Properties.Name -contains 'theme') { throw 'settings.json must not carry unused theme state' }
 $settingsOrder = @($settings.customEntryOrder)
 $settingsOrderSeen = @{}
 foreach ($id in $settingsOrder) {
@@ -168,7 +169,6 @@ if ([string]::IsNullOrWhiteSpace([string]$settings.entryViewMode)) { throw 'sett
 if (-not ($settings.requireConfirmationForLaunches -is [bool])) { throw 'settings.json requireConfirmationForLaunches must be boolean' }
 Add-Check 'settings-json' @{
     path = 'config\settings.json'
-    theme = $settings.theme
     sortMode = $settings.sortMode
     entryViewMode = $settings.entryViewMode
     requireConfirmationForLaunches = $settings.requireConfirmationForLaunches

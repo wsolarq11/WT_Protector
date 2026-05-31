@@ -4,11 +4,6 @@ namespace WTLauncher.Core;
 
 public sealed class LauncherSettings
 {
-    public const string DefaultTheme = "light";
-
-    [JsonPropertyName("theme")]
-    public string Theme { get; set; } = DefaultTheme;
-
     [JsonPropertyName("lastFilterText")]
     public string LastFilterText { get; set; } = "";
 

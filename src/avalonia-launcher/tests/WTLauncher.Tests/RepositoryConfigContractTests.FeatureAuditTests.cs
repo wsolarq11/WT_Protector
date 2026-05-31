@@ -97,7 +97,10 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("roll back memory/file state on preset save failures", audit);
         Assert.Contains("discards uncommitted drag-sort preview state first", audit);
         Assert.Contains("ghost order cannot become a hidden source of truth", audit);
+        Assert.Contains("unused `theme` state was removed", audit);
         Assert.Contains("docs/feature-reality-north-star-audit.md", readme);
+        Assert.Contains("portable UI preferences such as filter text", readme);
+        Assert.DoesNotContain("portable UI preferences such as theme", readme);
         Assert.Contains("Selected-item and current-group batch launch preflight every target before confirmation or process start", readme);
         Assert.Contains("Single and batch launch write transient `启动回执` text for canceled, requested, or failed launch attempts", readme);
         Assert.Contains("已请求启动", readme);

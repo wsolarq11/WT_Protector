@@ -7,7 +7,7 @@ public sealed class LauncherStartupArgumentsTests
     [Fact]
     public void ReadConfigPath_ReturnsValueAfterConfigFlag()
     {
-        var config = LauncherStartupArguments.ReadConfigPath(["--theme", "light", "--config", "D:\\portable\\config.json"]);
+        var config = LauncherStartupArguments.ReadConfigPath(["--ignored-option", "value", "--config", "D:\\portable\\config.json"]);
 
         Assert.Equal("D:\\portable\\config.json", config);
     }
@@ -32,7 +32,7 @@ public sealed class LauncherStartupArgumentsTests
     {
         AssertMissingConfigValue(["--config"]);
         AssertMissingConfigValue(["--config", "  "]);
-        AssertMissingConfigValue(["--config", "--theme"]);
+        AssertMissingConfigValue(["--config", "--ignored-option"]);
     }
 
     private static void AssertMissingConfigValue(string[] args)

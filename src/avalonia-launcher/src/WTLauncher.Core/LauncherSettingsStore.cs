@@ -54,7 +54,6 @@ public static class LauncherSettingsStore
 
     private static void Normalize(LauncherSettings settings)
     {
-        settings.Theme ??= LauncherSettings.DefaultTheme;
         settings.LastFilterText ??= string.Empty;
         settings.SortMode = LauncherEntryVisibility.NormalizeSortModeId(settings.SortMode);
         settings.EntryViewMode = LauncherEntryViewModes.NormalizeId(settings.EntryViewMode);

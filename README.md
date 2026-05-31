@@ -8,7 +8,7 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `src/avalonia-launcher/` — active mainline Avalonia/.NET launcher source, tests, run script, and publish gate.
 - `config/config.json` — canonical human-readable launcher configuration with launch entries and persistent checkbox state.
 - `config/presets.json` — canonical human-readable named launch groups built from `config/config.json` entry ids.
-- `config/settings.json` — portable UI preferences such as theme, filter text, sort/view/confirmation state, custom order, and window size.
+- `config/settings.json` — portable UI preferences such as filter text, sort/view/confirmation state, custom order, and window size.
 - `retired/WT Launcher.hta` — retired legacy HTA snapshot kept only for archive/reference.
 - `retired/config/config.json` — retired HTA-local config used only when manually opening the archived HTA.
 - `retired/design/winforms-launcher.md` — retired WinForms executable/source design lessons and receipts.
@@ -80,7 +80,6 @@ Portable UI settings live beside the launch config:
 
 ```json
 {
-  "theme": "light",
   "lastFilterText": "",
   "sortMode": "custom",
   "entryViewMode": "cards",

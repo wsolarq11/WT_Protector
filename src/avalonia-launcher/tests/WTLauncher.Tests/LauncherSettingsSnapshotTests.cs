@@ -8,7 +8,6 @@ public sealed class LauncherSettingsSnapshotTests
     public void CaptureDeepCopiesPortableSettingsAndRestoresAllFields()
     {
         var settings = Settings(
-            theme: "dark",
             lastFilterText: "codex",
             sortMode: LauncherEntryVisibility.AlphabeticalSortModeId,
             entryViewMode: LauncherEntryViewModes.DetailsId,
@@ -16,7 +15,6 @@ public sealed class LauncherSettingsSnapshotTests
             window: new LauncherWindowSettings { Width = 1200, Height = 800 });
 
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
-        settings.Theme = LauncherSettings.DefaultTheme;
         settings.LastFilterText = "";
         settings.SortMode = LauncherEntryVisibility.UpdatedSortModeId;
         settings.EntryViewMode = LauncherEntryViewModes.NamesId;
@@ -27,7 +25,6 @@ public sealed class LauncherSettingsSnapshotTests
 
         snapshot.Restore(settings);
 
-        Assert.Equal("dark", settings.Theme);
         Assert.Equal("codex", settings.LastFilterText);
         Assert.Equal(LauncherEntryVisibility.AlphabeticalSortModeId, settings.SortMode);
         Assert.Equal(LauncherEntryViewModes.DetailsId, settings.EntryViewMode);
@@ -69,7 +66,6 @@ public sealed class LauncherSettingsSnapshotTests
     }
 
     private static LauncherSettings Settings(
-        string theme = LauncherSettings.DefaultTheme,
         string lastFilterText = "",
         string sortMode = LauncherEntryVisibility.CustomSortModeId,
         string entryViewMode = LauncherEntryViewModes.CardsId,
@@ -77,7 +73,6 @@ public sealed class LauncherSettingsSnapshotTests
         LauncherWindowSettings? window = null) =>
         new()
         {
-            Theme = theme,
             LastFilterText = lastFilterText,
             SortMode = sortMode,
             EntryViewMode = entryViewMode,

@@ -11,7 +11,6 @@ public sealed partial class RepositoryConfigContractTests
 
         var settings = LauncherSettingsStore.Load(settingsPath);
 
-        Assert.Equal(LauncherSettings.DefaultTheme, settings.Theme);
         Assert.Equal("", settings.LastFilterText);
         Assert.Equal("custom", settings.SortMode);
         Assert.Equal("cards", settings.EntryViewMode);

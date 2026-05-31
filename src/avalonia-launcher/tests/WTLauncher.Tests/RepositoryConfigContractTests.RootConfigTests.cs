@@ -118,7 +118,9 @@ public sealed partial class RepositoryConfigContractTests
         });
 
         var root = document.RootElement;
-        Assert.Equal(LauncherSettings.DefaultTheme, root.GetProperty("theme").GetString());
+        Assert.False(
+            root.TryGetProperty("theme", out _),
+            "settings.json must not carry unused theme state; no active UI behavior reads it.");
         Assert.Equal("", root.GetProperty("lastFilterText").GetString());
         Assert.Equal("custom", root.GetProperty("sortMode").GetString());
         Assert.Equal("cards", root.GetProperty("entryViewMode").GetString());
