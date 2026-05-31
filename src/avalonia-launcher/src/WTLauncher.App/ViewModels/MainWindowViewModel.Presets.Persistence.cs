@@ -12,19 +12,41 @@ public sealed partial class MainWindowViewModel
 
     private void ApplyPresetFileState(LauncherPresetFile presetFile, string? preferredPresetId)
     {
-        Presets.Clear();
-        foreach (var preset in presetFile.Presets)
-        {
-            Presets.Add(new LauncherPresetViewModel(preset));
-        }
-
-        var targetPresetId = preferredPresetId ?? presetFile.DefaultPresetId;
         _presetFile = presetFile;
-        var selectedPreset = Presets.FirstOrDefault(preset => LauncherPresetIds.Same(preset.Id, targetPresetId))
-            ?? Presets.FirstOrDefault();
+        var targetPresetId = LauncherPresetIds.NormalizeReference(preferredPresetId ?? presetFile.DefaultPresetId);
+        var presetViewModels = presetFile.Presets
+            .Select(preset => new LauncherPresetViewModel(preset))
+            .ToList();
+        var selectedPreset = ResolveSelectedPreset(presetViewModels, targetPresetId);
+
+        Presets.Clear();
+        foreach (var preset in presetViewModels)
+            Presets.Add(preset);
+
         SelectedPreset = selectedPreset;
         PresetCount = Presets.Count;
         NotifyPresetManagementCommands();
+    }
+
+    private static LauncherPresetViewModel? ResolveSelectedPreset(
+        IReadOnlyList<LauncherPresetViewModel> presets,
+        string targetPresetId)
+    {
+        if (presets.Count == 0)
+        {
+            if (targetPresetId.Length != 0)
+                throw new InvalidDataException(
+                    $"Launcher selected preset id is invalid without presets: {targetPresetId}.");
+
+            return null;
+        }
+
+        if (targetPresetId.Length == 0)
+            throw new InvalidDataException("Launcher selected preset id is required when presets exist.");
+
+        return presets.FirstOrDefault(preset => LauncherPresetIds.Same(preset.Id, targetPresetId))
+            ?? throw new InvalidDataException(
+                $"Launcher selected preset id does not match any preset: {targetPresetId}.");
     }
 
     private bool SavePresetMutationAndApply(

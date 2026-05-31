@@ -1,3 +1,4 @@
+using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
 namespace WTLauncher.Tests;
@@ -42,6 +43,30 @@ public sealed partial class MainWindowViewModelTests
         Assert.Contains("启动组保存失败", viewModel.StatusText);
         Assert.DoesNotContain("已保存启动组", viewModel.StatusText);
         AssertNoStoreTempFiles(presets);
+    }
+
+    [Fact]
+    public async Task LaunchGroupSaveRollbackRejectsMissingSelectedPresetInsteadOfSelectingFirst()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
+        SavePresetFile(
+            presets,
+            "daily",
+            Preset("daily", "Daily", "one"),
+            Preset("secondary", "Secondary", "two"));
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            configure: vm => vm.RequestNewPresetAsync = _ => Task.FromResult<string?>("Project Pair"));
+        viewModel.SelectedPreset = new LauncherPresetViewModel(Preset("ghost", "Ghost", "one"));
+        Directory.CreateDirectory(presets + ".bak");
+
+        var exception = await Assert.ThrowsAsync<InvalidDataException>(
+            () => viewModel.SaveSelectionAsPresetCommand.ExecuteAsync(null));
+
+        Assert.Equal("Launcher selected preset id does not match any preset: ghost.", exception.Message);
+        Assert.DoesNotContain(viewModel.Presets, preset => preset.Id == "project-pair");
     }
 
     [Fact]
