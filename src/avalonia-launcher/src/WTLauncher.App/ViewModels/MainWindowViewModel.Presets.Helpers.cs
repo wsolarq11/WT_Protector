@@ -67,8 +67,11 @@ public sealed partial class MainWindowViewModel
         return normalizedName;
     }
 
-    private LauncherPresetMutationSnapshot CapturePresetMutationSnapshot() =>
-        LauncherPresetMutationSnapshot.Capture(_presetFile, SelectedPreset?.Id);
+    private LauncherPresetMutationSnapshot CapturePresetMutationSnapshot()
+    {
+        DiscardDragReorderPreview();
+        return LauncherPresetMutationSnapshot.Capture(_presetFile, SelectedPreset?.Id);
+    }
 
     private void RestorePresetSnapshotAndReportMissing(LauncherPresetMutationSnapshot snapshot)
     {

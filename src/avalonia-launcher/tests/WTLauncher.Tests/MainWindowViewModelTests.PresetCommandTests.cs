@@ -123,4 +123,39 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("daily", viewModel.SelectedPreset?.Id);
         Assert.Equal("已取消: 删除启动组 Daily", viewModel.StatusText);
     }
+
+    [Fact]
+    public async Task LaunchGroupDeleteDuringDragPreviewDiscardsPreviewOrder()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreateDragFixture(temp);
+        SavePresetFile(
+            presets,
+            "daily",
+            Preset("daily", "Daily", "one"),
+            Preset("secondary", "Secondary", "two"));
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            launcherSettings,
+            configure: vm => vm.ConfirmDeletePresetAsync = _ => Task.FromResult(true));
+
+        viewModel.BeginDragReorder("three");
+        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
+        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+
+        await viewModel.DeleteSelectedPresetCommand.ExecuteAsync(null);
+
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.DoesNotContain(viewModel.Entries, entry =>
+            entry.IsDragPreviewSource
+            || entry.IsDragPreviewTarget
+            || entry.IsDragInsertBefore
+            || entry.IsDragInsertAfter);
+        var presetFile = LauncherPresetStore.Load(presets);
+        Assert.DoesNotContain(presetFile.Presets, preset => preset.Id == "daily");
+        Assert.Equal("secondary", viewModel.SelectedPreset?.Id);
+    }
 }
