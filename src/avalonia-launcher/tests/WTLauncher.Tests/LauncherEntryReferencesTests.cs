@@ -124,6 +124,23 @@ public sealed class LauncherEntryReferencesTests
         Assert.Equal(["two"], customEntryOrder);
     }
 
+    [Fact]
+    public void RemoveEntryIdRejectsBlankEntryIdBeforeMutatingReferences()
+    {
+        var presetFile = PresetFile(Preset("daily", "one", " "));
+        var customEntryOrder = new List<string> { "one", " " };
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherEntryReferences.RemoveEntryId(
+                presetFile,
+                customEntryOrder,
+                entryId: " "));
+
+        Assert.Equal("entryId", exception.ParamName);
+        Assert.Equal(["one", " "], presetFile.Presets[0].EntryIds);
+        Assert.Equal(["one", " "], customEntryOrder);
+    }
+
     private static LauncherPresetFile PresetFile(params LauncherPreset[] presets) =>
         new()
         {

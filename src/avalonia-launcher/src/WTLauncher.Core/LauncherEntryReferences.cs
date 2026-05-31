@@ -33,9 +33,10 @@ public static class LauncherEntryReferences
         ArgumentNullException.ThrowIfNull(presetFile);
         ArgumentNullException.ThrowIfNull(customEntryOrder);
 
+        var normalizedEntryId = RequireEntryId(entryId, nameof(entryId));
         foreach (var entryIds in EntryReferenceLists(presetFile, customEntryOrder))
         {
-            entryIds.RemoveAll(id => LauncherEntryIds.SameNormalized(id, entryId));
+            entryIds.RemoveAll(id => LauncherEntryIds.SameNormalized(id, normalizedEntryId));
             NormalizeEntryIds(entryIds);
         }
     }

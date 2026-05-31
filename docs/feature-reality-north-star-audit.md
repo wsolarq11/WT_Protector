@@ -152,7 +152,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: the launcher must stay maintainable without manual JSON edits for common entry changes.
 - Current data owner: `config/config.json`, with preset/settings references updated or rolled back together.
-- Evidence: entry mutation tests cover add/edit/delete, dialog-boundary failure without file mutation, failed save rollback, preset/settings coordination, status text, and blank id rejection before reference-rename mutation.
+- Evidence: entry mutation tests cover add/edit/delete, dialog-boundary failure without file mutation, failed save rollback, preset/settings coordination, status text, and blank id rejection before reference rename/remove mutation.
 - Verdict: strong.
 - Remaining gap: no bulk import; that would be overbuilding until a real import workload exists.
 
