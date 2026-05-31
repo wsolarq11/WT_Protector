@@ -35,8 +35,4 @@ public sealed class LauncherSettingsSnapshot
         settings.CustomEntryOrder = LauncherSettingsCopies.CloneCustomEntryOrder(_settings)!;
     }
 
-    public List<string> CloneCustomEntryOrder()
-    {
-        return LauncherSettingsCopies.CloneCustomEntryOrder(_settings) ?? [];
-    }
 }
