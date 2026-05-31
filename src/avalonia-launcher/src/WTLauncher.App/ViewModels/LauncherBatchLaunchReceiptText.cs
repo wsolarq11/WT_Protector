@@ -20,6 +20,29 @@ public static class LauncherBatchLaunchReceiptText
         return string.Join(Environment.NewLine, lines);
     }
 
+    public static string Canceled(IReadOnlyList<LauncherBatchLaunchItem> items)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+
+        var lines = new List<string>
+        {
+            "启动回执",
+            $"已取消: 已请求启动 0 项，未启动 {items.Count} 项",
+        };
+
+        if (items.Count > 0)
+        {
+            lines.Add("");
+            foreach (var item in items)
+            {
+                lines.Add($"• 未启动: {item.Entry.Name}");
+                lines.Add(item.Plan.CommandLine);
+            }
+        }
+
+        return string.Join(Environment.NewLine, lines);
+    }
+
     private static void AppendPlanLines(
         List<string> lines,
         IReadOnlyList<LauncherBatchLaunchItem> items,

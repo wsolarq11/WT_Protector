@@ -15,6 +15,17 @@ public static class LauncherSingleLaunchReceiptText
             plan.CommandLine);
     }
 
+    public static string Canceled(string entryName, LaunchPlan plan)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+
+        return string.Join(
+            Environment.NewLine,
+            "启动回执",
+            $"已取消: {NormalizeName(entryName)}",
+            plan.CommandLine);
+    }
+
     public static string Failed(string entryName, Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);

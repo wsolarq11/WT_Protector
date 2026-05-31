@@ -79,7 +79,7 @@ public sealed partial class MainWindowViewModel
         if (accepted)
             return true;
 
-        DryRunText = plan.CommandLine;
+        DryRunText = LauncherSingleLaunchReceiptText.Canceled(item.Name, plan);
         StatusText = LauncherSingleLaunchStatus.Canceled(item.Name);
         return false;
     }

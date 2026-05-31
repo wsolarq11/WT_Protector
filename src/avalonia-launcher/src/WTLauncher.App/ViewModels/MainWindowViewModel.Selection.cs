@@ -95,6 +95,7 @@ public sealed partial class MainWindowViewModel
         if (accepted)
             return true;
 
+        DryRunText = LauncherBatchLaunchReceiptText.Canceled(items);
         StatusText = canceledStatus(items.Count);
         return false;
     }

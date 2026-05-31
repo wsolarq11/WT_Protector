@@ -62,10 +62,9 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
 
         Assert.Equal(1, confirmCalls);
-        Assert.StartsWith(
-            $"{LaunchArgumentBuilder.TerminalExecutable} {LaunchArgumentBuilder.WorkingDirectoryOption} ",
-            viewModel.DryRunText,
-            StringComparison.Ordinal);
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("已取消: one", viewModel.DryRunText);
+        Assert.Contains(LaunchArgumentBuilder.TerminalExecutable, viewModel.DryRunText);
         Assert.Equal("已取消: one", viewModel.StatusText);
     }
 
@@ -289,7 +288,10 @@ public sealed partial class MainWindowViewModelTests
         Assert.NotNull(confirmedItems);
         Assert.Equal(["one", "two"], confirmedItems!.Select(item => item.Entry.Id).ToArray());
         Assert.All(confirmedItems, item => Assert.Contains("wt.exe", item.Plan.CommandLine));
-        Assert.Equal("选择一个启动项查看预演命令。", viewModel.DryRunText);
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("已取消: 已请求启动 0 项，未启动 2 项", viewModel.DryRunText);
+        Assert.Contains("• 未启动: one", viewModel.DryRunText);
+        Assert.Contains("• 未启动: two", viewModel.DryRunText);
         Assert.Equal("已取消: 批量启动 2 项", viewModel.StatusText);
     }
 

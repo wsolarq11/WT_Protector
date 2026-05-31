@@ -52,6 +52,19 @@ public sealed class LauncherSingleLaunchReceiptTextTests
     }
 
     [Fact]
+    public void CanceledReceiptIncludesNameAndCommandLine()
+    {
+        using var temp = new TempDirectory();
+        var plan = Plan(temp.Path, "pwsh");
+
+        var receipt = LauncherSingleLaunchReceiptText.Canceled("one", plan);
+
+        Assert.Contains("启动回执", receipt);
+        Assert.Contains("已取消: one", receipt);
+        Assert.Contains(plan.CommandLine, receipt);
+    }
+
+    [Fact]
     public void FailedReceiptWithPlanIncludesCommandLineAndFailure()
     {
         using var temp = new TempDirectory();
