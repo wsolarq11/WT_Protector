@@ -61,6 +61,6 @@ public static class LauncherPresetStatus
     public static string DeleteCanceled(string presetName) =>
         $"已取消: 删除启动组 {presetName}";
 
-    public static string Deleted(string presetName) =>
-        $"已删除启动组: {presetName}";
+    public static string Deleted(string presetName, string selectedPresetName) =>
+        $"已删除启动组: {presetName}；当前启动组: {selectedPresetName}";
 }

@@ -154,6 +154,8 @@ public sealed partial class MainWindowViewModel
         if (!SavePresetMutationAndApply(snapshot, fallbackPresetId))
             return;
 
-        ApplyStatusText(LauncherPresetStatus.Deleted(preset.Name));
+        ApplyStatusText(LauncherPresetStatus.Deleted(
+            preset.Name,
+            SelectedPreset?.Name ?? "(none)"));
     }
 }

@@ -53,6 +53,9 @@ public sealed partial class MainWindowViewModelTests
         presetFile = LauncherPresetStore.Load(presets);
         Assert.DoesNotContain(presetFile.Presets, preset => preset.Id == "project-pair");
         Assert.Contains(presetFile.Presets, preset => preset.Id == "daily");
+        Assert.Equal("daily", presetFile.DefaultPresetId);
+        Assert.Equal("daily", viewModel.SelectedPreset?.Id);
+        Assert.Equal("已删除启动组: Project Pair；当前启动组: Daily", viewModel.StatusText);
 
         viewModel.SelectedPreset = viewModel.Presets.Single(preset => preset.Id == "blank-manual");
 

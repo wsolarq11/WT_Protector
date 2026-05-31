@@ -128,7 +128,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: a named group must be created, updated, and deleted inside the app, otherwise users fall back to hand-editing JSON.
 - Current data owner: `config/presets.json`.
-- Evidence: ViewModel commands save current selection as a new group, update current group, delete editable groups, and preserve locked groups.
+- Evidence: ViewModel commands save current selection as a new group, update current group, delete editable groups, preserve locked groups, and report the new current launch group after deletion instead of hiding fallback selection.
 - Verdict: north-star inside this scope.
 - Remaining gap: no conflict UI for simultaneous external JSON edits; current repo-local app does not need multi-writer machinery.
 

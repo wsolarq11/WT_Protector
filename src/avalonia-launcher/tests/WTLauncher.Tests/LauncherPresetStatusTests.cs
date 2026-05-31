@@ -10,7 +10,7 @@ public sealed class LauncherPresetStatusTests
         Assert.Equal("已应用启动组: Daily（2 项，已保存）", LauncherPresetStatus.Applied("Daily", 2));
         Assert.Equal("已保存启动组: Daily（2 项）", LauncherPresetStatus.Saved("Daily", 2));
         Assert.Equal("已更新启动组: Daily（2 项）", LauncherPresetStatus.Updated("Daily", 2));
-        Assert.Equal("已删除启动组: Daily", LauncherPresetStatus.Deleted("Daily"));
+        Assert.Equal("已删除启动组: Daily；当前启动组: Manual", LauncherPresetStatus.Deleted("Daily", "Manual"));
     }
 
     [Fact]
