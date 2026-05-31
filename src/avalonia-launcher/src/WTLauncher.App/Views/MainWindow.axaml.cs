@@ -77,12 +77,7 @@ public sealed partial class MainWindow : Window
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
-        if (DataContext is not MainWindowViewModel viewModel)
-            return;
-
-        if (viewModel.TrySaveWindowBounds(Width, Height))
-            return;
-
-        viewModel.StatusText = "窗口尺寸保存失败；下次将使用上次保存的尺寸";
+        if (DataContext is MainWindowViewModel viewModel)
+            viewModel.TrySaveWindowBounds(Width, Height);
     }
 }

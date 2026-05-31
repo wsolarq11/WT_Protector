@@ -12,4 +12,7 @@ public static class LauncherSettingsStatus
         requireConfirmation
             ? "启动确认: 所有启动项启动前统一确认"
             : "启动确认: 所有启动项直接启动";
+
+    public static string WindowBoundsSaveFailed =>
+        "窗口尺寸保存失败；下次将使用上次保存的尺寸";
 }

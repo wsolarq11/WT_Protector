@@ -146,7 +146,11 @@ public sealed partial class MainWindowViewModel
     public bool TrySaveWindowBounds(double width, double height)
     {
         DiscardDragReorderPreview();
-        return LauncherSettingsStore.TrySaveWindowBounds(_settings, _settingsPath, width, height);
+        if (LauncherSettingsStore.TrySaveWindowBounds(_settings, _settingsPath, width, height))
+            return true;
+
+        StatusText = LauncherSettingsStatus.WindowBoundsSaveFailed;
+        return false;
     }
 
     private void EnsureCustomOrderContainsEntries() =>

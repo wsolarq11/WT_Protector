@@ -122,4 +122,23 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(840d, savedSettings.Window.Height);
         AssertNoDragCues(viewModel);
     }
+
+    [Fact]
+    public void WindowBoundsSaveFailureReportsStatusAndDiscardsPreviewOrder()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreateDragFixture(temp);
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+        Directory.CreateDirectory(settings);
+
+        StartDefaultDragPreview(viewModel, launcherSettings);
+
+        Assert.False(viewModel.TrySaveWindowBounds(width: 1320, height: 840));
+
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(LauncherSettingsStatus.WindowBoundsSaveFailed, viewModel.StatusText);
+        AssertNoDragCues(viewModel);
+        AssertNoStoreTempFiles(settings);
+    }
 }
