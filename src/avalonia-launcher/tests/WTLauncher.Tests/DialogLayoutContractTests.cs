@@ -75,9 +75,27 @@ public sealed class DialogLayoutContractTests
         Assert.DoesNotContain("isDefault: true", MethodSource(dialogButtons, "Destructive"));
     }
 
+    [Fact]
+    public void EditableDialogTextInputsUseSharedDialogInputStyle()
+    {
+        var entryDetails = File.ReadAllText(TestRepositoryPaths.View("EntryDetailsWindow.cs"));
+        var presetDetails = File.ReadAllText(TestRepositoryPaths.View("PresetDetailsWindow.cs"));
+        var dialogText = File.ReadAllText(TestRepositoryPaths.View("LauncherDialogText.cs"));
+
+        Assert.Equal(4, Count(entryDetails, "LauncherDialogText.Input("));
+        Assert.Equal(1, Count(presetDetails, "LauncherDialogText.Input("));
+        Assert.DoesNotContain("new TextBox", entryDetails);
+        Assert.DoesNotContain("new TextBox", presetDetails);
+        Assert.Contains("public static TextBox Input(string text)", dialogText);
+        Assert.Contains("FontSize = 14", MethodSource(dialogText, "Input"));
+        Assert.Contains("Padding = new Thickness(10, 8)", MethodSource(dialogText, "Input"));
+    }
+
     private static string MethodSource(string source, string methodName)
     {
         var start = source.IndexOf($"static Button {methodName}(", StringComparison.Ordinal);
+        if (start < 0)
+            start = source.IndexOf($"static TextBox {methodName}(", StringComparison.Ordinal);
         Assert.True(start >= 0, $"Expected {methodName} method declaration.");
 
         var expressionEnd = source.IndexOf(";\n", start, StringComparison.Ordinal);
@@ -93,5 +111,18 @@ public sealed class DialogLayoutContractTests
     private static string GetDialogButtonsSource()
     {
         return File.ReadAllText(TestRepositoryPaths.View("LauncherDialogButtons.cs"));
+    }
+
+    private static int Count(string text, string value)
+    {
+        var count = 0;
+        var index = 0;
+        while ((index = text.IndexOf(value, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += value.Length;
+        }
+
+        return count;
     }
 }

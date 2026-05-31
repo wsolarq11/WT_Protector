@@ -20,12 +20,7 @@ public sealed class PresetDetailsWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = Brushes.White;
 
-        _nameBox = new TextBox
-        {
-            Text = "新启动组",
-            FontSize = 14,
-            Padding = new Thickness(10, 8),
-        };
+        _nameBox = LauncherDialogText.Input("新启动组");
 
         _errorText = LauncherDialogText.Error();
 

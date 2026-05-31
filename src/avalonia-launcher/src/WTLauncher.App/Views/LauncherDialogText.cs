@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 
@@ -58,6 +59,16 @@ internal static class LauncherDialogText
             Foreground = Brushes.IndianRed,
             IsVisible = false,
             TextWrapping = TextWrapping.Wrap,
+        };
+    }
+
+    public static TextBox Input(string text)
+    {
+        return new TextBox
+        {
+            Text = text,
+            FontSize = 14,
+            Padding = new Thickness(10, 8),
         };
     }
 }

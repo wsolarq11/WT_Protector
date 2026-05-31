@@ -26,10 +26,10 @@ public sealed class EntryDetailsWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = Brushes.White;
 
-        _idBox = CreateTextBox(entry?.Id ?? "");
-        _nameBox = CreateTextBox(entry?.Name ?? "");
-        _directoryBox = CreateTextBox(entry?.Directory ?? "");
-        _commandBox = CreateTextBox(entry?.Command ?? "");
+        _idBox = LauncherDialogText.Input(entry?.Id ?? "");
+        _nameBox = LauncherDialogText.Input(entry?.Name ?? "");
+        _directoryBox = LauncherDialogText.Input(entry?.Directory ?? "");
+        _commandBox = LauncherDialogText.Input(entry?.Command ?? "");
         _selectedBox = new CheckBox
         {
             Content = "保存为已勾选",
@@ -77,16 +77,6 @@ public sealed class EntryDetailsWindow : Window
         {
             (isEdit ? _nameBox : _idBox).Focus();
             (isEdit ? _nameBox : _idBox).SelectAll();
-        };
-    }
-
-    private static TextBox CreateTextBox(string text)
-    {
-        return new TextBox
-        {
-            Text = text,
-            FontSize = 14,
-            Padding = new Thickness(10, 8),
         };
     }
 
