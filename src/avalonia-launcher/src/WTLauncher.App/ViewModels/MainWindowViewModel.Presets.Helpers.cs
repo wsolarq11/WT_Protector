@@ -58,8 +58,7 @@ public sealed partial class MainWindowViewModel
             return null;
         }
 
-        var normalizedName = LauncherPresetNames.Normalize(presetName);
-        if (normalizedName.Length == 0)
+        if (!LauncherPresetNames.TryNormalizeRequired(presetName, out var normalizedName))
         {
             StatusText = LauncherPresetStatus.NameRequired;
             return null;

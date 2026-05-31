@@ -13,4 +13,20 @@ public sealed class LauncherPresetNamesTests
     {
         Assert.Equal(expected, LauncherPresetNames.Normalize(name));
     }
+
+    [Theory]
+    [InlineData(" Daily ", true, "Daily")]
+    [InlineData("", false, "")]
+    [InlineData("  ", false, "")]
+    [InlineData(null, false, "")]
+    public void TryNormalizeRequiredReturnsNormalizedNameAndRequiredState(
+        string? name,
+        bool expectedAccepted,
+        string expectedName)
+    {
+        var accepted = LauncherPresetNames.TryNormalizeRequired(name, out var normalizedName);
+
+        Assert.Equal(expectedAccepted, accepted);
+        Assert.Equal(expectedName, normalizedName);
+    }
 }

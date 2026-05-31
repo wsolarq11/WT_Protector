@@ -67,8 +67,7 @@ public sealed class PresetDetailsWindow : Window
 
     private void Submit()
     {
-        var name = LauncherPresetNames.Normalize(_nameBox.Text);
-        if (name.Length == 0)
+        if (!LauncherPresetNames.TryNormalizeRequired(_nameBox.Text, out var name))
         {
             _errorText.Text = "请输入启动组名称。";
             _errorText.IsVisible = true;
