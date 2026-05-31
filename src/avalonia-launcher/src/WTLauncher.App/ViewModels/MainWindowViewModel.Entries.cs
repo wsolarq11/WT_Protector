@@ -14,6 +14,7 @@ public sealed partial class MainWindowViewModel
     [RelayCommand]
     private async Task AddEntryAsync()
     {
+        DiscardDragReorderPreview();
         var draft = await RequestEntryDraftAsync(null).ConfigureAwait(true);
         if (draft is null)
         {
@@ -41,6 +42,7 @@ public sealed partial class MainWindowViewModel
 
     internal async Task EditEntryAsync(LauncherEntryViewModel item)
     {
+        DiscardDragReorderPreview();
         var draft = await RequestEntryDraftAsync(item.Entry).ConfigureAwait(true);
         if (draft is null)
         {
@@ -66,6 +68,7 @@ public sealed partial class MainWindowViewModel
 
     internal async Task DeleteEntryAsync(LauncherEntryViewModel item)
     {
+        DiscardDragReorderPreview();
         if (!await ConfirmDeleteEntryIfRequiredAsync(item).ConfigureAwait(true))
             return;
 

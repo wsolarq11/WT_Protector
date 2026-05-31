@@ -32,20 +32,30 @@ public sealed partial class MainWindowViewModelTests
     public async Task LaunchGroupSavePassesSelectedEntryIdsToPresetDialog()
     {
         using var temp = new TempDirectory();
-        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", "One", command: "codex", selected: true),
+            Entry("two", "Two", command: "opencode"),
+            Entry("three", "Three"));
+        var launcherSettings = CreateDragSettings();
         IReadOnlyList<string>? dialogEntryIds = null;
         var viewModel = CreateViewModel(
             config,
             settings,
+            launcherSettings,
             configure: vm => vm.RequestNewPresetAsync = entryIds =>
             {
                 dialogEntryIds = entryIds.ToArray();
                 return Task.FromResult<string?>(null);
             });
 
+        StartDefaultDragPreview(viewModel, launcherSettings);
+
         await viewModel.SaveSelectionAsPresetCommand.ExecuteAsync(null);
 
         Assert.Equal(["one"], dialogEntryIds);
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        AssertNoDragCues(viewModel);
         Assert.Equal("已取消: 保存启动组", viewModel.StatusText);
     }
 

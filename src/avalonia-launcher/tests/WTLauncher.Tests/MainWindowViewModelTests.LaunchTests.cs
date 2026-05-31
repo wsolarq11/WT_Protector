@@ -108,9 +108,7 @@ public sealed partial class MainWindowViewModelTests
         launcherSettings.RequireConfirmationForLaunches = false;
         var viewModel = CreateViewModel(config, settings, launcherSettings);
 
-        viewModel.BeginDragReorder("three");
-        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
-        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+        StartDefaultDragPreview(viewModel, launcherSettings);
 
         await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
 
@@ -132,9 +130,7 @@ public sealed partial class MainWindowViewModelTests
         launcherSettings.RequireConfirmationForLaunches = false;
         var viewModel = CreateViewModel(config, settings, launcherSettings);
 
-        viewModel.BeginDragReorder("three");
-        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
-        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+        StartDefaultDragPreview(viewModel, launcherSettings);
 
         viewModel.Entries.Single(entry => entry.Id == "one").DryRunCommand.Execute(null);
 
@@ -177,9 +173,7 @@ public sealed partial class MainWindowViewModelTests
         launcherSettings.RequireConfirmationForLaunches = false;
         var viewModel = CreateViewModel(config, settings, launcherSettings);
 
-        viewModel.BeginDragReorder("three");
-        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
-        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+        StartDefaultDragPreview(viewModel, launcherSettings);
 
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 

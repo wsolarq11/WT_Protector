@@ -86,23 +86,22 @@ public sealed partial class MainWindowViewModelTests
     public async Task AddEntryCancellationLeavesFilesAndOrderUnchanged()
     {
         using var temp = new TempDirectory();
-        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
-        var launcherSettings = new LauncherSettings
-        {
-            SortMode = LauncherEntryVisibility.CustomSortModeId,
-            CustomEntryOrder = ["one", "two"],
-        };
+        var (config, settings, _) = CreateDragFixture(temp);
+        var launcherSettings = CreateDragSettings();
         var viewModel = CreateViewModel(
             config,
             settings,
             launcherSettings,
             vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(null));
 
+        StartDefaultDragPreview(viewModel, launcherSettings);
+
         await viewModel.AddEntryCommand.ExecuteAsync(null);
 
-        Assert.Equal(["one", "two"], viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(["one", "two"], LoadEntriesById(config).Select(entry => entry.Id).ToArray());
-        Assert.Equal(["one", "two"], launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), LauncherConfigStore.Load(config).Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        AssertNoDragCues(viewModel);
         Assert.Equal(LauncherEntryStatus.AddCanceled, viewModel.StatusText);
     }
 
@@ -119,9 +118,7 @@ public sealed partial class MainWindowViewModelTests
             vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
                 NewFourEntryDraft()));
 
-        viewModel.BeginDragReorder("three");
-        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
-        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+        StartDefaultDragPreview(viewModel, launcherSettings);
 
         await viewModel.AddEntryCommand.ExecuteAsync(null);
 
@@ -135,26 +132,25 @@ public sealed partial class MainWindowViewModelTests
     public async Task EditEntryCancellationLeavesFilesAndReferencesUnchanged()
     {
         using var temp = new TempDirectory();
-        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        var (config, settings, presets) = CreateDragFixture(temp);
         SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
-        var launcherSettings = new LauncherSettings
-        {
-            SortMode = LauncherEntryVisibility.CustomSortModeId,
-            CustomEntryOrder = ["one", "two"],
-        };
+        var launcherSettings = CreateDragSettings();
         var viewModel = CreateViewModel(
             config,
             settings,
             launcherSettings,
             vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(null));
 
+        StartDefaultDragPreview(viewModel, launcherSettings);
+
         await viewModel.Entries.Single(entry => entry.Id == "one").EditCommand.ExecuteAsync(null);
 
-        Assert.Equal(["one", "two"], viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(["one", "two"], LoadEntriesById(config).Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), LauncherConfigStore.Load(config).Select(entry => entry.Id).ToArray());
         Assert.Equal(["one"], LauncherPresetStore.Load(presets).Presets.Single().EntryIds);
-        Assert.Equal(["one", "two"], launcherSettings.CustomEntryOrder);
-        Assert.Equal(LauncherEntryStatus.EditCanceled("one"), viewModel.StatusText);
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        AssertNoDragCues(viewModel);
+        Assert.Equal(LauncherEntryStatus.EditCanceled("One"), viewModel.StatusText);
     }
 
     [Fact]
@@ -228,26 +224,25 @@ public sealed partial class MainWindowViewModelTests
     public async Task DeleteEntryCancellationLeavesFilesAndReferencesUnchanged()
     {
         using var temp = new TempDirectory();
-        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        var (config, settings, presets) = CreateDragFixture(temp);
         SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
-        var launcherSettings = new LauncherSettings
-        {
-            SortMode = LauncherEntryVisibility.CustomSortModeId,
-            CustomEntryOrder = ["one", "two"],
-        };
+        var launcherSettings = CreateDragSettings();
         var viewModel = CreateViewModel(
             config,
             settings,
             launcherSettings,
             vm => vm.ConfirmDeleteEntryAsync = _ => Task.FromResult(false));
 
+        StartDefaultDragPreview(viewModel, launcherSettings);
+
         await viewModel.Entries.Single(entry => entry.Id == "one").DeleteCommand.ExecuteAsync(null);
 
-        Assert.Equal(["one", "two"], viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(["one", "two"], LoadEntriesById(config).Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), LauncherConfigStore.Load(config).Select(entry => entry.Id).ToArray());
         Assert.Equal(["one"], LauncherPresetStore.Load(presets).Presets.Single().EntryIds);
-        Assert.Equal(["one", "two"], launcherSettings.CustomEntryOrder);
-        Assert.Equal(LauncherEntryStatus.DeleteCanceled("one"), viewModel.StatusText);
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        AssertNoDragCues(viewModel);
+        Assert.Equal(LauncherEntryStatus.DeleteCanceled("One"), viewModel.StatusText);
     }
 
     private static EntryDraft NewThreeEntryDraft() =>

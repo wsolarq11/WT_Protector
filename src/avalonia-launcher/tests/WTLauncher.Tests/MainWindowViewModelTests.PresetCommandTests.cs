@@ -105,22 +105,28 @@ public sealed partial class MainWindowViewModelTests
     public async Task LaunchGroupDeleteCancellationLeavesPresetFileUnchanged()
     {
         using var temp = new TempDirectory();
-        var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
+        var (config, settings, presets) = CreateDragFixture(temp);
         SavePresetFile(
             presets,
             "daily",
             Preset("daily", "Daily", "one"),
             Preset("secondary", "Secondary", "two"));
+        var launcherSettings = CreateDragSettings();
         var viewModel = CreateViewModel(
             config,
             settings,
+            launcherSettings,
             configure: vm => vm.ConfirmDeletePresetAsync = _ => Task.FromResult(false));
+
+        StartDefaultDragPreview(viewModel, launcherSettings);
 
         await viewModel.DeleteSelectedPresetCommand.ExecuteAsync(null);
 
         var presetFile = LauncherPresetStore.Load(presets);
         Assert.Equal(["daily", "secondary"], presetFile.Presets.Select(preset => preset.Id).ToArray());
         Assert.Equal("daily", viewModel.SelectedPreset?.Id);
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        AssertNoDragCues(viewModel);
         Assert.Equal("已取消: 删除启动组 Daily", viewModel.StatusText);
     }
 
@@ -141,9 +147,7 @@ public sealed partial class MainWindowViewModelTests
             launcherSettings,
             configure: vm => vm.ConfirmDeletePresetAsync = _ => Task.FromResult(true));
 
-        viewModel.BeginDragReorder("three");
-        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
-        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+        StartDefaultDragPreview(viewModel, launcherSettings);
 
         await viewModel.DeleteSelectedPresetCommand.ExecuteAsync(null);
 

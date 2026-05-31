@@ -24,6 +24,7 @@ public sealed partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private async Task SaveSelectionAsPresetAsync()
     {
+        DiscardDragReorderPreview();
         if (SelectedCount == 0)
         {
             StatusText = LauncherSelectionStatus.NoSelectedEntries;
@@ -79,6 +80,7 @@ public sealed partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanDeleteSelectedPreset))]
     private async Task DeleteSelectedPresetAsync()
     {
+        DiscardDragReorderPreview();
         var selectedPreset = GetSelectedPresetOrReportMissing();
         if (selectedPreset is null)
             return;

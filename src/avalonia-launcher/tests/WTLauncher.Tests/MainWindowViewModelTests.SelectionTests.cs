@@ -68,9 +68,7 @@ public sealed partial class MainWindowViewModelTests
         var launcherSettings = CreateDragSettings();
         var viewModel = CreateViewModel(config, settings, launcherSettings);
 
-        viewModel.BeginDragReorder("three");
-        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
-        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+        StartDefaultDragPreview(viewModel, launcherSettings);
 
         viewModel.Entries.Single(entry => entry.Id == "two").IsSelected = true;
 

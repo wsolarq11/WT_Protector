@@ -94,9 +94,7 @@ public sealed partial class MainWindowViewModelTests
         var launcherSettings = CreateDragSettings();
         var viewModel = CreateViewModel(config, settings, launcherSettings);
 
-        viewModel.BeginDragReorder("three");
-        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
-        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+        StartDefaultDragPreview(viewModel, launcherSettings);
 
         viewModel.BeginDragReorder("missing");
 
@@ -114,9 +112,7 @@ public sealed partial class MainWindowViewModelTests
         var launcherSettings = CreateDragSettings();
         var viewModel = CreateViewModel(config, settings, launcherSettings);
 
-        viewModel.BeginDragReorder("three");
-        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
-        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+        StartDefaultDragPreview(viewModel, launcherSettings);
 
         viewModel.FilterText = "one";
 
@@ -134,9 +130,7 @@ public sealed partial class MainWindowViewModelTests
         var launcherSettings = CreateDragSettings();
         var viewModel = CreateViewModel(config, settings, launcherSettings);
 
-        viewModel.BeginDragReorder("three");
-        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
-        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+        StartDefaultDragPreview(viewModel, launcherSettings);
 
         viewModel.RefreshCommand.Execute(null);
 
@@ -222,6 +216,13 @@ public sealed partial class MainWindowViewModelTests
     private static string[] DefaultDragOrder() => ["one", "two", "three"];
 
     private static string[] ReorderedDragOrder() => ["three", "one", "two"];
+
+    private static void StartDefaultDragPreview(MainWindowViewModel viewModel, LauncherSettings launcherSettings)
+    {
+        viewModel.BeginDragReorder("three");
+        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
+        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+    }
 
     private static void AssertNoDragCues(MainWindowViewModel viewModel) =>
         Assert.DoesNotContain(viewModel.Entries, HasDragCue);
