@@ -27,6 +27,8 @@ For this repository, "domain north star" means:
 4. the behavior has current source/tests/gate evidence;
 5. the feature stays inside the narrow Windows Terminal workspace-launcher domain instead of becoming a generic automation platform.
 
+The requested "100% confidence and 0% side effects" standard is useful as pressure, but it is not an honest completion claim for software that starts external processes. This audit therefore treats absolute claims as unproven unless the current source, tests, and gate prove them. For side effects, the correct engineering target is: preflight everything local before launching, make every remaining side effect explicit, and never hide a partial failure behind fallback behavior.
+
 The external yardstick remains the source-tracked benchmark set in `docs/design-benchmark-digest.md` and `docs/giants-shoulders/launcher-first-class-patterns.md`: Windows Terminal profiles/command-line launch shape, VS Code workspaces/settings, Raycast quick links, Alfred workflows, Kubernetes spec/status separation, and WCAG/major design-system accessibility rules.
 
 ## Fresh external yardstick spot-check
@@ -39,6 +41,22 @@ Current external references were spot-checked on 2026-05-31 before making the no
 - Docker Compose profiles remain a named-subset model for activating only the needed services, which maps cleanly to WT Launcher's named presets.
 - WCAG 2.2 includes Dragging Movements as a Level AA criterion; this makes non-drag reorder a real accessibility contract, not cosmetic polish.
 - Kubernetes continues to separate desired object data from observed status; WT Launcher has desired config/preset/settings objects but no run-history/status object yet.
+
+## Current GitHub similar-project snapshot
+
+Live GitHub repository search was also spot-checked on 2026-05-31. The result is blunt: a universal "stronger than any similar GitHub project" claim is not provable, and in the broad launcher market it is false. Flow Launcher and Wox are mature broad launchers with thousands of stars, plugin ecosystems, package channels, and community proof. WT Launcher should not fight them as a generic launcher. That would be stupid scope creep.
+
+The relevant fight is narrower: portable Windows Terminal workspace launching with inspectable entries, named launch groups, explicit launch confirmation, rollback-aware JSON persistence, and a native repo gate.
+
+Representative GitHub yardsticks:
+
+- <https://github.com/SyDroX/dev-layout> — direct Windows Terminal workspace launcher; PowerShell, 0 stars, updated 2026-05-27. Strong for fixed Claude Code multi-repo layout, session resume, and `cd` blocking. Weaker than WT Launcher on editable portable UI entries, named launch groups, repository-level native gate, and rollback-aware config persistence.
+- <https://github.com/augustdragon/terminal-manager> — direct Windows Terminal profile/session manager; TypeScript, 0 stars, updated 2026-05-17. Stronger than WT Launcher for WT profile editing, split-pane session groups, import/export, and WT `settings.json` sync. Heavier stack, local web server, more moving parts, and it mutates Windows Terminal settings by design. This is a different tradeoff, not a small-and-beautiful local config launcher.
+- <https://github.com/joyahmed/devgo-app> — WSL-first developer launcher; C#, 2 stars, updated 2026-05-24. Strong for WSL + VS Code + tmux workflows and installer ambition. README still lists keyboard shortcuts and rough edges as in-progress, so it is not stronger on the current WT Launcher axis of verified portable launch groups.
+- <https://github.com/Flow-Launcher/Flow.Launcher> — broad Windows launcher; C#, 14,841 stars, updated 2026-05-31. Stronger in broad market proof, plugins, search, packaging, and community. Not the same narrow product.
+- <https://github.com/Wox-launcher/Wox> — broad cross-platform launcher; Go, 26,979 stars, updated 2026-05-31. Stronger in broad market proof, cross-platform packaging, plugin/theme stores, and AI/MCP direction. Not the same narrow product.
+
+Conclusion from the GitHub snapshot: WT Launcher can honestly claim a north-star shape only for the narrow, local, portable Windows Terminal workspace-launcher slice. It cannot honestly claim broad launcher supremacy.
 
 ## Core judgement
 
@@ -93,9 +111,9 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: users often launch a repeated slice of workspaces together.
 - Current data owner: `selected` in `config/config.json`.
-- Evidence: selection changes are saved, batch launch uses selected entries, and tests cover selection outcomes and batch confirmation/cancellation.
+- Evidence: selection changes are saved, batch launch uses selected entries, tests cover selection outcomes and batch confirmation/cancellation, and `LauncherLaunchWorkflow.StartBatch` now preflights every selected launch plan before starting any external process. If an external start still fails after earlier starts, the workflow records the failure and stops the remaining starts instead of compounding side effects.
 - Verdict: strong, and locally north-star as the bridge from the retired HTA one-click flow.
-- Remaining gap: `selected` is stateful UI memory; presets are the cleaner long-term object for named intent.
+- Remaining gap: `selected` is stateful UI memory; presets are the cleaner long-term object for named intent. Once an external process has started, the app cannot honestly guarantee zero side effects if a later external start fails; that is a property of launching real processes, not a missing fallback branch.
 
 ### 6. Named launch groups / presets
 
@@ -225,11 +243,12 @@ These are not defects in the current narrow product. They are the reasons not to
 2. no run history/status receipt model separated from desired config;
 3. no installer/update/signing channel;
 4. no screenshot-backed comfort receipt for visual taste after future visual-heavy layout changes.
+5. no honest way to prove "stronger than every GitHub similar project" or "0% side effects" for real process launch behavior.
 
 Do not build these preemptively. They become work only when the real user problem appears.
 
 ## Final answer
 
-The current project is already a north-star implementation for the narrow domain of a portable Windows Terminal workspace launcher. The strongest mappings are launch entries, named presets, global launch confirmation, portable settings, JSON persistence/rollback, and the native verify/publish gate.
+The current project is already a north-star implementation for the narrow domain of a portable Windows Terminal workspace launcher. The strongest mappings are launch entries, named presets, global launch confirmation, portable settings, JSON persistence/rollback, batch preflight-before-launch, abort-after-first-start-failure, and the native verify/publish gate.
 
-It is not a broad-domain north star for every launcher or automation product. That would require import/export, status history, distribution/update, and broader accessibility receipts. Building those now would be speculative.
+It is not a broad-domain north star for every launcher or automation product. GitHub market evidence contradicts that broad claim. Building import/export, status history, distribution/update, split panes, or a plugin system now would be speculative unless a real workflow beats the current small local contract.

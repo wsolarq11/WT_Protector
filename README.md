@@ -171,6 +171,7 @@ Important risks:
 
 - Launch confirmation is a global UI setting: when enabled, every item asks before launch; when disabled, every item launches directly.
 - `directory` must exist before the launcher starts an item.
+- Batch launch preflights every selected item before starting anything; if any local launch plan is invalid, no process starts. If an external start fails after earlier starts, remaining items are skipped and reported.
 - Command text is quoted before being passed to `wt.exe`, but it is still a shell command; review entries before launching.
 - Applying a preset only rewrites checkbox state; launching remains a separate explicit action.
 - The root `config/` directory is the canonical source.

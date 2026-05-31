@@ -26,8 +26,11 @@ public static class LauncherSelectionStatus
         ArgumentNullException.ThrowIfNull(report);
         return report.FailedCount == 0
             ? $"已启动 {report.StartedCount} 个勾选项"
-            : $"已启动 {report.StartedCount} 个勾选项，{report.FailedCount} 个失败：{FormatBatchFailures(report.FailureMessages)}";
+            : $"已启动 {report.StartedCount} 个勾选项，{report.FailedCount} 个失败{FormatSkipped(report)}：{FormatBatchFailures(report.FailureMessages)}";
     }
+
+    private static string FormatSkipped(LauncherBatchLaunchReport report) =>
+        report.SkippedCount == 0 ? "" : $"，{report.SkippedCount} 个未启动";
 
     public static string BatchLaunchFailed(Exception exception)
     {

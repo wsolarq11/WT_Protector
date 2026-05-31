@@ -10,6 +10,8 @@ public sealed class LauncherBatchLaunchReport
 
     public int FailedCount => _failures.Count;
 
+    public int SkippedCount { get; private set; }
+
     public string? LastCommandLine { get; private set; }
 
     public IReadOnlyList<string> FailureMessages => _failures;
@@ -23,6 +25,14 @@ public sealed class LauncherBatchLaunchReport
     public void RecordStarted()
     {
         StartedCount++;
+    }
+
+    public void RecordSkipped(int count)
+    {
+        if (count < 0)
+            throw new ArgumentOutOfRangeException(nameof(count), count, "Skipped count must not be negative.");
+
+        SkippedCount += count;
     }
 
     public void RecordFailure(string entryName, Exception exception)

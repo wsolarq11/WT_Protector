@@ -16,9 +16,11 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("Purpose: evaluate whether each active WT Launcher feature mapping solves a real user problem", audit);
         Assert.Contains("It does not evaluate ignored `.snow/` local runtime/index state.", audit);
         Assert.Contains("## Fresh external yardstick spot-check", audit);
+        Assert.Contains("## Current GitHub similar-project snapshot", audit);
         Assert.Contains("## Feature mapping audit", audit);
         Assert.Contains("## Final answer", audit);
         Assert.Equal(20, CountFeatureHeadings(audit));
+        AssertFeatureSectionsUseCompleteAuditShape(audit);
 
         foreach (var expectedMapping in new[]
         {
@@ -60,8 +62,24 @@ public sealed partial class RepositoryConfigContractTests
             Assert.Contains(externalYardstick, audit);
         }
 
+        foreach (var githubYardstick in new[]
+        {
+            "SyDroX/dev-layout",
+            "augustdragon/terminal-manager",
+            "joyahmed/devgo-app",
+            "Flow-Launcher/Flow.Launcher",
+            "Wox-launcher/Wox",
+        })
+        {
+            Assert.Contains(githubYardstick, audit);
+        }
+
+        Assert.Contains("\"100% confidence and 0% side effects\"", audit);
+        Assert.Contains("preflight everything local before launching", audit);
         Assert.Contains("not claim broad launcher/platform north-star status", audit);
+        Assert.Contains("cannot honestly claim broad launcher supremacy", audit);
         Assert.Contains("docs/feature-reality-north-star-audit.md", readme);
+        Assert.Contains("Batch launch preflights every selected item before starting anything", readme);
         Assert.Contains("Cards / Details", readme);
         Assert.Contains("Names", readme);
     }
@@ -71,4 +89,28 @@ public sealed partial class RepositoryConfigContractTests
             .Split('\n')
             .Select(line => line.TrimStart())
             .Count(line => line.StartsWith("### ", StringComparison.Ordinal));
+
+    private static void AssertFeatureSectionsUseCompleteAuditShape(string audit)
+    {
+        var featureAuditStart = audit.IndexOf("## Feature mapping audit", StringComparison.Ordinal);
+        var gapsStart = audit.IndexOf("## Gaps that block a broad-domain north-star claim", StringComparison.Ordinal);
+        Assert.True(featureAuditStart >= 0, "Feature mapping audit section is missing.");
+        Assert.True(gapsStart > featureAuditStart, "Feature mapping audit section must appear before broad-domain gaps.");
+
+        var featureAudit = audit[featureAuditStart..gapsStart];
+        var sections = featureAudit
+            .Split("\n### ", StringSplitOptions.RemoveEmptyEntries)
+            .Skip(1)
+            .ToArray();
+
+        Assert.Equal(20, sections.Length);
+        foreach (var section in sections)
+        {
+            Assert.Contains("- Real problem:", section);
+            Assert.Contains("- Current data owner:", section);
+            Assert.Contains("- Evidence:", section);
+            Assert.Contains("- Verdict:", section);
+            Assert.Contains("- Remaining gap:", section);
+        }
+    }
 }

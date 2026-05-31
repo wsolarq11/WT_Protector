@@ -34,8 +34,31 @@ public sealed class LauncherLaunchWorkflowTests
         Assert.Null(report.LastCommandLine);
         Assert.Equal(0, report.StartedCount);
         Assert.Equal(2, report.FailedCount);
+        Assert.Equal(0, report.SkippedCount);
         Assert.Contains(report.FailureMessages, failure => failure.StartsWith("one:", StringComparison.Ordinal));
         Assert.Contains(report.FailureMessages, failure => failure.StartsWith("two:", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void StartBatchPreflightsAllPlansBeforeStartingAnyProcess()
+    {
+        using var temp = new TempDirectory();
+        var startedPlans = new List<LaunchPlan>();
+        var workflow = new LauncherLaunchWorkflow(plan => startedPlans.Add(plan));
+
+        var report = workflow.StartBatch(
+            [
+                Entry("valid", temp.Path),
+                Entry("missing", Path.Combine(temp.Path, "missing")),
+            ],
+            requireConfirmation: false);
+
+        Assert.Empty(startedPlans);
+        Assert.Null(report.LastCommandLine);
+        Assert.Equal(0, report.StartedCount);
+        Assert.Equal(1, report.FailedCount);
+        Assert.Equal(1, report.SkippedCount);
+        Assert.Contains(report.FailureMessages, failure => failure.StartsWith("missing:", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -63,8 +86,36 @@ public sealed class LauncherLaunchWorkflowTests
 
         Assert.Equal(0, report.StartedCount);
         Assert.Equal(1, report.FailedCount);
+        Assert.Equal(0, report.SkippedCount);
         Assert.Contains("one: blocked", Assert.Single(report.FailureMessages), StringComparison.Ordinal);
         Assert.Contains("pwsh", report.LastCommandLine);
+    }
+
+    [Fact]
+    public void StartBatchStopsAfterFirstStartFailure()
+    {
+        using var temp = new TempDirectory();
+        var attempted = new List<string>();
+        var workflow = new LauncherLaunchWorkflow(plan =>
+        {
+            attempted.Add(plan.WorkingDirectory);
+            if (attempted.Count == 2)
+                throw new InvalidOperationException("blocked");
+        });
+
+        var report = workflow.StartBatch(
+            [
+                Entry("one", temp.Path),
+                Entry("two", temp.Path),
+                Entry("three", temp.Path),
+            ],
+            requireConfirmation: false);
+
+        Assert.Equal(2, attempted.Count);
+        Assert.Equal(1, report.StartedCount);
+        Assert.Equal(1, report.FailedCount);
+        Assert.Equal(1, report.SkippedCount);
+        Assert.Contains("two: blocked", Assert.Single(report.FailureMessages), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -83,6 +134,7 @@ public sealed class LauncherLaunchWorkflowTests
 
         Assert.Equal(2, report.StartedCount);
         Assert.Equal(0, report.FailedCount);
+        Assert.Equal(0, report.SkippedCount);
         Assert.Equal(["pwsh", "pwsh"], startedPlans.Select(plan => plan.Command).ToArray());
         Assert.All(startedPlans, plan => Assert.True(plan.RequiresConfirmation));
         Assert.Equal(startedPlans.Last().CommandLine, report.LastCommandLine);

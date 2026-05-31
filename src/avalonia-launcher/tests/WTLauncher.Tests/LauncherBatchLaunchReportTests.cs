@@ -14,6 +14,7 @@ public sealed class LauncherBatchLaunchReportTests
 
         Assert.Equal(2, report.StartedCount);
         Assert.Equal(0, report.FailedCount);
+        Assert.Equal(0, report.SkippedCount);
         Assert.Empty(report.FailureMessages);
     }
 
@@ -28,7 +29,30 @@ public sealed class LauncherBatchLaunchReportTests
 
         Assert.Equal(1, report.StartedCount);
         Assert.Equal(2, report.FailedCount);
+        Assert.Equal(0, report.SkippedCount);
         Assert.Equal(["one: missing one", "two: missing two"], report.FailureMessages);
+    }
+
+    [Fact]
+    public void ReportTracksSkippedCount()
+    {
+        var report = new LauncherBatchLaunchReport();
+
+        report.RecordSkipped(2);
+        report.RecordSkipped(3);
+
+        Assert.Equal(5, report.SkippedCount);
+    }
+
+    [Fact]
+    public void ReportRejectsNegativeSkippedCount()
+    {
+        var report = new LauncherBatchLaunchReport();
+
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            report.RecordSkipped(-1));
+
+        Assert.Equal("count", exception.ParamName);
     }
 
     [Fact]
