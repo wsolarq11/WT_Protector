@@ -35,6 +35,17 @@ public sealed class LauncherStartupArgumentsTests
         AssertMissingConfigValue(["--config", "--ignored-option"]);
     }
 
+    [Fact]
+    public void ReadConfigPath_RejectsDuplicateConfigFlags()
+    {
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherStartupArguments.ReadConfigPath(
+                ["--config", "config/first.json", "--ignored-option", "x", "--config", "config/second.json"]));
+
+        Assert.Equal("args", exception.ParamName);
+        Assert.StartsWith("Config path flag must appear at most once.", exception.Message);
+    }
+
     private static void AssertMissingConfigValue(string[] args)
     {
         var exception = Assert.Throws<ArgumentException>(() => LauncherStartupArguments.ReadConfigPath(args));
