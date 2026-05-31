@@ -85,6 +85,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void Refresh()
     {
+        DiscardDragReorderPreview();
         ReplaceEntries(LauncherConfigStore.Load(_configPath));
         LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds());
 
