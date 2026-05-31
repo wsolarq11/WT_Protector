@@ -30,28 +30,28 @@
   {
     "id": "gh_mirror_gui",
     "name": "gh_mirror_gui",
-    "directory": "D:\\<USER>\\Desktop\\!_Projects\\gh_mirror_gui",
+    "directory": "D:\\<PROJECT_ROOT>\\gh_mirror_gui",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
     "selected": false
   },
   {
     "id": "Soft_Install",
     "name": "Soft_Install",
-    "directory": "D:\\<USER>\\Desktop\\Soft_Install",
+    "directory": "D:\\<PROJECT_ROOT>\\Soft_Install",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
     "selected": false
   },
   {
     "id": "FolderSizeMonitor",
     "name": "FolderSizeMonitor",
-    "directory": "D:\\<USER>\\Desktop\\FolderSizeMonitor",
+    "directory": "D:\\<PROJECT_ROOT>\\FolderSizeMonitor",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
     "selected": false
   },
   {
     "id": "在线安装Bat_20260320",
     "name": "在线安装Bat_20260320",
-    "directory": "D:\\<USER>\\Desktop\\在线安装Bat_20260320",
+    "directory": "D:\\<PROJECT_ROOT>\\在线安装Bat_20260320",
     "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
     "selected": false
   },
@@ -128,7 +128,7 @@
   {
     "id": "claude_temp",
     "name": "CLAUDE_temp",
-    "directory": "D:\\<USER>\\Desktop\\temp",
+    "directory": "D:\\<USER>\\Desktop\\temp_claude",
     "command": "claude --dangerously-skip-permissions",
     "selected": false
   }

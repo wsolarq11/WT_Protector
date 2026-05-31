@@ -1,0 +1,74 @@
+namespace WTLauncher.Tests;
+
+public sealed partial class RepositoryConfigContractTests
+{
+    [Fact]
+    public void RepositoryFeatureRealityNorthStarAudit_CoversActiveFeatureMappings()
+    {
+        var auditPath = TestRepositoryPaths.Document("feature-reality-north-star-audit.md");
+        var readmePath = TestRepositoryPaths.RootFile("README.md");
+
+        Assert.True(File.Exists(auditPath), "The feature reality/north-star audit must stay source-tracked.");
+
+        var audit = File.ReadAllText(auditPath);
+        var readme = File.ReadAllText(readmePath);
+
+        Assert.Contains("Purpose: evaluate whether each active WT Launcher feature mapping solves a real user problem", audit);
+        Assert.Contains("It does not evaluate ignored `.snow/` local runtime/index state.", audit);
+        Assert.Contains("## Fresh external yardstick spot-check", audit);
+        Assert.Contains("## Feature mapping audit", audit);
+        Assert.Contains("## Final answer", audit);
+        Assert.Equal(20, CountFeatureHeadings(audit));
+
+        foreach (var expectedMapping in new[]
+        {
+            "Launch entry object",
+            "Existing-directory contract",
+            "Search/filter",
+            "Direct single launch",
+            "Persistent checkbox selection and batch launch",
+            "Named launch groups / presets",
+            "First-class preset actions",
+            "Preset-vs-selection preview",
+            "Add/edit/delete launcher buttons",
+            "Custom order and drag reorder",
+            "Sort modes",
+            "View modes: Cards / Details / Names",
+            "Adaptive card sizing and density",
+            "Global launch confirmation",
+            "Portable settings",
+            "JSON persistence, backup, and rollback compensation",
+            "Core/App/Tests separation",
+            "Self-contained win-x64 publish and native gate",
+            "Retired legacy surfaces",
+            "Design benchmark and giants-shoulders library",
+        })
+        {
+            Assert.Contains(expectedMapping, audit);
+        }
+
+        foreach (var externalYardstick in new[]
+        {
+            "Windows Terminal",
+            "VS Code",
+            "Raycast Quicklinks",
+            "Docker Compose profiles",
+            "WCAG 2.2",
+            "Kubernetes",
+        })
+        {
+            Assert.Contains(externalYardstick, audit);
+        }
+
+        Assert.Contains("not claim broad launcher/platform north-star status", audit);
+        Assert.Contains("docs/feature-reality-north-star-audit.md", readme);
+        Assert.Contains("Cards / Details", readme);
+        Assert.Contains("Names", readme);
+    }
+
+    private static int CountFeatureHeadings(string text) =>
+        text
+            .Split('\n')
+            .Select(line => line.TrimStart())
+            .Count(line => line.StartsWith("### ", StringComparison.Ordinal));
+}

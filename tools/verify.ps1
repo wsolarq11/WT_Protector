@@ -89,12 +89,20 @@ foreach ($item in $configItems) {
     if (-not ($item.selected -is [bool])) {
         throw "Config item $idx selected field must be boolean"
     }
+    if (-not (Test-Path -LiteralPath ([string]$item.directory) -PathType Container)) {
+        throw "Config item $idx directory does not exist: $($item.directory)"
+    }
     $selectedFields++
     if ($seenIds.ContainsKey([string]$item.id)) { throw "Duplicate config id: $($item.id)" }
     $seenIds[[string]$item.id] = $true
     $idx++
 }
-Add-Check 'config-schema' @{ uniqueIds = $seenIds.Count; selectedFields = $selectedFields; selectedCapable = ($selectedFields -eq $configItems.Count) }
+Add-Check 'config-schema' @{
+    uniqueIds = $seenIds.Count
+    selectedFields = $selectedFields
+    selectedCapable = ($selectedFields -eq $configItems.Count)
+    existingDirectories = $configItems.Count
+}
 
 $presetPath = Join-Path (Split-Path -Parent $rootConfigPath) 'presets.json'
 if (-not (Test-Path -LiteralPath $presetPath)) { throw "Missing portable launcher presets: $presetPath" }

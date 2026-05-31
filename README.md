@@ -13,6 +13,7 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `retired/config/config.json` — retired HTA-local config used only when manually opening the archived HTA.
 - `retired/design/winforms-launcher.md` — retired WinForms executable/source design lessons and receipts.
 - `docs/reference/shortcut-backup-manifest.json` — human-readable replacement for the deleted `WT_Shortcuts_Backup/` binary shortcut tree.
+- `docs/feature-reality-north-star-audit.md` — feature-by-feature reality mapping and north-star audit for the active launcher scope.
 - `.snow/` — ignored local runtime/index state; Git and verification intentionally do not track or validate it.
 - `.gitattributes` — repository line-ending policy; text is normalized as LF to avoid CRLF-only churn.
 - `tools/verify.ps1` — no-interaction local verification gate.
@@ -122,6 +123,7 @@ The verifier currently checks:
 - old `WT Launcher.exe`, `src/winforms-launcher/`, and `spikes/` do not return;
 - `src/avalonia-launcher/` has the solution, app project, tests project, and mainline verify script;
 - root `config/` parses, item `id` values are unique, persistent `selected` state remains part of the contract, and `presets.json` references only known entry ids;
+- every active `config/config.json` `directory` exists on this machine, so stale launcher buttons fail the gate instead of failing later at click time;
 - `settings.json` remains the portable source for sort mode, view mode, launch-confirmation state, and complete custom entry order;
 - `retired/design/winforms-launcher.md` exists with the absorbed WinForms design lessons;
 - retired HTA and shortcut-backup reference material remain readable;
@@ -185,7 +187,7 @@ The Avalonia mainline supports:
 - adaptive card sizing so the visible buttons shrink to fit the current window region instead of forcing a second scroll path;
 - custom-order dragging with a cursor-following ghost and live reorder preview so the redistribution is visible before drop;
 - three density states (Normal / Compact / Micro) that keep card content readable while the scroll view remains the fallback;
-- a Cards / Details (“详细列表”) view mode toggle for dense scanning and quick actions.
+- a Cards / Details (“详细列表”) / Names (“名称墙”) view mode toggle for readable actions, dense scanning, and overview;
 - header actions for selecting all visible items or clearing the saved selection;
 - add/edit/delete launch buttons inside the app, with every editable field saved back to portable config;
 - named launch groups/presets that replace the saved selection through explicit apply;
