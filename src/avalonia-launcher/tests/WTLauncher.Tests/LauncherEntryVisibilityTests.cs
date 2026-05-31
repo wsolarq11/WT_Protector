@@ -4,6 +4,18 @@ namespace WTLauncher.Tests;
 
 public sealed class LauncherEntryVisibilityTests
 {
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void NormalizeSortModeIdRejectsMissingModeIds(string? sortModeId)
+    {
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherEntryVisibility.NormalizeSortModeId(sortModeId));
+
+        Assert.Equal("Unknown launcher sort mode: .", exception.Message);
+    }
+
     [Fact]
     public void FilterAndSort_FiltersAcrossNameDirectoryAndCommand()
     {

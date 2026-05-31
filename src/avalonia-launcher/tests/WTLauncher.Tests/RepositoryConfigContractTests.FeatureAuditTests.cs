@@ -108,7 +108,8 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("invalid preset references rejected before label/preview/launch projection", audit);
         Assert.Contains("propagates missing or failed `presets.json`", audit);
         Assert.Contains("instead of synthesizing a second empty preset truth", audit);
-        Assert.Contains("null settings fields, blank mode ids, and non-positive persisted window dimensions now fail fast", audit);
+        Assert.Contains("reject missing or unknown mode ids", audit);
+        Assert.Contains("null settings fields, missing/blank mode ids, and non-positive persisted window dimensions now fail fast", audit);
         Assert.Contains("non-positive persisted window dimensions now fail fast", audit);
         Assert.Contains("missing files plus missing, null, blank mode, non-positive window geometry, unknown, or wrong-case JSON fields", audit);
         Assert.Contains("unused `theme` state was removed", audit);

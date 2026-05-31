@@ -11,7 +11,6 @@ public static class LauncherEntryVisibility
         var normalized = (sortModeId ?? string.Empty).Trim();
         return normalized switch
         {
-            "" => CustomSortModeId,
             CustomSortModeId => CustomSortModeId,
             UpdatedSortModeId => UpdatedSortModeId,
             AlphabeticalSortModeId => AlphabeticalSortModeId,

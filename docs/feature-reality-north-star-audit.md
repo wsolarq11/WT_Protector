@@ -168,7 +168,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: users need different scan modes: custom memory order, newest updated, or alphabetic lookup.
 - Current data owner: `settings.json` `sortMode`.
-- Evidence: tests cover custom/updated/alphabetic sort behavior and reject unknown mode ids.
+- Evidence: tests cover custom/updated/alphabetic sort behavior and reject missing or unknown mode ids.
 - Verdict: north-star; three modes are enough and not a framework.
 - Remaining gap: none proven.
 
@@ -200,7 +200,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: UI preferences should move with the repo and stay reviewable, not hide in AppData or registry.
 - Current data owner: `config/settings.json`.
-- Evidence: settings schema is documented and tests cover sort/view/confirmation/filter/order/window fields; null settings fields, blank mode ids, and non-positive persisted window dimensions now fail fast instead of being rewritten or carried into default/broken UI state; unused `theme` state was removed instead of kept as a fake preference.
+- Evidence: settings schema is documented and tests cover sort/view/confirmation/filter/order/window fields; null settings fields, missing/blank mode ids, and non-positive persisted window dimensions now fail fast instead of being rewritten or carried into default/broken UI state; unused `theme` state was removed instead of kept as a fake preference.
 - Verdict: north-star for this local tool.
 - Remaining gap: no cross-machine path normalization; this is fine because launch directories are machine-local facts.
 

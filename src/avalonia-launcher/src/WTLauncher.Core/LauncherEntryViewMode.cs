@@ -18,7 +18,6 @@ public static class LauncherEntryViewModes
         var normalized = (entryViewMode ?? string.Empty).Trim();
         return normalized switch
         {
-            "" => CardsId,
             CardsId => CardsId,
             DetailsId => DetailsId,
             NamesId => NamesId,
