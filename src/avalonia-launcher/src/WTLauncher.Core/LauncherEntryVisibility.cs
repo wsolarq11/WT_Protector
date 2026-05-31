@@ -84,8 +84,15 @@ public static class LauncherEntryVisibility
 
     private static string Text(string? value) => value ?? string.Empty;
 
-    private static DateTimeOffset ParseUpdatedAt(string? value) =>
-        DateTimeOffset.TryParse(value, out var parsed)
-            ? parsed
-            : DateTimeOffset.MinValue;
+    private static DateTimeOffset ParseUpdatedAt(string? value)
+    {
+        var normalized = LauncherEntryText.Normalize(value);
+        if (normalized.Length == 0)
+            return DateTimeOffset.MinValue;
+
+        if (DateTimeOffset.TryParse(normalized, out var parsed))
+            return parsed;
+
+        throw new InvalidDataException($"Invalid launcher entry updatedAtUtc: {normalized}.");
+    }
 }

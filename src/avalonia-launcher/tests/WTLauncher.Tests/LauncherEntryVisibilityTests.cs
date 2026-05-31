@@ -118,7 +118,7 @@ public sealed class LauncherEntryVisibilityTests
             Entry("two", "Alpha", updatedAtUtc: "2026-05-28T12:00:00Z"),
             Entry("one", "Alpha", updatedAtUtc: "2026-05-28T12:00:00Z"),
             Entry("three", "Beta", updatedAtUtc: "2026-05-27T12:00:00Z"),
-            Entry("zero", "Zero", updatedAtUtc: "not-a-date"),
+            Entry("zero", "Zero"),
         };
         var customOrder = new List<string> { "zero", "three", "two", "one" };
 
@@ -130,6 +130,26 @@ public sealed class LauncherEntryVisibilityTests
             static entry => entry);
 
         Assert.Equal(["one", "two", "three", "zero"], visible.Select(entry => entry.Id).ToArray());
+    }
+
+    [Fact]
+    public void FilterAndSort_RejectsInvalidUpdatedTimestampWhenSortingByUpdated()
+    {
+        var entries = new[]
+        {
+            Entry("one", "One", updatedAtUtc: "not-a-date"),
+            Entry("two", "Two", updatedAtUtc: "2026-05-28T12:00:00Z"),
+        };
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherEntryVisibility.FilterAndSort(
+                entries,
+                null,
+                LauncherEntryVisibility.UpdatedSortModeId,
+                [],
+                static entry => entry));
+
+        Assert.Equal("Invalid launcher entry updatedAtUtc: not-a-date.", exception.Message);
     }
 
     private static LaunchEntry Entry(
