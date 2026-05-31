@@ -108,6 +108,9 @@ public static class LauncherEntryVisibility
 
     private static DateTimeOffset ParseUpdatedAt(string? value)
     {
+        if (value is null)
+            throw new InvalidDataException("Launcher entry updatedAtUtc is required for projection.");
+
         var normalized = LauncherEntryText.Normalize(value);
         if (normalized.Length == 0)
             return DateTimeOffset.MinValue;

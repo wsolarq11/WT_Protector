@@ -96,7 +96,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: a launcher with many entries is only useful if the target can be found by name, path, or command.
 - Current data owner: in-memory `FilterText` derived from portable `settings.json` when saved.
-- Evidence: XAML placeholder says it searches name/directory/command; tests cover filtering across all three fields, persisted filter state, and projection rejection of null entry text or blank ids.
+- Evidence: XAML placeholder says it searches name/directory/command; tests cover filtering across all three fields, persisted filter state, and projection rejection of null entry text/timestamps or blank ids.
 - Verdict: north-star for current entry count and local use.
 - Remaining gap: fuzzy ranking is unnecessary until exact substring search stops solving the real workload.
 

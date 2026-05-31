@@ -91,7 +91,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("transient single-launch canceled/request/failure receipts", audit);
         Assert.Contains("honest requested-start wording", audit);
         Assert.Contains("side-effect-free current-group preview", audit);
-        Assert.Contains("projection rejection of null entry text or blank ids", audit);
+        Assert.Contains("projection rejection of null entry text/timestamps or blank ids", audit);
         Assert.Contains("preserving the preset name in cancellation and unexpected-failure status", audit);
         Assert.Contains("config-save failures during select-all/clear/checkbox mutation", audit);
         Assert.Contains("blank/duplicate reference rejection before reference rename/remove mutation", audit);

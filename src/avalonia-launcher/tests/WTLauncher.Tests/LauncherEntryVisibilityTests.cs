@@ -195,18 +195,38 @@ public sealed class LauncherEntryVisibilityTests
         Assert.Equal("Invalid launcher entry updatedAtUtc: not-a-date.", exception.Message);
     }
 
+    [Fact]
+    public void FilterAndSort_RejectsNullUpdatedTimestampWhenSortingByUpdated()
+    {
+        var entries = new[]
+        {
+            Entry("one", "One", updatedAtUtc: null!),
+            Entry("two", "Two", updatedAtUtc: "2026-05-28T12:00:00Z"),
+        };
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherEntryVisibility.FilterAndSort(
+                entries,
+                null,
+                LauncherEntryVisibility.UpdatedSortModeId,
+                [],
+                static entry => entry));
+
+        Assert.Equal("Launcher entry updatedAtUtc is required for projection.", exception.Message);
+    }
+
     private static LaunchEntry Entry(
         string id,
         string name,
         string directory = "",
         string command = "",
-        string updatedAtUtc = "") =>
+        string? updatedAtUtc = "") =>
         new()
         {
             Id = id,
             Name = name,
             Directory = directory,
             Command = command,
-            UpdatedAtUtc = updatedAtUtc,
+            UpdatedAtUtc = updatedAtUtc!,
         };
 }
