@@ -129,13 +129,16 @@ public sealed class LauncherPresetWorkflowTests
     }
 
     [Fact]
-    public void AddPreset_UsesNewPresetAsDefaultWhenCurrentDefaultIsMissing()
+    public void AddPreset_RejectsMissingDefaultBeforeMutatingExistingPresetFile()
     {
         var presetFile = PresetFile("missing", Preset("daily", "Daily", "one"));
 
-        var preset = LauncherPresetWorkflow.AddPreset(presetFile, " Project Pair ", ["one", "two"]);
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherPresetWorkflow.AddPreset(presetFile, " Project Pair ", ["one", "two"]));
 
-        Assert.Equal(preset.Id, presetFile.DefaultPresetId);
+        Assert.Equal("Launcher preset default id does not match any preset: missing.", exception.Message);
+        Assert.Equal("missing", presetFile.DefaultPresetId);
+        Assert.Single(presetFile.Presets);
     }
 
     [Fact]
@@ -335,6 +338,7 @@ public sealed class LauncherPresetWorkflowTests
     private static LauncherPresetFile PresetFile(params LauncherPreset[] presets) =>
         new()
         {
+            DefaultPresetId = presets.FirstOrDefault()?.Id ?? string.Empty,
             Presets = [.. presets],
         };
 

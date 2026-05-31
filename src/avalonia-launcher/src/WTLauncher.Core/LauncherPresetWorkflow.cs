@@ -6,7 +6,10 @@ public static class LauncherPresetWorkflow
     {
         ArgumentNullException.ThrowIfNull(presetFile);
         var normalizedName = NormalizeRequiredName(name);
-        var hasDefaultPreset = TryGetDefaultPresetId(presetFile, out var defaultPresetId);
+        var hasExistingPresets = presetFile.Presets.Count > 0;
+        var defaultPresetId = hasExistingPresets
+            ? RequireDefaultPresetId(presetFile)
+            : string.Empty;
         var preset = new LauncherPreset
         {
             Id = LauncherPresetIds.GenerateUnique(normalizedName, presetFile.Presets.Select(item => item.Id)),
@@ -14,7 +17,7 @@ public static class LauncherPresetWorkflow
             EntryIds = LauncherEntryIds.ToUniqueUsableList(entryIds),
         };
         presetFile.Presets.Add(preset);
-        presetFile.DefaultPresetId = hasDefaultPreset ? defaultPresetId : preset.Id;
+        presetFile.DefaultPresetId = hasExistingPresets ? defaultPresetId : preset.Id;
 
         return preset;
     }
@@ -80,6 +83,18 @@ public static class LauncherPresetWorkflow
         TryGetDefaultPresetId(presetFile, out var defaultPresetId)
             ? defaultPresetId
             : ResolveFallbackPresetId(presetFile);
+
+    private static string RequireDefaultPresetId(LauncherPresetFile presetFile)
+    {
+        if (TryGetDefaultPresetId(presetFile, out var defaultPresetId))
+            return defaultPresetId;
+
+        var normalizedDefaultPresetId = LauncherPresetIds.NormalizeReference(presetFile.DefaultPresetId);
+        throw new InvalidDataException(
+            normalizedDefaultPresetId.Length == 0
+                ? "Launcher preset default id is required when presets exist."
+                : $"Launcher preset default id does not match any preset: {normalizedDefaultPresetId}.");
+    }
 
     private static bool TryGetDefaultPresetId(LauncherPresetFile presetFile, out string defaultPresetId)
     {
