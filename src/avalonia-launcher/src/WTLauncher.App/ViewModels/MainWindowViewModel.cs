@@ -115,9 +115,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return true;
     }
 
+    private void DiscardDragReorderPreview() =>
+        _dragReorderWorkflow.Cancel();
+
     private LauncherSettingsSnapshot CaptureSettingsMutationSnapshot()
     {
-        _dragReorderWorkflow.Cancel();
+        DiscardDragReorderPreview();
         return LauncherSettingsSnapshot.Capture(_settings);
     }
 

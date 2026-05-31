@@ -107,6 +107,35 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task AddEntryDuringDragPreviewDoesNotCommitPreviewOrder()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreateDragFixture(temp);
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            launcherSettings,
+            vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
+                NewFourEntryDraft()));
+
+        viewModel.BeginDragReorder("three");
+        Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
+        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+
+        await viewModel.AddEntryCommand.ExecuteAsync(null);
+
+        var expectedOrder = DefaultDragOrder().Concat(["four"]).ToArray();
+        Assert.Equal(expectedOrder, launcherSettings.CustomEntryOrder);
+        Assert.Equal(expectedOrder, LauncherSettingsStore.Load(settings).CustomEntryOrder);
+        Assert.DoesNotContain(viewModel.Entries, entry =>
+            entry.IsDragPreviewSource
+            || entry.IsDragPreviewTarget
+            || entry.IsDragInsertBefore
+            || entry.IsDragInsertAfter);
+    }
+
+    [Fact]
     public async Task EditEntryCancellationLeavesFilesAndReferencesUnchanged()
     {
         using var temp = new TempDirectory();
@@ -227,6 +256,9 @@ public sealed partial class MainWindowViewModelTests
 
     private static EntryDraft NewThreeEntryDraft() =>
         new("three", "Three", "D:\\three", "pwsh", Selected: true);
+
+    private static EntryDraft NewFourEntryDraft() =>
+        new("four", "Four", "D:\\four", "pwsh", Selected: false);
 
     private static EntryDraft RenamedOneEntryDraft() =>
         new("one-renamed", "One Renamed", "D:\\renamed", "opencode", Selected: false);

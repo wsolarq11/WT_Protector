@@ -133,12 +133,15 @@ public sealed partial class MainWindowViewModel
         return true;
     }
 
-    private LauncherEntryMutationSnapshot CaptureEntryMutationSnapshot() =>
-        LauncherEntryMutationSnapshot.Capture(
+    private LauncherEntryMutationSnapshot CaptureEntryMutationSnapshot()
+    {
+        DiscardDragReorderPreview();
+        return LauncherEntryMutationSnapshot.Capture(
             Entries.Select(ToLaunchEntry),
             _presetFile,
             _settings.CustomEntryOrder,
             SelectedPreset?.Id);
+    }
 
     private void RestoreEntryMutationSnapshot(LauncherEntryMutationSnapshot snapshot)
     {
