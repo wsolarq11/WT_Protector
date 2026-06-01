@@ -18,7 +18,7 @@ public static class LauncherConfigStore
         RequireEntrySelectionFields(configPath);
         var entries = LauncherJson.LoadRequired<List<LaunchEntry?>>(configPath, "Launcher config");
 
-        return NormalizeEntries(entries);
+        return NormalizeEntries(entries).AsReadOnly();
     }
 
     public static void Save(IEnumerable<LaunchEntry> entries, string configPath, bool backup)

@@ -30,6 +30,31 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void Load_ReturnsReadOnlyEntryCollectionSnapshot()
+    {
+        using var temp = new TempDirectory();
+        var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
+        [
+          {
+            "id": "demo",
+            "name": "demo",
+            "directory": "D:\\demo",
+            "command": "codex",
+            "selected": true
+          }
+        ]
+        """);
+
+        var entries = LauncherConfigStore.Load(config);
+
+        var list = Assert.IsAssignableFrom<IList<LaunchEntry>>(entries);
+        Assert.True(list.IsReadOnly);
+        Assert.Throws<NotSupportedException>(() => list.Add(new LaunchEntry()));
+        Assert.Throws<NotSupportedException>(() => list[0] = new LaunchEntry());
+        Assert.Equal(["demo"], entries.Select(entry => entry.Id).ToArray());
+    }
+
+    [Fact]
     public void Load_RejectsObsoleteConfirmFieldFromConfig()
     {
         using var temp = new TempDirectory();

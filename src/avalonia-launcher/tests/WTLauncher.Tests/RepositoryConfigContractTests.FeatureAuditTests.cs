@@ -148,6 +148,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("invalid in-memory settings during close-time window save", audit);
         Assert.Contains("non-positive persisted window dimensions now fail fast", audit);
         Assert.Contains("missing files plus missing, null, blank mode, non-positive window geometry, unknown, or wrong-case JSON fields", audit);
+        Assert.Contains("config load returning a read-only entry collection snapshot instead of a mutable load list", audit);
         Assert.Contains("invalid in-memory mutation data and invalid rollback snapshots propagating instead of being reported as ordinary save/rollback failure", audit);
         Assert.Contains("rollback snapshot accessors cloning or read-only wrapping captured state instead of exposing mutable rollback storage", audit);
         Assert.Contains("unused `theme` state was removed", audit);
