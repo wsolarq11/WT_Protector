@@ -132,4 +132,26 @@ public sealed class LauncherPresetSelectionPreviewTests
         Assert.Equal("检查启动组", preview.ApplyButtonText);
         Assert.Contains("引用了 1 个不存在", preview.StatusText);
     }
+
+    [Fact]
+    public void PreviewCollectionsDoNotExposeMutableStorage()
+    {
+        var preview = LauncherPresetSelectionPreview.ForPreset(
+            "Broken",
+            selectedIds: ["one", "extra"],
+            knownIds: ["one"],
+            presetIds: ["one", "missing"]);
+
+        var selectedIds = Assert.IsAssignableFrom<ISet<string>>(preview.SelectedIds);
+        var presetIds = Assert.IsAssignableFrom<ISet<string>>(preview.PresetIds);
+        Assert.True(selectedIds.IsReadOnly);
+        Assert.True(presetIds.IsReadOnly);
+        Assert.Throws<NotSupportedException>(() => selectedIds.Add("fake"));
+        Assert.Throws<NotSupportedException>(() => presetIds.Add("fake"));
+        var missingConfigIds = Assert.IsAssignableFrom<IList<string>>(preview.MissingConfigIds);
+        Assert.True(missingConfigIds.IsReadOnly);
+        Assert.Throws<NotSupportedException>(() => missingConfigIds.Add("fake"));
+        Assert.Equal(["missing"], preview.MissingConfigIds);
+        Assert.True(preview.HasChanges);
+    }
 }

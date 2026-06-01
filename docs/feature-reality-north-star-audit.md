@@ -140,7 +140,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: applying a group blindly is dangerous because it rewrites saved selection.
 - Current data owner: preview is derived from current selection and selected preset; it is not a second source of truth.
-- Evidence: tests cover apply/preview/no-op states and disabled no-op apply.
+- Evidence: tests cover apply/preview/no-op states, disabled no-op apply, and preview collection outputs that cannot be cast back to mutable selection/preset/missing-id storage.
 - Verdict: north-star. It solves the real "what will change?" problem without a second persistent model.
 - Remaining gap: visual screenshot receipts are useful only after UI-heavy changes.
 

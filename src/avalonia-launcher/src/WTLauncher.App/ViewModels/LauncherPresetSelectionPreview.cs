@@ -1,3 +1,5 @@
+using System.Collections.Frozen;
+using System.Collections.ObjectModel;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -7,18 +9,18 @@ public sealed class LauncherPresetSelectionPreview
     public static string DefaultApplyButtonText => "应用启动组";
 
     private LauncherPresetSelectionPreview(
-        IReadOnlySet<string> selectedIds,
-        IReadOnlySet<string> presetIds,
-        IReadOnlyList<string> missingConfigIds,
+        IEnumerable<string> selectedIds,
+        IEnumerable<string> presetIds,
+        IEnumerable<string> missingConfigIds,
         int matchedCount,
         int missingCount,
         int extraCount,
         string applyButtonText,
         string statusText)
     {
-        SelectedIds = selectedIds;
-        PresetIds = presetIds;
-        MissingConfigIds = missingConfigIds;
+        SelectedIds = selectedIds.ToFrozenSet(LauncherEntryIds.Comparer);
+        PresetIds = presetIds.ToFrozenSet(LauncherEntryIds.Comparer);
+        MissingConfigIds = new ReadOnlyCollection<string>([.. missingConfigIds]);
         MatchedCount = matchedCount;
         MissingCount = missingCount;
         ExtraCount = extraCount;
@@ -47,8 +49,8 @@ public sealed class LauncherPresetSelectionPreview
     public static LauncherPresetSelectionPreview NoPreset(int presetCount)
     {
         return new LauncherPresetSelectionPreview(
-            new HashSet<string>(LauncherEntryIds.Comparer),
-            new HashSet<string>(LauncherEntryIds.Comparer),
+            [],
+            [],
             [],
             matchedCount: 0,
             missingCount: 0,

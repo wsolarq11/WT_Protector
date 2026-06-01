@@ -127,6 +127,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("selected fallback view model after deletion instead of hiding fallback selection or rendering `(none)`", audit);
         Assert.Contains("discards uncommitted drag-sort preview state first", audit);
         Assert.Contains("ghost order cannot become a hidden source of truth", audit);
+        Assert.Contains("preview collection outputs that cannot be cast back to mutable selection/preset/missing-id storage", audit);
         Assert.Contains("invalid move/custom-order rejection before mutation or sort projection", audit);
         Assert.Contains("missing or stale custom-order ids rejected before sort projection instead of buried at the end", audit);
         Assert.Contains("custom-order sync rejection of invalid order or known ids before mutation", audit);
