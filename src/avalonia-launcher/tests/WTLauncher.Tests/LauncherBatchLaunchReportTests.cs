@@ -79,10 +79,10 @@ public sealed class LauncherBatchLaunchReportTests
     {
         var report = new LauncherBatchLaunchReport();
 
-        var exception = Assert.Throws<ArgumentException>(() =>
+        var exception = Assert.Throws<InvalidDataException>(() =>
             report.RecordFailure(" ", new InvalidOperationException("missing name")));
 
-        Assert.Equal("entryName", exception.ParamName);
+        Assert.Equal("Entry name is required for batch launch report.", exception.Message);
         Assert.Empty(report.FailureMessages);
     }
 

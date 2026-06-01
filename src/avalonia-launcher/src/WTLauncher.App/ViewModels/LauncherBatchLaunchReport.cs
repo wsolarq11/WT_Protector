@@ -46,7 +46,7 @@ public sealed class LauncherBatchLaunchReport
     {
         var normalized = LauncherEntryText.Normalize(entryName);
         if (normalized.Length == 0)
-            throw new ArgumentException("Entry name is required for batch launch report.", nameof(entryName));
+            throw new InvalidDataException("Entry name is required for batch launch report.");
 
         return normalized;
     }

@@ -104,6 +104,16 @@ public sealed class LauncherBatchLaunchReceiptTextTests
         Assert.DoesNotContain("should not start", receipt);
     }
 
+    [Fact]
+    public void FailedReceiptShowsBatchFailureWithoutStalePlans()
+    {
+        var receipt = LauncherBatchLaunchReceiptText.Failed(new InvalidOperationException("broken"));
+
+        Assert.Contains("启动回执", receipt);
+        Assert.Contains("批量启动失败: broken", receipt);
+        Assert.DoesNotContain(LaunchArgumentBuilder.TerminalExecutable, receipt);
+    }
+
     private static LaunchEntry Entry(string id, string directory) =>
         new()
         {

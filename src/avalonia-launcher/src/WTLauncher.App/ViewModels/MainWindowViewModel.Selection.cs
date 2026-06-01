@@ -83,6 +83,7 @@ public sealed partial class MainWindowViewModel
         }
         catch (Exception ex)
         {
+            DryRunText = LauncherBatchLaunchReceiptText.Failed(ex);
             StatusText = failedStatus(ex);
         }
     }

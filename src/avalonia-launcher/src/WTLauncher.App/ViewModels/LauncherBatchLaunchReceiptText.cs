@@ -54,6 +54,16 @@ public static class LauncherBatchLaunchReceiptText
         return string.Join(Environment.NewLine, lines);
     }
 
+    public static string Failed(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        return string.Join(
+            Environment.NewLine,
+            "启动回执",
+            $"批量启动失败: {exception.Message}");
+    }
+
     private static void AppendPlanLines(
         List<string> lines,
         IReadOnlyList<LauncherBatchLaunchItem> items,

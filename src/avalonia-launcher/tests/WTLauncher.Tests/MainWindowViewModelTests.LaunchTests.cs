@@ -353,6 +353,29 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task BatchLaunchUnexpectedFailureReplacesStaleReceipt()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex", selected: true));
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = false });
+
+        viewModel.DryRunText = "旧回执";
+        viewModel.Entries.Single(entry => entry.Id == "one").Entry.Name = "";
+
+        await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
+
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("批量启动失败: Entry name is required for batch launch report.", viewModel.DryRunText);
+        Assert.DoesNotContain("旧回执", viewModel.DryRunText);
+        Assert.Equal("批量启动失败: Entry name is required for batch launch report.", viewModel.StatusText);
+    }
+
+    [Fact]
     public void LaunchActionsUseOneTypedWorkflowField()
     {
         Assert.Null(typeof(MainWindowViewModel).GetField("_launcherProcess", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
