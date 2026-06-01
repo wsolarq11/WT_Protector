@@ -56,7 +56,7 @@ public sealed partial class MainWindowViewModel
         EntryDraft? draft;
         try
         {
-            draft = await RequestEntryDraftAsync(item.Entry).ConfigureAwait(true);
+            draft = await RequestEntryDraftAsync(item.Entry with { }).ConfigureAwait(true);
         }
         catch (Exception ex)
         {

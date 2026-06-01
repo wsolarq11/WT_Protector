@@ -190,6 +190,66 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task EditEntryDialogReceivesSnapshotEntry()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreateDragFixture(temp);
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+        var launcherSettings = CreateDragSettings();
+        LaunchEntry? dialogEntry = null;
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            launcherSettings,
+            configure: vm => vm.RequestEntryDraftAsync = entry =>
+            {
+                dialogEntry = entry;
+                entry!.Id = "broken";
+                entry.Name = "";
+                return Task.FromResult<EntryDraft?>(null);
+            });
+
+        await viewModel.Entries.Single(entry => entry.Id == "one").EditCommand.ExecuteAsync(null);
+
+        Assert.NotNull(dialogEntry);
+        Assert.Equal("broken", dialogEntry!.Id);
+        Assert.Equal("", dialogEntry.Name);
+        Assert.Equal("one", viewModel.Entries.Single(entry => entry.Id == "one").Id);
+        Assert.Equal("One", viewModel.Entries.Single(entry => entry.Id == "one").Name);
+        Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), LauncherConfigStore.Load(config).Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one"], LauncherPresetStore.Load(presets).Presets.Single().EntryIds);
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(LauncherEntryStatus.EditCanceled("One"), viewModel.StatusText);
+    }
+
+    [Fact]
+    public async Task EditEntryUsesSnapshotEntryWhenDialogReturnsDraft()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreateDragFixture(temp);
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            launcherSettings,
+            configure: vm => vm.RequestEntryDraftAsync = entry =>
+            {
+                entry!.Id = "broken";
+                entry.Name = "";
+                return Task.FromResult<EntryDraft?>(RenamedOneEntryDraft());
+            });
+
+        await viewModel.Entries.Single(entry => entry.Id == "one").EditCommand.ExecuteAsync(null);
+
+        Assert.Equal(["one-renamed", "two", "three"], viewModel.Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one-renamed"], LauncherPresetStore.Load(presets).Presets.Single().EntryIds);
+        Assert.Equal(["one-renamed", "two", "three"], launcherSettings.CustomEntryOrder);
+        Assert.Equal(LauncherEntryStatus.Updated("One Renamed"), viewModel.StatusText);
+    }
+
+    [Fact]
     public async Task EntryCommandsPersistPortableConfigAndReferences()
     {
         using var temp = new TempDirectory();
