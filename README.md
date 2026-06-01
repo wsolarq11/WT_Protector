@@ -19,6 +19,7 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `tools/verify.ps1` — no-interaction local verification gate.
 - `tools/config-lib.ps1` — shared helper functions used by verification and config tools.
 - `docs/reference/github-similar-projects-snapshot.json` — current GitHub similar-project evidence used by the feature north-star audit.
+- `tools/update-github-similar-projects-snapshot.ps1` — refreshes that market snapshot through `gh repo view`.
 - `docs/giants-shoulders/` — "巨人肩膀库": curated external project lessons and source links for future stack/reflection decisions.
 - `omx_wiki/` — project knowledge base for durable local decisions, patterns, and learning summaries.
 
@@ -137,7 +138,7 @@ The verifier currently checks:
 - root `config/` parses, item `id` values are unique, persistent `selected` state remains part of the contract, and `presets.json` references only known entry ids;
 - every active `config/config.json` `directory` exists on this machine, so stale launcher buttons fail the gate instead of failing later at click time;
 - `settings.json` remains the portable source for sort mode, view mode, launch-confirmation state, and complete custom entry order;
-- `docs/reference/github-similar-projects-snapshot.json` keeps the current GitHub similar-project evidence schema, representative repos, and broad-market proof counters readable;
+- `docs/reference/github-similar-projects-snapshot.json` keeps the current GitHub similar-project evidence schema, representative repos, broad-market proof counters, and repo-local refresh command readable;
 - `retired/design/winforms-launcher.md` exists with the absorbed WinForms design lessons;
 - retired HTA and shortcut-backup reference material remain readable;
 - Avalonia mainline restore/test/isolated verification publish passes, including launch-argument tests; on Windows the gate also performs a hidden temp-config startup smoke of the published exe, while non-Windows hosts record that GUI smoke as skipped after the win-x64 publish is verified.

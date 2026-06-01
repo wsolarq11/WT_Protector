@@ -85,11 +85,13 @@ foreach ($section in @('Configuration schema', 'Build and verification', 'Run th
 }
 Add-Check 'readme' @{ sections = 6 }
 
+$githubRefreshScript = Join-Path $root 'tools\update-github-similar-projects-snapshot.ps1'
+if (-not (Test-Path -LiteralPath $githubRefreshScript)) { throw "Missing GitHub similar-project snapshot refresh script: $githubRefreshScript" }
 $githubSnapshotPath = Join-Path $root 'docs\reference\github-similar-projects-snapshot.json'
 if (-not (Test-Path -LiteralPath $githubSnapshotPath)) { throw "Missing GitHub similar-project snapshot: $githubSnapshotPath" }
 $githubSnapshot = Get-Content -Raw -Encoding UTF8 -LiteralPath $githubSnapshotPath | ConvertFrom-Json
 if ($null -eq $githubSnapshot) { throw "GitHub similar-project snapshot parsed to null: $githubSnapshotPath" }
-Assert-OnlyJsonKeys $githubSnapshot @('schemaVersion', 'capturedAtUtc', 'evidenceCommand', 'queries', 'scope', 'repositories') 'github-similar-projects-snapshot.json'
+Assert-OnlyJsonKeys $githubSnapshot @('schemaVersion', 'capturedAtUtc', 'evidenceCommand', 'refreshCommand', 'queries', 'scope', 'repositories') 'github-similar-projects-snapshot.json'
 if ([int]$githubSnapshot.schemaVersion -ne 1) { throw "Unsupported GitHub similar-project snapshot schemaVersion: $($githubSnapshot.schemaVersion)" }
 if ([string]::IsNullOrWhiteSpace([string]$githubSnapshot.capturedAtUtc)) { throw 'GitHub similar-project snapshot capturedAtUtc is required' }
 try {
@@ -99,6 +101,9 @@ try {
 }
 if (-not ([string]$githubSnapshot.evidenceCommand).Contains('gh repo view <owner>/<repo>')) {
     throw 'GitHub similar-project snapshot must record the gh repo view evidence command'
+}
+if (-not ([string]$githubSnapshot.refreshCommand).Contains('tools\update-github-similar-projects-snapshot.ps1')) {
+    throw 'GitHub similar-project snapshot must record its repo-local refresh command'
 }
 
 $githubQueries = @($githubSnapshot.queries)
@@ -147,6 +152,7 @@ if ($flowStars -lt 10000) { throw "Flow Launcher market-proof stars unexpectedly
 if ($woxStars -lt 10000) { throw "Wox market-proof stars unexpectedly low in snapshot: $woxStars" }
 Add-Check 'github-similar-projects-snapshot' @{
     path = 'docs\reference\github-similar-projects-snapshot.json'
+    refreshScript = 'tools\update-github-similar-projects-snapshot.ps1'
     capturedAtUtc = $githubSnapshot.capturedAtUtc
     repositories = $githubRepos.Count
     flowStars = $flowStars

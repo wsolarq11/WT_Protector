@@ -45,7 +45,7 @@ Current external references were spot-checked on 2026-06-01 before making the no
 
 ## Current GitHub similar-project snapshot
 
-Live GitHub repository search/API checks were refreshed on 2026-06-01 using current queries for `"Windows Terminal" workspace launcher`, `"Windows Terminal" session manager`, and `"Claude Code" launcher`. The current structured evidence is source-tracked in `docs/reference/github-similar-projects-snapshot.json`, captured with `gh repo view <owner>/<repo> --json nameWithOwner,url,description,stargazerCount,forkCount,pushedAt,updatedAt,primaryLanguage,isArchived`. The result is blunt: a universal "stronger than any similar GitHub project" claim is not provable, and in the broad launcher market it is false. Flow Launcher and Wox are mature broad launchers with thousands of stars, plugin ecosystems, package channels, and community proof. WT Launcher should not fight them as a generic launcher. That would be stupid scope creep.
+Live GitHub repository search/API checks were refreshed on 2026-06-01 using current queries for `"Windows Terminal" workspace launcher`, `"Windows Terminal" session manager`, and `"Claude Code" launcher`. The current structured evidence is source-tracked in `docs/reference/github-similar-projects-snapshot.json` and refreshed by `tools/update-github-similar-projects-snapshot.ps1`, captured with `gh repo view <owner>/<repo> --json nameWithOwner,url,description,stargazerCount,forkCount,pushedAt,updatedAt,primaryLanguage,isArchived`. The result is blunt: a universal "stronger than any similar GitHub project" claim is not provable, and in the broad launcher market it is false. Flow Launcher and Wox are mature broad launchers with thousands of stars, plugin ecosystems, package channels, and community proof. WT Launcher should not fight them as a generic launcher. That would be stupid scope creep.
 
 The relevant fight is narrower: portable Windows Terminal workspace launching with inspectable entries, named launch groups, side-effect-free plan preview, explicit launch confirmation, rollback-aware JSON persistence, and a native repo gate.
 
@@ -232,7 +232,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: a desktop launcher is only real if it can be restored, tested, published, and smoke-started.
 - Current data owner: `tools/verify.ps1`, `src/avalonia-launcher/verify.ps1`, and ignored publish artifacts.
-- Evidence: root verify checks retired paths, config/presets/settings, docs, the GitHub similar-project snapshot schema, tests, publish, and hidden startup smoke.
+- Evidence: root verify checks retired paths, config/presets/settings, docs, the GitHub similar-project snapshot schema plus refresh script, tests, publish, and hidden startup smoke.
 - Verdict: north-star for repo-local Windows release proof.
 - Remaining gap: no installer/update channel; that belongs to distribution scope, not current launcher correctness.
 
@@ -248,7 +248,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: UI/product decisions should not be made from vibes or copied frameworks.
 - Current data owner: `DESIGN.md`, `docs/design-benchmark-digest.md`, and `docs/giants-shoulders/`.
-- Evidence: docs translate external references into local acceptance rules, tests keep the digest referenced, `docs/reference/github-similar-projects-snapshot.json` preserves the current GitHub market yardstick used by this audit, and root verify validates the snapshot schema plus the representative direct and broad-market repositories.
+- Evidence: docs translate external references into local acceptance rules, tests keep the digest referenced, `docs/reference/github-similar-projects-snapshot.json` preserves the current GitHub market yardstick used by this audit, `tools/update-github-similar-projects-snapshot.ps1` refreshes it from GitHub API state, and root verify validates the snapshot schema plus the representative direct and broad-market repositories.
 - Verdict: strong, not automatically north-star.
 - Remaining gap: source freshness must be refreshed when a decision depends on a changed external standard.
 
