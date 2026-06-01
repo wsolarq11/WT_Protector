@@ -43,6 +43,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("visual-proof", audit);
         Assert.Contains("distribution-scope", audit);
         Assert.Contains("source-freshness", audit);
+        Assert.Contains("- Feature id:", audit);
         Assert.Contains("- Proof type:", audit);
         Assert.Contains("Verdict levels used below:", audit);
         Assert.Contains("narrow-north-star", audit);
@@ -292,14 +293,45 @@ public sealed partial class RepositoryConfigContractTests
             "distribution-scope",
             "source-freshness",
         };
+        var expectedFeatureIds = new[]
+        {
+            "launch-entry-object",
+            "existing-directory-contract",
+            "search-filter",
+            "direct-single-launch",
+            "persistent-checkbox-selection-and-batch-launch",
+            "named-launch-groups-presets",
+            "first-class-preset-actions",
+            "preset-vs-selection-preview",
+            "preset-launch-plan-preview",
+            "add-edit-delete-launcher-buttons",
+            "custom-order-and-drag-reorder",
+            "sort-modes",
+            "view-modes-cards-details-names",
+            "adaptive-card-sizing-and-density",
+            "global-launch-confirmation",
+            "portable-settings",
+            "json-persistence-backup-and-rollback-compensation",
+            "core-app-tests-separation",
+            "self-contained-win-x64-publish-and-native-gate",
+            "retired-legacy-surfaces",
+            "design-benchmark-and-giants-shoulders-library",
+        };
         var sections = featureAudit
             .Split("\n### ", StringSplitOptions.RemoveEmptyEntries)
             .Skip(1)
             .ToArray();
 
         Assert.Equal(21, sections.Length);
-        foreach (var section in sections)
+        Assert.Equal(expectedFeatureIds.Length, expectedFeatureIds.Distinct(StringComparer.Ordinal).Count());
+        for (var sectionIndex = 0; sectionIndex < sections.Length; sectionIndex++)
         {
+            var section = sections[sectionIndex];
+            Assert.Contains("- Feature id:", section);
+            var featureIdLine = section
+                .Split('\n')
+                .Single(line => line.StartsWith("- Feature id:", StringComparison.Ordinal));
+            Assert.Equal(expectedFeatureIds[sectionIndex], ParseControlledValue(featureIdLine, "- Feature id:"));
             Assert.Contains("- Real problem:", section);
             Assert.Contains("- Proof type:", section);
             var proofLine = section

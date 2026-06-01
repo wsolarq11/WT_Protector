@@ -109,6 +109,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 1. Launch entry object
 
+- Feature id: launch-entry-object
 - Real problem: repeated local workspaces need stable names, working directories, and shell commands instead of ad-hoc manual terminal setup.
 - Proof type: repo-battle-tested, market-informed
 - Verdict level: narrow-north-star
@@ -120,6 +121,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 2. Existing-directory contract
 
+- Feature id: existing-directory-contract
 - Real problem: a stale launcher button should fail before click time, not after the user has trusted the UI.
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
@@ -131,6 +133,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 3. Search/filter
 
+- Feature id: search-filter
 - Real problem: a launcher with many entries is only useful if the target can be found by name, path, or command.
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
@@ -142,6 +145,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 4. Direct single launch
 
+- Feature id: direct-single-launch
 - Real problem: one known workspace should open with one explicit action.
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
@@ -153,6 +157,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 5. Persistent checkbox selection and batch launch
 
+- Feature id: persistent-checkbox-selection-and-batch-launch
 - Real problem: users often launch a repeated slice of workspaces together.
 - Proof type: repo-battle-tested, legacy-flow-informed
 - Verdict level: strong
@@ -164,6 +169,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 6. Named launch groups / presets
 
+- Feature id: named-launch-groups-presets
 - Real problem: repeated subsets should be named, portable, inspectable objects instead of fragile transient checkbox state.
 - Proof type: repo-battle-tested, market-informed
 - Verdict level: narrow-north-star
@@ -175,6 +181,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 7. First-class preset actions
 
+- Feature id: first-class-preset-actions
 - Real problem: a named group must be created, updated, and deleted inside the app, otherwise users fall back to hand-editing JSON.
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
@@ -186,6 +193,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 8. Preset-vs-selection preview
 
+- Feature id: preset-vs-selection-preview
 - Real problem: applying a group blindly is dangerous because it rewrites saved selection.
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
@@ -197,6 +205,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 9. Preset launch plan preview
 
+- Feature id: preset-launch-plan-preview
 - Real problem: launching a saved group is the highest-risk routine action; users need to inspect the exact generated `wt.exe` commands without rewriting selection or starting external processes.
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
@@ -208,6 +217,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 10. Add/edit/delete launcher buttons
 
+- Feature id: add-edit-delete-launcher-buttons
 - Real problem: the launcher must stay maintainable without manual JSON edits for common entry changes.
 - Proof type: repo-battle-tested
 - Verdict level: strong
@@ -219,6 +229,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 11. Custom order and drag reorder
 
+- Feature id: custom-order-and-drag-reorder
 - Real problem: users build spatial memory; alphabetical order is not always the fastest launch order.
 - Proof type: repo-battle-tested, accessibility-informed
 - Verdict level: narrow-north-star
@@ -230,6 +241,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 12. Sort modes
 
+- Feature id: sort-modes
 - Real problem: users need different scan modes: custom memory order, newest updated, or alphabetic lookup.
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
@@ -241,6 +253,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 13. View modes: Cards / Details / Names
 
+- Feature id: view-modes-cards-details-names
 - Real problem: one layout cannot solve readable actions, dense field scanning, and overview at the same time.
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
@@ -252,6 +265,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 14. Adaptive card sizing and density
 
+- Feature id: adaptive-card-sizing-and-density
 - Real problem: fixed cards waste space on large windows and become unusable on small windows.
 - Proof type: repo-battle-tested
 - Verdict level: strong
@@ -263,6 +277,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 15. Global launch confirmation
 
+- Feature id: global-launch-confirmation
 - Real problem: launch safety should have one visible rule; per-command "danger" guesses create false confidence and hidden branches.
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
@@ -274,6 +289,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 16. Portable settings
 
+- Feature id: portable-settings
 - Real problem: UI preferences should move with the repo and stay reviewable, not hide in AppData or registry.
 - Proof type: repo-battle-tested, market-informed
 - Verdict level: narrow-north-star
@@ -285,6 +301,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 17. JSON persistence, backup, and rollback compensation
 
+- Feature id: json-persistence-backup-and-rollback-compensation
 - Real problem: config edits must not leave half-written JSON or half-applied multi-file state.
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
@@ -296,6 +313,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 18. Core/App/Tests separation
 
+- Feature id: core-app-tests-separation
 - Real problem: launch argument rules and config behavior must be testable without opening the GUI.
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
@@ -307,6 +325,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 19. Self-contained win-x64 publish and native gate
 
+- Feature id: self-contained-win-x64-publish-and-native-gate
 - Real problem: a desktop launcher is only real if it can be restored, tested, published, and smoke-started.
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
@@ -318,6 +337,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 20. Retired legacy surfaces
 
+- Feature id: retired-legacy-surfaces
 - Real problem: two active UI lines create duplicate truth and slow failure.
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
@@ -329,6 +349,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ### 21. Design benchmark and giants-shoulders library
 
+- Feature id: design-benchmark-and-giants-shoulders-library
 - Real problem: UI/product decisions should not be made from vibes or copied frameworks.
 - Proof type: source-backed, market-informed
 - Verdict level: source-backed
