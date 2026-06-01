@@ -260,6 +260,35 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void PreviewSelectedPresetUnexpectedFailureReplacesStalePreviewReceipt()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex", selected: false));
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+        var startedPlans = new List<LaunchPlan>();
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = false },
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+
+        viewModel.DryRunText = "旧启动组预演";
+        viewModel.Entries.Single(entry => entry.Id == "one").Entry.Name = "";
+
+        viewModel.PreviewSelectedPresetCommand.Execute(null);
+
+        Assert.Empty(startedPlans);
+        Assert.Contains("预演回执", viewModel.DryRunText);
+        Assert.Contains("预演失败: Entry name is required for batch launch report.", viewModel.DryRunText);
+        Assert.DoesNotContain("旧启动组预演", viewModel.DryRunText);
+        Assert.Equal("启动组“Daily”预演失败: Entry name is required for batch launch report.", viewModel.StatusText);
+        var entries = LoadEntriesById(config);
+        Assert.All(entries, entry => Assert.False(entry.Selected));
+    }
+
+    [Fact]
     public async Task LaunchSelectedPresetCancellationReceivesPreflightedPlansAndStartsNothing()
     {
         using var temp = new TempDirectory();

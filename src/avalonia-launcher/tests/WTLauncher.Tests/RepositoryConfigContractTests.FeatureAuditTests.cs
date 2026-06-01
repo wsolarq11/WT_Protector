@@ -99,6 +99,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("runtime filter mutations and core filter projection rejecting null instead of inventing an empty filter", audit);
         Assert.Contains("projection rejection of null entry text/timestamps or blank ids", audit);
         Assert.Contains("preserving the preset name in cancellation and unexpected-failure status", audit);
+        Assert.Contains("unexpected preview exceptions replacing stale preview text with a preview failure receipt", audit);
         Assert.Contains("config-save failures during select-all/clear/checkbox mutation", audit);
         Assert.Contains("blank/duplicate reference rejection before reference rename/remove mutation", audit);
         Assert.Contains("entry edit dialogs rejecting null initial/submitted text instead of converting it into empty required-field input", audit);

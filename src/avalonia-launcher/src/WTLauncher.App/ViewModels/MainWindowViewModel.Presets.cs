@@ -66,7 +66,7 @@ public sealed partial class MainWindowViewModel
         }
         catch (Exception ex)
         {
-            DryRunText = ex.Message;
+            DryRunText = LauncherBatchLaunchPlanText.Failed(ex);
             StatusText = LauncherPresetStatus.PreviewFailed(selectedPreset.Name, ex);
         }
     }

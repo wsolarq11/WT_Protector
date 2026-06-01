@@ -144,7 +144,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: launching a saved group is the highest-risk routine action; users need to inspect the exact generated `wt.exe` commands without rewriting selection or starting external processes.
 - Current data owner: `config/presets.json` owns desired group membership; `LaunchPlan` owns generated command lines; `DryRunText` is transient UI output, not persisted state.
-- Evidence: `PreviewSelectedPresetCommand` calls the same `LauncherLaunchWorkflow.PreflightBatch` path as launch, formats plans through `LauncherBatchLaunchPlanText`, starts no process, and preserves checkbox state; tests cover successful preview and mixed valid/invalid plan-failure preview, including valid generated command lines marked as not started plus the failure list.
+- Evidence: `PreviewSelectedPresetCommand` calls the same `LauncherLaunchWorkflow.PreflightBatch` path as launch, formats plans through `LauncherBatchLaunchPlanText`, starts no process, and preserves checkbox state; tests cover successful preview, mixed valid/invalid plan-failure preview, including valid generated command lines marked as not started plus the failure list, and unexpected preview exceptions replacing stale preview text with a preview failure receipt.
 - Verdict: north-star for the repo-owned side-effect boundary. It converts the impossible "0% side effects after launch" demand into a true pre-launch no-side-effect inspection path.
 - Remaining gap: once the user chooses real launch, arbitrary external commands still have side effects outside this app's control.
 

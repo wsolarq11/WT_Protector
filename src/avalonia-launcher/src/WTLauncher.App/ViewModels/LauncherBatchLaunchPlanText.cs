@@ -26,6 +26,17 @@ public static class LauncherBatchLaunchPlanText
         return JoinBlocks(lines);
     }
 
+    public static string Failed(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        return JoinBlocks(
+        [
+            "预演回执",
+            $"预演失败: {exception.Message}",
+        ]);
+    }
+
     private static void AppendPlanLines(
         List<string> lines,
         IReadOnlyList<LauncherBatchLaunchItem> items,
