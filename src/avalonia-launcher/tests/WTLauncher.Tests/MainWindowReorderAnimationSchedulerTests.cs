@@ -38,9 +38,28 @@ public sealed class MainWindowReorderAnimationSchedulerTests
 
         Assert.True(scheduled);
         Assert.Equal(["unsubscribe", "subscribe"], calls);
-        Assert.Same(snapshot, scheduler.Consume(Handler, _ => calls.Add("consume-unsubscribe")));
+        var pending = scheduler.Consume(Handler, _ => calls.Add("consume-unsubscribe"));
+        Assert.NotSame(snapshot, pending);
+        Assert.Equal(snapshot, pending);
         Assert.Equal(["unsubscribe", "subscribe", "consume-unsubscribe"], calls);
         Assert.Null(scheduler.Consume(Handler, _ => calls.Add("second-consume-unsubscribe")));
+    }
+
+    [Fact]
+    public void ScheduleCapturesSnapshotInsteadOfCallerOwnedDictionary()
+    {
+        var scheduler = new MainWindowReorderAnimationScheduler();
+        var snapshot = Snapshot("one");
+
+        scheduler.Schedule(snapshot, Handler, _ => { }, _ => { });
+        snapshot["one"] = new Rect(10, 20, 30, 40);
+        snapshot["two"] = new Rect(2, 3, 4, 5);
+
+        var pending = scheduler.Consume(Handler, _ => { });
+
+        Assert.NotNull(pending);
+        Assert.Equal(new Rect(1, 2, 3, 4), pending["one"]);
+        Assert.False(pending.ContainsKey("two"));
     }
 
     [Fact]
@@ -53,7 +72,10 @@ public sealed class MainWindowReorderAnimationSchedulerTests
         scheduler.Schedule(first, Handler, _ => { }, _ => { });
         scheduler.Schedule(second, Handler, _ => { }, _ => { });
 
-        Assert.Same(second, scheduler.Consume(Handler, _ => { }));
+        var pending = scheduler.Consume(Handler, _ => { });
+        Assert.NotSame(first, pending);
+        Assert.NotSame(second, pending);
+        Assert.Equal(second, pending);
     }
 
     private static Dictionary<string, Rect> Snapshot(string id)

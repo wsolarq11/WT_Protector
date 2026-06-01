@@ -20,7 +20,7 @@ public sealed class MainWindowReorderAnimationScheduler
         if (before.Count == 0)
             return false;
 
-        _pendingSnapshot = before;
+        _pendingSnapshot = new Dictionary<string, Rect>(before, before.Comparer);
         unsubscribe(handler);
         subscribe(handler);
         return true;
