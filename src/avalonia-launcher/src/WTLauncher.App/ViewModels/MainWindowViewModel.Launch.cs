@@ -34,15 +34,16 @@ public sealed partial class MainWindowViewModel
     internal void ShowDryRun(LauncherEntryViewModel item)
     {
         DiscardDragReorderPreview();
+        var entry = SnapshotLaunchEntry(item.Entry);
+        var entryName = LauncherEntryText.Normalize(entry.Name);
         try
         {
-            var plan = _launchWorkflow.BuildPlan(item.Entry, RequireConfirmationForLaunches);
+            var plan = _launchWorkflow.BuildPlan(entry, RequireConfirmationForLaunches);
             DryRunText = plan.CommandLine;
-            StatusText = LauncherSingleLaunchStatus.Preview(item.Name, plan.RequiresConfirmation);
+            StatusText = LauncherSingleLaunchStatus.Preview(entryName, plan.RequiresConfirmation);
         }
         catch (Exception ex)
         {
-            var entryName = LauncherEntryText.Normalize(item.Name);
             if (entryName.Length == 0)
             {
                 DryRunText = LauncherSingleLaunchReceiptText.PreviewFailed(ex);
@@ -58,20 +59,21 @@ public sealed partial class MainWindowViewModel
     internal async Task LaunchAsync(LauncherEntryViewModel item)
     {
         DiscardDragReorderPreview();
+        var entry = SnapshotLaunchEntry(item.Entry);
+        var entryName = LauncherEntryText.Normalize(entry.Name);
         LaunchPlan? plan = null;
         try
         {
-            plan = _launchWorkflow.BuildPlan(item.Entry, RequireConfirmationForLaunches);
-            if (!await ConfirmSingleLaunchIfRequiredAsync(item, plan).ConfigureAwait(true))
+            plan = _launchWorkflow.BuildPlan(entry, RequireConfirmationForLaunches);
+            if (!await ConfirmSingleLaunchIfRequiredAsync(entry, entryName, plan).ConfigureAwait(true))
                 return;
 
             _launchWorkflow.Start(plan);
-            DryRunText = LauncherSingleLaunchReceiptText.Requested(item.Name, plan);
-            StatusText = LauncherSingleLaunchStatus.Requested(item.Name);
+            DryRunText = LauncherSingleLaunchReceiptText.Requested(entryName, plan);
+            StatusText = LauncherSingleLaunchStatus.Requested(entryName);
         }
         catch (Exception ex)
         {
-            var entryName = LauncherEntryText.Normalize(item.Name);
             if (entryName.Length == 0)
             {
                 DryRunText = LauncherSingleLaunchReceiptText.Failed(ex);
@@ -86,7 +88,7 @@ public sealed partial class MainWindowViewModel
         }
     }
 
-    private async Task<bool> ConfirmSingleLaunchIfRequiredAsync(LauncherEntryViewModel item, LaunchPlan plan)
+    private async Task<bool> ConfirmSingleLaunchIfRequiredAsync(LaunchEntry entry, string entryName, LaunchPlan plan)
     {
         if (!plan.RequiresConfirmation)
             return true;
@@ -94,20 +96,20 @@ public sealed partial class MainWindowViewModel
         bool accepted;
         try
         {
-            accepted = await ConfirmLaunchAsync(item.Entry, plan).ConfigureAwait(true);
+            accepted = await ConfirmLaunchAsync(entry, plan).ConfigureAwait(true);
         }
         catch (Exception ex)
         {
-            DryRunText = LauncherSingleLaunchReceiptText.ConfirmationFailed(item.Name, plan, ex);
-            StatusText = LauncherSingleLaunchStatus.Failed(item.Name, ex);
+            DryRunText = LauncherSingleLaunchReceiptText.ConfirmationFailed(entryName, plan, ex);
+            StatusText = LauncherSingleLaunchStatus.Failed(entryName, ex);
             return false;
         }
 
         if (accepted)
             return true;
 
-        DryRunText = LauncherSingleLaunchReceiptText.Canceled(item.Name, plan);
-        StatusText = LauncherSingleLaunchStatus.Canceled(item.Name);
+        DryRunText = LauncherSingleLaunchReceiptText.Canceled(entryName, plan);
+        StatusText = LauncherSingleLaunchStatus.Canceled(entryName);
         return false;
     }
 
@@ -117,5 +119,11 @@ public sealed partial class MainWindowViewModel
         OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
         LauncherEntryLayoutPresentation.Refresh(Entries);
         ApplyFilter();
+    }
+
+    private static LaunchEntry SnapshotLaunchEntry(LaunchEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        return entry with { };
     }
 }

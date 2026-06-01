@@ -96,6 +96,42 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task SingleLaunchConfirmationFailureUsesPlanTimeEntrySnapshot()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex --version"));
+        var startedPlans = new List<LaunchPlan>();
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = true },
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+        var liveEntry = viewModel.Entries.Single(entry => entry.Id == "one").Entry;
+        LaunchEntry? confirmedEntry = null;
+        viewModel.ConfirmLaunchAsync = (entry, _) =>
+        {
+            confirmedEntry = entry;
+            liveEntry.Name = "";
+            throw new InvalidOperationException("dialog unavailable");
+        };
+
+        await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
+
+        Assert.NotNull(confirmedEntry);
+        Assert.NotSame(liveEntry, confirmedEntry);
+        Assert.Equal("one", confirmedEntry!.Name);
+        Assert.Equal("", liveEntry.Name);
+        Assert.Empty(startedPlans);
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("启动确认失败: one", viewModel.DryRunText);
+        Assert.Contains("错误: dialog unavailable", viewModel.DryRunText);
+        Assert.DoesNotContain("Entry name is required", viewModel.DryRunText);
+        Assert.Equal("启动失败: one — dialog unavailable", viewModel.StatusText);
+    }
+
+    [Fact]
     public async Task SingleLaunchStartsAfterConfirmationAcceptsPlan()
     {
         using var temp = new TempDirectory();
@@ -119,6 +155,41 @@ public sealed partial class MainWindowViewModelTests
         Assert.Contains("启动回执", viewModel.DryRunText);
         Assert.Contains("已请求启动: one", viewModel.DryRunText);
         Assert.Contains(confirmedPlan!.CommandLine, viewModel.DryRunText);
+        Assert.Equal("已请求启动: one", viewModel.StatusText);
+    }
+
+    [Fact]
+    public async Task SingleLaunchRequestedReceiptUsesPlanTimeEntrySnapshot()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex --version"));
+        var startedPlans = new List<LaunchPlan>();
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = true },
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+        var liveEntry = viewModel.Entries.Single(entry => entry.Id == "one").Entry;
+        LaunchEntry? confirmedEntry = null;
+        viewModel.ConfirmLaunchAsync = (entry, _) =>
+        {
+            confirmedEntry = entry;
+            liveEntry.Name = "";
+            return Task.FromResult(true);
+        };
+
+        await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
+
+        Assert.NotNull(confirmedEntry);
+        Assert.NotSame(liveEntry, confirmedEntry);
+        Assert.Equal("one", confirmedEntry!.Name);
+        Assert.Equal("", liveEntry.Name);
+        Assert.Single(startedPlans);
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("已请求启动: one", viewModel.DryRunText);
+        Assert.DoesNotContain("Entry name is required", viewModel.DryRunText);
         Assert.Equal("已请求启动: one", viewModel.StatusText);
     }
 
