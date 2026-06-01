@@ -111,6 +111,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("unexpected batch exceptions now replace stale dry-run text with a failure receipt", audit);
         Assert.Contains("runtime filter mutations and core filter projection rejecting null instead of inventing an empty filter", audit);
         Assert.Contains("projection rejection of null entry text/timestamps or blank ids", audit);
+        Assert.Contains("filter/sort projection returning a read-only collection snapshot instead of a mutable projection list", audit);
         Assert.Contains("preserving the preset name in cancellation and unexpected-failure status", audit);
         Assert.Contains("blank-name preview preflight failures replacing stale preview text with a preview failure receipt", audit);
         Assert.Contains("config-save failures during select-all/clear/checkbox mutation", audit);

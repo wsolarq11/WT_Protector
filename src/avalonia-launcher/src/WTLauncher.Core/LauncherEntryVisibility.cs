@@ -43,7 +43,7 @@ public static class LauncherEntryVisibility
             _ => SortByCustomOrder(source, filtered, customEntryOrder, selectEntry),
         };
 
-        return sorted.ToList();
+        return Array.AsReadOnly(sorted.ToArray());
     }
 
     private static bool MatchesFilter(LaunchEntry entry, string filterText)

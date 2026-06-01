@@ -100,6 +100,28 @@ public sealed class LauncherEntryVisibilityTests
     }
 
     [Fact]
+    public void FilterAndSort_ReturnsReadOnlyProjectionSnapshot()
+    {
+        var entries = new[]
+        {
+            Entry("one", "One"),
+        };
+
+        var visible = LauncherEntryVisibility.FilterAndSort(
+            entries,
+            string.Empty,
+            LauncherEntryVisibility.AlphabeticalSortModeId,
+            [],
+            static entry => entry);
+
+        var list = Assert.IsAssignableFrom<IList<LaunchEntry>>(visible);
+        Assert.True(list.IsReadOnly);
+        Assert.Throws<NotSupportedException>(() => list.Add(Entry("two", "Two")));
+        Assert.Throws<NotSupportedException>(() => list[0] = Entry("two", "Two"));
+        Assert.Equal(["one"], visible.Select(entry => entry.Id).ToArray());
+    }
+
+    [Fact]
     public void FilterAndSort_CustomSortRejectsMissingEntryIdsBeforeProjection()
     {
         var entries = new[]
