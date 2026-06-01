@@ -226,6 +226,8 @@ The Avalonia mainline supports:
 
 Current gate state:
 
+- the feature audit currently classifies all 21 active feature mappings as narrow-domain north-star for the portable Windows Terminal workspace-launcher scope only;
+- the full absolute objective remains not complete as written because unimprovable-product, stronger-than-every-GitHub-similar, and absolute zero-side-effect claims are still blocked by current evidence;
 - no current native-gate blocker is known after a fresh `tools/verify.ps1` PASS;
 - this is not a claim that the launcher is unimprovable, stronger than every GitHub alternative, or capable of 0% side effects after starting arbitrary external processes;
 - for future visual-heavy layout changes, repeat screenshot-backed comfort passes without weakening the root `tools/verify.ps1` gate.

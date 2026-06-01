@@ -301,6 +301,10 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("Cards / Details", readme);
         Assert.Contains("Names", readme);
         Assert.Contains("Current gate state:", readme);
+        Assert.Contains("all 21 active feature mappings as narrow-domain north-star", readme);
+        Assert.Contains("portable Windows Terminal workspace-launcher scope only", readme);
+        Assert.Contains("full absolute objective remains not complete as written", readme);
+        Assert.Contains("unimprovable-product, stronger-than-every-GitHub-similar, and absolute zero-side-effect claims", readme);
         Assert.Contains("no current native-gate blocker is known after a fresh `tools/verify.ps1` PASS", readme);
         Assert.Contains("not a claim that the launcher is unimprovable", readme);
         Assert.DoesNotContain("none for the current launcher scope", readme);
