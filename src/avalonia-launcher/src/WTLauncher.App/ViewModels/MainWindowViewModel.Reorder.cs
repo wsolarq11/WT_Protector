@@ -5,12 +5,12 @@ namespace WTLauncher.App.ViewModels;
 public sealed partial class MainWindowViewModel
 {
     public bool CanMoveEntryUp(LauncherEntryViewModel entry) =>
-        IsCustomSortMode && VisibleEntries.IndexOf(entry) > 0;
+        IsCustomSortMode && _visibleEntries.IndexOf(entry) > 0;
 
     public bool CanMoveEntryDown(LauncherEntryViewModel entry)
     {
-        var index = VisibleEntries.IndexOf(entry);
-        return IsCustomSortMode && index >= 0 && index < VisibleEntries.Count - 1;
+        var index = _visibleEntries.IndexOf(entry);
+        return IsCustomSortMode && index >= 0 && index < _visibleEntries.Count - 1;
     }
 
     public void MoveEntryUp(LauncherEntryViewModel entry) =>
@@ -48,21 +48,21 @@ public sealed partial class MainWindowViewModel
         int targetOffset,
         out LauncherEntryViewModel target)
     {
-        var sourceIndex = VisibleEntries.IndexOf(entry);
+        var sourceIndex = _visibleEntries.IndexOf(entry);
         var targetIndex = sourceIndex + targetOffset;
-        if (!IsCustomSortMode || sourceIndex < 0 || targetIndex < 0 || targetIndex >= VisibleEntries.Count)
+        if (!IsCustomSortMode || sourceIndex < 0 || targetIndex < 0 || targetIndex >= _visibleEntries.Count)
         {
             target = entry;
             return false;
         }
 
-        target = VisibleEntries[targetIndex];
+        target = _visibleEntries[targetIndex];
         return true;
     }
 
     private void RefreshReorderCommandState()
     {
-        foreach (var entry in Entries)
+        foreach (var entry in _entries)
             entry.RefreshReorderCommands();
     }
 }

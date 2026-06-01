@@ -11,11 +11,11 @@ public sealed partial class MainWindowViewModel
     [RelayCommand]
     private void SelectVisible()
     {
-        var targets = VisibleEntries.Where(entry => !entry.IsSelected).ToList();
+        var targets = _visibleEntries.Where(entry => !entry.IsSelected).ToList();
         if (targets.Count == 0)
         {
             ApplyStatusText(
-                VisibleEntries.Count == 0
+                _visibleEntries.Count == 0
                     ? LauncherSelectionStatus.NoVisibleEntries
                     : LauncherSelectionStatus.VisibleAlreadySelected);
             return;
@@ -143,8 +143,8 @@ public sealed partial class MainWindowViewModel
 
     private bool ReplaceSelection(IReadOnlySet<string> selectedIds)
     {
-        var snapshot = CaptureSelectionMutationSnapshot(Entries);
-        foreach (var entry in Entries)
+        var snapshot = CaptureSelectionMutationSnapshot(_entries);
+        foreach (var entry in _entries)
         {
             entry.SetSelectionFromOwner(selectedIds.Contains(entry.Id));
         }
@@ -198,7 +198,7 @@ public sealed partial class MainWindowViewModel
     }
 
     private List<LauncherEntryViewModel> GetSelectedEntries() =>
-        Entries
+        _entries
             .Where(entry => entry.IsSelected)
             .ToList();
 

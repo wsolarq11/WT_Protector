@@ -156,7 +156,7 @@ public sealed partial class MainWindowViewModel
     {
         selectedPreset = null;
         selection = null;
-        if (!TryGetSelectedPreset(out selectedPreset) || Entries.Count == 0)
+        if (!TryGetSelectedPreset(out selectedPreset) || _entries.Count == 0)
             return false;
 
         selection = BuildPresetSelectionPreview(selectedPreset, GetSelectedEntryIds());
@@ -165,7 +165,7 @@ public sealed partial class MainWindowViewModel
 
     private List<LauncherEntryViewModel> GetPresetEntries(IEnumerable<string> entryIds)
     {
-        var entriesById = Entries.ToDictionary(entry => entry.Id, LauncherEntryIds.Comparer);
+        var entriesById = _entries.ToDictionary(entry => entry.Id, LauncherEntryIds.Comparer);
         return LauncherEntryIds.ToRequiredUniqueList(entryIds, nameof(entryIds))
             .Select(id => entriesById[id])
             .ToList();

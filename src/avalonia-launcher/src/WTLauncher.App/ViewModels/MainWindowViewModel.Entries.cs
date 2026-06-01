@@ -41,7 +41,7 @@ public sealed partial class MainWindowViewModel
 
         var snapshot = CaptureEntryMutationSnapshot();
         entry.UpdatedAtUtc = CurrentTimestampUtc();
-        Entries.Add(new LauncherEntryViewModel(entry, this));
+        _entries.Add(new LauncherEntryViewModel(entry, this));
         _settings.CustomEntryOrder.Add(entry.Id);
 
         if (!SaveEntryCollectionChanges(savePresets: false, snapshot))
@@ -97,7 +97,7 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
-        Entries.Remove(item);
+        _entries.Remove(item);
         LauncherEntryReferences.RemoveEntryId(_presetFile, _settings.CustomEntryOrder, target.EntryId);
         if (!SaveEntryCollectionChanges(savePresets: true, snapshot))
             return;
@@ -134,7 +134,7 @@ public sealed partial class MainWindowViewModel
         var validation = LauncherEntryDrafts.ValidateEntry(
             entry,
             originalId,
-            Entries.Select(ToLaunchEntry));
+            _entries.Select(ToLaunchEntry));
         if (validation is null)
             return entry;
 
@@ -144,11 +144,11 @@ public sealed partial class MainWindowViewModel
 
     private bool SaveEntryCollectionChanges(bool savePresets, LauncherEntryMutationSnapshot rollbackSnapshot)
     {
-        TotalCount = Entries.Count;
+        TotalCount = _entries.Count;
         EnsureCustomOrderContainsEntries();
 
         var saveFailure = LauncherEntryMutationPersistence.Save(
-            Entries.Select(ToLaunchEntry),
+            _entries.Select(ToLaunchEntry),
             _configPath,
             _presetFile,
             _presetPath,
@@ -173,7 +173,7 @@ public sealed partial class MainWindowViewModel
     {
         DiscardDragReorderPreview();
         return LauncherEntryMutationSnapshot.Capture(
-            Entries.Select(ToLaunchEntry),
+            _entries.Select(ToLaunchEntry),
             _presetFile,
             _settings.CustomEntryOrder,
             SelectedPreset?.Id);
@@ -186,18 +186,18 @@ public sealed partial class MainWindowViewModel
         ApplyPresetFileState(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
         RefreshSelectionState();
         ApplyFilter();
-        LauncherEntryLayoutPresentation.Refresh(Entries);
+        LauncherEntryLayoutPresentation.Refresh(_entries);
     }
 
     private void ReplaceEntries(IEnumerable<LaunchEntry> entries)
     {
-        Entries.Clear();
+        _entries.Clear();
         foreach (var entry in entries)
         {
-            Entries.Add(new LauncherEntryViewModel(entry, this));
+            _entries.Add(new LauncherEntryViewModel(entry, this));
         }
 
-        TotalCount = Entries.Count;
+        TotalCount = _entries.Count;
     }
 
     private string CurrentTimestampUtc() => _utcNow().ToString("O");

@@ -20,12 +20,12 @@ public sealed partial class MainWindowViewModel
             .ToList();
         var selectedPreset = ResolveSelectedPreset(presetViewModels, targetPresetId);
 
-        Presets.Clear();
+        _presets.Clear();
         foreach (var preset in presetViewModels)
-            Presets.Add(preset);
+            _presets.Add(preset);
 
         SelectedPreset = selectedPreset;
-        PresetCount = Presets.Count;
+        PresetCount = _presets.Count;
         NotifyPresetManagementCommands();
     }
 

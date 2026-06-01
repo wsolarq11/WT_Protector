@@ -18,25 +18,29 @@ public sealed partial class MainWindowViewModel
     [ObservableProperty]
     private LauncherDisplayModeViewModel? _selectedDisplayMode;
 
-    public ObservableCollection<LauncherSortModeViewModel> SortModes { get; } =
+    private readonly ObservableCollection<LauncherSortModeViewModel> _sortModes =
     [
         new(LauncherEntryVisibility.CustomSortModeId, "自定义拖拽"),
         new(LauncherEntryVisibility.UpdatedSortModeId, "更新时间"),
         new(LauncherEntryVisibility.AlphabeticalSortModeId, "首字母顺序"),
     ];
 
-    public ObservableCollection<LauncherDisplayModeViewModel> DisplayModes { get; } =
+    private readonly ObservableCollection<LauncherDisplayModeViewModel> _displayModes =
     [
         new(LauncherEntryViewMode.Cards, "卡片"),
         new(LauncherEntryViewMode.Details, "详细列表"),
         new(LauncherEntryViewMode.Names, "名称墙"),
     ];
 
+    public ReadOnlyObservableCollection<LauncherSortModeViewModel> SortModes { get; }
+
+    public ReadOnlyObservableCollection<LauncherDisplayModeViewModel> DisplayModes { get; }
+
     private LauncherSortModeViewModel ResolveSortMode(string? sortModeId) =>
-        SortModes.First(mode => mode.Id == LauncherEntryVisibility.NormalizeSortModeId(sortModeId));
+        _sortModes.First(mode => mode.Id == LauncherEntryVisibility.NormalizeSortModeId(sortModeId));
 
     private LauncherDisplayModeViewModel ResolveDisplayMode(string? entryViewMode) =>
-        DisplayModes.First(mode => mode.Id == LauncherEntryViewModes.NormalizeId(entryViewMode));
+        _displayModes.First(mode => mode.Id == LauncherEntryViewModes.NormalizeId(entryViewMode));
 
     private LauncherEntryViewMode CurrentEntryViewMode => RequireDisplayModeSelection(SelectedDisplayMode).Mode;
 
@@ -110,14 +114,14 @@ public sealed partial class MainWindowViewModel
 
         var snapshot = CaptureSettingsMutationSnapshot();
         _settings.EntryViewMode = value.Id;
-        LauncherEntryLayoutPresentation.Refresh(Entries);
+        LauncherEntryLayoutPresentation.Refresh(_entries);
         var saveFailure = SaveSettingsChange(snapshot);
         if (saveFailure is not null)
         {
             _selectedDisplayMode = ResolveDisplayMode(snapshot.EntryViewMode);
             OnPropertyChanged(nameof(SelectedDisplayMode));
             NotifyDisplayModeProjectionChanged();
-            LauncherEntryLayoutPresentation.Refresh(Entries);
+            LauncherEntryLayoutPresentation.Refresh(_entries);
             ApplyStatusText(saveFailure);
             return;
         }
@@ -135,27 +139,27 @@ public sealed partial class MainWindowViewModel
     private void ApplyFilter()
     {
         var sorted = LauncherEntryVisibility.FilterAndSort(
-            Entries,
+            _entries,
             FilterText,
             RequireSortModeSelection(SelectedSortMode).Id,
             _settings.CustomEntryOrder,
             ToLaunchEntry);
 
-        VisibleEntries.Clear();
+        _visibleEntries.Clear();
         foreach (var entry in sorted)
         {
-            VisibleEntries.Add(entry);
+            _visibleEntries.Add(entry);
         }
 
-        VisibleCount = VisibleEntries.Count;
-        LauncherEntryLayoutPresentation.ApplyCardSize(Entries, VisibleEntries, _cardsAvailableSize);
+        VisibleCount = _visibleEntries.Count;
+        LauncherEntryLayoutPresentation.ApplyCardSize(_entries, _visibleEntries, _cardsAvailableSize);
         RefreshReorderCommandState();
     }
 
     public void UpdateCardsAvailableSize(Size availableSize)
     {
         _cardsAvailableSize = LauncherEntryLayoutPresentation.NormalizeAvailableSize(availableSize);
-        LauncherEntryLayoutPresentation.ApplyCardSize(Entries, VisibleEntries, _cardsAvailableSize);
+        LauncherEntryLayoutPresentation.ApplyCardSize(_entries, _visibleEntries, _cardsAvailableSize);
     }
 
     public bool TrySaveWindowBounds(double width, double height)
@@ -178,5 +182,5 @@ public sealed partial class MainWindowViewModel
         value ?? throw new InvalidOperationException("Launcher entry view mode selection is required.");
 
     private IEnumerable<string> GetEntryIds() =>
-        Entries.Select(entry => entry.Id);
+        _entries.Select(entry => entry.Id);
 }

@@ -14,6 +14,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly LauncherLaunchWorkflow _launchWorkflow;
     private readonly Func<DateTimeOffset> _utcNow;
     private LauncherPresetFile _presetFile = new();
+    private readonly ObservableCollection<LauncherEntryViewModel> _entries = [];
+    private readonly ObservableCollection<LauncherEntryViewModel> _visibleEntries = [];
+    private readonly ObservableCollection<LauncherPresetViewModel> _presets = [];
 
     [ObservableProperty]
     private string _statusText = LauncherMainWindowText.Ready;
@@ -59,10 +62,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settings = settings;
         _launchWorkflow = launchWorkflow ?? throw new ArgumentNullException(nameof(launchWorkflow));
         _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
+        Entries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_entries);
+        VisibleEntries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_visibleEntries);
+        Presets = new ReadOnlyObservableCollection<LauncherPresetViewModel>(_presets);
+        SortModes = new ReadOnlyObservableCollection<LauncherSortModeViewModel>(_sortModes);
+        DisplayModes = new ReadOnlyObservableCollection<LauncherDisplayModeViewModel>(_displayModes);
         _dragReorderWorkflow = new LauncherDragReorderWorkflow(
             _settings,
             _settingsPath,
-            Entries);
+            _entries);
         ConfigPathDisplay = LauncherMainWindowText.ConfigPathDisplay(configPath, _presetPath);
         _filterText = RequireSettingsText(settings.LastFilterText, "lastFilterText");
         _requireConfirmationForLaunches = settings.RequireConfirmationForLaunches;
@@ -73,11 +81,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
         Refresh();
     }
 
-    public ObservableCollection<LauncherEntryViewModel> Entries { get; } = [];
+    public ReadOnlyObservableCollection<LauncherEntryViewModel> Entries { get; }
 
-    public ObservableCollection<LauncherEntryViewModel> VisibleEntries { get; } = [];
+    public ReadOnlyObservableCollection<LauncherEntryViewModel> VisibleEntries { get; }
 
-    public ObservableCollection<LauncherPresetViewModel> Presets { get; } = [];
+    public ReadOnlyObservableCollection<LauncherPresetViewModel> Presets { get; }
 
     public string ConfigPathDisplay { get; }
 
@@ -92,7 +100,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         RefreshSelectionState();
         ApplyFilter();
-        LauncherEntryLayoutPresentation.Refresh(Entries);
+        LauncherEntryLayoutPresentation.Refresh(_entries);
         StatusText = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
     }
 
@@ -104,7 +112,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool SaveConfig()
     {
-        var saveFailure = LauncherConfigMutationPersistence.Save(Entries.Select(ToLaunchEntry), _configPath);
+        var saveFailure = LauncherConfigMutationPersistence.Save(_entries.Select(ToLaunchEntry), _configPath);
         if (saveFailure is not null)
         {
             ApplyStatusText(saveFailure);

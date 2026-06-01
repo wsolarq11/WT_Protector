@@ -122,7 +122,7 @@ public sealed partial class MainWindowViewModel
     {
         OnPropertyChanged(nameof(LaunchConfirmationToggleText));
         OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
-        LauncherEntryLayoutPresentation.Refresh(Entries);
+        LauncherEntryLayoutPresentation.Refresh(_entries);
         ApplyFilter();
     }
 
