@@ -260,7 +260,7 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public void PreviewSelectedPresetUnexpectedFailureReplacesStalePreviewReceipt()
+    public void PreviewSelectedPresetPreflightFailureReplacesStalePreviewReceipt()
     {
         using var temp = new TempDirectory();
         var (config, settings, presets) = CreatePortableFixture(
@@ -281,9 +281,10 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Empty(startedPlans);
         Assert.Contains("预演回执", viewModel.DryRunText);
-        Assert.Contains("预演失败: Entry name is required for batch launch report.", viewModel.DryRunText);
+        Assert.Contains("预演失败: 失败 1 项，未启动 0 项", viewModel.DryRunText);
+        Assert.Contains("Launch entry name is empty.", viewModel.DryRunText);
         Assert.DoesNotContain("旧启动组预演", viewModel.DryRunText);
-        Assert.Equal("启动组“Daily”预演失败: Entry name is required for batch launch report.", viewModel.StatusText);
+        Assert.Equal("启动组“Daily”预演失败: 1 个失败", viewModel.StatusText);
         var entries = LoadEntriesById(config);
         Assert.All(entries, entry => Assert.False(entry.Selected));
     }

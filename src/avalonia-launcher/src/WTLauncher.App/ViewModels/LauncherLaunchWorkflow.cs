@@ -52,7 +52,7 @@ public sealed class LauncherLaunchWorkflow
             }
             catch (Exception ex)
             {
-                report.RecordFailure(entry.Name, ex);
+                RecordFailure(report, entry.Name, ex);
             }
         }
 
@@ -82,12 +82,27 @@ public sealed class LauncherLaunchWorkflow
             }
             catch (Exception ex)
             {
-                report.RecordFailure(item.Entry.Name, ex);
+                RecordFailure(report, item.Entry.Name, ex);
                 report.RecordSkipped(items.Count - index - 1);
                 break;
             }
         }
 
         return report;
+    }
+
+    private static void RecordFailure(
+        LauncherBatchLaunchReport report,
+        string? entryName,
+        Exception exception)
+    {
+        var normalizedName = LauncherEntryText.Normalize(entryName);
+        if (normalizedName.Length == 0)
+        {
+            report.RecordFailure(exception);
+            return;
+        }
+
+        report.RecordFailure(normalizedName, exception);
     }
 }

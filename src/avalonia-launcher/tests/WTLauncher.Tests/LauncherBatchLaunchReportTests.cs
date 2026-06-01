@@ -43,6 +43,17 @@ public sealed class LauncherBatchLaunchReportTests
     }
 
     [Fact]
+    public void ReportTracksFailureWithoutInventingEntryName()
+    {
+        var report = new LauncherBatchLaunchReport();
+
+        report.RecordFailure(new InvalidOperationException("entry name is empty"));
+
+        Assert.Equal(1, report.FailedCount);
+        Assert.Equal(["entry name is empty"], report.FailureMessages);
+    }
+
+    [Fact]
     public void ReportTracksSkippedCount()
     {
         var report = new LauncherBatchLaunchReport();

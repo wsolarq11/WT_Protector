@@ -92,6 +92,23 @@ public sealed class LauncherLaunchWorkflowTests
     }
 
     [Fact]
+    public void PreflightBatchReportsBlankEntryNameWithoutInventingFallbackName()
+    {
+        using var temp = new TempDirectory();
+        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+
+        var preflight = workflow.PreflightBatch(
+            [
+                Entry("one", temp.Path) with { Name = " " },
+            ],
+            requireConfirmation: false);
+
+        Assert.Empty(preflight.Items);
+        Assert.Equal(1, preflight.Report.FailedCount);
+        Assert.Equal(["Launch entry name is empty."], preflight.Report.FailureMessages);
+    }
+
+    [Fact]
     public void StartBatchKeepsLastCommandLineWhenStartFails()
     {
         using var temp = new TempDirectory();
@@ -107,6 +124,24 @@ public sealed class LauncherLaunchWorkflowTests
         Assert.Equal(1, report.FailedCount);
         Assert.Equal(0, report.SkippedCount);
         Assert.Contains("one: blocked", Assert.Single(report.FailureMessages), StringComparison.Ordinal);
+        Assert.Contains("pwsh", report.LastCommandLine);
+    }
+
+    [Fact]
+    public void StartBatchReportsBlankMutatedEntryNameWithoutInventingFallbackName()
+    {
+        using var temp = new TempDirectory();
+        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("blocked"));
+        var entry = Entry("one", temp.Path);
+        var preflight = workflow.PreflightBatch([entry], requireConfirmation: false);
+        entry.Name = " ";
+
+        var report = workflow.StartBatch(preflight);
+
+        Assert.Equal(0, report.RequestedCount);
+        Assert.Equal(1, report.FailedCount);
+        Assert.Equal(0, report.SkippedCount);
+        Assert.Equal(["blocked"], report.FailureMessages);
         Assert.Contains("pwsh", report.LastCommandLine);
     }
 

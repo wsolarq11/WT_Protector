@@ -42,6 +42,12 @@ public sealed class LauncherBatchLaunchReport
         _failures.Add($"{RequireEntryName(entryName)}: {exception.Message}");
     }
 
+    public void RecordFailure(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+        _failures.Add(exception.Message);
+    }
+
     private static string RequireEntryName(string entryName)
     {
         var normalized = LauncherEntryText.Normalize(entryName);

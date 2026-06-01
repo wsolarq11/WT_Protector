@@ -401,7 +401,7 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task BatchLaunchUnexpectedFailureReplacesStaleReceipt()
+    public async Task BatchLaunchPreflightFailureReplacesStaleReceipt()
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(
@@ -418,9 +418,11 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 
         Assert.Contains("启动回执", viewModel.DryRunText);
-        Assert.Contains("批量启动失败: Entry name is required for batch launch report.", viewModel.DryRunText);
+        Assert.Contains("已请求启动 0 项，失败 1 项，未启动 0 项", viewModel.DryRunText);
+        Assert.Contains("Launch entry name is empty.", viewModel.DryRunText);
         Assert.DoesNotContain("旧回执", viewModel.DryRunText);
-        Assert.Equal("批量启动失败: Entry name is required for batch launch report.", viewModel.StatusText);
+        Assert.Contains("已请求启动 0 个勾选项，1 个失败", viewModel.StatusText);
+        Assert.Contains("Launch entry name is empty.", viewModel.StatusText);
     }
 
     [Fact]
