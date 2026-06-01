@@ -78,6 +78,35 @@ public sealed class LauncherLaunchWorkflowTests
     }
 
     [Fact]
+    public void StartBatchDoesNotMutatePreflightReport()
+    {
+        using var temp = new TempDirectory();
+        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+
+        var preflight = workflow.PreflightBatch(
+            [
+                Entry("valid", temp.Path),
+                Entry("missing", Path.Combine(temp.Path, "missing")),
+            ],
+            requireConfirmation: false);
+
+        Assert.Single(preflight.Items);
+        Assert.Equal(1, preflight.Report.FailedCount);
+        Assert.Equal(0, preflight.Report.RequestedCount);
+        Assert.Equal(0, preflight.Report.SkippedCount);
+
+        var report = workflow.StartBatch(preflight);
+
+        Assert.NotSame(preflight.Report, report);
+        Assert.Equal(1, preflight.Report.FailedCount);
+        Assert.Equal(0, preflight.Report.RequestedCount);
+        Assert.Equal(0, preflight.Report.SkippedCount);
+        Assert.Equal(1, report.FailedCount);
+        Assert.Equal(0, report.RequestedCount);
+        Assert.Equal(1, report.SkippedCount);
+    }
+
+    [Fact]
     public void StartBatchPreflightsAllPlansBeforeStartingAnyProcess()
     {
         using var temp = new TempDirectory();

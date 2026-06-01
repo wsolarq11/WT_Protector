@@ -5,12 +5,9 @@ namespace WTLauncher.Tests;
 public sealed class LauncherBatchLaunchReportTests
 {
     [Fact]
-    public void ReportTracksRequestedCount()
+    public void ReportPreservesRequestedCount()
     {
-        var report = new LauncherBatchLaunchReport();
-
-        report.RecordRequested();
-        report.RecordRequested();
+        var report = new LauncherBatchLaunchReport(requestedCount: 2);
 
         Assert.Equal(2, report.RequestedCount);
         Assert.Equal(0, report.FailedCount);
@@ -19,22 +16,27 @@ public sealed class LauncherBatchLaunchReportTests
     }
 
     [Fact]
-    public void ReportUsesRequestedLaunchLanguage()
+    public void ReportDoesNotExposeMutableRecordMethods()
     {
-        Assert.NotNull(typeof(LauncherBatchLaunchReport).GetProperty(nameof(LauncherBatchLaunchReport.RequestedCount)));
-        Assert.NotNull(typeof(LauncherBatchLaunchReport).GetMethod(nameof(LauncherBatchLaunchReport.RecordRequested)));
+        Assert.Null(typeof(LauncherBatchLaunchReport).GetMethod("RecordRequested"));
+        Assert.Null(typeof(LauncherBatchLaunchReport).GetMethod("RecordPlan"));
+        Assert.Null(typeof(LauncherBatchLaunchReport).GetMethod("RecordSkipped"));
+        Assert.Null(typeof(LauncherBatchLaunchReport).GetMethod("RecordFailure", [typeof(Exception)]));
+        Assert.Null(typeof(LauncherBatchLaunchReport).GetMethod("RecordFailure", [typeof(string), typeof(Exception)]));
         Assert.Null(typeof(LauncherBatchLaunchReport).GetProperty("StartedCount"));
         Assert.Null(typeof(LauncherBatchLaunchReport).GetMethod("RecordStarted"));
     }
 
     [Fact]
-    public void ReportTracksFailureMessages()
+    public void ReportPreservesFailureMessages()
     {
-        var report = new LauncherBatchLaunchReport();
-
-        report.RecordRequested();
-        report.RecordFailure("one", new InvalidOperationException("missing one"));
-        report.RecordFailure("two", new InvalidOperationException("missing two"));
+        var report = new LauncherBatchLaunchReport(
+            requestedCount: 1,
+            failureMessages:
+            [
+                "one: missing one",
+                "two: missing two",
+            ]);
 
         Assert.Equal(1, report.RequestedCount);
         Assert.Equal(2, report.FailedCount);
@@ -45,9 +47,9 @@ public sealed class LauncherBatchLaunchReportTests
     [Fact]
     public void ReportFailureMessagesDoNotExposeMutableStorage()
     {
-        var report = new LauncherBatchLaunchReport();
-
-        report.RecordFailure("one", new InvalidOperationException("missing one"));
+        var source = new List<string> { "one: missing one" };
+        var report = new LauncherBatchLaunchReport(failureMessages: source);
+        source.Add("fake success");
 
         Assert.IsNotType<List<string>>(report.FailureMessages);
         var messages = Assert.IsAssignableFrom<IList<string>>(report.FailureMessages);
@@ -58,68 +60,37 @@ public sealed class LauncherBatchLaunchReportTests
     }
 
     [Fact]
-    public void ReportTracksFailureWithoutInventingEntryName()
+    public void ReportPreservesSkippedCount()
     {
-        var report = new LauncherBatchLaunchReport();
-
-        report.RecordFailure(new InvalidOperationException("entry name is empty"));
-
-        Assert.Equal(1, report.FailedCount);
-        Assert.Equal(["entry name is empty"], report.FailureMessages);
-    }
-
-    [Fact]
-    public void ReportTracksSkippedCount()
-    {
-        var report = new LauncherBatchLaunchReport();
-
-        report.RecordSkipped(2);
-        report.RecordSkipped(3);
+        var report = new LauncherBatchLaunchReport(skippedCount: 5);
 
         Assert.Equal(5, report.SkippedCount);
     }
 
     [Fact]
+    public void ReportRejectsNegativeRequestedCount()
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new LauncherBatchLaunchReport(requestedCount: -1));
+
+        Assert.Equal("requestedCount", exception.ParamName);
+    }
+
+    [Fact]
     public void ReportRejectsNegativeSkippedCount()
     {
-        var report = new LauncherBatchLaunchReport();
-
         var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
-            report.RecordSkipped(-1));
+            new LauncherBatchLaunchReport(skippedCount: -1));
 
-        Assert.Equal("count", exception.ParamName);
+        Assert.Equal("skippedCount", exception.ParamName);
     }
 
     [Fact]
-    public void ReportNormalizesFailureEntryNames()
+    public void ReportRejectsNullFailureMessages()
     {
-        var report = new LauncherBatchLaunchReport();
-
-        report.RecordFailure(" one ", new InvalidOperationException("missing one"));
-
-        Assert.Equal(["one: missing one"], report.FailureMessages);
-    }
-
-    [Fact]
-    public void ReportRejectsBlankFailureEntryName()
-    {
-        var report = new LauncherBatchLaunchReport();
-
         var exception = Assert.Throws<InvalidDataException>(() =>
-            report.RecordFailure(" ", new InvalidOperationException("missing name")));
+            new LauncherBatchLaunchReport(failureMessages: ["ok", null!]));
 
-        Assert.Equal("Entry name is required for batch launch report.", exception.Message);
-        Assert.Empty(report.FailureMessages);
-    }
-
-    [Fact]
-    public void ReportRejectsNullFailureEntryName()
-    {
-        var report = new LauncherBatchLaunchReport();
-
-        var exception = Assert.Throws<ArgumentNullException>(() =>
-            report.RecordFailure(null!, new InvalidOperationException("missing name")));
-
-        Assert.Equal("entryName", exception.ParamName);
+        Assert.Equal("Launcher batch failure message is null.", exception.Message);
     }
 }

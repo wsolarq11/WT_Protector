@@ -41,7 +41,7 @@ public sealed class LauncherLaunchWorkflow
     {
         ArgumentNullException.ThrowIfNull(entries);
 
-        var report = new LauncherBatchLaunchReport();
+        var report = new LauncherBatchLaunchReportBuilder();
         var items = new List<LauncherBatchLaunchItem>();
         foreach (var entry in entries)
         {
@@ -56,7 +56,7 @@ public sealed class LauncherLaunchWorkflow
             }
         }
 
-        return new LauncherBatchLaunchPreflight(items, report);
+        return new LauncherBatchLaunchPreflight(items, report.ToReport());
     }
 
     public LauncherBatchLaunchReport StartBatch(LauncherBatchLaunchPreflight preflight)
@@ -64,11 +64,11 @@ public sealed class LauncherLaunchWorkflow
         ArgumentNullException.ThrowIfNull(preflight);
 
         var items = preflight.Items;
-        var report = preflight.Report;
+        var report = new LauncherBatchLaunchReportBuilder(preflight.Report);
         if (report.FailedCount > 0)
         {
             report.RecordSkipped(items.Count);
-            return report;
+            return report.ToReport();
         }
 
         for (var index = 0; index < items.Count; index++)
@@ -88,11 +88,11 @@ public sealed class LauncherLaunchWorkflow
             }
         }
 
-        return report;
+        return report.ToReport();
     }
 
     private static void RecordFailure(
-        LauncherBatchLaunchReport report,
+        LauncherBatchLaunchReportBuilder report,
         string? entryName,
         Exception exception)
     {

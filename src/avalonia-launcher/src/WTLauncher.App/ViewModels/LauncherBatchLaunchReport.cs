@@ -4,12 +4,75 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed class LauncherBatchLaunchReport
 {
-    private readonly List<string> _failures = [];
     private readonly IReadOnlyList<string> _failureMessages;
 
-    public LauncherBatchLaunchReport()
+    public LauncherBatchLaunchReport(
+        int requestedCount = 0,
+        int skippedCount = 0,
+        string? lastCommandLine = null,
+        IEnumerable<string>? failureMessages = null)
     {
-        _failureMessages = _failures.AsReadOnly();
+        if (requestedCount < 0)
+            throw new ArgumentOutOfRangeException(
+                nameof(requestedCount),
+                requestedCount,
+                "Requested count must not be negative.");
+        if (skippedCount < 0)
+            throw new ArgumentOutOfRangeException(
+                nameof(skippedCount),
+                skippedCount,
+                "Skipped count must not be negative.");
+
+        RequestedCount = requestedCount;
+        SkippedCount = skippedCount;
+        LastCommandLine = lastCommandLine;
+        _failureMessages = Array.AsReadOnly(CloneFailureMessages(failureMessages));
+    }
+
+    public int RequestedCount { get; }
+
+    public int FailedCount => _failureMessages.Count;
+
+    public int SkippedCount { get; }
+
+    public string? LastCommandLine { get; }
+
+    public IReadOnlyList<string> FailureMessages => _failureMessages;
+
+    private static string[] CloneFailureMessages(IEnumerable<string>? failureMessages)
+    {
+        if (failureMessages is null)
+            return [];
+
+        var clone = new List<string>();
+        foreach (var failure in failureMessages)
+        {
+            if (failure is null)
+                throw new InvalidDataException("Launcher batch failure message is null.");
+
+            clone.Add(failure);
+        }
+
+        return [.. clone];
+    }
+}
+
+internal sealed class LauncherBatchLaunchReportBuilder
+{
+    private readonly List<string> _failures = [];
+
+    public LauncherBatchLaunchReportBuilder()
+    {
+    }
+
+    public LauncherBatchLaunchReportBuilder(LauncherBatchLaunchReport report)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+
+        RequestedCount = report.RequestedCount;
+        SkippedCount = report.SkippedCount;
+        LastCommandLine = report.LastCommandLine;
+        _failures.AddRange(report.FailureMessages);
     }
 
     public int RequestedCount { get; private set; }
@@ -20,7 +83,8 @@ public sealed class LauncherBatchLaunchReport
 
     public string? LastCommandLine { get; private set; }
 
-    public IReadOnlyList<string> FailureMessages => _failureMessages;
+    public LauncherBatchLaunchReport ToReport() =>
+        new(RequestedCount, SkippedCount, LastCommandLine, _failures);
 
     public void RecordPlan(LaunchPlan plan)
     {

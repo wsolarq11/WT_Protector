@@ -20,16 +20,17 @@ public sealed class LauncherSelectionStatusTests
     public void StatusTextDescribesBatchLaunchSelectionOutcomes()
     {
         var exception = new InvalidOperationException("boom");
-        var success = new LauncherBatchLaunchReport();
-        success.RecordRequested();
-        success.RecordRequested();
-        var failures = new LauncherBatchLaunchReport();
-        failures.RecordRequested();
-        failures.RecordFailure("one", new InvalidOperationException("missing one"));
-        failures.RecordFailure("two", new InvalidOperationException("missing two"));
-        failures.RecordFailure("three", new InvalidOperationException("missing three"));
-        failures.RecordFailure("four", new InvalidOperationException("missing four"));
-        failures.RecordSkipped(2);
+        var success = new LauncherBatchLaunchReport(requestedCount: 2);
+        var failures = new LauncherBatchLaunchReport(
+            requestedCount: 1,
+            skippedCount: 2,
+            failureMessages:
+            [
+                "one: missing one",
+                "two: missing two",
+                "three: missing three",
+                "four: missing four",
+            ]);
 
         Assert.Equal("已取消: 批量启动 2 项", LauncherSelectionStatus.BatchLaunchCanceled(2));
         Assert.Equal("已请求启动 2 个勾选项", LauncherSelectionStatus.BatchLaunchCompleted(success));
