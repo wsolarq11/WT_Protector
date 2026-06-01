@@ -50,6 +50,13 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("- Gap class:", audit);
         Assert.Contains("## Feature mapping audit", audit);
         Assert.Contains("## Objective completion audit", audit);
+        Assert.Contains("Objective verdict classes used below:", audit);
+        Assert.Contains("proven-current-scope", audit);
+        Assert.Contains("proven-audit-only", audit);
+        Assert.Contains("contradicted", audit);
+        Assert.Contains("false-broad-scope", audit);
+        Assert.Contains("preserved-current-scope", audit);
+        Assert.Contains("impossible-absolute", audit);
         Assert.Contains("## Final answer", audit);
         Assert.Equal(21, CountFeatureHeadings(audit));
         AssertFeatureSectionsUseCompleteAuditShape(audit);
@@ -329,10 +336,10 @@ public sealed partial class RepositoryConfigContractTests
             "- Requirement: remain small and beautiful.",
             "- Requirement: 100% confidence and 0% side effects.",
             "controlled gap class",
-            "- Status: contradicted. There are possible improvements",
-            "- Status: false for broad launcher scope",
+            "- Status: contradicted",
+            "- Status: false-broad-scope",
             "transient single-launch canceled/request/failure receipts plus batch receipts",
-            "- Status: impossible as an absolute claim; mitigated where the repository owns the boundary.",
+            "- Status: impossible-absolute",
         })
         {
             Assert.Contains(requiredLine, audit);
@@ -351,6 +358,15 @@ public sealed partial class RepositoryConfigContractTests
             .Split("\n- Requirement:", StringSplitOptions.RemoveEmptyEntries)
             .Skip(1)
             .ToArray();
+        var allowedObjectiveVerdicts = new[]
+        {
+            "proven-current-scope",
+            "proven-audit-only",
+            "contradicted",
+            "false-broad-scope",
+            "preserved-current-scope",
+            "impossible-absolute",
+        };
 
         Assert.Equal(6, requirements.Length);
         foreach (var requirement in requirements)
@@ -362,6 +378,14 @@ public sealed partial class RepositoryConfigContractTests
             Assert.StartsWith(" ", lines[0]);
             Assert.Contains(lines, line => line.TrimStart().StartsWith("- Evidence:", StringComparison.Ordinal));
             Assert.Contains(lines, line => line.TrimStart().StartsWith("- Status:", StringComparison.Ordinal));
+            var statusLine = lines
+                .Single(line => line.TrimStart().StartsWith("- Status:", StringComparison.Ordinal))
+                .TrimStart();
+            var objectiveVerdict = statusLine["- Status:".Length..]
+                .TrimStart()
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .First();
+            Assert.Contains(objectiveVerdict, allowedObjectiveVerdicts);
             Assert.DoesNotContain(lines, line => line == "- Evidence:" || line == "- Status:");
         }
     }

@@ -354,24 +354,33 @@ Do not build these preemptively. They become work only when the real user proble
 
 This section checks the user's full objective against current evidence instead of redefining success around the work already done.
 
+Objective verdict classes used below:
+
+- `proven-current-scope`: current repository evidence proves the requirement inside the documented WT Launcher scope.
+- `proven-audit-only`: the evaluation is complete, but it does not prove universal product supremacy.
+- `contradicted`: current evidence directly contradicts the absolute requirement.
+- `false-broad-scope`: broad-market GitHub evidence contradicts the claim, even if a narrow slice remains strong.
+- `preserved-current-scope`: the current design keeps the app small by rejecting speculative scope.
+- `impossible-absolute`: the requirement cannot be honestly proven as an absolute for software that starts external processes.
+
 - Requirement: evaluate every active feature.
   - Evidence: the 21 feature sections above cover every active feature mapping documented in `README.md` and the current Avalonia mainline scope.
-  - Status: proven for the current repository scope.
+  - Status: proven-current-scope — the audit covers the current repository scope.
 - Requirement: decide whether each feature is battle-practice or market-proven north-star.
   - Evidence: every feature section has a real problem, controlled proof type, controlled verdict level, controlled gap class, data owner, evidence, verdict, and remaining gap; the GitHub snapshot separates narrow direct competitors from broad launchers.
-  - Status: proven as an audit, not as a universal supremacy claim.
+  - Status: proven-audit-only — the classification is proven as an audit, not as a universal supremacy claim.
 - Requirement: current ability is already unimprovable.
   - Evidence: the broad-domain gap list still names import/export, persisted terminal-session health/history, distribution/update, visual receipts, and external side-effect limits.
-  - Status: contradicted. There are possible improvements, but most are intentionally not current work until real demand appears.
+  - Status: contradicted — there are possible improvements, but most are intentionally not current work until real demand appears.
 - Requirement: stronger than any similar GitHub project.
   - Evidence: Flow Launcher and Wox have far stronger broad-market proof; Terminal Manager, Launchpad-CLI, win-screen-setup, DevWorkspace, claude-dashboard, wtsm-cli, and AgentSpace each beat WT Launcher on at least one adjacent axis such as WT profile management, installer/statusline distribution, visual multi-monitor layout, split panes/cost tracking, named-session CLI scope, or embedded PTY/SSH scope. WT Launcher is stronger only in the narrower portable config + named group + rollback-aware native gate slice.
-  - Status: false for broad launcher scope; supported only for the narrow local Windows Terminal workspace-launcher slice.
+  - Status: false-broad-scope — broad launcher supremacy is false; support exists only for the narrow local Windows Terminal workspace-launcher slice.
 - Requirement: remain small and beautiful.
   - Evidence: this audit rejects speculative plugin marketplace, local web server, split-pane editor, installer/update channel, and workflow graph features until they beat the current local gate.
-  - Status: currently preserved.
+  - Status: preserved-current-scope — currently preserved.
 - Requirement: 100% confidence and 0% side effects.
   - Evidence: current tests and gate prove batch preflight-before-confirmation, side-effect-free current-group preview with valid plans visible even when another plan fails preflight, exact generated command confirmation, transient single-launch canceled/request/failure receipts plus batch receipts for canceled/requested/failed/skipped plans, abort-after-first-start-failure, rollback-aware JSON persistence, and native publish smoke. They cannot prove that starting arbitrary external processes has zero side effects.
-  - Status: impossible as an absolute claim; mitigated where the repository owns the boundary.
+  - Status: impossible-absolute — impossible as an absolute claim; mitigated where the repository owns the boundary.
 
 ## Final answer
 
