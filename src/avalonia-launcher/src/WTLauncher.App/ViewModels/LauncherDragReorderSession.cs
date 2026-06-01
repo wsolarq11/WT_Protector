@@ -23,15 +23,24 @@ public sealed class LauncherDragReorderSession
     internal LauncherSettingsSnapshot Snapshot { get; }
 
     public static LauncherDragReorderSession Start(
-        string draggedEntryId,
-        LauncherSettingsSnapshot snapshot,
-        LauncherEntryViewModel source)
+        LauncherEntryViewModel source,
+        LauncherSettingsSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(snapshot);
 
-        var session = new LauncherDragReorderSession(draggedEntryId, snapshot, source);
+        var session = new LauncherDragReorderSession(RequireSourceEntryId(source), snapshot, source);
         source.ShowDragPreviewSource();
         return session;
+    }
+
+    private static string RequireSourceEntryId(LauncherEntryViewModel source)
+    {
+        var entryId = LauncherEntryIds.Normalize(source.Id);
+        if (!LauncherEntryIds.IsUsable(entryId))
+            throw new InvalidOperationException("Drag source entry id is required.");
+
+        return entryId;
     }
 
     public bool IsFor(string draggedEntryId)

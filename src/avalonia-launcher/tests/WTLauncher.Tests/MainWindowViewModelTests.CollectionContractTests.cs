@@ -44,6 +44,15 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("one", entry.SnapshotEntry().Id);
     }
 
+    [Fact]
+    public void EntryViewModelsRejectMissingOwner()
+    {
+        var exception = Assert.Throws<ArgumentNullException>(() =>
+            new LauncherEntryViewModel(Entry("one"), null!));
+
+        Assert.Equal("owner", exception.ParamName);
+    }
+
     private static void AssertReadOnlyProjection<T>(IList<T> collection, T sample)
     {
         var count = collection.Count;

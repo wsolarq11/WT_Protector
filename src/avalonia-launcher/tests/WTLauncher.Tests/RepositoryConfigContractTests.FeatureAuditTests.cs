@@ -141,6 +141,8 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("discards uncommitted drag-sort preview state first", audit);
         Assert.Contains("ghost order cannot become a hidden source of truth", audit);
         Assert.Contains("sessions not publicly exposing mutable source view models or settings snapshots", audit);
+        Assert.Contains("drag sessions deriving the dragged id from the source entry instead of accepting a second mismatched id", audit);
+        Assert.Contains("required drag workflow dependencies failing fast at construction", audit);
         Assert.Contains("preview collection outputs that cannot be cast back to mutable selection/preset/missing-id storage", audit);
         Assert.Contains("custom-order index returning a read-only dictionary snapshot instead of a mutable index map", audit);
         Assert.Contains("reorder bounds capture and animation scheduling exposing read-only cloned snapshots instead of caller-owned mutable dictionaries", audit);

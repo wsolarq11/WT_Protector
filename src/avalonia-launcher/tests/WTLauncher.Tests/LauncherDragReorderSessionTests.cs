@@ -33,8 +33,36 @@ public sealed class LauncherDragReorderSessionTests
     {
         var session = StartSession(" three ");
 
+        Assert.Equal("three", session.DraggedEntryId);
         Assert.True(session.IsFor("three"));
         Assert.False(session.IsFor("Three"));
+    }
+
+    [Fact]
+    public void StartRejectsMissingDependenciesAndBlankSourceIds()
+    {
+        using var temp = new TempDirectory();
+        var source = MainWindowEntryCardTestFactory.CreateEntryViewModel(temp.Path, "one");
+        var snapshot = LauncherSettingsSnapshot.Capture(new LauncherSettings());
+
+        Assert.Throws<ArgumentNullException>(() =>
+            LauncherDragReorderSession.Start(null!, snapshot));
+        Assert.Throws<ArgumentNullException>(() =>
+            LauncherDragReorderSession.Start(source, null!));
+
+        var blankSource = new LauncherEntryViewModel(
+            new LaunchEntry
+            {
+                Id = " ",
+                Name = "Blank",
+                Directory = temp.Path,
+                Command = "pwsh",
+            },
+            MainWindowEntryCardTestFactory.CreateOwner(temp.Path));
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            LauncherDragReorderSession.Start(blankSource, snapshot));
+
+        Assert.Equal("Drag source entry id is required.", exception.Message);
     }
 
     [Fact]
@@ -54,8 +82,7 @@ public sealed class LauncherDragReorderSessionTests
     {
         using var temp = new TempDirectory();
         return LauncherDragReorderSession.Start(
-            draggedEntryId,
-            LauncherSettingsSnapshot.Capture(new LauncherSettings()),
-            MainWindowEntryCardTestFactory.CreateEntryViewModel(temp.Path, draggedEntryId));
+            MainWindowEntryCardTestFactory.CreateEntryViewModel(temp.Path, draggedEntryId),
+            LauncherSettingsSnapshot.Capture(new LauncherSettings()));
     }
 }

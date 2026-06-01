@@ -12,6 +12,7 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     public LauncherEntryViewModel(LaunchEntry entry, MainWindowViewModel owner)
     {
         ArgumentNullException.ThrowIfNull(entry);
+        ArgumentNullException.ThrowIfNull(owner);
         _entry = entry;
         _owner = owner;
         _isSelected = entry.Selected;

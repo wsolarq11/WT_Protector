@@ -14,6 +14,11 @@ public sealed class LauncherDragReorderWorkflow
         string settingsPath,
         IReadOnlyList<LauncherEntryViewModel> entries)
     {
+        ArgumentNullException.ThrowIfNull(settings);
+        if (string.IsNullOrWhiteSpace(settingsPath))
+            throw new ArgumentException("Settings path is required.", nameof(settingsPath));
+        ArgumentNullException.ThrowIfNull(entries);
+
         _settings = settings;
         _settingsPath = settingsPath;
         _entries = entries;
@@ -33,9 +38,8 @@ public sealed class LauncherDragReorderWorkflow
             return refreshEntries;
 
         _session = LauncherDragReorderSession.Start(
-            draggedEntryId,
-            LauncherSettingsSnapshot.Capture(_settings),
-            source);
+            source,
+            LauncherSettingsSnapshot.Capture(_settings));
         return refreshEntries;
     }
 
