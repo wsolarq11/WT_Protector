@@ -1,14 +1,16 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
-using WTLauncher.Core;
+using WTLauncher.App.ViewModels;
 
 namespace WTLauncher.App.Views;
 
 public sealed class ConfirmLaunchWindow : Window
 {
-    public ConfirmLaunchWindow(LaunchEntry entry, LaunchPlan plan)
+    public ConfirmLaunchWindow(LauncherSingleLaunchConfirmation confirmation)
     {
+        ArgumentNullException.ThrowIfNull(confirmation);
+
         Title = "确认启动";
         Width = 680;
         Height = 360;
@@ -17,11 +19,11 @@ public sealed class ConfirmLaunchWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = Brushes.White;
 
-        var title = LauncherDialogText.Title($"启动：{entry.Name}");
+        var title = LauncherDialogText.Title($"启动：{confirmation.EntryName}");
         var warning = LauncherDialogText.Body("当前已开启启动确认，请确认后继续。");
         var command = new TextBox
         {
-            Text = plan.CommandLine,
+            Text = confirmation.Plan.CommandLine,
             IsReadOnly = true,
             FontFamily = new FontFamily("Cascadia Code, Consolas"),
             FontSize = 12,

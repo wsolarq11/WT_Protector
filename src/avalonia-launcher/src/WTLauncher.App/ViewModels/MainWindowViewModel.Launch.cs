@@ -10,8 +10,8 @@ public sealed partial class MainWindowViewModel
         ? "所有启动项启动前统一确认。"
         : "所有启动项直接启动，不弹确认。";
 
-    public Func<LaunchEntry, LaunchPlan, Task<bool>> ConfirmLaunchAsync { get; set; } =
-        static (_, _) => Task.FromResult(false);
+    public Func<LauncherSingleLaunchConfirmation, Task<bool>> ConfirmLaunchAsync { get; set; } =
+        static _ => Task.FromResult(false);
 
     partial void OnRequireConfirmationForLaunchesChanged(bool value)
     {
@@ -65,7 +65,8 @@ public sealed partial class MainWindowViewModel
         try
         {
             plan = _launchWorkflow.BuildPlan(entry, RequireConfirmationForLaunches);
-            if (!await ConfirmSingleLaunchIfRequiredAsync(entry, entryName, plan).ConfigureAwait(true))
+            var confirmation = new LauncherSingleLaunchConfirmation(entry, plan);
+            if (!await ConfirmSingleLaunchIfRequiredAsync(confirmation).ConfigureAwait(true))
                 return;
 
             _launchWorkflow.Start(plan);
@@ -88,15 +89,19 @@ public sealed partial class MainWindowViewModel
         }
     }
 
-    private async Task<bool> ConfirmSingleLaunchIfRequiredAsync(LaunchEntry entry, string entryName, LaunchPlan plan)
+    private async Task<bool> ConfirmSingleLaunchIfRequiredAsync(LauncherSingleLaunchConfirmation confirmation)
     {
+        ArgumentNullException.ThrowIfNull(confirmation);
+
+        var entryName = confirmation.EntryName;
+        var plan = confirmation.Plan;
         if (!plan.RequiresConfirmation)
             return true;
 
         bool accepted;
         try
         {
-            accepted = await ConfirmLaunchAsync(entry, plan).ConfigureAwait(true);
+            accepted = await ConfirmLaunchAsync(confirmation).ConfigureAwait(true);
         }
         catch (Exception ex)
         {

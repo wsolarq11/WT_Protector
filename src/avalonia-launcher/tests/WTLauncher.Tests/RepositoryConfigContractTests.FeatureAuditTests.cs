@@ -69,6 +69,10 @@ public sealed partial class RepositoryConfigContractTests
         {
             "SyDroX/dev-layout",
             "augustdragon/terminal-manager",
+            "noambrand/Launchpad-CLI",
+            "kevinkicho/win-screen-setup",
+            "ewdieckman/DevWorkspace",
+            "pramin/AgentSpace",
             "joyahmed/devgo-app",
             "Flow-Launcher/Flow.Launcher",
             "Wox-launcher/Wox",
@@ -80,6 +84,8 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("\"100% confidence and 0% side effects\"", audit);
         Assert.Contains("preflight everything local before launching", audit);
         Assert.Contains("Live GitHub repository search/API checks were refreshed on 2026-06-01", audit);
+        Assert.Contains("updated 2026-05-31T14:38:02Z", audit);
+        Assert.Contains("embedded PTY/SSH scope", audit);
         Assert.Contains("updated 2026-05-31T16:46:25Z", audit);
         Assert.Contains("updated 2026-05-31T15:02:11Z", audit);
         AssertObjectiveCompletionAuditPreservesOriginalScope(audit);
@@ -91,6 +97,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("transient single-launch canceled/request/failure receipts", audit);
         Assert.Contains("receipt rejection of blank entry names instead of rendering fake `(unnamed)` launches", audit);
         Assert.Contains("single launch snapshotting entry data before confirmation", audit);
+        Assert.Contains("single launch confirmation target carries entry id/name plus the generated plan", audit);
         Assert.Contains("unexpected single-launch exceptions replacing stale dry-run text with a failure receipt", audit);
         Assert.Contains("unexpected dry-run exceptions replacing stale preview text with a preview failure receipt", audit);
         Assert.Contains("Each preflight item snapshots the entry id and name", audit);

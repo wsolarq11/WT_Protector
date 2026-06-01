@@ -20,7 +20,7 @@ public sealed partial class MainWindow : Window
         : this()
     {
         DataContext = viewModel;
-        viewModel.ConfirmLaunchAsync = (entry, plan) => new ConfirmLaunchWindow(entry, plan).ShowDialog<bool>(this);
+        viewModel.ConfirmLaunchAsync = confirmation => new ConfirmLaunchWindow(confirmation).ShowDialog<bool>(this);
         viewModel.ConfirmBatchLaunchAsync = confirmation => new ConfirmBatchLaunchWindow(confirmation).ShowDialog<bool>(this);
         viewModel.RequestNewPresetAsync = selectedEntryIds =>
             new PresetDetailsWindow(selectedEntryIds).ShowDialog<string?>(this);

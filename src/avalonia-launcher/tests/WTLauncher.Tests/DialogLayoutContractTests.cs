@@ -79,6 +79,21 @@ public sealed class DialogLayoutContractTests
         Assert.DoesNotContain("个已勾选项", source);
     }
 
+    [Fact]
+    public void SingleLaunchConfirmationDialogUsesSnapshotConfirmation()
+    {
+        var source = File.ReadAllText(TestRepositoryPaths.View("ConfirmLaunchWindow.cs"));
+
+        Assert.Contains("ConfirmLaunchWindow(LauncherSingleLaunchConfirmation confirmation)", source);
+        Assert.Contains("ArgumentNullException.ThrowIfNull(confirmation);", source);
+        Assert.Contains("confirmation.EntryName", source);
+        Assert.Contains("confirmation.Plan.CommandLine", source);
+        Assert.DoesNotContain("LaunchEntry entry", source);
+        Assert.DoesNotContain("LaunchPlan plan", source);
+        Assert.DoesNotContain("entry.Name", source);
+        Assert.DoesNotContain("plan.CommandLine", source);
+    }
+
     [Theory]
     [InlineData("ConfirmEntryDeleteWindow.cs")]
     [InlineData("ConfirmPresetDeleteWindow.cs")]

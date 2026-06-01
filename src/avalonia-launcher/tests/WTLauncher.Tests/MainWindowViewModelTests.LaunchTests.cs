@@ -53,7 +53,7 @@ public sealed partial class MainWindowViewModelTests
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true });
         var confirmCalls = 0;
-        viewModel.ConfirmLaunchAsync = (_, _) =>
+        viewModel.ConfirmLaunchAsync = _ =>
         {
             confirmCalls++;
             return Task.FromResult(false);
@@ -80,7 +80,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            vm => vm.ConfirmLaunchAsync = (_, _) =>
+            vm => vm.ConfirmLaunchAsync = _ =>
                 throw new InvalidOperationException("dialog unavailable"),
             launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
 
@@ -109,19 +109,19 @@ public sealed partial class MainWindowViewModelTests
             new LauncherSettings { RequireConfirmationForLaunches = true },
             launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
         var liveEntry = viewModel.Entries.Single(entry => entry.Id == "one").Entry;
-        LaunchEntry? confirmedEntry = null;
-        viewModel.ConfirmLaunchAsync = (entry, _) =>
+        LauncherSingleLaunchConfirmation? confirmation = null;
+        viewModel.ConfirmLaunchAsync = candidate =>
         {
-            confirmedEntry = entry;
+            confirmation = candidate;
             liveEntry.Name = "";
             throw new InvalidOperationException("dialog unavailable");
         };
 
         await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
 
-        Assert.NotNull(confirmedEntry);
-        Assert.NotSame(liveEntry, confirmedEntry);
-        Assert.Equal("one", confirmedEntry!.Name);
+        Assert.NotNull(confirmation);
+        Assert.Equal("one", confirmation!.EntryId);
+        Assert.Equal("one", confirmation.EntryName);
         Assert.Equal("", liveEntry.Name);
         Assert.Empty(startedPlans);
         Assert.Contains("启动回执", viewModel.DryRunText);
@@ -143,9 +143,9 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            vm => vm.ConfirmLaunchAsync = (_, plan) =>
+            vm => vm.ConfirmLaunchAsync = confirmation =>
             {
-                confirmedPlan = plan;
+                confirmedPlan = confirmation.Plan;
                 return Task.FromResult(true);
             });
 
@@ -172,19 +172,19 @@ public sealed partial class MainWindowViewModelTests
             new LauncherSettings { RequireConfirmationForLaunches = true },
             launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
         var liveEntry = viewModel.Entries.Single(entry => entry.Id == "one").Entry;
-        LaunchEntry? confirmedEntry = null;
-        viewModel.ConfirmLaunchAsync = (entry, _) =>
+        LauncherSingleLaunchConfirmation? confirmation = null;
+        viewModel.ConfirmLaunchAsync = candidate =>
         {
-            confirmedEntry = entry;
+            confirmation = candidate;
             liveEntry.Name = "";
             return Task.FromResult(true);
         };
 
         await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
 
-        Assert.NotNull(confirmedEntry);
-        Assert.NotSame(liveEntry, confirmedEntry);
-        Assert.Equal("one", confirmedEntry!.Name);
+        Assert.NotNull(confirmation);
+        Assert.Equal("one", confirmation!.EntryId);
+        Assert.Equal("one", confirmation.EntryName);
         Assert.Equal("", liveEntry.Name);
         Assert.Single(startedPlans);
         Assert.Contains("启动回执", viewModel.DryRunText);
