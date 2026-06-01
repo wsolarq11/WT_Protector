@@ -110,7 +110,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 1. Launch entry object
 
 - Real problem: repeated local workspaces need stable names, working directories, and shell commands instead of ad-hoc manual terminal setup.
-- Proof type: repo-battle-tested through active config/tests, market-informed by Windows Terminal command-line shape.
+- Proof type: repo-battle-tested, market-informed
 - Verdict level: narrow-north-star
 - Gap class: future-workload
 - Current data owner: `config/config.json` entry rows with `id`, `name`, `directory`, `command`, `selected`, optional `updatedAtUtc`.
@@ -121,7 +121,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 2. Existing-directory contract
 
 - Real problem: a stale launcher button should fail before click time, not after the user has trusted the UI.
-- Proof type: repo-battle-tested by root gate against the current filesystem; not a market supremacy claim.
+- Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: external-process-limit
 - Current data owner: `config/config.json` `directory`; current local truth is the filesystem.
@@ -132,7 +132,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 3. Search/filter
 
 - Real problem: a launcher with many entries is only useful if the target can be found by name, path, or command.
-- Proof type: repo-battle-tested by ViewModel/core tests; exact substring search remains intentionally narrow.
+- Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: future-workload
 - Current data owner: in-memory `FilterText` derived from portable `settings.json` when saved.
@@ -143,7 +143,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 4. Direct single launch
 
 - Real problem: one known workspace should open with one explicit action.
-- Proof type: repo-battle-tested at the app boundary; external terminal health remains outside proof.
+- Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: external-process-limit
 - Current data owner: `LaunchPlan` built from the selected entry and global confirmation setting.
@@ -154,7 +154,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 5. Persistent checkbox selection and batch launch
 
 - Real problem: users often launch a repeated slice of workspaces together.
-- Proof type: repo-battle-tested and legacy-flow-informed by the retired HTA bridge.
+- Proof type: repo-battle-tested, legacy-flow-informed
 - Verdict level: strong
 - Gap class: future-workload, external-process-limit
 - Current data owner: `selected` in `config/config.json`.
@@ -165,7 +165,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 6. Named launch groups / presets
 
 - Real problem: repeated subsets should be named, portable, inspectable objects instead of fragile transient checkbox state.
-- Proof type: repo-battle-tested and market-informed by named-subset patterns such as Compose profiles.
+- Proof type: repo-battle-tested, market-informed
 - Verdict level: narrow-north-star
 - Gap class: future-workload
 - Current data owner: `config/presets.json`, referencing stable entry ids.
@@ -176,7 +176,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 7. First-class preset actions
 
 - Real problem: a named group must be created, updated, and deleted inside the app, otherwise users fall back to hand-editing JSON.
-- Proof type: repo-battle-tested through dialog, mutation, rollback, and persistence contracts.
+- Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: future-workload
 - Current data owner: `config/presets.json`.
@@ -187,7 +187,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 8. Preset-vs-selection preview
 
 - Real problem: applying a group blindly is dangerous because it rewrites saved selection.
-- Proof type: repo-battle-tested as a no-side-effect projection, not a second persistent model.
+- Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: visual-proof
 - Current data owner: preview is derived from current selection and selected preset; it is not a second source of truth.
@@ -198,7 +198,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 9. Preset launch plan preview
 
 - Real problem: launching a saved group is the highest-risk routine action; users need to inspect the exact generated `wt.exe` commands without rewriting selection or starting external processes.
-- Proof type: repo-battle-tested as the strongest zero-side-effect pre-launch boundary.
+- Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: external-process-limit
 - Current data owner: `config/presets.json` owns desired group membership; `LaunchPlan` owns generated command lines; `DryRunText` is transient UI output, not persisted state.
@@ -209,7 +209,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 10. Add/edit/delete launcher buttons
 
 - Real problem: the launcher must stay maintainable without manual JSON edits for common entry changes.
-- Proof type: repo-battle-tested through mutation, reference, dialog-boundary, and rollback tests.
+- Proof type: repo-battle-tested
 - Verdict level: strong
 - Gap class: future-workload
 - Current data owner: `config/config.json`, with preset/settings references updated or rolled back together.
@@ -220,7 +220,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 11. Custom order and drag reorder
 
 - Real problem: users build spatial memory; alphabetical order is not always the fastest launch order.
-- Proof type: repo-battle-tested and accessibility-informed by WCAG non-drag movement requirements.
+- Proof type: repo-battle-tested, accessibility-informed
 - Verdict level: narrow-north-star
 - Gap class: none-proven
 - Current data owner: `settings.json` `customEntryOrder`; drag session is a single transient object.
@@ -231,7 +231,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 12. Sort modes
 
 - Real problem: users need different scan modes: custom memory order, newest updated, or alphabetic lookup.
-- Proof type: repo-battle-tested; three modes are enough for current observed use.
+- Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: none-proven
 - Current data owner: `settings.json` `sortMode`.
@@ -242,7 +242,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 13. View modes: Cards / Details / Names
 
 - Real problem: one layout cannot solve readable actions, dense field scanning, and overview at the same time.
-- Proof type: repo-battle-tested for state/model switching; visual taste still needs screenshot evidence after visual changes.
+- Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: visual-proof
 - Current data owner: `settings.json` `entryViewMode`.
@@ -253,7 +253,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 14. Adaptive card sizing and density
 
 - Real problem: fixed cards waste space on large windows and become unusable on small windows.
-- Proof type: repo-battle-tested structurally; perceptual comfort is not fully machine-proven.
+- Proof type: repo-battle-tested
 - Verdict level: strong
 - Gap class: visual-proof
 - Current data owner: `LauncherEntryLayoutDensity`, derived from available size and visible entry count.
@@ -264,7 +264,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 15. Global launch confirmation
 
 - Real problem: launch safety should have one visible rule; per-command "danger" guesses create false confidence and hidden branches.
-- Proof type: repo-battle-tested; one global safety switch beats speculative per-command classification.
+- Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: none-proven
 - Current data owner: `settings.json` `requireConfirmationForLaunches`.
@@ -275,7 +275,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 16. Portable settings
 
 - Real problem: UI preferences should move with the repo and stay reviewable, not hide in AppData or registry.
-- Proof type: repo-battle-tested and market-informed by reviewable workspace/settings patterns.
+- Proof type: repo-battle-tested, market-informed
 - Verdict level: narrow-north-star
 - Gap class: future-workload
 - Current data owner: `config/settings.json`.
@@ -286,7 +286,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 17. JSON persistence, backup, and rollback compensation
 
 - Real problem: config edits must not leave half-written JSON or half-applied multi-file state.
-- Proof type: repo-battle-tested for single-process local persistence; no multi-writer market claim.
+- Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: future-workload
 - Current data owner: config/preset/settings stores plus mutation snapshots.
@@ -297,7 +297,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 18. Core/App/Tests separation
 
 - Real problem: launch argument rules and config behavior must be testable without opening the GUI.
-- Proof type: repo-battle-tested by independent Core/App/tests contracts.
+- Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: none-proven
 - Current data owner: Core owns pure records/rules; App owns ViewModels/Views; Tests own behavior contracts.
@@ -308,7 +308,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 19. Self-contained win-x64 publish and native gate
 
 - Real problem: a desktop launcher is only real if it can be restored, tested, published, and smoke-started.
-- Proof type: repo-battle-tested by the root/native gate on the current checkout.
+- Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: distribution-scope
 - Current data owner: `tools/verify.ps1`, `src/avalonia-launcher/verify.ps1`, and ignored publish artifacts.
@@ -319,7 +319,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 20. Retired legacy surfaces
 
 - Real problem: two active UI lines create duplicate truth and slow failure.
-- Proof type: repo-battle-tested by retired-path gate checks; duplicate UI truth stays dead.
+- Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: none-proven
 - Current data owner: Avalonia mainline; retired HTA/WinForms are archive/reference only.
@@ -330,7 +330,7 @@ It is not a general launcher/automation north star. That broader domain includes
 ### 21. Design benchmark and giants-shoulders library
 
 - Real problem: UI/product decisions should not be made from vibes or copied frameworks.
-- Proof type: source-backed and market-informed; it guides decisions but is not automatically feature proof.
+- Proof type: source-backed, market-informed
 - Verdict level: source-backed
 - Gap class: source-freshness
 - Current data owner: `DESIGN.md`, `docs/design-benchmark-digest.md`, and `docs/giants-shoulders/`.

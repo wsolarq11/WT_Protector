@@ -305,20 +305,20 @@ public sealed partial class RepositoryConfigContractTests
             var proofLine = section
                 .Split('\n')
                 .Single(line => line.StartsWith("- Proof type:", StringComparison.Ordinal));
-            Assert.Contains(allowedProofTypes, proofType => proofLine.Contains(proofType, StringComparison.Ordinal));
+            foreach (var proofType in ParseControlledList(proofLine, "- Proof type:"))
+            {
+                Assert.Contains(proofType, allowedProofTypes);
+            }
             Assert.Contains("- Verdict level:", section);
             var verdictLevelLine = section
                 .Split('\n')
                 .Single(line => line.StartsWith("- Verdict level:", StringComparison.Ordinal));
-            Assert.Contains(allowedVerdictLevels, verdictLevel => verdictLevelLine.Contains(verdictLevel, StringComparison.Ordinal));
+            Assert.Contains(ParseControlledValue(verdictLevelLine, "- Verdict level:"), allowedVerdictLevels);
             Assert.Contains("- Gap class:", section);
             var gapClassLine = section
                 .Split('\n')
                 .Single(line => line.StartsWith("- Gap class:", StringComparison.Ordinal));
-            var gapClasses = gapClassLine["- Gap class:".Length..]
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            Assert.NotEmpty(gapClasses);
-            foreach (var gapClass in gapClasses)
+            foreach (var gapClass in ParseControlledList(gapClassLine, "- Gap class:"))
             {
                 Assert.Contains(gapClass, allowedGapClasses);
             }
@@ -327,6 +327,34 @@ public sealed partial class RepositoryConfigContractTests
             Assert.Contains("- Verdict:", section);
             Assert.Contains("- Remaining gap:", section);
         }
+    }
+
+    private static string ParseControlledValue(string line, string prefix)
+    {
+        Assert.StartsWith(prefix, line);
+        var value = line[prefix.Length..].Trim();
+        Assert.False(string.IsNullOrWhiteSpace(value), $"{prefix} must not be blank.");
+        Assert.DoesNotContain(" ", value);
+        Assert.DoesNotContain(".", value);
+        Assert.DoesNotContain(";", value);
+        return value;
+    }
+
+    private static string[] ParseControlledList(string line, string prefix)
+    {
+        Assert.StartsWith(prefix, line);
+        var values = line[prefix.Length..]
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        Assert.NotEmpty(values);
+        foreach (var value in values)
+        {
+            Assert.False(string.IsNullOrWhiteSpace(value), $"{prefix} contains a blank token.");
+            Assert.DoesNotContain(" ", value);
+            Assert.DoesNotContain(".", value);
+            Assert.DoesNotContain(";", value);
+        }
+
+        return values;
     }
 
     private static void AssertObjectiveCompletionAuditPreservesOriginalScope(string audit)
