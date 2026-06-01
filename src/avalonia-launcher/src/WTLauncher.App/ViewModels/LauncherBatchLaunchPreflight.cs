@@ -38,9 +38,25 @@ public sealed record LauncherBatchLaunchItem
     }
 }
 
-public sealed record LauncherBatchLaunchPreflight(
-    IReadOnlyList<LauncherBatchLaunchItem> Items,
-    LauncherBatchLaunchReport Report);
+public sealed record LauncherBatchLaunchPreflight
+{
+    public LauncherBatchLaunchPreflight(
+        IReadOnlyList<LauncherBatchLaunchItem> items,
+        LauncherBatchLaunchReport report)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+
+        Items = items.ToArray();
+        foreach (var item in Items)
+            ArgumentNullException.ThrowIfNull(item);
+
+        Report = report ?? throw new ArgumentNullException(nameof(report));
+    }
+
+    public IReadOnlyList<LauncherBatchLaunchItem> Items { get; }
+
+    public LauncherBatchLaunchReport Report { get; }
+}
 
 public sealed record LauncherBatchLaunchConfirmation
 {

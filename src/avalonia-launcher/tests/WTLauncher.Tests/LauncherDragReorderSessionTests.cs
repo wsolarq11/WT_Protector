@@ -37,6 +37,19 @@ public sealed class LauncherDragReorderSessionTests
         Assert.False(session.IsFor("Three"));
     }
 
+    [Fact]
+    public void SessionDoesNotExposeMutableSourceOrSettingsSnapshotPublicly()
+    {
+        var properties = typeof(LauncherDragReorderSession)
+            .GetProperties()
+            .Select(property => property.Name)
+            .ToArray();
+
+        Assert.DoesNotContain("Source", properties);
+        Assert.DoesNotContain("Snapshot", properties);
+        Assert.Contains(nameof(LauncherDragReorderSession.DraggedEntryId), properties);
+    }
+
     private static LauncherDragReorderSession StartSession(string draggedEntryId = "three")
     {
         using var temp = new TempDirectory();

@@ -6,6 +6,7 @@ public sealed class LauncherDragReorderSession
 {
     private LauncherEntryViewModel? _target;
     private LauncherDragInsertPreview? _lastPreview;
+    private readonly LauncherEntryViewModel _source;
 
     private LauncherDragReorderSession(
         string draggedEntryId,
@@ -14,14 +15,12 @@ public sealed class LauncherDragReorderSession
     {
         DraggedEntryId = draggedEntryId;
         Snapshot = snapshot;
-        Source = source;
+        _source = source;
     }
 
     public string DraggedEntryId { get; }
 
-    public LauncherSettingsSnapshot Snapshot { get; }
-
-    public LauncherEntryViewModel Source { get; }
+    internal LauncherSettingsSnapshot Snapshot { get; }
 
     public static LauncherDragReorderSession Start(
         string draggedEntryId,
@@ -72,7 +71,7 @@ public sealed class LauncherDragReorderSession
     public void Clear()
     {
         ClearHover();
-        Source.ClearDragCue();
+        _source.ClearDragCue();
     }
 
     private void ClearTarget()

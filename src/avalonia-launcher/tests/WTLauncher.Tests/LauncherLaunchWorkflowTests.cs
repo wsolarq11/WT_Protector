@@ -60,6 +60,24 @@ public sealed class LauncherLaunchWorkflowTests
     }
 
     [Fact]
+    public void PreflightItemsDoNotExposeMutableStorage()
+    {
+        using var temp = new TempDirectory();
+        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+
+        var preflight = workflow.PreflightBatch(
+            [
+                Entry("one", temp.Path),
+            ],
+            requireConfirmation: false);
+        var items = Assert.IsAssignableFrom<IList<LauncherBatchLaunchItem>>(preflight.Items);
+
+        Assert.True(items.IsReadOnly);
+        Assert.Throws<NotSupportedException>(() => items.Add(Assert.Single(preflight.Items)));
+        Assert.Single(preflight.Items);
+    }
+
+    [Fact]
     public void StartBatchPreflightsAllPlansBeforeStartingAnyProcess()
     {
         using var temp = new TempDirectory();

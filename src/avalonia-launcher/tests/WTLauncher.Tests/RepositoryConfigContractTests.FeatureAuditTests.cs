@@ -101,6 +101,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("unexpected single-launch exceptions replacing stale dry-run text with a failure receipt", audit);
         Assert.Contains("unexpected dry-run exceptions replacing stale preview text with a preview failure receipt", audit);
         Assert.Contains("Each preflight item snapshots the entry id and name", audit);
+        Assert.Contains("Batch preflight exposes its prepared item list as read-only state instead of leaking the mutable staging list", audit);
         Assert.Contains("Batch confirmation snapshots its item list plus a required target label", audit);
         Assert.Contains("honest requested-start wording", audit);
         Assert.Contains("side-effect-free current-group preview", audit);
@@ -128,6 +129,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("selected fallback view model after deletion instead of hiding fallback selection or rendering `(none)`", audit);
         Assert.Contains("discards uncommitted drag-sort preview state first", audit);
         Assert.Contains("ghost order cannot become a hidden source of truth", audit);
+        Assert.Contains("sessions not publicly exposing mutable source view models or settings snapshots", audit);
         Assert.Contains("preview collection outputs that cannot be cast back to mutable selection/preset/missing-id storage", audit);
         Assert.Contains("invalid move/custom-order rejection before mutation or sort projection", audit);
         Assert.Contains("missing or stale custom-order ids rejected before sort projection instead of buried at the end", audit);
