@@ -37,6 +37,9 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("accessibility-informed", audit);
         Assert.Contains("source-backed", audit);
         Assert.Contains("- Proof type:", audit);
+        Assert.Contains("Verdict levels used below:", audit);
+        Assert.Contains("narrow-north-star", audit);
+        Assert.Contains("- Verdict level:", audit);
         Assert.Contains("## Feature mapping audit", audit);
         Assert.Contains("## Objective completion audit", audit);
         Assert.Contains("## Final answer", audit);
@@ -255,6 +258,12 @@ public sealed partial class RepositoryConfigContractTests
             "accessibility-informed",
             "source-backed",
         };
+        var allowedVerdictLevels = new[]
+        {
+            "narrow-north-star",
+            "strong",
+            "source-backed",
+        };
         var sections = featureAudit
             .Split("\n### ", StringSplitOptions.RemoveEmptyEntries)
             .Skip(1)
@@ -269,6 +278,11 @@ public sealed partial class RepositoryConfigContractTests
                 .Split('\n')
                 .Single(line => line.StartsWith("- Proof type:", StringComparison.Ordinal));
             Assert.Contains(allowedProofTypes, proofType => proofLine.Contains(proofType, StringComparison.Ordinal));
+            Assert.Contains("- Verdict level:", section);
+            var verdictLevelLine = section
+                .Split('\n')
+                .Single(line => line.StartsWith("- Verdict level:", StringComparison.Ordinal));
+            Assert.Contains(allowedVerdictLevels, verdictLevel => verdictLevelLine.Contains(verdictLevel, StringComparison.Ordinal));
             Assert.Contains("- Current data owner:", section);
             Assert.Contains("- Evidence:", section);
             Assert.Contains("- Verdict:", section);
