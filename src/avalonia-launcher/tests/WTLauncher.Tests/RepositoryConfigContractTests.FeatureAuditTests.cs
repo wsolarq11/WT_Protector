@@ -42,6 +42,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("## Final answer", audit);
         Assert.Equal(21, CountFeatureHeadings(audit));
         AssertFeatureSectionsUseCompleteAuditShape(audit);
+        AssertObjectiveCompletionAuditUsesIndentedEvidenceAndStatus(audit);
 
         foreach (var expectedMapping in new[]
         {
@@ -292,6 +293,33 @@ public sealed partial class RepositoryConfigContractTests
         })
         {
             Assert.Contains(requiredLine, audit);
+        }
+    }
+
+    private static void AssertObjectiveCompletionAuditUsesIndentedEvidenceAndStatus(string audit)
+    {
+        var start = audit.IndexOf("## Objective completion audit", StringComparison.Ordinal);
+        var end = audit.IndexOf("## Final answer", StringComparison.Ordinal);
+        Assert.True(start >= 0, "Objective completion audit section is missing.");
+        Assert.True(end > start, "Objective completion audit section must appear before the final answer.");
+
+        var section = audit[start..end];
+        var requirements = section
+            .Split("\n- Requirement:", StringSplitOptions.RemoveEmptyEntries)
+            .Skip(1)
+            .ToArray();
+
+        Assert.Equal(6, requirements.Length);
+        foreach (var requirement in requirements)
+        {
+            var lines = requirement
+                .Split('\n')
+                .Select(line => line.TrimEnd())
+                .ToArray();
+            Assert.StartsWith(" ", lines[0]);
+            Assert.Contains(lines, line => line.TrimStart().StartsWith("- Evidence:", StringComparison.Ordinal));
+            Assert.Contains(lines, line => line.TrimStart().StartsWith("- Status:", StringComparison.Ordinal));
+            Assert.DoesNotContain(lines, line => line == "- Evidence:" || line == "- Status:");
         }
     }
 }
