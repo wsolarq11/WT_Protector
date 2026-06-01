@@ -136,7 +136,10 @@ public sealed partial class MainWindowViewModel
         if (selectedPreset is null)
             return;
 
-        var target = new LauncherPresetDeleteTarget(selectedPreset.Preset);
+        var target = new LauncherPresetDeleteTarget(
+            selectedPreset.Id,
+            selectedPreset.Name,
+            selectedPreset.EntryIds);
         if (!LauncherPresetWorkflow.CanDeletePreset(_presetFile, target.PresetId))
         {
             StatusText = LauncherPresetStatus.DeleteBlocked(target.PresetName);

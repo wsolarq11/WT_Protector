@@ -134,6 +134,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("missing `entryIds` rejection", audit);
         Assert.Contains("invalid preset references rejected before label/preview/launch projection", audit);
         Assert.Contains("propagates missing or failed `presets.json`", audit);
+        Assert.Contains("preset view models snapshot preset facts plus read-only entry ids instead of exposing the live mutable preset object", audit);
         Assert.Contains("instead of synthesizing a second empty preset truth", audit);
         Assert.Contains("reject missing or unknown mode ids", audit);
         Assert.Contains("null settings fields, null saved filter state at ViewModel construction, null runtime filter mutations", audit);

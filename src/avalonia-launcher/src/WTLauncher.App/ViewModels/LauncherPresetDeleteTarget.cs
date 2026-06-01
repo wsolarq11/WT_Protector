@@ -4,6 +4,13 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed record LauncherPresetDeleteTarget
 {
+    public LauncherPresetDeleteTarget(string presetId, string presetName, IReadOnlyList<string> entryIds)
+    {
+        PresetId = RequirePresetId(presetId);
+        PresetName = RequirePresetName(presetName);
+        EntryCount = LauncherEntryIds.ToRequiredUniqueList(entryIds, nameof(entryIds)).Count;
+    }
+
     public LauncherPresetDeleteTarget(LauncherPreset preset)
     {
         ArgumentNullException.ThrowIfNull(preset);

@@ -433,7 +433,7 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task LaunchGroupDeleteCancellationRestoresMutatedLivePreset()
+    public async Task LaunchGroupDeleteCancellationKeepsPresetSelection()
     {
         using var temp = new TempDirectory();
         var (config, settings, presets) = CreateDragFixture(temp);
@@ -444,14 +444,10 @@ public sealed partial class MainWindowViewModelTests
             Preset("secondary", "Secondary", "two"));
         var launcherSettings = CreateDragSettings();
         var viewModel = CreateViewModel(config, settings, launcherSettings);
-        var livePreset = viewModel.SelectedPreset!.Preset;
         LauncherPresetDeleteTarget? target = null;
         viewModel.ConfirmDeletePresetAsync = candidate =>
         {
             target = candidate;
-            livePreset.Id = "broken";
-            livePreset.Name = "";
-            livePreset.EntryIds.Clear();
             return Task.FromResult(false);
         };
 
@@ -482,14 +478,10 @@ public sealed partial class MainWindowViewModelTests
             Preset("secondary", "Secondary", "two"));
         var launcherSettings = CreateDragSettings();
         var viewModel = CreateViewModel(config, settings, launcherSettings);
-        var livePreset = viewModel.SelectedPreset!.Preset;
         LauncherPresetDeleteTarget? target = null;
         viewModel.ConfirmDeletePresetAsync = candidate =>
         {
             target = candidate;
-            livePreset.Id = "broken";
-            livePreset.Name = "";
-            livePreset.EntryIds.Clear();
             return Task.FromResult(true);
         };
 

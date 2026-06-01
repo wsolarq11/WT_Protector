@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -6,22 +7,31 @@ public sealed class LauncherPresetViewModel
 {
     public LauncherPresetViewModel(LauncherPreset preset)
     {
-        Preset = preset;
+        ArgumentNullException.ThrowIfNull(preset);
+
+        Id = preset.Id;
+        Name = preset.Name;
+        EntryIds = new ReadOnlyCollection<string>(SnapshotEntryIds(preset.EntryIds));
+        IsLocked = preset.Locked;
     }
 
-    public LauncherPreset Preset { get; }
+    public string Id { get; }
 
-    public string Id => Preset.Id;
+    public string Name { get; }
 
-    public string Name => Preset.Name;
-
-    public IReadOnlyList<string> EntryIds => Preset.EntryIds;
+    public IReadOnlyList<string> EntryIds { get; }
 
     public int EntryCount => LauncherEntryIds.ToRequiredUniqueList(EntryIds, nameof(EntryIds)).Count;
 
-    public bool IsLocked => Preset.Locked;
+    public bool IsLocked { get; }
 
     public string Label => IsLocked ? $"{Name} (系统组, {EntryCount}项)" : $"{Name} ({EntryCount}项)";
 
     public override string ToString() => Label;
+
+    private static List<string> SnapshotEntryIds(IEnumerable<string> entryIds)
+    {
+        ArgumentNullException.ThrowIfNull(entryIds, nameof(LauncherPreset.EntryIds));
+        return [.. entryIds];
+    }
 }

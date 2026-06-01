@@ -25,6 +25,19 @@ public sealed class LauncherPresetDeleteTargetTests
         Assert.Equal(2, target.EntryCount);
     }
 
+    [Fact]
+    public void TargetSnapshotsExplicitPresetFactsAndEntryCount()
+    {
+        var entryIds = new List<string> { " one ", " two " };
+
+        var target = new LauncherPresetDeleteTarget(" Daily Group ", " Daily ", entryIds);
+        entryIds.Clear();
+
+        Assert.Equal("daily-group", target.PresetId);
+        Assert.Equal("Daily", target.PresetName);
+        Assert.Equal(2, target.EntryCount);
+    }
+
     [Theory]
     [InlineData(" ", "Daily", "Launcher preset delete target id is required.")]
     [InlineData("daily", " ", "Launcher preset delete target name is required.")]
