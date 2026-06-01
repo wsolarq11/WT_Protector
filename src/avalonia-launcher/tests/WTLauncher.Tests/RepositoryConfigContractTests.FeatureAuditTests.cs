@@ -36,10 +36,18 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("legacy-flow-informed", audit);
         Assert.Contains("accessibility-informed", audit);
         Assert.Contains("source-backed", audit);
+        Assert.Contains("Gap classes used below:", audit);
+        Assert.Contains("none-proven", audit);
+        Assert.Contains("future-workload", audit);
+        Assert.Contains("external-process-limit", audit);
+        Assert.Contains("visual-proof", audit);
+        Assert.Contains("distribution-scope", audit);
+        Assert.Contains("source-freshness", audit);
         Assert.Contains("- Proof type:", audit);
         Assert.Contains("Verdict levels used below:", audit);
         Assert.Contains("narrow-north-star", audit);
         Assert.Contains("- Verdict level:", audit);
+        Assert.Contains("- Gap class:", audit);
         Assert.Contains("## Feature mapping audit", audit);
         Assert.Contains("## Objective completion audit", audit);
         Assert.Contains("## Final answer", audit);
@@ -264,6 +272,15 @@ public sealed partial class RepositoryConfigContractTests
             "strong",
             "source-backed",
         };
+        var allowedGapClasses = new[]
+        {
+            "none-proven",
+            "future-workload",
+            "external-process-limit",
+            "visual-proof",
+            "distribution-scope",
+            "source-freshness",
+        };
         var sections = featureAudit
             .Split("\n### ", StringSplitOptions.RemoveEmptyEntries)
             .Skip(1)
@@ -283,6 +300,17 @@ public sealed partial class RepositoryConfigContractTests
                 .Split('\n')
                 .Single(line => line.StartsWith("- Verdict level:", StringComparison.Ordinal));
             Assert.Contains(allowedVerdictLevels, verdictLevel => verdictLevelLine.Contains(verdictLevel, StringComparison.Ordinal));
+            Assert.Contains("- Gap class:", section);
+            var gapClassLine = section
+                .Split('\n')
+                .Single(line => line.StartsWith("- Gap class:", StringComparison.Ordinal));
+            var gapClasses = gapClassLine["- Gap class:".Length..]
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            Assert.NotEmpty(gapClasses);
+            foreach (var gapClass in gapClasses)
+            {
+                Assert.Contains(gapClass, allowedGapClasses);
+            }
             Assert.Contains("- Current data owner:", section);
             Assert.Contains("- Evidence:", section);
             Assert.Contains("- Verdict:", section);
@@ -300,6 +328,7 @@ public sealed partial class RepositoryConfigContractTests
             "- Requirement: stronger than any similar GitHub project.",
             "- Requirement: remain small and beautiful.",
             "- Requirement: 100% confidence and 0% side effects.",
+            "controlled gap class",
             "- Status: contradicted. There are possible improvements",
             "- Status: false for broad launcher scope",
             "transient single-launch canceled/request/failure receipts plus batch receipts",

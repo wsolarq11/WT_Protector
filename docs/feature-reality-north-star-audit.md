@@ -46,6 +46,15 @@ Verdict levels used below:
 - `strong`: real and useful, but not enough evidence or polish to call the feature a north-star even in the narrow scope.
 - `source-backed`: useful source-backed decision support, not a runtime feature verdict.
 
+Gap classes used below:
+
+- `none-proven`: no current narrow-scope gap has evidence.
+- `future-workload`: possible future capability, but no current workload justifies it yet.
+- `external-process-limit`: after external process handoff, the app cannot prove terminal-session health or arbitrary command side effects.
+- `visual-proof`: visual or perceptual comfort needs screenshot/human evidence after visual-heavy changes.
+- `distribution-scope`: installer, update, signing, or package-channel work belongs to distribution scope, not current launcher correctness.
+- `source-freshness`: external references must be refreshed before they are used as current evidence.
+
 ## Fresh external yardstick spot-check
 
 Current external references were spot-checked on 2026-06-01 before making the north-star judgment:
@@ -103,6 +112,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: repeated local workspaces need stable names, working directories, and shell commands instead of ad-hoc manual terminal setup.
 - Proof type: repo-battle-tested through active config/tests, market-informed by Windows Terminal command-line shape.
 - Verdict level: narrow-north-star
+- Gap class: future-workload
 - Current data owner: `config/config.json` entry rows with `id`, `name`, `directory`, `command`, `selected`, optional `updatedAtUtc`.
 - Evidence: `README.md` documents the schema; `LaunchArgumentBuilder.Build` turns a row into the `wt.exe` launch plan; repository config tests build dry-run plans for active config rows.
 - Verdict: north-star for this narrow Windows Terminal launcher.
@@ -113,6 +123,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: a stale launcher button should fail before click time, not after the user has trusted the UI.
 - Proof type: repo-battle-tested by root gate against the current filesystem; not a market supremacy claim.
 - Verdict level: narrow-north-star
+- Gap class: external-process-limit
 - Current data owner: `config/config.json` `directory`; current local truth is the filesystem.
 - Evidence: `tools/verify.ps1` rejects active config rows whose `directory` is not an existing container.
 - Verdict: north-star. This is the right boundary: fail fast at the repo gate instead of adding UI guesswork.
@@ -123,6 +134,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: a launcher with many entries is only useful if the target can be found by name, path, or command.
 - Proof type: repo-battle-tested by ViewModel/core tests; exact substring search remains intentionally narrow.
 - Verdict level: narrow-north-star
+- Gap class: future-workload
 - Current data owner: in-memory `FilterText` derived from portable `settings.json` when saved.
 - Evidence: XAML placeholder says it searches name/directory/command; tests cover filtering across all three fields, persisted filter state, runtime filter mutations and core filter projection rejecting null instead of inventing an empty filter, projection rejection of null entry text/timestamps or blank ids, and filter/sort projection returning a read-only collection snapshot instead of a mutable projection list.
 - Verdict: north-star for current entry count and local use.
@@ -133,6 +145,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: one known workspace should open with one explicit action.
 - Proof type: repo-battle-tested at the app boundary; external terminal health remains outside proof.
 - Verdict level: narrow-north-star
+- Gap class: external-process-limit
 - Current data owner: `LaunchPlan` built from the selected entry and global confirmation setting.
 - Evidence: launch workflow tests cover confirm/cancel paths, dry-run text, process handoff, honest `已请求启动` status wording, transient single-launch canceled/request/failure receipts, receipt rejection of blank entry names instead of rendering fake `(unnamed)` launches, single launch snapshotting entry data before confirmation so receipt/status cannot drift if the live entry changes during confirmation, single launch confirmation target carries entry id/name plus the generated plan instead of exposing the live mutable entry to the dialog, launch plans themselves reject blank executable/argument/working-directory/command fields before process handoff, unexpected single-launch exceptions replacing stale dry-run text with a failure receipt instead of leaving old success-looking output behind, and unexpected dry-run exceptions replacing stale preview text with a preview failure receipt.
 - Verdict: north-star for explicit local launching.
@@ -143,6 +156,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: users often launch a repeated slice of workspaces together.
 - Proof type: repo-battle-tested and legacy-flow-informed by the retired HTA bridge.
 - Verdict level: strong
+- Gap class: future-workload, external-process-limit
 - Current data owner: `selected` in `config/config.json`.
 - Evidence: selection changes are saved, batch launch uses selected entries, tests cover selection outcomes and batch confirmation/cancellation, and config-save failures during select-all/clear/checkbox mutation now prove visible `配置保存失败` status plus memory/file rollback instead of a false saved action. `LauncherLaunchWorkflow.PreflightBatch` prepares every selected launch plan before confirmation or external process start. Each preflight item snapshots the entry id and name, so confirmation text and batch receipts cannot drift if the mutable entry object changes after preflight. Batch preflight exposes its prepared item list as read-only state instead of leaking the mutable staging list. Batch launch reports are immutable snapshots, and starting a preflight returns a separate launch report instead of mutating the preflight report. Batch confirmation snapshots its item list as read-only state plus a required target label, so selected-entry confirmation says `已勾选项` and direct preset launch says the selected launch group instead of pretending every batch is checkbox state. The batch confirmation receives the generated `LaunchPlan` items, and if an external start still fails after earlier starts, the workflow records the failure and stops the remaining starts instead of compounding side effects. Named presets can now launch directly from `config/presets.json` without rewriting checkbox state first, and confirmation-cancel/failure tests prove that direct preset launch receives preflighted generated command lines before any process start while preserving the preset name in cancellation and unexpected-failure status. Current-group preview uses the same preflight output and formatter, then writes only transient dry-run/status text instead of starting processes or persisting checkbox state. Batch launch writes a transient `启动回执` that lists requested, failed, and skipped plans, exposes batch failure messages as read-only report state instead of handing formatters the mutable failure list, rejects blank failure entry names instead of rendering fake `(unnamed)` rows, reports blank-name batch preflight/start failures without inventing fallback names, and unexpected batch exceptions now replace stale dry-run text with a failure receipt instead of leaving old success-looking output behind; UI status says `已请求启动` instead of pretending the terminal session completed healthy.
 - Verdict: strong. Direct preset launch is the cleaner north-star path; checkbox batch remains the useful legacy/ad-hoc bridge from the retired HTA one-click flow.
@@ -153,6 +167,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: repeated subsets should be named, portable, inspectable objects instead of fragile transient checkbox state.
 - Proof type: repo-battle-tested and market-informed by named-subset patterns such as Compose profiles.
 - Verdict level: narrow-north-star
+- Gap class: future-workload
 - Current data owner: `config/presets.json`, referencing stable entry ids.
 - Evidence: preset schema is documented, validated by `tools/verify.ps1`, and covered by store/workflow/ViewModel tests, including missing `entryIds` rejection and invalid preset references rejected before label/preview/launch projection. The ViewModel load path propagates missing or failed `presets.json` instead of replacing it with an empty launch-group model, and preset view models snapshot preset facts plus read-only entry ids instead of exposing the live mutable preset object. The selected preset can be launched directly, preserving current checkbox state instead of forcing a selection rewrite before launch, while still sharing the same preflight/confirmation path as selected-item batch launch. Applying, previewing, or launching a preset also discards uncommitted drag-sort preview state first, so a visual ghost order is not silently persisted by a launch-group action. Applying a preset has a failure contract too: config backup/write failures leave the preset selection and config file unchanged and report `配置保存失败` instead of claiming the group was applied.
 - Verdict: north-star. This is the best current data-structure move in the project.
@@ -163,6 +178,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: a named group must be created, updated, and deleted inside the app, otherwise users fall back to hand-editing JSON.
 - Proof type: repo-battle-tested through dialog, mutation, rollback, and persistence contracts.
 - Verdict level: narrow-north-star
+- Gap class: future-workload
 - Current data owner: `config/presets.json`.
 - Evidence: ViewModel commands save current selection as a new group, update current group, delete editable groups, preserve locked groups, report dialog-boundary failures without mutating portable files, roll back memory/file state on preset save failures, save-new-preset dialogs receiving a read-only snapshot target so the saved entry ids cannot drift during the dialog, reject blank/duplicate preset entry ids before add/update mutation, reject invalid fallback preset references, blank fallback preset ids, and missing default-preset state before delete mutation instead of repairing corrupt state, reject missing selected-preset ids during preset state restore instead of silently selecting the first group, and report the new current launch group from the selected fallback view model after deletion instead of hiding fallback selection or rendering `(none)`.
 - Verdict: north-star inside this scope.
@@ -173,6 +189,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: applying a group blindly is dangerous because it rewrites saved selection.
 - Proof type: repo-battle-tested as a no-side-effect projection, not a second persistent model.
 - Verdict level: narrow-north-star
+- Gap class: visual-proof
 - Current data owner: preview is derived from current selection and selected preset; it is not a second source of truth.
 - Evidence: tests cover apply/preview/no-op states, disabled no-op apply, and preview collection outputs that cannot be cast back to mutable selection/preset/missing-id storage.
 - Verdict: north-star. It solves the real "what will change?" problem without a second persistent model.
@@ -183,6 +200,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: launching a saved group is the highest-risk routine action; users need to inspect the exact generated `wt.exe` commands without rewriting selection or starting external processes.
 - Proof type: repo-battle-tested as the strongest zero-side-effect pre-launch boundary.
 - Verdict level: narrow-north-star
+- Gap class: external-process-limit
 - Current data owner: `config/presets.json` owns desired group membership; `LaunchPlan` owns generated command lines; `DryRunText` is transient UI output, not persisted state.
 - Evidence: `PreviewSelectedPresetCommand` calls the same `LauncherLaunchWorkflow.PreflightBatch` path as launch, formats plans through `LauncherBatchLaunchPlanText`, starts no process, and preserves checkbox state; tests cover successful preview, mixed valid/invalid plan-failure preview, including valid generated command lines marked as not started plus the failure list, and blank-name preview preflight failures replacing stale preview text with a preview failure receipt.
 - Verdict: north-star for the repo-owned side-effect boundary. It converts the impossible "0% side effects after launch" demand into a true pre-launch no-side-effect inspection path.
@@ -193,6 +211,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: the launcher must stay maintainable without manual JSON edits for common entry changes.
 - Proof type: repo-battle-tested through mutation, reference, dialog-boundary, and rollback tests.
 - Verdict level: strong
+- Gap class: future-workload
 - Current data owner: `config/config.json`, with preset/settings references updated or rolled back together.
 - Evidence: entry mutation tests cover add/edit/delete, dialog-boundary failure without file mutation, dialog-boundary handler assignments rejecting null instead of storing a broken runtime callback, failed save rollback, preset/settings coordination, status text, blank/duplicate reference rejection before reference rename/remove mutation, entry delete confirmation snapshotting target id/name before dialog mutation so references and rollback cannot drift, preset delete confirmation snapshotting target id/name/count before dialog mutation so the target and status cannot drift, entry view models exposing snapshot copies instead of public live `LaunchEntry` rows, entry edit dialogs receiving a snapshot entry instead of the live mutable row, and entry edit dialogs rejecting null initial/submitted text instead of converting it into empty required-field input.
 - Verdict: strong.
@@ -203,6 +222,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: users build spatial memory; alphabetical order is not always the fastest launch order.
 - Proof type: repo-battle-tested and accessibility-informed by WCAG non-drag movement requirements.
 - Verdict level: narrow-north-star
+- Gap class: none-proven
 - Current data owner: `settings.json` `customEntryOrder`; drag session is a single transient object.
 - Evidence: drag reorder session/workflow tests cover preview, commit, cancel, rollback, single-session ownership, sessions not publicly exposing mutable source view models or settings snapshots, drag sessions deriving the dragged id from the source entry instead of accepting a second mismatched id, required drag workflow dependencies failing fast at construction, custom-order index returning a read-only dictionary snapshot instead of a mutable index map, reorder bounds capture and animation scheduling exposing read-only cloned snapshots instead of caller-owned mutable dictionaries, invalid move/custom-order rejection before mutation or sort projection, missing or stale custom-order ids rejected before sort projection instead of buried at the end, and custom-order sync rejection of invalid order or known ids before mutation; context-menu `上移排序` / `下移排序` commands persist the same `customEntryOrder` without creating a second reorder model, and when invoked during a drag preview they discard the preview before resolving targets so ghost order cannot become a hidden source of truth.
 - Verdict: north-star for mouse-first local use.
@@ -213,6 +233,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: users need different scan modes: custom memory order, newest updated, or alphabetic lookup.
 - Proof type: repo-battle-tested; three modes are enough for current observed use.
 - Verdict level: narrow-north-star
+- Gap class: none-proven
 - Current data owner: `settings.json` `sortMode`.
 - Evidence: tests cover custom/updated/alphabetic sort behavior and reject missing or unknown mode ids.
 - Verdict: north-star; three modes are enough and not a framework.
@@ -223,6 +244,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: one layout cannot solve readable actions, dense field scanning, and overview at the same time.
 - Proof type: repo-battle-tested for state/model switching; visual taste still needs screenshot evidence after visual changes.
 - Verdict level: narrow-north-star
+- Gap class: visual-proof
 - Current data owner: `settings.json` `entryViewMode`.
 - Evidence: code exposes `cards`, `details`, and `names`; XAML has three roots; tests cover mode persistence and root selection.
 - Verdict: north-star data model; README needed to name the already-implemented `Names` mode explicitly.
@@ -233,6 +255,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: fixed cards waste space on large windows and become unusable on small windows.
 - Proof type: repo-battle-tested structurally; perceptual comfort is not fully machine-proven.
 - Verdict level: strong
+- Gap class: visual-proof
 - Current data owner: `LauncherEntryLayoutDensity`, derived from available size and visible entry count.
 - Evidence: layout tests cover Normal/Compact/Micro density and filtered visible-entry sizing.
 - Verdict: strong, close to north-star.
@@ -243,6 +266,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: launch safety should have one visible rule; per-command "danger" guesses create false confidence and hidden branches.
 - Proof type: repo-battle-tested; one global safety switch beats speculative per-command classification.
 - Verdict level: narrow-north-star
+- Gap class: none-proven
 - Current data owner: `settings.json` `requireConfirmationForLaunches`.
 - Evidence: launch confirmation tests cover saved setting, confirmation/cancel, and `LaunchPlan.RequiresConfirmation`; missing, unknown, or wrong-case JSON fields now fail fast, so obsolete per-entry `confirm` cannot silently compete with the global setting.
 - Verdict: north-star. One switch is simpler and safer than command-classification theater.
@@ -253,6 +277,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: UI preferences should move with the repo and stay reviewable, not hide in AppData or registry.
 - Proof type: repo-battle-tested and market-informed by reviewable workspace/settings patterns.
 - Verdict level: narrow-north-star
+- Gap class: future-workload
 - Current data owner: `config/settings.json`.
 - Evidence: settings schema is documented and tests cover sort/view/confirmation/filter/order/window fields; null settings fields, null saved filter state at ViewModel construction, null runtime filter mutations, null runtime sort/display mode assignments, missing/blank mode ids, invalid in-memory settings during close-time window save, and non-positive persisted window dimensions now fail fast instead of being rewritten or carried into default/broken UI state; unused `theme` state was removed instead of kept as a fake preference.
 - Verdict: north-star for this local tool.
@@ -263,6 +288,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: config edits must not leave half-written JSON or half-applied multi-file state.
 - Proof type: repo-battle-tested for single-process local persistence; no multi-writer market claim.
 - Verdict level: narrow-north-star
+- Gap class: future-workload
 - Current data owner: config/preset/settings stores plus mutation snapshots.
 - Evidence: store tests cover temp writes, `.bak` backups, skip-backup rollback writes, multi-file rollback failure statuses, config load returning a read-only entry collection snapshot instead of a mutable load list, rollback snapshot accessors cloning or read-only wrapping captured state instead of exposing mutable rollback storage, invalid in-memory mutation data and invalid rollback snapshots propagating instead of being reported as ordinary save/rollback failure, and fail-fast rejection of missing files plus missing, null, blank mode, non-positive window geometry, unknown, or wrong-case JSON fields. ViewModel refresh now shares that fail-fast preset-load contract instead of synthesizing a second empty preset truth.
 - Verdict: north-star for a single-process local app.
@@ -273,6 +299,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: launch argument rules and config behavior must be testable without opening the GUI.
 - Proof type: repo-battle-tested by independent Core/App/tests contracts.
 - Verdict level: narrow-north-star
+- Gap class: none-proven
 - Current data owner: Core owns pure records/rules; App owns ViewModels/Views; Tests own behavior contracts.
 - Evidence: solution layout and root verify enforce Core/App/Tests presence, tests cover Core helpers independently, ViewModel-owned collections expose read-only projections instead of public mutable collection owners, startup arguments reject null argument lists plus unknown or duplicate `--config` inputs instead of silently choosing one, and config path resolution rejects missing search roots instead of silently falling back to `Environment.CurrentDirectory`.
 - Verdict: north-star for maintainability.
@@ -283,6 +310,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: a desktop launcher is only real if it can be restored, tested, published, and smoke-started.
 - Proof type: repo-battle-tested by the root/native gate on the current checkout.
 - Verdict level: narrow-north-star
+- Gap class: distribution-scope
 - Current data owner: `tools/verify.ps1`, `src/avalonia-launcher/verify.ps1`, and ignored publish artifacts.
 - Evidence: root verify checks retired paths, config/presets/settings, docs, the GitHub similar-project snapshot schema plus refresh script and freshness window, tests, publish, and hidden startup smoke.
 - Verdict: north-star for repo-local Windows release proof.
@@ -293,6 +321,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: two active UI lines create duplicate truth and slow failure.
 - Proof type: repo-battle-tested by retired-path gate checks; duplicate UI truth stays dead.
 - Verdict level: narrow-north-star
+- Gap class: none-proven
 - Current data owner: Avalonia mainline; retired HTA/WinForms are archive/reference only.
 - Evidence: root verify rejects old WinForms/spike/root executable return and keeps retirement docs readable.
 - Verdict: north-star. The old line is retired instead of kept alive by compatibility branches.
@@ -303,6 +332,7 @@ It is not a general launcher/automation north star. That broader domain includes
 - Real problem: UI/product decisions should not be made from vibes or copied frameworks.
 - Proof type: source-backed and market-informed; it guides decisions but is not automatically feature proof.
 - Verdict level: source-backed
+- Gap class: source-freshness
 - Current data owner: `DESIGN.md`, `docs/design-benchmark-digest.md`, and `docs/giants-shoulders/`.
 - Evidence: docs translate external references into local acceptance rules, tests keep the digest referenced, `docs/reference/github-similar-projects-snapshot.json` preserves the current GitHub market yardstick used by this audit, `tools/update-github-similar-projects-snapshot.ps1` refreshes it from GitHub API state, and root verify validates the snapshot schema, freshness window, representative direct projects, and broad-market repositories.
 - Verdict: strong, not automatically north-star.
@@ -328,7 +358,7 @@ This section checks the user's full objective against current evidence instead o
   - Evidence: the 21 feature sections above cover every active feature mapping documented in `README.md` and the current Avalonia mainline scope.
   - Status: proven for the current repository scope.
 - Requirement: decide whether each feature is battle-practice or market-proven north-star.
-  - Evidence: every feature section has a real problem, controlled proof type, controlled verdict level, data owner, evidence, verdict, and remaining gap; the GitHub snapshot separates narrow direct competitors from broad launchers.
+  - Evidence: every feature section has a real problem, controlled proof type, controlled verdict level, controlled gap class, data owner, evidence, verdict, and remaining gap; the GitHub snapshot separates narrow direct competitors from broad launchers.
   - Status: proven as an audit, not as a universal supremacy claim.
 - Requirement: current ability is already unimprovable.
   - Evidence: the broad-domain gap list still names import/export, persisted terminal-session health/history, distribution/update, visual receipts, and external side-effect limits.
