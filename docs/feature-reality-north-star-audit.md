@@ -212,7 +212,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: config edits must not leave half-written JSON or half-applied multi-file state.
 - Current data owner: config/preset/settings stores plus mutation snapshots.
-- Evidence: store tests cover temp writes, `.bak` backups, skip-backup rollback writes, multi-file rollback failure statuses, invalid in-memory mutation data and invalid rollback snapshots propagating instead of being reported as ordinary save/rollback failure, and fail-fast rejection of missing files plus missing, null, blank mode, non-positive window geometry, unknown, or wrong-case JSON fields. ViewModel refresh now shares that fail-fast preset-load contract instead of synthesizing a second empty preset truth.
+- Evidence: store tests cover temp writes, `.bak` backups, skip-backup rollback writes, multi-file rollback failure statuses, rollback snapshot accessors cloning or read-only wrapping captured state instead of exposing mutable rollback storage, invalid in-memory mutation data and invalid rollback snapshots propagating instead of being reported as ordinary save/rollback failure, and fail-fast rejection of missing files plus missing, null, blank mode, non-positive window geometry, unknown, or wrong-case JSON fields. ViewModel refresh now shares that fail-fast preset-load contract instead of synthesizing a second empty preset truth.
 - Verdict: north-star for a single-process local app.
 - Remaining gap: no file locking or merge resolution for concurrent external edits; that is not a current requirement.
 

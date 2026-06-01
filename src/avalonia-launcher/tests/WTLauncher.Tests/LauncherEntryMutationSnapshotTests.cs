@@ -51,6 +51,26 @@ public sealed class LauncherEntryMutationSnapshotTests
         Assert.Equal("one", Assert.Single(snapshot.CustomEntryOrder));
     }
 
+    [Fact]
+    public void PublicAccessorsDoNotExposeRollbackStorage()
+    {
+        var snapshot = LauncherEntryMutationSnapshot.Capture(
+            [Entry()],
+            PresetFile(),
+            ["one"],
+            selectedPresetId: "daily");
+
+        Assert.Single(snapshot.Entries).Id = "changed";
+        snapshot.PresetFile.Presets[0].EntryIds[0] = "changed";
+        var order = Assert.IsAssignableFrom<IList<string>>(snapshot.CustomEntryOrder);
+
+        Assert.True(order.IsReadOnly);
+        Assert.Throws<NotSupportedException>(() => order.Add("changed"));
+        Assert.Equal("one", Assert.Single(snapshot.CloneEntries()).Id);
+        Assert.Equal("one", Assert.Single(snapshot.ClonePresetFile().Presets[0].EntryIds));
+        Assert.Equal("one", Assert.Single(snapshot.CloneCustomEntryOrder()));
+    }
+
     private static LaunchEntry Entry(
         bool selected = false,
         string updatedAtUtc = "") =>

@@ -145,6 +145,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("non-positive persisted window dimensions now fail fast", audit);
         Assert.Contains("missing files plus missing, null, blank mode, non-positive window geometry, unknown, or wrong-case JSON fields", audit);
         Assert.Contains("invalid in-memory mutation data and invalid rollback snapshots propagating instead of being reported as ordinary save/rollback failure", audit);
+        Assert.Contains("rollback snapshot accessors cloning or read-only wrapping captured state instead of exposing mutable rollback storage", audit);
         Assert.Contains("unused `theme` state was removed", audit);
         Assert.Contains("startup arguments reject unknown or duplicate `--config` inputs instead of silently choosing one", audit);
         Assert.Contains("ViewModel-owned collections expose read-only projections instead of public mutable collection owners", audit);

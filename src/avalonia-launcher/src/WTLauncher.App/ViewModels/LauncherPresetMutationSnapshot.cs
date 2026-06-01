@@ -4,13 +4,15 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed class LauncherPresetMutationSnapshot
 {
+    private readonly LauncherPresetFile _presetFile;
+
     private LauncherPresetMutationSnapshot(LauncherPresetFile presetFile, string? selectedPresetId)
     {
-        PresetFile = presetFile;
+        _presetFile = presetFile;
         SelectedPresetId = selectedPresetId;
     }
 
-    public LauncherPresetFile PresetFile { get; }
+    public LauncherPresetFile PresetFile => ClonePresetFile();
 
     public string? SelectedPresetId { get; }
 
@@ -25,6 +27,6 @@ public sealed class LauncherPresetMutationSnapshot
 
     public LauncherPresetFile ClonePresetFile()
     {
-        return LauncherPresetFiles.Clone(PresetFile);
+        return LauncherPresetFiles.Clone(_presetFile);
     }
 }

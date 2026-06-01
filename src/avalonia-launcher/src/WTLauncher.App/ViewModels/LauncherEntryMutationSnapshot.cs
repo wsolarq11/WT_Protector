@@ -4,23 +4,27 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed class LauncherEntryMutationSnapshot
 {
+    private readonly List<LaunchEntry> _entries;
+    private readonly LauncherPresetFile _presetFile;
+    private readonly List<string> _customEntryOrder;
+
     private LauncherEntryMutationSnapshot(
         List<LaunchEntry> entries,
         LauncherPresetFile presetFile,
         List<string> customEntryOrder,
         string? selectedPresetId)
     {
-        Entries = entries;
-        PresetFile = presetFile;
-        CustomEntryOrder = customEntryOrder;
+        _entries = entries;
+        _presetFile = presetFile;
+        _customEntryOrder = customEntryOrder;
         SelectedPresetId = selectedPresetId;
     }
 
-    public IReadOnlyList<LaunchEntry> Entries { get; }
+    public IReadOnlyList<LaunchEntry> Entries => CloneEntries().AsReadOnly();
 
-    public LauncherPresetFile PresetFile { get; }
+    public LauncherPresetFile PresetFile => ClonePresetFile();
 
-    public IReadOnlyList<string> CustomEntryOrder { get; }
+    public IReadOnlyList<string> CustomEntryOrder => CloneCustomEntryOrder().AsReadOnly();
 
     public string? SelectedPresetId { get; }
 
@@ -39,16 +43,16 @@ public sealed class LauncherEntryMutationSnapshot
 
     public List<LaunchEntry> CloneEntries()
     {
-        return [.. Entries.Select(entry => entry with { })];
+        return [.. _entries.Select(entry => entry with { })];
     }
 
     public LauncherPresetFile ClonePresetFile()
     {
-        return LauncherPresetFiles.Clone(PresetFile);
+        return LauncherPresetFiles.Clone(_presetFile);
     }
 
     public List<string> CloneCustomEntryOrder()
     {
-        return [.. CustomEntryOrder];
+        return [.. _customEntryOrder];
     }
 }

@@ -35,4 +35,16 @@ public sealed class LauncherPresetMutationSnapshotTests
 
         Assert.Equal("one", Assert.Single(snapshot.PresetFile.Presets[0].EntryIds));
     }
+
+    [Fact]
+    public void PublicAccessorDoesNotExposeRollbackStorage()
+    {
+        var snapshot = LauncherPresetMutationSnapshot.Capture(
+            PresetFile("daily", NamedPreset("daily", "Daily", "one")),
+            selectedPresetId: "daily");
+
+        snapshot.PresetFile.Presets[0].EntryIds[0] = "changed";
+
+        Assert.Equal("one", Assert.Single(snapshot.ClonePresetFile().Presets[0].EntryIds));
+    }
 }
