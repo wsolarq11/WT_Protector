@@ -30,6 +30,10 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("gh repo view <owner>/<repo>", audit);
         Assert.Contains("root verify validates the snapshot schema", audit);
         Assert.Contains("freshness window", audit);
+        Assert.Contains("GitHub yardstick verdict tokens used below:", audit);
+        Assert.Contains("direct-narrow-weaker", audit);
+        Assert.Contains("adjacent-axis-stronger", audit);
+        Assert.Contains("broad-market-stronger", audit);
         Assert.Contains("Proof taxonomy used below:", audit);
         Assert.Contains("repo-battle-tested", audit);
         Assert.Contains("market-informed", audit);
@@ -127,6 +131,7 @@ public sealed partial class RepositoryConfigContractTests
             Assert.Contains(githubYardstick, audit);
             Assert.Contains(githubYardstick, githubSnapshot.GetProperty("repositories").EnumerateArray().Select(repo => repo.GetProperty("fullName").GetString()));
         }
+        AssertGitHubYardsticksUseControlledVerdicts(audit, githubSnapshot);
 
         Assert.Equal(1, githubSnapshot.GetProperty("schemaVersion").GetInt32());
         Assert.True(
@@ -358,6 +363,55 @@ public sealed partial class RepositoryConfigContractTests
             Assert.Contains("- Evidence:", section);
             Assert.Contains("- Verdict:", section);
             Assert.Contains("- Remaining gap:", section);
+        }
+    }
+
+    private static void AssertGitHubYardsticksUseControlledVerdicts(string audit, JsonElement githubSnapshot)
+    {
+        var start = audit.IndexOf("Representative GitHub yardsticks:", StringComparison.Ordinal);
+        var end = audit.IndexOf("Conclusion from the GitHub snapshot:", StringComparison.Ordinal);
+        Assert.True(start >= 0, "Representative GitHub yardsticks section is missing.");
+        Assert.True(end > start, "Representative GitHub yardsticks must appear before its conclusion.");
+
+        var allowedVerdicts = new[]
+        {
+            "direct-narrow-weaker",
+            "adjacent-axis-stronger",
+            "broad-market-stronger",
+        };
+        var expectedYardsticks = new (string FullName, string Verdict)[]
+        {
+            ("SyDroX/dev-layout", "direct-narrow-weaker"),
+            ("augustdragon/terminal-manager", "adjacent-axis-stronger"),
+            ("noambrand/Launchpad-CLI", "adjacent-axis-stronger"),
+            ("kevinkicho/win-screen-setup", "adjacent-axis-stronger"),
+            ("ewdieckman/DevWorkspace", "adjacent-axis-stronger"),
+            ("jsoulet42/claude-launcher-app", "direct-narrow-weaker"),
+            ("A-ema755/claude-dashboard", "adjacent-axis-stronger"),
+            ("adityacodepublic/wtsm-cli", "adjacent-axis-stronger"),
+            ("pramin/AgentSpace", "adjacent-axis-stronger"),
+            ("joyahmed/devgo-app", "adjacent-axis-stronger"),
+            ("Flow-Launcher/Flow.Launcher", "broad-market-stronger"),
+            ("Wox-launcher/Wox", "broad-market-stronger"),
+        };
+        var section = audit[start..end];
+        var yardstickLines = section
+            .Split('\n')
+            .Where(line => line.StartsWith("- <https://github.com/", StringComparison.Ordinal))
+            .ToArray();
+        var snapshotRepos = githubSnapshot.GetProperty("repositories")
+            .EnumerateArray()
+            .Select(repo => repo.GetProperty("fullName").GetString())
+            .ToArray();
+
+        Assert.Equal(expectedYardsticks.Length, yardstickLines.Length);
+        Assert.Equal(2, expectedYardsticks.Count(yardstick => yardstick.Verdict == "broad-market-stronger"));
+        foreach (var (fullName, verdict) in expectedYardsticks)
+        {
+            Assert.Contains(verdict, allowedVerdicts);
+            Assert.Contains(fullName, snapshotRepos);
+            var line = yardstickLines.Single(yardstickLine => yardstickLine.Contains($"https://github.com/{fullName}", StringComparison.Ordinal));
+            Assert.Contains($"Yardstick verdict: `{verdict}`", line);
         }
     }
 
