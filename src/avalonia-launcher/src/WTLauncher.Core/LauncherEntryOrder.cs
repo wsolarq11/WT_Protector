@@ -42,7 +42,7 @@ public static class LauncherEntryOrder
             indexById.Add(ids[index], index);
         }
 
-        return indexById;
+        return new System.Collections.ObjectModel.ReadOnlyDictionary<string, int>(indexById);
     }
 
     public static bool MoveRelative(

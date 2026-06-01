@@ -184,6 +184,18 @@ public sealed class LauncherEntryOrderTests
     }
 
     [Fact]
+    public void BuildIndexReturnsReadOnlyIndexSnapshot()
+    {
+        var index = LauncherEntryOrder.BuildIndex(["two", "one"]);
+
+        var dictionary = Assert.IsAssignableFrom<IDictionary<string, int>>(index);
+        Assert.True(dictionary.IsReadOnly);
+        Assert.Throws<NotSupportedException>(() => dictionary.Add("three", 2));
+        Assert.Throws<NotSupportedException>(() => dictionary["two"] = 9);
+        Assert.Equal(0, index["two"]);
+    }
+
+    [Fact]
     public void BuildIndexRejectsDuplicateIds()
     {
         var exception = Assert.Throws<ArgumentException>(() =>
