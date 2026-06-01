@@ -26,10 +26,10 @@ public sealed class EntryDetailsWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = Brushes.White;
 
-        _idBox = LauncherDialogText.Input(entry?.Id ?? "");
-        _nameBox = LauncherDialogText.Input(entry?.Name ?? "");
-        _directoryBox = LauncherDialogText.Input(entry?.Directory ?? "");
-        _commandBox = LauncherDialogText.Input(entry?.Command ?? "");
+        _idBox = LauncherDialogText.Input(RequireInitialEntryId(entry));
+        _nameBox = LauncherDialogText.Input(RequireInitialEntryText(entry, static item => item.Name, "name"));
+        _directoryBox = LauncherDialogText.Input(RequireInitialEntryText(entry, static item => item.Directory, "directory"));
+        _commandBox = LauncherDialogText.Input(RequireInitialEntryText(entry, static item => item.Command, "command"));
         _selectedBox = new CheckBox
         {
             Content = "保存为已勾选",
@@ -83,10 +83,10 @@ public sealed class EntryDetailsWindow : Window
     private void Submit()
     {
         var rawDraft = new EntryDraft(
-            _idBox.Text ?? string.Empty,
-            _nameBox.Text ?? string.Empty,
-            _directoryBox.Text ?? string.Empty,
-            _commandBox.Text ?? string.Empty,
+            RequireSubmittedText(_idBox, "id"),
+            RequireSubmittedText(_nameBox, "name"),
+            RequireSubmittedText(_directoryBox, "directory"),
+            RequireSubmittedText(_commandBox, "command"),
             _selectedBox.IsChecked == true);
 
         if (!LauncherEntryDrafts.TryNormalizeRequiredDraft(rawDraft, out var draft, out var requiredFieldError))
@@ -98,4 +98,35 @@ public sealed class EntryDetailsWindow : Window
 
         Close(draft);
     }
+
+    private static string RequireInitialEntryId(LaunchEntry? entry)
+    {
+        if (entry is null)
+            return string.Empty;
+
+        var id = LauncherEntryIds.Normalize(entry.Id);
+        if (!LauncherEntryIds.IsUsable(id))
+            throw new InvalidDataException("Launcher entry dialog initial id is required.");
+
+        return id;
+    }
+
+    private static string RequireInitialEntryText(
+        LaunchEntry? entry,
+        Func<LaunchEntry, string?> selectText,
+        string fieldName)
+    {
+        if (entry is null)
+            return string.Empty;
+
+        var text = LauncherEntryText.Normalize(selectText(entry));
+        if (text.Length == 0)
+            throw new InvalidDataException($"Launcher entry dialog initial {fieldName} is required.");
+
+        return text;
+    }
+
+    private static string RequireSubmittedText(TextBox textBox, string fieldName) =>
+        textBox.Text
+        ?? throw new InvalidDataException($"Launcher entry dialog submitted {fieldName} text is null.");
 }

@@ -106,6 +106,32 @@ public sealed class DialogLayoutContractTests
         Assert.Contains("Padding = new Thickness(10, 8)", MethodSource(dialogText, "Input"));
     }
 
+    [Fact]
+    public void EntryDetailsDialogRejectsNullTextFallbacks()
+    {
+        var source = File.ReadAllText(TestRepositoryPaths.View("EntryDetailsWindow.cs"));
+
+        Assert.Contains("_idBox = LauncherDialogText.Input(RequireInitialEntryId(entry));", source);
+        Assert.Contains("_nameBox = LauncherDialogText.Input(RequireInitialEntryText(entry, static item => item.Name, \"name\"));", source);
+        Assert.Contains("_directoryBox = LauncherDialogText.Input(RequireInitialEntryText(entry, static item => item.Directory, \"directory\"));", source);
+        Assert.Contains("_commandBox = LauncherDialogText.Input(RequireInitialEntryText(entry, static item => item.Command, \"command\"));", source);
+
+        Assert.Contains("RequireSubmittedText(_idBox, \"id\")", source);
+        Assert.Contains("RequireSubmittedText(_nameBox, \"name\")", source);
+        Assert.Contains("RequireSubmittedText(_directoryBox, \"directory\")", source);
+        Assert.Contains("RequireSubmittedText(_commandBox, \"command\")", source);
+        Assert.Contains("throw new InvalidDataException", source);
+
+        Assert.DoesNotContain("_idBox.Text ?? string.Empty", source);
+        Assert.DoesNotContain("_nameBox.Text ?? string.Empty", source);
+        Assert.DoesNotContain("_directoryBox.Text ?? string.Empty", source);
+        Assert.DoesNotContain("_commandBox.Text ?? string.Empty", source);
+        Assert.DoesNotContain("entry?.Id ?? \"\"", source);
+        Assert.DoesNotContain("entry?.Name ?? \"\"", source);
+        Assert.DoesNotContain("entry?.Directory ?? \"\"", source);
+        Assert.DoesNotContain("entry?.Command ?? \"\"", source);
+    }
+
     private static string MethodSource(string source, string methodName)
     {
         var start = source.IndexOf($"static Button {methodName}(", StringComparison.Ordinal);
