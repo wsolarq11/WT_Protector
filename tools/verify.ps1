@@ -94,10 +94,16 @@ if ($null -eq $githubSnapshot) { throw "GitHub similar-project snapshot parsed t
 Assert-OnlyJsonKeys $githubSnapshot @('schemaVersion', 'capturedAtUtc', 'evidenceCommand', 'refreshCommand', 'queries', 'scope', 'repositories') 'github-similar-projects-snapshot.json'
 if ([int]$githubSnapshot.schemaVersion -ne 1) { throw "Unsupported GitHub similar-project snapshot schemaVersion: $($githubSnapshot.schemaVersion)" }
 if ([string]::IsNullOrWhiteSpace([string]$githubSnapshot.capturedAtUtc)) { throw 'GitHub similar-project snapshot capturedAtUtc is required' }
+$githubSnapshotMaxAgeDays = 30
 try {
-    [void][datetimeoffset]::Parse([string]$githubSnapshot.capturedAtUtc, [System.Globalization.CultureInfo]::InvariantCulture)
+    $githubCapturedAt = [datetimeoffset]::Parse([string]$githubSnapshot.capturedAtUtc, [System.Globalization.CultureInfo]::InvariantCulture)
 } catch {
     throw "GitHub similar-project snapshot capturedAtUtc is not parseable: $($githubSnapshot.capturedAtUtc)"
+}
+$githubSnapshotAge = (Get-Date).ToUniversalTime() - $githubCapturedAt.UtcDateTime
+if ($githubSnapshotAge.TotalSeconds -lt 0) { throw "GitHub similar-project snapshot capturedAtUtc is in the future: $($githubSnapshot.capturedAtUtc)" }
+if ($githubSnapshotAge.TotalDays -gt $githubSnapshotMaxAgeDays) {
+    throw "GitHub similar-project snapshot is stale: $($githubSnapshot.capturedAtUtc). Refresh with: powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\update-github-similar-projects-snapshot.ps1"
 }
 if (-not ([string]$githubSnapshot.evidenceCommand).Contains('gh repo view <owner>/<repo>')) {
     throw 'GitHub similar-project snapshot must record the gh repo view evidence command'
@@ -154,6 +160,8 @@ Add-Check 'github-similar-projects-snapshot' @{
     path = 'docs\reference\github-similar-projects-snapshot.json'
     refreshScript = 'tools\update-github-similar-projects-snapshot.ps1'
     capturedAtUtc = $githubSnapshot.capturedAtUtc
+    maxAgeDays = $githubSnapshotMaxAgeDays
+    ageDays = [math]::Round($githubSnapshotAge.TotalDays, 2)
     repositories = $githubRepos.Count
     flowStars = $flowStars
     woxStars = $woxStars

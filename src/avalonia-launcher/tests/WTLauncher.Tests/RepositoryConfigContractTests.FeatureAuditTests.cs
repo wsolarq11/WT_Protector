@@ -29,6 +29,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("tools/update-github-similar-projects-snapshot.ps1", audit);
         Assert.Contains("gh repo view <owner>/<repo>", audit);
         Assert.Contains("root verify validates the snapshot schema", audit);
+        Assert.Contains("freshness window", audit);
         Assert.Contains("## Feature mapping audit", audit);
         Assert.Contains("## Objective completion audit", audit);
         Assert.Contains("## Final answer", audit);
@@ -97,7 +98,9 @@ public sealed partial class RepositoryConfigContractTests
         }
 
         Assert.Equal(1, githubSnapshot.GetProperty("schemaVersion").GetInt32());
-        Assert.StartsWith("2026-06-01T", githubSnapshot.GetProperty("capturedAtUtc").GetString());
+        Assert.True(
+            DateTimeOffset.TryParse(githubSnapshot.GetProperty("capturedAtUtc").GetString(), out _),
+            "GitHub snapshot capturedAtUtc must be parseable.");
         Assert.Contains("gh repo view <owner>/<repo>", githubSnapshot.GetProperty("evidenceCommand").GetString());
         Assert.Contains("tools\\update-github-similar-projects-snapshot.ps1", githubSnapshot.GetProperty("refreshCommand").GetString());
         Assert.Equal("broad Windows launcher", githubSnapshot.GetProperty("repositories").EnumerateArray().Single(repo => repo.GetProperty("fullName").GetString() == "Flow-Launcher/Flow.Launcher").GetProperty("classification").GetString());
@@ -107,14 +110,14 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("Live GitHub repository search/API checks were refreshed on 2026-06-01", audit);
         Assert.Contains("\"Windows Terminal\" workspace launcher", audit);
         Assert.Contains("\"Claude Code\" launcher", audit);
-        Assert.Contains("updated 2026-05-31T14:38:02Z", audit);
         Assert.Contains("embedded PTY/SSH scope", audit);
-        Assert.Contains("updated 2026-04-08T23:38:30Z", audit);
         Assert.Contains("named-session CLI scope", audit);
-        Assert.Contains("14,844 stars, 607 forks, pushed 2026-06-01T09:41:17Z, updated 2026-06-01T08:06:11Z", audit);
-        Assert.Contains("26,982 stars, 2,411 forks, pushed 2026-06-01T03:46:06Z, updated 2026-06-01T08:40:12Z", audit);
-        Assert.Equal(14844, githubSnapshot.GetProperty("repositories").EnumerateArray().Single(repo => repo.GetProperty("fullName").GetString() == "Flow-Launcher/Flow.Launcher").GetProperty("stars").GetInt32());
-        Assert.Equal(26982, githubSnapshot.GetProperty("repositories").EnumerateArray().Single(repo => repo.GetProperty("fullName").GetString() == "Wox-launcher/Wox").GetProperty("stars").GetInt32());
+        Assert.True(
+            githubSnapshot.GetProperty("repositories").EnumerateArray().Single(repo => repo.GetProperty("fullName").GetString() == "Flow-Launcher/Flow.Launcher").GetProperty("stars").GetInt32() >= 10_000,
+            "Flow Launcher must remain broad-market proof in the snapshot.");
+        Assert.True(
+            githubSnapshot.GetProperty("repositories").EnumerateArray().Single(repo => repo.GetProperty("fullName").GetString() == "Wox-launcher/Wox").GetProperty("stars").GetInt32() >= 10_000,
+            "Wox must remain broad-market proof in the snapshot.");
         AssertObjectiveCompletionAuditPreservesOriginalScope(audit);
         Assert.Contains("not claim broad launcher/platform north-star status", audit);
         Assert.Contains("cannot honestly claim broad launcher supremacy", audit);
@@ -195,6 +198,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("docs/reference/github-similar-projects-snapshot.json", readme);
         Assert.Contains("tools/update-github-similar-projects-snapshot.ps1", readme);
         Assert.Contains("current GitHub similar-project evidence schema", readme);
+        Assert.Contains("root gate rejects stale snapshots", readme);
         Assert.Contains("portable UI preferences such as filter text", readme);
         Assert.DoesNotContain("portable UI preferences such as theme", readme);
         Assert.Contains("must not contain the obsolete per-entry `confirm` key", readme);

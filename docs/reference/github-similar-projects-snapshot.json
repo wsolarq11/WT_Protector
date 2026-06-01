@@ -1,6 +1,6 @@
 {
     "schemaVersion":  1,
-    "capturedAtUtc":  "2026-06-01T10:31:45Z",
+    "capturedAtUtc":  "2026-06-01T10:39:45Z",
     "evidenceCommand":  "gh repo view \u003cowner\u003e/\u003crepo\u003e --json nameWithOwner,url,description,stargazerCount,forkCount,pushedAt,updatedAt,primaryLanguage,isArchived",
     "refreshCommand":  "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tools\\update-github-similar-projects-snapshot.ps1",
     "queries":  [

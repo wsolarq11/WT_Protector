@@ -51,18 +51,18 @@ The relevant fight is narrower: portable Windows Terminal workspace launching wi
 
 Representative GitHub yardsticks:
 
-- <https://github.com/SyDroX/dev-layout> — direct Windows Terminal workspace launcher; PowerShell, 0 stars, updated 2026-05-27. Strong for fixed Claude Code multi-repo layout, session resume, and `cd` blocking. Weaker than WT Launcher on editable portable UI entries, named launch groups, repository-level native gate, and rollback-aware config persistence.
-- <https://github.com/augustdragon/terminal-manager> — direct Windows Terminal profile/session manager; TypeScript, 0 stars, updated 2026-05-17. Stronger than WT Launcher for WT profile editing, split-pane session groups, import/export, and WT `settings.json` sync. Heavier stack, local web server, more moving parts, and it mutates Windows Terminal settings by design. This is a different tradeoff, not a small-and-beautiful local config launcher.
-- <https://github.com/noambrand/Launchpad-CLI> — Claude Code launcher/installer; HTML-heavy repo, 16 stars, updated 2026-05-31T14:38:02Z. Stronger for installer/folder picker/right-click launch/statusline distribution. Heavier and broader than this repo's portable WT workspace-launcher slice.
-- <https://github.com/kevinkicho/win-screen-setup> — Windows multi-monitor workspace launcher; Python, 0 stars, updated 2026-04-26. Stronger for visual screen/app positioning across monitors. Broader side-effect surface than WT Launcher's small JSON-to-`wt.exe` contract.
-- <https://github.com/ewdieckman/DevWorkspace> — PowerShell Windows Terminal multi-pane workspace module; 0 stars, updated 2026-04-17. Stronger on fixed split-pane layouts. Weaker on editable GUI entries, rollback-aware persistence, and native publish/verify gate.
-- <https://github.com/jsoulet42/claude-launcher-app> — Claude Code Windows Terminal TUI workspace launcher; TypeScript, 1 star, updated 2026-04-06T18:14:28Z. Adjacent proof that the WT+Claude workspace-launcher niche is real, but still not stronger on this repo's portable editable GUI entries, rollback-aware JSON, and native gate axis.
-- <https://github.com/A-ema755/claude-dashboard> — Claude Code CLI session launcher/preset manager; JavaScript, 0 stars, updated 2026-04-08T23:38:30Z. Stronger adjacent scope for split-pane layouts and cost tracking; heavier and outside this app's small local launcher contract.
-- <https://github.com/adityacodepublic/wtsm-cli> — Windows Terminal session manager CLI; TypeScript, 1 star, updated 2026-02-07T05:12:44Z. Strong for named terminal sessions; weaker on GUI editing, launch-group preview, and repo-native rollback/verify evidence.
-- <https://github.com/pramin/AgentSpace> — Avalonia agent workspace launcher; C#, 0 stars, updated 2026-05-18. Stronger on embedded PTY/SSH file tree/code preview scope. Much larger domain, not the same small local WT launcher.
-- <https://github.com/joyahmed/devgo-app> — WSL-first developer launcher; C#, 2 stars, updated 2026-05-24. Strong for WSL + VS Code + tmux workflows and installer ambition. README still lists keyboard shortcuts and rough edges as in-progress, so it is not stronger on the current WT Launcher axis of verified portable launch groups.
-- <https://github.com/Flow-Launcher/Flow.Launcher> — broad Windows launcher; C#, 14,844 stars, 607 forks, pushed 2026-06-01T09:41:17Z, updated 2026-06-01T08:06:11Z. Stronger in broad market proof, plugins, search, packaging, and community. Not the same narrow product.
-- <https://github.com/Wox-launcher/Wox> — broad cross-platform launcher; Go, 26,982 stars, 2,411 forks, pushed 2026-06-01T03:46:06Z, updated 2026-06-01T08:40:12Z. Stronger in broad market proof, cross-platform packaging, plugin/theme stores, and AI/MCP direction. Not the same narrow product.
+- <https://github.com/SyDroX/dev-layout> — direct Windows Terminal workspace launcher. Strong for fixed Claude Code multi-repo layout, session resume, and `cd` blocking. Weaker than WT Launcher on editable portable UI entries, named launch groups, repository-level native gate, and rollback-aware config persistence.
+- <https://github.com/augustdragon/terminal-manager> — direct Windows Terminal profile/session manager. Stronger than WT Launcher for WT profile editing, split-pane session groups, import/export, and WT `settings.json` sync. Heavier stack, local web server, more moving parts, and it mutates Windows Terminal settings by design.
+- <https://github.com/noambrand/Launchpad-CLI> — Claude Code launcher/installer. Stronger for installer/folder picker/right-click launch/statusline distribution. Heavier and broader than this repo's portable WT workspace-launcher slice.
+- <https://github.com/kevinkicho/win-screen-setup> — Windows multi-monitor workspace launcher. Stronger for visual screen/app positioning across monitors. Broader side-effect surface than WT Launcher's small JSON-to-`wt.exe` contract.
+- <https://github.com/ewdieckman/DevWorkspace> — PowerShell Windows Terminal multi-pane workspace module. Stronger on fixed split-pane layouts. Weaker on editable GUI entries, rollback-aware persistence, and native publish/verify gate.
+- <https://github.com/jsoulet42/claude-launcher-app> — Claude Code Windows Terminal TUI workspace launcher. Adjacent proof that the WT+Claude workspace-launcher niche is real, but still not stronger on this repo's portable editable GUI entries, rollback-aware JSON, and native gate axis.
+- <https://github.com/A-ema755/claude-dashboard> — Claude Code CLI session launcher/preset manager. Stronger adjacent scope for split-pane layouts and cost tracking; heavier and outside this app's small local launcher contract.
+- <https://github.com/adityacodepublic/wtsm-cli> — Windows Terminal session manager CLI. Strong for named terminal sessions; weaker on GUI editing, launch-group preview, and repo-native rollback/verify evidence.
+- <https://github.com/pramin/AgentSpace> — Avalonia agent workspace launcher. Stronger on embedded PTY/SSH file tree/code preview scope. Much larger domain, not the same small local WT launcher.
+- <https://github.com/joyahmed/devgo-app> — WSL-first developer launcher. Strong for WSL + VS Code + tmux workflows and installer ambition. README still lists keyboard shortcuts and rough edges as in-progress, so it is not stronger on the current WT Launcher axis of verified portable launch groups.
+- <https://github.com/Flow-Launcher/Flow.Launcher> — broad Windows launcher. Stronger in broad market proof, plugins, search, packaging, and community. Not the same narrow product.
+- <https://github.com/Wox-launcher/Wox> — broad cross-platform launcher. Stronger in broad market proof, cross-platform packaging, plugin/theme stores, and AI/MCP direction. Not the same narrow product.
 
 Conclusion from the GitHub snapshot: WT Launcher can honestly claim a north-star shape only for the narrow, local, portable Windows Terminal workspace-launcher slice. It cannot honestly claim broad launcher supremacy.
 
@@ -232,7 +232,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: a desktop launcher is only real if it can be restored, tested, published, and smoke-started.
 - Current data owner: `tools/verify.ps1`, `src/avalonia-launcher/verify.ps1`, and ignored publish artifacts.
-- Evidence: root verify checks retired paths, config/presets/settings, docs, the GitHub similar-project snapshot schema plus refresh script, tests, publish, and hidden startup smoke.
+- Evidence: root verify checks retired paths, config/presets/settings, docs, the GitHub similar-project snapshot schema plus refresh script and freshness window, tests, publish, and hidden startup smoke.
 - Verdict: north-star for repo-local Windows release proof.
 - Remaining gap: no installer/update channel; that belongs to distribution scope, not current launcher correctness.
 
@@ -248,7 +248,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: UI/product decisions should not be made from vibes or copied frameworks.
 - Current data owner: `DESIGN.md`, `docs/design-benchmark-digest.md`, and `docs/giants-shoulders/`.
-- Evidence: docs translate external references into local acceptance rules, tests keep the digest referenced, `docs/reference/github-similar-projects-snapshot.json` preserves the current GitHub market yardstick used by this audit, `tools/update-github-similar-projects-snapshot.ps1` refreshes it from GitHub API state, and root verify validates the snapshot schema plus the representative direct and broad-market repositories.
+- Evidence: docs translate external references into local acceptance rules, tests keep the digest referenced, `docs/reference/github-similar-projects-snapshot.json` preserves the current GitHub market yardstick used by this audit, `tools/update-github-similar-projects-snapshot.ps1` refreshes it from GitHub API state, and root verify validates the snapshot schema, freshness window, representative direct projects, and broad-market repositories.
 - Verdict: strong, not automatically north-star.
 - Remaining gap: source freshness must be refreshed when a decision depends on a changed external standard.
 
