@@ -37,6 +37,14 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("gh repo view <owner>/<repo>", audit);
         Assert.Contains("root verify validates the snapshot schema", audit);
         Assert.Contains("freshness window", audit);
+        Assert.Contains("Representative GitHub yardsticks:", audit);
+        Assert.Contains("GitHub yardstick id:", audit);
+        Assert.Contains("Repository:", audit);
+        Assert.Contains("Yardstick verdict:", audit);
+        Assert.Contains("Classification:", audit);
+        Assert.Contains("Stronger axes:", audit);
+        Assert.Contains("WT Launcher axes:", audit);
+        Assert.Contains("Claim boundary:", audit);
         Assert.Contains("GitHub yardstick verdict tokens used below:", audit);
         Assert.Contains("direct-narrow-weaker", audit);
         Assert.Contains("adjacent-axis-stronger", audit);
@@ -143,7 +151,7 @@ public sealed partial class RepositoryConfigContractTests
             Assert.Contains(githubYardstick, audit);
             Assert.Contains(githubYardstick, githubSnapshot.GetProperty("repositories").EnumerateArray().Select(repo => repo.GetProperty("fullName").GetString()));
         }
-        AssertGitHubYardsticksUseControlledVerdicts(audit, githubSnapshot);
+        AssertGitHubYardsticksUseControlledLedger(audit, githubSnapshot);
 
         Assert.Equal(3, githubSnapshot.GetProperty("schemaVersion").GetInt32());
         Assert.True(DateTimeOffset.TryParse(githubCapturedAtUtc, out _), "GitHub snapshot capturedAtUtc must be parseable.");
@@ -472,7 +480,7 @@ public sealed partial class RepositoryConfigContractTests
         }
     }
 
-    private static void AssertGitHubYardsticksUseControlledVerdicts(string audit, JsonElement githubSnapshot)
+    private static void AssertGitHubYardsticksUseControlledLedger(string audit, JsonElement githubSnapshot)
     {
         var start = audit.IndexOf("Representative GitHub yardsticks:", StringComparison.Ordinal);
         var end = audit.IndexOf("Conclusion from the GitHub snapshot:", StringComparison.Ordinal);
@@ -485,25 +493,25 @@ public sealed partial class RepositoryConfigContractTests
             "adjacent-axis-stronger",
             "broad-market-stronger",
         };
-        var expectedYardsticks = new (string FullName, string Verdict)[]
+        var expectedYardsticks = new (string ReferenceId, string FullName, string Verdict, string Classification, string StrongerAxes, string WtLauncherAxes, string ClaimBoundary)[]
         {
-            ("SyDroX/dev-layout", "direct-narrow-weaker"),
-            ("augustdragon/terminal-manager", "adjacent-axis-stronger"),
-            ("noambrand/Launchpad-CLI", "adjacent-axis-stronger"),
-            ("kevinkicho/win-screen-setup", "adjacent-axis-stronger"),
-            ("ewdieckman/DevWorkspace", "adjacent-axis-stronger"),
-            ("jsoulet42/claude-launcher-app", "direct-narrow-weaker"),
-            ("A-ema755/claude-dashboard", "adjacent-axis-stronger"),
-            ("adityacodepublic/wtsm-cli", "adjacent-axis-stronger"),
-            ("pramin/AgentSpace", "adjacent-axis-stronger"),
-            ("joyahmed/devgo-app", "adjacent-axis-stronger"),
-            ("Flow-Launcher/Flow.Launcher", "broad-market-stronger"),
-            ("Wox-launcher/Wox", "broad-market-stronger"),
+            ("sydrox-dev-layout", "SyDroX/dev-layout", "direct-narrow-weaker", "direct WT workspace launcher", "fixed Claude Code multi-repo layout; session resume; cd blocking", "editable portable UI entries; named launch groups; rollback-aware JSON persistence; native gate", "supports WT Launcher's audited narrow axis only; not a universal repository ranking."),
+            ("augustdragon-terminal-manager", "augustdragon/terminal-manager", "adjacent-axis-stronger", "direct WT profile/session manager", "WT profile editing; split-pane groups; import/export; WT settings sync", "smaller local JSON-to-wt contract; no local web server; does not mutate Windows Terminal settings", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
+            ("noambrand-launchpad-cli", "noambrand/Launchpad-CLI", "adjacent-axis-stronger", "Claude Code launcher/installer", "installer; folder picker; right-click launch; statusline distribution", "portable editable WT workspace groups; rollback-aware config gate; smaller app scope", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
+            ("kevinkicho-win-screen-setup", "kevinkicho/win-screen-setup", "adjacent-axis-stronger", "Windows multi-monitor workspace launcher", "visual screen/app positioning", "narrower side-effect surface; portable launch groups; native repo gate", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
+            ("ewdieckman-devworkspace", "ewdieckman/DevWorkspace", "adjacent-axis-stronger", "PowerShell WT multi-pane workspace module", "fixed split-pane layouts", "editable GUI entries; rollback-aware persistence; native publish/verify gate", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
+            ("jsoulet42-claude-launcher-app", "jsoulet42/claude-launcher-app", "direct-narrow-weaker", "Claude Code WT TUI workspace launcher", "adjacent TUI flow", "portable editable GUI entries; named groups; rollback-aware JSON; native gate", "supports WT Launcher's audited narrow axis only; not a universal repository ranking."),
+            ("a-ema755-claude-dashboard", "A-ema755/claude-dashboard", "adjacent-axis-stronger", "Claude Code CLI session launcher/preset manager", "split-pane layouts; cost tracking", "small local WT launcher contract; portable GUI config; native gate", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
+            ("adityacodepublic-wtsm-cli", "adityacodepublic/wtsm-cli", "adjacent-axis-stronger", "Windows Terminal session manager CLI", "named terminal sessions CLI", "GUI editing; launch-group preview; repo-native rollback/verify evidence", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
+            ("pramin-agentspace", "pramin/AgentSpace", "adjacent-axis-stronger", "Avalonia agent workspace launcher", "embedded PTY; SSH file tree; code preview", "smaller WT handoff scope; portable JSON groups; native gate", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
+            ("joyahmed-devgo-app", "joyahmed/devgo-app", "adjacent-axis-stronger", "WSL-first developer launcher", "WSL; VS Code; tmux workflows; installer ambition", "verified portable WT launch groups; rollback-aware JSON; narrower scope", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
+            ("flow-launcher-flow-launcher", "Flow-Launcher/Flow.Launcher", "broad-market-stronger", "broad Windows launcher", "market proof; plugins; search; packaging; community", "narrow portable WT workspace-launcher slice only", "contradicts broad launcher supremacy and stays outside WT Launcher's narrow product domain."),
+            ("wox-launcher-wox", "Wox-launcher/Wox", "broad-market-stronger", "broad cross-platform launcher", "market proof; cross-platform packaging; plugin/theme stores; AI/MCP direction", "narrow portable WT workspace-launcher slice only", "contradicts broad launcher supremacy and stays outside WT Launcher's narrow product domain."),
         };
         var section = audit[start..end];
         var yardstickLines = section
-            .Split('\n')
-            .Where(line => line.StartsWith("- <https://github.com/", StringComparison.Ordinal))
+            .Split("\n- GitHub yardstick id:", StringSplitOptions.RemoveEmptyEntries)
+            .Skip(1)
             .ToArray();
         var snapshotRepos = githubSnapshot.GetProperty("repositories")
             .EnumerateArray()
@@ -512,16 +520,31 @@ public sealed partial class RepositoryConfigContractTests
 
         Assert.Equal(expectedYardsticks.Length, yardstickLines.Length);
         Assert.Equal(2, expectedYardsticks.Count(yardstick => yardstick.Verdict == "broad-market-stronger"));
-        foreach (var (fullName, verdict) in expectedYardsticks)
+        foreach (var (referenceId, fullName, verdict, classification, strongerAxes, wtLauncherAxes, claimBoundary) in expectedYardsticks)
         {
             Assert.Contains(verdict, allowedVerdicts);
             Assert.Contains(fullName, snapshotRepos);
             var repo = githubSnapshot.GetProperty("repositories")
                 .EnumerateArray()
                 .Single(snapshotRepo => snapshotRepo.GetProperty("fullName").GetString() == fullName);
+            Assert.Equal(referenceId, $"{fullName}".ToLowerInvariant().Replace("/", "-").Replace(".", "-"));
             Assert.Equal(verdict, repo.GetProperty("yardstickVerdict").GetString());
-            var line = yardstickLines.Single(yardstickLine => yardstickLine.Contains($"https://github.com/{fullName}", StringComparison.Ordinal));
-            Assert.Contains($"Yardstick verdict: `{verdict}`", line);
+            Assert.Equal(classification, repo.GetProperty("classification").GetString());
+            Assert.Equal(strongerAxes, string.Join("; ", repo.GetProperty("strongerAxes").EnumerateArray().Select(item => item.GetString())));
+            Assert.Equal(wtLauncherAxes, string.Join("; ", repo.GetProperty("wtLauncherAxes").EnumerateArray().Select(item => item.GetString())));
+
+            var block = yardstickLines.Single(yardstickLine => yardstickLine.TrimStart().StartsWith(referenceId, StringComparison.Ordinal));
+            var blockLines = block
+                .Split('\n')
+                .Select(line => line.TrimEnd())
+                .ToArray();
+            Assert.Equal(referenceId, blockLines[0].Trim());
+            Assert.Equal(fullName, ParseRequiredValue(blockLines.Single(line => line.TrimStart().StartsWith("- Repository:", StringComparison.Ordinal)).TrimStart(), "- Repository:"));
+            Assert.Equal(verdict, ParseControlledValue(blockLines.Single(line => line.TrimStart().StartsWith("- Yardstick verdict:", StringComparison.Ordinal)).TrimStart(), "- Yardstick verdict:"));
+            Assert.Equal(classification, ParseRequiredValue(blockLines.Single(line => line.TrimStart().StartsWith("- Classification:", StringComparison.Ordinal)).TrimStart(), "- Classification:"));
+            Assert.Equal(strongerAxes, ParseRequiredValue(blockLines.Single(line => line.TrimStart().StartsWith("- Stronger axes:", StringComparison.Ordinal)).TrimStart(), "- Stronger axes:"));
+            Assert.Equal(wtLauncherAxes, ParseRequiredValue(blockLines.Single(line => line.TrimStart().StartsWith("- WT Launcher axes:", StringComparison.Ordinal)).TrimStart(), "- WT Launcher axes:"));
+            Assert.Equal(claimBoundary, ParseRequiredValue(blockLines.Single(line => line.TrimStart().StartsWith("- Claim boundary:", StringComparison.Ordinal)).TrimStart(), "- Claim boundary:"));
         }
     }
 
@@ -579,6 +602,14 @@ public sealed partial class RepositoryConfigContractTests
         Assert.DoesNotContain(" ", value);
         Assert.DoesNotContain(".", value);
         Assert.DoesNotContain(";", value);
+        return value;
+    }
+
+    private static string ParseRequiredValue(string line, string prefix)
+    {
+        Assert.StartsWith(prefix, line);
+        var value = line[prefix.Length..].Trim();
+        Assert.False(string.IsNullOrWhiteSpace(value), $"{prefix} must not be blank.");
         return value;
     }
 

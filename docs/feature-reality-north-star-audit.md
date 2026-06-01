@@ -122,18 +122,90 @@ GitHub yardstick verdict tokens used below:
 - `adjacent-axis-stronger`: stronger on at least one adjacent axis, but not proof of broad universal superiority.
 - `broad-market-stronger`: stronger broad-market proof, explicitly outside WT Launcher's narrow domain.
 
-- <https://github.com/SyDroX/dev-layout> — Yardstick verdict: `direct-narrow-weaker`. Direct Windows Terminal workspace launcher. Strong for fixed Claude Code multi-repo layout, session resume, and `cd` blocking. Weaker than WT Launcher on editable portable UI entries, named launch groups, repository-level native gate, and rollback-aware config persistence.
-- <https://github.com/augustdragon/terminal-manager> — Yardstick verdict: `adjacent-axis-stronger`. Direct Windows Terminal profile/session manager. Stronger than WT Launcher for WT profile editing, split-pane session groups, import/export, and WT `settings.json` sync. Heavier stack, local web server, more moving parts, and it mutates Windows Terminal settings by design.
-- <https://github.com/noambrand/Launchpad-CLI> — Yardstick verdict: `adjacent-axis-stronger`. Claude Code launcher/installer. Stronger for installer/folder picker/right-click launch/statusline distribution. Heavier and broader than this repo's portable WT workspace-launcher slice.
-- <https://github.com/kevinkicho/win-screen-setup> — Yardstick verdict: `adjacent-axis-stronger`. Windows multi-monitor workspace launcher. Stronger for visual screen/app positioning across monitors. Broader side-effect surface than WT Launcher's small JSON-to-`wt.exe` contract.
-- <https://github.com/ewdieckman/DevWorkspace> — Yardstick verdict: `adjacent-axis-stronger`. PowerShell Windows Terminal multi-pane workspace module. Stronger on fixed split-pane layouts. Weaker on editable GUI entries, rollback-aware persistence, and native publish/verify gate.
-- <https://github.com/jsoulet42/claude-launcher-app> — Yardstick verdict: `direct-narrow-weaker`. Claude Code Windows Terminal TUI workspace launcher. Adjacent proof that the WT+Claude workspace-launcher niche is real, but still not stronger on this repo's portable editable GUI entries, rollback-aware JSON, and native gate axis.
-- <https://github.com/A-ema755/claude-dashboard> — Yardstick verdict: `adjacent-axis-stronger`. Claude Code CLI session launcher/preset manager. Stronger adjacent scope for split-pane layouts and cost tracking; heavier and outside this app's small local launcher contract.
-- <https://github.com/adityacodepublic/wtsm-cli> — Yardstick verdict: `adjacent-axis-stronger`. Windows Terminal session manager CLI. Strong for named terminal sessions; weaker on GUI editing, launch-group preview, and repo-native rollback/verify evidence.
-- <https://github.com/pramin/AgentSpace> — Yardstick verdict: `adjacent-axis-stronger`. Avalonia agent workspace launcher. Stronger on embedded PTY/SSH file tree/code preview scope. Much larger domain, not the same small local WT launcher.
-- <https://github.com/joyahmed/devgo-app> — Yardstick verdict: `adjacent-axis-stronger`. WSL-first developer launcher. Strong for WSL + VS Code + tmux workflows and installer ambition. README still lists keyboard shortcuts and rough edges as in-progress, so it is not stronger on the current WT Launcher axis of verified portable launch groups.
-- <https://github.com/Flow-Launcher/Flow.Launcher> — Yardstick verdict: `broad-market-stronger`. Broad Windows launcher. Stronger in broad market proof, plugins, search, packaging, and community. Not the same narrow product.
-- <https://github.com/Wox-launcher/Wox> — Yardstick verdict: `broad-market-stronger`. Broad cross-platform launcher. Stronger in broad market proof, cross-platform packaging, plugin/theme stores, and AI/MCP direction. Not the same narrow product.
+- GitHub yardstick id: sydrox-dev-layout
+  - Repository: SyDroX/dev-layout
+  - Yardstick verdict: direct-narrow-weaker
+  - Classification: direct WT workspace launcher
+  - Stronger axes: fixed Claude Code multi-repo layout; session resume; cd blocking
+  - WT Launcher axes: editable portable UI entries; named launch groups; rollback-aware JSON persistence; native gate
+  - Claim boundary: supports WT Launcher's audited narrow axis only; not a universal repository ranking.
+- GitHub yardstick id: augustdragon-terminal-manager
+  - Repository: augustdragon/terminal-manager
+  - Yardstick verdict: adjacent-axis-stronger
+  - Classification: direct WT profile/session manager
+  - Stronger axes: WT profile editing; split-pane groups; import/export; WT settings sync
+  - WT Launcher axes: smaller local JSON-to-wt contract; no local web server; does not mutate Windows Terminal settings
+  - Claim boundary: blocks universal superiority because the repository is stronger on at least one adjacent axis.
+- GitHub yardstick id: noambrand-launchpad-cli
+  - Repository: noambrand/Launchpad-CLI
+  - Yardstick verdict: adjacent-axis-stronger
+  - Classification: Claude Code launcher/installer
+  - Stronger axes: installer; folder picker; right-click launch; statusline distribution
+  - WT Launcher axes: portable editable WT workspace groups; rollback-aware config gate; smaller app scope
+  - Claim boundary: blocks universal superiority because the repository is stronger on at least one adjacent axis.
+- GitHub yardstick id: kevinkicho-win-screen-setup
+  - Repository: kevinkicho/win-screen-setup
+  - Yardstick verdict: adjacent-axis-stronger
+  - Classification: Windows multi-monitor workspace launcher
+  - Stronger axes: visual screen/app positioning
+  - WT Launcher axes: narrower side-effect surface; portable launch groups; native repo gate
+  - Claim boundary: blocks universal superiority because the repository is stronger on at least one adjacent axis.
+- GitHub yardstick id: ewdieckman-devworkspace
+  - Repository: ewdieckman/DevWorkspace
+  - Yardstick verdict: adjacent-axis-stronger
+  - Classification: PowerShell WT multi-pane workspace module
+  - Stronger axes: fixed split-pane layouts
+  - WT Launcher axes: editable GUI entries; rollback-aware persistence; native publish/verify gate
+  - Claim boundary: blocks universal superiority because the repository is stronger on at least one adjacent axis.
+- GitHub yardstick id: jsoulet42-claude-launcher-app
+  - Repository: jsoulet42/claude-launcher-app
+  - Yardstick verdict: direct-narrow-weaker
+  - Classification: Claude Code WT TUI workspace launcher
+  - Stronger axes: adjacent TUI flow
+  - WT Launcher axes: portable editable GUI entries; named groups; rollback-aware JSON; native gate
+  - Claim boundary: supports WT Launcher's audited narrow axis only; not a universal repository ranking.
+- GitHub yardstick id: a-ema755-claude-dashboard
+  - Repository: A-ema755/claude-dashboard
+  - Yardstick verdict: adjacent-axis-stronger
+  - Classification: Claude Code CLI session launcher/preset manager
+  - Stronger axes: split-pane layouts; cost tracking
+  - WT Launcher axes: small local WT launcher contract; portable GUI config; native gate
+  - Claim boundary: blocks universal superiority because the repository is stronger on at least one adjacent axis.
+- GitHub yardstick id: adityacodepublic-wtsm-cli
+  - Repository: adityacodepublic/wtsm-cli
+  - Yardstick verdict: adjacent-axis-stronger
+  - Classification: Windows Terminal session manager CLI
+  - Stronger axes: named terminal sessions CLI
+  - WT Launcher axes: GUI editing; launch-group preview; repo-native rollback/verify evidence
+  - Claim boundary: blocks universal superiority because the repository is stronger on at least one adjacent axis.
+- GitHub yardstick id: pramin-agentspace
+  - Repository: pramin/AgentSpace
+  - Yardstick verdict: adjacent-axis-stronger
+  - Classification: Avalonia agent workspace launcher
+  - Stronger axes: embedded PTY; SSH file tree; code preview
+  - WT Launcher axes: smaller WT handoff scope; portable JSON groups; native gate
+  - Claim boundary: blocks universal superiority because the repository is stronger on at least one adjacent axis.
+- GitHub yardstick id: joyahmed-devgo-app
+  - Repository: joyahmed/devgo-app
+  - Yardstick verdict: adjacent-axis-stronger
+  - Classification: WSL-first developer launcher
+  - Stronger axes: WSL; VS Code; tmux workflows; installer ambition
+  - WT Launcher axes: verified portable WT launch groups; rollback-aware JSON; narrower scope
+  - Claim boundary: blocks universal superiority because the repository is stronger on at least one adjacent axis.
+- GitHub yardstick id: flow-launcher-flow-launcher
+  - Repository: Flow-Launcher/Flow.Launcher
+  - Yardstick verdict: broad-market-stronger
+  - Classification: broad Windows launcher
+  - Stronger axes: market proof; plugins; search; packaging; community
+  - WT Launcher axes: narrow portable WT workspace-launcher slice only
+  - Claim boundary: contradicts broad launcher supremacy and stays outside WT Launcher's narrow product domain.
+- GitHub yardstick id: wox-launcher-wox
+  - Repository: Wox-launcher/Wox
+  - Yardstick verdict: broad-market-stronger
+  - Classification: broad cross-platform launcher
+  - Stronger axes: market proof; cross-platform packaging; plugin/theme stores; AI/MCP direction
+  - WT Launcher axes: narrow portable WT workspace-launcher slice only
+  - Claim boundary: contradicts broad launcher supremacy and stays outside WT Launcher's narrow product domain.
 
 Conclusion from the GitHub snapshot: WT Launcher can honestly claim a north-star shape only for the narrow, local, portable Windows Terminal workspace-launcher slice. It cannot honestly claim broad launcher supremacy.
 
