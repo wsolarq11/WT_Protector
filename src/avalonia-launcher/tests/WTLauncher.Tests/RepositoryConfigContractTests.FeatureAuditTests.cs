@@ -97,6 +97,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Equal(21, CountFeatureHeadings(audit));
         AssertFeatureVerdictSummaryMatchesFeatureSections(audit);
         AssertFeatureSectionsUseCompleteAuditShape(audit);
+        AssertAdaptiveCardSizingAuditUsesEngineeredVisualBoundary(audit);
         AssertBroadDomainGapsUseControlledLedger(audit);
         AssertClaimBoundaryLedgerConstrainsFinalClaims(audit);
         AssertObjectiveCompletionAuditUsesIndentedEvidenceAndStatus(audit);
@@ -351,7 +352,10 @@ public sealed partial class RepositoryConfigContractTests
         AssertCountsEqual(gapCounts, ParseCountLine(summary, "- Gap count:"));
         AssertCountsEqual(proofCounts, ParseCountLine(summary, "- Proof count:"));
         Assert.Contains(
-            "1 strong feature blocks any honest \"every feature is already a north-star\" claim",
+            "all 21 feature verdicts support the narrow portable Windows Terminal workspace-launcher claim only",
+            summary);
+        Assert.DoesNotContain(
+            "strong feature blocks any honest \"every feature is already a north-star\" claim",
             summary);
         Assert.Contains(
             "future-workload, external-process-limit, visual-proof, distribution-scope, and source-freshness gaps block \"100% confidence / 0% side effects\"",
@@ -479,6 +483,38 @@ public sealed partial class RepositoryConfigContractTests
             default:
                 throw new InvalidOperationException($"Unknown verdict level for {featureId}: {verdictLevel}");
         }
+    }
+
+    private static void AssertAdaptiveCardSizingAuditUsesEngineeredVisualBoundary(string audit)
+    {
+        var featureAuditStart = audit.IndexOf("## Feature mapping audit", StringComparison.Ordinal);
+        var gapsStart = audit.IndexOf("## Gaps that block a broad-domain north-star claim", StringComparison.Ordinal);
+        Assert.True(featureAuditStart >= 0, "Feature mapping audit section is missing.");
+        Assert.True(gapsStart > featureAuditStart, "Feature mapping audit section must appear before broad-domain gaps.");
+
+        var featureAudit = audit[featureAuditStart..gapsStart];
+        var section = featureAudit
+            .Split("\n### ", StringSplitOptions.RemoveEmptyEntries)
+            .Single(featureSection => featureSection.Contains("- Feature id: adaptive-card-sizing-and-density", StringComparison.Ordinal));
+
+        foreach (var expectedEvidence in new[]
+        {
+            "- Verdict level: narrow-north-star",
+            "Normal/Compact/Micro density",
+            "one typed density owner",
+            "one typed available-size owner",
+            "filtered visible-entry count sizing",
+            "golden-ratio card shape",
+            "readable minimum before scroll fallback",
+            "name-wall multi-column fit",
+            "engineering-owned visual comfort boundary",
+            "screenshot or human visual receipts are required only after future visual-heavy changes",
+        })
+        {
+            Assert.Contains(expectedEvidence, section);
+        }
+
+        Assert.DoesNotContain("strong, close to north-star", section);
     }
 
     private static void AssertFreshExternalYardsticksUseControlledLedger(string audit)

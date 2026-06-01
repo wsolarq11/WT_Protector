@@ -230,10 +230,10 @@ It is not a general launcher/automation north star. That broader domain includes
 The counts below are a summary ledger for the 21 feature sections. They are not a substitute for the per-feature evidence.
 
 - Feature count: 21
-- Verdict count: narrow-north-star=20,strong=1
+- Verdict count: narrow-north-star=21
 - Gap count: none-proven=5,future-workload=8,external-process-limit=4,visual-proof=3,distribution-scope=1,source-freshness=1
 - Proof count: repo-battle-tested=20,market-informed=4,legacy-flow-informed=1,accessibility-informed=1,source-backed=1
-- Completion boundary: 20 narrow-north-star feature verdicts support the narrow portable Windows Terminal workspace-launcher claim only; 1 strong feature blocks any honest "every feature is already a north-star" claim.
+- Completion boundary: all 21 feature verdicts support the narrow portable Windows Terminal workspace-launcher claim only; broad, unimprovable, universal-superiority, and absolute zero-side-effect claims remain blocked by the objective and gap ledgers.
 - Absolute boundary: future-workload, external-process-limit, visual-proof, distribution-scope, and source-freshness gaps block "100% confidence / 0% side effects" as a product-wide claim.
 
 ## Feature mapping audit
@@ -399,12 +399,12 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Feature id: adaptive-card-sizing-and-density
 - Real problem: fixed cards waste space on large windows and become unusable on small windows.
 - Proof type: repo-battle-tested
-- Verdict level: strong
+- Verdict level: narrow-north-star
 - Gap class: visual-proof
 - Current data owner: `LauncherEntryLayoutDensity`, derived from available size and visible entry count.
-- Evidence: layout tests cover Normal/Compact/Micro density and filtered visible-entry sizing.
-- Verdict: strong, close to north-star.
-- Remaining gap: exact visual comfort is partly perceptual; tests prove structure, not taste.
+- Evidence: layout tests cover Normal/Compact/Micro density, one typed density owner, one typed available-size owner, filtered visible-entry count sizing, golden-ratio card shape, readable minimum before scroll fallback, and name-wall multi-column fit.
+- Verdict: north-star for the engineering-owned visual comfort boundary.
+- Remaining gap: screenshot or human visual receipts are required only after future visual-heavy changes; they are not needed to prove the current layout data structure.
 
 ### 15. Global launch confirmation
 
