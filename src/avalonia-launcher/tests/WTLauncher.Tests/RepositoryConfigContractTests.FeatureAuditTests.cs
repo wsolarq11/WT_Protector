@@ -121,6 +121,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("filter/sort projection returning a read-only collection snapshot instead of a mutable projection list", audit);
         Assert.Contains("preserving the preset name in cancellation and unexpected-failure status", audit);
         Assert.Contains("blank-name preview preflight failures replacing stale preview text with a preview failure receipt", audit);
+        Assert.Contains("dialog-boundary handler assignments rejecting null instead of storing a broken runtime callback", audit);
         Assert.Contains("config-save failures during select-all/clear/checkbox mutation", audit);
         Assert.Contains("blank/duplicate reference rejection before reference rename/remove mutation", audit);
         Assert.Contains("entry delete confirmation snapshotting target id/name before dialog mutation", audit);

@@ -5,8 +5,14 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
-    public Func<LauncherBatchLaunchConfirmation, Task<bool>> ConfirmBatchLaunchAsync { get; set; } =
+    private Func<LauncherBatchLaunchConfirmation, Task<bool>> _confirmBatchLaunchAsync =
         static _ => Task.FromResult(false);
+
+    public Func<LauncherBatchLaunchConfirmation, Task<bool>> ConfirmBatchLaunchAsync
+    {
+        get => _confirmBatchLaunchAsync;
+        set => _confirmBatchLaunchAsync = value ?? throw new ArgumentNullException(nameof(value));
+    }
 
     [RelayCommand]
     private void SelectVisible()

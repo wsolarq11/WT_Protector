@@ -5,11 +5,23 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
-    public Func<LauncherPresetSaveTarget, Task<string?>> RequestNewPresetAsync { get; set; } =
+    private Func<LauncherPresetSaveTarget, Task<string?>> _requestNewPresetAsync =
         static _ => Task.FromResult<string?>(null);
 
-    public Func<LauncherPresetDeleteTarget, Task<bool>> ConfirmDeletePresetAsync { get; set; } =
+    private Func<LauncherPresetDeleteTarget, Task<bool>> _confirmDeletePresetAsync =
         static _ => Task.FromResult(false);
+
+    public Func<LauncherPresetSaveTarget, Task<string?>> RequestNewPresetAsync
+    {
+        get => _requestNewPresetAsync;
+        set => _requestNewPresetAsync = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    public Func<LauncherPresetDeleteTarget, Task<bool>> ConfirmDeletePresetAsync
+    {
+        get => _confirmDeletePresetAsync;
+        set => _confirmDeletePresetAsync = value ?? throw new ArgumentNullException(nameof(value));
+    }
 
     [RelayCommand(CanExecute = nameof(CanApplyPreset))]
     private void ApplyPreset()

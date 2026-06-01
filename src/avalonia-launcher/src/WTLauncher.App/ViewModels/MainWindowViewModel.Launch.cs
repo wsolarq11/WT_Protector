@@ -10,8 +10,14 @@ public sealed partial class MainWindowViewModel
         ? "所有启动项启动前统一确认。"
         : "所有启动项直接启动，不弹确认。";
 
-    public Func<LauncherSingleLaunchConfirmation, Task<bool>> ConfirmLaunchAsync { get; set; } =
+    private Func<LauncherSingleLaunchConfirmation, Task<bool>> _confirmLaunchAsync =
         static _ => Task.FromResult(false);
+
+    public Func<LauncherSingleLaunchConfirmation, Task<bool>> ConfirmLaunchAsync
+    {
+        get => _confirmLaunchAsync;
+        set => _confirmLaunchAsync = value ?? throw new ArgumentNullException(nameof(value));
+    }
 
     partial void OnRequireConfirmationForLaunchesChanged(bool value)
     {

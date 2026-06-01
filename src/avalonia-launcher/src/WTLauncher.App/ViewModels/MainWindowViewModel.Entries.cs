@@ -5,11 +5,23 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
-    public Func<LaunchEntry?, Task<EntryDraft?>> RequestEntryDraftAsync { get; set; } =
+    private Func<LaunchEntry?, Task<EntryDraft?>> _requestEntryDraftAsync =
         static _ => Task.FromResult<EntryDraft?>(null);
 
-    public Func<LauncherEntryDeleteTarget, Task<bool>> ConfirmDeleteEntryAsync { get; set; } =
+    private Func<LauncherEntryDeleteTarget, Task<bool>> _confirmDeleteEntryAsync =
         static _ => Task.FromResult(false);
+
+    public Func<LaunchEntry?, Task<EntryDraft?>> RequestEntryDraftAsync
+    {
+        get => _requestEntryDraftAsync;
+        set => _requestEntryDraftAsync = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    public Func<LauncherEntryDeleteTarget, Task<bool>> ConfirmDeleteEntryAsync
+    {
+        get => _confirmDeleteEntryAsync;
+        set => _confirmDeleteEntryAsync = value ?? throw new ArgumentNullException(nameof(value));
+    }
 
     [RelayCommand]
     private async Task AddEntryAsync()
