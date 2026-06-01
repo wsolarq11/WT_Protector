@@ -59,12 +59,54 @@ Gap classes used below:
 
 Current external references were spot-checked on 2026-06-01 before making the north-star judgment:
 
-- Microsoft Windows Terminal still treats `wt.exe` as an explicit command line with `-d` / `--startingDirectory` for the starting folder, which matches this repo's `directory` + `command` entry contract.
-- VS Code still separates user/workspace settings and multi-root workspace files, which supports portable, human-readable context objects instead of hidden local state.
-- Raycast Quicklinks still solve the same frequent-action problem by opening URLs, file paths, and deeplinks instantly; current v2 Quicklinks also include tags, pinning, and dynamic placeholders, which is exactly why this repo must not claim broad launcher/platform north-star status.
-- Docker Compose profiles remain a named-subset model for activating only the needed services, which maps cleanly to WT Launcher's named presets.
-- WCAG 2.2 includes Dragging Movements as a Level AA criterion; this makes non-drag reorder a real accessibility contract, not cosmetic polish.
-- Kubernetes continues to separate desired object data from observed status; WT Launcher has desired config/preset/settings objects but no run-history/status object yet.
+External source class tokens used below:
+
+- `command-line-contract`: external tool exposes an explicit command boundary.
+- `portable-context-contract`: external tool proves portable context files are a real pattern.
+- `frequent-action-market-proof`: external product proves repeated instant launch is a real market workload.
+- `named-subset-contract`: external spec proves named subsets are a stable data shape.
+- `accessibility-contract`: external standard turns a UI path into a real accessibility requirement.
+- `spec-status-contract`: external system separates desired state from observed status.
+
+Local implication tokens used below:
+
+- `supports-current-entry-contract`: supports this repo's `directory` + `command` launch-entry shape.
+- `supports-portable-json-contract`: supports human-readable config/preset/settings files instead of hidden state.
+- `blocks-broad-launcher-claim`: proves the broader launcher/platform market has stronger axes than this narrow app.
+- `supports-named-presets`: supports named launch groups as the right small data structure.
+- `supports-non-drag-reorder-contract`: supports non-drag reorder as a real accessibility boundary.
+- `identifies-run-status-gap`: exposes the missing status/history object that blocks absolute side-effect claims.
+
+- External reference id: windows-terminal-command-line
+  - Source class: command-line-contract
+  - Local implication: supports-current-entry-contract
+  - Claim boundary: supports explicit launch-plan generation; does not prove terminal-session health after `wt.exe` accepts the request.
+  - Evidence: Microsoft Windows Terminal still treats `wt.exe` as an explicit command line with `-d` / `--startingDirectory` for the starting folder, which matches this repo's `directory` + `command` entry contract.
+- External reference id: vscode-workspace-context
+  - Source class: portable-context-contract
+  - Local implication: supports-portable-json-contract
+  - Claim boundary: supports source-visible context objects; does not prove broad editor/workspace-platform parity.
+  - Evidence: VS Code still separates user/workspace settings and multi-root workspace files, which supports portable, human-readable context objects instead of hidden local state.
+- External reference id: raycast-quicklinks
+  - Source class: frequent-action-market-proof
+  - Local implication: blocks-broad-launcher-claim
+  - Claim boundary: proves frequent-action launch is a real market workload and also proves WT Launcher must not claim broad launcher/platform north-star status.
+  - Evidence: Raycast Quicklinks still solve the same frequent-action problem by opening URLs, file paths, and deeplinks instantly; current v2 Quicklinks also include tags, pinning, and dynamic placeholders.
+- External reference id: docker-compose-profiles
+  - Source class: named-subset-contract
+  - Local implication: supports-named-presets
+  - Claim boundary: supports named subsets; does not justify importing Docker orchestration concepts into this app.
+  - Evidence: Docker Compose profiles remain a named-subset model for activating only the needed services, which maps cleanly to WT Launcher's named presets.
+- External reference id: wcag-dragging-movements
+  - Source class: accessibility-contract
+  - Local implication: supports-non-drag-reorder-contract
+  - Claim boundary: supports non-drag reorder as a required path; does not prove all visual comfort or accessibility concerns are solved.
+  - Evidence: WCAG 2.2 includes Dragging Movements as a Level AA criterion; this makes non-drag reorder a real accessibility contract, not cosmetic polish.
+- External reference id: kubernetes-spec-status
+  - Source class: spec-status-contract
+  - Local implication: identifies-run-status-gap
+  - Claim boundary: supports current desired-object modeling and exposes the missing observed run-history/status object.
+  - Evidence: Kubernetes continues to separate desired object data from observed status; WT Launcher has desired config/preset/settings objects but no run-history/status object yet.
 
 ## Current GitHub similar-project snapshot
 

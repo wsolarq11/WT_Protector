@@ -25,6 +25,12 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("Reviewed on: 2026-06-02", audit);
         Assert.Contains("It does not evaluate ignored `.snow/` local runtime/index state.", audit);
         Assert.Contains("## Fresh external yardstick spot-check", audit);
+        Assert.Contains("External source class tokens used below:", audit);
+        Assert.Contains("Local implication tokens used below:", audit);
+        Assert.Contains("- External reference id:", audit);
+        Assert.Contains("- Source class:", audit);
+        Assert.Contains("- Local implication:", audit);
+        Assert.Contains("- Claim boundary:", audit);
         Assert.Contains("## Current GitHub similar-project snapshot", audit);
         Assert.Contains("docs/reference/github-similar-projects-snapshot.json", audit);
         Assert.Contains("tools/update-github-similar-projects-snapshot.ps1", audit);
@@ -116,6 +122,7 @@ public sealed partial class RepositoryConfigContractTests
         {
             Assert.Contains(externalYardstick, audit);
         }
+        AssertFreshExternalYardsticksUseControlledLedger(audit);
 
         foreach (var githubYardstick in new[]
         {
@@ -378,6 +385,90 @@ public sealed partial class RepositoryConfigContractTests
             Assert.Contains("- Evidence:", section);
             Assert.Contains("- Verdict:", section);
             Assert.Contains("- Remaining gap:", section);
+        }
+    }
+
+    private static void AssertFreshExternalYardsticksUseControlledLedger(string audit)
+    {
+        var start = audit.IndexOf("## Fresh external yardstick spot-check", StringComparison.Ordinal);
+        var end = audit.IndexOf("## Current GitHub similar-project snapshot", StringComparison.Ordinal);
+        Assert.True(start >= 0, "Fresh external yardstick section is missing.");
+        Assert.True(end > start, "Fresh external yardstick section must appear before the GitHub snapshot section.");
+
+        var expectedReferences = new (string ReferenceId, string SourceClass, string LocalImplication)[]
+        {
+            ("windows-terminal-command-line", "command-line-contract", "supports-current-entry-contract"),
+            ("vscode-workspace-context", "portable-context-contract", "supports-portable-json-contract"),
+            ("raycast-quicklinks", "frequent-action-market-proof", "blocks-broad-launcher-claim"),
+            ("docker-compose-profiles", "named-subset-contract", "supports-named-presets"),
+            ("wcag-dragging-movements", "accessibility-contract", "supports-non-drag-reorder-contract"),
+            ("kubernetes-spec-status", "spec-status-contract", "identifies-run-status-gap"),
+        };
+        var allowedSourceClasses = expectedReferences
+            .Select(reference => reference.SourceClass)
+            .ToArray();
+        var allowedLocalImplications = expectedReferences
+            .Select(reference => reference.LocalImplication)
+            .ToArray();
+        var section = audit[start..end];
+        var references = section
+            .Split("\n- External reference id:", StringSplitOptions.RemoveEmptyEntries)
+            .Skip(1)
+            .ToArray();
+
+        foreach (var sourceClass in allowedSourceClasses)
+        {
+            Assert.Contains($"- `{sourceClass}`:", section);
+        }
+
+        foreach (var localImplication in allowedLocalImplications)
+        {
+            Assert.Contains($"- `{localImplication}`:", section);
+        }
+
+        Assert.Equal(expectedReferences.Length, references.Length);
+        for (var referenceIndex = 0; referenceIndex < references.Length; referenceIndex++)
+        {
+            var lines = references[referenceIndex]
+                .Split('\n')
+                .Select(line => line.TrimEnd())
+                .ToArray();
+            var referenceId = lines[0].Trim();
+            var expected = expectedReferences[referenceIndex];
+
+            Assert.Equal(expected.ReferenceId, referenceId);
+            Assert.False(string.IsNullOrWhiteSpace(referenceId), "External reference id must not be blank.");
+            Assert.DoesNotContain(" ", referenceId);
+            Assert.DoesNotContain(".", referenceId);
+            Assert.DoesNotContain(";", referenceId);
+
+            var sourceClassLine = lines
+                .Single(line => line.TrimStart().StartsWith("- Source class:", StringComparison.Ordinal))
+                .TrimStart();
+            var sourceClass = ParseControlledValue(sourceClassLine, "- Source class:");
+            Assert.Equal(expected.SourceClass, sourceClass);
+            Assert.Contains(sourceClass, allowedSourceClasses);
+
+            var localImplicationLine = lines
+                .Single(line => line.TrimStart().StartsWith("- Local implication:", StringComparison.Ordinal))
+                .TrimStart();
+            var localImplication = ParseControlledValue(localImplicationLine, "- Local implication:");
+            Assert.Equal(expected.LocalImplication, localImplication);
+            Assert.Contains(localImplication, allowedLocalImplications);
+
+            var claimBoundaryLine = lines
+                .Single(line => line.TrimStart().StartsWith("- Claim boundary:", StringComparison.Ordinal))
+                .TrimStart();
+            Assert.False(
+                string.IsNullOrWhiteSpace(claimBoundaryLine["- Claim boundary:".Length..].Trim()),
+                $"{expected.ReferenceId} must document its claim boundary.");
+
+            var evidenceLine = lines
+                .Single(line => line.TrimStart().StartsWith("- Evidence:", StringComparison.Ordinal))
+                .TrimStart();
+            Assert.False(
+                string.IsNullOrWhiteSpace(evidenceLine["- Evidence:".Length..].Trim()),
+                $"{expected.ReferenceId} must document evidence.");
         }
     }
 
