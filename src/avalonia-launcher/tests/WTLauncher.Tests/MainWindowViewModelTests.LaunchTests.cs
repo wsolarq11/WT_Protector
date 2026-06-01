@@ -361,7 +361,7 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 
         Assert.NotNull(confirmedItems);
-        Assert.Equal(["one", "two"], confirmedItems!.Select(item => item.Entry.Id).ToArray());
+        Assert.Equal(["one", "two"], confirmedItems!.Select(item => item.EntryId).ToArray());
         Assert.Equal(["one", "two"], confirmedItems.Select(item => item.EntryName).ToArray());
         Assert.All(confirmedItems, item => Assert.Contains("wt.exe", item.Plan.CommandLine));
         Assert.Contains("启动回执", viewModel.DryRunText);

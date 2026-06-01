@@ -52,7 +52,7 @@ public sealed class LauncherLaunchWorkflowTests
             requireConfirmation: true);
 
         var item = Assert.Single(preflight.Items);
-        Assert.Equal("one", item.Entry.Id);
+        Assert.Equal("one", item.EntryId);
         Assert.Equal("one", item.EntryName);
         Assert.True(item.Plan.RequiresConfirmation);
         Assert.Equal(0, preflight.Report.FailedCount);
@@ -110,6 +110,23 @@ public sealed class LauncherLaunchWorkflowTests
     }
 
     [Fact]
+    public void PreflightBatchReportsBlankEntryIdWithoutInventingFallbackId()
+    {
+        using var temp = new TempDirectory();
+        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+
+        var preflight = workflow.PreflightBatch(
+            [
+                Entry("one", temp.Path) with { Id = " " },
+            ],
+            requireConfirmation: false);
+
+        Assert.Empty(preflight.Items);
+        Assert.Equal(1, preflight.Report.FailedCount);
+        Assert.Equal(["one: Launch entry id is empty."], preflight.Report.FailureMessages);
+    }
+
+    [Fact]
     public void StartBatchKeepsLastCommandLineWhenStartFails()
     {
         using var temp = new TempDirectory();
@@ -139,7 +156,9 @@ public sealed class LauncherLaunchWorkflowTests
 
         var report = workflow.StartBatch(preflight);
 
-        Assert.Equal("one", Assert.Single(preflight.Items).EntryName);
+        var item = Assert.Single(preflight.Items);
+        Assert.Equal("one", item.EntryId);
+        Assert.Equal("one", item.EntryName);
         Assert.Equal(0, report.RequestedCount);
         Assert.Equal(1, report.FailedCount);
         Assert.Equal(0, report.SkippedCount);

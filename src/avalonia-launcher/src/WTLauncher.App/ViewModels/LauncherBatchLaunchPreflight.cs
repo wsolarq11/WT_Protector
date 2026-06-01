@@ -8,16 +8,25 @@ public sealed record LauncherBatchLaunchItem
     {
         ArgumentNullException.ThrowIfNull(entry);
 
-        Entry = entry;
-        Plan = plan ?? throw new ArgumentNullException(nameof(plan));
+        EntryId = RequireEntryId(entry.Id);
         EntryName = RequireEntryName(entry.Name);
+        Plan = plan ?? throw new ArgumentNullException(nameof(plan));
     }
 
-    public LaunchEntry Entry { get; }
+    public string EntryId { get; }
 
     public LaunchPlan Plan { get; }
 
     public string EntryName { get; }
+
+    private static string RequireEntryId(string? entryId)
+    {
+        var normalized = LauncherEntryIds.Normalize(entryId);
+        if (!LauncherEntryIds.IsUsable(normalized))
+            throw new InvalidOperationException("Launch entry id is empty.");
+
+        return normalized;
+    }
 
     private static string RequireEntryName(string? entryName)
     {
