@@ -117,6 +117,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("instead of synthesizing a second empty preset truth", audit);
         Assert.Contains("reject missing or unknown mode ids", audit);
         Assert.Contains("null settings fields, null saved filter state at ViewModel construction, null runtime filter mutations", audit);
+        Assert.Contains("null runtime sort/display mode assignments", audit);
         Assert.Contains("missing/blank mode ids, invalid in-memory settings during close-time window save", audit);
         Assert.Contains("invalid in-memory settings during close-time window save", audit);
         Assert.Contains("non-positive persisted window dimensions now fail fast", audit);

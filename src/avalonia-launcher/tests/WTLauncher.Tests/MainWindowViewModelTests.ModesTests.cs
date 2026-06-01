@@ -134,4 +134,29 @@ public sealed partial class MainWindowViewModelTests
             1,
             new[] { viewModel.IsCardsViewMode, viewModel.IsDetailedListMode, viewModel.IsNamesViewMode }.Count(value => value));
     }
+
+    [Fact]
+    public void SelectedModesRejectNullAssignmentsInsteadOfFallingBackToDefaults()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreateSingleEntryFixture(temp);
+
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { SortMode = LauncherEntryVisibility.CustomSortModeId, EntryViewMode = LauncherEntryViewModes.CardsId });
+
+        var sortMode = viewModel.SelectedSortMode;
+        var displayMode = viewModel.SelectedDisplayMode;
+
+        var sortException = Assert.Throws<InvalidOperationException>(() => viewModel.SelectedSortMode = null);
+        Assert.Equal("Launcher sort mode selection is required.", sortException.Message);
+        Assert.Same(sortMode, viewModel.SelectedSortMode);
+        Assert.True(viewModel.IsCustomSortMode);
+
+        var displayException = Assert.Throws<InvalidOperationException>(() => viewModel.SelectedDisplayMode = null);
+        Assert.Equal("Launcher entry view mode selection is required.", displayException.Message);
+        Assert.Same(displayMode, viewModel.SelectedDisplayMode);
+        Assert.True(viewModel.IsCardsViewMode);
+    }
 }

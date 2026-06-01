@@ -200,7 +200,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: UI preferences should move with the repo and stay reviewable, not hide in AppData or registry.
 - Current data owner: `config/settings.json`.
-- Evidence: settings schema is documented and tests cover sort/view/confirmation/filter/order/window fields; null settings fields, null saved filter state at ViewModel construction, null runtime filter mutations, missing/blank mode ids, invalid in-memory settings during close-time window save, and non-positive persisted window dimensions now fail fast instead of being rewritten or carried into default/broken UI state; unused `theme` state was removed instead of kept as a fake preference.
+- Evidence: settings schema is documented and tests cover sort/view/confirmation/filter/order/window fields; null settings fields, null saved filter state at ViewModel construction, null runtime filter mutations, null runtime sort/display mode assignments, missing/blank mode ids, invalid in-memory settings during close-time window save, and non-positive persisted window dimensions now fail fast instead of being rewritten or carried into default/broken UI state; unused `theme` state was removed instead of kept as a fake preference.
 - Verdict: north-star for this local tool.
 - Remaining gap: no cross-machine path normalization; this is fine because launch directories are machine-local facts.
 

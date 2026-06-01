@@ -38,9 +38,9 @@ public sealed partial class MainWindowViewModel
     private LauncherDisplayModeViewModel ResolveDisplayMode(string? entryViewMode) =>
         DisplayModes.First(mode => mode.Id == LauncherEntryViewModes.NormalizeId(entryViewMode));
 
-    private LauncherEntryViewMode CurrentEntryViewMode => SelectedDisplayMode?.Mode ?? LauncherEntryViewMode.Cards;
+    private LauncherEntryViewMode CurrentEntryViewMode => RequireDisplayModeSelection(SelectedDisplayMode).Mode;
 
-    public bool IsCustomSortMode => SelectedSortMode?.Id == LauncherEntryVisibility.CustomSortModeId;
+    public bool IsCustomSortMode => RequireSortModeSelection(SelectedSortMode).Id == LauncherEntryVisibility.CustomSortModeId;
 
     public bool IsCardsViewMode => CurrentEntryViewMode == LauncherEntryViewMode.Cards;
 
@@ -70,11 +70,15 @@ public sealed partial class MainWindowViewModel
         ApplyFilter();
     }
 
+    partial void OnSelectedSortModeChanging(LauncherSortModeViewModel? value)
+    {
+        _ = RequireSortModeSelection(value);
+    }
+
     partial void OnSelectedSortModeChanged(LauncherSortModeViewModel? value)
     {
+        value = RequireSortModeSelection(value);
         OnPropertyChanged(nameof(IsCustomSortMode));
-        if (value is null)
-            return;
 
         var snapshot = CaptureSettingsMutationSnapshot();
         _settings.SortMode = value.Id;
@@ -94,11 +98,15 @@ public sealed partial class MainWindowViewModel
         StatusText = LauncherSettingsStatus.SortModeSaved(value.Label);
     }
 
+    partial void OnSelectedDisplayModeChanging(LauncherDisplayModeViewModel? value)
+    {
+        _ = RequireDisplayModeSelection(value);
+    }
+
     partial void OnSelectedDisplayModeChanged(LauncherDisplayModeViewModel? value)
     {
+        value = RequireDisplayModeSelection(value);
         NotifyDisplayModeProjectionChanged();
-        if (value is null)
-            return;
 
         var snapshot = CaptureSettingsMutationSnapshot();
         _settings.EntryViewMode = value.Id;
@@ -129,7 +137,7 @@ public sealed partial class MainWindowViewModel
         var sorted = LauncherEntryVisibility.FilterAndSort(
             Entries,
             FilterText,
-            SelectedSortMode?.Id,
+            RequireSortModeSelection(SelectedSortMode).Id,
             _settings.CustomEntryOrder,
             ToLaunchEntry);
 
@@ -162,6 +170,12 @@ public sealed partial class MainWindowViewModel
 
     private void EnsureCustomOrderContainsEntries() =>
         LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds());
+
+    private static LauncherSortModeViewModel RequireSortModeSelection(LauncherSortModeViewModel? value) =>
+        value ?? throw new InvalidOperationException("Launcher sort mode selection is required.");
+
+    private static LauncherDisplayModeViewModel RequireDisplayModeSelection(LauncherDisplayModeViewModel? value) =>
+        value ?? throw new InvalidOperationException("Launcher entry view mode selection is required.");
 
     private IEnumerable<string> GetEntryIds() =>
         Entries.Select(entry => entry.Id);
