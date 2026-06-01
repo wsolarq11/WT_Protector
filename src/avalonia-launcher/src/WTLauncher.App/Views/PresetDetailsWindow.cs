@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.Views;
@@ -10,8 +11,10 @@ public sealed class PresetDetailsWindow : Window
     private readonly TextBox _nameBox;
     private readonly TextBlock _errorText;
 
-    public PresetDetailsWindow(IReadOnlyList<string> selectedEntryIds)
+    public PresetDetailsWindow(LauncherPresetSaveTarget target)
     {
+        ArgumentNullException.ThrowIfNull(target);
+
         Title = "保存为启动组";
         Width = 560;
         Height = 260;
@@ -24,7 +27,7 @@ public sealed class PresetDetailsWindow : Window
 
         _errorText = LauncherDialogText.Error();
 
-        var summary = LauncherDialogText.Body($"将当前 {selectedEntryIds.Count} 个勾选项保存为可复用启动组。");
+        var summary = LauncherDialogText.Body($"将当前 {target.EntryCount} 个勾选项保存为可复用启动组。");
 
         var cancel = LauncherDialogButtons.Cancel();
         cancel.Click += (_, _) => Close((string?)null);

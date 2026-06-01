@@ -119,6 +119,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("entry edit dialogs rejecting null initial/submitted text instead of converting it into empty required-field input", audit);
         Assert.Contains("Applying a preset has a failure contract too", audit);
         Assert.Contains("roll back memory/file state on preset save failures", audit);
+        Assert.Contains("save-new-preset dialogs receiving a read-only snapshot target", audit);
         Assert.Contains("reject blank/duplicate preset entry ids before add/update mutation", audit);
         Assert.Contains("reject invalid fallback preset references, blank fallback preset ids, and missing default-preset state before delete mutation", audit);
         Assert.Contains("reject missing selected-preset ids during preset state restore instead of silently selecting the first group", audit);

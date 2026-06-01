@@ -25,6 +25,18 @@ public sealed class DialogLayoutContractTests
         Assert.Contains(5, placedRows);
     }
 
+    [Fact]
+    public void PresetDetailsDialogUsesSnapshotTarget()
+    {
+        var source = File.ReadAllText(TestRepositoryPaths.View("PresetDetailsWindow.cs"));
+
+        Assert.Contains("PresetDetailsWindow(LauncherPresetSaveTarget target)", source);
+        Assert.Contains("ArgumentNullException.ThrowIfNull(target);", source);
+        Assert.Contains("target.EntryCount", source);
+        Assert.DoesNotContain("IReadOnlyList<string> selectedEntryIds", source);
+        Assert.DoesNotContain("selectedEntryIds.Count", source);
+    }
+
     [Theory]
     [InlineData("ConfirmBatchLaunchWindow.cs")]
     [InlineData("ConfirmEntryDeleteWindow.cs")]

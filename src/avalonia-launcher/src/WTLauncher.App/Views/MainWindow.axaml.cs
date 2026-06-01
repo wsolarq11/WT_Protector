@@ -22,8 +22,7 @@ public sealed partial class MainWindow : Window
         DataContext = viewModel;
         viewModel.ConfirmLaunchAsync = confirmation => new ConfirmLaunchWindow(confirmation).ShowDialog<bool>(this);
         viewModel.ConfirmBatchLaunchAsync = confirmation => new ConfirmBatchLaunchWindow(confirmation).ShowDialog<bool>(this);
-        viewModel.RequestNewPresetAsync = selectedEntryIds =>
-            new PresetDetailsWindow(selectedEntryIds).ShowDialog<string?>(this);
+        viewModel.RequestNewPresetAsync = target => new PresetDetailsWindow(target).ShowDialog<string?>(this);
         viewModel.ConfirmDeletePresetAsync = target => new ConfirmPresetDeleteWindow(target).ShowDialog<bool>(this);
         viewModel.RequestEntryDraftAsync = entry => new EntryDetailsWindow(entry).ShowDialog<EntryDraft?>(this);
         viewModel.ConfirmDeleteEntryAsync = target => new ConfirmEntryDeleteWindow(target).ShowDialog<bool>(this);

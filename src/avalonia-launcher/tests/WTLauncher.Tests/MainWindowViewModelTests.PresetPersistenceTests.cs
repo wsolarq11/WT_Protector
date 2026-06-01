@@ -131,14 +131,14 @@ public sealed partial class MainWindowViewModelTests
             Entry("two", "Two", command: "opencode"),
             Entry("three", "Three"));
         var launcherSettings = CreateDragSettings();
-        IReadOnlyList<string>? dialogEntryIds = null;
+        LauncherPresetSaveTarget? target = null;
         var viewModel = CreateViewModel(
             config,
             settings,
             launcherSettings,
-            configure: vm => vm.RequestNewPresetAsync = entryIds =>
+            configure: vm => vm.RequestNewPresetAsync = candidate =>
             {
-                dialogEntryIds = entryIds.ToArray();
+                target = candidate;
                 return Task.FromResult<string?>(null);
             });
 
@@ -146,10 +146,38 @@ public sealed partial class MainWindowViewModelTests
 
         await viewModel.SaveSelectionAsPresetCommand.ExecuteAsync(null);
 
-        Assert.Equal(["one"], dialogEntryIds);
+        Assert.NotNull(target);
+        Assert.Equal(["one"], target!.EntryIds);
+        Assert.Equal(1, target.EntryCount);
         Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
         Assert.Equal("已取消: 保存启动组", viewModel.StatusText);
+    }
+
+    [Fact]
+    public async Task LaunchGroupSaveUsesReadOnlyDialogTargetSnapshot()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(
+            temp,
+            Entry("one", "One", command: "codex", selected: true),
+            Entry("two", "Two", command: "opencode"));
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            configure: vm => vm.RequestNewPresetAsync = target =>
+            {
+                var mutable = Assert.IsAssignableFrom<IList<string>>(target.EntryIds);
+                Assert.Throws<NotSupportedException>(() => mutable.Clear());
+                return Task.FromResult<string?>("Snapshot");
+            });
+
+        await viewModel.SaveSelectionAsPresetCommand.ExecuteAsync(null);
+
+        var savedPreset = LauncherPresetStore.Load(presets).Presets.Single(preset => preset.Id == "snapshot");
+        Assert.Equal(["one"], savedPreset.EntryIds);
+        Assert.Equal("已保存启动组: Snapshot（1 项）", viewModel.StatusText);
     }
 
     [Fact]

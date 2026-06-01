@@ -5,7 +5,7 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
-    public Func<IReadOnlyList<string>, Task<string?>> RequestNewPresetAsync { get; set; } =
+    public Func<LauncherPresetSaveTarget, Task<string?>> RequestNewPresetAsync { get; set; } =
         static _ => Task.FromResult<string?>(null);
 
     public Func<LauncherPresetDeleteTarget, Task<bool>> ConfirmDeletePresetAsync { get; set; } =
@@ -82,13 +82,13 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
-        var entryIds = GetSelectedEntryIds();
-        var presetName = await RequestPresetNameIfRequiredAsync(entryIds).ConfigureAwait(true);
+        var target = new LauncherPresetSaveTarget(GetSelectedEntryIds());
+        var presetName = await RequestPresetNameIfRequiredAsync(target).ConfigureAwait(true);
         if (presetName is null)
             return;
 
         var snapshot = CapturePresetMutationSnapshot();
-        var preset = LauncherPresetWorkflow.AddPreset(_presetFile, presetName, entryIds);
+        var preset = LauncherPresetWorkflow.AddPreset(_presetFile, presetName, target.EntryIds);
         if (!SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset))
             return;
 

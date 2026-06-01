@@ -59,12 +59,12 @@ public sealed partial class MainWindowViewModel
         return false;
     }
 
-    private async Task<string?> RequestPresetNameIfRequiredAsync(IReadOnlyList<string> entryIds)
+    private async Task<string?> RequestPresetNameIfRequiredAsync(LauncherPresetSaveTarget target)
     {
         string? presetName;
         try
         {
-            presetName = await RequestNewPresetAsync(entryIds).ConfigureAwait(true);
+            presetName = await RequestNewPresetAsync(target).ConfigureAwait(true);
         }
         catch (Exception ex)
         {
