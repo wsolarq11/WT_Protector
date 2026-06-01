@@ -399,6 +399,12 @@ public sealed partial class RepositoryConfigContractTests
             "- Requirement: stronger than any similar GitHub project.",
             "- Requirement: remain small and beautiful.",
             "- Requirement: 100% confidence and 0% side effects.",
+            "- Requirement id: evaluate-every-active-feature",
+            "- Requirement id: classify-battle-practice-or-market-proven",
+            "- Requirement id: prove-unimprovable-current-ability",
+            "- Requirement id: prove-stronger-than-any-github-similar-project",
+            "- Requirement id: preserve-small-and-beautiful",
+            "- Requirement id: prove-absolute-confidence-and-zero-side-effects",
             "controlled gap class",
             "- Status: contradicted",
             "- Status: false-broad-scope",
@@ -459,15 +465,30 @@ public sealed partial class RepositoryConfigContractTests
             "preserved-current-scope",
             "impossible-absolute",
         };
+        var expectedRequirementIdsAndVerdicts = new (string RequirementId, string Verdict)[]
+        {
+            ("evaluate-every-active-feature", "proven-current-scope"),
+            ("classify-battle-practice-or-market-proven", "proven-audit-only"),
+            ("prove-unimprovable-current-ability", "contradicted"),
+            ("prove-stronger-than-any-github-similar-project", "false-broad-scope"),
+            ("preserve-small-and-beautiful", "preserved-current-scope"),
+            ("prove-absolute-confidence-and-zero-side-effects", "impossible-absolute"),
+        };
 
         Assert.Equal(6, requirements.Length);
-        foreach (var requirement in requirements)
+        for (var requirementIndex = 0; requirementIndex < requirements.Length; requirementIndex++)
         {
+            var requirement = requirements[requirementIndex];
             var lines = requirement
                 .Split('\n')
                 .Select(line => line.TrimEnd())
                 .ToArray();
             Assert.StartsWith(" ", lines[0]);
+            var requirementIdLine = lines
+                .Single(line => line.TrimStart().StartsWith("- Requirement id:", StringComparison.Ordinal))
+                .TrimStart();
+            var requirementId = ParseControlledValue(requirementIdLine, "- Requirement id:");
+            Assert.Equal(expectedRequirementIdsAndVerdicts[requirementIndex].RequirementId, requirementId);
             Assert.Contains(lines, line => line.TrimStart().StartsWith("- Evidence:", StringComparison.Ordinal));
             Assert.Contains(lines, line => line.TrimStart().StartsWith("- Status:", StringComparison.Ordinal));
             var statusLine = lines
@@ -478,6 +499,7 @@ public sealed partial class RepositoryConfigContractTests
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries)
                 .First();
             Assert.Contains(objectiveVerdict, allowedObjectiveVerdicts);
+            Assert.Equal(expectedRequirementIdsAndVerdicts[requirementIndex].Verdict, objectiveVerdict);
             Assert.DoesNotContain(lines, line => line == "- Evidence:" || line == "- Status:");
         }
     }

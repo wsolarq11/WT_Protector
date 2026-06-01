@@ -385,21 +385,27 @@ Objective verdict classes used below:
 - `impossible-absolute`: the requirement cannot be honestly proven as an absolute for software that starts external processes.
 
 - Requirement: evaluate every active feature.
+  - Requirement id: evaluate-every-active-feature
   - Evidence: the 21 feature sections above cover every active feature mapping documented in `README.md` and the current Avalonia mainline scope.
   - Status: proven-current-scope — the audit covers the current repository scope.
 - Requirement: decide whether each feature is battle-practice or market-proven north-star.
+  - Requirement id: classify-battle-practice-or-market-proven
   - Evidence: every feature section has a real problem, controlled proof type, controlled verdict level, controlled gap class, data owner, evidence, verdict, and remaining gap; the GitHub snapshot separates narrow direct competitors from broad launchers.
   - Status: proven-audit-only — the classification is proven as an audit, not as a universal supremacy claim.
 - Requirement: current ability is already unimprovable.
+  - Requirement id: prove-unimprovable-current-ability
   - Evidence: the broad-domain gap list still names import/export, persisted terminal-session health/history, distribution/update, visual receipts, and external side-effect limits.
   - Status: contradicted — there are possible improvements, but most are intentionally not current work until real demand appears.
 - Requirement: stronger than any similar GitHub project.
+  - Requirement id: prove-stronger-than-any-github-similar-project
   - Evidence: Flow Launcher and Wox have far stronger broad-market proof; Terminal Manager, Launchpad-CLI, win-screen-setup, DevWorkspace, claude-dashboard, wtsm-cli, and AgentSpace each beat WT Launcher on at least one adjacent axis such as WT profile management, installer/statusline distribution, visual multi-monitor layout, split panes/cost tracking, named-session CLI scope, or embedded PTY/SSH scope. WT Launcher is stronger only in the narrower portable config + named group + rollback-aware native gate slice.
   - Status: false-broad-scope — broad launcher supremacy is false; support exists only for the narrow local Windows Terminal workspace-launcher slice.
 - Requirement: remain small and beautiful.
+  - Requirement id: preserve-small-and-beautiful
   - Evidence: this audit rejects speculative plugin marketplace, local web server, split-pane editor, installer/update channel, and workflow graph features until they beat the current local gate.
   - Status: preserved-current-scope — currently preserved.
 - Requirement: 100% confidence and 0% side effects.
+  - Requirement id: prove-absolute-confidence-and-zero-side-effects
   - Evidence: current tests and gate prove batch preflight-before-confirmation, side-effect-free current-group preview with valid plans visible even when another plan fails preflight, exact generated command confirmation, transient single-launch canceled/request/failure receipts plus batch receipts for canceled/requested/failed/skipped plans, abort-after-first-start-failure, rollback-aware JSON persistence, and native publish smoke. They cannot prove that starting arbitrary external processes has zero side effects.
   - Status: impossible-absolute — impossible as an absolute claim; mitigated where the repository owns the boundary.
 
