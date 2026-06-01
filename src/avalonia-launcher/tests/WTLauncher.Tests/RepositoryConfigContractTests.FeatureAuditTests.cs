@@ -18,10 +18,11 @@ public sealed partial class RepositoryConfigContractTests
         var audit = File.ReadAllText(auditPath);
         using var githubSnapshotDoc = JsonDocument.Parse(File.ReadAllText(githubSnapshotPath));
         var githubSnapshot = githubSnapshotDoc.RootElement;
+        var githubCapturedAtUtc = githubSnapshot.GetProperty("capturedAtUtc").GetString();
         var readme = File.ReadAllText(readmePath);
 
         Assert.Contains("Purpose: evaluate whether each active WT Launcher feature mapping solves a real user problem", audit);
-        Assert.Contains("Reviewed on: 2026-06-01", audit);
+        Assert.Contains("Reviewed on: 2026-06-02", audit);
         Assert.Contains("It does not evaluate ignored `.snow/` local runtime/index state.", audit);
         Assert.Contains("## Fresh external yardstick spot-check", audit);
         Assert.Contains("## Current GitHub similar-project snapshot", audit);
@@ -134,16 +135,15 @@ public sealed partial class RepositoryConfigContractTests
         AssertGitHubYardsticksUseControlledVerdicts(audit, githubSnapshot);
 
         Assert.Equal(1, githubSnapshot.GetProperty("schemaVersion").GetInt32());
-        Assert.True(
-            DateTimeOffset.TryParse(githubSnapshot.GetProperty("capturedAtUtc").GetString(), out _),
-            "GitHub snapshot capturedAtUtc must be parseable.");
+        Assert.True(DateTimeOffset.TryParse(githubCapturedAtUtc, out _), "GitHub snapshot capturedAtUtc must be parseable.");
+        Assert.Contains($"GitHub evidence capturedAtUtc: `{githubCapturedAtUtc}`", audit);
         Assert.Contains("gh repo view <owner>/<repo>", githubSnapshot.GetProperty("evidenceCommand").GetString());
         Assert.Contains("tools\\update-github-similar-projects-snapshot.ps1", githubSnapshot.GetProperty("refreshCommand").GetString());
         Assert.Equal("broad Windows launcher", githubSnapshot.GetProperty("repositories").EnumerateArray().Single(repo => repo.GetProperty("fullName").GetString() == "Flow-Launcher/Flow.Launcher").GetProperty("classification").GetString());
         Assert.Equal("broad cross-platform launcher", githubSnapshot.GetProperty("repositories").EnumerateArray().Single(repo => repo.GetProperty("fullName").GetString() == "Wox-launcher/Wox").GetProperty("classification").GetString());
         Assert.Contains("\"100% confidence and 0% side effects\"", audit);
         Assert.Contains("preflight everything local before launching", audit);
-        Assert.Contains("Live GitHub repository search/API checks were refreshed on 2026-06-01", audit);
+        Assert.Contains("Live GitHub repository search/API checks were refreshed on 2026-06-02 local time", audit);
         Assert.Contains("\"Windows Terminal\" workspace launcher", audit);
         Assert.Contains("\"Claude Code\" launcher", audit);
         Assert.Contains("embedded PTY/SSH scope", audit);

@@ -1,6 +1,6 @@
 # Feature reality and north-star audit
 
-Reviewed on: 2026-06-01
+Reviewed on: 2026-06-02
 
 Purpose: evaluate whether each active WT Launcher feature mapping solves a real user problem and whether the implementation is already a domain north star. This is an audit document, not marketing copy.
 
@@ -68,7 +68,7 @@ Current external references were spot-checked on 2026-06-01 before making the no
 
 ## Current GitHub similar-project snapshot
 
-Live GitHub repository search/API checks were refreshed on 2026-06-01 using current queries for `"Windows Terminal" workspace launcher`, `"Windows Terminal" session manager`, and `"Claude Code" launcher`. The current structured evidence is source-tracked in `docs/reference/github-similar-projects-snapshot.json` and refreshed by `tools/update-github-similar-projects-snapshot.ps1`, captured with `gh repo view <owner>/<repo> --json nameWithOwner,url,description,stargazerCount,forkCount,pushedAt,updatedAt,primaryLanguage,isArchived`. The result is blunt: a universal "stronger than any similar GitHub project" claim is not provable, and in the broad launcher market it is false. Flow Launcher and Wox are mature broad launchers with thousands of stars, plugin ecosystems, package channels, and community proof. WT Launcher should not fight them as a generic launcher. That would be stupid scope creep.
+Live GitHub repository search/API checks were refreshed on 2026-06-02 local time using current queries for `"Windows Terminal" workspace launcher`, `"Windows Terminal" session manager`, and `"Claude Code" launcher`. The current structured evidence is source-tracked in `docs/reference/github-similar-projects-snapshot.json` and refreshed by `tools/update-github-similar-projects-snapshot.ps1`, captured with `gh repo view <owner>/<repo> --json nameWithOwner,url,description,stargazerCount,forkCount,pushedAt,updatedAt,primaryLanguage,isArchived`. GitHub evidence capturedAtUtc: `2026-06-01T16:03:42Z`. The result is blunt: a universal "stronger than any similar GitHub project" claim is not provable, and in the broad launcher market it is false. Flow Launcher and Wox are mature broad launchers with thousands of stars, plugin ecosystems, package channels, and community proof. WT Launcher should not fight them as a generic launcher. That would be stupid scope creep.
 
 The relevant fight is narrower: portable Windows Terminal workspace launching with inspectable entries, named launch groups, side-effect-free plan preview, explicit launch confirmation, rollback-aware JSON persistence, and a native repo gate.
 
