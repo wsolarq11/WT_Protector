@@ -432,23 +432,69 @@ Objective verdict classes used below:
 
 ## Claim boundary ledger
 
-Allowed current claims:
+Claim status tokens used below:
 
-1. WT Launcher is a narrow-domain north-star for a portable Windows Terminal workspace launcher.
-2. WT Launcher is stronger only on the portable config, named group, side-effect-free preview, rollback-aware persistence, and native-gate slice.
-3. The small-and-beautiful constraint is currently preserved by refusing speculative plugin marketplace, local web server, split-pane editor, workflow graph, and distribution/update scope.
-4. The strongest zero-side-effect claim applies only before external process handoff: preflight, generated-command preview, confirmation/cancel paths, and JSON rollback boundaries.
+- `allowed`: safe to state only inside the documented current WT Launcher scope.
+- `forbidden`: not proven by current repository, native gate, or GitHub yardstick evidence.
 
-Forbidden current claims:
+Evidence owner tokens used below:
 
-1. Do not claim broad launcher or automation-platform north-star status.
-2. Do not claim the product is unimprovable.
-3. Do not claim stronger-than-every-GitHub-similar-project status.
-4. Do not claim 100% confidence or 0% side effects for real `wt.exe` process launch behavior.
-5. Do not claim terminal-session health after `wt.exe` accepts the start request.
+- `feature-audit`: this document's feature mapping and objective completion audit.
+- `native-gate`: `tools/verify.ps1` plus the focused repository contract tests.
+- `github-snapshot`: `docs/reference/github-similar-projects-snapshot.json`.
+- `scope-rejection`: deliberate refusal to add speculative broad-platform scope.
+- `external-process-boundary`: repository-owned checks before handing control to `wt.exe`.
+
+- Claim id: narrow-domain-north-star
+  - Claim status: allowed
+  - Scope: portable Windows Terminal workspace launcher.
+  - Evidence owner: feature-audit,native-gate,github-snapshot
+  - Claim: WT Launcher is a narrow-domain north-star for a portable Windows Terminal workspace launcher.
+- Claim id: narrow-slice-stronger
+  - Claim status: allowed
+  - Scope: portable config, named group, side-effect-free preview, rollback-aware persistence, and native-gate slice.
+  - Evidence owner: feature-audit,native-gate,github-snapshot
+  - Claim: WT Launcher is stronger only on the portable config, named group, side-effect-free preview, rollback-aware persistence, and native-gate slice.
+- Claim id: small-beautiful-preserved
+  - Claim status: allowed
+  - Scope: current small local launcher contract.
+  - Evidence owner: feature-audit,scope-rejection
+  - Claim: The small-and-beautiful constraint is currently preserved by refusing speculative plugin marketplace, local web server, split-pane editor, workflow graph, and distribution/update scope.
+- Claim id: pre-handoff-zero-side-effect-boundary
+  - Claim status: allowed
+  - Scope: repository-owned checks before external process handoff.
+  - Evidence owner: native-gate,external-process-boundary
+  - Claim: The strongest zero-side-effect claim applies only before external process handoff: preflight, generated-command preview, confirmation/cancel paths, and JSON rollback boundaries.
+- Claim id: broad-launcher-platform-north-star
+  - Claim status: forbidden
+  - Scope: broad launcher or automation platform.
+  - Evidence owner: feature-audit,github-snapshot
+  - Claim: Do not claim broad launcher or automation-platform north-star status.
+- Claim id: unimprovable-product
+  - Claim status: forbidden
+  - Scope: current product ability across all possible workflows.
+  - Evidence owner: feature-audit
+  - Claim: Do not claim the product is unimprovable.
+- Claim id: stronger-than-every-github-similar
+  - Claim status: forbidden
+  - Scope: every similar GitHub project and every adjacent launcher axis.
+  - Evidence owner: feature-audit,github-snapshot
+  - Claim: Do not claim stronger-than-every-GitHub-similar-project status.
+- Claim id: absolute-confidence-zero-side-effects
+  - Claim status: forbidden
+  - Scope: real `wt.exe` process launch behavior.
+  - Evidence owner: feature-audit,external-process-boundary
+  - Claim: Do not claim 100% confidence or 0% side effects for real `wt.exe` process launch behavior.
+- Claim id: post-wt-terminal-health
+  - Claim status: forbidden
+  - Scope: terminal-session health after Windows Terminal accepts a start request.
+  - Evidence owner: external-process-boundary
+  - Claim: Do not claim terminal-session health after `wt.exe` accepts the start request.
 
 ## Final answer
 
 The current project is a north-star implementation only for the narrow domain of a portable Windows Terminal workspace launcher. The strongest mappings are launch entries, named presets, side-effect-free current-group preview, honest requested-start wording, transient single and batch launch receipts, global launch confirmation, portable settings, JSON persistence/rollback, batch preflight-before-confirmation, exact generated command confirmation, abort-after-first-start-failure, and the native verify/publish gate.
 
 It is not a broad-domain north star for every launcher or automation product. GitHub market evidence contradicts that broad claim. Building import/export, status history, distribution/update, split panes, or a plugin system now would be speculative unless a real workflow beats the current small local contract.
+
+This final answer follows allowed claim ids `narrow-domain-north-star`, `narrow-slice-stronger`, `small-beautiful-preserved`, and `pre-handoff-zero-side-effect-boundary`. It rejects forbidden claim ids `broad-launcher-platform-north-star`, `unimprovable-product`, `stronger-than-every-github-similar`, `absolute-confidence-zero-side-effects`, and `post-wt-terminal-health`.

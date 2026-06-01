@@ -64,8 +64,11 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("preserved-current-scope", audit);
         Assert.Contains("impossible-absolute", audit);
         Assert.Contains("## Claim boundary ledger", audit);
-        Assert.Contains("Allowed current claims:", audit);
-        Assert.Contains("Forbidden current claims:", audit);
+        Assert.Contains("Claim status tokens used below:", audit);
+        Assert.Contains("Evidence owner tokens used below:", audit);
+        Assert.Contains("- Claim id:", audit);
+        Assert.Contains("- Claim status:", audit);
+        Assert.Contains("- Evidence owner:", audit);
         Assert.Contains("## Final answer", audit);
         Assert.Equal(21, CountFeatureHeadings(audit));
         AssertFeatureSectionsUseCompleteAuditShape(audit);
@@ -542,22 +545,123 @@ public sealed partial class RepositoryConfigContractTests
         var section = audit[start..end];
         foreach (var requiredLine in new[]
         {
-            "WT Launcher is a narrow-domain north-star for a portable Windows Terminal workspace launcher.",
-            "WT Launcher is stronger only on the portable config, named group, side-effect-free preview, rollback-aware persistence, and native-gate slice.",
-            "The strongest zero-side-effect claim applies only before external process handoff",
-            "Do not claim broad launcher or automation-platform north-star status.",
-            "Do not claim the product is unimprovable.",
-            "Do not claim stronger-than-every-GitHub-similar-project status.",
-            "Do not claim 100% confidence or 0% side effects for real `wt.exe` process launch behavior.",
-            "Do not claim terminal-session health after `wt.exe` accepts the start request.",
+            "- `allowed`: safe to state only inside the documented current WT Launcher scope.",
+            "- `forbidden`: not proven by current repository, native gate, or GitHub yardstick evidence.",
+            "- `feature-audit`: this document's feature mapping and objective completion audit.",
+            "- `native-gate`: `tools/verify.ps1` plus the focused repository contract tests.",
+            "- `github-snapshot`: `docs/reference/github-similar-projects-snapshot.json`.",
+            "- `scope-rejection`: deliberate refusal to add speculative broad-platform scope.",
+            "- `external-process-boundary`: repository-owned checks before handing control to `wt.exe`.",
         })
         {
             Assert.Contains(requiredLine, section);
         }
 
+        var expectedClaims = new (string ClaimId, string ClaimStatus, string[] EvidenceOwners, string Claim)[]
+        {
+            (
+                "narrow-domain-north-star",
+                "allowed",
+                new[] { "feature-audit", "native-gate", "github-snapshot" },
+                "WT Launcher is a narrow-domain north-star for a portable Windows Terminal workspace launcher."),
+            (
+                "narrow-slice-stronger",
+                "allowed",
+                new[] { "feature-audit", "native-gate", "github-snapshot" },
+                "WT Launcher is stronger only on the portable config, named group, side-effect-free preview, rollback-aware persistence, and native-gate slice."),
+            (
+                "small-beautiful-preserved",
+                "allowed",
+                new[] { "feature-audit", "scope-rejection" },
+                "The small-and-beautiful constraint is currently preserved by refusing speculative plugin marketplace, local web server, split-pane editor, workflow graph, and distribution/update scope."),
+            (
+                "pre-handoff-zero-side-effect-boundary",
+                "allowed",
+                new[] { "native-gate", "external-process-boundary" },
+                "The strongest zero-side-effect claim applies only before external process handoff: preflight, generated-command preview, confirmation/cancel paths, and JSON rollback boundaries."),
+            (
+                "broad-launcher-platform-north-star",
+                "forbidden",
+                new[] { "feature-audit", "github-snapshot" },
+                "Do not claim broad launcher or automation-platform north-star status."),
+            (
+                "unimprovable-product",
+                "forbidden",
+                new[] { "feature-audit" },
+                "Do not claim the product is unimprovable."),
+            (
+                "stronger-than-every-github-similar",
+                "forbidden",
+                new[] { "feature-audit", "github-snapshot" },
+                "Do not claim stronger-than-every-GitHub-similar-project status."),
+            (
+                "absolute-confidence-zero-side-effects",
+                "forbidden",
+                new[] { "feature-audit", "external-process-boundary" },
+                "Do not claim 100% confidence or 0% side effects for real `wt.exe` process launch behavior."),
+            (
+                "post-wt-terminal-health",
+                "forbidden",
+                new[] { "external-process-boundary" },
+                "Do not claim terminal-session health after `wt.exe` accepts the start request."),
+        };
+        var claims = section
+            .Split("\n- Claim id:", StringSplitOptions.RemoveEmptyEntries)
+            .Skip(1)
+            .ToArray();
+
+        Assert.Equal(expectedClaims.Length, claims.Length);
+        for (var claimIndex = 0; claimIndex < claims.Length; claimIndex++)
+        {
+            var lines = claims[claimIndex]
+                .Split('\n')
+                .Select(line => line.TrimEnd())
+                .ToArray();
+            var claimId = lines[0].Trim();
+            var expected = expectedClaims[claimIndex];
+
+            Assert.Equal(expected.ClaimId, claimId);
+            Assert.False(string.IsNullOrWhiteSpace(claimId), "Claim id must not be blank.");
+            Assert.DoesNotContain(" ", claimId);
+            Assert.DoesNotContain(".", claimId);
+            Assert.DoesNotContain(";", claimId);
+
+            var statusLine = lines
+                .Single(line => line.TrimStart().StartsWith("- Claim status:", StringComparison.Ordinal))
+                .TrimStart();
+            var status = ParseControlledValue(statusLine, "- Claim status:");
+            Assert.Equal(expected.ClaimStatus, status);
+            Assert.Contains(status, new[] { "allowed", "forbidden" });
+
+            var scopeLine = lines
+                .Single(line => line.TrimStart().StartsWith("- Scope:", StringComparison.Ordinal))
+                .TrimStart();
+            Assert.False(
+                string.IsNullOrWhiteSpace(scopeLine["- Scope:".Length..].Trim()),
+                $"{expected.ClaimId} must name a scope.");
+
+            var evidenceOwnerLine = lines
+                .Single(line => line.TrimStart().StartsWith("- Evidence owner:", StringComparison.Ordinal))
+                .TrimStart();
+            Assert.Equal(
+                expected.EvidenceOwners,
+                ParseControlledList(evidenceOwnerLine, "- Evidence owner:"));
+
+            var claimLine = lines
+                .Single(line => line.TrimStart().StartsWith("- Claim:", StringComparison.Ordinal))
+                .TrimStart();
+            Assert.Equal(expected.Claim, claimLine["- Claim:".Length..].Trim());
+        }
+
         var finalAnswer = audit[end..];
         Assert.Contains("north-star implementation only for the narrow domain", finalAnswer);
         Assert.Contains("It is not a broad-domain north star", finalAnswer);
+        Assert.Contains("This final answer follows allowed claim ids", finalAnswer);
+        Assert.Contains("It rejects forbidden claim ids", finalAnswer);
+        foreach (var claimId in expectedClaims.Select(claim => claim.ClaimId))
+        {
+            Assert.Contains($"`{claimId}`", finalAnswer);
+        }
     }
 
     private static void AssertObjectiveCompletionAuditUsesIndentedEvidenceAndStatus(string audit)
