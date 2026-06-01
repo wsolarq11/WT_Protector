@@ -109,7 +109,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("unexpected dry-run exceptions replacing stale preview text with a preview failure receipt", audit);
         Assert.Contains("Each preflight item snapshots the entry id and name", audit);
         Assert.Contains("Batch preflight exposes its prepared item list as read-only state instead of leaking the mutable staging list", audit);
-        Assert.Contains("Batch confirmation snapshots its item list plus a required target label", audit);
+        Assert.Contains("Batch confirmation snapshots its item list as read-only state plus a required target label", audit);
         Assert.Contains("honest requested-start wording", audit);
         Assert.Contains("side-effect-free current-group preview", audit);
         Assert.Contains("rejects blank failure entry names instead of rendering fake `(unnamed)` rows", audit);

@@ -21,6 +21,20 @@ public sealed class LauncherBatchLaunchConfirmationTests
     }
 
     [Fact]
+    public void ConfirmationItemsDoNotExposeMutableStorage()
+    {
+        using var temp = new TempDirectory();
+        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+        var preflight = workflow.PreflightBatch([Entry("one", temp.Path)], requireConfirmation: true);
+        var confirmation = new LauncherBatchLaunchConfirmation(preflight.Items, "已勾选项");
+
+        var items = Assert.IsAssignableFrom<IList<LauncherBatchLaunchItem>>(confirmation.Items);
+        Assert.True(items.IsReadOnly);
+        Assert.Throws<NotSupportedException>(() => items.Add(Assert.Single(confirmation.Items)));
+        Assert.Single(confirmation.Items);
+    }
+
+    [Fact]
     public void ConfirmationRejectsBlankTargetLabel()
     {
         using var temp = new TempDirectory();
