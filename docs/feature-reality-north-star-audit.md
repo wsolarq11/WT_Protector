@@ -44,7 +44,7 @@ Current external references were spot-checked on 2026-06-01 before making the no
 
 ## Current GitHub similar-project snapshot
 
-Live GitHub repository search/API checks were refreshed on 2026-06-01. The result is blunt: a universal "stronger than any similar GitHub project" claim is not provable, and in the broad launcher market it is false. Flow Launcher and Wox are mature broad launchers with thousands of stars, plugin ecosystems, package channels, and community proof. WT Launcher should not fight them as a generic launcher. That would be stupid scope creep.
+Live GitHub repository search/API checks were refreshed on 2026-06-01 using current queries for `"Windows Terminal" workspace launcher`, `"Windows Terminal" session manager`, and `"Claude Code" launcher`. The result is blunt: a universal "stronger than any similar GitHub project" claim is not provable, and in the broad launcher market it is false. Flow Launcher and Wox are mature broad launchers with thousands of stars, plugin ecosystems, package channels, and community proof. WT Launcher should not fight them as a generic launcher. That would be stupid scope creep.
 
 The relevant fight is narrower: portable Windows Terminal workspace launching with inspectable entries, named launch groups, side-effect-free plan preview, explicit launch confirmation, rollback-aware JSON persistence, and a native repo gate.
 
@@ -55,10 +55,13 @@ Representative GitHub yardsticks:
 - <https://github.com/noambrand/Launchpad-CLI> — Claude Code launcher/installer; HTML-heavy repo, 16 stars, updated 2026-05-31T14:38:02Z. Stronger for installer/folder picker/right-click launch/statusline distribution. Heavier and broader than this repo's portable WT workspace-launcher slice.
 - <https://github.com/kevinkicho/win-screen-setup> — Windows multi-monitor workspace launcher; Python, 0 stars, updated 2026-04-26. Stronger for visual screen/app positioning across monitors. Broader side-effect surface than WT Launcher's small JSON-to-`wt.exe` contract.
 - <https://github.com/ewdieckman/DevWorkspace> — PowerShell Windows Terminal multi-pane workspace module; 0 stars, updated 2026-04-17. Stronger on fixed split-pane layouts. Weaker on editable GUI entries, rollback-aware persistence, and native publish/verify gate.
+- <https://github.com/jsoulet42/claude-launcher-app> — Claude Code Windows Terminal TUI workspace launcher; TypeScript, 1 star, updated 2026-04-06T18:14:28Z. Adjacent proof that the WT+Claude workspace-launcher niche is real, but still not stronger on this repo's portable editable GUI entries, rollback-aware JSON, and native gate axis.
+- <https://github.com/A-ema755/claude-dashboard> — Claude Code CLI session launcher/preset manager; JavaScript, 0 stars, updated 2026-04-08T23:38:30Z. Stronger adjacent scope for split-pane layouts and cost tracking; heavier and outside this app's small local launcher contract.
+- <https://github.com/adityacodepublic/wtsm-cli> — Windows Terminal session manager CLI; TypeScript, 1 star, updated 2026-02-07T05:12:44Z. Strong for named terminal sessions; weaker on GUI editing, launch-group preview, and repo-native rollback/verify evidence.
 - <https://github.com/pramin/AgentSpace> — Avalonia agent workspace launcher; C#, 0 stars, updated 2026-05-18. Stronger on embedded PTY/SSH file tree/code preview scope. Much larger domain, not the same small local WT launcher.
 - <https://github.com/joyahmed/devgo-app> — WSL-first developer launcher; C#, 2 stars, updated 2026-05-24. Strong for WSL + VS Code + tmux workflows and installer ambition. README still lists keyboard shortcuts and rough edges as in-progress, so it is not stronger on the current WT Launcher axis of verified portable launch groups.
-- <https://github.com/Flow-Launcher/Flow.Launcher> — broad Windows launcher; C#, 14,842 stars, updated 2026-05-31T16:46:25Z. Stronger in broad market proof, plugins, search, packaging, and community. Not the same narrow product.
-- <https://github.com/Wox-launcher/Wox> — broad cross-platform launcher; Go, 26,979 stars, updated 2026-05-31T15:02:11Z. Stronger in broad market proof, cross-platform packaging, plugin/theme stores, and AI/MCP direction. Not the same narrow product.
+- <https://github.com/Flow-Launcher/Flow.Launcher> — broad Windows launcher; C#, 14,845 stars, updated 2026-05-31T21:52:23Z. Stronger in broad market proof, plugins, search, packaging, and community. Not the same narrow product.
+- <https://github.com/Wox-launcher/Wox> — broad cross-platform launcher; Go, 26,981 stars, updated 2026-06-01T03:46:12Z. Stronger in broad market proof, cross-platform packaging, plugin/theme stores, and AI/MCP direction. Not the same narrow product.
 
 Conclusion from the GitHub snapshot: WT Launcher can honestly claim a north-star shape only for the narrow, local, portable Windows Terminal workspace-launcher slice. It cannot honestly claim broad launcher supremacy.
 
@@ -274,7 +277,7 @@ This section checks the user's full objective against current evidence instead o
   - Evidence: the broad-domain gap list still names import/export, persisted terminal-session health/history, distribution/update, visual receipts, and external side-effect limits.
   - Status: contradicted. There are possible improvements, but most are intentionally not current work until real demand appears.
 - Requirement: stronger than any similar GitHub project.
-  - Evidence: Flow Launcher and Wox have far stronger broad-market proof; Terminal Manager, Launchpad-CLI, win-screen-setup, DevWorkspace, and AgentSpace each beat WT Launcher on at least one adjacent axis such as WT profile management, installer/statusline distribution, visual multi-monitor layout, split panes, or embedded PTY/SSH scope. WT Launcher is stronger only in the narrower portable config + named group + rollback-aware native gate slice.
+  - Evidence: Flow Launcher and Wox have far stronger broad-market proof; Terminal Manager, Launchpad-CLI, win-screen-setup, DevWorkspace, claude-dashboard, wtsm-cli, and AgentSpace each beat WT Launcher on at least one adjacent axis such as WT profile management, installer/statusline distribution, visual multi-monitor layout, split panes/cost tracking, named-session CLI scope, or embedded PTY/SSH scope. WT Launcher is stronger only in the narrower portable config + named group + rollback-aware native gate slice.
   - Status: false for broad launcher scope; supported only for the narrow local Windows Terminal workspace-launcher slice.
 - Requirement: remain small and beautiful.
   - Evidence: this audit rejects speculative plugin marketplace, local web server, split-pane editor, installer/update channel, and workflow graph features until they beat the current local gate.

@@ -72,6 +72,9 @@ public sealed partial class RepositoryConfigContractTests
             "noambrand/Launchpad-CLI",
             "kevinkicho/win-screen-setup",
             "ewdieckman/DevWorkspace",
+            "jsoulet42/claude-launcher-app",
+            "A-ema755/claude-dashboard",
+            "adityacodepublic/wtsm-cli",
             "pramin/AgentSpace",
             "joyahmed/devgo-app",
             "Flow-Launcher/Flow.Launcher",
@@ -84,10 +87,14 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("\"100% confidence and 0% side effects\"", audit);
         Assert.Contains("preflight everything local before launching", audit);
         Assert.Contains("Live GitHub repository search/API checks were refreshed on 2026-06-01", audit);
+        Assert.Contains("\"Windows Terminal\" workspace launcher", audit);
+        Assert.Contains("\"Claude Code\" launcher", audit);
         Assert.Contains("updated 2026-05-31T14:38:02Z", audit);
         Assert.Contains("embedded PTY/SSH scope", audit);
-        Assert.Contains("updated 2026-05-31T16:46:25Z", audit);
-        Assert.Contains("updated 2026-05-31T15:02:11Z", audit);
+        Assert.Contains("updated 2026-04-08T23:38:30Z", audit);
+        Assert.Contains("named-session CLI scope", audit);
+        Assert.Contains("updated 2026-05-31T21:52:23Z", audit);
+        Assert.Contains("updated 2026-06-01T03:46:12Z", audit);
         AssertObjectiveCompletionAuditPreservesOriginalScope(audit);
         Assert.Contains("not claim broad launcher/platform north-star status", audit);
         Assert.Contains("cannot honestly claim broad launcher supremacy", audit);
