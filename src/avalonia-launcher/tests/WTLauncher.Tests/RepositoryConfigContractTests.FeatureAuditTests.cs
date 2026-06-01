@@ -30,6 +30,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("gh repo view <owner>/<repo>", audit);
         Assert.Contains("root verify validates the snapshot schema", audit);
         Assert.Contains("freshness window", audit);
+        Assert.Contains("- Proof type:", audit);
         Assert.Contains("## Feature mapping audit", audit);
         Assert.Contains("## Objective completion audit", audit);
         Assert.Contains("## Final answer", audit);
@@ -248,6 +249,7 @@ public sealed partial class RepositoryConfigContractTests
         foreach (var section in sections)
         {
             Assert.Contains("- Real problem:", section);
+            Assert.Contains("- Proof type:", section);
             Assert.Contains("- Current data owner:", section);
             Assert.Contains("- Evidence:", section);
             Assert.Contains("- Verdict:", section);
