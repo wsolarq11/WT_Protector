@@ -85,6 +85,74 @@ foreach ($section in @('Configuration schema', 'Build and verification', 'Run th
 }
 Add-Check 'readme' @{ sections = 6 }
 
+$githubSnapshotPath = Join-Path $root 'docs\reference\github-similar-projects-snapshot.json'
+if (-not (Test-Path -LiteralPath $githubSnapshotPath)) { throw "Missing GitHub similar-project snapshot: $githubSnapshotPath" }
+$githubSnapshot = Get-Content -Raw -Encoding UTF8 -LiteralPath $githubSnapshotPath | ConvertFrom-Json
+if ($null -eq $githubSnapshot) { throw "GitHub similar-project snapshot parsed to null: $githubSnapshotPath" }
+Assert-OnlyJsonKeys $githubSnapshot @('schemaVersion', 'capturedAtUtc', 'evidenceCommand', 'queries', 'scope', 'repositories') 'github-similar-projects-snapshot.json'
+if ([int]$githubSnapshot.schemaVersion -ne 1) { throw "Unsupported GitHub similar-project snapshot schemaVersion: $($githubSnapshot.schemaVersion)" }
+if ([string]::IsNullOrWhiteSpace([string]$githubSnapshot.capturedAtUtc)) { throw 'GitHub similar-project snapshot capturedAtUtc is required' }
+try {
+    [void][datetimeoffset]::Parse([string]$githubSnapshot.capturedAtUtc, [System.Globalization.CultureInfo]::InvariantCulture)
+} catch {
+    throw "GitHub similar-project snapshot capturedAtUtc is not parseable: $($githubSnapshot.capturedAtUtc)"
+}
+if (-not ([string]$githubSnapshot.evidenceCommand).Contains('gh repo view <owner>/<repo>')) {
+    throw 'GitHub similar-project snapshot must record the gh repo view evidence command'
+}
+
+$githubQueries = @($githubSnapshot.queries)
+foreach ($query in @('Windows Terminal workspace launcher', 'Windows Terminal session manager', 'Claude Code launcher')) {
+    if ($githubQueries -notcontains $query) { throw "GitHub similar-project snapshot missing query: $query" }
+}
+
+$githubRepos = @($githubSnapshot.repositories)
+if ($githubRepos.Count -lt 12) { throw "GitHub similar-project snapshot should track at least 12 representative repositories; found $($githubRepos.Count)" }
+$githubRepoByName = @{}
+foreach ($repo in $githubRepos) {
+    Assert-OnlyJsonKeys $repo @('fullName', 'url', 'description', 'language', 'stars', 'forks', 'pushedAtUtc', 'updatedAtUtc', 'archived', 'classification', 'strongerAxes', 'wtLauncherAxes') "GitHub similar-project snapshot repository"
+    $fullName = [string]$repo.fullName
+    if ([string]::IsNullOrWhiteSpace($fullName)) { throw 'GitHub similar-project snapshot repository fullName is required' }
+    if ($githubRepoByName.ContainsKey($fullName)) { throw "Duplicate GitHub similar-project snapshot repository: $fullName" }
+    if (-not ([string]$repo.url).StartsWith('https://github.com/', [StringComparison]::Ordinal)) { throw "GitHub similar-project snapshot repository url is invalid: $fullName" }
+    if ([int]$repo.stars -lt 0) { throw "GitHub similar-project snapshot repository stars must be non-negative: $fullName" }
+    if ([int]$repo.forks -lt 0) { throw "GitHub similar-project snapshot repository forks must be non-negative: $fullName" }
+    if (-not ($repo.archived -is [bool])) { throw "GitHub similar-project snapshot repository archived must be boolean: $fullName" }
+    if ([string]::IsNullOrWhiteSpace([string]$repo.classification)) { throw "GitHub similar-project snapshot repository classification is required: $fullName" }
+    if (@($repo.strongerAxes).Count -lt 1) { throw "GitHub similar-project snapshot repository strongerAxes is required: $fullName" }
+    if (@($repo.wtLauncherAxes).Count -lt 1) { throw "GitHub similar-project snapshot repository wtLauncherAxes is required: $fullName" }
+    $githubRepoByName[$fullName] = $repo
+}
+foreach ($requiredRepo in @(
+    'SyDroX/dev-layout',
+    'augustdragon/terminal-manager',
+    'noambrand/Launchpad-CLI',
+    'kevinkicho/win-screen-setup',
+    'ewdieckman/DevWorkspace',
+    'jsoulet42/claude-launcher-app',
+    'A-ema755/claude-dashboard',
+    'adityacodepublic/wtsm-cli',
+    'pramin/AgentSpace',
+    'joyahmed/devgo-app',
+    'Flow-Launcher/Flow.Launcher',
+    'Wox-launcher/Wox'
+)) {
+    if (-not $githubRepoByName.ContainsKey($requiredRepo)) {
+        throw "GitHub similar-project snapshot missing representative repo: $requiredRepo"
+    }
+}
+$flowStars = [int]$githubRepoByName['Flow-Launcher/Flow.Launcher'].stars
+$woxStars = [int]$githubRepoByName['Wox-launcher/Wox'].stars
+if ($flowStars -lt 10000) { throw "Flow Launcher market-proof stars unexpectedly low in snapshot: $flowStars" }
+if ($woxStars -lt 10000) { throw "Wox market-proof stars unexpectedly low in snapshot: $woxStars" }
+Add-Check 'github-similar-projects-snapshot' @{
+    path = 'docs\reference\github-similar-projects-snapshot.json'
+    capturedAtUtc = $githubSnapshot.capturedAtUtc
+    repositories = $githubRepos.Count
+    flowStars = $flowStars
+    woxStars = $woxStars
+}
+
 $rootConfigPath = Get-LauncherConfigPath
 $canonicalKey = 'config\config.json'
 $configItems = @(Read-ConfigItems $rootConfigPath)

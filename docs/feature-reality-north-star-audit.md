@@ -232,7 +232,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: a desktop launcher is only real if it can be restored, tested, published, and smoke-started.
 - Current data owner: `tools/verify.ps1`, `src/avalonia-launcher/verify.ps1`, and ignored publish artifacts.
-- Evidence: root verify checks retired paths, config/presets/settings, docs, tests, publish, and hidden startup smoke.
+- Evidence: root verify checks retired paths, config/presets/settings, docs, the GitHub similar-project snapshot schema, tests, publish, and hidden startup smoke.
 - Verdict: north-star for repo-local Windows release proof.
 - Remaining gap: no installer/update channel; that belongs to distribution scope, not current launcher correctness.
 
@@ -248,7 +248,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: UI/product decisions should not be made from vibes or copied frameworks.
 - Current data owner: `DESIGN.md`, `docs/design-benchmark-digest.md`, and `docs/giants-shoulders/`.
-- Evidence: docs translate external references into local acceptance rules, tests keep the digest referenced, and `docs/reference/github-similar-projects-snapshot.json` preserves the current GitHub market yardstick used by this audit.
+- Evidence: docs translate external references into local acceptance rules, tests keep the digest referenced, `docs/reference/github-similar-projects-snapshot.json` preserves the current GitHub market yardstick used by this audit, and root verify validates the snapshot schema plus the representative direct and broad-market repositories.
 - Verdict: strong, not automatically north-star.
 - Remaining gap: source freshness must be refreshed when a decision depends on a changed external standard.
 

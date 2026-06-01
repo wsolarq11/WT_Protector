@@ -24,6 +24,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("## Current GitHub similar-project snapshot", audit);
         Assert.Contains("docs/reference/github-similar-projects-snapshot.json", audit);
         Assert.Contains("gh repo view <owner>/<repo>", audit);
+        Assert.Contains("root verify validates the snapshot schema", audit);
         Assert.Contains("## Feature mapping audit", audit);
         Assert.Contains("## Objective completion audit", audit);
         Assert.Contains("## Final answer", audit);
@@ -187,6 +188,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("accepts only one optional `--config <path>` pair", readme);
         Assert.Contains("docs/feature-reality-north-star-audit.md", readme);
         Assert.Contains("docs/reference/github-similar-projects-snapshot.json", readme);
+        Assert.Contains("current GitHub similar-project evidence schema", readme);
         Assert.Contains("portable UI preferences such as filter text", readme);
         Assert.DoesNotContain("portable UI preferences such as theme", readme);
         Assert.Contains("must not contain the obsolete per-entry `confirm` key", readme);
