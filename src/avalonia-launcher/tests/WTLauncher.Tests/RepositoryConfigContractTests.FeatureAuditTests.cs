@@ -821,6 +821,9 @@ public sealed partial class RepositoryConfigContractTests
             "- Requirement id: preserve-small-and-beautiful",
             "- Requirement id: prove-absolute-confidence-and-zero-side-effects",
             "Objective status count: proven-current-scope=1,proven-audit-only=1,contradicted=1,false-broad-scope=1,preserved-current-scope=1,impossible-absolute=1",
+            "Full objective result: not-complete-as-written",
+            "Feature north-star coverage: current-active-features=21,narrow-north-star=21,non-north-star=0",
+            "Blocked absolute requirements: unimprovable-product,stronger-than-every-github-similar,absolute-confidence-zero-side-effects",
             "Objective claim impact tokens used below:",
             "- `supports-current-feature-coverage`:",
             "- `classifies-without-supremacy`:",
@@ -835,6 +838,7 @@ public sealed partial class RepositoryConfigContractTests
             "- Claim impact: preserves-small-scope",
             "- Claim impact: blocks-absolute-side-effect-claim",
             "controlled gap class",
+            "all 21 current feature sections now have `Verdict level: narrow-north-star`",
             "- Status: contradicted",
             "- Status: false-broad-scope",
             "transient single-launch canceled/request/failure receipts plus batch receipts",
@@ -964,7 +968,9 @@ public sealed partial class RepositoryConfigContractTests
         }
 
         var finalAnswer = audit[end..];
+        Assert.Contains("All 21 current feature mappings classify as narrow-domain north-star", finalAnswer);
         Assert.Contains("north-star implementation only for the narrow domain", finalAnswer);
+        Assert.Contains("adaptive card sizing/density", finalAnswer);
         Assert.Contains("It is not a broad-domain north star", finalAnswer);
         Assert.Contains("This final answer follows allowed claim ids", finalAnswer);
         Assert.Contains("It rejects forbidden claim ids", finalAnswer);

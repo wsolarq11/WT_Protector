@@ -531,6 +531,9 @@ Objective verdict classes used below:
 - `impossible-absolute`: the requirement cannot be honestly proven as an absolute for software that starts external processes.
 
 Objective status count: proven-current-scope=1,proven-audit-only=1,contradicted=1,false-broad-scope=1,preserved-current-scope=1,impossible-absolute=1
+Full objective result: not-complete-as-written
+Feature north-star coverage: current-active-features=21,narrow-north-star=21,non-north-star=0
+Blocked absolute requirements: unimprovable-product,stronger-than-every-github-similar,absolute-confidence-zero-side-effects
 
 Objective claim impact tokens used below:
 
@@ -549,7 +552,7 @@ Objective claim impact tokens used below:
 - Requirement: decide whether each feature is battle-practice or market-proven north-star.
   - Requirement id: classify-battle-practice-or-market-proven
   - Claim impact: classifies-without-supremacy
-  - Evidence: every feature section has a real problem, controlled proof type, controlled verdict level, controlled gap class, data owner, evidence, verdict, and remaining gap; the GitHub snapshot separates narrow direct competitors from broad launchers.
+  - Evidence: every feature section has a real problem, controlled proof type, controlled verdict level, controlled gap class, data owner, evidence, verdict, and remaining gap; all 21 current feature sections now have `Verdict level: narrow-north-star`; the GitHub snapshot separates narrow direct competitors from broad launchers.
   - Status: proven-audit-only — the classification is proven as an audit, not as a universal supremacy claim.
 - Requirement: current ability is already unimprovable.
   - Requirement id: prove-unimprovable-current-ability
@@ -635,7 +638,7 @@ Evidence owner tokens used below:
 
 ## Final answer
 
-The current project is a north-star implementation only for the narrow domain of a portable Windows Terminal workspace launcher. The strongest mappings are launch entries, named presets, side-effect-free current-group preview, honest requested-start wording, transient single and batch launch receipts, global launch confirmation, portable settings, JSON persistence/rollback, batch preflight-before-confirmation, exact generated command confirmation, abort-after-first-start-failure, and the native verify/publish gate.
+All 21 current feature mappings classify as narrow-domain north-star. The current project is a north-star implementation only for the narrow domain of a portable Windows Terminal workspace launcher. The strongest mappings are launch entries, named presets, adaptive card sizing/density, side-effect-free current-group preview, honest requested-start wording, transient single and batch launch receipts, global launch confirmation, portable settings, JSON persistence/rollback, batch preflight-before-confirmation, exact generated command confirmation, abort-after-first-start-failure, and the native verify/publish gate.
 
 It is not a broad-domain north star for every launcher or automation product. GitHub market evidence contradicts that broad claim. Building import/export, status history, distribution/update, split panes, or a plugin system now would be speculative unless a real workflow beats the current small local contract.
 
