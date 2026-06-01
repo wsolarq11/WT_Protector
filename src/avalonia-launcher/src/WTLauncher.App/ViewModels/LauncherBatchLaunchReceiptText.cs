@@ -76,7 +76,7 @@ public static class LauncherBatchLaunchReceiptText
         for (var index = 0; index < items.Count; index++)
         {
             var item = items[index];
-            lines.Add($"• {StatusFor(index, report)}: {item.Entry.Name}");
+            lines.Add($"• {StatusFor(index, report)}: {item.EntryName}");
             lines.Add(item.Plan.CommandLine);
         }
     }
@@ -109,7 +109,7 @@ public static class LauncherBatchLaunchReceiptText
         lines.Add("");
         foreach (var item in items)
         {
-            lines.Add($"• 未启动: {item.Entry.Name}");
+            lines.Add($"• 未启动: {item.EntryName}");
             lines.Add(item.Plan.CommandLine);
         }
     }

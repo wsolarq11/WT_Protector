@@ -43,7 +43,7 @@ public static class LauncherBatchLaunchPlanText
         string prefix)
     {
         foreach (var item in items)
-            lines.Add($"{prefix}{item.Entry.Name}{Environment.NewLine}{item.Plan.CommandLine}");
+            lines.Add($"{prefix}{item.EntryName}{Environment.NewLine}{item.Plan.CommandLine}");
     }
 
     private static void AppendFailureLines(List<string> lines, IReadOnlyList<string> failures)

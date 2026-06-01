@@ -82,7 +82,7 @@ public sealed class LauncherLaunchWorkflow
             }
             catch (Exception ex)
             {
-                RecordFailure(report, item.Entry.Name, ex);
+                RecordFailure(report, item.EntryName, ex);
                 report.RecordSkipped(items.Count - index - 1);
                 break;
             }

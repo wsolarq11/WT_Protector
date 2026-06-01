@@ -53,6 +53,7 @@ public sealed class LauncherLaunchWorkflowTests
 
         var item = Assert.Single(preflight.Items);
         Assert.Equal("one", item.Entry.Id);
+        Assert.Equal("one", item.EntryName);
         Assert.True(item.Plan.RequiresConfirmation);
         Assert.Equal(0, preflight.Report.FailedCount);
         Assert.Equal(0, preflight.Report.RequestedCount);
@@ -128,7 +129,7 @@ public sealed class LauncherLaunchWorkflowTests
     }
 
     [Fact]
-    public void StartBatchReportsBlankMutatedEntryNameWithoutInventingFallbackName()
+    public void StartBatchUsesPreflightNameSnapshotWhenEntryNameMutates()
     {
         using var temp = new TempDirectory();
         var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("blocked"));
@@ -138,10 +139,11 @@ public sealed class LauncherLaunchWorkflowTests
 
         var report = workflow.StartBatch(preflight);
 
+        Assert.Equal("one", Assert.Single(preflight.Items).EntryName);
         Assert.Equal(0, report.RequestedCount);
         Assert.Equal(1, report.FailedCount);
         Assert.Equal(0, report.SkippedCount);
-        Assert.Equal(["blocked"], report.FailureMessages);
+        Assert.Equal(["one: blocked"], report.FailureMessages);
         Assert.Contains("pwsh", report.LastCommandLine);
     }
 

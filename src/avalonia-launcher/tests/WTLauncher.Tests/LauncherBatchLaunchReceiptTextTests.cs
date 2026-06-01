@@ -58,6 +58,23 @@ public sealed class LauncherBatchLaunchReceiptTextTests
     }
 
     [Fact]
+    public void ReceiptUsesPreflightNameSnapshotWhenEntryNameMutates()
+    {
+        using var temp = new TempDirectory();
+        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("blocked"));
+        var entry = Entry("one", temp.Path);
+        var preflight = workflow.PreflightBatch([entry], requireConfirmation: false);
+        entry.Name = " ";
+
+        var report = workflow.StartBatch(preflight);
+        var receipt = LauncherBatchLaunchReceiptText.Format(preflight, report);
+
+        Assert.Contains("• 启动失败: one", receipt);
+        Assert.Contains("one: blocked", receipt);
+        Assert.DoesNotContain("(unnamed)", receipt);
+    }
+
+    [Fact]
     public void CanceledReceiptMarksEveryPlanAsNotStarted()
     {
         using var temp = new TempDirectory();
