@@ -1,6 +1,6 @@
 {
-    "schemaVersion":  2,
-    "capturedAtUtc":  "2026-06-01T16:12:03Z",
+    "schemaVersion":  3,
+    "capturedAtUtc":  "2026-06-01T16:27:57Z",
     "evidenceCommand":  "gh repo view \u003cowner\u003e/\u003crepo\u003e --json nameWithOwner,url,description,stargazerCount,forkCount,pushedAt,updatedAt,primaryLanguage,isArchived",
     "refreshCommand":  "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tools\\update-github-similar-projects-snapshot.ps1",
     "queries":  [
@@ -9,6 +9,14 @@
                     "Claude Code launcher"
                 ],
     "scope":  "Representative similar GitHub projects for WT Launcher\u0027s market/north-star audit; not a universal ranking of every launcher repository.",
+    "summary":  {
+                    "repositories":  12,
+                    "directNarrowWeaker":  2,
+                    "adjacentAxisStronger":  8,
+                    "broadMarketStronger":  2,
+                    "flowStars":  14845,
+                    "woxStars":  26982
+                },
     "repositories":  [
                          {
                              "fullName":  "SyDroX/dev-layout",
@@ -267,7 +275,7 @@
                              "stars":  26982,
                              "forks":  2411,
                              "pushedAtUtc":  "2026-06-01T16:09:01Z",
-                             "updatedAtUtc":  "2026-06-01T15:35:33Z",
+                             "updatedAtUtc":  "2026-06-01T16:14:21Z",
                              "archived":  false,
                              "classification":  "broad cross-platform launcher",
                              "yardstickVerdict":  "broad-market-stronger",

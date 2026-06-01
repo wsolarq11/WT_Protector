@@ -91,8 +91,8 @@ $githubSnapshotPath = Join-Path $root 'docs\reference\github-similar-projects-sn
 if (-not (Test-Path -LiteralPath $githubSnapshotPath)) { throw "Missing GitHub similar-project snapshot: $githubSnapshotPath" }
 $githubSnapshot = Get-Content -Raw -Encoding UTF8 -LiteralPath $githubSnapshotPath | ConvertFrom-Json
 if ($null -eq $githubSnapshot) { throw "GitHub similar-project snapshot parsed to null: $githubSnapshotPath" }
-Assert-OnlyJsonKeys $githubSnapshot @('schemaVersion', 'capturedAtUtc', 'evidenceCommand', 'refreshCommand', 'queries', 'scope', 'repositories') 'github-similar-projects-snapshot.json'
-if ([int]$githubSnapshot.schemaVersion -ne 2) { throw "Unsupported GitHub similar-project snapshot schemaVersion: $($githubSnapshot.schemaVersion)" }
+Assert-OnlyJsonKeys $githubSnapshot @('schemaVersion', 'capturedAtUtc', 'evidenceCommand', 'refreshCommand', 'queries', 'scope', 'summary', 'repositories') 'github-similar-projects-snapshot.json'
+if ([int]$githubSnapshot.schemaVersion -ne 3) { throw "Unsupported GitHub similar-project snapshot schemaVersion: $($githubSnapshot.schemaVersion)" }
 if ([string]::IsNullOrWhiteSpace([string]$githubSnapshot.capturedAtUtc)) { throw 'GitHub similar-project snapshot capturedAtUtc is required' }
 $githubSnapshotMaxAgeDays = 30
 try {
@@ -111,6 +111,8 @@ if (-not ([string]$githubSnapshot.evidenceCommand).Contains('gh repo view <owner
 if (-not ([string]$githubSnapshot.refreshCommand).Contains('tools\update-github-similar-projects-snapshot.ps1')) {
     throw 'GitHub similar-project snapshot must record its repo-local refresh command'
 }
+if ($null -eq $githubSnapshot.summary) { throw 'GitHub similar-project snapshot summary is required' }
+Assert-OnlyJsonKeys $githubSnapshot.summary @('repositories', 'directNarrowWeaker', 'adjacentAxisStronger', 'broadMarketStronger', 'flowStars', 'woxStars') 'GitHub similar-project snapshot summary'
 
 $githubQueries = @($githubSnapshot.queries)
 foreach ($query in @('Windows Terminal workspace launcher', 'Windows Terminal session manager', 'Claude Code launcher')) {
@@ -160,16 +162,26 @@ if ($flowStars -lt 10000) { throw "Flow Launcher market-proof stars unexpectedly
 if ($woxStars -lt 10000) { throw "Wox market-proof stars unexpectedly low in snapshot: $woxStars" }
 if ([string]$githubRepoByName['Flow-Launcher/Flow.Launcher'].yardstickVerdict -ne 'broad-market-stronger') { throw 'Flow Launcher must remain classified as broad-market-stronger' }
 if ([string]$githubRepoByName['Wox-launcher/Wox'].yardstickVerdict -ne 'broad-market-stronger') { throw 'Wox must remain classified as broad-market-stronger' }
+$directNarrowWeakerCount = @($githubRepos | Where-Object { [string]$_.yardstickVerdict -eq 'direct-narrow-weaker' }).Count
+$adjacentAxisStrongerCount = @($githubRepos | Where-Object { [string]$_.yardstickVerdict -eq 'adjacent-axis-stronger' }).Count
 $broadMarketStrongerCount = @($githubRepos | Where-Object { [string]$_.yardstickVerdict -eq 'broad-market-stronger' }).Count
 if ($broadMarketStrongerCount -ne 2) { throw "GitHub similar-project snapshot broad-market-stronger count must be 2; found $broadMarketStrongerCount" }
+if ([int]$githubSnapshot.summary.repositories -ne $githubRepos.Count) { throw "GitHub similar-project snapshot summary repositories mismatch: $($githubSnapshot.summary.repositories) vs $($githubRepos.Count)" }
+if ([int]$githubSnapshot.summary.directNarrowWeaker -ne $directNarrowWeakerCount) { throw "GitHub similar-project snapshot summary directNarrowWeaker mismatch: $($githubSnapshot.summary.directNarrowWeaker) vs $directNarrowWeakerCount" }
+if ([int]$githubSnapshot.summary.adjacentAxisStronger -ne $adjacentAxisStrongerCount) { throw "GitHub similar-project snapshot summary adjacentAxisStronger mismatch: $($githubSnapshot.summary.adjacentAxisStronger) vs $adjacentAxisStrongerCount" }
+if ([int]$githubSnapshot.summary.broadMarketStronger -ne $broadMarketStrongerCount) { throw "GitHub similar-project snapshot summary broadMarketStronger mismatch: $($githubSnapshot.summary.broadMarketStronger) vs $broadMarketStrongerCount" }
+if ([int]$githubSnapshot.summary.flowStars -ne $flowStars) { throw "GitHub similar-project snapshot summary flowStars mismatch: $($githubSnapshot.summary.flowStars) vs $flowStars" }
+if ([int]$githubSnapshot.summary.woxStars -ne $woxStars) { throw "GitHub similar-project snapshot summary woxStars mismatch: $($githubSnapshot.summary.woxStars) vs $woxStars" }
 Add-Check 'github-similar-projects-snapshot' @{
     path = 'docs\reference\github-similar-projects-snapshot.json'
     refreshScript = 'tools\update-github-similar-projects-snapshot.ps1'
     capturedAtUtc = $githubSnapshot.capturedAtUtc
     maxAgeDays = $githubSnapshotMaxAgeDays
     ageDays = [math]::Round($githubSnapshotAge.TotalDays, 2)
-    repositories = $githubRepos.Count
-    broadMarketStronger = $broadMarketStrongerCount
+    repositories = $githubSnapshot.summary.repositories
+    directNarrowWeaker = $githubSnapshot.summary.directNarrowWeaker
+    adjacentAxisStronger = $githubSnapshot.summary.adjacentAxisStronger
+    broadMarketStronger = $githubSnapshot.summary.broadMarketStronger
     flowStars = $flowStars
     woxStars = $woxStars
 }

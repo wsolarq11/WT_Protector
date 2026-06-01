@@ -122,9 +122,24 @@ $repositories = foreach ($note in $repoNotes) {
     }
 }
 
+$directNarrowWeakerCount = @($repositories | Where-Object { [string]$_.yardstickVerdict -eq 'direct-narrow-weaker' }).Count
+$adjacentAxisStrongerCount = @($repositories | Where-Object { [string]$_.yardstickVerdict -eq 'adjacent-axis-stronger' }).Count
+$broadMarketStrongerCount = @($repositories | Where-Object { [string]$_.yardstickVerdict -eq 'broad-market-stronger' }).Count
+$flowStars = [int](@($repositories) | Where-Object { $_.fullName -eq 'Flow-Launcher/Flow.Launcher' } | Select-Object -First 1).stars
+$woxStars = [int](@($repositories) | Where-Object { $_.fullName -eq 'Wox-launcher/Wox' } | Select-Object -First 1).stars
+
 $capturedAtUtc = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+$summary = [ordered]@{
+    repositories = @($repositories).Count
+    directNarrowWeaker = $directNarrowWeakerCount
+    adjacentAxisStronger = $adjacentAxisStrongerCount
+    broadMarketStronger = $broadMarketStrongerCount
+    flowStars = $flowStars
+    woxStars = $woxStars
+}
+
 $snapshot = [ordered]@{
-    schemaVersion = 2
+    schemaVersion = 3
     capturedAtUtc = $capturedAtUtc
     evidenceCommand = $evidenceCommand
     refreshCommand = 'powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\update-github-similar-projects-snapshot.ps1'
@@ -134,6 +149,7 @@ $snapshot = [ordered]@{
         'Claude Code launcher'
     )
     scope = "Representative similar GitHub projects for WT Launcher's market/north-star audit; not a universal ranking of every launcher repository."
+    summary = $summary
     repositories = @($repositories)
 }
 
@@ -144,7 +160,10 @@ $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 New-ToolReceipt 'github-similar-projects-snapshot-refresh' @{
     path = 'docs\reference\github-similar-projects-snapshot.json'
     capturedAtUtc = $capturedAtUtc
-    repositories = @($repositories).Count
-    flowStars = [int](@($repositories) | Where-Object { $_.fullName -eq 'Flow-Launcher/Flow.Launcher' } | Select-Object -First 1).stars
-    woxStars = [int](@($repositories) | Where-Object { $_.fullName -eq 'Wox-launcher/Wox' } | Select-Object -First 1).stars
+    repositories = $summary.repositories
+    directNarrowWeaker = $summary.directNarrowWeaker
+    adjacentAxisStronger = $summary.adjacentAxisStronger
+    broadMarketStronger = $summary.broadMarketStronger
+    flowStars = $summary.flowStars
+    woxStars = $summary.woxStars
 } | ConvertTo-Json -Depth 4 -Compress

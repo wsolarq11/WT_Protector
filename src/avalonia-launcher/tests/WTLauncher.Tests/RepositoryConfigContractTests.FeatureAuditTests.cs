@@ -134,9 +134,14 @@ public sealed partial class RepositoryConfigContractTests
         }
         AssertGitHubYardsticksUseControlledVerdicts(audit, githubSnapshot);
 
-        Assert.Equal(2, githubSnapshot.GetProperty("schemaVersion").GetInt32());
+        Assert.Equal(3, githubSnapshot.GetProperty("schemaVersion").GetInt32());
         Assert.True(DateTimeOffset.TryParse(githubCapturedAtUtc, out _), "GitHub snapshot capturedAtUtc must be parseable.");
         Assert.Contains($"GitHub evidence capturedAtUtc: `{githubCapturedAtUtc}`", audit);
+        var githubSnapshotSummary = githubSnapshot.GetProperty("summary");
+        Assert.Equal(12, githubSnapshotSummary.GetProperty("repositories").GetInt32());
+        Assert.Equal(2, githubSnapshotSummary.GetProperty("directNarrowWeaker").GetInt32());
+        Assert.Equal(8, githubSnapshotSummary.GetProperty("adjacentAxisStronger").GetInt32());
+        Assert.Equal(2, githubSnapshotSummary.GetProperty("broadMarketStronger").GetInt32());
         Assert.Contains("gh repo view <owner>/<repo>", githubSnapshot.GetProperty("evidenceCommand").GetString());
         Assert.Contains("tools\\update-github-similar-projects-snapshot.ps1", githubSnapshot.GetProperty("refreshCommand").GetString());
         Assert.Equal("broad Windows launcher", githubSnapshot.GetProperty("repositories").EnumerateArray().Single(repo => repo.GetProperty("fullName").GetString() == "Flow-Launcher/Flow.Launcher").GetProperty("classification").GetString());
@@ -151,9 +156,15 @@ public sealed partial class RepositoryConfigContractTests
         Assert.True(
             githubSnapshot.GetProperty("repositories").EnumerateArray().Single(repo => repo.GetProperty("fullName").GetString() == "Flow-Launcher/Flow.Launcher").GetProperty("stars").GetInt32() >= 10_000,
             "Flow Launcher must remain broad-market proof in the snapshot.");
+        Assert.Equal(
+            githubSnapshot.GetProperty("repositories").EnumerateArray().Single(repo => repo.GetProperty("fullName").GetString() == "Flow-Launcher/Flow.Launcher").GetProperty("stars").GetInt32(),
+            githubSnapshotSummary.GetProperty("flowStars").GetInt32());
         Assert.True(
             githubSnapshot.GetProperty("repositories").EnumerateArray().Single(repo => repo.GetProperty("fullName").GetString() == "Wox-launcher/Wox").GetProperty("stars").GetInt32() >= 10_000,
             "Wox must remain broad-market proof in the snapshot.");
+        Assert.Equal(
+            githubSnapshot.GetProperty("repositories").EnumerateArray().Single(repo => repo.GetProperty("fullName").GetString() == "Wox-launcher/Wox").GetProperty("stars").GetInt32(),
+            githubSnapshotSummary.GetProperty("woxStars").GetInt32());
         AssertObjectiveCompletionAuditPreservesOriginalScope(audit);
         Assert.Contains("not claim broad launcher/platform north-star status", audit);
         Assert.Contains("cannot honestly claim broad launcher supremacy", audit);
