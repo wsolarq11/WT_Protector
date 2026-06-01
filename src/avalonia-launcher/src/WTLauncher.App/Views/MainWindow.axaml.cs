@@ -24,7 +24,7 @@ public sealed partial class MainWindow : Window
         viewModel.ConfirmBatchLaunchAsync = confirmation => new ConfirmBatchLaunchWindow(confirmation).ShowDialog<bool>(this);
         viewModel.RequestNewPresetAsync = selectedEntryIds =>
             new PresetDetailsWindow(selectedEntryIds).ShowDialog<string?>(this);
-        viewModel.ConfirmDeletePresetAsync = preset => new ConfirmPresetDeleteWindow(preset).ShowDialog<bool>(this);
+        viewModel.ConfirmDeletePresetAsync = target => new ConfirmPresetDeleteWindow(target).ShowDialog<bool>(this);
         viewModel.RequestEntryDraftAsync = entry => new EntryDetailsWindow(entry).ShowDialog<EntryDraft?>(this);
         viewModel.ConfirmDeleteEntryAsync = target => new ConfirmEntryDeleteWindow(target).ShowDialog<bool>(this);
         DragDrop.AddDragOverHandler(this, OnEntryDragOver);

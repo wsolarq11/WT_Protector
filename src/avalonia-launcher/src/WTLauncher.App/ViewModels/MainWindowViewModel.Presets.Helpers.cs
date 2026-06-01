@@ -39,23 +39,23 @@ public sealed partial class MainWindowViewModel
         return selectedPreset is not null;
     }
 
-    private async Task<bool> ConfirmDeletePresetIfRequiredAsync(LauncherPresetViewModel selectedPreset)
+    private async Task<bool> ConfirmDeletePresetIfRequiredAsync(LauncherPresetDeleteTarget target)
     {
         bool accepted;
         try
         {
-            accepted = await ConfirmDeletePresetAsync(selectedPreset).ConfigureAwait(true);
+            accepted = await ConfirmDeletePresetAsync(target).ConfigureAwait(true);
         }
         catch (Exception ex)
         {
-            StatusText = LauncherPresetStatus.DeleteConfirmationFailed(selectedPreset.Name, ex);
+            StatusText = LauncherPresetStatus.DeleteConfirmationFailed(target.PresetName, ex);
             return false;
         }
 
         if (accepted)
             return true;
 
-        StatusText = LauncherPresetStatus.DeleteCanceled(selectedPreset.Name);
+        StatusText = LauncherPresetStatus.DeleteCanceled(target.PresetName);
         return false;
     }
 
@@ -93,9 +93,12 @@ public sealed partial class MainWindowViewModel
         return LauncherPresetMutationSnapshot.Capture(_presetFile, SelectedPreset?.Id);
     }
 
+    private void RestorePresetMutationSnapshot(LauncherPresetMutationSnapshot snapshot) =>
+        ApplyPresetFileState(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
+
     private void RestorePresetSnapshotAndReportMissing(LauncherPresetMutationSnapshot snapshot)
     {
-        ApplyPresetFileState(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
+        RestorePresetMutationSnapshot(snapshot);
         ApplyStatusText(LauncherPresetStatus.CurrentPresetMissing);
     }
 

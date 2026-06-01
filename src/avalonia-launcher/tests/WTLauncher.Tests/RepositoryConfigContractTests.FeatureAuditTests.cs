@@ -107,6 +107,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("config-save failures during select-all/clear/checkbox mutation", audit);
         Assert.Contains("blank/duplicate reference rejection before reference rename/remove mutation", audit);
         Assert.Contains("entry delete confirmation snapshotting target id/name before dialog mutation", audit);
+        Assert.Contains("preset delete confirmation snapshotting target id/name/count before dialog mutation", audit);
         Assert.Contains("entry edit dialogs rejecting null initial/submitted text instead of converting it into empty required-field input", audit);
         Assert.Contains("Applying a preset has a failure contract too", audit);
         Assert.Contains("roll back memory/file state on preset save failures", audit);

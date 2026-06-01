@@ -106,6 +106,20 @@ public sealed class DialogLayoutContractTests
     }
 
     [Fact]
+    public void PresetDeleteDialogUsesSnapshotTarget()
+    {
+        var source = File.ReadAllText(TestRepositoryPaths.View("ConfirmPresetDeleteWindow.cs"));
+
+        Assert.Contains("ConfirmPresetDeleteWindow(LauncherPresetDeleteTarget target)", source);
+        Assert.Contains("ArgumentNullException.ThrowIfNull(target);", source);
+        Assert.Contains("target.PresetName", source);
+        Assert.Contains("target.EntryCount", source);
+        Assert.DoesNotContain("LauncherPresetViewModel preset", source);
+        Assert.DoesNotContain("preset.Name", source);
+        Assert.DoesNotContain("preset.EntryCount", source);
+    }
+
+    [Fact]
     public void EditableDialogTextInputsUseSharedDialogInputStyle()
     {
         var entryDetails = File.ReadAllText(TestRepositoryPaths.View("EntryDetailsWindow.cs"));

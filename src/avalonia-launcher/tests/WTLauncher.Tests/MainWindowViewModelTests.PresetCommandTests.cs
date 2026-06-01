@@ -44,7 +44,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(["one", "two"], created.EntryIds);
         Assert.False(viewModel.UpdateSelectedPresetCommand.CanExecute(null));
 
-        viewModel.ConfirmDeletePresetAsync = preset => Task.FromResult(preset.Id == "project-pair");
+        viewModel.ConfirmDeletePresetAsync = preset => Task.FromResult(preset.PresetId == "project-pair");
 
         Assert.True(viewModel.DeleteSelectedPresetCommand.CanExecute(null));
 
@@ -430,6 +430,80 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
         Assert.Equal("删除启动组确认失败: Daily — dialog unavailable", viewModel.StatusText);
+    }
+
+    [Fact]
+    public async Task LaunchGroupDeleteCancellationRestoresMutatedLivePreset()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreateDragFixture(temp);
+        SavePresetFile(
+            presets,
+            "daily",
+            Preset("daily", "Daily", "one"),
+            Preset("secondary", "Secondary", "two"));
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+        var livePreset = viewModel.SelectedPreset!.Preset;
+        LauncherPresetDeleteTarget? target = null;
+        viewModel.ConfirmDeletePresetAsync = candidate =>
+        {
+            target = candidate;
+            livePreset.Id = "broken";
+            livePreset.Name = "";
+            livePreset.EntryIds.Clear();
+            return Task.FromResult(false);
+        };
+
+        await viewModel.DeleteSelectedPresetCommand.ExecuteAsync(null);
+
+        Assert.NotNull(target);
+        Assert.Equal("daily", target!.PresetId);
+        Assert.Equal("Daily", target.PresetName);
+        Assert.Equal(1, target.EntryCount);
+        var presetFile = LauncherPresetStore.Load(presets);
+        Assert.Equal(["daily", "secondary"], presetFile.Presets.Select(preset => preset.Id).ToArray());
+        Assert.Equal("daily", viewModel.SelectedPreset?.Id);
+        Assert.Equal("Daily", viewModel.SelectedPreset?.Name);
+        Assert.Equal(["one"], viewModel.SelectedPreset!.EntryIds.ToArray());
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal("已取消: 删除启动组 Daily", viewModel.StatusText);
+    }
+
+    [Fact]
+    public async Task LaunchGroupDeleteUsesConfirmationSnapshotForTargetAndStatus()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreateDragFixture(temp);
+        SavePresetFile(
+            presets,
+            "daily",
+            Preset("daily", "Daily", "one"),
+            Preset("secondary", "Secondary", "two"));
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+        var livePreset = viewModel.SelectedPreset!.Preset;
+        LauncherPresetDeleteTarget? target = null;
+        viewModel.ConfirmDeletePresetAsync = candidate =>
+        {
+            target = candidate;
+            livePreset.Id = "broken";
+            livePreset.Name = "";
+            livePreset.EntryIds.Clear();
+            return Task.FromResult(true);
+        };
+
+        await viewModel.DeleteSelectedPresetCommand.ExecuteAsync(null);
+
+        Assert.NotNull(target);
+        Assert.Equal("daily", target!.PresetId);
+        Assert.Equal("Daily", target.PresetName);
+        Assert.Equal(1, target.EntryCount);
+        var presetFile = LauncherPresetStore.Load(presets);
+        Assert.DoesNotContain(presetFile.Presets, preset => preset.Id == "daily");
+        Assert.Equal("secondary", presetFile.DefaultPresetId);
+        Assert.Equal("secondary", viewModel.SelectedPreset?.Id);
+        Assert.Equal("已删除启动组: Daily；当前启动组: Secondary", viewModel.StatusText);
     }
 
     [Fact]

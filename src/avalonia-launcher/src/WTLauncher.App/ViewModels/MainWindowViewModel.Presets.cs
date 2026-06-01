@@ -8,7 +8,7 @@ public sealed partial class MainWindowViewModel
     public Func<IReadOnlyList<string>, Task<string?>> RequestNewPresetAsync { get; set; } =
         static _ => Task.FromResult<string?>(null);
 
-    public Func<LauncherPresetViewModel, Task<bool>> ConfirmDeletePresetAsync { get; set; } =
+    public Func<LauncherPresetDeleteTarget, Task<bool>> ConfirmDeletePresetAsync { get; set; } =
         static _ => Task.FromResult(false);
 
     [RelayCommand(CanExecute = nameof(CanApplyPreset))]
@@ -136,17 +136,22 @@ public sealed partial class MainWindowViewModel
         if (selectedPreset is null)
             return;
 
-        if (!LauncherPresetWorkflow.CanDeletePreset(_presetFile, selectedPreset.Id))
+        var target = new LauncherPresetDeleteTarget(selectedPreset.Preset);
+        if (!LauncherPresetWorkflow.CanDeletePreset(_presetFile, target.PresetId))
         {
-            StatusText = LauncherPresetStatus.DeleteBlocked(selectedPreset.Name);
+            StatusText = LauncherPresetStatus.DeleteBlocked(target.PresetName);
             return;
         }
 
-        if (!await ConfirmDeletePresetIfRequiredAsync(selectedPreset).ConfigureAwait(true))
-            return;
-
         var snapshot = CapturePresetMutationSnapshot();
-        var preset = LauncherPresetWorkflow.DeletePreset(_presetFile, selectedPreset.Id, out var fallbackPresetId);
+        if (!await ConfirmDeletePresetIfRequiredAsync(target).ConfigureAwait(true))
+        {
+            RestorePresetMutationSnapshot(snapshot);
+            return;
+        }
+
+        RestorePresetMutationSnapshot(snapshot);
+        var preset = LauncherPresetWorkflow.DeletePreset(_presetFile, target.PresetId, out var fallbackPresetId);
         if (preset is null)
         {
             RestorePresetSnapshotAndReportMissing(snapshot);
@@ -156,7 +161,7 @@ public sealed partial class MainWindowViewModel
             return;
 
         ApplyStatusText(LauncherPresetStatus.Deleted(
-            preset.Name,
+            target.PresetName,
             fallbackPreset.Name));
     }
 }

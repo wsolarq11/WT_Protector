@@ -7,8 +7,10 @@ namespace WTLauncher.App.Views;
 
 public sealed class ConfirmPresetDeleteWindow : Window
 {
-    public ConfirmPresetDeleteWindow(LauncherPresetViewModel preset)
+    public ConfirmPresetDeleteWindow(LauncherPresetDeleteTarget target)
     {
+        ArgumentNullException.ThrowIfNull(target);
+
         Title = "删除启动组";
         Width = 560;
         Height = 280;
@@ -33,8 +35,8 @@ public sealed class ConfirmPresetDeleteWindow : Window
                 Children =
                 {
                     LauncherDialogText.Title("删除这个启动组？"),
-                    LauncherDialogText.Body($"\"{preset.Name}\" 只会删除命名组，不会删除任何启动项。删除后可重新保存。").WithGridRow(1),
-                    LauncherDialogText.Subtle($"包含 {preset.EntryCount} 个启动项。").WithGridRow(2),
+                    LauncherDialogText.Body($"\"{target.PresetName}\" 只会删除命名组，不会删除任何启动项。删除后可重新保存。").WithGridRow(1),
+                    LauncherDialogText.Subtle($"包含 {target.EntryCount} 个启动项。").WithGridRow(2),
                     LauncherDialogButtons.Footer(14, cancel, delete).WithGridRow(3),
                 },
             },
