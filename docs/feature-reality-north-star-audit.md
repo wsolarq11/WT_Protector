@@ -230,10 +230,10 @@ It is not a general launcher/automation north star. That broader domain includes
 The counts below are a summary ledger for the 21 feature sections. They are not a substitute for the per-feature evidence.
 
 - Feature count: 21
-- Verdict count: narrow-north-star=17,strong=3,source-backed=1
+- Verdict count: narrow-north-star=18,strong=2,source-backed=1
 - Gap count: none-proven=5,future-workload=8,external-process-limit=4,visual-proof=3,distribution-scope=1,source-freshness=1
 - Proof count: repo-battle-tested=20,market-informed=4,legacy-flow-informed=1,accessibility-informed=1,source-backed=1
-- Completion boundary: 17 narrow-north-star feature verdicts support the narrow portable Windows Terminal workspace-launcher claim only; 3 strong features and 1 source-backed feature block any honest "every feature is already a north-star" claim.
+- Completion boundary: 18 narrow-north-star feature verdicts support the narrow portable Windows Terminal workspace-launcher claim only; 2 strong features and 1 source-backed feature block any honest "every feature is already a north-star" claim.
 - Absolute boundary: future-workload, external-process-limit, visual-proof, distribution-scope, and source-freshness gaps block "100% confidence / 0% side effects" as a product-wide claim.
 
 ## Feature mapping audit
@@ -351,12 +351,12 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Feature id: add-edit-delete-launcher-buttons
 - Real problem: the launcher must stay maintainable without manual JSON edits for common entry changes.
 - Proof type: repo-battle-tested
-- Verdict level: strong
+- Verdict level: narrow-north-star
 - Gap class: future-workload
 - Current data owner: `config/config.json`, with preset/settings references updated or rolled back together.
 - Evidence: entry mutation tests cover add/edit/delete, dialog-boundary failure without file mutation, dialog-boundary handler assignments rejecting null instead of storing a broken runtime callback, failed save rollback, preset/settings coordination, status text, blank/duplicate reference rejection before reference rename/remove mutation, entry delete confirmation snapshotting target id/name before dialog mutation so references and rollback cannot drift, preset delete confirmation snapshotting target id/name/count before dialog mutation so the target and status cannot drift, entry view models exposing snapshot copies instead of public live `LaunchEntry` rows, entry edit dialogs receiving a snapshot entry instead of the live mutable row, and entry edit dialogs rejecting null initial/submitted text instead of converting it into empty required-field input.
-- Verdict: strong.
-- Remaining gap: no bulk import; that would be overbuilding until a real import workload exists.
+- Verdict: north-star for current local entry CRUD. It keeps one config owner, snapshots dialog/delete targets, updates references in one mutation slice, and fails before corrupting portable files.
+- Remaining gap: no bulk import; that remains rejected scope until a real import workload beats current manual add/edit/delete with less complexity.
 
 ### 11. Custom order and drag reorder
 

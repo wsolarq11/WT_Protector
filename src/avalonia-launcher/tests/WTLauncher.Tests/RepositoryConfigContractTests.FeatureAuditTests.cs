@@ -348,7 +348,7 @@ public sealed partial class RepositoryConfigContractTests
         AssertCountsEqual(gapCounts, ParseCountLine(summary, "- Gap count:"));
         AssertCountsEqual(proofCounts, ParseCountLine(summary, "- Proof count:"));
         Assert.Contains(
-            "3 strong features and 1 source-backed feature block any honest \"every feature is already a north-star\" claim",
+            "2 strong features and 1 source-backed feature block any honest \"every feature is already a north-star\" claim",
             summary);
         Assert.Contains(
             "future-workload, external-process-limit, visual-proof, distribution-scope, and source-freshness gaps block \"100% confidence / 0% side effects\"",
@@ -438,7 +438,8 @@ public sealed partial class RepositoryConfigContractTests
             var verdictLevelLine = section
                 .Split('\n')
                 .Single(line => line.StartsWith("- Verdict level:", StringComparison.Ordinal));
-            Assert.Contains(ParseControlledValue(verdictLevelLine, "- Verdict level:"), allowedVerdictLevels);
+            var verdictLevel = ParseControlledValue(verdictLevelLine, "- Verdict level:");
+            Assert.Contains(verdictLevel, allowedVerdictLevels);
             Assert.Contains("- Gap class:", section);
             var gapClassLine = section
                 .Split('\n')
@@ -450,7 +451,30 @@ public sealed partial class RepositoryConfigContractTests
             Assert.Contains("- Current data owner:", section);
             Assert.Contains("- Evidence:", section);
             Assert.Contains("- Verdict:", section);
+            var verdictLine = section
+                .Split('\n')
+                .Single(line => line.StartsWith("- Verdict:", StringComparison.Ordinal));
+            AssertFeatureVerdictLineMatchesLevel(expectedFeatureIds[sectionIndex], verdictLevel, verdictLine);
             Assert.Contains("- Remaining gap:", section);
+        }
+    }
+
+    private static void AssertFeatureVerdictLineMatchesLevel(string featureId, string verdictLevel, string verdictLine)
+    {
+        var verdict = verdictLine["- Verdict:".Length..].Trim();
+        switch (verdictLevel)
+        {
+            case "narrow-north-star":
+                Assert.Contains("north-star", verdict, StringComparison.OrdinalIgnoreCase);
+                break;
+            case "strong":
+                Assert.Contains("strong", verdict, StringComparison.OrdinalIgnoreCase);
+                break;
+            case "source-backed":
+                Assert.Contains("not automatically north-star", verdict, StringComparison.OrdinalIgnoreCase);
+                break;
+            default:
+                throw new InvalidOperationException($"Unknown verdict level for {featureId}: {verdictLevel}");
         }
     }
 
