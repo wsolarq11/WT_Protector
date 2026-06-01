@@ -75,4 +75,22 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(0, viewModel.VisibleCount);
         Assert.Equal("missing", LauncherSettingsStore.Load(settings).LastFilterText);
     }
+
+    [Fact]
+    public void FilterTextRejectsNullMutationInsteadOfInventingEmptyFilter()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        var viewModel = CreateViewModel(config, settings);
+
+        viewModel.FilterText = "CODEX";
+
+        var exception = Assert.Throws<ArgumentNullException>(() => viewModel.FilterText = null!);
+
+        Assert.Equal("value", exception.ParamName);
+        Assert.Equal("CODEX", viewModel.FilterText);
+        Assert.Equal("CODEX", LauncherSettingsStore.Load(settings).LastFilterText);
+        var visible = Assert.Single(viewModel.VisibleEntries);
+        Assert.Equal("one", visible.Entry.Id);
+    }
 }

@@ -96,7 +96,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: a launcher with many entries is only useful if the target can be found by name, path, or command.
 - Current data owner: in-memory `FilterText` derived from portable `settings.json` when saved.
-- Evidence: XAML placeholder says it searches name/directory/command; tests cover filtering across all three fields, persisted filter state, and projection rejection of null entry text/timestamps or blank ids.
+- Evidence: XAML placeholder says it searches name/directory/command; tests cover filtering across all three fields, persisted filter state, runtime filter mutations rejecting null instead of inventing an empty filter, and projection rejection of null entry text/timestamps or blank ids.
 - Verdict: north-star for current entry count and local use.
 - Remaining gap: fuzzy ranking is unnecessary until exact substring search stops solving the real workload.
 
@@ -128,7 +128,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: a named group must be created, updated, and deleted inside the app, otherwise users fall back to hand-editing JSON.
 - Current data owner: `config/presets.json`.
-- Evidence: ViewModel commands save current selection as a new group, update current group, delete editable groups, preserve locked groups, report dialog-boundary failures without mutating portable files, roll back memory/file state on preset save failures, reject blank/duplicate preset entry ids before add/update mutation, reject invalid fallback preset references plus missing default-preset state before delete mutation instead of repairing corrupt state, reject missing selected-preset ids during preset state restore instead of silently selecting the first group, and report the new current launch group after deletion instead of hiding fallback selection.
+- Evidence: ViewModel commands save current selection as a new group, update current group, delete editable groups, preserve locked groups, report dialog-boundary failures without mutating portable files, roll back memory/file state on preset save failures, reject blank/duplicate preset entry ids before add/update mutation, reject invalid fallback preset references plus missing default-preset state before delete mutation instead of repairing corrupt state, reject missing selected-preset ids during preset state restore instead of silently selecting the first group, and report the new current launch group from the selected fallback view model after deletion instead of hiding fallback selection or rendering `(none)`.
 - Verdict: north-star inside this scope.
 - Remaining gap: no conflict UI for simultaneous external JSON edits; current repo-local app does not need multi-writer machinery.
 
@@ -200,7 +200,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: UI preferences should move with the repo and stay reviewable, not hide in AppData or registry.
 - Current data owner: `config/settings.json`.
-- Evidence: settings schema is documented and tests cover sort/view/confirmation/filter/order/window fields; null settings fields, null saved filter state at ViewModel construction, missing/blank mode ids, invalid in-memory settings during close-time window save, and non-positive persisted window dimensions now fail fast instead of being rewritten or carried into default/broken UI state; unused `theme` state was removed instead of kept as a fake preference.
+- Evidence: settings schema is documented and tests cover sort/view/confirmation/filter/order/window fields; null settings fields, null saved filter state at ViewModel construction, null runtime filter mutations, missing/blank mode ids, invalid in-memory settings during close-time window save, and non-positive persisted window dimensions now fail fast instead of being rewritten or carried into default/broken UI state; unused `theme` state was removed instead of kept as a fake preference.
 - Verdict: north-star for this local tool.
 - Remaining gap: no cross-machine path normalization; this is fine because launch directories are machine-local facts.
 

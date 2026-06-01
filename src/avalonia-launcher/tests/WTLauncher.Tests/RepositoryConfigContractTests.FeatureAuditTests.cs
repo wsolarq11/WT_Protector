@@ -93,6 +93,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("honest requested-start wording", audit);
         Assert.Contains("side-effect-free current-group preview", audit);
         Assert.Contains("rejects blank failure entry names instead of rendering fake `(unnamed)` rows", audit);
+        Assert.Contains("runtime filter mutations rejecting null instead of inventing an empty filter", audit);
         Assert.Contains("projection rejection of null entry text/timestamps or blank ids", audit);
         Assert.Contains("preserving the preset name in cancellation and unexpected-failure status", audit);
         Assert.Contains("config-save failures during select-all/clear/checkbox mutation", audit);
@@ -102,6 +103,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("reject blank/duplicate preset entry ids before add/update mutation", audit);
         Assert.Contains("reject invalid fallback preset references plus missing default-preset state before delete mutation", audit);
         Assert.Contains("reject missing selected-preset ids during preset state restore instead of silently selecting the first group", audit);
+        Assert.Contains("selected fallback view model after deletion instead of hiding fallback selection or rendering `(none)`", audit);
         Assert.Contains("discards uncommitted drag-sort preview state first", audit);
         Assert.Contains("ghost order cannot become a hidden source of truth", audit);
         Assert.Contains("invalid move/custom-order rejection before mutation or sort projection", audit);
@@ -113,7 +115,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("propagates missing or failed `presets.json`", audit);
         Assert.Contains("instead of synthesizing a second empty preset truth", audit);
         Assert.Contains("reject missing or unknown mode ids", audit);
-        Assert.Contains("null settings fields, null saved filter state at ViewModel construction", audit);
+        Assert.Contains("null settings fields, null saved filter state at ViewModel construction, null runtime filter mutations", audit);
         Assert.Contains("missing/blank mode ids, invalid in-memory settings during close-time window save", audit);
         Assert.Contains("invalid in-memory settings during close-time window save", audit);
         Assert.Contains("non-positive persisted window dimensions now fail fast", audit);

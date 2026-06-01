@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -51,8 +52,13 @@ public sealed partial class MainWindowViewModel
 
     private bool SavePresetMutationAndApply(
         LauncherPresetMutationSnapshot snapshot,
-        string? selectedPresetId)
+        string selectedPresetId,
+        [NotNullWhen(true)] out LauncherPresetViewModel? selectedPreset)
     {
+        if (LauncherPresetIds.NormalizeReference(selectedPresetId).Length == 0)
+            throw new InvalidOperationException("Launcher preset mutation selected id is required.");
+
+        selectedPreset = null;
         var saveFailure = LauncherPresetMutationPersistence.Save(_presetFile, _presetPath);
         if (saveFailure is not null)
         {
@@ -62,6 +68,9 @@ public sealed partial class MainWindowViewModel
         }
 
         ApplyPresetFileState(_presetFile, selectedPresetId);
+        selectedPreset = SelectedPreset
+            ?? throw new InvalidOperationException(
+                $"Launcher preset mutation selected id did not resolve: {selectedPresetId}.");
         return true;
     }
 }

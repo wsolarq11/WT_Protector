@@ -48,10 +48,15 @@ public sealed partial class MainWindowViewModel
 
     public bool IsNamesViewMode => CurrentEntryViewMode == LauncherEntryViewMode.Names;
 
+    partial void OnFilterTextChanging(string value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+    }
+
     partial void OnFilterTextChanged(string value)
     {
         var snapshot = CaptureSettingsMutationSnapshot();
-        _settings.LastFilterText = value ?? string.Empty;
+        _settings.LastFilterText = value;
         var saveFailure = SaveSettingsChange(snapshot);
         if (saveFailure is not null)
         {

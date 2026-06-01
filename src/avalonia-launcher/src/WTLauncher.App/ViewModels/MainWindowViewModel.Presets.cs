@@ -88,10 +88,10 @@ public sealed partial class MainWindowViewModel
 
         var snapshot = CapturePresetMutationSnapshot();
         var preset = LauncherPresetWorkflow.AddPreset(_presetFile, presetName, entryIds);
-        if (!SavePresetMutationAndApply(snapshot, preset.Id))
+        if (!SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset))
             return;
 
-        ApplyStatusText(LauncherPresetStatus.Saved(preset.Name, preset.EntryIds.Count));
+        ApplyStatusText(LauncherPresetStatus.Saved(savedPreset.Name, savedPreset.EntryIds.Count));
     }
 
     [RelayCommand(CanExecute = nameof(CanUpdateSelectedPreset))]
@@ -121,10 +121,10 @@ public sealed partial class MainWindowViewModel
             RestorePresetSnapshotAndReportMissing(snapshot);
             return;
         }
-        if (!SavePresetMutationAndApply(snapshot, preset.Id))
+        if (!SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset))
             return;
 
-        ApplyStatusText(LauncherPresetStatus.Updated(preset.Name, preset.EntryIds.Count));
+        ApplyStatusText(LauncherPresetStatus.Updated(savedPreset.Name, savedPreset.EntryIds.Count));
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteSelectedPreset))]
@@ -151,11 +151,11 @@ public sealed partial class MainWindowViewModel
             RestorePresetSnapshotAndReportMissing(snapshot);
             return;
         }
-        if (!SavePresetMutationAndApply(snapshot, fallbackPresetId))
+        if (!SavePresetMutationAndApply(snapshot, fallbackPresetId, out var fallbackPreset))
             return;
 
         ApplyStatusText(LauncherPresetStatus.Deleted(
             preset.Name,
-            SelectedPreset?.Name ?? "(none)"));
+            fallbackPreset.Name));
     }
 }
