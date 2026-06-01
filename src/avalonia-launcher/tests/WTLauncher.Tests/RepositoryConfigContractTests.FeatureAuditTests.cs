@@ -93,7 +93,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("honest requested-start wording", audit);
         Assert.Contains("side-effect-free current-group preview", audit);
         Assert.Contains("rejects blank failure entry names instead of rendering fake `(unnamed)` rows", audit);
-        Assert.Contains("runtime filter mutations rejecting null instead of inventing an empty filter", audit);
+        Assert.Contains("runtime filter mutations and core filter projection rejecting null instead of inventing an empty filter", audit);
         Assert.Contains("projection rejection of null entry text/timestamps or blank ids", audit);
         Assert.Contains("preserving the preset name in cancellation and unexpected-failure status", audit);
         Assert.Contains("config-save failures during select-all/clear/checkbox mutation", audit);

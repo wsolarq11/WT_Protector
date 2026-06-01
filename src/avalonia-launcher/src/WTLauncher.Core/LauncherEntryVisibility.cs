@@ -20,17 +20,18 @@ public static class LauncherEntryVisibility
 
     public static IReadOnlyList<TEntry> FilterAndSort<TEntry>(
         IEnumerable<TEntry> entries,
-        string? filterText,
+        string filterText,
         string? sortModeId,
         IEnumerable<string> customEntryOrder,
         Func<TEntry, LaunchEntry> selectEntry)
     {
         ArgumentNullException.ThrowIfNull(entries);
+        ArgumentNullException.ThrowIfNull(filterText);
         ArgumentNullException.ThrowIfNull(customEntryOrder);
         ArgumentNullException.ThrowIfNull(selectEntry);
 
         var source = entries.ToList();
-        var normalizedFilter = (filterText ?? string.Empty).Trim();
+        var normalizedFilter = filterText.Trim();
         var filtered = normalizedFilter.Length == 0
             ? source
             : source.Where(entry => MatchesFilter(selectEntry(entry), normalizedFilter));

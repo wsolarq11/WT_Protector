@@ -38,6 +38,25 @@ public sealed class LauncherEntryVisibilityTests
     }
 
     [Fact]
+    public void FilterAndSort_RejectsNullFilterTextInsteadOfShowingEverything()
+    {
+        var entries = new[]
+        {
+            Entry("one", "One"),
+        };
+
+        var exception = Assert.Throws<ArgumentNullException>(() =>
+            LauncherEntryVisibility.FilterAndSort(
+                entries,
+                null!,
+                LauncherEntryVisibility.CustomSortModeId,
+                ["one"],
+                static entry => entry));
+
+        Assert.Equal("filterText", exception.ParamName);
+    }
+
+    [Fact]
     public void FilterAndSort_RejectsNullTextFieldsBeforeProjection()
     {
         var entries = new[]
@@ -71,7 +90,7 @@ public sealed class LauncherEntryVisibilityTests
 
         var visible = LauncherEntryVisibility.FilterAndSort(
             entries,
-            null,
+            string.Empty,
             LauncherEntryVisibility.CustomSortModeId,
             customOrder,
             static entry => entry);
@@ -94,7 +113,7 @@ public sealed class LauncherEntryVisibilityTests
         var exception = Assert.Throws<InvalidDataException>(() =>
             LauncherEntryVisibility.FilterAndSort(
                 entries,
-                null,
+                string.Empty,
                 LauncherEntryVisibility.CustomSortModeId,
                 customOrder,
                 static entry => entry));
@@ -116,7 +135,7 @@ public sealed class LauncherEntryVisibilityTests
         var exception = Assert.Throws<InvalidDataException>(() =>
             LauncherEntryVisibility.FilterAndSort(
                 entries,
-                null,
+                string.Empty,
                 LauncherEntryVisibility.CustomSortModeId,
                 customOrder,
                 static entry => entry));
@@ -138,7 +157,7 @@ public sealed class LauncherEntryVisibilityTests
         var exception = Assert.Throws<ArgumentException>(() =>
             LauncherEntryVisibility.FilterAndSort(
                 entries,
-                null,
+                string.Empty,
                 LauncherEntryVisibility.CustomSortModeId,
                 customOrder,
                 static entry => entry));
@@ -160,7 +179,7 @@ public sealed class LauncherEntryVisibilityTests
 
         var visible = LauncherEntryVisibility.FilterAndSort(
             entries,
-            null,
+            string.Empty,
             LauncherEntryVisibility.CustomSortModeId,
             customOrder,
             static entry => entry);
@@ -181,7 +200,7 @@ public sealed class LauncherEntryVisibilityTests
         var exception = Assert.Throws<InvalidDataException>(() =>
             LauncherEntryVisibility.FilterAndSort(
                 entries,
-                null,
+                string.Empty,
                 LauncherEntryVisibility.AlphabeticalSortModeId,
                 [],
                 static entry => entry));
@@ -202,7 +221,7 @@ public sealed class LauncherEntryVisibilityTests
 
         var visible = LauncherEntryVisibility.FilterAndSort(
             entries,
-            null,
+            string.Empty,
             LauncherEntryVisibility.AlphabeticalSortModeId,
             customOrder,
             static entry => entry);
@@ -224,7 +243,7 @@ public sealed class LauncherEntryVisibilityTests
 
         var visible = LauncherEntryVisibility.FilterAndSort(
             entries,
-            null,
+            string.Empty,
             LauncherEntryVisibility.UpdatedSortModeId,
             customOrder,
             static entry => entry);
@@ -244,7 +263,7 @@ public sealed class LauncherEntryVisibilityTests
         var exception = Assert.Throws<InvalidDataException>(() =>
             LauncherEntryVisibility.FilterAndSort(
                 entries,
-                null,
+                string.Empty,
                 LauncherEntryVisibility.UpdatedSortModeId,
                 [],
                 static entry => entry));
@@ -264,7 +283,7 @@ public sealed class LauncherEntryVisibilityTests
         var exception = Assert.Throws<InvalidDataException>(() =>
             LauncherEntryVisibility.FilterAndSort(
                 entries,
-                null,
+                string.Empty,
                 LauncherEntryVisibility.UpdatedSortModeId,
                 [],
                 static entry => entry));
