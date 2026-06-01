@@ -1,0 +1,272 @@
+{
+  "schemaVersion": 1,
+  "capturedAtUtc": "2026-06-01T10:04:52Z",
+  "evidenceCommand": "gh repo view <owner>/<repo> --json nameWithOwner,url,description,stargazerCount,forkCount,pushedAt,updatedAt,primaryLanguage,isArchived",
+  "queries": [
+    "Windows Terminal workspace launcher",
+    "Windows Terminal session manager",
+    "Claude Code launcher"
+  ],
+  "scope": "Representative similar GitHub projects for WT Launcher's market/north-star audit; not a universal ranking of every launcher repository.",
+  "repositories": [
+    {
+      "fullName": "SyDroX/dev-layout",
+      "url": "https://github.com/SyDroX/dev-layout",
+      "description": "Windows Terminal workspace launcher - two windows, multi-tab, auto-snap",
+      "language": "PowerShell",
+      "stars": 0,
+      "forks": 0,
+      "pushedAtUtc": "2026-05-27T14:51:21Z",
+      "updatedAtUtc": "2026-05-27T14:51:26Z",
+      "archived": false,
+      "classification": "direct WT workspace launcher",
+      "strongerAxes": [
+        "fixed Claude Code multi-repo layout",
+        "session resume",
+        "cd blocking"
+      ],
+      "wtLauncherAxes": [
+        "editable portable UI entries",
+        "named launch groups",
+        "rollback-aware JSON persistence",
+        "native gate"
+      ]
+    },
+    {
+      "fullName": "augustdragon/terminal-manager",
+      "url": "https://github.com/augustdragon/terminal-manager",
+      "description": "A session manager for Windows Terminal — manage profiles, groups, and workspace launches from a local dashboard",
+      "language": "TypeScript",
+      "stars": 0,
+      "forks": 0,
+      "pushedAtUtc": "2026-05-23T13:18:17Z",
+      "updatedAtUtc": "2026-05-17T18:03:22Z",
+      "archived": false,
+      "classification": "direct WT profile/session manager",
+      "strongerAxes": [
+        "WT profile editing",
+        "split-pane groups",
+        "import/export",
+        "WT settings sync"
+      ],
+      "wtLauncherAxes": [
+        "smaller local JSON-to-wt contract",
+        "no local web server",
+        "does not mutate Windows Terminal settings"
+      ]
+    },
+    {
+      "fullName": "noambrand/Launchpad-CLI",
+      "url": "https://github.com/noambrand/Launchpad-CLI",
+      "description": "Claude Code Launchpad installer for Windows + macOS. Bundles Node.js, Git, Windows Terminal theme, Live status bar, Folder picker, Right-click launch, Named profiles, Flages.  Zero-to-Claude in under a minute",
+      "language": "HTML",
+      "stars": 16,
+      "forks": 1,
+      "pushedAtUtc": "2026-05-31T14:37:58Z",
+      "updatedAtUtc": "2026-05-31T14:38:02Z",
+      "archived": false,
+      "classification": "Claude Code launcher/installer",
+      "strongerAxes": [
+        "installer",
+        "folder picker",
+        "right-click launch",
+        "statusline distribution"
+      ],
+      "wtLauncherAxes": [
+        "portable editable WT workspace groups",
+        "rollback-aware config gate",
+        "smaller app scope"
+      ]
+    },
+    {
+      "fullName": "kevinkicho/win-screen-setup",
+      "url": "https://github.com/kevinkicho/win-screen-setup",
+      "description": " Windows multi-monitor workspace launcher. Visual tkinter editor + one-click launch of apps positioned   across screens: PowerShell, Chrome, PWAs, .exe, Windows Terminal grids. No dependencies.",
+      "language": "Python",
+      "stars": 0,
+      "forks": 0,
+      "pushedAtUtc": "2026-04-26T01:06:26Z",
+      "updatedAtUtc": "2026-04-26T01:06:31Z",
+      "archived": false,
+      "classification": "Windows multi-monitor workspace launcher",
+      "strongerAxes": [
+        "visual screen/app positioning"
+      ],
+      "wtLauncherAxes": [
+        "narrower side-effect surface",
+        "portable launch groups",
+        "native repo gate"
+      ]
+    },
+    {
+      "fullName": "ewdieckman/DevWorkspace",
+      "url": "https://github.com/ewdieckman/DevWorkspace",
+      "description": "A PowerShell module for launching pre-configured multi-pane Windows Terminal   workspaces for developer projects.",
+      "language": "PowerShell",
+      "stars": 0,
+      "forks": 0,
+      "pushedAtUtc": "2026-04-17T21:26:40Z",
+      "updatedAtUtc": "2026-04-17T21:26:43Z",
+      "archived": false,
+      "classification": "PowerShell WT multi-pane workspace module",
+      "strongerAxes": [
+        "fixed split-pane layouts"
+      ],
+      "wtLauncherAxes": [
+        "editable GUI entries",
+        "rollback-aware persistence",
+        "native publish/verify gate"
+      ]
+    },
+    {
+      "fullName": "jsoulet42/claude-launcher-app",
+      "url": "https://github.com/jsoulet42/claude-launcher-app",
+      "description": "Launcher TUI Windows pour Claude Code - workspaces multi-terminaux via Windows Terminal",
+      "language": "TypeScript",
+      "stars": 1,
+      "forks": 0,
+      "pushedAtUtc": "2026-04-06T18:14:18Z",
+      "updatedAtUtc": "2026-04-06T18:14:28Z",
+      "archived": false,
+      "classification": "Claude Code WT TUI workspace launcher",
+      "strongerAxes": [
+        "adjacent TUI flow"
+      ],
+      "wtLauncherAxes": [
+        "portable editable GUI entries",
+        "named groups",
+        "rollback-aware JSON",
+        "native gate"
+      ]
+    },
+    {
+      "fullName": "A-ema755/claude-dashboard",
+      "url": "https://github.com/A-ema755/claude-dashboard",
+      "description": "CLI session launcher and preset manager for Claude Code — Windows Terminal integration with split-pane layouts, cost tracking, and preset profiles",
+      "language": "JavaScript",
+      "stars": 0,
+      "forks": 0,
+      "pushedAtUtc": "2026-04-08T23:38:26Z",
+      "updatedAtUtc": "2026-04-08T23:38:30Z",
+      "archived": false,
+      "classification": "Claude Code CLI session launcher/preset manager",
+      "strongerAxes": [
+        "split-pane layouts",
+        "cost tracking"
+      ],
+      "wtLauncherAxes": [
+        "small local WT launcher contract",
+        "portable GUI config",
+        "native gate"
+      ]
+    },
+    {
+      "fullName": "adityacodepublic/wtsm-cli",
+      "url": "https://github.com/adityacodepublic/wtsm-cli",
+      "description": "Windows Terminal Session Manager (s) A CLI tool to define, save, and launch named Windows Terminal sessions.",
+      "language": "TypeScript",
+      "stars": 1,
+      "forks": 0,
+      "pushedAtUtc": "2026-02-07T05:22:20Z",
+      "updatedAtUtc": "2026-02-07T05:12:44Z",
+      "archived": false,
+      "classification": "Windows Terminal session manager CLI",
+      "strongerAxes": [
+        "named terminal sessions CLI"
+      ],
+      "wtLauncherAxes": [
+        "GUI editing",
+        "launch-group preview",
+        "repo-native rollback/verify evidence"
+      ]
+    },
+    {
+      "fullName": "pramin/AgentSpace",
+      "url": "https://github.com/pramin/AgentSpace",
+      "description": "Avalonia 12 agent workspace launcher (SSH file tree, persistent workspaces, transparent code preview), shipped alongside the bits Avalonia forgot: Avalonia.XTerm (24-bit truecolor PTY terminal, full mouse reporting) and Avalonia.PrimarySelection (X11 PRIMARY clipboard). MyTerm tabbed-terminal sibling included. Linux + Windows. MIT.",
+      "language": "C#",
+      "stars": 0,
+      "forks": 0,
+      "pushedAtUtc": "2026-05-18T21:24:49Z",
+      "updatedAtUtc": "2026-05-18T21:24:51Z",
+      "archived": false,
+      "classification": "Avalonia agent workspace launcher",
+      "strongerAxes": [
+        "embedded PTY",
+        "SSH file tree",
+        "code preview"
+      ],
+      "wtLauncherAxes": [
+        "smaller WT handoff scope",
+        "portable JSON groups",
+        "native gate"
+      ]
+    },
+    {
+      "fullName": "joyahmed/devgo-app",
+      "url": "https://github.com/joyahmed/devgo-app",
+      "description": "A lightweight WSL-first launcher for VS Code + tmux workflows on Windows.",
+      "language": "C#",
+      "stars": 2,
+      "forks": 1,
+      "pushedAtUtc": "2026-05-13T23:11:03Z",
+      "updatedAtUtc": "2026-05-24T11:05:45Z",
+      "archived": false,
+      "classification": "WSL-first developer launcher",
+      "strongerAxes": [
+        "WSL",
+        "VS Code",
+        "tmux workflows",
+        "installer ambition"
+      ],
+      "wtLauncherAxes": [
+        "verified portable WT launch groups",
+        "rollback-aware JSON",
+        "narrower scope"
+      ]
+    },
+    {
+      "fullName": "Flow-Launcher/Flow.Launcher",
+      "url": "https://github.com/Flow-Launcher/Flow.Launcher",
+      "description": ":mag: Quick file search & app launcher for Windows with community-made plugins",
+      "language": "C#",
+      "stars": 14844,
+      "forks": 607,
+      "pushedAtUtc": "2026-06-01T09:41:17Z",
+      "updatedAtUtc": "2026-06-01T08:06:11Z",
+      "archived": false,
+      "classification": "broad Windows launcher",
+      "strongerAxes": [
+        "market proof",
+        "plugins",
+        "search",
+        "packaging",
+        "community"
+      ],
+      "wtLauncherAxes": [
+        "narrow portable WT workspace-launcher slice only"
+      ]
+    },
+    {
+      "fullName": "Wox-launcher/Wox",
+      "url": "https://github.com/Wox-launcher/Wox",
+      "description": "A cross-platform launcher that simply works",
+      "language": "Go",
+      "stars": 26982,
+      "forks": 2411,
+      "pushedAtUtc": "2026-06-01T03:46:06Z",
+      "updatedAtUtc": "2026-06-01T08:40:12Z",
+      "archived": false,
+      "classification": "broad cross-platform launcher",
+      "strongerAxes": [
+        "market proof",
+        "cross-platform packaging",
+        "plugin/theme stores",
+        "AI/MCP direction"
+      ],
+      "wtLauncherAxes": [
+        "narrow portable WT workspace-launcher slice only"
+      ]
+    }
+  ]
+}

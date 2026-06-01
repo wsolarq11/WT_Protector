@@ -6,11 +6,15 @@ public sealed partial class RepositoryConfigContractTests
     public void RepositoryFeatureRealityNorthStarAudit_CoversActiveFeatureMappings()
     {
         var auditPath = TestRepositoryPaths.Document("feature-reality-north-star-audit.md");
+        var githubSnapshotPath = TestRepositoryPaths.Document(
+            Path.Combine("reference", "github-similar-projects-snapshot.json"));
         var readmePath = TestRepositoryPaths.RootFile("README.md");
 
         Assert.True(File.Exists(auditPath), "The feature reality/north-star audit must stay source-tracked.");
+        Assert.True(File.Exists(githubSnapshotPath), "The similar-project GitHub snapshot must stay source-tracked.");
 
         var audit = File.ReadAllText(auditPath);
+        var githubSnapshot = File.ReadAllText(githubSnapshotPath);
         var readme = File.ReadAllText(readmePath);
 
         Assert.Contains("Purpose: evaluate whether each active WT Launcher feature mapping solves a real user problem", audit);
@@ -18,6 +22,8 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("It does not evaluate ignored `.snow/` local runtime/index state.", audit);
         Assert.Contains("## Fresh external yardstick spot-check", audit);
         Assert.Contains("## Current GitHub similar-project snapshot", audit);
+        Assert.Contains("docs/reference/github-similar-projects-snapshot.json", audit);
+        Assert.Contains("gh repo view <owner>/<repo>", audit);
         Assert.Contains("## Feature mapping audit", audit);
         Assert.Contains("## Objective completion audit", audit);
         Assert.Contains("## Final answer", audit);
@@ -82,8 +88,14 @@ public sealed partial class RepositoryConfigContractTests
         })
         {
             Assert.Contains(githubYardstick, audit);
+            Assert.Contains(githubYardstick, githubSnapshot);
         }
 
+        Assert.Contains("\"schemaVersion\": 1", githubSnapshot);
+        Assert.Contains("\"capturedAtUtc\": \"2026-06-01T", githubSnapshot);
+        Assert.Contains("\"evidenceCommand\": \"gh repo view <owner>/<repo>", githubSnapshot);
+        Assert.Contains("\"classification\": \"broad Windows launcher\"", githubSnapshot);
+        Assert.Contains("\"classification\": \"broad cross-platform launcher\"", githubSnapshot);
         Assert.Contains("\"100% confidence and 0% side effects\"", audit);
         Assert.Contains("preflight everything local before launching", audit);
         Assert.Contains("Live GitHub repository search/API checks were refreshed on 2026-06-01", audit);
@@ -93,8 +105,10 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("embedded PTY/SSH scope", audit);
         Assert.Contains("updated 2026-04-08T23:38:30Z", audit);
         Assert.Contains("named-session CLI scope", audit);
-        Assert.Contains("updated 2026-05-31T21:52:23Z", audit);
-        Assert.Contains("updated 2026-06-01T03:46:12Z", audit);
+        Assert.Contains("14,844 stars, 607 forks, pushed 2026-06-01T09:41:17Z, updated 2026-06-01T08:06:11Z", audit);
+        Assert.Contains("26,982 stars, 2,411 forks, pushed 2026-06-01T03:46:06Z, updated 2026-06-01T08:40:12Z", audit);
+        Assert.Contains("\"stars\": 14844", githubSnapshot);
+        Assert.Contains("\"stars\": 26982", githubSnapshot);
         AssertObjectiveCompletionAuditPreservesOriginalScope(audit);
         Assert.Contains("not claim broad launcher/platform north-star status", audit);
         Assert.Contains("cannot honestly claim broad launcher supremacy", audit);
@@ -172,6 +186,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("ViewModel-owned collections expose read-only projections instead of public mutable collection owners", audit);
         Assert.Contains("accepts only one optional `--config <path>` pair", readme);
         Assert.Contains("docs/feature-reality-north-star-audit.md", readme);
+        Assert.Contains("docs/reference/github-similar-projects-snapshot.json", readme);
         Assert.Contains("portable UI preferences such as filter text", readme);
         Assert.DoesNotContain("portable UI preferences such as theme", readme);
         Assert.Contains("must not contain the obsolete per-entry `confirm` key", readme);

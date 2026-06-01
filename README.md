@@ -18,6 +18,7 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `.gitattributes` — repository line-ending policy; text is normalized as LF to avoid CRLF-only churn.
 - `tools/verify.ps1` — no-interaction local verification gate.
 - `tools/config-lib.ps1` — shared helper functions used by verification and config tools.
+- `docs/reference/github-similar-projects-snapshot.json` — current GitHub similar-project evidence used by the feature north-star audit.
 - `docs/giants-shoulders/` — "巨人肩膀库": curated external project lessons and source links for future stack/reflection decisions.
 - `omx_wiki/` — project knowledge base for durable local decisions, patterns, and learning summaries.
 

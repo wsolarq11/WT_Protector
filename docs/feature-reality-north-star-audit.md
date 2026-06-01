@@ -15,6 +15,7 @@ This audit covers the active Avalonia mainline and repository-level launcher con
 - `README.md`
 - `DESIGN.md`
 - `docs/design-benchmark-digest.md`
+- `docs/reference/github-similar-projects-snapshot.json`
 - `tools/verify.ps1`
 
 It does not evaluate ignored `.snow/` local runtime/index state.
@@ -44,7 +45,7 @@ Current external references were spot-checked on 2026-06-01 before making the no
 
 ## Current GitHub similar-project snapshot
 
-Live GitHub repository search/API checks were refreshed on 2026-06-01 using current queries for `"Windows Terminal" workspace launcher`, `"Windows Terminal" session manager`, and `"Claude Code" launcher`. The result is blunt: a universal "stronger than any similar GitHub project" claim is not provable, and in the broad launcher market it is false. Flow Launcher and Wox are mature broad launchers with thousands of stars, plugin ecosystems, package channels, and community proof. WT Launcher should not fight them as a generic launcher. That would be stupid scope creep.
+Live GitHub repository search/API checks were refreshed on 2026-06-01 using current queries for `"Windows Terminal" workspace launcher`, `"Windows Terminal" session manager`, and `"Claude Code" launcher`. The current structured evidence is source-tracked in `docs/reference/github-similar-projects-snapshot.json`, captured with `gh repo view <owner>/<repo> --json nameWithOwner,url,description,stargazerCount,forkCount,pushedAt,updatedAt,primaryLanguage,isArchived`. The result is blunt: a universal "stronger than any similar GitHub project" claim is not provable, and in the broad launcher market it is false. Flow Launcher and Wox are mature broad launchers with thousands of stars, plugin ecosystems, package channels, and community proof. WT Launcher should not fight them as a generic launcher. That would be stupid scope creep.
 
 The relevant fight is narrower: portable Windows Terminal workspace launching with inspectable entries, named launch groups, side-effect-free plan preview, explicit launch confirmation, rollback-aware JSON persistence, and a native repo gate.
 
@@ -60,8 +61,8 @@ Representative GitHub yardsticks:
 - <https://github.com/adityacodepublic/wtsm-cli> — Windows Terminal session manager CLI; TypeScript, 1 star, updated 2026-02-07T05:12:44Z. Strong for named terminal sessions; weaker on GUI editing, launch-group preview, and repo-native rollback/verify evidence.
 - <https://github.com/pramin/AgentSpace> — Avalonia agent workspace launcher; C#, 0 stars, updated 2026-05-18. Stronger on embedded PTY/SSH file tree/code preview scope. Much larger domain, not the same small local WT launcher.
 - <https://github.com/joyahmed/devgo-app> — WSL-first developer launcher; C#, 2 stars, updated 2026-05-24. Strong for WSL + VS Code + tmux workflows and installer ambition. README still lists keyboard shortcuts and rough edges as in-progress, so it is not stronger on the current WT Launcher axis of verified portable launch groups.
-- <https://github.com/Flow-Launcher/Flow.Launcher> — broad Windows launcher; C#, 14,845 stars, updated 2026-05-31T21:52:23Z. Stronger in broad market proof, plugins, search, packaging, and community. Not the same narrow product.
-- <https://github.com/Wox-launcher/Wox> — broad cross-platform launcher; Go, 26,981 stars, updated 2026-06-01T03:46:12Z. Stronger in broad market proof, cross-platform packaging, plugin/theme stores, and AI/MCP direction. Not the same narrow product.
+- <https://github.com/Flow-Launcher/Flow.Launcher> — broad Windows launcher; C#, 14,844 stars, 607 forks, pushed 2026-06-01T09:41:17Z, updated 2026-06-01T08:06:11Z. Stronger in broad market proof, plugins, search, packaging, and community. Not the same narrow product.
+- <https://github.com/Wox-launcher/Wox> — broad cross-platform launcher; Go, 26,982 stars, 2,411 forks, pushed 2026-06-01T03:46:06Z, updated 2026-06-01T08:40:12Z. Stronger in broad market proof, cross-platform packaging, plugin/theme stores, and AI/MCP direction. Not the same narrow product.
 
 Conclusion from the GitHub snapshot: WT Launcher can honestly claim a north-star shape only for the narrow, local, portable Windows Terminal workspace-launcher slice. It cannot honestly claim broad launcher supremacy.
 
@@ -247,7 +248,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: UI/product decisions should not be made from vibes or copied frameworks.
 - Current data owner: `DESIGN.md`, `docs/design-benchmark-digest.md`, and `docs/giants-shoulders/`.
-- Evidence: docs translate external references into local acceptance rules and tests keep the digest referenced.
+- Evidence: docs translate external references into local acceptance rules, tests keep the digest referenced, and `docs/reference/github-similar-projects-snapshot.json` preserves the current GitHub market yardstick used by this audit.
 - Verdict: strong, not automatically north-star.
 - Remaining gap: source freshness must be refreshed when a decision depends on a changed external standard.
 
