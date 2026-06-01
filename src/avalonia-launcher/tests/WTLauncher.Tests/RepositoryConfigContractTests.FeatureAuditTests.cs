@@ -832,6 +832,7 @@ public sealed partial class RepositoryConfigContractTests
             "Full objective result: not-complete-as-written",
             "Feature north-star coverage: current-active-features=21,narrow-north-star=21,non-north-star=0",
             "Blocked absolute requirements: unimprovable-product,stronger-than-every-github-similar,absolute-confidence-zero-side-effects",
+            "The full objective remains not complete as written.",
             "Objective claim impact tokens used below:",
             "- `supports-current-feature-coverage`:",
             "- `classifies-without-supremacy`:",
@@ -976,6 +977,7 @@ public sealed partial class RepositoryConfigContractTests
         }
 
         var finalAnswer = audit[end..];
+        Assert.Contains("The full objective remains not complete as written.", finalAnswer);
         Assert.Contains("All 21 current feature mappings classify as narrow-domain north-star", finalAnswer);
         Assert.Contains("north-star implementation only for the narrow domain", finalAnswer);
         Assert.Contains("adaptive card sizing/density", finalAnswer);

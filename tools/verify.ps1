@@ -105,6 +105,7 @@ foreach ($requiredObjectiveBoundary in @(
     'Full objective result: not-complete-as-written',
     'Feature north-star coverage: current-active-features=21,narrow-north-star=21,non-north-star=0',
     'Blocked absolute requirements: unimprovable-product,stronger-than-every-github-similar,absolute-confidence-zero-side-effects',
+    'The full objective remains not complete as written.',
     'All 21 current feature mappings classify as narrow-domain north-star',
     'It is not a broad-domain north star for every launcher or automation product'
 )) {
@@ -128,6 +129,7 @@ Add-Check 'feature-objective-boundary' @{
         'stronger-than-every-github-similar',
         'absolute-confidence-zero-side-effects'
     )
+    finalAnswer = 'not-complete-as-written'
 }
 
 $claimLedgerStart = $featureAudit.IndexOf('## Claim boundary ledger', [System.StringComparison]::Ordinal)
