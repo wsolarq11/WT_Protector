@@ -139,6 +139,7 @@ The verifier currently checks:
 - every active `config/config.json` `directory` exists on this machine, so stale launcher buttons fail the gate instead of failing later at click time;
 - `settings.json` remains the portable source for sort mode, view mode, launch-confirmation state, and complete custom entry order;
 - `docs/feature-reality-north-star-audit.md` keeps the 21/21 narrow-domain north-star coverage and the explicit `not-complete-as-written` full-objective boundary;
+- the claim-boundary ledger keeps allowed narrow-scope claims separate from forbidden broad, unimprovable, universal-superiority, absolute-side-effect, and post-`wt.exe` health claims;
 - `docs/reference/github-similar-projects-snapshot.json` keeps the current GitHub similar-project evidence schema, representative repos, broad-market proof counters, controlled yardstick verdicts, summary counts, repo-local refresh command, and freshness metadata readable;
 - `retired/design/winforms-launcher.md` exists with the absorbed WinForms design lessons;
 - retired HTA and shortcut-backup reference material remain readable;

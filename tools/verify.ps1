@@ -130,6 +130,45 @@ Add-Check 'feature-objective-boundary' @{
     )
 }
 
+$claimLedgerStart = $featureAudit.IndexOf('## Claim boundary ledger', [System.StringComparison]::Ordinal)
+$finalAnswerStart = $featureAudit.IndexOf('## Final answer', [System.StringComparison]::Ordinal)
+if ($claimLedgerStart -lt 0) { throw 'Feature reality/north-star audit missing claim boundary ledger' }
+if ($finalAnswerStart -le $claimLedgerStart) { throw 'Feature reality/north-star audit claim boundary ledger must appear before final answer' }
+$claimLedger = $featureAudit.Substring($claimLedgerStart, $finalAnswerStart - $claimLedgerStart)
+$expectedClaimStatuses = [ordered]@{
+    'narrow-domain-north-star' = 'allowed'
+    'narrow-slice-stronger' = 'allowed'
+    'small-beautiful-preserved' = 'allowed'
+    'pre-handoff-zero-side-effect-boundary' = 'allowed'
+    'broad-launcher-platform-north-star' = 'forbidden'
+    'unimprovable-product' = 'forbidden'
+    'stronger-than-every-github-similar' = 'forbidden'
+    'absolute-confidence-zero-side-effects' = 'forbidden'
+    'post-wt-terminal-health' = 'forbidden'
+}
+foreach ($claimId in $expectedClaimStatuses.Keys) {
+    $status = $expectedClaimStatuses[$claimId]
+    $pattern = "(?ms)^- Claim id: $([regex]::Escape($claimId))\s*\r?\n\s+- Claim status: $([regex]::Escape($status))\b"
+    if (-not [regex]::IsMatch($claimLedger, $pattern)) {
+        throw "Feature reality/north-star audit claim boundary mismatch: $claimId must be $status"
+    }
+}
+$allowedClaimCount = [regex]::Matches($claimLedger, '(?m)^\s+- Claim status: allowed$').Count
+$forbiddenClaimCount = [regex]::Matches($claimLedger, '(?m)^\s+- Claim status: forbidden$').Count
+if ($allowedClaimCount -ne 4) { throw "Feature reality/north-star audit allowed claim count must be 4; found $allowedClaimCount" }
+if ($forbiddenClaimCount -ne 5) { throw "Feature reality/north-star audit forbidden claim count must be 5; found $forbiddenClaimCount" }
+Add-Check 'claim-boundary-ledger' @{
+    path = 'docs\feature-reality-north-star-audit.md'
+    allowedClaims = $allowedClaimCount
+    forbiddenClaims = $forbiddenClaimCount
+    forbiddenAbsoluteClaims = @(
+        'unimprovable-product',
+        'stronger-than-every-github-similar',
+        'absolute-confidence-zero-side-effects',
+        'post-wt-terminal-health'
+    )
+}
+
 $githubRefreshScript = Join-Path $root 'tools\update-github-similar-projects-snapshot.ps1'
 if (-not (Test-Path -LiteralPath $githubRefreshScript)) { throw "Missing GitHub similar-project snapshot refresh script: $githubRefreshScript" }
 $githubSnapshotPath = Join-Path $root 'docs\reference\github-similar-projects-snapshot.json'

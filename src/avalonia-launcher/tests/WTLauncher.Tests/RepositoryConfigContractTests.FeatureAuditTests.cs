@@ -282,6 +282,8 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("root gate rejects stale snapshots", readme);
         Assert.Contains("keeps the 21/21 narrow-domain north-star coverage", readme);
         Assert.Contains("explicit `not-complete-as-written` full-objective boundary", readme);
+        Assert.Contains("claim-boundary ledger keeps allowed narrow-scope claims separate from forbidden broad", readme);
+        Assert.Contains("absolute-side-effect, and post-`wt.exe` health claims", readme);
         Assert.Contains("portable UI preferences such as filter text", readme);
         Assert.DoesNotContain("portable UI preferences such as theme", readme);
         Assert.Contains("must not contain the obsolete per-entry `confirm` key", readme);
