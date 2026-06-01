@@ -5,6 +5,12 @@ namespace WTLauncher.App.ViewModels;
 public sealed class LauncherBatchLaunchReport
 {
     private readonly List<string> _failures = [];
+    private readonly IReadOnlyList<string> _failureMessages;
+
+    public LauncherBatchLaunchReport()
+    {
+        _failureMessages = _failures.AsReadOnly();
+    }
 
     public int RequestedCount { get; private set; }
 
@@ -14,7 +20,7 @@ public sealed class LauncherBatchLaunchReport
 
     public string? LastCommandLine { get; private set; }
 
-    public IReadOnlyList<string> FailureMessages => _failures;
+    public IReadOnlyList<string> FailureMessages => _failureMessages;
 
     public void RecordPlan(LaunchPlan plan)
     {

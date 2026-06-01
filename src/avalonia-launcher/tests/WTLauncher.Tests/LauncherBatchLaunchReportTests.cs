@@ -43,6 +43,21 @@ public sealed class LauncherBatchLaunchReportTests
     }
 
     [Fact]
+    public void ReportFailureMessagesDoNotExposeMutableStorage()
+    {
+        var report = new LauncherBatchLaunchReport();
+
+        report.RecordFailure("one", new InvalidOperationException("missing one"));
+
+        Assert.IsNotType<List<string>>(report.FailureMessages);
+        var messages = Assert.IsAssignableFrom<IList<string>>(report.FailureMessages);
+        Assert.True(messages.IsReadOnly);
+        Assert.Throws<NotSupportedException>(() => messages.Add("fake success"));
+        Assert.Equal(["one: missing one"], report.FailureMessages);
+        Assert.Equal(1, report.FailedCount);
+    }
+
+    [Fact]
     public void ReportTracksFailureWithoutInventingEntryName()
     {
         var report = new LauncherBatchLaunchReport();

@@ -105,6 +105,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("honest requested-start wording", audit);
         Assert.Contains("side-effect-free current-group preview", audit);
         Assert.Contains("rejects blank failure entry names instead of rendering fake `(unnamed)` rows", audit);
+        Assert.Contains("exposes batch failure messages as read-only report state instead of handing formatters the mutable failure list", audit);
         Assert.Contains("reports blank-name batch preflight/start failures without inventing fallback names", audit);
         Assert.Contains("unexpected batch exceptions now replace stale dry-run text with a failure receipt", audit);
         Assert.Contains("runtime filter mutations and core filter projection rejecting null instead of inventing an empty filter", audit);
