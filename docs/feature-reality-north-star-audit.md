@@ -230,10 +230,10 @@ It is not a general launcher/automation north star. That broader domain includes
 The counts below are a summary ledger for the 21 feature sections. They are not a substitute for the per-feature evidence.
 
 - Feature count: 21
-- Verdict count: narrow-north-star=18,strong=2,source-backed=1
+- Verdict count: narrow-north-star=19,strong=2
 - Gap count: none-proven=5,future-workload=8,external-process-limit=4,visual-proof=3,distribution-scope=1,source-freshness=1
 - Proof count: repo-battle-tested=20,market-informed=4,legacy-flow-informed=1,accessibility-informed=1,source-backed=1
-- Completion boundary: 18 narrow-north-star feature verdicts support the narrow portable Windows Terminal workspace-launcher claim only; 2 strong features and 1 source-backed feature block any honest "every feature is already a north-star" claim.
+- Completion boundary: 19 narrow-north-star feature verdicts support the narrow portable Windows Terminal workspace-launcher claim only; 2 strong features block any honest "every feature is already a north-star" claim.
 - Absolute boundary: future-workload, external-process-limit, visual-proof, distribution-scope, and source-freshness gaps block "100% confidence / 0% side effects" as a product-wide claim.
 
 ## Feature mapping audit
@@ -483,12 +483,12 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Feature id: design-benchmark-and-giants-shoulders-library
 - Real problem: UI/product decisions should not be made from vibes or copied frameworks.
 - Proof type: source-backed, market-informed
-- Verdict level: source-backed
+- Verdict level: narrow-north-star
 - Gap class: source-freshness
 - Current data owner: `DESIGN.md`, `docs/design-benchmark-digest.md`, and `docs/giants-shoulders/`.
-- Evidence: docs translate external references into local acceptance rules, tests keep the digest referenced, `docs/reference/github-similar-projects-snapshot.json` preserves the current GitHub market yardstick used by this audit, `tools/update-github-similar-projects-snapshot.ps1` refreshes it from GitHub API state, and root verify validates the snapshot schema, freshness window, representative direct projects, and broad-market repositories.
-- Verdict: strong, not automatically north-star.
-- Remaining gap: source freshness must be refreshed when a decision depends on a changed external standard.
+- Evidence: docs translate external references into local acceptance rules, tests keep the digest referenced, verify the giants-shoulders admission rule and current entries, preserve the first-class launcher pattern table plus "what not to copy" boundary, `docs/reference/github-similar-projects-snapshot.json` preserves the current GitHub market yardstick used by this audit, `tools/update-github-similar-projects-snapshot.ps1` refreshes it from GitHub API state, and root verify validates the snapshot schema, freshness window, representative direct projects, and broad-market repositories.
+- Verdict: north-star for source-tracked decision support in this repo. It converts outside lessons into local acceptance rules and explicit rejection boundaries instead of importing frameworks.
+- Remaining gap: source freshness must be refreshed when a decision depends on a changed external standard; stale references are not current proof.
 
 ## Gaps that block a broad-domain north-star claim
 

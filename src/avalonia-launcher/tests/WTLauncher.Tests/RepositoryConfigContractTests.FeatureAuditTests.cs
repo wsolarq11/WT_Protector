@@ -348,7 +348,7 @@ public sealed partial class RepositoryConfigContractTests
         AssertCountsEqual(gapCounts, ParseCountLine(summary, "- Gap count:"));
         AssertCountsEqual(proofCounts, ParseCountLine(summary, "- Proof count:"));
         Assert.Contains(
-            "2 strong features and 1 source-backed feature block any honest \"every feature is already a north-star\" claim",
+            "2 strong features block any honest \"every feature is already a north-star\" claim",
             summary);
         Assert.Contains(
             "future-workload, external-process-limit, visual-proof, distribution-scope, and source-freshness gaps block \"100% confidence / 0% side effects\"",
