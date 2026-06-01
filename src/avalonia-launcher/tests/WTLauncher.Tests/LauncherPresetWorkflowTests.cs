@@ -377,6 +377,22 @@ public sealed class LauncherPresetWorkflowTests
     }
 
     [Fact]
+    public void DeletePreset_RejectsBlankFallbackPresetIdBeforeMutatingPresetFile()
+    {
+        var presetFile = PresetFile(
+            "daily",
+            Preset("daily", "Daily", "one"),
+            Preset(" ", "Broken", "two"));
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherPresetWorkflow.DeletePreset(presetFile, "daily", out _));
+
+        Assert.Equal("Launcher preset fallback id is required after delete.", exception.Message);
+        Assert.Equal("daily", presetFile.DefaultPresetId);
+        Assert.Equal(["daily", " "], presetFile.Presets.Select(preset => preset.Id).ToArray());
+    }
+
+    [Fact]
     public void DeletePreset_RejectsBlankFallbackReferencesBeforeMutatingPresetFile()
     {
         var presetFile = PresetFile(

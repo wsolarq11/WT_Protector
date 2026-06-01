@@ -101,7 +101,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("Applying a preset has a failure contract too", audit);
         Assert.Contains("roll back memory/file state on preset save failures", audit);
         Assert.Contains("reject blank/duplicate preset entry ids before add/update mutation", audit);
-        Assert.Contains("reject invalid fallback preset references plus missing default-preset state before delete mutation", audit);
+        Assert.Contains("reject invalid fallback preset references, blank fallback preset ids, and missing default-preset state before delete mutation", audit);
         Assert.Contains("reject missing selected-preset ids during preset state restore instead of silently selecting the first group", audit);
         Assert.Contains("selected fallback view model after deletion instead of hiding fallback selection or rendering `(none)`", audit);
         Assert.Contains("discards uncommitted drag-sort preview state first", audit);

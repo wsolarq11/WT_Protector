@@ -52,8 +52,8 @@ public static class LauncherPresetWorkflow
         if (preset is null || !CanDeletePreset(presetFile, preset))
             return null;
 
+        fallbackPresetId = ResolveDefaultPresetIdAfterDelete(presetFile, preset, fallbackPresetId);
         presetFile.Presets.Remove(preset);
-        fallbackPresetId = ResolveDefaultPresetId(presetFile);
         presetFile.DefaultPresetId = fallbackPresetId;
 
         return preset;
@@ -81,11 +81,6 @@ public static class LauncherPresetWorkflow
         return presetFile.Presets.FirstOrDefault(preset => LauncherPresetIds.Same(preset.Id, normalizedPresetId));
     }
 
-    private static string ResolveDefaultPresetId(LauncherPresetFile presetFile) =>
-        TryGetDefaultPresetId(presetFile, out var defaultPresetId)
-            ? defaultPresetId
-            : ResolveFallbackPresetId(presetFile);
-
     private static string RequireDefaultPresetId(LauncherPresetFile presetFile)
     {
         if (TryGetDefaultPresetId(presetFile, out var defaultPresetId))
@@ -106,10 +101,27 @@ public static class LauncherPresetWorkflow
             && presetFile.Presets.Any(preset => LauncherPresetIds.Same(preset.Id, candidate));
     }
 
-    private static string ResolveFallbackPresetId(LauncherPresetFile presetFile) =>
-        presetFile.Presets.FirstOrDefault(HasEntryReferences)?.Id
-        ?? presetFile.Presets.FirstOrDefault()?.Id
-        ?? string.Empty;
+    private static string ResolveDefaultPresetIdAfterDelete(
+        LauncherPresetFile presetFile,
+        LauncherPreset target,
+        string currentDefaultPresetId) =>
+        LauncherPresetIds.Same(currentDefaultPresetId, target.Id)
+            ? RequireFallbackPresetIdAfterDelete(presetFile, target)
+            : currentDefaultPresetId;
+
+    private static string RequireFallbackPresetIdAfterDelete(LauncherPresetFile presetFile, LauncherPreset target)
+    {
+        var fallback = presetFile.Presets.FirstOrDefault(preset =>
+            !LauncherPresetIds.Same(preset.Id, target.Id) && HasEntryReferences(preset));
+        if (fallback is null)
+            throw new InvalidDataException("Launcher preset fallback id is required after delete.");
+
+        var fallbackPresetId = LauncherPresetIds.NormalizeReference(fallback.Id);
+        if (fallbackPresetId.Length == 0)
+            throw new InvalidDataException("Launcher preset fallback id is required after delete.");
+
+        return fallbackPresetId;
+    }
 
     private static bool HasEntryReferences(LauncherPreset preset) =>
         LauncherEntryIds.ToRequiredUniqueList(preset.EntryIds, nameof(preset.EntryIds)).Count > 0;
