@@ -280,6 +280,8 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("tools/update-github-similar-projects-snapshot.ps1", readme);
         Assert.Contains("current GitHub similar-project evidence schema", readme);
         Assert.Contains("root gate rejects stale snapshots", readme);
+        Assert.Contains("keeps the 21/21 narrow-domain north-star coverage", readme);
+        Assert.Contains("explicit `not-complete-as-written` full-objective boundary", readme);
         Assert.Contains("portable UI preferences such as filter text", readme);
         Assert.DoesNotContain("portable UI preferences such as theme", readme);
         Assert.Contains("must not contain the obsolete per-entry `confirm` key", readme);

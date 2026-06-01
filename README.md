@@ -138,6 +138,7 @@ The verifier currently checks:
 - root `config/` parses, item `id` values are unique, persistent `selected` state remains part of the contract, and `presets.json` references only known entry ids;
 - every active `config/config.json` `directory` exists on this machine, so stale launcher buttons fail the gate instead of failing later at click time;
 - `settings.json` remains the portable source for sort mode, view mode, launch-confirmation state, and complete custom entry order;
+- `docs/feature-reality-north-star-audit.md` keeps the 21/21 narrow-domain north-star coverage and the explicit `not-complete-as-written` full-objective boundary;
 - `docs/reference/github-similar-projects-snapshot.json` keeps the current GitHub similar-project evidence schema, representative repos, broad-market proof counters, controlled yardstick verdicts, summary counts, repo-local refresh command, and freshness metadata readable;
 - `retired/design/winforms-launcher.md` exists with the absorbed WinForms design lessons;
 - retired HTA and shortcut-backup reference material remain readable;

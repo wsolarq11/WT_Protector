@@ -83,7 +83,52 @@ $readme = Get-Content -Raw -Encoding UTF8 -LiteralPath $readmePath
 foreach ($section in @('Configuration schema', 'Build and verification', 'Run the mainline app', 'WinForms retirement', 'Safety notes', 'Current implementation status')) {
     if (-not $readme.Contains($section)) { throw "README missing section: $section" }
 }
-Add-Check 'readme' @{ sections = 6 }
+foreach ($requiredObjectiveBoundary in @(
+    'all 21 active feature mappings as narrow-domain north-star',
+    'portable Windows Terminal workspace-launcher scope only',
+    'full absolute objective remains not complete as written',
+    'unimprovable-product, stronger-than-every-GitHub-similar, and absolute zero-side-effect claims'
+)) {
+    if (-not $readme.Contains($requiredObjectiveBoundary)) {
+        throw "README missing current objective boundary: $requiredObjectiveBoundary"
+    }
+}
+Add-Check 'readme' @{
+    sections = 6
+    fullObjectiveBoundary = 'not-complete-as-written'
+}
+
+$featureAuditPath = Join-Path $root 'docs\feature-reality-north-star-audit.md'
+if (-not (Test-Path -LiteralPath $featureAuditPath)) { throw "Missing feature reality/north-star audit: $featureAuditPath" }
+$featureAudit = Get-Content -Raw -Encoding UTF8 -LiteralPath $featureAuditPath
+foreach ($requiredObjectiveBoundary in @(
+    'Full objective result: not-complete-as-written',
+    'Feature north-star coverage: current-active-features=21,narrow-north-star=21,non-north-star=0',
+    'Blocked absolute requirements: unimprovable-product,stronger-than-every-github-similar,absolute-confidence-zero-side-effects',
+    'All 21 current feature mappings classify as narrow-domain north-star',
+    'It is not a broad-domain north star for every launcher or automation product'
+)) {
+    if (-not $featureAudit.Contains($requiredObjectiveBoundary)) {
+        throw "Feature reality/north-star audit missing objective boundary: $requiredObjectiveBoundary"
+    }
+}
+$featureHeadingCount = [regex]::Matches($featureAudit, '(?m)^### \d+\. ').Count
+$narrowNorthStarVerdictCount = [regex]::Matches($featureAudit, '(?m)^- Verdict level: narrow-north-star$').Count
+if ($featureHeadingCount -ne 21) { throw "Feature reality/north-star audit must cover 21 active feature mappings; found $featureHeadingCount" }
+if ($narrowNorthStarVerdictCount -ne $featureHeadingCount) {
+    throw "Feature reality/north-star audit has non-north-star feature verdicts: narrow=$narrowNorthStarVerdictCount total=$featureHeadingCount"
+}
+Add-Check 'feature-objective-boundary' @{
+    path = 'docs\feature-reality-north-star-audit.md'
+    activeFeatureMappings = $featureHeadingCount
+    narrowNorthStarVerdicts = $narrowNorthStarVerdictCount
+    fullObjectiveResult = 'not-complete-as-written'
+    blockedAbsoluteRequirements = @(
+        'unimprovable-product',
+        'stronger-than-every-github-similar',
+        'absolute-confidence-zero-side-effects'
+    )
+}
 
 $githubRefreshScript = Join-Path $root 'tools\update-github-similar-projects-snapshot.ps1'
 if (-not (Test-Path -LiteralPath $githubRefreshScript)) { throw "Missing GitHub similar-project snapshot refresh script: $githubRefreshScript" }
