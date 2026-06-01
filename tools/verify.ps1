@@ -92,7 +92,7 @@ if (-not (Test-Path -LiteralPath $githubSnapshotPath)) { throw "Missing GitHub s
 $githubSnapshot = Get-Content -Raw -Encoding UTF8 -LiteralPath $githubSnapshotPath | ConvertFrom-Json
 if ($null -eq $githubSnapshot) { throw "GitHub similar-project snapshot parsed to null: $githubSnapshotPath" }
 Assert-OnlyJsonKeys $githubSnapshot @('schemaVersion', 'capturedAtUtc', 'evidenceCommand', 'refreshCommand', 'queries', 'scope', 'repositories') 'github-similar-projects-snapshot.json'
-if ([int]$githubSnapshot.schemaVersion -ne 1) { throw "Unsupported GitHub similar-project snapshot schemaVersion: $($githubSnapshot.schemaVersion)" }
+if ([int]$githubSnapshot.schemaVersion -ne 2) { throw "Unsupported GitHub similar-project snapshot schemaVersion: $($githubSnapshot.schemaVersion)" }
 if ([string]::IsNullOrWhiteSpace([string]$githubSnapshot.capturedAtUtc)) { throw 'GitHub similar-project snapshot capturedAtUtc is required' }
 $githubSnapshotMaxAgeDays = 30
 try {
@@ -120,8 +120,9 @@ foreach ($query in @('Windows Terminal workspace launcher', 'Windows Terminal se
 $githubRepos = @($githubSnapshot.repositories)
 if ($githubRepos.Count -lt 12) { throw "GitHub similar-project snapshot should track at least 12 representative repositories; found $($githubRepos.Count)" }
 $githubRepoByName = @{}
+$githubAllowedYardstickVerdicts = @('direct-narrow-weaker', 'adjacent-axis-stronger', 'broad-market-stronger')
 foreach ($repo in $githubRepos) {
-    Assert-OnlyJsonKeys $repo @('fullName', 'url', 'description', 'language', 'stars', 'forks', 'pushedAtUtc', 'updatedAtUtc', 'archived', 'classification', 'strongerAxes', 'wtLauncherAxes') "GitHub similar-project snapshot repository"
+    Assert-OnlyJsonKeys $repo @('fullName', 'url', 'description', 'language', 'stars', 'forks', 'pushedAtUtc', 'updatedAtUtc', 'archived', 'classification', 'yardstickVerdict', 'strongerAxes', 'wtLauncherAxes') "GitHub similar-project snapshot repository"
     $fullName = [string]$repo.fullName
     if ([string]::IsNullOrWhiteSpace($fullName)) { throw 'GitHub similar-project snapshot repository fullName is required' }
     if ($githubRepoByName.ContainsKey($fullName)) { throw "Duplicate GitHub similar-project snapshot repository: $fullName" }
@@ -130,6 +131,7 @@ foreach ($repo in $githubRepos) {
     if ([int]$repo.forks -lt 0) { throw "GitHub similar-project snapshot repository forks must be non-negative: $fullName" }
     if (-not ($repo.archived -is [bool])) { throw "GitHub similar-project snapshot repository archived must be boolean: $fullName" }
     if ([string]::IsNullOrWhiteSpace([string]$repo.classification)) { throw "GitHub similar-project snapshot repository classification is required: $fullName" }
+    if ($githubAllowedYardstickVerdicts -notcontains [string]$repo.yardstickVerdict) { throw "GitHub similar-project snapshot repository yardstickVerdict is unsupported for $fullName`: $($repo.yardstickVerdict)" }
     if (@($repo.strongerAxes).Count -lt 1) { throw "GitHub similar-project snapshot repository strongerAxes is required: $fullName" }
     if (@($repo.wtLauncherAxes).Count -lt 1) { throw "GitHub similar-project snapshot repository wtLauncherAxes is required: $fullName" }
     $githubRepoByName[$fullName] = $repo
@@ -156,6 +158,10 @@ $flowStars = [int]$githubRepoByName['Flow-Launcher/Flow.Launcher'].stars
 $woxStars = [int]$githubRepoByName['Wox-launcher/Wox'].stars
 if ($flowStars -lt 10000) { throw "Flow Launcher market-proof stars unexpectedly low in snapshot: $flowStars" }
 if ($woxStars -lt 10000) { throw "Wox market-proof stars unexpectedly low in snapshot: $woxStars" }
+if ([string]$githubRepoByName['Flow-Launcher/Flow.Launcher'].yardstickVerdict -ne 'broad-market-stronger') { throw 'Flow Launcher must remain classified as broad-market-stronger' }
+if ([string]$githubRepoByName['Wox-launcher/Wox'].yardstickVerdict -ne 'broad-market-stronger') { throw 'Wox must remain classified as broad-market-stronger' }
+$broadMarketStrongerCount = @($githubRepos | Where-Object { [string]$_.yardstickVerdict -eq 'broad-market-stronger' }).Count
+if ($broadMarketStrongerCount -ne 2) { throw "GitHub similar-project snapshot broad-market-stronger count must be 2; found $broadMarketStrongerCount" }
 Add-Check 'github-similar-projects-snapshot' @{
     path = 'docs\reference\github-similar-projects-snapshot.json'
     refreshScript = 'tools\update-github-similar-projects-snapshot.ps1'
@@ -163,6 +169,7 @@ Add-Check 'github-similar-projects-snapshot' @{
     maxAgeDays = $githubSnapshotMaxAgeDays
     ageDays = [math]::Round($githubSnapshotAge.TotalDays, 2)
     repositories = $githubRepos.Count
+    broadMarketStronger = $broadMarketStrongerCount
     flowStars = $flowStars
     woxStars = $woxStars
 }

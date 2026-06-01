@@ -134,7 +134,7 @@ public sealed partial class RepositoryConfigContractTests
         }
         AssertGitHubYardsticksUseControlledVerdicts(audit, githubSnapshot);
 
-        Assert.Equal(1, githubSnapshot.GetProperty("schemaVersion").GetInt32());
+        Assert.Equal(2, githubSnapshot.GetProperty("schemaVersion").GetInt32());
         Assert.True(DateTimeOffset.TryParse(githubCapturedAtUtc, out _), "GitHub snapshot capturedAtUtc must be parseable.");
         Assert.Contains($"GitHub evidence capturedAtUtc: `{githubCapturedAtUtc}`", audit);
         Assert.Contains("gh repo view <owner>/<repo>", githubSnapshot.GetProperty("evidenceCommand").GetString());
@@ -410,6 +410,10 @@ public sealed partial class RepositoryConfigContractTests
         {
             Assert.Contains(verdict, allowedVerdicts);
             Assert.Contains(fullName, snapshotRepos);
+            var repo = githubSnapshot.GetProperty("repositories")
+                .EnumerateArray()
+                .Single(snapshotRepo => snapshotRepo.GetProperty("fullName").GetString() == fullName);
+            Assert.Equal(verdict, repo.GetProperty("yardstickVerdict").GetString());
             var line = yardstickLines.Single(yardstickLine => yardstickLine.Contains($"https://github.com/{fullName}", StringComparison.Ordinal));
             Assert.Contains($"Yardstick verdict: `{verdict}`", line);
         }

@@ -13,72 +13,84 @@ $repoNotes = @(
     @{
         fullName = 'SyDroX/dev-layout'
         classification = 'direct WT workspace launcher'
+        yardstickVerdict = 'direct-narrow-weaker'
         strongerAxes = @('fixed Claude Code multi-repo layout', 'session resume', 'cd blocking')
         wtLauncherAxes = @('editable portable UI entries', 'named launch groups', 'rollback-aware JSON persistence', 'native gate')
     },
     @{
         fullName = 'augustdragon/terminal-manager'
         classification = 'direct WT profile/session manager'
+        yardstickVerdict = 'adjacent-axis-stronger'
         strongerAxes = @('WT profile editing', 'split-pane groups', 'import/export', 'WT settings sync')
         wtLauncherAxes = @('smaller local JSON-to-wt contract', 'no local web server', 'does not mutate Windows Terminal settings')
     },
     @{
         fullName = 'noambrand/Launchpad-CLI'
         classification = 'Claude Code launcher/installer'
+        yardstickVerdict = 'adjacent-axis-stronger'
         strongerAxes = @('installer', 'folder picker', 'right-click launch', 'statusline distribution')
         wtLauncherAxes = @('portable editable WT workspace groups', 'rollback-aware config gate', 'smaller app scope')
     },
     @{
         fullName = 'kevinkicho/win-screen-setup'
         classification = 'Windows multi-monitor workspace launcher'
+        yardstickVerdict = 'adjacent-axis-stronger'
         strongerAxes = @('visual screen/app positioning')
         wtLauncherAxes = @('narrower side-effect surface', 'portable launch groups', 'native repo gate')
     },
     @{
         fullName = 'ewdieckman/DevWorkspace'
         classification = 'PowerShell WT multi-pane workspace module'
+        yardstickVerdict = 'adjacent-axis-stronger'
         strongerAxes = @('fixed split-pane layouts')
         wtLauncherAxes = @('editable GUI entries', 'rollback-aware persistence', 'native publish/verify gate')
     },
     @{
         fullName = 'jsoulet42/claude-launcher-app'
         classification = 'Claude Code WT TUI workspace launcher'
+        yardstickVerdict = 'direct-narrow-weaker'
         strongerAxes = @('adjacent TUI flow')
         wtLauncherAxes = @('portable editable GUI entries', 'named groups', 'rollback-aware JSON', 'native gate')
     },
     @{
         fullName = 'A-ema755/claude-dashboard'
         classification = 'Claude Code CLI session launcher/preset manager'
+        yardstickVerdict = 'adjacent-axis-stronger'
         strongerAxes = @('split-pane layouts', 'cost tracking')
         wtLauncherAxes = @('small local WT launcher contract', 'portable GUI config', 'native gate')
     },
     @{
         fullName = 'adityacodepublic/wtsm-cli'
         classification = 'Windows Terminal session manager CLI'
+        yardstickVerdict = 'adjacent-axis-stronger'
         strongerAxes = @('named terminal sessions CLI')
         wtLauncherAxes = @('GUI editing', 'launch-group preview', 'repo-native rollback/verify evidence')
     },
     @{
         fullName = 'pramin/AgentSpace'
         classification = 'Avalonia agent workspace launcher'
+        yardstickVerdict = 'adjacent-axis-stronger'
         strongerAxes = @('embedded PTY', 'SSH file tree', 'code preview')
         wtLauncherAxes = @('smaller WT handoff scope', 'portable JSON groups', 'native gate')
     },
     @{
         fullName = 'joyahmed/devgo-app'
         classification = 'WSL-first developer launcher'
+        yardstickVerdict = 'adjacent-axis-stronger'
         strongerAxes = @('WSL', 'VS Code', 'tmux workflows', 'installer ambition')
         wtLauncherAxes = @('verified portable WT launch groups', 'rollback-aware JSON', 'narrower scope')
     },
     @{
         fullName = 'Flow-Launcher/Flow.Launcher'
         classification = 'broad Windows launcher'
+        yardstickVerdict = 'broad-market-stronger'
         strongerAxes = @('market proof', 'plugins', 'search', 'packaging', 'community')
         wtLauncherAxes = @('narrow portable WT workspace-launcher slice only')
     },
     @{
         fullName = 'Wox-launcher/Wox'
         classification = 'broad cross-platform launcher'
+        yardstickVerdict = 'broad-market-stronger'
         strongerAxes = @('market proof', 'cross-platform packaging', 'plugin/theme stores', 'AI/MCP direction')
         wtLauncherAxes = @('narrow portable WT workspace-launcher slice only')
     }
@@ -104,6 +116,7 @@ $repositories = foreach ($note in $repoNotes) {
         updatedAtUtc = [string]$repo.updatedAt
         archived = [bool]$repo.isArchived
         classification = [string]$note.classification
+        yardstickVerdict = [string]$note.yardstickVerdict
         strongerAxes = @($note.strongerAxes)
         wtLauncherAxes = @($note.wtLauncherAxes)
     }
@@ -111,7 +124,7 @@ $repositories = foreach ($note in $repoNotes) {
 
 $capturedAtUtc = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
 $snapshot = [ordered]@{
-    schemaVersion = 1
+    schemaVersion = 2
     capturedAtUtc = $capturedAtUtc
     evidenceCommand = $evidenceCommand
     refreshCommand = 'powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\update-github-similar-projects-snapshot.ps1'
