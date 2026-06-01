@@ -79,6 +79,66 @@ public sealed class LauncherEntryMutationPersistenceTests
         Assert.Equal(["one"], preset.EntryIds);
     }
 
+    [Fact]
+    public void SaveRejectsInvalidSettingsInsteadOfRollingBack()
+    {
+        using var temp = new TempDirectory();
+        var configPath = Path.Combine(temp.Path, "config.json");
+        var presetPath = Path.Combine(temp.Path, "presets.json");
+        var settingsPath = Path.Combine(temp.Path, "settings.json");
+        LauncherConfigStore.Save([Entry("one")], configPath, backup: true);
+        LauncherPresetStore.Save(PresetFile("daily", Preset("daily", "one")), presetPath, backup: true);
+        var snapshot = Snapshot();
+        var settings = new LauncherSettings
+        {
+            SortMode = "missing",
+        };
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherEntryMutationPersistence.Save(
+                entries: [Entry("mutated")],
+                configPath: configPath,
+                presetFile: PresetFile("mutated", Preset("mutated", "mutated")),
+                presetPath: presetPath,
+                settings: settings,
+                settingsPath: settingsPath,
+                savePresets: true,
+                rollbackSnapshot: snapshot));
+
+        Assert.Equal("Unknown launcher sort mode: missing.", exception.Message);
+        Assert.False(File.Exists(settingsPath));
+    }
+
+    [Fact]
+    public void SaveRejectsInvalidRollbackSnapshotInsteadOfReturningRollbackStatus()
+    {
+        using var temp = new TempDirectory();
+        var configPath = Path.Combine(temp.Path, "config.json");
+        var presetPath = Path.Combine(temp.Path, "presets.json");
+        LauncherConfigStore.Save([Entry("one")], configPath, backup: true);
+        LauncherPresetStore.Save(PresetFile("daily", Preset("daily", "one")), presetPath, backup: true);
+        var invalidEntry = Entry("one");
+        invalidEntry.Name = null!;
+        var snapshot = LauncherEntryMutationSnapshot.Capture(
+            [invalidEntry],
+            PresetFile("daily", Preset("daily", "one")),
+            customEntryOrder: ["one"],
+            selectedPresetId: "daily");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherEntryMutationPersistence.Save(
+                entries: [Entry("mutated")],
+                configPath: configPath,
+                presetFile: PresetFile("mutated", Preset("mutated", "mutated")),
+                presetPath: presetPath,
+                settings: new LauncherSettings(),
+                settingsPath: temp.Path,
+                savePresets: true,
+                rollbackSnapshot: snapshot));
+
+        Assert.Equal("Launcher config entry 0 name is null.", exception.Message);
+    }
+
     private static LauncherEntryMutationSnapshot Snapshot()
     {
         return LauncherEntryMutationSnapshot.Capture(
