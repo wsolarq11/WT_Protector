@@ -225,6 +225,17 @@ open known local workspaces quickly
 
 It is not a general launcher/automation north star. That broader domain includes plugin marketplaces, workflow graphs, cloud sync, import/export ecosystems, package/update channels, and run history/status receipts. Those are intentionally outside current scope unless they beat the existing local gate with less complexity.
 
+## Feature verdict summary
+
+The counts below are a summary ledger for the 21 feature sections. They are not a substitute for the per-feature evidence.
+
+- Feature count: 21
+- Verdict count: narrow-north-star=17,strong=3,source-backed=1
+- Gap count: none-proven=5,future-workload=8,external-process-limit=4,visual-proof=3,distribution-scope=1,source-freshness=1
+- Proof count: repo-battle-tested=20,market-informed=4,legacy-flow-informed=1,accessibility-informed=1,source-backed=1
+- Completion boundary: 17 narrow-north-star feature verdicts support the narrow portable Windows Terminal workspace-launcher claim only; 3 strong features and 1 source-backed feature block any honest "every feature is already a north-star" claim.
+- Absolute boundary: future-workload, external-process-limit, visual-proof, distribution-scope, and source-freshness gaps block "100% confidence / 0% side effects" as a product-wide claim.
+
 ## Feature mapping audit
 
 ### 1. Launch entry object

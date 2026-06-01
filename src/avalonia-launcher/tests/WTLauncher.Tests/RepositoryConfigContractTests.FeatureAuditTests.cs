@@ -68,6 +68,13 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("narrow-north-star", audit);
         Assert.Contains("- Verdict level:", audit);
         Assert.Contains("- Gap class:", audit);
+        Assert.Contains("## Feature verdict summary", audit);
+        Assert.Contains("- Feature count:", audit);
+        Assert.Contains("- Verdict count:", audit);
+        Assert.Contains("- Gap count:", audit);
+        Assert.Contains("- Proof count:", audit);
+        Assert.Contains("- Completion boundary:", audit);
+        Assert.Contains("- Absolute boundary:", audit);
         Assert.Contains("## Feature mapping audit", audit);
         Assert.Contains("## Objective completion audit", audit);
         Assert.Contains("Objective verdict classes used below:", audit);
@@ -85,6 +92,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("- Evidence owner:", audit);
         Assert.Contains("## Final answer", audit);
         Assert.Equal(21, CountFeatureHeadings(audit));
+        AssertFeatureVerdictSummaryMatchesFeatureSections(audit);
         AssertFeatureSectionsUseCompleteAuditShape(audit);
         AssertBroadDomainGapsUseControlledLedger(audit);
         AssertClaimBoundaryLedgerConstrainsFinalClaims(audit);
@@ -296,6 +304,53 @@ public sealed partial class RepositoryConfigContractTests
             .Split('\n')
             .Select(line => line.TrimStart())
             .Count(line => line.StartsWith("### ", StringComparison.Ordinal));
+
+    private static void AssertFeatureVerdictSummaryMatchesFeatureSections(string audit)
+    {
+        var summaryStart = audit.IndexOf("## Feature verdict summary", StringComparison.Ordinal);
+        var featureAuditStart = audit.IndexOf("## Feature mapping audit", StringComparison.Ordinal);
+        var gapsStart = audit.IndexOf("## Gaps that block a broad-domain north-star claim", StringComparison.Ordinal);
+        Assert.True(summaryStart >= 0, "Feature verdict summary section is missing.");
+        Assert.True(featureAuditStart > summaryStart, "Feature verdict summary must appear before feature mapping audit.");
+        Assert.True(gapsStart > featureAuditStart, "Feature mapping audit section must appear before broad-domain gaps.");
+
+        var summary = audit[summaryStart..featureAuditStart];
+        var featureAudit = audit[featureAuditStart..gapsStart];
+        var featureSections = featureAudit
+            .Split("\n### ", StringSplitOptions.RemoveEmptyEntries)
+            .Skip(1)
+            .ToArray();
+        var proofCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+        var verdictCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+        var gapCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        foreach (var section in featureSections)
+        {
+            var lines = section.Split('\n');
+            AddControlledCounts(
+                proofCounts,
+                ParseControlledList(lines.Single(line => line.StartsWith("- Proof type:", StringComparison.Ordinal)), "- Proof type:"));
+            AddControlledCounts(
+                gapCounts,
+                ParseControlledList(lines.Single(line => line.StartsWith("- Gap class:", StringComparison.Ordinal)), "- Gap class:"));
+            AddControlledCounts(
+                verdictCounts,
+                new[] { ParseControlledValue(lines.Single(line => line.StartsWith("- Verdict level:", StringComparison.Ordinal)), "- Verdict level:") });
+        }
+
+        Assert.Equal(
+            featureSections.Length,
+            ParseIntegerLine(summary, "- Feature count:"));
+        AssertCountsEqual(verdictCounts, ParseCountLine(summary, "- Verdict count:"));
+        AssertCountsEqual(gapCounts, ParseCountLine(summary, "- Gap count:"));
+        AssertCountsEqual(proofCounts, ParseCountLine(summary, "- Proof count:"));
+        Assert.Contains(
+            "3 strong features and 1 source-backed feature block any honest \"every feature is already a north-star\" claim",
+            summary);
+        Assert.Contains(
+            "future-workload, external-process-limit, visual-proof, distribution-scope, and source-freshness gaps block \"100% confidence / 0% side effects\"",
+            summary);
+    }
 
     private static void AssertFeatureSectionsUseCompleteAuditShape(string audit)
     {
@@ -611,6 +666,59 @@ public sealed partial class RepositoryConfigContractTests
         var value = line[prefix.Length..].Trim();
         Assert.False(string.IsNullOrWhiteSpace(value), $"{prefix} must not be blank.");
         return value;
+    }
+
+    private static int ParseIntegerLine(string section, string prefix)
+    {
+        var line = section
+            .Split('\n')
+            .Single(line => line.StartsWith(prefix, StringComparison.Ordinal));
+        Assert.True(
+            int.TryParse(line[prefix.Length..].Trim(), out var value),
+            $"{prefix} must be an integer.");
+        return value;
+    }
+
+    private static Dictionary<string, int> ParseCountLine(string section, string prefix)
+    {
+        var line = section
+            .Split('\n')
+            .Single(line => line.StartsWith(prefix, StringComparison.Ordinal));
+        return line[prefix.Length..]
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(item => item.Split('=', 2, StringSplitOptions.TrimEntries))
+            .ToDictionary(
+                item =>
+                {
+                    Assert.Equal(2, item.Length);
+                    Assert.False(string.IsNullOrWhiteSpace(item[0]), $"{prefix} has a blank count key.");
+                    return item[0];
+                },
+                item =>
+                {
+                    Assert.True(int.TryParse(item[1], out var value), $"{prefix} has a non-integer count.");
+                    return value;
+                },
+                StringComparer.Ordinal);
+    }
+
+    private static void AddControlledCounts(Dictionary<string, int> counts, string[] values)
+    {
+        foreach (var value in values)
+        {
+            counts[value] = counts.GetValueOrDefault(value) + 1;
+        }
+    }
+
+    private static void AssertCountsEqual(Dictionary<string, int> expected, Dictionary<string, int> actual)
+    {
+        Assert.Equal(
+            expected.Keys.OrderBy(key => key, StringComparer.Ordinal),
+            actual.Keys.OrderBy(key => key, StringComparer.Ordinal));
+        foreach (var (key, expectedValue) in expected)
+        {
+            Assert.Equal(expectedValue, actual[key]);
+        }
     }
 
     private static string[] ParseControlledList(string line, string prefix)
