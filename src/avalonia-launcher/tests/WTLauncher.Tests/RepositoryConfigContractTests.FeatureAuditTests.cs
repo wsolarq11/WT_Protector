@@ -30,6 +30,12 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("gh repo view <owner>/<repo>", audit);
         Assert.Contains("root verify validates the snapshot schema", audit);
         Assert.Contains("freshness window", audit);
+        Assert.Contains("Proof taxonomy used below:", audit);
+        Assert.Contains("repo-battle-tested", audit);
+        Assert.Contains("market-informed", audit);
+        Assert.Contains("legacy-flow-informed", audit);
+        Assert.Contains("accessibility-informed", audit);
+        Assert.Contains("source-backed", audit);
         Assert.Contains("- Proof type:", audit);
         Assert.Contains("## Feature mapping audit", audit);
         Assert.Contains("## Objective completion audit", audit);
@@ -240,6 +246,14 @@ public sealed partial class RepositoryConfigContractTests
         Assert.True(gapsStart > featureAuditStart, "Feature mapping audit section must appear before broad-domain gaps.");
 
         var featureAudit = audit[featureAuditStart..gapsStart];
+        var allowedProofTypes = new[]
+        {
+            "repo-battle-tested",
+            "market-informed",
+            "legacy-flow-informed",
+            "accessibility-informed",
+            "source-backed",
+        };
         var sections = featureAudit
             .Split("\n### ", StringSplitOptions.RemoveEmptyEntries)
             .Skip(1)
@@ -250,6 +264,10 @@ public sealed partial class RepositoryConfigContractTests
         {
             Assert.Contains("- Real problem:", section);
             Assert.Contains("- Proof type:", section);
+            var proofLine = section
+                .Split('\n')
+                .Single(line => line.StartsWith("- Proof type:", StringComparison.Ordinal));
+            Assert.Contains(allowedProofTypes, proofType => proofLine.Contains(proofType, StringComparison.Ordinal));
             Assert.Contains("- Current data owner:", section);
             Assert.Contains("- Evidence:", section);
             Assert.Contains("- Verdict:", section);

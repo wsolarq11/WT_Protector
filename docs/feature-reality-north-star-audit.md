@@ -32,6 +32,14 @@ The requested "100% confidence and 0% side effects" standard is useful as pressu
 
 The external yardstick remains the source-tracked benchmark set in `docs/design-benchmark-digest.md` and `docs/giants-shoulders/launcher-first-class-patterns.md`: Windows Terminal profiles/command-line launch shape, VS Code workspaces/settings, Raycast quick links, Alfred workflows, Kubernetes spec/status separation, and WCAG/major design-system accessibility rules.
 
+Proof taxonomy used below:
+
+- `repo-battle-tested`: current source, tests, or native gate prove the behavior in this repository. This is local implementation proof, not market supremacy.
+- `market-informed`: external products or standards prove the pattern is real. This does not prove WT Launcher is stronger than those products.
+- `legacy-flow-informed`: retired HTA/WinForms usage proves the local workflow existed before the Avalonia mainline. This is not a broad-market claim.
+- `accessibility-informed`: external accessibility standards shape the feature contract. Source/tests must still prove the implementation.
+- `source-backed`: source-tracked docs or benchmark material support the decision, but the item is weaker than a runtime feature proof.
+
 ## Fresh external yardstick spot-check
 
 Current external references were spot-checked on 2026-06-01 before making the north-star judgment:
@@ -293,7 +301,7 @@ This section checks the user's full objective against current evidence instead o
   - Evidence: the 21 feature sections above cover every active feature mapping documented in `README.md` and the current Avalonia mainline scope.
   - Status: proven for the current repository scope.
 - Requirement: decide whether each feature is battle-practice or market-proven north-star.
-  - Evidence: every feature section has a real problem, proof type, data owner, evidence, verdict, and remaining gap; the GitHub snapshot separates narrow direct competitors from broad launchers.
+  - Evidence: every feature section has a real problem, controlled proof type, data owner, evidence, verdict, and remaining gap; the GitHub snapshot separates narrow direct competitors from broad launchers.
   - Status: proven as an audit, not as a universal supremacy claim.
 - Requirement: current ability is already unimprovable.
   - Evidence: the broad-domain gap list still names import/export, persisted terminal-session health/history, distribution/update, visual receipts, and external side-effect limits.
