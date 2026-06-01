@@ -241,6 +241,30 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void DryRunUnexpectedFailureReplacesStaleReceiptWithoutInventingName()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex"));
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = false });
+
+        viewModel.DryRunText = "旧预演";
+        viewModel.Entries.Single(entry => entry.Id == "one").Entry.Name = "";
+
+        viewModel.Entries.Single(entry => entry.Id == "one").DryRunCommand.Execute(null);
+
+        Assert.Contains("预演回执", viewModel.DryRunText);
+        Assert.Contains("预演失败: Launch entry name is empty.", viewModel.DryRunText);
+        Assert.DoesNotContain("旧预演", viewModel.DryRunText);
+        Assert.DoesNotContain("(unnamed)", viewModel.DryRunText);
+        Assert.Equal("预演失败: Launch entry name is empty.", viewModel.StatusText);
+    }
+
+    [Fact]
     public async Task BatchLaunchReportsPerEntryPlanFailuresWithoutStartingProcesses()
     {
         using var temp = new TempDirectory();

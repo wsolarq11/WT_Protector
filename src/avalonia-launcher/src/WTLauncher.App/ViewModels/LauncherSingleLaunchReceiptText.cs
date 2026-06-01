@@ -26,6 +26,27 @@ public static class LauncherSingleLaunchReceiptText
             plan.CommandLine);
     }
 
+    public static string PreviewFailed(string entryName, Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        return string.Join(
+            Environment.NewLine,
+            "预演回执",
+            $"预演失败: {RequireName(entryName)}",
+            $"错误: {exception.Message}");
+    }
+
+    public static string PreviewFailed(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        return string.Join(
+            Environment.NewLine,
+            "预演回执",
+            $"预演失败: {exception.Message}");
+    }
+
     public static string ConfirmationFailed(string entryName, LaunchPlan plan, Exception exception)
     {
         ArgumentNullException.ThrowIfNull(plan);

@@ -77,6 +77,29 @@ public sealed class LauncherSingleLaunchReceiptTextTests
     }
 
     [Fact]
+    public void PreviewFailedReceiptIncludesEntryNameAndFailure()
+    {
+        var receipt = LauncherSingleLaunchReceiptText.PreviewFailed(
+            " one ",
+            new InvalidOperationException("bad directory"));
+
+        Assert.Contains("预演回执", receipt);
+        Assert.Contains("预演失败: one", receipt);
+        Assert.Contains("错误: bad directory", receipt);
+    }
+
+    [Fact]
+    public void PreviewFailedReceiptWithoutEntryNameDoesNotInventUnnamedEntry()
+    {
+        var receipt = LauncherSingleLaunchReceiptText.PreviewFailed(new InvalidOperationException("bad entry"));
+
+        Assert.Contains("预演回执", receipt);
+        Assert.Contains("预演失败: bad entry", receipt);
+        Assert.DoesNotContain("(unnamed)", receipt);
+        Assert.DoesNotContain(LaunchArgumentBuilder.TerminalExecutable, receipt);
+    }
+
+    [Fact]
     public void FailedReceiptWithPlanIncludesCommandLineAndFailure()
     {
         using var temp = new TempDirectory();

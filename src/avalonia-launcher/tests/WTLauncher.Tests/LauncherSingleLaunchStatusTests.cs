@@ -18,6 +18,7 @@ public sealed class LauncherSingleLaunchStatusTests
         var exception = new InvalidOperationException("missing directory");
 
         Assert.Equal("预演失败: one", LauncherSingleLaunchStatus.PreviewFailed("one"));
+        Assert.Equal("预演失败: missing directory", LauncherSingleLaunchStatus.PreviewFailed(exception));
         Assert.Equal("已取消: one", LauncherSingleLaunchStatus.Canceled("one"));
         Assert.Equal("已请求启动: one", LauncherSingleLaunchStatus.Requested("one"));
         Assert.Equal(

@@ -10,6 +10,12 @@ public static class LauncherSingleLaunchStatus
     public static string PreviewFailed(string entryName) =>
         $"预演失败: {entryName}";
 
+    public static string PreviewFailed(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+        return $"预演失败: {exception.Message}";
+    }
+
     public static string Canceled(string entryName) =>
         $"已取消: {entryName}";
 

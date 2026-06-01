@@ -91,6 +91,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("transient single-launch canceled/request/failure receipts", audit);
         Assert.Contains("receipt rejection of blank entry names instead of rendering fake `(unnamed)` launches", audit);
         Assert.Contains("unexpected single-launch exceptions replacing stale dry-run text with a failure receipt", audit);
+        Assert.Contains("unexpected dry-run exceptions replacing stale preview text with a preview failure receipt", audit);
         Assert.Contains("honest requested-start wording", audit);
         Assert.Contains("side-effect-free current-group preview", audit);
         Assert.Contains("rejects blank failure entry names instead of rendering fake `(unnamed)` rows", audit);

@@ -42,8 +42,16 @@ public sealed partial class MainWindowViewModel
         }
         catch (Exception ex)
         {
-            DryRunText = ex.Message;
-            StatusText = LauncherSingleLaunchStatus.PreviewFailed(item.Name);
+            var entryName = LauncherEntryText.Normalize(item.Name);
+            if (entryName.Length == 0)
+            {
+                DryRunText = LauncherSingleLaunchReceiptText.PreviewFailed(ex);
+                StatusText = LauncherSingleLaunchStatus.PreviewFailed(ex);
+                return;
+            }
+
+            DryRunText = LauncherSingleLaunchReceiptText.PreviewFailed(entryName, ex);
+            StatusText = LauncherSingleLaunchStatus.PreviewFailed(entryName);
         }
     }
 
