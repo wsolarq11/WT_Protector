@@ -369,11 +369,26 @@ It is not a general launcher/automation north star. That broader domain includes
 
 These are not defects in the current narrow product. They are the reasons not to claim "best launcher/automation tool in the whole domain":
 
-1. no first-class import/export ecosystem for entries or groups;
-2. no persisted run history or terminal-session health model separated from desired config; transient launch receipts exist for requested/failed/skipped plans;
-3. no installer/update/signing channel;
-4. no screenshot-backed comfort receipt for visual taste after future visual-heavy layout changes.
-5. no honest way to prove "stronger than every GitHub similar project" or "0% side effects" for real process launch behavior.
+- Broad gap id: import-export-ecosystem
+  - Gap class: future-workload
+  - Blocks requirement id: prove-unimprovable-current-ability, prove-stronger-than-any-github-similar-project
+  - Evidence: no first-class import/export ecosystem for entries or groups.
+- Broad gap id: run-history-terminal-health
+  - Gap class: future-workload
+  - Blocks requirement id: prove-unimprovable-current-ability, prove-absolute-confidence-and-zero-side-effects
+  - Evidence: no persisted run history or terminal-session health model separated from desired config; transient launch receipts exist for requested/failed/skipped plans.
+- Broad gap id: installer-update-signing-channel
+  - Gap class: distribution-scope
+  - Blocks requirement id: prove-unimprovable-current-ability, prove-stronger-than-any-github-similar-project
+  - Evidence: no installer/update/signing channel.
+- Broad gap id: screenshot-backed-visual-comfort
+  - Gap class: visual-proof
+  - Blocks requirement id: prove-unimprovable-current-ability
+  - Evidence: no screenshot-backed comfort receipt for visual taste after future visual-heavy layout changes.
+- Broad gap id: universal-supremacy-zero-side-effects
+  - Gap class: external-process-limit
+  - Blocks requirement id: prove-stronger-than-any-github-similar-project, prove-absolute-confidence-and-zero-side-effects
+  - Evidence: no honest way to prove "stronger than every GitHub similar project" or "0% side effects" for real process launch behavior.
 
 Do not build these preemptively. They become work only when the real user problem appears.
 

@@ -69,6 +69,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("## Final answer", audit);
         Assert.Equal(21, CountFeatureHeadings(audit));
         AssertFeatureSectionsUseCompleteAuditShape(audit);
+        AssertBroadDomainGapsUseControlledLedger(audit);
         AssertClaimBoundaryLedgerConstrainsFinalClaims(audit);
         AssertObjectiveCompletionAuditUsesIndentedEvidenceAndStatus(audit);
 
@@ -427,6 +428,52 @@ public sealed partial class RepositoryConfigContractTests
             Assert.Equal(verdict, repo.GetProperty("yardstickVerdict").GetString());
             var line = yardstickLines.Single(yardstickLine => yardstickLine.Contains($"https://github.com/{fullName}", StringComparison.Ordinal));
             Assert.Contains($"Yardstick verdict: `{verdict}`", line);
+        }
+    }
+
+    private static void AssertBroadDomainGapsUseControlledLedger(string audit)
+    {
+        var start = audit.IndexOf("## Gaps that block a broad-domain north-star claim", StringComparison.Ordinal);
+        var end = audit.IndexOf("## Objective completion audit", StringComparison.Ordinal);
+        Assert.True(start >= 0, "Broad-domain gap section is missing.");
+        Assert.True(end > start, "Broad-domain gap section must appear before the objective completion audit.");
+
+        var expectedGaps = new (string GapId, string GapClass, string[] RequirementIds)[]
+        {
+            ("import-export-ecosystem", "future-workload", new[] { "prove-unimprovable-current-ability", "prove-stronger-than-any-github-similar-project" }),
+            ("run-history-terminal-health", "future-workload", new[] { "prove-unimprovable-current-ability", "prove-absolute-confidence-and-zero-side-effects" }),
+            ("installer-update-signing-channel", "distribution-scope", new[] { "prove-unimprovable-current-ability", "prove-stronger-than-any-github-similar-project" }),
+            ("screenshot-backed-visual-comfort", "visual-proof", new[] { "prove-unimprovable-current-ability" }),
+            ("universal-supremacy-zero-side-effects", "external-process-limit", new[] { "prove-stronger-than-any-github-similar-project", "prove-absolute-confidence-and-zero-side-effects" }),
+        };
+        var section = audit[start..end];
+        var gaps = section
+            .Split("\n- Broad gap id:", StringSplitOptions.RemoveEmptyEntries)
+            .Skip(1)
+            .ToArray();
+
+        Assert.Equal(expectedGaps.Length, gaps.Length);
+        for (var gapIndex = 0; gapIndex < gaps.Length; gapIndex++)
+        {
+            var lines = gaps[gapIndex]
+                .Split('\n')
+                .Select(line => line.TrimEnd())
+                .ToArray();
+            var gapId = lines[0].Trim();
+            Assert.Equal(expectedGaps[gapIndex].GapId, gapId);
+
+            var gapClassLine = lines
+                .Single(line => line.TrimStart().StartsWith("- Gap class:", StringComparison.Ordinal))
+                .TrimStart();
+            Assert.Equal(expectedGaps[gapIndex].GapClass, ParseControlledValue(gapClassLine, "- Gap class:"));
+
+            var blockedRequirementLine = lines
+                .Single(line => line.TrimStart().StartsWith("- Blocks requirement id:", StringComparison.Ordinal))
+                .TrimStart();
+            Assert.Equal(
+                expectedGaps[gapIndex].RequirementIds,
+                ParseControlledList(blockedRequirementLine, "- Blocks requirement id:"));
+            Assert.Contains(lines, line => line.TrimStart().StartsWith("- Evidence:", StringComparison.Ordinal));
         }
     }
 
