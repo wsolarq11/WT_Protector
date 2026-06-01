@@ -4,8 +4,7 @@ public static class LauncherStartupArguments
 {
     public static string? ReadConfigPath(IReadOnlyList<string>? args)
     {
-        if (args is null)
-            return null;
+        ArgumentNullException.ThrowIfNull(args);
 
         string? configPath = null;
         for (var i = 0; i < args.Count; i++)

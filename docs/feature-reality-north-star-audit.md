@@ -223,7 +223,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: launch argument rules and config behavior must be testable without opening the GUI.
 - Current data owner: Core owns pure records/rules; App owns ViewModels/Views; Tests own behavior contracts.
-- Evidence: solution layout and root verify enforce Core/App/Tests presence, tests cover Core helpers independently, ViewModel-owned collections expose read-only projections instead of public mutable collection owners, and startup arguments reject unknown or duplicate `--config` inputs instead of silently choosing one.
+- Evidence: solution layout and root verify enforce Core/App/Tests presence, tests cover Core helpers independently, ViewModel-owned collections expose read-only projections instead of public mutable collection owners, and startup arguments reject null argument lists plus unknown or duplicate `--config` inputs instead of silently choosing one.
 - Verdict: north-star for maintainability.
 - Remaining gap: none proven.
 

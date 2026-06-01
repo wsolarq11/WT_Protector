@@ -162,7 +162,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("invalid in-memory mutation data and invalid rollback snapshots propagating instead of being reported as ordinary save/rollback failure", audit);
         Assert.Contains("rollback snapshot accessors cloning or read-only wrapping captured state instead of exposing mutable rollback storage", audit);
         Assert.Contains("unused `theme` state was removed", audit);
-        Assert.Contains("startup arguments reject unknown or duplicate `--config` inputs instead of silently choosing one", audit);
+        Assert.Contains("startup arguments reject null argument lists plus unknown or duplicate `--config` inputs instead of silently choosing one", audit);
         Assert.Contains("ViewModel-owned collections expose read-only projections instead of public mutable collection owners", audit);
         Assert.Contains("accepts only one optional `--config <path>` pair", readme);
         Assert.Contains("docs/feature-reality-north-star-audit.md", readme);

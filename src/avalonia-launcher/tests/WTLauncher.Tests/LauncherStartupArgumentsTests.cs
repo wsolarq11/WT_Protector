@@ -24,7 +24,21 @@ public sealed class LauncherStartupArgumentsTests
     public void ReadConfigPath_IsCaseInsensitive()
     {
         Assert.Equal("config/custom.json", LauncherStartupArguments.ReadConfigPath(["--CONFIG", "config/custom.json"]));
-        Assert.Null(LauncherStartupArguments.ReadConfigPath(null));
+    }
+
+    [Fact]
+    public void ReadConfigPath_ReturnsNullWhenNoArgumentsAreProvided()
+    {
+        Assert.Null(LauncherStartupArguments.ReadConfigPath([]));
+    }
+
+    [Fact]
+    public void ReadConfigPath_RejectsNullArgumentList()
+    {
+        var exception = Assert.Throws<ArgumentNullException>(() =>
+            LauncherStartupArguments.ReadConfigPath(null));
+
+        Assert.Equal("args", exception.ParamName);
     }
 
     [Fact]
