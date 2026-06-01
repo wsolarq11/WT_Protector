@@ -78,12 +78,15 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("## Feature mapping audit", audit);
         Assert.Contains("## Objective completion audit", audit);
         Assert.Contains("Objective verdict classes used below:", audit);
+        Assert.Contains("Objective status count:", audit);
+        Assert.Contains("Objective claim impact tokens used below:", audit);
         Assert.Contains("proven-current-scope", audit);
         Assert.Contains("proven-audit-only", audit);
         Assert.Contains("contradicted", audit);
         Assert.Contains("false-broad-scope", audit);
         Assert.Contains("preserved-current-scope", audit);
         Assert.Contains("impossible-absolute", audit);
+        Assert.Contains("- Claim impact:", audit);
         Assert.Contains("## Claim boundary ledger", audit);
         Assert.Contains("Claim status tokens used below:", audit);
         Assert.Contains("Evidence owner tokens used below:", audit);
@@ -754,6 +757,20 @@ public sealed partial class RepositoryConfigContractTests
             "- Requirement id: prove-stronger-than-any-github-similar-project",
             "- Requirement id: preserve-small-and-beautiful",
             "- Requirement id: prove-absolute-confidence-and-zero-side-effects",
+            "Objective status count: proven-current-scope=1,proven-audit-only=1,contradicted=1,false-broad-scope=1,preserved-current-scope=1,impossible-absolute=1",
+            "Objective claim impact tokens used below:",
+            "- `supports-current-feature-coverage`:",
+            "- `classifies-without-supremacy`:",
+            "- `blocks-unimprovable-claim`:",
+            "- `blocks-broad-github-claim`:",
+            "- `preserves-small-scope`:",
+            "- `blocks-absolute-side-effect-claim`:",
+            "- Claim impact: supports-current-feature-coverage",
+            "- Claim impact: classifies-without-supremacy",
+            "- Claim impact: blocks-unimprovable-claim",
+            "- Claim impact: blocks-broad-github-claim",
+            "- Claim impact: preserves-small-scope",
+            "- Claim impact: blocks-absolute-side-effect-claim",
             "controlled gap class",
             "- Status: contradicted",
             "- Status: false-broad-scope",
@@ -915,15 +932,25 @@ public sealed partial class RepositoryConfigContractTests
             "preserved-current-scope",
             "impossible-absolute",
         };
-        var expectedRequirementIdsAndVerdicts = new (string RequirementId, string Verdict)[]
+        var allowedClaimImpacts = new[]
         {
-            ("evaluate-every-active-feature", "proven-current-scope"),
-            ("classify-battle-practice-or-market-proven", "proven-audit-only"),
-            ("prove-unimprovable-current-ability", "contradicted"),
-            ("prove-stronger-than-any-github-similar-project", "false-broad-scope"),
-            ("preserve-small-and-beautiful", "preserved-current-scope"),
-            ("prove-absolute-confidence-and-zero-side-effects", "impossible-absolute"),
+            "supports-current-feature-coverage",
+            "classifies-without-supremacy",
+            "blocks-unimprovable-claim",
+            "blocks-broad-github-claim",
+            "preserves-small-scope",
+            "blocks-absolute-side-effect-claim",
         };
+        var expectedRequirementIdsVerdictsAndImpacts = new (string RequirementId, string Verdict, string ClaimImpact)[]
+        {
+            ("evaluate-every-active-feature", "proven-current-scope", "supports-current-feature-coverage"),
+            ("classify-battle-practice-or-market-proven", "proven-audit-only", "classifies-without-supremacy"),
+            ("prove-unimprovable-current-ability", "contradicted", "blocks-unimprovable-claim"),
+            ("prove-stronger-than-any-github-similar-project", "false-broad-scope", "blocks-broad-github-claim"),
+            ("preserve-small-and-beautiful", "preserved-current-scope", "preserves-small-scope"),
+            ("prove-absolute-confidence-and-zero-side-effects", "impossible-absolute", "blocks-absolute-side-effect-claim"),
+        };
+        var objectiveVerdictCounts = new Dictionary<string, int>(StringComparer.Ordinal);
 
         Assert.Equal(6, requirements.Length);
         for (var requirementIndex = 0; requirementIndex < requirements.Length; requirementIndex++)
@@ -938,7 +965,13 @@ public sealed partial class RepositoryConfigContractTests
                 .Single(line => line.TrimStart().StartsWith("- Requirement id:", StringComparison.Ordinal))
                 .TrimStart();
             var requirementId = ParseControlledValue(requirementIdLine, "- Requirement id:");
-            Assert.Equal(expectedRequirementIdsAndVerdicts[requirementIndex].RequirementId, requirementId);
+            Assert.Equal(expectedRequirementIdsVerdictsAndImpacts[requirementIndex].RequirementId, requirementId);
+            var claimImpactLine = lines
+                .Single(line => line.TrimStart().StartsWith("- Claim impact:", StringComparison.Ordinal))
+                .TrimStart();
+            var claimImpact = ParseControlledValue(claimImpactLine, "- Claim impact:");
+            Assert.Contains(claimImpact, allowedClaimImpacts);
+            Assert.Equal(expectedRequirementIdsVerdictsAndImpacts[requirementIndex].ClaimImpact, claimImpact);
             Assert.Contains(lines, line => line.TrimStart().StartsWith("- Evidence:", StringComparison.Ordinal));
             Assert.Contains(lines, line => line.TrimStart().StartsWith("- Status:", StringComparison.Ordinal));
             var statusLine = lines
@@ -949,8 +982,11 @@ public sealed partial class RepositoryConfigContractTests
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries)
                 .First();
             Assert.Contains(objectiveVerdict, allowedObjectiveVerdicts);
-            Assert.Equal(expectedRequirementIdsAndVerdicts[requirementIndex].Verdict, objectiveVerdict);
+            Assert.Equal(expectedRequirementIdsVerdictsAndImpacts[requirementIndex].Verdict, objectiveVerdict);
+            objectiveVerdictCounts[objectiveVerdict] = objectiveVerdictCounts.GetValueOrDefault(objectiveVerdict) + 1;
             Assert.DoesNotContain(lines, line => line == "- Evidence:" || line == "- Status:");
         }
+
+        AssertCountsEqual(objectiveVerdictCounts, ParseCountLine(section, "Objective status count:"));
     }
 }
