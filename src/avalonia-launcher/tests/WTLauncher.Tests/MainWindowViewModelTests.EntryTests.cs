@@ -280,6 +280,67 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(LauncherEntryStatus.DeleteCanceled("One"), viewModel.StatusText);
     }
 
+    [Fact]
+    public async Task DeleteEntryConfirmationCancellationRestoresMutatedLiveEntry()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreateDragFixture(temp);
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+        var liveEntry = viewModel.Entries.Single(entry => entry.Id == "one").Entry;
+        LauncherEntryDeleteTarget? target = null;
+        viewModel.ConfirmDeleteEntryAsync = candidate =>
+        {
+            target = candidate;
+            liveEntry.Id = "broken";
+            liveEntry.Name = "";
+            return Task.FromResult(false);
+        };
+
+        await viewModel.Entries.Single(entry => entry.Id == "one").DeleteCommand.ExecuteAsync(null);
+
+        Assert.NotNull(target);
+        Assert.Equal("one", target!.EntryId);
+        Assert.Equal("One", target.EntryName);
+        Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal("One", viewModel.Entries.Single(entry => entry.Id == "one").Name);
+        Assert.Equal(DefaultDragOrder(), LauncherConfigStore.Load(config).Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one"], LauncherPresetStore.Load(presets).Presets.Single().EntryIds);
+        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(LauncherEntryStatus.DeleteCanceled("One"), viewModel.StatusText);
+    }
+
+    [Fact]
+    public async Task DeleteEntryUsesConfirmationSnapshotForReferencesAndStatus()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreateDragFixture(temp);
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+        var liveEntry = viewModel.Entries.Single(entry => entry.Id == "one").Entry;
+        LauncherEntryDeleteTarget? target = null;
+        viewModel.ConfirmDeleteEntryAsync = candidate =>
+        {
+            target = candidate;
+            liveEntry.Id = "broken";
+            liveEntry.Name = "";
+            return Task.FromResult(true);
+        };
+
+        await viewModel.Entries.Single(entry => entry.Id == "one").DeleteCommand.ExecuteAsync(null);
+
+        Assert.NotNull(target);
+        Assert.Equal("one", target!.EntryId);
+        Assert.Equal("One", target.EntryName);
+        Assert.Equal(["two", "three"], viewModel.Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["two", "three"], LauncherConfigStore.Load(config).Select(entry => entry.Id).ToArray());
+        Assert.Empty(LauncherPresetStore.Load(presets).Presets.Single().EntryIds);
+        Assert.Equal(["two", "three"], launcherSettings.CustomEntryOrder);
+        Assert.Equal(LauncherEntryStatus.Deleted("One"), viewModel.StatusText);
+    }
+
     private static void AssertNoEntryMutation(
         string config,
         string presets,

@@ -94,6 +94,18 @@ public sealed class DialogLayoutContractTests
     }
 
     [Fact]
+    public void EntryDeleteDialogUsesSnapshotTarget()
+    {
+        var source = File.ReadAllText(TestRepositoryPaths.View("ConfirmEntryDeleteWindow.cs"));
+
+        Assert.Contains("ConfirmEntryDeleteWindow(LauncherEntryDeleteTarget target)", source);
+        Assert.Contains("ArgumentNullException.ThrowIfNull(target);", source);
+        Assert.Contains("target.EntryName", source);
+        Assert.DoesNotContain("LauncherEntryViewModel entry", source);
+        Assert.DoesNotContain("entry.Name", source);
+    }
+
+    [Fact]
     public void EditableDialogTextInputsUseSharedDialogInputStyle()
     {
         var entryDetails = File.ReadAllText(TestRepositoryPaths.View("EntryDetailsWindow.cs"));

@@ -8,7 +8,7 @@ public sealed partial class MainWindowViewModel
     public Func<LaunchEntry?, Task<EntryDraft?>> RequestEntryDraftAsync { get; set; } =
         static _ => Task.FromResult<EntryDraft?>(null);
 
-    public Func<LauncherEntryViewModel, Task<bool>> ConfirmDeleteEntryAsync { get; set; } =
+    public Func<LauncherEntryDeleteTarget, Task<bool>> ConfirmDeleteEntryAsync { get; set; } =
         static _ => Task.FromResult(false);
 
     [RelayCommand]
@@ -89,36 +89,39 @@ public sealed partial class MainWindowViewModel
     internal async Task DeleteEntryAsync(LauncherEntryViewModel item)
     {
         DiscardDragReorderPreview();
-        if (!await ConfirmDeleteEntryIfRequiredAsync(item).ConfigureAwait(true))
-            return;
-
+        var target = new LauncherEntryDeleteTarget(item.Entry);
         var snapshot = CaptureEntryMutationSnapshot();
-        var entryName = item.Name;
+        if (!await ConfirmDeleteEntryIfRequiredAsync(target).ConfigureAwait(true))
+        {
+            RestoreEntryMutationSnapshot(snapshot);
+            return;
+        }
+
         Entries.Remove(item);
-        LauncherEntryReferences.RemoveEntryId(_presetFile, _settings.CustomEntryOrder, item.Id);
+        LauncherEntryReferences.RemoveEntryId(_presetFile, _settings.CustomEntryOrder, target.EntryId);
         if (!SaveEntryCollectionChanges(savePresets: true, snapshot))
             return;
 
-        ApplyStatusText(LauncherEntryStatus.Deleted(entryName));
+        ApplyStatusText(LauncherEntryStatus.Deleted(target.EntryName));
     }
 
-    private async Task<bool> ConfirmDeleteEntryIfRequiredAsync(LauncherEntryViewModel item)
+    private async Task<bool> ConfirmDeleteEntryIfRequiredAsync(LauncherEntryDeleteTarget target)
     {
         bool accepted;
         try
         {
-            accepted = await ConfirmDeleteEntryAsync(item).ConfigureAwait(true);
+            accepted = await ConfirmDeleteEntryAsync(target).ConfigureAwait(true);
         }
         catch (Exception ex)
         {
-            StatusText = LauncherEntryStatus.DeleteConfirmationFailed(item.Name, ex);
+            StatusText = LauncherEntryStatus.DeleteConfirmationFailed(target.EntryName, ex);
             return false;
         }
 
         if (accepted)
             return true;
 
-        StatusText = LauncherEntryStatus.DeleteCanceled(item.Name);
+        StatusText = LauncherEntryStatus.DeleteCanceled(target.EntryName);
         return false;
     }
 

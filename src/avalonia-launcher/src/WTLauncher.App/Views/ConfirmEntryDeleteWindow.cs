@@ -7,8 +7,10 @@ namespace WTLauncher.App.Views;
 
 public sealed class ConfirmEntryDeleteWindow : Window
 {
-    public ConfirmEntryDeleteWindow(LauncherEntryViewModel entry)
+    public ConfirmEntryDeleteWindow(LauncherEntryDeleteTarget target)
     {
+        ArgumentNullException.ThrowIfNull(target);
+
         Title = "删除按钮";
         Width = 520;
         Height = 260;
@@ -32,7 +34,7 @@ public sealed class ConfirmEntryDeleteWindow : Window
                 Children =
                 {
                     LauncherDialogText.Title("确认删除启动按钮？"),
-                    LauncherDialogText.Body($"“{entry.Name}” 会从 config\\config.json 删除，并从所有启动组里移除引用。"),
+                    LauncherDialogText.Body($"“{target.EntryName}” 会从 config\\config.json 删除，并从所有启动组里移除引用。"),
                     LauncherDialogButtons.Footer(24, cancel, delete),
                 },
             },

@@ -26,7 +26,7 @@ public sealed partial class MainWindow : Window
             new PresetDetailsWindow(selectedEntryIds).ShowDialog<string?>(this);
         viewModel.ConfirmDeletePresetAsync = preset => new ConfirmPresetDeleteWindow(preset).ShowDialog<bool>(this);
         viewModel.RequestEntryDraftAsync = entry => new EntryDetailsWindow(entry).ShowDialog<EntryDraft?>(this);
-        viewModel.ConfirmDeleteEntryAsync = entry => new ConfirmEntryDeleteWindow(entry).ShowDialog<bool>(this);
+        viewModel.ConfirmDeleteEntryAsync = target => new ConfirmEntryDeleteWindow(target).ShowDialog<bool>(this);
         DragDrop.AddDragOverHandler(this, OnEntryDragOver);
         DragDrop.AddDropHandler(this, OnEntryDrop);
         SizeChanged += (_, _) => UpdateCardRegionSize(viewModel);
