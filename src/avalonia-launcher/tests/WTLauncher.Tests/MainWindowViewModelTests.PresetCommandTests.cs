@@ -33,7 +33,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.False(created.Locked);
         Assert.False(viewModel.ApplyPresetCommand.CanExecute(null));
 
-        viewModel.Entries.Single(entry => entry.Entry.Id == "two").IsSelected = true;
+        viewModel.Entries.Single(entry => entry.Id == "two").IsSelected = true;
 
         Assert.True(viewModel.UpdateSelectedPresetCommand.CanExecute(null));
 
@@ -260,7 +260,7 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public void PreviewSelectedPresetPreflightFailureReplacesStalePreviewReceipt()
+    public void PreviewSelectedPresetIgnoresMutatedEntrySnapshot()
     {
         using var temp = new TempDirectory();
         var (config, settings, presets) = CreatePortableFixture(
@@ -275,16 +275,18 @@ public sealed partial class MainWindowViewModelTests
             launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
 
         viewModel.DryRunText = "旧启动组预演";
-        viewModel.Entries.Single(entry => entry.Id == "one").Entry.Name = "";
+        var snapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
+        snapshot.Name = "";
 
         viewModel.PreviewSelectedPresetCommand.Execute(null);
 
         Assert.Empty(startedPlans);
-        Assert.Contains("预演回执", viewModel.DryRunText);
-        Assert.Contains("预演失败: 失败 1 项，未启动 0 项", viewModel.DryRunText);
-        Assert.Contains("Launch entry name is empty.", viewModel.DryRunText);
+        Assert.Contains("codex", viewModel.DryRunText);
+        Assert.DoesNotContain("Launch entry name is empty.", viewModel.DryRunText);
         Assert.DoesNotContain("旧启动组预演", viewModel.DryRunText);
-        Assert.Equal("启动组“Daily”预演失败: 1 个失败", viewModel.StatusText);
+        Assert.Equal("", snapshot.Name);
+        Assert.Equal("one", viewModel.Entries.Single(entry => entry.Id == "one").Name);
+        Assert.Equal("预演启动组: Daily（1 项）", viewModel.StatusText);
         var entries = LoadEntriesById(config);
         Assert.All(entries, entry => Assert.False(entry.Selected));
     }

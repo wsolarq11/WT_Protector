@@ -17,6 +17,6 @@ public sealed class LauncherSelectionMutationSnapshotTests
         snapshot.Restore();
 
         Assert.True(entry.IsSelected);
-        Assert.True(entry.Entry.Selected);
+        Assert.True(entry.SnapshotEntry().Selected);
     }
 }

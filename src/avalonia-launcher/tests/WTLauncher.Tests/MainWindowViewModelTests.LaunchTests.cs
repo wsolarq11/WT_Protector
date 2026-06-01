@@ -108,12 +108,13 @@ public sealed partial class MainWindowViewModelTests
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
             launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
-        var liveEntry = viewModel.Entries.Single(entry => entry.Id == "one").Entry;
+        LaunchEntry? externalSnapshot = null;
         LauncherSingleLaunchConfirmation? confirmation = null;
         viewModel.ConfirmLaunchAsync = candidate =>
         {
             confirmation = candidate;
-            liveEntry.Name = "";
+            externalSnapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
+            externalSnapshot.Name = "";
             throw new InvalidOperationException("dialog unavailable");
         };
 
@@ -122,7 +123,8 @@ public sealed partial class MainWindowViewModelTests
         Assert.NotNull(confirmation);
         Assert.Equal("one", confirmation!.EntryId);
         Assert.Equal("one", confirmation.EntryName);
-        Assert.Equal("", liveEntry.Name);
+        Assert.Equal("", externalSnapshot!.Name);
+        Assert.Equal("one", viewModel.Entries.Single(entry => entry.Id == "one").Name);
         Assert.Empty(startedPlans);
         Assert.Contains("启动回执", viewModel.DryRunText);
         Assert.Contains("启动确认失败: one", viewModel.DryRunText);
@@ -171,12 +173,13 @@ public sealed partial class MainWindowViewModelTests
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
             launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
-        var liveEntry = viewModel.Entries.Single(entry => entry.Id == "one").Entry;
+        LaunchEntry? externalSnapshot = null;
         LauncherSingleLaunchConfirmation? confirmation = null;
         viewModel.ConfirmLaunchAsync = candidate =>
         {
             confirmation = candidate;
-            liveEntry.Name = "";
+            externalSnapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
+            externalSnapshot.Name = "";
             return Task.FromResult(true);
         };
 
@@ -185,7 +188,8 @@ public sealed partial class MainWindowViewModelTests
         Assert.NotNull(confirmation);
         Assert.Equal("one", confirmation!.EntryId);
         Assert.Equal("one", confirmation.EntryName);
-        Assert.Equal("", liveEntry.Name);
+        Assert.Equal("", externalSnapshot!.Name);
+        Assert.Equal("one", viewModel.Entries.Single(entry => entry.Id == "one").Name);
         Assert.Single(startedPlans);
         Assert.Contains("启动回执", viewModel.DryRunText);
         Assert.Contains("已请求启动: one", viewModel.DryRunText);
@@ -266,7 +270,7 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task SingleLaunchUnexpectedFailureReplacesStaleReceiptWithoutInventingName()
+    public async Task SingleLaunchIgnoresMutatedEntrySnapshot()
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(
@@ -278,15 +282,18 @@ public sealed partial class MainWindowViewModelTests
             new LauncherSettings { RequireConfirmationForLaunches = false });
 
         viewModel.DryRunText = "旧单项回执";
-        viewModel.Entries.Single(entry => entry.Id == "one").Entry.Name = "";
+        var snapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
+        snapshot.Name = "";
 
         await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
 
         Assert.Contains("启动回执", viewModel.DryRunText);
-        Assert.Contains("启动失败: Launch entry name is empty.", viewModel.DryRunText);
+        Assert.Contains("已请求启动: one", viewModel.DryRunText);
         Assert.DoesNotContain("旧单项回执", viewModel.DryRunText);
-        Assert.DoesNotContain("(unnamed)", viewModel.DryRunText);
-        Assert.Equal("启动失败: Launch entry name is empty.", viewModel.StatusText);
+        Assert.DoesNotContain("Launch entry name is empty.", viewModel.DryRunText);
+        Assert.Equal("", snapshot.Name);
+        Assert.Equal("one", viewModel.Entries.Single(entry => entry.Id == "one").Name);
+        Assert.Equal("已请求启动: one", viewModel.StatusText);
     }
 
     [Fact]
@@ -312,7 +319,7 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public void DryRunUnexpectedFailureReplacesStaleReceiptWithoutInventingName()
+    public void DryRunIgnoresMutatedEntrySnapshot()
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(
@@ -324,15 +331,17 @@ public sealed partial class MainWindowViewModelTests
             new LauncherSettings { RequireConfirmationForLaunches = false });
 
         viewModel.DryRunText = "旧预演";
-        viewModel.Entries.Single(entry => entry.Id == "one").Entry.Name = "";
+        var snapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
+        snapshot.Name = "";
 
         viewModel.Entries.Single(entry => entry.Id == "one").DryRunCommand.Execute(null);
 
-        Assert.Contains("预演回执", viewModel.DryRunText);
-        Assert.Contains("预演失败: Launch entry name is empty.", viewModel.DryRunText);
+        Assert.Contains("wt", viewModel.DryRunText);
         Assert.DoesNotContain("旧预演", viewModel.DryRunText);
-        Assert.DoesNotContain("(unnamed)", viewModel.DryRunText);
-        Assert.Equal("预演失败: Launch entry name is empty.", viewModel.StatusText);
+        Assert.DoesNotContain("Launch entry name is empty.", viewModel.DryRunText);
+        Assert.Equal("", snapshot.Name);
+        Assert.Equal("one", viewModel.Entries.Single(entry => entry.Id == "one").Name);
+        Assert.Equal("预演: one", viewModel.StatusText);
     }
 
     [Fact]
@@ -477,7 +486,7 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task BatchLaunchPreflightFailureReplacesStaleReceipt()
+    public async Task BatchLaunchIgnoresMutatedEntrySnapshot()
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(
@@ -489,16 +498,18 @@ public sealed partial class MainWindowViewModelTests
             new LauncherSettings { RequireConfirmationForLaunches = false });
 
         viewModel.DryRunText = "旧回执";
-        viewModel.Entries.Single(entry => entry.Id == "one").Entry.Name = "";
+        var snapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
+        snapshot.Name = "";
 
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 
         Assert.Contains("启动回执", viewModel.DryRunText);
-        Assert.Contains("已请求启动 0 项，失败 1 项，未启动 0 项", viewModel.DryRunText);
-        Assert.Contains("Launch entry name is empty.", viewModel.DryRunText);
+        Assert.Contains("已请求启动 1 项，失败 0 项", viewModel.DryRunText);
+        Assert.DoesNotContain("Launch entry name is empty.", viewModel.DryRunText);
         Assert.DoesNotContain("旧回执", viewModel.DryRunText);
-        Assert.Contains("已请求启动 0 个勾选项，1 个失败", viewModel.StatusText);
-        Assert.Contains("Launch entry name is empty.", viewModel.StatusText);
+        Assert.Equal("", snapshot.Name);
+        Assert.Equal("one", viewModel.Entries.Single(entry => entry.Id == "one").Name);
+        Assert.Equal("已请求启动 1 个勾选项", viewModel.StatusText);
     }
 
     [Fact]

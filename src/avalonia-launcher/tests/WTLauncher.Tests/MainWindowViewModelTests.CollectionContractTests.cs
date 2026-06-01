@@ -21,6 +21,29 @@ public sealed partial class MainWindowViewModelTests
         AssertReadOnlyProjection(viewModel.DisplayModes, viewModel.DisplayModes.First());
     }
 
+    [Fact]
+    public void EntryViewModelsExposeEntrySnapshotsNotLiveRows()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", "One", command: "pwsh", selected: true));
+        var viewModel = CreateViewModel(config, settings);
+        var entry = viewModel.Entries.Single();
+
+        var snapshot = entry.SnapshotEntry();
+        snapshot.Id = "broken";
+        snapshot.Name = "";
+        snapshot.Command = "bad";
+        snapshot.Selected = false;
+
+        Assert.Equal("one", entry.Id);
+        Assert.Equal("One", entry.Name);
+        Assert.Equal("pwsh", entry.Command);
+        Assert.True(entry.IsSelected);
+        Assert.Equal("one", entry.SnapshotEntry().Id);
+    }
+
     private static void AssertReadOnlyProjection<T>(IList<T> collection, T sample)
     {
         var count = collection.Count;

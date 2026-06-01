@@ -135,7 +135,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return LauncherSettingsSnapshot.Capture(_settings);
     }
 
-    private static LaunchEntry ToLaunchEntry(LauncherEntryViewModel entry) => entry.Entry;
+    private static LaunchEntry ToLaunchEntry(LauncherEntryViewModel entry) => entry.SnapshotEntry();
 
     private static string RequireSettingsText(string? value, string fieldName) =>
         value ?? throw new InvalidDataException($"Launcher settings {fieldName} is null.");

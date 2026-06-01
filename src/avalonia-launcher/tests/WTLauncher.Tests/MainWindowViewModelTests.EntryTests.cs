@@ -341,20 +341,21 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task DeleteEntryConfirmationCancellationRestoresMutatedLiveEntry()
+    public async Task DeleteEntryConfirmationCancellationIgnoresMutatedEntrySnapshot()
     {
         using var temp = new TempDirectory();
         var (config, settings, presets) = CreateDragFixture(temp);
         SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
         var launcherSettings = CreateDragSettings();
         var viewModel = CreateViewModel(config, settings, launcherSettings);
-        var liveEntry = viewModel.Entries.Single(entry => entry.Id == "one").Entry;
+        LaunchEntry? externalSnapshot = null;
         LauncherEntryDeleteTarget? target = null;
         viewModel.ConfirmDeleteEntryAsync = candidate =>
         {
             target = candidate;
-            liveEntry.Id = "broken";
-            liveEntry.Name = "";
+            externalSnapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
+            externalSnapshot.Id = "broken";
+            externalSnapshot.Name = "";
             return Task.FromResult(false);
         };
 
@@ -363,6 +364,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.NotNull(target);
         Assert.Equal("one", target!.EntryId);
         Assert.Equal("One", target.EntryName);
+        Assert.Equal("broken", externalSnapshot!.Id);
         Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
         Assert.Equal("One", viewModel.Entries.Single(entry => entry.Id == "one").Name);
         Assert.Equal(DefaultDragOrder(), LauncherConfigStore.Load(config).Select(entry => entry.Id).ToArray());
@@ -379,13 +381,14 @@ public sealed partial class MainWindowViewModelTests
         SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
         var launcherSettings = CreateDragSettings();
         var viewModel = CreateViewModel(config, settings, launcherSettings);
-        var liveEntry = viewModel.Entries.Single(entry => entry.Id == "one").Entry;
+        LaunchEntry? externalSnapshot = null;
         LauncherEntryDeleteTarget? target = null;
         viewModel.ConfirmDeleteEntryAsync = candidate =>
         {
             target = candidate;
-            liveEntry.Id = "broken";
-            liveEntry.Name = "";
+            externalSnapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
+            externalSnapshot.Id = "broken";
+            externalSnapshot.Name = "";
             return Task.FromResult(true);
         };
 
@@ -394,6 +397,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.NotNull(target);
         Assert.Equal("one", target!.EntryId);
         Assert.Equal("One", target.EntryName);
+        Assert.Equal("broken", externalSnapshot!.Id);
         Assert.Equal(["two", "three"], viewModel.Entries.Select(entry => entry.Id).ToArray());
         Assert.Equal(["two", "three"], LauncherConfigStore.Load(config).Select(entry => entry.Id).ToArray());
         Assert.Empty(LauncherPresetStore.Load(presets).Presets.Single().EntryIds);

@@ -116,6 +116,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("blank/duplicate reference rejection before reference rename/remove mutation", audit);
         Assert.Contains("entry delete confirmation snapshotting target id/name before dialog mutation", audit);
         Assert.Contains("preset delete confirmation snapshotting target id/name/count before dialog mutation", audit);
+        Assert.Contains("entry view models exposing snapshot copies instead of public live `LaunchEntry` rows", audit);
         Assert.Contains("entry edit dialogs receiving a snapshot entry instead of the live mutable row", audit);
         Assert.Contains("entry edit dialogs rejecting null initial/submitted text instead of converting it into empty required-field input", audit);
         Assert.Contains("Applying a preset has a failure contract too", audit);

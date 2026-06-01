@@ -7,23 +7,25 @@ namespace WTLauncher.App.ViewModels;
 public sealed partial class LauncherEntryViewModel : ObservableObject
 {
     private readonly MainWindowViewModel _owner;
+    private readonly LaunchEntry _entry;
 
     public LauncherEntryViewModel(LaunchEntry entry, MainWindowViewModel owner)
     {
-        Entry = entry;
+        ArgumentNullException.ThrowIfNull(entry);
+        _entry = entry;
         _owner = owner;
         _isSelected = entry.Selected;
     }
 
-    public LaunchEntry Entry { get; }
+    public LaunchEntry SnapshotEntry() => _entry with { };
 
-    public string Id => Entry.Id;
+    public string Id => _entry.Id;
 
-    public string Name => Entry.Name;
+    public string Name => _entry.Name;
 
-    public string Directory => Entry.Directory;
+    public string Directory => _entry.Directory;
 
-    public string Command => Entry.Command;
+    public string Command => _entry.Command;
 
     private bool _isSelected;
 
@@ -51,25 +53,25 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     internal void SetSelectionFromOwner(bool selected)
     {
-        Entry.Selected = selected;
+        _entry.Selected = selected;
         SetProperty(ref _isSelected, selected, nameof(IsSelected));
     }
 
     internal bool ReplaceEntrySelectionFromOwner(bool selected)
     {
-        var previousSelected = Entry.Selected;
-        Entry.Selected = selected;
+        var previousSelected = _entry.Selected;
+        _entry.Selected = selected;
         return previousSelected;
     }
 
     internal void ReplaceEntryFromOwner(LaunchEntry updated, string updatedAtUtc)
     {
         ArgumentNullException.ThrowIfNull(updated);
-        Entry.Id = updated.Id;
-        Entry.Name = updated.Name;
-        Entry.Directory = updated.Directory;
-        Entry.Command = updated.Command;
-        Entry.UpdatedAtUtc = updatedAtUtc;
+        _entry.Id = updated.Id;
+        _entry.Name = updated.Name;
+        _entry.Directory = updated.Directory;
+        _entry.Command = updated.Command;
+        _entry.UpdatedAtUtc = updatedAtUtc;
         SetSelectionFromOwner(updated.Selected);
         RefreshDisplay();
     }

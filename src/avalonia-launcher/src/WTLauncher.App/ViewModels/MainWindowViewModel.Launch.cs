@@ -34,7 +34,7 @@ public sealed partial class MainWindowViewModel
     internal void ShowDryRun(LauncherEntryViewModel item)
     {
         DiscardDragReorderPreview();
-        var entry = SnapshotLaunchEntry(item.Entry);
+        var entry = item.SnapshotEntry();
         var entryName = LauncherEntryText.Normalize(entry.Name);
         try
         {
@@ -59,7 +59,7 @@ public sealed partial class MainWindowViewModel
     internal async Task LaunchAsync(LauncherEntryViewModel item)
     {
         DiscardDragReorderPreview();
-        var entry = SnapshotLaunchEntry(item.Entry);
+        var entry = item.SnapshotEntry();
         var entryName = LauncherEntryText.Normalize(entry.Name);
         LaunchPlan? plan = null;
         try
@@ -126,9 +126,4 @@ public sealed partial class MainWindowViewModel
         ApplyFilter();
     }
 
-    private static LaunchEntry SnapshotLaunchEntry(LaunchEntry entry)
-    {
-        ArgumentNullException.ThrowIfNull(entry);
-        return entry with { };
-    }
 }

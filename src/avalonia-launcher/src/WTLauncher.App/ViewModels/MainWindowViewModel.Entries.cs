@@ -56,7 +56,7 @@ public sealed partial class MainWindowViewModel
         EntryDraft? draft;
         try
         {
-            draft = await RequestEntryDraftAsync(item.Entry with { }).ConfigureAwait(true);
+            draft = await RequestEntryDraftAsync(item.SnapshotEntry()).ConfigureAwait(true);
         }
         catch (Exception ex)
         {
@@ -71,7 +71,7 @@ public sealed partial class MainWindowViewModel
         }
 
         var oldId = item.Id;
-        var updated = CreateEntryFromDraftOrReportValidation(draft, oldId, item.Entry);
+        var updated = CreateEntryFromDraftOrReportValidation(draft, oldId, item.SnapshotEntry());
         if (updated is null)
             return;
 
@@ -89,7 +89,7 @@ public sealed partial class MainWindowViewModel
     internal async Task DeleteEntryAsync(LauncherEntryViewModel item)
     {
         DiscardDragReorderPreview();
-        var target = new LauncherEntryDeleteTarget(item.Entry);
+        var target = new LauncherEntryDeleteTarget(item.SnapshotEntry());
         var snapshot = CaptureEntryMutationSnapshot();
         if (!await ConfirmDeleteEntryIfRequiredAsync(target).ConfigureAwait(true))
         {
