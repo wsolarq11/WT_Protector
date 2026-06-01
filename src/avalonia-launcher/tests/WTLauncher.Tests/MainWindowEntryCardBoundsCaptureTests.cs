@@ -46,6 +46,25 @@ public sealed class MainWindowEntryCardBoundsCaptureTests
     }
 
     [Fact]
+    public void CaptureReturnsReadOnlySnapshot()
+    {
+        using var temp = new TempDirectory();
+        var owner = CreateOwner(temp.Path);
+        var card = Card(CreateEntryViewModel(owner, "one"));
+
+        var captured = MainWindowEntryCardBoundsCapture.Capture(
+            [card],
+            _ => new Point(1, 2),
+            _ => new Size(3, 4));
+
+        Assert.IsNotType<Dictionary<string, Rect>>(captured);
+        var dictionary = Assert.IsAssignableFrom<IDictionary<string, Rect>>(captured);
+        Assert.True(dictionary.IsReadOnly);
+        Assert.Throws<NotSupportedException>(() => dictionary.Add("fake", new Rect(9, 9, 9, 9)));
+        Assert.Equal(new Rect(new Point(1, 2), new Size(3, 4)), captured["one"]);
+    }
+
+    [Fact]
     public void CaptureUsesOrdinalDictionaryForEntryIds()
     {
         using var temp = new TempDirectory();

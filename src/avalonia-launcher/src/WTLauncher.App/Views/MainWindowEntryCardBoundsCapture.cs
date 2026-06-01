@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.VisualTree;
@@ -7,7 +8,7 @@ namespace WTLauncher.App.Views;
 
 public static class MainWindowEntryCardBoundsCapture
 {
-    public static Dictionary<string, Rect> Capture(Control root, Visual relativeTo)
+    public static IReadOnlyDictionary<string, Rect> Capture(Control root, Visual relativeTo)
     {
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(relativeTo);
@@ -18,7 +19,7 @@ public static class MainWindowEntryCardBoundsCapture
             card => card.Bounds.Size);
     }
 
-    public static Dictionary<string, Rect> Capture(
+    public static IReadOnlyDictionary<string, Rect> Capture(
         IEnumerable<Border> cards,
         Func<Border, Point?> translateOrigin,
         Func<Border, Size> readSize)
@@ -37,6 +38,6 @@ public static class MainWindowEntryCardBoundsCapture
             bounds[entry.Id] = new Rect(origin.Value, readSize(card));
         }
 
-        return bounds;
+        return new ReadOnlyDictionary<string, Rect>(bounds);
     }
 }

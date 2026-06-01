@@ -1,13 +1,15 @@
+using System.Collections.ObjectModel;
 using Avalonia;
+using WTLauncher.Core;
 
 namespace WTLauncher.App.Views;
 
 public sealed class MainWindowReorderAnimationScheduler
 {
-    private Dictionary<string, Rect>? _pendingSnapshot;
+    private IReadOnlyDictionary<string, Rect>? _pendingSnapshot;
 
     public bool Schedule(
-        Dictionary<string, Rect> before,
+        IReadOnlyDictionary<string, Rect> before,
         EventHandler handler,
         Action<EventHandler> unsubscribe,
         Action<EventHandler> subscribe)
@@ -20,13 +22,14 @@ public sealed class MainWindowReorderAnimationScheduler
         if (before.Count == 0)
             return false;
 
-        _pendingSnapshot = new Dictionary<string, Rect>(before, before.Comparer);
+        _pendingSnapshot = new ReadOnlyDictionary<string, Rect>(
+            new Dictionary<string, Rect>(before, LauncherEntryIds.Comparer));
         unsubscribe(handler);
         subscribe(handler);
         return true;
     }
 
-    public Dictionary<string, Rect>? Consume(EventHandler handler, Action<EventHandler> unsubscribe)
+    public IReadOnlyDictionary<string, Rect>? Consume(EventHandler handler, Action<EventHandler> unsubscribe)
     {
         ArgumentNullException.ThrowIfNull(handler);
         ArgumentNullException.ThrowIfNull(unsubscribe);

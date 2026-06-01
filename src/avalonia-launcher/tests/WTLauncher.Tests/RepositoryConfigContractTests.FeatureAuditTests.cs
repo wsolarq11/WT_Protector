@@ -141,7 +141,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("sessions not publicly exposing mutable source view models or settings snapshots", audit);
         Assert.Contains("preview collection outputs that cannot be cast back to mutable selection/preset/missing-id storage", audit);
         Assert.Contains("custom-order index returning a read-only dictionary snapshot instead of a mutable index map", audit);
-        Assert.Contains("reorder animation scheduling cloning captured bounds instead of retaining caller-owned mutable dictionaries", audit);
+        Assert.Contains("reorder bounds capture and animation scheduling exposing read-only cloned snapshots instead of caller-owned mutable dictionaries", audit);
         Assert.Contains("invalid move/custom-order rejection before mutation or sort projection", audit);
         Assert.Contains("missing or stale custom-order ids rejected before sort projection instead of buried at the end", audit);
         Assert.Contains("custom-order sync rejection of invalid order or known ids before mutation", audit);

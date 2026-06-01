@@ -12,7 +12,7 @@ public sealed class MainWindowReorderAnimationSchedulerTests
         var calls = new List<string>();
 
         var scheduled = scheduler.Schedule(
-            [],
+            new Dictionary<string, Rect>(),
             Handler,
             _ => calls.Add("unsubscribe"),
             _ => calls.Add("subscribe"));
@@ -60,6 +60,9 @@ public sealed class MainWindowReorderAnimationSchedulerTests
         Assert.NotNull(pending);
         Assert.Equal(new Rect(1, 2, 3, 4), pending["one"]);
         Assert.False(pending.ContainsKey("two"));
+        var dictionary = Assert.IsAssignableFrom<IDictionary<string, Rect>>(pending);
+        Assert.True(dictionary.IsReadOnly);
+        Assert.Throws<NotSupportedException>(() => dictionary.Add("fake", new Rect(9, 9, 9, 9)));
     }
 
     [Fact]
