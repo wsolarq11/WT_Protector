@@ -57,9 +57,13 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("false-broad-scope", audit);
         Assert.Contains("preserved-current-scope", audit);
         Assert.Contains("impossible-absolute", audit);
+        Assert.Contains("## Claim boundary ledger", audit);
+        Assert.Contains("Allowed current claims:", audit);
+        Assert.Contains("Forbidden current claims:", audit);
         Assert.Contains("## Final answer", audit);
         Assert.Equal(21, CountFeatureHeadings(audit));
         AssertFeatureSectionsUseCompleteAuditShape(audit);
+        AssertClaimBoundaryLedgerConstrainsFinalClaims(audit);
         AssertObjectiveCompletionAuditUsesIndentedEvidenceAndStatus(audit);
 
         foreach (var expectedMapping in new[]
@@ -344,6 +348,34 @@ public sealed partial class RepositoryConfigContractTests
         {
             Assert.Contains(requiredLine, audit);
         }
+    }
+
+    private static void AssertClaimBoundaryLedgerConstrainsFinalClaims(string audit)
+    {
+        var start = audit.IndexOf("## Claim boundary ledger", StringComparison.Ordinal);
+        var end = audit.IndexOf("## Final answer", StringComparison.Ordinal);
+        Assert.True(start >= 0, "Claim boundary ledger section is missing.");
+        Assert.True(end > start, "Claim boundary ledger must appear before the final answer.");
+
+        var section = audit[start..end];
+        foreach (var requiredLine in new[]
+        {
+            "WT Launcher is a narrow-domain north-star for a portable Windows Terminal workspace launcher.",
+            "WT Launcher is stronger only on the portable config, named group, side-effect-free preview, rollback-aware persistence, and native-gate slice.",
+            "The strongest zero-side-effect claim applies only before external process handoff",
+            "Do not claim broad launcher or automation-platform north-star status.",
+            "Do not claim the product is unimprovable.",
+            "Do not claim stronger-than-every-GitHub-similar-project status.",
+            "Do not claim 100% confidence or 0% side effects for real `wt.exe` process launch behavior.",
+            "Do not claim terminal-session health after `wt.exe` accepts the start request.",
+        })
+        {
+            Assert.Contains(requiredLine, section);
+        }
+
+        var finalAnswer = audit[end..];
+        Assert.Contains("north-star implementation only for the narrow domain", finalAnswer);
+        Assert.Contains("It is not a broad-domain north star", finalAnswer);
     }
 
     private static void AssertObjectiveCompletionAuditUsesIndentedEvidenceAndStatus(string audit)

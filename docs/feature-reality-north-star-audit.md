@@ -382,8 +382,25 @@ Objective verdict classes used below:
   - Evidence: current tests and gate prove batch preflight-before-confirmation, side-effect-free current-group preview with valid plans visible even when another plan fails preflight, exact generated command confirmation, transient single-launch canceled/request/failure receipts plus batch receipts for canceled/requested/failed/skipped plans, abort-after-first-start-failure, rollback-aware JSON persistence, and native publish smoke. They cannot prove that starting arbitrary external processes has zero side effects.
   - Status: impossible-absolute — impossible as an absolute claim; mitigated where the repository owns the boundary.
 
+## Claim boundary ledger
+
+Allowed current claims:
+
+1. WT Launcher is a narrow-domain north-star for a portable Windows Terminal workspace launcher.
+2. WT Launcher is stronger only on the portable config, named group, side-effect-free preview, rollback-aware persistence, and native-gate slice.
+3. The small-and-beautiful constraint is currently preserved by refusing speculative plugin marketplace, local web server, split-pane editor, workflow graph, and distribution/update scope.
+4. The strongest zero-side-effect claim applies only before external process handoff: preflight, generated-command preview, confirmation/cancel paths, and JSON rollback boundaries.
+
+Forbidden current claims:
+
+1. Do not claim broad launcher or automation-platform north-star status.
+2. Do not claim the product is unimprovable.
+3. Do not claim stronger-than-every-GitHub-similar-project status.
+4. Do not claim 100% confidence or 0% side effects for real `wt.exe` process launch behavior.
+5. Do not claim terminal-session health after `wt.exe` accepts the start request.
+
 ## Final answer
 
-The current project is already a north-star implementation for the narrow domain of a portable Windows Terminal workspace launcher. The strongest mappings are launch entries, named presets, side-effect-free current-group preview, honest requested-start wording, transient single and batch launch receipts, global launch confirmation, portable settings, JSON persistence/rollback, batch preflight-before-confirmation, exact generated command confirmation, abort-after-first-start-failure, and the native verify/publish gate.
+The current project is a north-star implementation only for the narrow domain of a portable Windows Terminal workspace launcher. The strongest mappings are launch entries, named presets, side-effect-free current-group preview, honest requested-start wording, transient single and batch launch receipts, global launch confirmation, portable settings, JSON persistence/rollback, batch preflight-before-confirmation, exact generated command confirmation, abort-after-first-start-failure, and the native verify/publish gate.
 
 It is not a broad-domain north star for every launcher or automation product. GitHub market evidence contradicts that broad claim. Building import/export, status history, distribution/update, split panes, or a plugin system now would be speculative unless a real workflow beats the current small local contract.
