@@ -7,8 +7,10 @@ namespace WTLauncher.App.Views;
 
 public sealed class ConfirmBatchLaunchWindow : Window
 {
-    public ConfirmBatchLaunchWindow(IReadOnlyList<LauncherBatchLaunchItem> items)
+    public ConfirmBatchLaunchWindow(LauncherBatchLaunchConfirmation confirmation)
     {
+        ArgumentNullException.ThrowIfNull(confirmation);
+
         Title = "确认一键启动";
         Width = 760;
         Height = 520;
@@ -16,9 +18,10 @@ public sealed class ConfirmBatchLaunchWindow : Window
         MinHeight = 340;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
+        var items = confirmation.Items;
         var plans = LauncherBatchLaunchPlanText.Format(items);
-        var message = $"将启动 {items.Count} 个已勾选项。请确认实际 wt.exe 命令。";
-        var title = LauncherDialogText.Title("一键启动已勾选项？");
+        var message = $"将启动 {items.Count} 个{confirmation.TargetLabel}。请确认实际 wt.exe 命令。";
+        var title = LauncherDialogText.Title($"{confirmation.TargetLabel}启动确认？");
         var messageText = LauncherDialogText.Body(message);
         messageText.Margin = new Thickness(0, 12, 0, 14);
         var plansText = new TextBox

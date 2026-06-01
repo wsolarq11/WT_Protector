@@ -5,7 +5,7 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
-    public Func<IReadOnlyList<LauncherBatchLaunchItem>, Task<bool>> ConfirmBatchLaunchAsync { get; set; } =
+    public Func<LauncherBatchLaunchConfirmation, Task<bool>> ConfirmBatchLaunchAsync { get; set; } =
         static _ => Task.FromResult(false);
 
     [RelayCommand]
@@ -44,6 +44,7 @@ public sealed partial class MainWindowViewModel
     {
         await LaunchBatchAsync(
             GetSelectedEntries(),
+            "已勾选项",
             LauncherSelectionStatus.NoSelectedEntries,
             LauncherSelectionStatus.BatchLaunchCanceled,
             LauncherSelectionStatus.BatchLaunchFailed,
@@ -52,6 +53,7 @@ public sealed partial class MainWindowViewModel
 
     private async Task LaunchBatchAsync(
         IReadOnlyList<LauncherEntryViewModel> entries,
+        string confirmationTargetLabel,
         string emptyStatus,
         Func<int, string> canceledStatus,
         Func<Exception, string> failedStatus,
@@ -73,6 +75,7 @@ public sealed partial class MainWindowViewModel
             if (preflight.Report.FailedCount == 0 &&
                 !await ConfirmBatchLaunchIfRequiredAsync(
                     preflight.Items,
+                    confirmationTargetLabel,
                     canceledStatus,
                     failedStatus).ConfigureAwait(true))
                 return;
@@ -90,6 +93,7 @@ public sealed partial class MainWindowViewModel
 
     private async Task<bool> ConfirmBatchLaunchIfRequiredAsync(
         IReadOnlyList<LauncherBatchLaunchItem> items,
+        string confirmationTargetLabel,
         Func<int, string> canceledStatus,
         Func<Exception, string> failedStatus)
     {
@@ -97,13 +101,14 @@ public sealed partial class MainWindowViewModel
             return true;
 
         bool accepted;
+        var confirmation = new LauncherBatchLaunchConfirmation(items, confirmationTargetLabel);
         try
         {
-            accepted = await ConfirmBatchLaunchAsync(items).ConfigureAwait(true);
+            accepted = await ConfirmBatchLaunchAsync(confirmation).ConfigureAwait(true);
         }
         catch (Exception ex)
         {
-            DryRunText = LauncherBatchLaunchReceiptText.ConfirmationFailed(items, ex);
+            DryRunText = LauncherBatchLaunchReceiptText.ConfirmationFailed(confirmation.Items, ex);
             StatusText = failedStatus(ex);
             return false;
         }
@@ -111,8 +116,8 @@ public sealed partial class MainWindowViewModel
         if (accepted)
             return true;
 
-        DryRunText = LauncherBatchLaunchReceiptText.Canceled(items);
-        StatusText = canceledStatus(items.Count);
+        DryRunText = LauncherBatchLaunchReceiptText.Canceled(confirmation.Items);
+        StatusText = canceledStatus(confirmation.Items.Count);
         return false;
     }
 

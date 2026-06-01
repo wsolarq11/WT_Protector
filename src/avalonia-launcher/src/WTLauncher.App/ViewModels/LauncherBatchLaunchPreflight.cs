@@ -41,3 +41,32 @@ public sealed record LauncherBatchLaunchItem
 public sealed record LauncherBatchLaunchPreflight(
     IReadOnlyList<LauncherBatchLaunchItem> Items,
     LauncherBatchLaunchReport Report);
+
+public sealed record LauncherBatchLaunchConfirmation
+{
+    public LauncherBatchLaunchConfirmation(
+        IReadOnlyList<LauncherBatchLaunchItem> items,
+        string targetLabel)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+
+        Items = items.ToArray();
+        foreach (var item in Items)
+            ArgumentNullException.ThrowIfNull(item);
+
+        TargetLabel = RequireTargetLabel(targetLabel);
+    }
+
+    public IReadOnlyList<LauncherBatchLaunchItem> Items { get; }
+
+    public string TargetLabel { get; }
+
+    private static string RequireTargetLabel(string? targetLabel)
+    {
+        var normalized = LauncherEntryText.Normalize(targetLabel);
+        if (normalized.Length == 0)
+            throw new ArgumentException("Batch launch confirmation target label is required.", nameof(targetLabel));
+
+        return normalized;
+    }
+}

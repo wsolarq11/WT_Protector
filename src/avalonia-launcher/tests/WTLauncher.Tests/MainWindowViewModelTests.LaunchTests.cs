@@ -418,19 +418,23 @@ public sealed partial class MainWindowViewModelTests
             temp,
             Entry("one", directory: temp.Path, command: "codex", selected: true),
             Entry("two", directory: temp.Path, command: "opencode", selected: true));
+        LauncherBatchLaunchConfirmation? confirmation = null;
         IReadOnlyList<LauncherBatchLaunchItem>? confirmedItems = null;
         var viewModel = CreateViewModel(
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            vm => vm.ConfirmBatchLaunchAsync = items =>
+            vm => vm.ConfirmBatchLaunchAsync = candidate =>
             {
-                confirmedItems = items.ToArray();
+                confirmation = candidate;
+                confirmedItems = candidate.Items.ToArray();
                 return Task.FromResult(false);
             });
 
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 
+        Assert.NotNull(confirmation);
+        Assert.Equal("已勾选项", confirmation!.TargetLabel);
         Assert.NotNull(confirmedItems);
         Assert.Equal(["one", "two"], confirmedItems!.Select(item => item.EntryId).ToArray());
         Assert.Equal(["one", "two"], confirmedItems.Select(item => item.EntryName).ToArray());

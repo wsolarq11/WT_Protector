@@ -67,13 +67,16 @@ public sealed class DialogLayoutContractTests
         var source = File.ReadAllText(TestRepositoryPaths.View("ConfirmBatchLaunchWindow.cs"));
         var formatter = File.ReadAllText(TestRepositoryPaths.ViewModel("LauncherBatchLaunchPlanText.cs"));
 
-        Assert.Contains("IReadOnlyList<LauncherBatchLaunchItem> items", source);
+        Assert.Contains("LauncherBatchLaunchConfirmation confirmation", source);
+        Assert.Contains("var items = confirmation.Items;", source);
         Assert.Contains("LauncherBatchLaunchPlanText.Format(items)", source);
         Assert.Contains("item.Plan.CommandLine", formatter);
         Assert.Contains("请确认实际 wt.exe 命令", source);
+        Assert.Contains("confirmation.TargetLabel", source);
         Assert.Contains("Text = plans", source);
         Assert.Contains("IsReadOnly = true", source);
         Assert.DoesNotContain("IReadOnlyList<LaunchEntry>", source);
+        Assert.DoesNotContain("个已勾选项", source);
     }
 
     [Theory]

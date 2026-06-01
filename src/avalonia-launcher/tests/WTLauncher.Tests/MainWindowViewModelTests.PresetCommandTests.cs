@@ -299,20 +299,24 @@ public sealed partial class MainWindowViewModelTests
             Entry("two", directory: temp.Path, command: "opencode", selected: false));
         SavePresetFile(presets, "daily", Preset("daily", "Daily", "one", "two"));
         var startedPlans = new List<LaunchPlan>();
+        LauncherBatchLaunchConfirmation? confirmation = null;
         IReadOnlyList<LauncherBatchLaunchItem>? confirmedItems = null;
         var viewModel = CreateViewModel(
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            vm => vm.ConfirmBatchLaunchAsync = items =>
+            vm => vm.ConfirmBatchLaunchAsync = candidate =>
             {
-                confirmedItems = items.ToArray();
+                confirmation = candidate;
+                confirmedItems = candidate.Items.ToArray();
                 return Task.FromResult(false);
             },
             launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
 
         await viewModel.LaunchSelectedPresetCommand.ExecuteAsync(null);
 
+        Assert.NotNull(confirmation);
+        Assert.Equal("启动组“Daily”条目", confirmation!.TargetLabel);
         Assert.NotNull(confirmedItems);
         Assert.Equal(["one", "two"], confirmedItems!.Select(item => item.EntryId).ToArray());
         Assert.Equal(["one", "two"], confirmedItems.Select(item => item.EntryName).ToArray());
