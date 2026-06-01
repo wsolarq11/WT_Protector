@@ -230,10 +230,10 @@ It is not a general launcher/automation north star. That broader domain includes
 The counts below are a summary ledger for the 21 feature sections. They are not a substitute for the per-feature evidence.
 
 - Feature count: 21
-- Verdict count: narrow-north-star=19,strong=2
+- Verdict count: narrow-north-star=20,strong=1
 - Gap count: none-proven=5,future-workload=8,external-process-limit=4,visual-proof=3,distribution-scope=1,source-freshness=1
 - Proof count: repo-battle-tested=20,market-informed=4,legacy-flow-informed=1,accessibility-informed=1,source-backed=1
-- Completion boundary: 19 narrow-north-star feature verdicts support the narrow portable Windows Terminal workspace-launcher claim only; 2 strong features block any honest "every feature is already a north-star" claim.
+- Completion boundary: 20 narrow-north-star feature verdicts support the narrow portable Windows Terminal workspace-launcher claim only; 1 strong feature blocks any honest "every feature is already a north-star" claim.
 - Absolute boundary: future-workload, external-process-limit, visual-proof, distribution-scope, and source-freshness gaps block "100% confidence / 0% side effects" as a product-wide claim.
 
 ## Feature mapping audit
@@ -291,12 +291,12 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Feature id: persistent-checkbox-selection-and-batch-launch
 - Real problem: users often launch a repeated slice of workspaces together.
 - Proof type: repo-battle-tested, legacy-flow-informed
-- Verdict level: strong
+- Verdict level: narrow-north-star
 - Gap class: future-workload, external-process-limit
-- Current data owner: `selected` in `config/config.json`.
+- Current data owner: `selected` in `config/config.json`, representing the current ad-hoc launch group; named repeatable intent belongs to `config/presets.json`.
 - Evidence: selection changes are saved, batch launch uses selected entries, tests cover selection outcomes and batch confirmation/cancellation, and config-save failures during select-all/clear/checkbox mutation now prove visible `配置保存失败` status plus memory/file rollback instead of a false saved action. `LauncherLaunchWorkflow.PreflightBatch` prepares every selected launch plan before confirmation or external process start. Each preflight item snapshots the entry id and name, so confirmation text and batch receipts cannot drift if the mutable entry object changes after preflight. Batch preflight exposes its prepared item list as read-only state instead of leaking the mutable staging list. Batch launch reports are immutable snapshots, and starting a preflight returns a separate launch report instead of mutating the preflight report. Batch confirmation snapshots its item list as read-only state plus a required target label, so selected-entry confirmation says `已勾选项` and direct preset launch says the selected launch group instead of pretending every batch is checkbox state. The batch confirmation receives the generated `LaunchPlan` items, and if an external start still fails after earlier starts, the workflow records the failure and stops the remaining starts instead of compounding side effects. Named presets can now launch directly from `config/presets.json` without rewriting checkbox state first, and confirmation-cancel/failure tests prove that direct preset launch receives preflighted generated command lines before any process start while preserving the preset name in cancellation and unexpected-failure status. Current-group preview uses the same preflight output and formatter, then writes only transient dry-run/status text instead of starting processes or persisting checkbox state. Batch launch writes a transient `启动回执` that lists requested, failed, and skipped plans, exposes batch failure messages as read-only report state instead of handing formatters the mutable failure list, rejects blank failure entry names instead of rendering fake `(unnamed)` rows, reports blank-name batch preflight/start failures without inventing fallback names, and unexpected batch exceptions now replace stale dry-run text with a failure receipt instead of leaving old success-looking output behind; UI status says `已请求启动` instead of pretending the terminal session completed healthy.
-- Verdict: strong. Direct preset launch is the cleaner north-star path; checkbox batch remains the useful legacy/ad-hoc bridge from the retired HTA one-click flow.
-- Remaining gap: `selected` remains stateful UI memory for ad-hoc batches; direct preset launch is the cleaner path for named intent. Once an external process has started, the app cannot honestly guarantee zero side effects if a later external start fails; that is a property of launching real processes, not a missing fallback branch.
+- Verdict: north-star for current ad-hoc group launch. It is not a compatibility branch: `selected` is the one portable current-group owner, presets own named groups, and both share the same preflight/confirmation/receipt boundary.
+- Remaining gap: named repeatable intent belongs in presets, not in another checkbox model. Once an external process has started, the app cannot honestly guarantee zero side effects if a later external start fails; that is a property of launching real processes, not a missing fallback branch.
 
 ### 6. Named launch groups / presets
 

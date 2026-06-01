@@ -207,6 +207,9 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("single launch confirmation target carries entry id/name plus the generated plan", audit);
         Assert.Contains("unexpected single-launch exceptions replacing stale dry-run text with a failure receipt", audit);
         Assert.Contains("unexpected dry-run exceptions replacing stale preview text with a preview failure receipt", audit);
+        Assert.Contains("representing the current ad-hoc launch group", audit);
+        Assert.Contains("presets own named groups", audit);
+        Assert.Contains("both share the same preflight/confirmation/receipt boundary", audit);
         Assert.Contains("Each preflight item snapshots the entry id and name", audit);
         Assert.Contains("Batch preflight exposes its prepared item list as read-only state instead of leaking the mutable staging list", audit);
         Assert.Contains("Batch launch reports are immutable snapshots", audit);
@@ -348,7 +351,7 @@ public sealed partial class RepositoryConfigContractTests
         AssertCountsEqual(gapCounts, ParseCountLine(summary, "- Gap count:"));
         AssertCountsEqual(proofCounts, ParseCountLine(summary, "- Proof count:"));
         Assert.Contains(
-            "2 strong features block any honest \"every feature is already a north-star\" claim",
+            "1 strong feature blocks any honest \"every feature is already a north-star\" claim",
             summary);
         Assert.Contains(
             "future-workload, external-process-limit, visual-proof, distribution-scope, and source-freshness gaps block \"100% confidence / 0% side effects\"",
