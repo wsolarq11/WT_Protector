@@ -74,6 +74,46 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
+    public void ResolveConfigPath_ReturnsCurrentDirectoryConfigPathWhenSearchMisses()
+    {
+        using var temp = new TempDirectory();
+        var currentDir = Path.Combine(temp.Path, "work");
+        Directory.CreateDirectory(currentDir);
+
+        var resolved = LauncherConfigStore.ResolveConfigPath(
+            null,
+            currentDirectory: currentDir,
+            appBaseDirectory: null);
+
+        Assert.Equal(Path.Combine(currentDir, LauncherConfigStore.ConfigDirectoryName, LauncherConfigStore.ConfigFileName), resolved);
+    }
+
+    [Fact]
+    public void ResolveConfigPath_ReturnsAppBaseConfigPathWhenCurrentDirectoryIsUnavailable()
+    {
+        using var temp = new TempDirectory();
+        var appDir = Path.Combine(temp.Path, "publish");
+        Directory.CreateDirectory(appDir);
+
+        var resolved = LauncherConfigStore.ResolveConfigPath(
+            null,
+            currentDirectory: null,
+            appBaseDirectory: appDir);
+
+        Assert.Equal(Path.Combine(appDir, LauncherConfigStore.ConfigDirectoryName, LauncherConfigStore.ConfigFileName), resolved);
+    }
+
+    [Fact]
+    public void ResolveConfigPath_RejectsMissingSearchRootsWithoutExplicitPath()
+    {
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherConfigStore.ResolveConfigPath(null, currentDirectory: null, appBaseDirectory: null));
+
+        Assert.Equal("currentDirectory", exception.ParamName);
+        Assert.StartsWith("Config search root is required when config path is not explicit.", exception.Message);
+    }
+
+    [Fact]
     public void ResolveSettingsPath_StaysBesideResolvedConfig()
     {
         var config = Path.Combine("portable-root", LauncherConfigStore.ConfigDirectoryName, LauncherConfigStore.ConfigFileName);

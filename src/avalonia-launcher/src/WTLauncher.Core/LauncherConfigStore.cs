@@ -61,7 +61,7 @@ public static class LauncherConfigStore
                 return config;
         }
 
-        return BuildConfigPath(currentDirectory ?? Environment.CurrentDirectory);
+        return BuildConfigPath(RequireSearchRoot(candidateRoots));
     }
 
     public static string ResolveSettingsPath(string configPath)
@@ -97,6 +97,19 @@ public static class LauncherConfigStore
         }
 
         return null;
+    }
+
+    private static string RequireSearchRoot(IEnumerable<string?> candidateRoots)
+    {
+        foreach (var candidateRoot in candidateRoots)
+        {
+            if (!string.IsNullOrWhiteSpace(candidateRoot))
+                return candidateRoot;
+        }
+
+        throw new ArgumentException(
+            "Config search root is required when config path is not explicit.",
+            "currentDirectory");
     }
 
     private static string BuildConfigPath(string root) =>

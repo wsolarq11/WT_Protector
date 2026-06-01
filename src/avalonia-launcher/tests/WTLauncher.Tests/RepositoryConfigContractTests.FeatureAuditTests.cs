@@ -163,6 +163,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("rollback snapshot accessors cloning or read-only wrapping captured state instead of exposing mutable rollback storage", audit);
         Assert.Contains("unused `theme` state was removed", audit);
         Assert.Contains("startup arguments reject null argument lists plus unknown or duplicate `--config` inputs instead of silently choosing one", audit);
+        Assert.Contains("config path resolution rejects missing search roots instead of silently falling back to `Environment.CurrentDirectory`", audit);
         Assert.Contains("ViewModel-owned collections expose read-only projections instead of public mutable collection owners", audit);
         Assert.Contains("accepts only one optional `--config <path>` pair", readme);
         Assert.Contains("docs/feature-reality-north-star-audit.md", readme);
