@@ -21,4 +21,10 @@ public static class LauncherSingleLaunchStatus
         ArgumentNullException.ThrowIfNull(exception);
         return $"启动失败: {entryName} — {exception.Message}";
     }
+
+    public static string Failed(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+        return $"启动失败: {exception.Message}";
+    }
 }

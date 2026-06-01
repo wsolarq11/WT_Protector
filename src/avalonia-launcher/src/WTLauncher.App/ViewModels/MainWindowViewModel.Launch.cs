@@ -63,10 +63,18 @@ public sealed partial class MainWindowViewModel
         }
         catch (Exception ex)
         {
+            var entryName = LauncherEntryText.Normalize(item.Name);
+            if (entryName.Length == 0)
+            {
+                DryRunText = LauncherSingleLaunchReceiptText.Failed(ex);
+                StatusText = LauncherSingleLaunchStatus.Failed(ex);
+                return;
+            }
+
             DryRunText = plan is null
-                ? LauncherSingleLaunchReceiptText.Failed(item.Name, ex)
-                : LauncherSingleLaunchReceiptText.Failed(item.Name, plan, ex);
-            StatusText = LauncherSingleLaunchStatus.Failed(item.Name, ex);
+                ? LauncherSingleLaunchReceiptText.Failed(entryName, ex)
+                : LauncherSingleLaunchReceiptText.Failed(entryName, plan, ex);
+            StatusText = LauncherSingleLaunchStatus.Failed(entryName, ex);
         }
     }
 

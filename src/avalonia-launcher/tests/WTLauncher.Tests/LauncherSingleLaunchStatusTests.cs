@@ -23,5 +23,8 @@ public sealed class LauncherSingleLaunchStatusTests
         Assert.Equal(
             "启动失败: one — missing directory",
             LauncherSingleLaunchStatus.Failed("one", exception));
+        Assert.Equal(
+            "启动失败: missing directory",
+            LauncherSingleLaunchStatus.Failed(exception));
     }
 }

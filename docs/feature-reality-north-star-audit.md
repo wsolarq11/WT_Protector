@@ -104,7 +104,7 @@ It is not a general launcher/automation north star. That broader domain includes
 
 - Real problem: one known workspace should open with one explicit action.
 - Current data owner: `LaunchPlan` built from the selected entry and global confirmation setting.
-- Evidence: launch workflow tests cover confirm/cancel paths, dry-run text, process handoff, honest `已请求启动` status wording, transient single-launch canceled/request/failure receipts, and receipt rejection of blank entry names instead of rendering fake `(unnamed)` launches.
+- Evidence: launch workflow tests cover confirm/cancel paths, dry-run text, process handoff, honest `已请求启动` status wording, transient single-launch canceled/request/failure receipts, receipt rejection of blank entry names instead of rendering fake `(unnamed)` launches, and unexpected single-launch exceptions replacing stale dry-run text with a failure receipt instead of leaving old success-looking output behind.
 - Verdict: north-star for explicit local launching.
 - Remaining gap: launch request success still cannot prove terminal-session health after `wt.exe` accepts the process start request.
 

@@ -195,6 +195,30 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task SingleLaunchUnexpectedFailureReplacesStaleReceiptWithoutInventingName()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex"));
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = false });
+
+        viewModel.DryRunText = "旧单项回执";
+        viewModel.Entries.Single(entry => entry.Id == "one").Entry.Name = "";
+
+        await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
+
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("启动失败: Launch entry name is empty.", viewModel.DryRunText);
+        Assert.DoesNotContain("旧单项回执", viewModel.DryRunText);
+        Assert.DoesNotContain("(unnamed)", viewModel.DryRunText);
+        Assert.Equal("启动失败: Launch entry name is empty.", viewModel.StatusText);
+    }
+
+    [Fact]
     public void DryRunDuringDragPreviewDiscardsPreviewOrder()
     {
         using var temp = new TempDirectory();

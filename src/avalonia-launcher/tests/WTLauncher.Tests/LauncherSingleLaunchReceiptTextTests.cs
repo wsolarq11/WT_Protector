@@ -53,6 +53,17 @@ public sealed class LauncherSingleLaunchReceiptTextTests
     }
 
     [Fact]
+    public void FailedReceiptWithoutEntryNameDoesNotInventUnnamedEntry()
+    {
+        var receipt = LauncherSingleLaunchReceiptText.Failed(new InvalidOperationException("bad entry"));
+
+        Assert.Contains("启动回执", receipt);
+        Assert.Contains("启动失败: bad entry", receipt);
+        Assert.DoesNotContain("(unnamed)", receipt);
+        Assert.DoesNotContain(LaunchArgumentBuilder.TerminalExecutable, receipt);
+    }
+
+    [Fact]
     public void CanceledReceiptIncludesNameAndCommandLine()
     {
         using var temp = new TempDirectory();

@@ -50,6 +50,16 @@ public static class LauncherSingleLaunchReceiptText
             $"错误: {exception.Message}");
     }
 
+    public static string Failed(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        return string.Join(
+            Environment.NewLine,
+            "启动回执",
+            $"启动失败: {exception.Message}");
+    }
+
     public static string Failed(string entryName, LaunchPlan plan, Exception exception)
     {
         ArgumentNullException.ThrowIfNull(plan);
