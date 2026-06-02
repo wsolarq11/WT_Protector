@@ -42,7 +42,7 @@ public static class LauncherSettingsStore
         // Close-time bounds persistence must not leave unsaved sizes in memory.
         // Write failures can surface as IOException, UnauthorizedAccessException,
         // or other path/storage exceptions depending on the underlying cause.
-        catch (Exception)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
             snapshot.Restore(settings);
             return false;
