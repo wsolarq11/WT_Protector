@@ -5,24 +5,13 @@
     {
       "id": "core-projects",
       "name": "主线维护",
-      "entryIds": [
-        "启动脚本",
-        "opencode_WT_Protector"
-      ]
+      "entryIds": ["启动脚本", "opencode_WT_Protector"]
     },
     {
       "id": "blank-manual",
       "name": "清空勾选 / 手动模式",
       "entryIds": [],
       "locked": true
-    },
-    {
-      "id": "新启动组",
-      "name": "新启动组",
-      "entryIds": [
-        "启动脚本",
-        "opencode_WT_Protector"
-      ]
     }
   ]
 }
