@@ -77,7 +77,7 @@ public sealed class DialogLayoutContractTests
     public void BatchLaunchConfirmationShowsPreflightedCommandLines()
     {
         var source = File.ReadAllText(TestRepositoryPaths.View("ConfirmBatchLaunchWindow.cs"));
-        var formatter = File.ReadAllText(TestRepositoryPaths.ViewModel("LauncherBatchLaunchPlanText.cs"));
+        var formatter = File.ReadAllText(TestRepositoryPaths.ViewModel("MainWindowViewModel.cs"));
 
         Assert.Contains("LauncherBatchLaunchConfirmation confirmation", source);
         Assert.Contains("var items = confirmation.Items;", source);

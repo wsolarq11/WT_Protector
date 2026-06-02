@@ -128,7 +128,8 @@ public static class LauncherPresetWorkflow
 
     private static string NormalizeRequiredName(string? name)
     {
-        if (!LauncherPresetNames.TryNormalizeRequired(name, out var normalizedName))
+        var normalizedName = LauncherEntryText.Normalize(name);
+        if (normalizedName.Length == 0)
             throw new ArgumentException("Preset name is required.", nameof(name));
 
         return normalizedName;

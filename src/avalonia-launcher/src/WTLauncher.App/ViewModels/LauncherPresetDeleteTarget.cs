@@ -37,7 +37,7 @@ public sealed record LauncherPresetDeleteTarget
 
     private static string RequirePresetName(string? presetName)
     {
-        var normalized = LauncherPresetNames.Normalize(presetName);
+        var normalized = LauncherEntryText.Normalize(presetName);
         if (normalized.Length == 0)
             throw new InvalidOperationException("Launcher preset delete target name is required.");
 

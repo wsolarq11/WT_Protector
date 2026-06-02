@@ -219,3 +219,29 @@ public sealed partial class MainWindow
         }
     }
 }
+
+public static class MainWindowDragInsertDecision
+{
+    public static bool ShouldInsertAfter(Point positionInCard, Size cardSize, bool isDetailedListMode) =>
+        isDetailedListMode
+            ? positionInCard.Y >= cardSize.Height * 0.5
+            : positionInCard.X >= cardSize.Width * 0.5;
+}
+
+public static class MainWindowDragEntryTransfer
+{
+    public static void SetEntryId(DataTransfer dataTransfer, string entryId)
+    {
+        ArgumentNullException.ThrowIfNull(dataTransfer);
+
+        dataTransfer.Add(DataTransferItem.CreateText(entryId));
+    }
+
+    public static string? TryGetEntryId(IDataTransfer dataTransfer)
+    {
+        ArgumentNullException.ThrowIfNull(dataTransfer);
+
+        var entryId = LauncherEntryIds.Normalize(dataTransfer.TryGetText());
+        return LauncherEntryIds.IsUsable(entryId) ? entryId : null;
+    }
+}

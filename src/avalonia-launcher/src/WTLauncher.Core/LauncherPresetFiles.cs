@@ -91,7 +91,7 @@ public static class LauncherPresetFiles
 
     private static string NormalizePresetName(string? name, int index)
     {
-        var normalized = LauncherPresetNames.Normalize(name);
+        var normalized = LauncherEntryText.Normalize(name);
         if (normalized.Length == 0)
             throw new InvalidDataException($"Launcher preset {index} name is empty.");
 

@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Input;
+using Avalonia.VisualTree;
 using WTLauncher.App.ViewModels;
 
 namespace WTLauncher.App.Views;
@@ -78,5 +79,92 @@ public sealed partial class MainWindow : Window
     {
         if (DataContext is MainWindowViewModel viewModel)
             viewModel.TrySaveWindowBounds(Width, Height);
+    }
+}
+
+public static class MainWindowEntryClasses
+{
+    public const string Card = "card";
+
+    public const string DragHandle = "entry-drag-handle";
+}
+
+internal static class GridExtensions
+{
+    public static T WithGridRow<T>(this T control, int row)
+        where T : Control
+    {
+        Grid.SetRow(control, row);
+        return control;
+    }
+}
+
+public static class MainWindowEntriesRootSelection
+{
+    public static Control Select(
+        bool isDetailedListMode,
+        bool isNamesViewMode,
+        Control detailsRoot,
+        Control namesRoot,
+        Control cardsRoot)
+    {
+        ArgumentNullException.ThrowIfNull(detailsRoot);
+        ArgumentNullException.ThrowIfNull(namesRoot);
+        ArgumentNullException.ThrowIfNull(cardsRoot);
+
+        if (isDetailedListMode)
+            return detailsRoot;
+
+        return isNamesViewMode ? namesRoot : cardsRoot;
+    }
+}
+
+public static class MainWindowEntryRowDoubleTap
+{
+    public static bool ShouldLaunchFromSource(object? source)
+    {
+        foreach (var control in MainWindowVisualTree.ControlsFromSource(source))
+        {
+            if (control is Button or CheckBox)
+                return false;
+
+            if (control is Border border && border.Classes.Contains(MainWindowEntryClasses.DragHandle))
+                return false;
+        }
+
+        return true;
+    }
+}
+
+public static class MainWindowEntryCardContextMenu
+{
+    public static (ContextMenu Menu, Border Card)? ResolveFromSource(object? source)
+    {
+        foreach (var control in MainWindowVisualTree.ControlsFromSource(source))
+        {
+            if (control is not Border border || !MainWindowEntryCardResolver.IsCard(border))
+                continue;
+
+            return border.ContextMenu is ContextMenu menu
+                ? (menu, border)
+                : null;
+        }
+
+        return null;
+    }
+}
+
+internal static class MainWindowVisualTree
+{
+    public static IEnumerable<Control> ControlsFromSource(object? source)
+    {
+        if (source is not Visual visual)
+            yield break;
+
+        foreach (var ancestor in visual.GetSelfAndVisualAncestors())
+        {
+            if (ancestor is Control control)
+                yield return control;
+        }
     }
 }

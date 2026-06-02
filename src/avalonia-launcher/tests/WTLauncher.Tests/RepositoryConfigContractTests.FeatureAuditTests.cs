@@ -314,414 +314,96 @@ public sealed partial class RepositoryConfigContractTests
         Assert.DoesNotContain("none for the current launcher scope", readme);
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // Shared markdown-section parsing infrastructure
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Returns the raw text between <paramref name="startHeading"/> and <paramref name="endHeading"/>.
+    /// Asserts both headings exist and appear in the correct order.
+    /// </summary>
+    private static string GetSectionText(string markdown, string startHeading, string endHeading)
+    {
+        var start = markdown.IndexOf(startHeading, StringComparison.Ordinal);
+        Assert.True(start >= 0, $"Section '{startHeading}' is missing.");
+        var end = markdown.IndexOf(endHeading, StringComparison.Ordinal);
+        Assert.True(end > start, $"'{startHeading}' must appear before '{endHeading}'.");
+        return markdown[start..end];
+    }
+
+    /// <summary>
+    /// Extracts a markdown section and splits it into <see cref="MarkdownBlock"/> items.
+    /// Each block starts with <paramref name="blockSeparator"/> (the separator text is consumed).
+    /// </summary>
+    private static (string SectionText, IReadOnlyList<MarkdownBlock> Blocks) ExtractBlocks(
+        string markdown, string startHeading, string endHeading, string blockSeparator)
+    {
+        var section = GetSectionText(markdown, startHeading, endHeading);
+        var blocks = section
+            .Split(blockSeparator, StringSplitOptions.RemoveEmptyEntries)
+            .Skip(1)
+            .Select(b => new MarkdownBlock(b.Split('\n').Select(l => l.TrimEnd()).ToArray()))
+            .ToList()
+            .AsReadOnly();
+        return (section, blocks);
+    }
+
+    /// <summary>
+    /// Wraps the lines of a single markdown block so callers can extract token-prefixed
+    /// values without repeating line-finding and parsing logic.
+    /// </summary>
+    private sealed class MarkdownBlock
+    {
+        internal readonly string[] Lines;
+        public MarkdownBlock(string[] lines) => Lines = lines;
+
+        /// <summary>The first line of the block, trimmed — typically the block identifier.</summary>
+        public string Id => Lines[0].Trim();
+
+        /// <summary>The first line without trimming (for indentation checks).</summary>
+        public string RawFirstLine => Lines[0];
+
+        /// <summary>The full raw text of the block (lines joined by newline).</summary>
+        public string FullText => string.Join("\n", Lines);
+
+        /// <summary>
+        /// Finds the single line starting with <paramref name="prefix"/> and returns the
+        /// controlled-value token after it (no spaces, dots, or semicolons allowed).
+        /// </summary>
+        public string GetToken(string prefix) =>
+            ParseControlledValue(FindLine(prefix), prefix);
+
+        /// <summary>
+        /// Finds the single line starting with <paramref name="prefix"/> and returns the
+        /// comma-separated controlled tokens after it.
+        /// </summary>
+        public string[] GetTokenList(string prefix) =>
+            ParseControlledList(FindLine(prefix), prefix);
+
+        /// <summary>
+        /// Finds the single line starting with <paramref name="prefix"/> and returns the
+        /// required (free-text) value after it.
+        /// </summary>
+        public string GetRequiredToken(string prefix) =>
+            ParseRequiredValue(FindLine(prefix), prefix);
+
+        /// <summary>Returns true if any line (trimmed) starts with <paramref name="prefix"/>.</summary>
+        public bool HasToken(string prefix) =>
+            Lines.Any(l => l.TrimStart().StartsWith(prefix, StringComparison.Ordinal));
+
+        private string FindLine(string prefix) =>
+            Lines.Single(l => l.TrimStart().StartsWith(prefix, StringComparison.Ordinal)).TrimStart();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Low-level parsing utilities (unchanged)
+    // ═══════════════════════════════════════════════════════════════
+
     private static int CountFeatureHeadings(string text) =>
         text
             .Split('\n')
             .Select(line => line.TrimStart())
             .Count(line => line.StartsWith("### ", StringComparison.Ordinal));
-
-    private static void AssertFeatureVerdictSummaryMatchesFeatureSections(string audit)
-    {
-        var summaryStart = audit.IndexOf("## Feature verdict summary", StringComparison.Ordinal);
-        var featureAuditStart = audit.IndexOf("## Feature mapping audit", StringComparison.Ordinal);
-        var gapsStart = audit.IndexOf("## Gaps that block a broad-domain north-star claim", StringComparison.Ordinal);
-        Assert.True(summaryStart >= 0, "Feature verdict summary section is missing.");
-        Assert.True(featureAuditStart > summaryStart, "Feature verdict summary must appear before feature mapping audit.");
-        Assert.True(gapsStart > featureAuditStart, "Feature mapping audit section must appear before broad-domain gaps.");
-
-        var summary = audit[summaryStart..featureAuditStart];
-        var featureAudit = audit[featureAuditStart..gapsStart];
-        var featureSections = featureAudit
-            .Split("\n### ", StringSplitOptions.RemoveEmptyEntries)
-            .Skip(1)
-            .ToArray();
-        var proofCounts = new Dictionary<string, int>(StringComparer.Ordinal);
-        var verdictCounts = new Dictionary<string, int>(StringComparer.Ordinal);
-        var gapCounts = new Dictionary<string, int>(StringComparer.Ordinal);
-
-        foreach (var section in featureSections)
-        {
-            var lines = section.Split('\n');
-            AddControlledCounts(
-                proofCounts,
-                ParseControlledList(lines.Single(line => line.StartsWith("- Proof type:", StringComparison.Ordinal)), "- Proof type:"));
-            AddControlledCounts(
-                gapCounts,
-                ParseControlledList(lines.Single(line => line.StartsWith("- Gap class:", StringComparison.Ordinal)), "- Gap class:"));
-            AddControlledCounts(
-                verdictCounts,
-                new[] { ParseControlledValue(lines.Single(line => line.StartsWith("- Verdict level:", StringComparison.Ordinal)), "- Verdict level:") });
-        }
-
-        Assert.Equal(
-            featureSections.Length,
-            ParseIntegerLine(summary, "- Feature count:"));
-        AssertCountsEqual(verdictCounts, ParseCountLine(summary, "- Verdict count:"));
-        AssertCountsEqual(gapCounts, ParseCountLine(summary, "- Gap count:"));
-        AssertCountsEqual(proofCounts, ParseCountLine(summary, "- Proof count:"));
-        Assert.Contains(
-            "all 21 feature verdicts support the narrow portable Windows Terminal workspace-launcher claim only",
-            summary);
-        Assert.DoesNotContain(
-            "strong feature blocks any honest \"every feature is already a north-star\" claim",
-            summary);
-        Assert.Contains(
-            "future-workload, external-process-limit, visual-proof, distribution-scope, and source-freshness gaps block \"100% confidence / 0% side effects\"",
-            summary);
-    }
-
-    private static void AssertFeatureSectionsUseCompleteAuditShape(string audit)
-    {
-        var featureAuditStart = audit.IndexOf("## Feature mapping audit", StringComparison.Ordinal);
-        var gapsStart = audit.IndexOf("## Gaps that block a broad-domain north-star claim", StringComparison.Ordinal);
-        Assert.True(featureAuditStart >= 0, "Feature mapping audit section is missing.");
-        Assert.True(gapsStart > featureAuditStart, "Feature mapping audit section must appear before broad-domain gaps.");
-
-        var featureAudit = audit[featureAuditStart..gapsStart];
-        var allowedProofTypes = new[]
-        {
-            "repo-battle-tested",
-            "market-informed",
-            "legacy-flow-informed",
-            "accessibility-informed",
-            "source-backed",
-        };
-        var allowedVerdictLevels = new[]
-        {
-            "narrow-north-star",
-            "strong",
-            "source-backed",
-        };
-        var allowedGapClasses = new[]
-        {
-            "none-proven",
-            "future-workload",
-            "external-process-limit",
-            "visual-proof",
-            "distribution-scope",
-            "source-freshness",
-        };
-        var expectedFeatureIds = new[]
-        {
-            "launch-entry-object",
-            "existing-directory-contract",
-            "search-filter",
-            "direct-single-launch",
-            "persistent-checkbox-selection-and-batch-launch",
-            "named-launch-groups-presets",
-            "first-class-preset-actions",
-            "preset-vs-selection-preview",
-            "preset-launch-plan-preview",
-            "add-edit-delete-launcher-buttons",
-            "custom-order-and-drag-reorder",
-            "sort-modes",
-            "view-modes-cards-details-names",
-            "adaptive-card-sizing-and-density",
-            "global-launch-confirmation",
-            "portable-settings",
-            "json-persistence-backup-and-rollback-compensation",
-            "core-app-tests-separation",
-            "self-contained-win-x64-publish-and-native-gate",
-            "retired-legacy-surfaces",
-            "design-benchmark-and-giants-shoulders-library",
-        };
-        var sections = featureAudit
-            .Split("\n### ", StringSplitOptions.RemoveEmptyEntries)
-            .Skip(1)
-            .ToArray();
-
-        Assert.Equal(21, sections.Length);
-        Assert.Equal(expectedFeatureIds.Length, expectedFeatureIds.Distinct(StringComparer.Ordinal).Count());
-        for (var sectionIndex = 0; sectionIndex < sections.Length; sectionIndex++)
-        {
-            var section = sections[sectionIndex];
-            Assert.Contains("- Feature id:", section);
-            var featureIdLine = section
-                .Split('\n')
-                .Single(line => line.StartsWith("- Feature id:", StringComparison.Ordinal));
-            Assert.Equal(expectedFeatureIds[sectionIndex], ParseControlledValue(featureIdLine, "- Feature id:"));
-            Assert.Contains("- Real problem:", section);
-            Assert.Contains("- Proof type:", section);
-            var proofLine = section
-                .Split('\n')
-                .Single(line => line.StartsWith("- Proof type:", StringComparison.Ordinal));
-            foreach (var proofType in ParseControlledList(proofLine, "- Proof type:"))
-            {
-                Assert.Contains(proofType, allowedProofTypes);
-            }
-            Assert.Contains("- Verdict level:", section);
-            var verdictLevelLine = section
-                .Split('\n')
-                .Single(line => line.StartsWith("- Verdict level:", StringComparison.Ordinal));
-            var verdictLevel = ParseControlledValue(verdictLevelLine, "- Verdict level:");
-            Assert.Contains(verdictLevel, allowedVerdictLevels);
-            Assert.Contains("- Gap class:", section);
-            var gapClassLine = section
-                .Split('\n')
-                .Single(line => line.StartsWith("- Gap class:", StringComparison.Ordinal));
-            foreach (var gapClass in ParseControlledList(gapClassLine, "- Gap class:"))
-            {
-                Assert.Contains(gapClass, allowedGapClasses);
-            }
-            Assert.Contains("- Current data owner:", section);
-            Assert.Contains("- Evidence:", section);
-            Assert.Contains("- Verdict:", section);
-            var verdictLine = section
-                .Split('\n')
-                .Single(line => line.StartsWith("- Verdict:", StringComparison.Ordinal));
-            AssertFeatureVerdictLineMatchesLevel(expectedFeatureIds[sectionIndex], verdictLevel, verdictLine);
-            Assert.Contains("- Remaining gap:", section);
-        }
-    }
-
-    private static void AssertFeatureVerdictLineMatchesLevel(string featureId, string verdictLevel, string verdictLine)
-    {
-        var verdict = verdictLine["- Verdict:".Length..].Trim();
-        switch (verdictLevel)
-        {
-            case "narrow-north-star":
-                Assert.Contains("north-star", verdict, StringComparison.OrdinalIgnoreCase);
-                break;
-            case "strong":
-                Assert.Contains("strong", verdict, StringComparison.OrdinalIgnoreCase);
-                break;
-            case "source-backed":
-                Assert.Contains("not automatically north-star", verdict, StringComparison.OrdinalIgnoreCase);
-                break;
-            default:
-                throw new InvalidOperationException($"Unknown verdict level for {featureId}: {verdictLevel}");
-        }
-    }
-
-    private static void AssertAdaptiveCardSizingAuditUsesEngineeredVisualBoundary(string audit)
-    {
-        var featureAuditStart = audit.IndexOf("## Feature mapping audit", StringComparison.Ordinal);
-        var gapsStart = audit.IndexOf("## Gaps that block a broad-domain north-star claim", StringComparison.Ordinal);
-        Assert.True(featureAuditStart >= 0, "Feature mapping audit section is missing.");
-        Assert.True(gapsStart > featureAuditStart, "Feature mapping audit section must appear before broad-domain gaps.");
-
-        var featureAudit = audit[featureAuditStart..gapsStart];
-        var section = featureAudit
-            .Split("\n### ", StringSplitOptions.RemoveEmptyEntries)
-            .Single(featureSection => featureSection.Contains("- Feature id: adaptive-card-sizing-and-density", StringComparison.Ordinal));
-
-        foreach (var expectedEvidence in new[]
-        {
-            "- Verdict level: narrow-north-star",
-            "Normal/Compact/Micro density",
-            "one typed density owner",
-            "one typed available-size owner",
-            "filtered visible-entry count sizing",
-            "golden-ratio card shape",
-            "readable minimum before scroll fallback",
-            "name-wall multi-column fit",
-            "engineering-owned visual comfort boundary",
-            "screenshot or human visual receipts are required only after future visual-heavy changes",
-        })
-        {
-            Assert.Contains(expectedEvidence, section);
-        }
-
-        Assert.DoesNotContain("strong, close to north-star", section);
-    }
-
-    private static void AssertFreshExternalYardsticksUseControlledLedger(string audit)
-    {
-        var start = audit.IndexOf("## Fresh external yardstick spot-check", StringComparison.Ordinal);
-        var end = audit.IndexOf("## Current GitHub similar-project snapshot", StringComparison.Ordinal);
-        Assert.True(start >= 0, "Fresh external yardstick section is missing.");
-        Assert.True(end > start, "Fresh external yardstick section must appear before the GitHub snapshot section.");
-
-        var expectedReferences = new (string ReferenceId, string SourceClass, string LocalImplication)[]
-        {
-            ("windows-terminal-command-line", "command-line-contract", "supports-current-entry-contract"),
-            ("vscode-workspace-context", "portable-context-contract", "supports-portable-json-contract"),
-            ("raycast-quicklinks", "frequent-action-market-proof", "blocks-broad-launcher-claim"),
-            ("docker-compose-profiles", "named-subset-contract", "supports-named-presets"),
-            ("wcag-dragging-movements", "accessibility-contract", "supports-non-drag-reorder-contract"),
-            ("kubernetes-spec-status", "spec-status-contract", "identifies-run-status-gap"),
-        };
-        var allowedSourceClasses = expectedReferences
-            .Select(reference => reference.SourceClass)
-            .ToArray();
-        var allowedLocalImplications = expectedReferences
-            .Select(reference => reference.LocalImplication)
-            .ToArray();
-        var section = audit[start..end];
-        var references = section
-            .Split("\n- External reference id:", StringSplitOptions.RemoveEmptyEntries)
-            .Skip(1)
-            .ToArray();
-
-        foreach (var sourceClass in allowedSourceClasses)
-        {
-            Assert.Contains($"- `{sourceClass}`:", section);
-        }
-
-        foreach (var localImplication in allowedLocalImplications)
-        {
-            Assert.Contains($"- `{localImplication}`:", section);
-        }
-
-        Assert.Equal(expectedReferences.Length, references.Length);
-        for (var referenceIndex = 0; referenceIndex < references.Length; referenceIndex++)
-        {
-            var lines = references[referenceIndex]
-                .Split('\n')
-                .Select(line => line.TrimEnd())
-                .ToArray();
-            var referenceId = lines[0].Trim();
-            var expected = expectedReferences[referenceIndex];
-
-            Assert.Equal(expected.ReferenceId, referenceId);
-            Assert.False(string.IsNullOrWhiteSpace(referenceId), "External reference id must not be blank.");
-            Assert.DoesNotContain(" ", referenceId);
-            Assert.DoesNotContain(".", referenceId);
-            Assert.DoesNotContain(";", referenceId);
-
-            var sourceClassLine = lines
-                .Single(line => line.TrimStart().StartsWith("- Source class:", StringComparison.Ordinal))
-                .TrimStart();
-            var sourceClass = ParseControlledValue(sourceClassLine, "- Source class:");
-            Assert.Equal(expected.SourceClass, sourceClass);
-            Assert.Contains(sourceClass, allowedSourceClasses);
-
-            var localImplicationLine = lines
-                .Single(line => line.TrimStart().StartsWith("- Local implication:", StringComparison.Ordinal))
-                .TrimStart();
-            var localImplication = ParseControlledValue(localImplicationLine, "- Local implication:");
-            Assert.Equal(expected.LocalImplication, localImplication);
-            Assert.Contains(localImplication, allowedLocalImplications);
-
-            var claimBoundaryLine = lines
-                .Single(line => line.TrimStart().StartsWith("- Claim boundary:", StringComparison.Ordinal))
-                .TrimStart();
-            Assert.False(
-                string.IsNullOrWhiteSpace(claimBoundaryLine["- Claim boundary:".Length..].Trim()),
-                $"{expected.ReferenceId} must document its claim boundary.");
-
-            var evidenceLine = lines
-                .Single(line => line.TrimStart().StartsWith("- Evidence:", StringComparison.Ordinal))
-                .TrimStart();
-            Assert.False(
-                string.IsNullOrWhiteSpace(evidenceLine["- Evidence:".Length..].Trim()),
-                $"{expected.ReferenceId} must document evidence.");
-        }
-    }
-
-    private static void AssertGitHubYardsticksUseControlledLedger(string audit, JsonElement githubSnapshot)
-    {
-        var start = audit.IndexOf("Representative GitHub yardsticks:", StringComparison.Ordinal);
-        var end = audit.IndexOf("Conclusion from the GitHub snapshot:", StringComparison.Ordinal);
-        Assert.True(start >= 0, "Representative GitHub yardsticks section is missing.");
-        Assert.True(end > start, "Representative GitHub yardsticks must appear before its conclusion.");
-
-        var allowedVerdicts = new[]
-        {
-            "direct-narrow-weaker",
-            "adjacent-axis-stronger",
-            "broad-market-stronger",
-        };
-        var expectedYardsticks = new (string ReferenceId, string FullName, string Verdict, string Classification, string StrongerAxes, string WtLauncherAxes, string ClaimBoundary)[]
-        {
-            ("sydrox-dev-layout", "SyDroX/dev-layout", "direct-narrow-weaker", "direct WT workspace launcher", "fixed Claude Code multi-repo layout; session resume; cd blocking", "editable portable UI entries; named launch groups; rollback-aware JSON persistence; native gate", "supports WT Launcher's audited narrow axis only; not a universal repository ranking."),
-            ("augustdragon-terminal-manager", "augustdragon/terminal-manager", "adjacent-axis-stronger", "direct WT profile/session manager", "WT profile editing; split-pane groups; import/export; WT settings sync", "smaller local JSON-to-wt contract; no local web server; does not mutate Windows Terminal settings", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
-            ("noambrand-launchpad-cli", "noambrand/Launchpad-CLI", "adjacent-axis-stronger", "Claude Code launcher/installer", "installer; folder picker; right-click launch; statusline distribution", "portable editable WT workspace groups; rollback-aware config gate; smaller app scope", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
-            ("kevinkicho-win-screen-setup", "kevinkicho/win-screen-setup", "adjacent-axis-stronger", "Windows multi-monitor workspace launcher", "visual screen/app positioning", "narrower side-effect surface; portable launch groups; native repo gate", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
-            ("ewdieckman-devworkspace", "ewdieckman/DevWorkspace", "adjacent-axis-stronger", "PowerShell WT multi-pane workspace module", "fixed split-pane layouts", "editable GUI entries; rollback-aware persistence; native publish/verify gate", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
-            ("jsoulet42-claude-launcher-app", "jsoulet42/claude-launcher-app", "direct-narrow-weaker", "Claude Code WT TUI workspace launcher", "adjacent TUI flow", "portable editable GUI entries; named groups; rollback-aware JSON; native gate", "supports WT Launcher's audited narrow axis only; not a universal repository ranking."),
-            ("a-ema755-claude-dashboard", "A-ema755/claude-dashboard", "adjacent-axis-stronger", "Claude Code CLI session launcher/preset manager", "split-pane layouts; cost tracking", "small local WT launcher contract; portable GUI config; native gate", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
-            ("adityacodepublic-wtsm-cli", "adityacodepublic/wtsm-cli", "adjacent-axis-stronger", "Windows Terminal session manager CLI", "named terminal sessions CLI", "GUI editing; launch-group preview; repo-native rollback/verify evidence", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
-            ("pramin-agentspace", "pramin/AgentSpace", "adjacent-axis-stronger", "Avalonia agent workspace launcher", "embedded PTY; SSH file tree; code preview", "smaller WT handoff scope; portable JSON groups; native gate", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
-            ("joyahmed-devgo-app", "joyahmed/devgo-app", "adjacent-axis-stronger", "WSL-first developer launcher", "WSL; VS Code; tmux workflows; installer ambition", "verified portable WT launch groups; rollback-aware JSON; narrower scope", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
-            ("flow-launcher-flow-launcher", "Flow-Launcher/Flow.Launcher", "broad-market-stronger", "broad Windows launcher", "market proof; plugins; search; packaging; community", "narrow portable WT workspace-launcher slice only", "contradicts broad launcher supremacy and stays outside WT Launcher's narrow product domain."),
-            ("wox-launcher-wox", "Wox-launcher/Wox", "broad-market-stronger", "broad cross-platform launcher", "market proof; cross-platform packaging; plugin/theme stores; AI/MCP direction", "narrow portable WT workspace-launcher slice only", "contradicts broad launcher supremacy and stays outside WT Launcher's narrow product domain."),
-        };
-        var section = audit[start..end];
-        var yardstickLines = section
-            .Split("\n- GitHub yardstick id:", StringSplitOptions.RemoveEmptyEntries)
-            .Skip(1)
-            .ToArray();
-        var snapshotRepos = githubSnapshot.GetProperty("repositories")
-            .EnumerateArray()
-            .Select(repo => repo.GetProperty("fullName").GetString())
-            .ToArray();
-
-        Assert.Equal(expectedYardsticks.Length, yardstickLines.Length);
-        Assert.Equal(2, expectedYardsticks.Count(yardstick => yardstick.Verdict == "broad-market-stronger"));
-        foreach (var (referenceId, fullName, verdict, classification, strongerAxes, wtLauncherAxes, claimBoundary) in expectedYardsticks)
-        {
-            Assert.Contains(verdict, allowedVerdicts);
-            Assert.Contains(fullName, snapshotRepos);
-            var repo = githubSnapshot.GetProperty("repositories")
-                .EnumerateArray()
-                .Single(snapshotRepo => snapshotRepo.GetProperty("fullName").GetString() == fullName);
-            Assert.Equal(referenceId, $"{fullName}".ToLowerInvariant().Replace("/", "-").Replace(".", "-"));
-            Assert.Equal(verdict, repo.GetProperty("yardstickVerdict").GetString());
-            Assert.Equal(classification, repo.GetProperty("classification").GetString());
-            Assert.Equal(strongerAxes, string.Join("; ", repo.GetProperty("strongerAxes").EnumerateArray().Select(item => item.GetString())));
-            Assert.Equal(wtLauncherAxes, string.Join("; ", repo.GetProperty("wtLauncherAxes").EnumerateArray().Select(item => item.GetString())));
-
-            var block = yardstickLines.Single(yardstickLine => yardstickLine.TrimStart().StartsWith(referenceId, StringComparison.Ordinal));
-            var blockLines = block
-                .Split('\n')
-                .Select(line => line.TrimEnd())
-                .ToArray();
-            Assert.Equal(referenceId, blockLines[0].Trim());
-            Assert.Equal(fullName, ParseRequiredValue(blockLines.Single(line => line.TrimStart().StartsWith("- Repository:", StringComparison.Ordinal)).TrimStart(), "- Repository:"));
-            Assert.Equal(verdict, ParseControlledValue(blockLines.Single(line => line.TrimStart().StartsWith("- Yardstick verdict:", StringComparison.Ordinal)).TrimStart(), "- Yardstick verdict:"));
-            Assert.Equal(classification, ParseRequiredValue(blockLines.Single(line => line.TrimStart().StartsWith("- Classification:", StringComparison.Ordinal)).TrimStart(), "- Classification:"));
-            Assert.Equal(strongerAxes, ParseRequiredValue(blockLines.Single(line => line.TrimStart().StartsWith("- Stronger axes:", StringComparison.Ordinal)).TrimStart(), "- Stronger axes:"));
-            Assert.Equal(wtLauncherAxes, ParseRequiredValue(blockLines.Single(line => line.TrimStart().StartsWith("- WT Launcher axes:", StringComparison.Ordinal)).TrimStart(), "- WT Launcher axes:"));
-            Assert.Equal(claimBoundary, ParseRequiredValue(blockLines.Single(line => line.TrimStart().StartsWith("- Claim boundary:", StringComparison.Ordinal)).TrimStart(), "- Claim boundary:"));
-        }
-    }
-
-    private static void AssertBroadDomainGapsUseControlledLedger(string audit)
-    {
-        var start = audit.IndexOf("## Gaps that block a broad-domain north-star claim", StringComparison.Ordinal);
-        var end = audit.IndexOf("## Objective completion audit", StringComparison.Ordinal);
-        Assert.True(start >= 0, "Broad-domain gap section is missing.");
-        Assert.True(end > start, "Broad-domain gap section must appear before the objective completion audit.");
-
-        var expectedGaps = new (string GapId, string GapClass, string[] RequirementIds)[]
-        {
-            ("import-export-ecosystem", "future-workload", new[] { "prove-unimprovable-current-ability", "prove-stronger-than-any-github-similar-project" }),
-            ("run-history-terminal-health", "future-workload", new[] { "prove-unimprovable-current-ability", "prove-absolute-confidence-and-zero-side-effects" }),
-            ("installer-update-signing-channel", "distribution-scope", new[] { "prove-unimprovable-current-ability", "prove-stronger-than-any-github-similar-project" }),
-            ("screenshot-backed-visual-comfort", "visual-proof", new[] { "prove-unimprovable-current-ability" }),
-            ("universal-supremacy-zero-side-effects", "external-process-limit", new[] { "prove-stronger-than-any-github-similar-project", "prove-absolute-confidence-and-zero-side-effects" }),
-        };
-        var section = audit[start..end];
-        var gaps = section
-            .Split("\n- Broad gap id:", StringSplitOptions.RemoveEmptyEntries)
-            .Skip(1)
-            .ToArray();
-
-        Assert.Equal(expectedGaps.Length, gaps.Length);
-        for (var gapIndex = 0; gapIndex < gaps.Length; gapIndex++)
-        {
-            var lines = gaps[gapIndex]
-                .Split('\n')
-                .Select(line => line.TrimEnd())
-                .ToArray();
-            var gapId = lines[0].Trim();
-            Assert.Equal(expectedGaps[gapIndex].GapId, gapId);
-
-            var gapClassLine = lines
-                .Single(line => line.TrimStart().StartsWith("- Gap class:", StringComparison.Ordinal))
-                .TrimStart();
-            Assert.Equal(expectedGaps[gapIndex].GapClass, ParseControlledValue(gapClassLine, "- Gap class:"));
-
-            var blockedRequirementLine = lines
-                .Single(line => line.TrimStart().StartsWith("- Blocks requirement id:", StringComparison.Ordinal))
-                .TrimStart();
-            Assert.Equal(
-                expectedGaps[gapIndex].RequirementIds,
-                ParseControlledList(blockedRequirementLine, "- Blocks requirement id:"));
-            Assert.Contains(lines, line => line.TrimStart().StartsWith("- Evidence:", StringComparison.Ordinal));
-        }
-    }
 
     private static string ParseControlledValue(string line, string prefix)
     {
@@ -779,9 +461,7 @@ public sealed partial class RepositoryConfigContractTests
     private static void AddControlledCounts(Dictionary<string, int> counts, string[] values)
     {
         foreach (var value in values)
-        {
             counts[value] = counts.GetValueOrDefault(value) + 1;
-        }
     }
 
     private static void AssertCountsEqual(Dictionary<string, int> expected, Dictionary<string, int> actual)
@@ -790,9 +470,7 @@ public sealed partial class RepositoryConfigContractTests
             expected.Keys.OrderBy(key => key, StringComparer.Ordinal),
             actual.Keys.OrderBy(key => key, StringComparer.Ordinal));
         foreach (var (key, expectedValue) in expected)
-        {
             Assert.Equal(expectedValue, actual[key]);
-        }
     }
 
     private static string[] ParseControlledList(string line, string prefix)
@@ -811,6 +489,297 @@ public sealed partial class RepositoryConfigContractTests
 
         return values;
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Feature-audit assertion helpers
+    // ═══════════════════════════════════════════════════════════════
+
+    private static void AssertFeatureVerdictSummaryMatchesFeatureSections(string audit)
+    {
+        var summary = GetSectionText(audit, "## Feature verdict summary", "## Feature mapping audit");
+        var (_, featureBlocks) = ExtractBlocks(audit, "## Feature mapping audit",
+            "## Gaps that block a broad-domain north-star claim", "\n### ");
+
+        var proofCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+        var verdictCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+        var gapCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        foreach (var block in featureBlocks)
+        {
+            AddControlledCounts(proofCounts, block.GetTokenList("- Proof type:"));
+            AddControlledCounts(gapCounts, block.GetTokenList("- Gap class:"));
+            AddControlledCounts(verdictCounts, new[] { block.GetToken("- Verdict level:") });
+        }
+
+        Assert.Equal(featureBlocks.Count, ParseIntegerLine(summary, "- Feature count:"));
+        AssertCountsEqual(verdictCounts, ParseCountLine(summary, "- Verdict count:"));
+        AssertCountsEqual(gapCounts, ParseCountLine(summary, "- Gap count:"));
+        AssertCountsEqual(proofCounts, ParseCountLine(summary, "- Proof count:"));
+        Assert.Contains(
+            "all 21 feature verdicts support the narrow portable Windows Terminal workspace-launcher claim only",
+            summary);
+        Assert.DoesNotContain(
+            "strong feature blocks any honest \"every feature is already a north-star\" claim",
+            summary);
+        Assert.Contains(
+            "future-workload, external-process-limit, visual-proof, distribution-scope, and source-freshness gaps block \"100% confidence / 0% side effects\"",
+            summary);
+    }
+
+    private static void AssertFeatureSectionsUseCompleteAuditShape(string audit)
+    {
+        var (_, blocks) = ExtractBlocks(audit, "## Feature mapping audit",
+            "## Gaps that block a broad-domain north-star claim", "\n### ");
+
+        var allowedProofTypes = new[]
+        {
+            "repo-battle-tested", "market-informed", "legacy-flow-informed",
+            "accessibility-informed", "source-backed",
+        };
+        var allowedVerdictLevels = new[] { "narrow-north-star", "strong", "source-backed" };
+        var allowedGapClasses = new[]
+        {
+            "none-proven", "future-workload", "external-process-limit",
+            "visual-proof", "distribution-scope", "source-freshness",
+        };
+        var expectedFeatureIds = new[]
+        {
+            "launch-entry-object", "existing-directory-contract", "search-filter",
+            "direct-single-launch", "persistent-checkbox-selection-and-batch-launch",
+            "named-launch-groups-presets", "first-class-preset-actions",
+            "preset-vs-selection-preview", "preset-launch-plan-preview",
+            "add-edit-delete-launcher-buttons", "custom-order-and-drag-reorder",
+            "sort-modes", "view-modes-cards-details-names",
+            "adaptive-card-sizing-and-density", "global-launch-confirmation",
+            "portable-settings", "json-persistence-backup-and-rollback-compensation",
+            "core-app-tests-separation", "self-contained-win-x64-publish-and-native-gate",
+            "retired-legacy-surfaces", "design-benchmark-and-giants-shoulders-library",
+        };
+
+        Assert.Equal(21, blocks.Count);
+        Assert.Equal(expectedFeatureIds.Length, expectedFeatureIds.Distinct(StringComparer.Ordinal).Count());
+
+        for (var i = 0; i < blocks.Count; i++)
+        {
+            var block = blocks[i];
+            Assert.Equal(expectedFeatureIds[i], block.GetToken("- Feature id:"));
+            Assert.True(block.HasToken("- Real problem:"));
+
+            foreach (var pt in block.GetTokenList("- Proof type:"))
+                Assert.Contains(pt, allowedProofTypes);
+
+            var verdictLevel = block.GetToken("- Verdict level:");
+            Assert.Contains(verdictLevel, allowedVerdictLevels);
+
+            foreach (var gc in block.GetTokenList("- Gap class:"))
+                Assert.Contains(gc, allowedGapClasses);
+
+            Assert.True(block.HasToken("- Current data owner:"));
+            Assert.True(block.HasToken("- Evidence:"));
+            AssertFeatureVerdictLineMatchesLevel(expectedFeatureIds[i], verdictLevel,
+                block.GetRequiredToken("- Verdict:"));
+            Assert.True(block.HasToken("- Remaining gap:"));
+        }
+    }
+
+    private static void AssertFeatureVerdictLineMatchesLevel(string featureId, string verdictLevel, string verdict)
+    {
+        switch (verdictLevel)
+        {
+            case "narrow-north-star":
+                Assert.Contains("north-star", verdict, StringComparison.OrdinalIgnoreCase);
+                break;
+            case "strong":
+                Assert.Contains("strong", verdict, StringComparison.OrdinalIgnoreCase);
+                break;
+            case "source-backed":
+                Assert.Contains("not automatically north-star", verdict, StringComparison.OrdinalIgnoreCase);
+                break;
+            default:
+                throw new InvalidOperationException($"Unknown verdict level for {featureId}: {verdictLevel}");
+        }
+    }
+
+    private static void AssertAdaptiveCardSizingAuditUsesEngineeredVisualBoundary(string audit)
+    {
+        var (_, blocks) = ExtractBlocks(audit, "## Feature mapping audit",
+            "## Gaps that block a broad-domain north-star claim", "\n### ");
+
+        var block = blocks.Single(b => b.HasToken("- Feature id: adaptive-card-sizing-and-density"));
+
+        foreach (var expectedEvidence in new[]
+        {
+            "- Verdict level: narrow-north-star", "Normal/Compact/Micro density",
+            "one typed density owner", "one typed available-size owner",
+            "filtered visible-entry count sizing", "golden-ratio card shape",
+            "readable minimum before scroll fallback", "name-wall multi-column fit",
+            "engineering-owned visual comfort boundary",
+            "screenshot or human visual receipts are required only after future visual-heavy changes",
+        })
+        {
+            Assert.Contains(expectedEvidence, block.FullText);
+        }
+
+        Assert.DoesNotContain("strong, close to north-star", block.FullText);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // External-yardstick assertion helpers
+    // ═══════════════════════════════════════════════════════════════
+
+    private static void AssertFreshExternalYardsticksUseControlledLedger(string audit)
+    {
+        var (section, blocks) = ExtractBlocks(audit,
+            "## Fresh external yardstick spot-check",
+            "## Current GitHub similar-project snapshot",
+            "\n- External reference id:");
+
+        var expectedReferences = new (string ReferenceId, string SourceClass, string LocalImplication)[]
+        {
+            ("windows-terminal-command-line", "command-line-contract", "supports-current-entry-contract"),
+            ("vscode-workspace-context", "portable-context-contract", "supports-portable-json-contract"),
+            ("raycast-quicklinks", "frequent-action-market-proof", "blocks-broad-launcher-claim"),
+            ("docker-compose-profiles", "named-subset-contract", "supports-named-presets"),
+            ("wcag-dragging-movements", "accessibility-contract", "supports-non-drag-reorder-contract"),
+            ("kubernetes-spec-status", "spec-status-contract", "identifies-run-status-gap"),
+        };
+        var allowedSourceClasses = expectedReferences.Select(r => r.SourceClass).ToArray();
+        var allowedLocalImplications = expectedReferences.Select(r => r.LocalImplication).ToArray();
+
+        foreach (var sourceClass in allowedSourceClasses)
+            Assert.Contains($"- `{sourceClass}`:", section);
+        foreach (var localImplication in allowedLocalImplications)
+            Assert.Contains($"- `{localImplication}`:", section);
+
+        Assert.Equal(expectedReferences.Length, blocks.Count);
+
+        for (var i = 0; i < blocks.Count; i++)
+        {
+            var block = blocks[i];
+            var expected = expectedReferences[i];
+            var referenceId = block.Id;
+
+            Assert.Equal(expected.ReferenceId, referenceId);
+            Assert.False(string.IsNullOrWhiteSpace(referenceId), "External reference id must not be blank.");
+            Assert.DoesNotContain(" ", referenceId);
+            Assert.DoesNotContain(".", referenceId);
+            Assert.DoesNotContain(";", referenceId);
+
+            var sourceClass = block.GetToken("- Source class:");
+            Assert.Equal(expected.SourceClass, sourceClass);
+            Assert.Contains(sourceClass, allowedSourceClasses);
+
+            var localImplication = block.GetToken("- Local implication:");
+            Assert.Equal(expected.LocalImplication, localImplication);
+            Assert.Contains(localImplication, allowedLocalImplications);
+
+            Assert.False(
+                string.IsNullOrWhiteSpace(block.GetRequiredToken("- Claim boundary:")),
+                $"{expected.ReferenceId} must document its claim boundary.");
+
+            Assert.False(
+                string.IsNullOrWhiteSpace(block.GetRequiredToken("- Evidence:")),
+                $"{expected.ReferenceId} must document evidence.");
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // GitHub-yardstick assertion helper
+    // ═══════════════════════════════════════════════════════════════
+
+    private static void AssertGitHubYardsticksUseControlledLedger(string audit, JsonElement githubSnapshot)
+    {
+        var (_, blocks) = ExtractBlocks(audit,
+            "Representative GitHub yardsticks:",
+            "Conclusion from the GitHub snapshot:",
+            "\n- GitHub yardstick id:");
+
+        var allowedVerdicts = new[] { "direct-narrow-weaker", "adjacent-axis-stronger", "broad-market-stronger" };
+        var expectedYardsticks = new (string ReferenceId, string FullName, string Verdict, string Classification, string StrongerAxes, string WtLauncherAxes, string ClaimBoundary)[]
+        {
+            ("sydrox-dev-layout", "SyDroX/dev-layout", "direct-narrow-weaker", "direct WT workspace launcher", "fixed Claude Code multi-repo layout; session resume; cd blocking", "editable portable UI entries; named launch groups; rollback-aware JSON persistence; native gate", "supports WT Launcher's audited narrow axis only; not a universal repository ranking."),
+            ("augustdragon-terminal-manager", "augustdragon/terminal-manager", "adjacent-axis-stronger", "direct WT profile/session manager", "WT profile editing; split-pane groups; import/export; WT settings sync", "smaller local JSON-to-wt contract; no local web server; does not mutate Windows Terminal settings", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
+            ("noambrand-launchpad-cli", "noambrand/Launchpad-CLI", "adjacent-axis-stronger", "Claude Code launcher/installer", "installer; folder picker; right-click launch; statusline distribution", "portable editable WT workspace groups; rollback-aware config gate; smaller app scope", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
+            ("kevinkicho-win-screen-setup", "kevinkicho/win-screen-setup", "adjacent-axis-stronger", "Windows multi-monitor workspace launcher", "visual screen/app positioning", "narrower side-effect surface; portable launch groups; native repo gate", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
+            ("ewdieckman-devworkspace", "ewdieckman/DevWorkspace", "adjacent-axis-stronger", "PowerShell WT multi-pane workspace module", "fixed split-pane layouts", "editable GUI entries; rollback-aware persistence; native publish/verify gate", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
+            ("jsoulet42-claude-launcher-app", "jsoulet42/claude-launcher-app", "direct-narrow-weaker", "Claude Code WT TUI workspace launcher", "adjacent TUI flow", "portable editable GUI entries; named groups; rollback-aware JSON; native gate", "supports WT Launcher's audited narrow axis only; not a universal repository ranking."),
+            ("a-ema755-claude-dashboard", "A-ema755/claude-dashboard", "adjacent-axis-stronger", "Claude Code CLI session launcher/preset manager", "split-pane layouts; cost tracking", "small local WT launcher contract; portable GUI config; native gate", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
+            ("adityacodepublic-wtsm-cli", "adityacodepublic/wtsm-cli", "adjacent-axis-stronger", "Windows Terminal session manager CLI", "named terminal sessions CLI", "GUI editing; launch-group preview; repo-native rollback/verify evidence", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
+            ("pramin-agentspace", "pramin/AgentSpace", "adjacent-axis-stronger", "Avalonia agent workspace launcher", "embedded PTY; SSH file tree; code preview", "smaller WT handoff scope; portable JSON groups; native gate", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
+            ("joyahmed-devgo-app", "joyahmed/devgo-app", "adjacent-axis-stronger", "WSL-first developer launcher", "WSL; VS Code; tmux workflows; installer ambition", "verified portable WT launch groups; rollback-aware JSON; narrower scope", "blocks universal superiority because the repository is stronger on at least one adjacent axis."),
+            ("flow-launcher-flow-launcher", "Flow-Launcher/Flow.Launcher", "broad-market-stronger", "broad Windows launcher", "market proof; plugins; search; packaging; community", "narrow portable WT workspace-launcher slice only", "contradicts broad launcher supremacy and stays outside WT Launcher's narrow product domain."),
+            ("wox-launcher-wox", "Wox-launcher/Wox", "broad-market-stronger", "broad cross-platform launcher", "market proof; cross-platform packaging; plugin/theme stores; AI/MCP direction", "narrow portable WT workspace-launcher slice only", "contradicts broad launcher supremacy and stays outside WT Launcher's narrow product domain."),
+        };
+
+        var snapshotRepos = githubSnapshot.GetProperty("repositories")
+            .EnumerateArray()
+            .Select(repo => repo.GetProperty("fullName").GetString())
+            .ToArray();
+
+        Assert.Equal(expectedYardsticks.Length, blocks.Count);
+        Assert.Equal(2, expectedYardsticks.Count(y => y.Verdict == "broad-market-stronger"));
+
+        foreach (var (referenceId, fullName, verdict, classification, strongerAxes, wtLauncherAxes, claimBoundary) in expectedYardsticks)
+        {
+            Assert.Contains(verdict, allowedVerdicts);
+            Assert.Contains(fullName, snapshotRepos);
+
+            var repo = githubSnapshot.GetProperty("repositories")
+                .EnumerateArray()
+                .Single(r => r.GetProperty("fullName").GetString() == fullName);
+            Assert.Equal(referenceId, fullName.ToLowerInvariant().Replace("/", "-").Replace(".", "-"));
+            Assert.Equal(verdict, repo.GetProperty("yardstickVerdict").GetString());
+            Assert.Equal(classification, repo.GetProperty("classification").GetString());
+            Assert.Equal(strongerAxes, string.Join("; ", repo.GetProperty("strongerAxes").EnumerateArray().Select(item => item.GetString())));
+            Assert.Equal(wtLauncherAxes, string.Join("; ", repo.GetProperty("wtLauncherAxes").EnumerateArray().Select(item => item.GetString())));
+
+            var block = blocks.Single(b => b.Id == referenceId);
+            Assert.Equal(fullName, block.GetRequiredToken("- Repository:"));
+            Assert.Equal(verdict, block.GetToken("- Yardstick verdict:"));
+            Assert.Equal(classification, block.GetRequiredToken("- Classification:"));
+            Assert.Equal(strongerAxes, block.GetRequiredToken("- Stronger axes:"));
+            Assert.Equal(wtLauncherAxes, block.GetRequiredToken("- WT Launcher axes:"));
+            Assert.Equal(claimBoundary, block.GetRequiredToken("- Claim boundary:"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Broad-domain gaps helper
+    // ═══════════════════════════════════════════════════════════════
+
+    private static void AssertBroadDomainGapsUseControlledLedger(string audit)
+    {
+        var (_, blocks) = ExtractBlocks(audit,
+            "## Gaps that block a broad-domain north-star claim",
+            "## Objective completion audit",
+            "\n- Broad gap id:");
+
+        var expectedGaps = new (string GapId, string GapClass, string[] RequirementIds)[]
+        {
+            ("import-export-ecosystem", "future-workload", new[] { "prove-unimprovable-current-ability", "prove-stronger-than-any-github-similar-project" }),
+            ("run-history-terminal-health", "future-workload", new[] { "prove-unimprovable-current-ability", "prove-absolute-confidence-and-zero-side-effects" }),
+            ("installer-update-signing-channel", "distribution-scope", new[] { "prove-unimprovable-current-ability", "prove-stronger-than-any-github-similar-project" }),
+            ("screenshot-backed-visual-comfort", "visual-proof", new[] { "prove-unimprovable-current-ability" }),
+            ("universal-supremacy-zero-side-effects", "external-process-limit", new[] { "prove-stronger-than-any-github-similar-project", "prove-absolute-confidence-and-zero-side-effects" }),
+        };
+
+        Assert.Equal(expectedGaps.Length, blocks.Count);
+
+        for (var i = 0; i < blocks.Count; i++)
+        {
+            var block = blocks[i];
+            var (gapId, gapClass, requirementIds) = expectedGaps[i];
+
+            Assert.Equal(gapId, block.Id);
+            Assert.Equal(gapClass, block.GetToken("- Gap class:"));
+            Assert.Equal(requirementIds, block.GetTokenList("- Blocks requirement id:"));
+            Assert.True(block.HasToken("- Evidence:"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Objective-completion helpers
+    // ═══════════════════════════════════════════════════════════════
 
     private static void AssertObjectiveCompletionAuditPreservesOriginalScope(string audit)
     {
@@ -858,14 +827,75 @@ public sealed partial class RepositoryConfigContractTests
         }
     }
 
+    private static void AssertObjectiveCompletionAuditUsesIndentedEvidenceAndStatus(string audit)
+    {
+        var (section, blocks) = ExtractBlocks(audit,
+            "## Objective completion audit",
+            "## Final answer",
+            "\n- Requirement:");
+
+        var allowedObjectiveVerdicts = new[]
+        {
+            "proven-current-scope", "proven-audit-only", "contradicted",
+            "false-broad-scope", "preserved-current-scope", "impossible-absolute",
+        };
+        var allowedClaimImpacts = new[]
+        {
+            "supports-current-feature-coverage", "classifies-without-supremacy",
+            "blocks-unimprovable-claim", "blocks-broad-github-claim",
+            "preserves-small-scope", "blocks-absolute-side-effect-claim",
+        };
+        var expected = new (string RequirementId, string Verdict, string ClaimImpact)[]
+        {
+            ("evaluate-every-active-feature", "proven-current-scope", "supports-current-feature-coverage"),
+            ("classify-battle-practice-or-market-proven", "proven-audit-only", "classifies-without-supremacy"),
+            ("prove-unimprovable-current-ability", "contradicted", "blocks-unimprovable-claim"),
+            ("prove-stronger-than-any-github-similar-project", "false-broad-scope", "blocks-broad-github-claim"),
+            ("preserve-small-and-beautiful", "preserved-current-scope", "preserves-small-scope"),
+            ("prove-absolute-confidence-and-zero-side-effects", "impossible-absolute", "blocks-absolute-side-effect-claim"),
+        };
+        var objectiveVerdictCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        Assert.Equal(6, blocks.Count);
+
+        for (var i = 0; i < blocks.Count; i++)
+        {
+            var block = blocks[i];
+            Assert.StartsWith(" ", block.RawFirstLine); // requirement text must be indented
+
+            var requirementId = block.GetToken("- Requirement id:");
+            Assert.Equal(expected[i].RequirementId, requirementId);
+
+            var claimImpact = block.GetToken("- Claim impact:");
+            Assert.Contains(claimImpact, allowedClaimImpacts);
+            Assert.Equal(expected[i].ClaimImpact, claimImpact);
+
+            Assert.True(block.HasToken("- Evidence:"));
+
+            var statusLine = block.GetRequiredToken("- Status:");
+            var objectiveVerdict = statusLine
+                .TrimStart()
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .First();
+            Assert.Contains(objectiveVerdict, allowedObjectiveVerdicts);
+            Assert.Equal(expected[i].Verdict, objectiveVerdict);
+            objectiveVerdictCounts[objectiveVerdict] = objectiveVerdictCounts.GetValueOrDefault(objectiveVerdict) + 1;
+
+            // Evidence and Status lines must carry content beyond the prefix
+            Assert.DoesNotContain(block.Lines, line => line == "- Evidence:" || line == "- Status:");
+        }
+
+        AssertCountsEqual(objectiveVerdictCounts, ParseCountLine(section, "Objective status count:"));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Claim-boundary ledger helper
+    // ═══════════════════════════════════════════════════════════════
+
     private static void AssertClaimBoundaryLedgerConstrainsFinalClaims(string audit)
     {
-        var start = audit.IndexOf("## Claim boundary ledger", StringComparison.Ordinal);
-        var end = audit.IndexOf("## Final answer", StringComparison.Ordinal);
-        Assert.True(start >= 0, "Claim boundary ledger section is missing.");
-        Assert.True(end > start, "Claim boundary ledger must appear before the final answer.");
+        var section = GetSectionText(audit, "## Claim boundary ledger", "## Final answer");
 
-        var section = audit[start..end];
         foreach (var requiredLine in new[]
         {
             "- `allowed`: safe to state only inside the documented current WT Launcher scope.",
@@ -882,101 +912,60 @@ public sealed partial class RepositoryConfigContractTests
 
         var expectedClaims = new (string ClaimId, string ClaimStatus, string[] EvidenceOwners, string Claim)[]
         {
-            (
-                "narrow-domain-north-star",
-                "allowed",
-                new[] { "feature-audit", "native-gate", "github-snapshot" },
+            ("narrow-domain-north-star", "allowed", new[] { "feature-audit", "native-gate", "github-snapshot" },
                 "WT Launcher is a narrow-domain north-star for a portable Windows Terminal workspace launcher."),
-            (
-                "narrow-slice-stronger",
-                "allowed",
-                new[] { "feature-audit", "native-gate", "github-snapshot" },
+            ("narrow-slice-stronger", "allowed", new[] { "feature-audit", "native-gate", "github-snapshot" },
                 "WT Launcher is stronger only on the portable config, named group, side-effect-free preview, rollback-aware persistence, and native-gate slice."),
-            (
-                "small-beautiful-preserved",
-                "allowed",
-                new[] { "feature-audit", "scope-rejection" },
+            ("small-beautiful-preserved", "allowed", new[] { "feature-audit", "scope-rejection" },
                 "The small-and-beautiful constraint is currently preserved by refusing speculative plugin marketplace, local web server, split-pane editor, workflow graph, and distribution/update scope."),
-            (
-                "pre-handoff-zero-side-effect-boundary",
-                "allowed",
-                new[] { "native-gate", "external-process-boundary" },
+            ("pre-handoff-zero-side-effect-boundary", "allowed", new[] { "native-gate", "external-process-boundary" },
                 "The strongest zero-side-effect claim applies only before external process handoff: preflight, generated-command preview, confirmation/cancel paths, and JSON rollback boundaries."),
-            (
-                "broad-launcher-platform-north-star",
-                "forbidden",
-                new[] { "feature-audit", "github-snapshot" },
+            ("broad-launcher-platform-north-star", "forbidden", new[] { "feature-audit", "github-snapshot" },
                 "Do not claim broad launcher or automation-platform north-star status."),
-            (
-                "unimprovable-product",
-                "forbidden",
-                new[] { "feature-audit" },
+            ("unimprovable-product", "forbidden", new[] { "feature-audit" },
                 "Do not claim the product is unimprovable."),
-            (
-                "stronger-than-every-github-similar",
-                "forbidden",
-                new[] { "feature-audit", "github-snapshot" },
+            ("stronger-than-every-github-similar", "forbidden", new[] { "feature-audit", "github-snapshot" },
                 "Do not claim stronger-than-every-GitHub-similar-project status."),
-            (
-                "absolute-confidence-zero-side-effects",
-                "forbidden",
-                new[] { "feature-audit", "external-process-boundary" },
+            ("absolute-confidence-zero-side-effects", "forbidden", new[] { "feature-audit", "external-process-boundary" },
                 "Do not claim 100% confidence or 0% side effects for real `wt.exe` process launch behavior."),
-            (
-                "post-wt-terminal-health",
-                "forbidden",
-                new[] { "external-process-boundary" },
+            ("post-wt-terminal-health", "forbidden", new[] { "external-process-boundary" },
                 "Do not claim terminal-session health after `wt.exe` accepts the start request."),
         };
+
         var claims = section
             .Split("\n- Claim id:", StringSplitOptions.RemoveEmptyEntries)
             .Skip(1)
+            .Select(b => new MarkdownBlock(b.Split('\n').Select(l => l.TrimEnd()).ToArray()))
             .ToArray();
 
         Assert.Equal(expectedClaims.Length, claims.Length);
-        for (var claimIndex = 0; claimIndex < claims.Length; claimIndex++)
-        {
-            var lines = claims[claimIndex]
-                .Split('\n')
-                .Select(line => line.TrimEnd())
-                .ToArray();
-            var claimId = lines[0].Trim();
-            var expected = expectedClaims[claimIndex];
 
-            Assert.Equal(expected.ClaimId, claimId);
+        for (var i = 0; i < claims.Length; i++)
+        {
+            var block = claims[i];
+            var (claimId, claimStatus, evidenceOwners, claim) = expectedClaims[i];
+
+            Assert.Equal(claimId, block.Id);
             Assert.False(string.IsNullOrWhiteSpace(claimId), "Claim id must not be blank.");
             Assert.DoesNotContain(" ", claimId);
             Assert.DoesNotContain(".", claimId);
             Assert.DoesNotContain(";", claimId);
 
-            var statusLine = lines
-                .Single(line => line.TrimStart().StartsWith("- Claim status:", StringComparison.Ordinal))
-                .TrimStart();
-            var status = ParseControlledValue(statusLine, "- Claim status:");
-            Assert.Equal(expected.ClaimStatus, status);
+            var status = block.GetToken("- Claim status:");
+            Assert.Equal(claimStatus, status);
             Assert.Contains(status, new[] { "allowed", "forbidden" });
 
-            var scopeLine = lines
-                .Single(line => line.TrimStart().StartsWith("- Scope:", StringComparison.Ordinal))
-                .TrimStart();
             Assert.False(
-                string.IsNullOrWhiteSpace(scopeLine["- Scope:".Length..].Trim()),
-                $"{expected.ClaimId} must name a scope.");
+                string.IsNullOrWhiteSpace(block.GetRequiredToken("- Scope:")),
+                $"{claimId} must name a scope.");
 
-            var evidenceOwnerLine = lines
-                .Single(line => line.TrimStart().StartsWith("- Evidence owner:", StringComparison.Ordinal))
-                .TrimStart();
-            Assert.Equal(
-                expected.EvidenceOwners,
-                ParseControlledList(evidenceOwnerLine, "- Evidence owner:"));
-
-            var claimLine = lines
-                .Single(line => line.TrimStart().StartsWith("- Claim:", StringComparison.Ordinal))
-                .TrimStart();
-            Assert.Equal(expected.Claim, claimLine["- Claim:".Length..].Trim());
+            Assert.Equal(evidenceOwners, block.GetTokenList("- Evidence owner:"));
+            Assert.Equal(claim, block.GetRequiredToken("- Claim:"));
         }
 
-        var finalAnswer = audit[end..];
+        var finalAnswerStart = audit.IndexOf("## Final answer", StringComparison.Ordinal);
+        var finalAnswer = audit[finalAnswerStart..];
+
         Assert.Contains("The full objective remains not complete as written.", finalAnswer);
         Assert.Contains("All 21 current feature mappings classify as narrow-domain north-star", finalAnswer);
         Assert.Contains("north-star implementation only for the narrow domain", finalAnswer);
@@ -984,88 +973,8 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains("It is not a broad-domain north star", finalAnswer);
         Assert.Contains("This final answer follows allowed claim ids", finalAnswer);
         Assert.Contains("It rejects forbidden claim ids", finalAnswer);
-        foreach (var claimId in expectedClaims.Select(claim => claim.ClaimId))
-        {
+
+        foreach (var claimId in expectedClaims.Select(c => c.ClaimId))
             Assert.Contains($"`{claimId}`", finalAnswer);
-        }
-    }
-
-    private static void AssertObjectiveCompletionAuditUsesIndentedEvidenceAndStatus(string audit)
-    {
-        var start = audit.IndexOf("## Objective completion audit", StringComparison.Ordinal);
-        var end = audit.IndexOf("## Final answer", StringComparison.Ordinal);
-        Assert.True(start >= 0, "Objective completion audit section is missing.");
-        Assert.True(end > start, "Objective completion audit section must appear before the final answer.");
-
-        var section = audit[start..end];
-        var requirements = section
-            .Split("\n- Requirement:", StringSplitOptions.RemoveEmptyEntries)
-            .Skip(1)
-            .ToArray();
-        var allowedObjectiveVerdicts = new[]
-        {
-            "proven-current-scope",
-            "proven-audit-only",
-            "contradicted",
-            "false-broad-scope",
-            "preserved-current-scope",
-            "impossible-absolute",
-        };
-        var allowedClaimImpacts = new[]
-        {
-            "supports-current-feature-coverage",
-            "classifies-without-supremacy",
-            "blocks-unimprovable-claim",
-            "blocks-broad-github-claim",
-            "preserves-small-scope",
-            "blocks-absolute-side-effect-claim",
-        };
-        var expectedRequirementIdsVerdictsAndImpacts = new (string RequirementId, string Verdict, string ClaimImpact)[]
-        {
-            ("evaluate-every-active-feature", "proven-current-scope", "supports-current-feature-coverage"),
-            ("classify-battle-practice-or-market-proven", "proven-audit-only", "classifies-without-supremacy"),
-            ("prove-unimprovable-current-ability", "contradicted", "blocks-unimprovable-claim"),
-            ("prove-stronger-than-any-github-similar-project", "false-broad-scope", "blocks-broad-github-claim"),
-            ("preserve-small-and-beautiful", "preserved-current-scope", "preserves-small-scope"),
-            ("prove-absolute-confidence-and-zero-side-effects", "impossible-absolute", "blocks-absolute-side-effect-claim"),
-        };
-        var objectiveVerdictCounts = new Dictionary<string, int>(StringComparer.Ordinal);
-
-        Assert.Equal(6, requirements.Length);
-        for (var requirementIndex = 0; requirementIndex < requirements.Length; requirementIndex++)
-        {
-            var requirement = requirements[requirementIndex];
-            var lines = requirement
-                .Split('\n')
-                .Select(line => line.TrimEnd())
-                .ToArray();
-            Assert.StartsWith(" ", lines[0]);
-            var requirementIdLine = lines
-                .Single(line => line.TrimStart().StartsWith("- Requirement id:", StringComparison.Ordinal))
-                .TrimStart();
-            var requirementId = ParseControlledValue(requirementIdLine, "- Requirement id:");
-            Assert.Equal(expectedRequirementIdsVerdictsAndImpacts[requirementIndex].RequirementId, requirementId);
-            var claimImpactLine = lines
-                .Single(line => line.TrimStart().StartsWith("- Claim impact:", StringComparison.Ordinal))
-                .TrimStart();
-            var claimImpact = ParseControlledValue(claimImpactLine, "- Claim impact:");
-            Assert.Contains(claimImpact, allowedClaimImpacts);
-            Assert.Equal(expectedRequirementIdsVerdictsAndImpacts[requirementIndex].ClaimImpact, claimImpact);
-            Assert.Contains(lines, line => line.TrimStart().StartsWith("- Evidence:", StringComparison.Ordinal));
-            Assert.Contains(lines, line => line.TrimStart().StartsWith("- Status:", StringComparison.Ordinal));
-            var statusLine = lines
-                .Single(line => line.TrimStart().StartsWith("- Status:", StringComparison.Ordinal))
-                .TrimStart();
-            var objectiveVerdict = statusLine["- Status:".Length..]
-                .TrimStart()
-                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                .First();
-            Assert.Contains(objectiveVerdict, allowedObjectiveVerdicts);
-            Assert.Equal(expectedRequirementIdsVerdictsAndImpacts[requirementIndex].Verdict, objectiveVerdict);
-            objectiveVerdictCounts[objectiveVerdict] = objectiveVerdictCounts.GetValueOrDefault(objectiveVerdict) + 1;
-            Assert.DoesNotContain(lines, line => line == "- Evidence:" || line == "- Status:");
-        }
-
-        AssertCountsEqual(objectiveVerdictCounts, ParseCountLine(section, "Objective status count:"));
     }
 }
