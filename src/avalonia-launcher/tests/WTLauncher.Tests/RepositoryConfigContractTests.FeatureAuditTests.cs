@@ -179,7 +179,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Equal("broad cross-platform launcher", githubSnapshot.GetProperty("repositories").EnumerateArray().Single(repo => repo.GetProperty("fullName").GetString() == "Wox-launcher/Wox").GetProperty("classification").GetString());
         Assert.Contains("\"100% confidence and 0% side effects\"", audit);
         Assert.Contains("preflight everything local before launching", audit);
-        Assert.Contains("Live GitHub repository search/API checks were refreshed on 2026-06-02 local time", audit);
+        Assert.Contains("Live GitHub repository search/API checks were refreshed using current queries", audit);
         Assert.Contains("\"Windows Terminal\" workspace launcher", audit);
         Assert.Contains("\"Claude Code\" launcher", audit);
         Assert.Contains("embedded PTY/SSH scope", audit);
