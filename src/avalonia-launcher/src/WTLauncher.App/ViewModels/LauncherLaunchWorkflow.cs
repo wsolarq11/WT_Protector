@@ -6,6 +6,8 @@ public sealed class LauncherLaunchWorkflow
 {
     private readonly Action<LaunchPlan> _start;
 
+    public IReadOnlyDictionary<string, string>? CommandTemplates { get; set; }
+
     public LauncherLaunchWorkflow(LauncherProcess launcherProcess)
     {
         ArgumentNullException.ThrowIfNull(launcherProcess);
@@ -22,7 +24,8 @@ public sealed class LauncherLaunchWorkflow
         LaunchArgumentBuilder.Build(
             entry,
             validateDirectory: true,
-            requireConfirmation: requireConfirmation);
+            requireConfirmation: requireConfirmation,
+            commandTemplates: CommandTemplates);
 
     public void Start(LaunchPlan plan)
     {

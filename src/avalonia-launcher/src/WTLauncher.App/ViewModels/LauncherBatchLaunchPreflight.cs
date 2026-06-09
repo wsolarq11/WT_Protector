@@ -19,14 +19,8 @@ public sealed record LauncherBatchLaunchItem
 
     public string EntryName { get; }
 
-    private static string RequireEntryId(string? entryId)
-    {
-        var normalized = LauncherEntryIds.Normalize(entryId);
-        if (!LauncherEntryIds.IsUsable(normalized))
-            throw new InvalidOperationException("Launch entry id is empty.");
-
-        return normalized;
-    }
+    private static string RequireEntryId(string? entryId) =>
+        LauncherEntryIds.RequireEntryId(entryId, nameof(entryId));
 
     private static string RequireEntryName(string? entryName)
     {

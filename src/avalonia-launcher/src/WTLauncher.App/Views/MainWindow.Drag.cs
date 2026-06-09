@@ -15,6 +15,10 @@ public sealed partial class MainWindow
     private Border? _dragGhost;
     private readonly MainWindowReorderAnimationScheduler _reorderAnimationScheduler = new();
     private string? _activeDragEntryId;
+    private Dictionary<string, (LauncherEntryViewModel Entry, Control Card)>? _dragCardCache;
+
+    // P2: Suppress XAML transitions during active drag to avoid layout thrashing.
+    private const string SuppressTransitionsClass = "suppress-drag-transitions";
 
     private async void OnEntryDragPointerPressed(object? sender, PointerPressedEventArgs e)
     {
@@ -34,7 +38,11 @@ public sealed partial class MainWindow
         e.Handled = true;
         _activeDragEntryId = item.Id;
         viewModel.BeginDragReorder(item.Id);
+        _dragCardCache = BuildDragCardCache();
         ShowDragGhost(item, card, e);
+
+        // P2: Suppress 0.12s XAML transitions on all card entries during drag.
+        SuppressDragTransitions(true);
 
         var effect = DragDropEffects.None;
         try
@@ -43,6 +51,7 @@ public sealed partial class MainWindow
         }
         finally
         {
+            SuppressDragTransitions(false);
             HideDragGhost();
             FinishDragReorder(viewModel, effect);
             _activeDragEntryId = null;
@@ -51,6 +60,8 @@ public sealed partial class MainWindow
 
     private void FinishDragReorder(MainWindowViewModel viewModel, DragDropEffects effect)
     {
+        _dragCardCache = null;
+
         if (_activeDragEntryId is null)
             return;
 
@@ -58,6 +69,23 @@ public sealed partial class MainWindow
             viewModel.CommitDragReorder();
         else
             viewModel.CancelDragReorder();
+    }
+
+    /// <summary>
+    /// P2: Add/remove CSS class on all ItemsControl hosts to disable
+    /// the 0.12s transitions on Border.card elements during drag.
+    /// </summary>
+    private void SuppressDragTransitions(bool suppress)
+    {
+        var itemsControls = new[] { CardsEntriesItemsControl, DetailsEntriesItemsControl, NamesEntriesItemsControl };
+        foreach (var ic in itemsControls)
+        {
+            if (ic is null) continue;
+            if (suppress)
+                ic.Classes.Add(SuppressTransitionsClass);
+            else
+                ic.Classes.Remove(SuppressTransitionsClass);
+        }
     }
 
     private void OnEntryDragOver(object? sender, DragEventArgs e)
@@ -116,21 +144,17 @@ public sealed partial class MainWindow
             e.GetPosition(target.Card),
             target.Card.Bounds.Size,
             viewModel.IsDetailedListMode);
-        var root = MainWindowEntriesRootSelection.Select(
-            viewModel.IsDetailedListMode,
-            viewModel.IsNamesViewMode,
-            DetailsEntriesItemsControl,
-            NamesEntriesItemsControl,
-            CardsEntriesItemsControl);
-        var before = MainWindowEntryCardBoundsCapture.Capture(root, this);
-        if (viewModel.PreviewMoveEntry(draggedId, target.Entry.Id, insertAfter))
-        {
-            _reorderAnimationScheduler.Schedule(
-                before,
-                OnEntriesLayoutUpdated,
-                handler => root.LayoutUpdated -= handler,
-                handler => root.LayoutUpdated += handler);
-        }
+
+        // Lazy capture: only walk the visual tree when the reorder target actually changed.
+        // WouldChangePreview does a cheap O(1) string comparison — no visual tree traversal.
+        if (!viewModel.WouldChangePreview(draggedId, target.Entry.Id, insertAfter))
+            return;
+
+        // P0: Skip bounds capture during active drag. The FLIP animation is explicitly
+        // skipped during drag (ghost overlay provides feedback), and the real FLIP on
+        // commit happens through OnEntriesLayoutUpdated after ApplyFilter.
+        // The root selection + Capture() traverse all visual descendants and were pure waste.
+        viewModel.PreviewMoveEntry(draggedId, target.Entry.Id, insertAfter);
     }
 
     private (LauncherEntryViewModel Entry, Control Card)? ResolveEntryCardFromDragEvent(DragEventArgs e)
@@ -139,7 +163,31 @@ public sealed partial class MainWindow
         if (direct is not null)
             return direct;
 
+        // Check the drag card cache before falling through to visual tree traversal.
+        if (_dragCardCache is not null)
+        {
+            var entryId = MainWindowDragEntryTransfer.TryGetEntryId(e.DataTransfer);
+            if (entryId is not null && _dragCardCache.TryGetValue(entryId, out var cached))
+                return cached;
+        }
+
         return MainWindowEntryCardResolver.ResolveFromSource(this.GetVisualAt(e.GetPosition(this)));
+    }
+
+    private Dictionary<string, (LauncherEntryViewModel, Control)> BuildDragCardCache()
+    {
+        var cache = new Dictionary<string, (LauncherEntryViewModel, Control)>();
+        foreach (var control in this.GetVisualDescendants())
+        {
+            if (control is Border border &&
+                border.DataContext is LauncherEntryViewModel entry &&
+                !string.IsNullOrWhiteSpace(entry.Id))
+            {
+                if (!cache.ContainsKey(entry.Id))
+                    cache[entry.Id] = (entry, border);
+            }
+        }
+        return cache;
     }
 
     private void ShowDragGhost(
@@ -203,11 +251,16 @@ public sealed partial class MainWindow
         if (before is null || before.Count == 0)
             return;
 
-        var after = MainWindowEntryCardBoundsCapture.Capture(root, this);
+        // Walk the visual tree once; share Borders between after-capture and FLIP target resolution.
+        var cards = root.GetVisualDescendants().OfType<Border>().ToList();
+        var after = MainWindowEntryCardBoundsCapture.Capture(
+            cards,
+            card => card.TranslatePoint(new Point(0, 0), this),
+            card => card.Bounds.Size);
         if (after.Count == 0)
             return;
 
-        foreach (var target in MainWindowReorderFlipAnimation.FindTargets(root, before, after))
+        foreach (var target in MainWindowReorderFlipAnimation.FindTargets(cards, before, after))
         {
             // FLIP: jump back without transition, then let the style transition animate to the final position.
             MainWindowReorderFlipAnimation.ApplyStart(target.Card, target.Offset);

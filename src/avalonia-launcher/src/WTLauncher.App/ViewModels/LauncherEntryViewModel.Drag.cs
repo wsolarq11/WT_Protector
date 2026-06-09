@@ -24,11 +24,22 @@ public sealed partial class LauncherEntryViewModel
         if (_dragCueState == state)
             return;
 
+        var old = _dragCueState;
         _dragCueState = state;
-        OnPropertyChanged(nameof(IsDragPreviewTarget));
-        OnPropertyChanged(nameof(IsDragPreviewSource));
-        OnPropertyChanged(nameof(IsDragInsertBefore));
-        OnPropertyChanged(nameof(IsDragInsertAfter));
+
+        var oldWasTarget = old is DragCueState.TargetBefore or DragCueState.TargetAfter;
+        var newIsTarget = state is DragCueState.TargetBefore or DragCueState.TargetAfter;
+        if (oldWasTarget != newIsTarget)
+            OnPropertyChanged(nameof(IsDragPreviewTarget));
+
+        if ((old == DragCueState.Source) != (state == DragCueState.Source))
+            OnPropertyChanged(nameof(IsDragPreviewSource));
+
+        if ((old == DragCueState.TargetBefore) != (state == DragCueState.TargetBefore))
+            OnPropertyChanged(nameof(IsDragInsertBefore));
+
+        if ((old == DragCueState.TargetAfter) != (state == DragCueState.TargetAfter))
+            OnPropertyChanged(nameof(IsDragInsertAfter));
     }
 
     private enum DragCueState

@@ -9,6 +9,8 @@ public sealed class LauncherDragReorderWorkflow
     private readonly IReadOnlyList<LauncherEntryViewModel> _entries;
     private LauncherDragReorderSession? _session;
 
+    public bool HasActiveSession => _session is not null;
+
     public LauncherDragReorderWorkflow(
         LauncherSettings settings,
         string settingsPath,
@@ -41,6 +43,21 @@ public sealed class LauncherDragReorderWorkflow
             source,
             LauncherSettingsSnapshot.Capture(_settings));
         return refreshEntries;
+    }
+
+    public bool WouldChangePreview(bool isCustomSortMode, string draggedEntryId, string targetEntryId, bool insertAfter)
+    {
+        if (!isCustomSortMode)
+            return false;
+
+        if (LauncherEntryIds.SameNormalized(draggedEntryId, targetEntryId))
+            return false;
+
+        var session = _session;
+        if (session is null || !session.IsFor(draggedEntryId))
+            return true; // new session or different source — will change
+
+        return !session.WouldSkip(targetEntryId, insertAfter);
     }
 
     public (bool Accepted, bool RefreshEntries) Preview(bool isCustomSortMode, string draggedEntryId, string targetEntryId, bool insertAfter)

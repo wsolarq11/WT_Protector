@@ -14,6 +14,23 @@ public static class LauncherEntryIds
     public static bool SameNormalized(string? left, string? right) =>
         Same(Normalize(left), Normalize(right));
 
+    /// <summary>
+    /// Validates and normalizes an entry ID, rejecting null, empty, or whitespace values.
+    /// This is the single authoritative entry-ID validation used across the entire codebase.
+    /// </summary>
+    /// <param name="id">The raw entry ID to validate. Null is rejected.</param>
+    /// <param name="paramName">The parameter name for error messages.</param>
+    /// <returns>The normalized (trimmed) entry ID.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="id"/> is null, empty, or whitespace.</exception>
+    public static string RequireEntryId(string? id, string paramName)
+    {
+        var normalized = Normalize(id);
+        if (!IsUsable(normalized))
+            throw new ArgumentException("Entry id is required.", paramName);
+
+        return normalized;
+    }
+
     public static List<string> ToRequiredUniqueList(IEnumerable<string> ids, string paramName)
     {
         ArgumentNullException.ThrowIfNull(ids);

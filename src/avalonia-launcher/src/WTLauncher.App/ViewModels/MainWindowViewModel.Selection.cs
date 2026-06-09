@@ -87,6 +87,17 @@ public sealed partial class MainWindowViewModel
                 return;
 
             var report = _launchWorkflow.StartBatch(preflight);
+            var timestamp = CurrentTimestampUtc();
+            var startedCount = report.RequestedCount;
+            var preflightItems = preflight.Items;
+            for (var i = 0; i < startedCount && i < preflightItems.Count; i++)
+            {
+                var preflightItem = preflightItems[i];
+                var entryVm = _entries.FirstOrDefault(e => LauncherEntryIds.Same(e.Id, preflightItem.EntryId));
+                entryVm?.RecordLaunchFromOwner(timestamp);
+            }
+            if (startedCount > 0)
+                SaveConfig();
             DryRunText = LauncherBatchLaunchReceiptText.Format(preflight, report);
             StatusText = completedStatus(report);
         }

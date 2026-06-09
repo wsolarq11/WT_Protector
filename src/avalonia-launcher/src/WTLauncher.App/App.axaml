@@ -2,6 +2,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="WTLauncher.App.App"
              RequestedThemeVariant="Default">
+  <Application.Resources>
+    <!-- Design Tokens — injected at runtime from WTLauncher.Core.LauncherDesignTokens.cs via App.axaml.cs -->
+  </Application.Resources>
   <Application.Styles>
     <FluentTheme />
   </Application.Styles>

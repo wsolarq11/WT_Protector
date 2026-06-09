@@ -22,19 +22,23 @@ public sealed class LauncherEntryDeleteTargetTests
         Assert.Equal("One", target.EntryName);
     }
 
-    [Theory]
-    [InlineData(" ", "One", "Launcher entry delete target id is required.")]
-    [InlineData("one", " ", "Launcher entry delete target name is required.")]
-    public void TargetRejectsBlankEntryFacts(string id, string name, string expected)
+    [Fact]
+    public void TargetRejectsBlankEntryId()
     {
-        var entry = new LaunchEntry
-        {
-            Id = id,
-            Name = name,
-        };
+        var entry = new LaunchEntry { Id = " ", Name = "One" };
+
+        var exception = Assert.Throws<ArgumentException>(() => new LauncherEntryDeleteTarget(entry));
+
+        Assert.Equal("Entry id is required. (Parameter 'entryId')", exception.Message);
+    }
+
+    [Fact]
+    public void TargetRejectsBlankEntryName()
+    {
+        var entry = new LaunchEntry { Id = "one", Name = " " };
 
         var exception = Assert.Throws<InvalidOperationException>(() => new LauncherEntryDeleteTarget(entry));
 
-        Assert.Equal(expected, exception.Message);
+        Assert.Equal("Launcher entry delete target name is required.", exception.Message);
     }
 }

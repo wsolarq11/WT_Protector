@@ -15,7 +15,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly Func<DateTimeOffset> _utcNow;
     private LauncherPresetFile _presetFile = new();
     private readonly ObservableCollection<LauncherEntryViewModel> _entries = [];
-    private readonly ObservableCollection<LauncherEntryViewModel> _visibleEntries = [];
+    private ObservableCollection<LauncherEntryViewModel> _visibleEntries = [];
     private readonly ObservableCollection<LauncherPresetViewModel> _presets = [];
 
     [ObservableProperty]
@@ -61,6 +61,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settingsPath = settingsPath;
         _settings = settings;
         _launchWorkflow = launchWorkflow ?? throw new ArgumentNullException(nameof(launchWorkflow));
+        _launchWorkflow.CommandTemplates = settings.CommandTemplates;
         _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
         Entries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_entries);
         VisibleEntries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_visibleEntries);
@@ -83,9 +84,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public ReadOnlyObservableCollection<LauncherEntryViewModel> Entries { get; }
 
-    public ReadOnlyObservableCollection<LauncherEntryViewModel> VisibleEntries { get; }
+    public ReadOnlyObservableCollection<LauncherEntryViewModel> VisibleEntries { get; private set; }
 
     public ReadOnlyObservableCollection<LauncherPresetViewModel> Presets { get; }
+
+    public IReadOnlyDictionary<string, string>? CommandTemplates => _launchWorkflow.CommandTemplates;
 
     public string ConfigPathDisplay { get; }
 

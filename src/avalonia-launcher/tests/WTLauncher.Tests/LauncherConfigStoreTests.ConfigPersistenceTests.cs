@@ -167,9 +167,9 @@ public sealed partial class LauncherConfigStoreTests
         ]
         """);
 
-        var exception = Assert.Throws<InvalidDataException>(() => LauncherConfigStore.Load(config));
+        var exception = Assert.Throws<ArgumentException>(() => LauncherConfigStore.Load(config));
 
-        Assert.Equal("Launcher config entry 0 id is null.", exception.Message);
+        Assert.Equal("Entry id is required. (Parameter 'id')", exception.Message);
     }
 
     [Fact]

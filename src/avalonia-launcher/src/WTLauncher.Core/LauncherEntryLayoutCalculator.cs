@@ -2,13 +2,13 @@ namespace WTLauncher.Core;
 
 public static class LauncherEntryLayoutCalculator
 {
-    public const double CardGap = 8;
+    public const double CardGap = LauncherDesignTokens.SpacingSmall;
     public const double CardMinWidth = 200;
     public const double CardMinHeight = 96;
     public const double CardGoldenRatio = 21d / 13d;
-    public const double NameTileGap = 6;
+    public const double NameTileGap = LauncherDesignTokens.NameTileGap;
     public const double NameTileHeight = 24;
-    public const double NameTileRowGap = 4;
+    public const double NameTileRowGap = LauncherDesignTokens.NameTileRowGap;
     public const double NameTileMinWidth = 132;
     public const double NameTilePreferredMaxWidth = 220;
 

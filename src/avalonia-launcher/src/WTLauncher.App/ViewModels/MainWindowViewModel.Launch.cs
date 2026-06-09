@@ -76,6 +76,8 @@ public sealed partial class MainWindowViewModel
                 return;
 
             _launchWorkflow.Start(plan);
+            item.RecordLaunchFromOwner(CurrentTimestampUtc());
+            SaveConfig();
             DryRunText = LauncherSingleLaunchReceiptText.Requested(entryName, plan);
             StatusText = LauncherSingleLaunchStatus.Requested(entryName);
         }

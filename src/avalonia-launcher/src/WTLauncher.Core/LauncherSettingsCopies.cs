@@ -11,7 +11,9 @@ internal static class LauncherSettingsCopies
             SortMode = settings.SortMode,
             EntryViewMode = settings.EntryViewMode,
             RequireConfirmationForLaunches = settings.RequireConfirmationForLaunches,
+            CommandTemplates = CloneCommandTemplates(settings.CommandTemplates),
             CustomEntryOrder = CloneCustomEntryOrder(settings)!,
+            SearchHistory = [.. settings.SearchHistory],
             Window = CloneWindow(settings.Window)!,
         };
     }
@@ -24,7 +26,9 @@ internal static class LauncherSettingsCopies
         target.SortMode = source.SortMode;
         target.EntryViewMode = source.EntryViewMode;
         target.RequireConfirmationForLaunches = source.RequireConfirmationForLaunches;
+        target.CommandTemplates = CloneCommandTemplates(source.CommandTemplates);
         target.CustomEntryOrder = CloneCustomEntryOrder(source)!;
+        target.SearchHistory = [.. source.SearchHistory];
         target.Window = CloneWindow(source.Window)!;
     }
 
@@ -33,6 +37,9 @@ internal static class LauncherSettingsCopies
         ArgumentNullException.ThrowIfNull(settings);
         return settings.CustomEntryOrder is null ? null : [.. settings.CustomEntryOrder];
     }
+
+    public static Dictionary<string, string> CloneCommandTemplates(Dictionary<string, string> templates) =>
+        new(templates, StringComparer.OrdinalIgnoreCase);
 
     private static LauncherWindowSettings? CloneWindow(LauncherWindowSettings? window) =>
         window is null

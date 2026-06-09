@@ -219,7 +219,7 @@ public sealed class LauncherEntryVisibilityTests
             Entry(" ", "Two"),
         };
 
-        var exception = Assert.Throws<InvalidDataException>(() =>
+        var exception = Assert.Throws<ArgumentException>(() =>
             LauncherEntryVisibility.FilterAndSort(
                 entries,
                 string.Empty,
@@ -227,7 +227,7 @@ public sealed class LauncherEntryVisibilityTests
                 [],
                 static entry => entry));
 
-        Assert.Equal("Launcher entry id is required for projection.", exception.Message);
+        Assert.Equal("Entry id is required. (Parameter 'Id')", exception.Message);
     }
 
     [Fact]

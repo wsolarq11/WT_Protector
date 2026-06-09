@@ -58,6 +58,12 @@ public sealed class LauncherDragReorderSession
         return true;
     }
 
+    public bool WouldSkip(string targetEntryId, bool insertAfter)
+    {
+        var nextPreview = new LauncherDragInsertPreview(LauncherEntryIds.Normalize(targetEntryId), insertAfter);
+        return _lastPreview == nextPreview;
+    }
+
     public void SetTarget(LauncherEntryViewModel target, bool insertAfter)
     {
         if (ReferenceEquals(_target, target))

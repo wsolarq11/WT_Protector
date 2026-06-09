@@ -60,7 +60,9 @@ public static class LauncherSettingsStore
         settings.LastFilterText = RequireNullableText(settings.LastFilterText, "lastFilterText");
         settings.SortMode = NormalizeRequiredMode(settings.SortMode, "sortMode", LauncherEntryVisibility.NormalizeSortModeId);
         settings.EntryViewMode = NormalizeRequiredMode(settings.EntryViewMode, "entryViewMode", LauncherEntryViewModes.NormalizeId);
+        settings.CommandTemplates = RequireCommandTemplates(settings.CommandTemplates);
         settings.CustomEntryOrder = RequireCustomEntryOrder(settings.CustomEntryOrder);
+        settings.SearchHistory = RequireSearchHistory(settings.SearchHistory);
         settings.Window = NormalizeWindow(RequireWindow(settings.Window));
     }
 
@@ -88,6 +90,25 @@ public static class LauncherSettingsStore
                 throw new InvalidDataException($"Launcher settings customEntryOrder[{i}] is duplicate: {entryId}.");
 
             normalized.Add(entryId);
+        }
+
+        return normalized;
+    }
+
+    private static List<string> RequireSearchHistory(List<string>? searchHistory)
+    {
+        if (searchHistory is null)
+            throw new InvalidDataException("Launcher settings searchHistory is null.");
+
+        var normalized = new List<string>(searchHistory.Count);
+        foreach (var term in searchHistory)
+        {
+            var trimmed = LauncherEntryText.Normalize(term);
+            if (trimmed.Length == 0)
+                continue;
+
+            if (!normalized.Contains(trimmed, StringComparer.OrdinalIgnoreCase))
+                normalized.Add(trimmed);
         }
 
         return normalized;
@@ -124,5 +145,28 @@ public static class LauncherSettingsStore
     {
         if (!double.IsFinite(value) || value <= 0)
             throw new InvalidDataException($"Launcher settings window {fieldName} must be positive.");
+    }
+
+    private static Dictionary<string, string> RequireCommandTemplates(Dictionary<string, string>? templates)
+    {
+        if (templates is null)
+            return [];
+
+        var normalized = new Dictionary<string, string>(templates.Count, StringComparer.OrdinalIgnoreCase);
+        foreach (var (key, value) in templates)
+        {
+            var trimmedKey = LauncherEntryText.Normalize(key);
+            if (trimmedKey.Length == 0)
+                throw new InvalidDataException("Launcher settings commandTemplates has an empty key.");
+
+            var trimmedValue = LauncherEntryText.Normalize(value);
+            if (trimmedValue.Length == 0)
+                throw new InvalidDataException($"Launcher settings commandTemplates key '{trimmedKey}' has an empty value.");
+
+            if (!normalized.TryAdd(trimmedKey, trimmedValue))
+                throw new InvalidDataException($"Launcher settings commandTemplates has duplicate key: {trimmedKey}.");
+        }
+
+        return normalized;
     }
 }

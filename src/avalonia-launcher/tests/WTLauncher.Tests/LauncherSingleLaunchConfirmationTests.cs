@@ -24,21 +24,26 @@ public sealed class LauncherSingleLaunchConfirmationTests
         Assert.Same(plan, confirmation.Plan);
     }
 
-    [Theory]
-    [InlineData(" ", "One", "Launcher single launch confirmation entry id is required.")]
-    [InlineData("one", " ", "Launcher single launch confirmation entry name is required.")]
-    public void ConfirmationRejectsBlankEntryFacts(string id, string name, string expected)
+    [Fact]
+    public void ConfirmationRejectsBlankEntryId()
     {
-        var entry = new LaunchEntry
-        {
-            Id = id,
-            Name = name,
-        };
+        var entry = new LaunchEntry { Id = " ", Name = "One" };
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            new LauncherSingleLaunchConfirmation(entry, Plan("codex --version")));
+
+        Assert.Equal("Entry id is required. (Parameter 'entryId')", exception.Message);
+    }
+
+    [Fact]
+    public void ConfirmationRejectsBlankEntryName()
+    {
+        var entry = new LaunchEntry { Id = "one", Name = " " };
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
             new LauncherSingleLaunchConfirmation(entry, Plan("codex --version")));
 
-        Assert.Equal(expected, exception.Message);
+        Assert.Equal("Launcher single launch confirmation entry name is required.", exception.Message);
     }
 
     private static LaunchPlan Plan(string command) =>

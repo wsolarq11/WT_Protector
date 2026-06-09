@@ -8,13 +8,15 @@ public static class LaunchArgumentBuilder
     public const string WorkingDirectoryOption = "-d";
     public const string ShellCommandPrefix = "pwsh -NoExit -Command";
 
-    public static LaunchPlan Build(LaunchEntry entry, bool validateDirectory, bool requireConfirmation)
+    public static LaunchPlan Build(LaunchEntry entry, bool validateDirectory, bool requireConfirmation, IReadOnlyDictionary<string, string>? commandTemplates = null)
     {
         ArgumentNullException.ThrowIfNull(entry);
 
         var name = LauncherEntryText.Normalize(entry.Name);
         var directory = LauncherEntryText.Normalize(entry.Directory);
+        directory = Environment.ExpandEnvironmentVariables(directory);
         var command = LauncherEntryText.Normalize(entry.Command);
+        command = LauncherCommandTemplateResolver.Resolve(command, commandTemplates);
 
         if (name.Length == 0)
             throw new InvalidOperationException("Launch entry name is empty.");
@@ -25,7 +27,7 @@ public static class LaunchArgumentBuilder
         if (command.Length == 0)
             throw new InvalidOperationException($"Launch entry '{name}' has an empty command.");
 
-        var arguments = $"{WorkingDirectoryOption} {QuoteArgument(directory)} {ShellCommandPrefix} {QuoteArgument(command)}";
+        var arguments = $"{WorkingDirectoryOption} {QuoteArgument(directory)} --title {QuoteArgument(name)} {ShellCommandPrefix} {QuoteArgument(command)}";
         return new LaunchPlan(
             TerminalExecutable,
             arguments,

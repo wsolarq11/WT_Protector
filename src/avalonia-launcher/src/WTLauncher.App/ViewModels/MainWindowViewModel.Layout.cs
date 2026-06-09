@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Threading;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using WTLauncher.Core;
@@ -8,6 +9,7 @@ namespace WTLauncher.App.ViewModels;
 public sealed partial class MainWindowViewModel
 {
     private Size _cardsAvailableSize = new(900, 420);
+    private Size _lastAppliedCardsAvailableSize;
 
     [ObservableProperty]
     private string _filterText = "";
@@ -21,6 +23,7 @@ public sealed partial class MainWindowViewModel
     private readonly ObservableCollection<LauncherSortModeViewModel> _sortModes =
     [
         new(LauncherEntryVisibility.CustomSortModeId, "自定义拖拽"),
+        new(LauncherEntryVisibility.RecentSortModeId, "最近启动"),
         new(LauncherEntryVisibility.UpdatedSortModeId, "更新时间"),
         new(LauncherEntryVisibility.AlphabeticalSortModeId, "首字母顺序"),
     ];
@@ -61,6 +64,7 @@ public sealed partial class MainWindowViewModel
     {
         var snapshot = CaptureSettingsMutationSnapshot();
         _settings.LastFilterText = value;
+        RecordSearchHistory(value);
         var saveFailure = SaveSettingsChange(snapshot);
         if (saveFailure is not null)
         {
@@ -72,6 +76,24 @@ public sealed partial class MainWindowViewModel
         }
 
         ApplyFilter();
+    }
+
+    private static void RecordSearchHistoryValue(List<string> history, string value)
+    {
+        var trimmed = LauncherEntryText.Normalize(value);
+        if (trimmed.Length == 0)
+            return;
+
+        history.RemoveAll(term => string.Equals(term, trimmed, StringComparison.OrdinalIgnoreCase));
+        history.Insert(0, trimmed);
+        const int maxHistory = 20;
+        if (history.Count > maxHistory)
+            history.RemoveRange(maxHistory, history.Count - maxHistory);
+    }
+
+    private void RecordSearchHistory(string value)
+    {
+        RecordSearchHistoryValue(_settings.SearchHistory, value);
     }
 
     partial void OnSelectedSortModeChanging(LauncherSortModeViewModel? value)
@@ -138,28 +160,104 @@ public sealed partial class MainWindowViewModel
 
     private void ApplyFilter()
     {
-        var sorted = LauncherEntryVisibility.FilterAndSort(
-            _entries,
-            FilterText,
-            RequireSortModeSelection(SelectedSortMode).Id,
-            _settings.CustomEntryOrder,
-            ToLaunchEntry);
+        var isDragging = _dragReorderWorkflow.HasActiveSession;
 
-        _visibleEntries.Clear();
-        foreach (var entry in sorted)
+        // P1: During drag reorder, card sizes don't change — skip the calculation.
+        if (!isDragging)
         {
-            _visibleEntries.Add(entry);
+            var sorted = LauncherEntryVisibility.FilterAndSort(
+                _entries,
+                FilterText,
+                RequireSortModeSelection(SelectedSortMode).Id,
+                _settings.CustomEntryOrder,
+                ToLaunchEntry);
+
+            SyncVisibleEntries(sorted);
+
+            // P1: Only recalculate card sizes when available size actually changed.
+            if (_cardsAvailableSize != _lastAppliedCardsAvailableSize)
+            {
+                LauncherEntryLayoutPresentation.ApplyCardSize(_entries, _visibleEntries, _cardsAvailableSize);
+                _lastAppliedCardsAvailableSize = _cardsAvailableSize;
+            }
+        }
+        else
+        {
+            // Drag path: still need to sync VisibleCount
+            VisibleCount = _visibleEntries.Count;
+            return;
         }
 
         VisibleCount = _visibleEntries.Count;
-        LauncherEntryLayoutPresentation.ApplyCardSize(_entries, _visibleEntries, _cardsAvailableSize);
-        RefreshReorderCommandState();
+    }
+
+    /// <summary>
+    /// P5: O(n) incremental sync using Dictionary for position lookup.
+    /// Removes disappeared entries, inserts new ones, and reorders existing
+    /// ones via Move — preserving Avalonia containers.
+    /// Updates position map incrementally instead of rebuilding after each operation.
+    /// </summary>
+    private void SyncVisibleEntries(IReadOnlyList<LauncherEntryViewModel> sorted)
+    {
+        // Remove entries no longer visible (iterate backwards for safe removal).
+        var sortedSet = new HashSet<LauncherEntryViewModel>(sorted);
+        for (var i = _visibleEntries.Count - 1; i >= 0; i--)
+        {
+            if (!sortedSet.Contains(_visibleEntries[i]))
+                _visibleEntries.RemoveAt(i);
+        }
+
+        // Build position map for O(1) lookups instead of O(n) IndexOf.
+        var positionByEntry = new Dictionary<LauncherEntryViewModel, int>(_visibleEntries.Count);
+        for (var i = 0; i < _visibleEntries.Count; i++)
+            positionByEntry[_visibleEntries[i]] = i;
+
+        // Insert new entries and move existing ones to correct positions.
+        for (var targetIndex = 0; targetIndex < sorted.Count; targetIndex++)
+        {
+            var entry = sorted[targetIndex];
+            if (positionByEntry.TryGetValue(entry, out var currentIndex))
+            {
+                if (currentIndex != targetIndex)
+                {
+                    _visibleEntries.Move(currentIndex, targetIndex);
+                    // P5: Update positions incrementally instead of rebuilding the dictionary.
+                    // After Move(from, to), entries in [min, max] shift by ±1.
+                    var from = currentIndex;
+                    var to = targetIndex;
+                    if (from < to)
+                    {
+                        for (var j = from; j < to; j++)
+                            positionByEntry[_visibleEntries[j]] = j;
+                    }
+                    else
+                    {
+                        for (var j = to + 1; j <= from; j++)
+                            positionByEntry[_visibleEntries[j]] = j;
+                    }
+                    positionByEntry[entry] = to;
+                }
+            }
+            else
+            {
+                _visibleEntries.Insert(targetIndex, entry);
+                // P5: Shift positions for entries after the insertion point.
+                for (var j = targetIndex + 1; j < _visibleEntries.Count; j++)
+                    positionByEntry[_visibleEntries[j]] = j;
+                positionByEntry[entry] = targetIndex;
+            }
+        }
     }
 
     public void UpdateCardsAvailableSize(Size availableSize)
     {
-        _cardsAvailableSize = LauncherEntryLayoutPresentation.NormalizeAvailableSize(availableSize);
+        var normalized = LauncherEntryLayoutPresentation.NormalizeAvailableSize(availableSize);
+        if (_cardsAvailableSize == normalized)
+            return; // P1: Skip when size unchanged — avoids redundant PropertyChanged storm.
+
+        _cardsAvailableSize = normalized;
         LauncherEntryLayoutPresentation.ApplyCardSize(_entries, _visibleEntries, _cardsAvailableSize);
+        _lastAppliedCardsAvailableSize = _cardsAvailableSize;
     }
 
     public bool TrySaveWindowBounds(double width, double height)
@@ -183,4 +281,16 @@ public sealed partial class MainWindowViewModel
 
     private IEnumerable<string> GetEntryIds() =>
         _entries.Select(entry => entry.Id);
+
+    public void ApplyFilterAfterDropDown() => ApplyFilter();
+
+    public int GetPresetReferenceCount(string entryId)
+    {
+        if (string.IsNullOrWhiteSpace(entryId))
+            return 0;
+
+        var normalized = LauncherEntryIds.Normalize(entryId);
+        return _presetFile.Presets.Count(preset =>
+            preset.EntryIds.Any(id => LauncherEntryIds.Same(id, normalized)));
+    }
 }

@@ -31,6 +31,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(
             [
                 LauncherEntryVisibility.CustomSortModeId,
+                LauncherEntryVisibility.RecentSortModeId,
                 LauncherEntryVisibility.UpdatedSortModeId,
                 LauncherEntryVisibility.AlphabeticalSortModeId,
             ],

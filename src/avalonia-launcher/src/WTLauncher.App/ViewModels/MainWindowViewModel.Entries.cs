@@ -62,6 +62,65 @@ public sealed partial class MainWindowViewModel
         ApplyStatusText(LauncherEntryStatus.Added(entry.Name));
     }
 
+    internal async Task CloneEntryAsync(LauncherEntryViewModel item)
+    {
+        DiscardDragReorderPreview();
+        var source = item.SnapshotEntry();
+        var cloneSource = new LaunchEntry
+        {
+            Id = GenerateUniqueCloneId(source.Id),
+            Name = source.Name + " (副本)",
+            Directory = source.Directory,
+            Command = source.Command,
+            Selected = false,
+        };
+
+        EntryDraft? draft;
+        try
+        {
+            draft = await RequestEntryDraftAsync(cloneSource).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            StatusText = LauncherEntryStatus.AddDialogFailed(ex);
+            return;
+        }
+
+        if (draft is null)
+        {
+            StatusText = LauncherEntryStatus.AddCanceled;
+            return;
+        }
+
+        var entry = CreateEntryFromDraftOrReportValidation(
+            draft,
+            originalId: null,
+            previousEntry: null);
+        if (entry is null)
+            return;
+
+        var snapshot = CaptureEntryMutationSnapshot();
+        entry.UpdatedAtUtc = CurrentTimestampUtc();
+        _entries.Add(new LauncherEntryViewModel(entry, this));
+        _settings.CustomEntryOrder.Add(entry.Id);
+
+        if (!SaveEntryCollectionChanges(savePresets: false, snapshot))
+            return;
+
+        ApplyStatusText($"已复制按钮: {source.Name} → {entry.Name}（已保存）");
+    }
+
+    private string GenerateUniqueCloneId(string sourceId)
+    {
+        var baseId = sourceId + "-copy";
+        var candidate = baseId;
+        var index = 2;
+        var existingIds = _entries.Select(e => e.Id).ToHashSet(LauncherEntryIds.Comparer);
+        while (existingIds.Contains(candidate))
+            candidate = $"{baseId}-{index++}";
+        return candidate;
+    }
+
     internal async Task EditEntryAsync(LauncherEntryViewModel item)
     {
         DiscardDragReorderPreview();

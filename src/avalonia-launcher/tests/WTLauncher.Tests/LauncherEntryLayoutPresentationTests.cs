@@ -27,7 +27,8 @@ public sealed class LauncherEntryLayoutPresentationTests
 
         LauncherEntryLayoutPresentation.ApplyCardSize(entries, visibleEntries, new Size(900, 520));
 
-        foreach (var entry in entries)
+        // Only visible entries receive layout; hidden entries keep defaults.
+        foreach (var entry in visibleEntries)
         {
             Assert.Equal(expected.CardWidth, entry.CardWidth);
             Assert.Equal(expected.CardHeight, entry.CardHeight);
@@ -37,16 +38,17 @@ public sealed class LauncherEntryLayoutPresentationTests
     }
 
     [Fact]
-    public void ApplyCardSizeFallsBackToAllEntriesWhenNothingVisible()
+    public void ApplyCardSizeSkipsEntriesWhenNothingVisible()
     {
         using var temp = new TempDirectory();
         var owner = CreateOwner(temp.Path);
         var entries = Entries(owner, "one", "two", "three");
-        var expected = LauncherEntryLayoutCalculator.Calculate(640, 260, itemCount: 3);
 
+        // When nothing is visible, layout is calculated but only applied to visible entries (none).
         LauncherEntryLayoutPresentation.ApplyCardSize(entries, [], new Size(640, 260));
 
-        Assert.All(entries, entry => Assert.Equal(expected.CardWidth, entry.CardWidth));
+        // All entries keep their default sizes.
+        Assert.All(entries, entry => Assert.Equal(300, entry.CardWidth));
     }
 
     private static List<LauncherEntryViewModel> Entries(MainWindowViewModel owner, params string[] ids)

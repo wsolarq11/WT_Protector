@@ -13,7 +13,7 @@ public sealed class MainWindowXamlContractTests
         Assert.True(nextRowStart > gridStart, "ControlBoxesGrid should be the complete row-2 control band before action row 3.");
 
         var controlGrid = xaml[gridStart..nextRowStart];
-        Assert.Contains("ColumnDefinitions=\"2.2*,1.1*,1.1*,2.2*\"", controlGrid);
+        Assert.Contains("ColumnDefinitions=\"1.8*,1*,1*,2.8*\"", controlGrid);
         Assert.Equal(4, Count(controlGrid, "Classes=\"control-box\""));
         AssertInOrder(controlGrid, "Text=\"搜索\"", "Text=\"排序\"", "Text=\"视图\"", "Text=\"启动组\"");
         Assert.Contains("Text=\"{Binding FilterText, Mode=TwoWay}\"", controlGrid);
@@ -21,9 +21,9 @@ public sealed class MainWindowXamlContractTests
         Assert.Contains("ItemsSource=\"{Binding DisplayModes}\"", controlGrid);
         Assert.Contains("ItemsSource=\"{Binding Presets}\"", controlGrid);
         Assert.Contains("Content=\"{Binding ApplyPresetButtonText}\"", controlGrid);
-        Assert.Contains("Content=\"预演当前组\"", controlGrid);
+        Assert.Contains("Content=\"预演\"", controlGrid);
         Assert.Contains("Command=\"{Binding PreviewSelectedPresetCommand}\"", controlGrid);
-        Assert.Contains("Content=\"启动当前组\"", controlGrid);
+        Assert.Contains("Content=\"启动\"", controlGrid);
         Assert.Contains("Command=\"{Binding LaunchSelectedPresetCommand}\"", controlGrid);
     }
 
@@ -35,6 +35,34 @@ public sealed class MainWindowXamlContractTests
         Assert.DoesNotContain("UpdatedLabel", xaml);
         Assert.DoesNotContain("ShowUpdatedLabel", xaml);
         Assert.DoesNotContain("更新时间", xaml);
+    }
+
+    [Fact]
+    public void MainWindow_BaseCardStyleUsesInjectedDesignTokenResources()
+    {
+        var xaml = File.ReadAllText(TestRepositoryPaths.MainWindowXaml);
+        var appCodeBehind = File.ReadAllText(TestRepositoryPaths.AppCodeBehind);
+        var cardStyle = Slice(
+            xaml,
+            "<Style Selector=\"Border.card\">",
+            "<Style Selector=\"ItemsControl.suppress-drag-transitions Border.card\">");
+
+        AssertInOrder(
+            cardStyle,
+            "<Setter Property=\"Background\" Value=\"{StaticResource SurfaceBrush}\"/>",
+            "<Setter Property=\"CornerRadius\" Value=\"{StaticResource CardBorderRadius}\"/>",
+            "<Setter Property=\"Padding\" Value=\"{StaticResource CardPadding}\"/>",
+            "<Setter Property=\"BorderBrush\" Value=\"{StaticResource CardBorderBrush}\"/>",
+            "<Setter Property=\"BoxShadow\" Value=\"{StaticResource CardBoxShadow}\"/>");
+        Assert.DoesNotContain("CornerRadius\" Value=\"13\"", cardStyle);
+        Assert.DoesNotContain("Padding\" Value=\"13\"", cardStyle);
+        Assert.DoesNotContain("#120F172A", cardStyle);
+
+        AssertInOrder(
+            appCodeBehind,
+            "Resources[\"CardBorderRadius\"] = new CornerRadius(LauncherDesignTokens.CardBorderRadius);",
+            "Resources[\"CardPadding\"] = new Thickness(LauncherDesignTokens.CardPadding);",
+            "Resources[\"CardBoxShadow\"] = BoxShadows.Parse($\"0 8 24 0 {LauncherDesignTokens.BoxShadowColor}\");");
     }
 
     [Fact]
@@ -53,7 +81,7 @@ public sealed class MainWindowXamlContractTests
             xaml,
             "<Style Selector=\"Border.drag-insert\">",
             "<Setter Property=\"CornerRadius\" Value=\"2\"/>",
-            "<Setter Property=\"Background\" Value=\"#38BDF8\"/>",
+            "<Setter Property=\"Background\" Value=\"{StaticResource DragHighlightBrush}\"/>",
             "<Setter Property=\"Opacity\" Value=\"0.9\"/>",
             "<Setter Property=\"IsHitTestVisible\" Value=\"False\"/>");
 
@@ -91,23 +119,21 @@ public sealed class MainWindowXamlContractTests
             "_dragGhost = null");
         Assert.Contains("private void ApplyDragReorderPreview(", dragCodeBehind);
         Assert.Equal(1, Count(dragCodeBehind, "viewModel.PreviewMoveEntry("));
-        Assert.Contains("if (viewModel.PreviewMoveEntry", dragCodeBehind);
+        Assert.DoesNotContain("if (viewModel.PreviewMoveEntry", dragCodeBehind);
+        // Lazy capture: WouldChangePreview guard runs first (O(1) string compare),
+        // then PreviewMoveEntry only when target actually changed.
+        // FLIP animation (_reorderAnimationScheduler) skipped during active drag.
         AssertInOrder(
             dragCodeBehind,
-            "var root = MainWindowEntriesRootSelection.Select(",
-            "MainWindowEntryCardBoundsCapture.Capture(root, this)",
-            "if (viewModel.PreviewMoveEntry",
-            "_reorderAnimationScheduler.Schedule(");
+            "WouldChangePreview(draggedId, target.Entry.Id, insertAfter)",
+            "return;",
+            "viewModel.PreviewMoveEntry");
         Assert.DoesNotContain("_pendingReorderAnimationAttached", dragCodeBehind);
         Assert.DoesNotContain("_pendingReorderAnimationSnapshot", dragCodeBehind);
-        AssertInOrder(
-            dragCodeBehind,
-            "_reorderAnimationScheduler.Schedule(",
-            "handler => root.LayoutUpdated -= handler",
-            "handler => root.LayoutUpdated += handler");
+        Assert.DoesNotContain("_reorderAnimationScheduler.Schedule(", dragCodeBehind);
+        // FLIP animation scheduler infrastructure retained for future use;
+        // Schedule() not called during active drag (P2-3 optimization).
         Assert.Contains("_reorderAnimationScheduler.Consume(", dragCodeBehind);
-        Assert.Equal(1, Count(dragCodeBehind, "handler => root.LayoutUpdated += handler"));
-        Assert.Equal(2, Count(dragCodeBehind, "handler => root.LayoutUpdated -= handler"));
         Assert.Contains("FLIP: jump back without transition", dragCodeBehind);
     }
 
@@ -139,6 +165,7 @@ public sealed class MainWindowXamlContractTests
             "Header=\"预演\"",
             "Header=\"上移排序\"",
             "Header=\"下移排序\"",
+            "Header=\"复制\"",
             "Header=\"编辑\"",
             "Header=\"删除\"");
     }
@@ -174,6 +201,15 @@ public sealed class MainWindowXamlContractTests
             Assert.True(index > last, $"Expected '{value}' after index {last}.");
             last = index;
         }
+    }
+
+    private static string Slice(string text, string start, string end)
+    {
+        var startIndex = text.IndexOf(start, StringComparison.Ordinal);
+        Assert.True(startIndex >= 0, $"Expected section start: {start}");
+        var endIndex = text.IndexOf(end, startIndex + start.Length, StringComparison.Ordinal);
+        Assert.True(endIndex > startIndex, $"Expected section end after {start}: {end}");
+        return text[startIndex..endIndex];
     }
 
 }

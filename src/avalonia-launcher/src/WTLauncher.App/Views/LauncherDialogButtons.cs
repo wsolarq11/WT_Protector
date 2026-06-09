@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using WTLauncher.Core;
 
 namespace WTLauncher.App.Views;
 
@@ -27,7 +28,7 @@ internal static class LauncherDialogButtons
             content,
             isDefault: true,
             minWidth: minWidth,
-            background: Brush.Parse("#2563EB"),
+            background: Brush.Parse(LauncherDesignTokens.PrimaryColor),
             foreground: Brushes.White,
             fontWeight: FontWeight.SemiBold);
     }
@@ -37,7 +38,7 @@ internal static class LauncherDialogButtons
         return Create(
             content,
             minWidth: minWidth,
-            background: Brush.Parse("#DC2626"),
+            background: Brush.Parse(LauncherDesignTokens.DestructiveColor),
             foreground: Brushes.White,
             fontWeight: FontWeight.SemiBold);
     }
@@ -48,7 +49,7 @@ internal static class LauncherDialogButtons
         {
             Orientation = Orientation.Horizontal,
             HorizontalAlignment = HorizontalAlignment.Right,
-            Spacing = 10,
+            Spacing = LauncherDesignTokens.DialogFooterSpacing,
             Margin = new Thickness(0, topMargin, 0, 0),
         };
 

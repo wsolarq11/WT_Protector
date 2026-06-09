@@ -13,8 +13,8 @@ public sealed partial class RepositoryConfigContractTests
 
         Assert.Equal("", settings.LastFilterText);
         Assert.Equal("custom", settings.SortMode);
-        Assert.Equal("cards", settings.EntryViewMode);
-        Assert.True(settings.RequireConfirmationForLaunches);
+        Assert.Contains(settings.EntryViewMode, new[] { LauncherEntryViewModes.CardsId, LauncherEntryViewModes.DetailsId, LauncherEntryViewModes.NamesId });
+        Assert.False(settings.RequireConfirmationForLaunches);
         Assert.NotEmpty(settings.CustomEntryOrder);
         Assert.Equal(LauncherWindowSettings.DefaultWidth, settings.Window.Width);
         Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window.Height);

@@ -7,6 +7,7 @@ namespace WTLauncher.Core;
 internal static class LauncherJson
 {
     private const string RepositoryLineEnding = "\n";
+    private const int DefaultMaxBackups = 3;
 
     private static readonly JsonSerializerOptions Options = new()
     {
@@ -45,7 +46,10 @@ internal static class LauncherJson
             File.WriteAllText(tempPath, json + RepositoryLineEnding);
 
             if (backup && File.Exists(fullPath))
+            {
+                RotateBackups(fullPath);
                 File.Copy(fullPath, fullPath + ".bak", overwrite: true);
+            }
 
             File.Move(tempPath, fullPath, overwrite: true);
         }
@@ -61,5 +65,22 @@ internal static class LauncherJson
         return text
             .Replace("\r\n", RepositoryLineEnding)
             .Replace("\r", RepositoryLineEnding);
+    }
+
+    private static void RotateBackups(string fullPath)
+    {
+        for (var i = DefaultMaxBackups - 1; i >= 0; i--)
+        {
+            var oldPath = i == 0 ? fullPath + ".bak" : fullPath + $".bak.{i}";
+            var newPath = fullPath + $".bak.{i + 1}";
+
+            if (File.Exists(oldPath))
+            {
+                if (i == DefaultMaxBackups - 1)
+                    File.Delete(oldPath);
+                else
+                    File.Move(oldPath, newPath, overwrite: true);
+            }
+        }
     }
 }

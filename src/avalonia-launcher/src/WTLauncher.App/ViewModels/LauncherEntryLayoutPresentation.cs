@@ -30,12 +30,18 @@ public static class LauncherEntryLayoutPresentation
             availableSize.Height,
             count);
 
-        foreach (var entry in entries)
+        // P5: Only set properties that changed — avoids redundant PropertyChanged → layout invalidations.
+        // During dropdown mode changes or window resize, the card size is typically identical across all entries.
+        foreach (var entry in visibleEntries)
         {
-            entry.CardWidth = layout.CardWidth;
-            entry.CardHeight = layout.CardHeight;
-            entry.NameTileWidth = layout.NameTileWidth;
-            entry.NameTileHeight = layout.NameTileHeight;
+            if (entry.CardWidth != layout.CardWidth)
+                entry.CardWidth = layout.CardWidth;
+            if (entry.CardHeight != layout.CardHeight)
+                entry.CardHeight = layout.CardHeight;
+            if (entry.NameTileWidth != layout.NameTileWidth)
+                entry.NameTileWidth = layout.NameTileWidth;
+            if (entry.NameTileHeight != layout.NameTileHeight)
+                entry.NameTileHeight = layout.NameTileHeight;
         }
     }
 

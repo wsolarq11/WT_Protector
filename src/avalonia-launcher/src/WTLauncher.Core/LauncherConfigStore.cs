@@ -180,6 +180,7 @@ public static class LauncherConfigStore
         entry.Directory = RequireEntryText(entry.Directory, index, "directory");
         entry.Command = RequireEntryText(entry.Command, index, "command");
         entry.UpdatedAtUtc = NormalizeOptionalEntryText(entry.UpdatedAtUtc, index, "updatedAtUtc");
+        entry.LaunchedAtUtc = NormalizeOptionalEntryText(entry.LaunchedAtUtc, index, "launchedAtUtc");
         return entry;
     }
 
@@ -188,12 +189,7 @@ public static class LauncherConfigStore
 
     private static string RequireEntryId(string? id, int index, HashSet<string> seenIds)
     {
-        if (id is null)
-            throw new InvalidDataException($"Launcher config entry {index} id is null.");
-
-        var normalized = LauncherEntryIds.Normalize(id);
-        if (normalized.Length == 0)
-            throw new InvalidDataException($"Launcher config entry {index} id is empty.");
+        var normalized = LauncherEntryIds.RequireEntryId(id, nameof(id));
 
         if (!seenIds.Add(normalized))
             throw new InvalidDataException($"Launcher config entry {index} id is duplicate: {normalized}.");

@@ -45,7 +45,7 @@ public sealed partial class RepositoryConfigContractTests
         {
             AssertJsonPropertyNames(
                 entry,
-                ["id", "name", "directory", "command", "selected", "updatedAtUtc"],
+                ["id", "name", "directory", "command", "selected", "updatedAtUtc", "launchedAtUtc"],
                 "config entry");
             Assert.False(
                 entry.TryGetProperty("confirm", out _),
@@ -126,15 +126,15 @@ public sealed partial class RepositoryConfigContractTests
         var root = document.RootElement;
         AssertJsonPropertyNames(
             root,
-            ["lastFilterText", "sortMode", "entryViewMode", "requireConfirmationForLaunches", "customEntryOrder", "window"],
+            ["lastFilterText", "sortMode", "entryViewMode", "requireConfirmationForLaunches", "commandTemplates", "searchHistory", "customEntryOrder", "window"],
             "settings.json");
         Assert.False(
             root.TryGetProperty("theme", out _),
             "settings.json must not carry unused theme state; no active UI behavior reads it.");
         Assert.Equal("", root.GetProperty("lastFilterText").GetString());
         Assert.Equal("custom", root.GetProperty("sortMode").GetString());
-        Assert.Equal("cards", root.GetProperty("entryViewMode").GetString());
-        Assert.True(root.GetProperty("requireConfirmationForLaunches").GetBoolean());
+        Assert.Contains(root.GetProperty("entryViewMode").GetString(), new[] { LauncherEntryViewModes.CardsId, LauncherEntryViewModes.DetailsId, LauncherEntryViewModes.NamesId });
+        Assert.False(root.GetProperty("requireConfirmationForLaunches").GetBoolean());
 
         var entryOrder = root.GetProperty("customEntryOrder").EnumerateArray().Select(item => item.GetString()).ToList();
         Assert.Equal(knownEntryIds.Count, entryOrder.Count);

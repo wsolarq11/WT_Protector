@@ -14,7 +14,7 @@ public sealed class LaunchArgumentBuilderTests
 
         Assert.Equal(LaunchArgumentBuilder.TerminalExecutable, plan.Executable);
         Assert.Equal(
-            $"{LaunchArgumentBuilder.WorkingDirectoryOption} {LaunchArgumentBuilder.QuoteArgument(temp.Path)} {LaunchArgumentBuilder.ShellCommandPrefix} \"codex --version\"",
+            $"{LaunchArgumentBuilder.WorkingDirectoryOption} {LaunchArgumentBuilder.QuoteArgument(temp.Path)} --title \"demo\" {LaunchArgumentBuilder.ShellCommandPrefix} \"codex --version\"",
             plan.Arguments);
         Assert.False(plan.RequiresConfirmation);
     }

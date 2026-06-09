@@ -170,7 +170,7 @@ public sealed class LauncherLaunchWorkflowTests
 
         Assert.Empty(preflight.Items);
         Assert.Equal(1, preflight.Report.FailedCount);
-        Assert.Equal(["one: Launch entry id is empty."], preflight.Report.FailureMessages);
+        Assert.Equal(["one: Entry id is required. (Parameter 'entryId')"], preflight.Report.FailureMessages);
     }
 
     [Fact]

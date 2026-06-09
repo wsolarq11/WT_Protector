@@ -1,4 +1,3 @@
-
 # WT Launcher / WT Protector
 
 A local Windows Terminal launcher for quickly opening saved workspaces with a chosen shell command.
@@ -14,6 +13,7 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `retired/design/winforms-launcher.md` — retired WinForms executable/source design lessons and receipts.
 - `docs/reference/shortcut-backup-manifest.json` — human-readable replacement for the deleted `WT_Shortcuts_Backup/` binary shortcut tree.
 - `docs/feature-reality-north-star-audit.md` — feature-by-feature reality mapping and north-star audit for the active launcher scope.
+- `docs/feature-first-class-upgrade-audit.md` — current all-capability real-problem and first-class upgrade audit.
 - `.snow/` — ignored local runtime/index state; Git and verification intentionally do not track or validate it.
 - `.gitattributes` — repository line-ending policy; text is normalized as LF to avoid CRLF-only churn.
 - `tools/verify.ps1` — no-interaction local verification gate.
@@ -47,9 +47,10 @@ Fields:
 - `id` — stable human-readable identity for future grouping/sorting/migration.
 - `name` — display name in the launcher UI.
 - `directory` — working directory passed to `wt.exe -d`.
-- `command` — command passed to `pwsh -NoExit -Command`.
+- `command` — command passed to `pwsh -NoExit -Command`. Supports `$key` template references resolved from `settings.json` `commandTemplates` (see below).
 - `selected` — persistent checkbox state used by the one-click/batch launch flow.
-- `updatedAtUtc` — optional ISO-8601 UTC timestamp refreshed when the app adds or edits a button, and used by the “更新时间” sort mode.
+- `updatedAtUtc` — optional ISO-8601 UTC timestamp refreshed when the app adds or edits a button, and used by the "更新时间" sort mode.
+- `launchedAtUtc` — optional ISO-8601 UTC timestamp written after each successful launch, and used by the "最近启动" sort mode.
 
 Active config entries must not contain the obsolete per-entry `confirm` key. Launch confirmation has one authority: `settings.json` → `requireConfirmationForLaunches`.
 
@@ -100,10 +101,11 @@ Portable UI settings live beside the launch config:
 
 Additional settings fields:
 
-- `sortMode` — `custom`, `updated`, or `alphabetical`.
+- `sortMode` — `custom`, `recent`, `updated`, or `alphabetical`.
 - `entryViewMode` — `cards`, `details`, or `names`.
 - `requireConfirmationForLaunches` — global launch-confirmation toggle persisted with the other portable UI settings.
-- `customEntryOrder` — stable entry-id order used by the “自定义拖拽” mode and persisted after drag-drop reorder.
+- `customEntryOrder` — stable entry-id order used by the "自定义拖拽" mode and persisted after drag-drop reorder.
+- `commandTemplates` — optional dictionary of reusable command templates. When a config entry's `command` starts with `$` followed by a key (e.g. `$codex`), the launcher resolves it to the template value from this map. Missing template keys cause a launch validation error.
 
 ## Run the mainline app
 
@@ -205,8 +207,8 @@ Important risks:
 
 The Avalonia mainline supports:
 
-- search and direct card launch;
-- single launch and batch launch;
+- search with multi-word tokenized matching (space-separated keywords all must match) and direct card launch;
+- single launch and batch launch, with `launchedAtUtc` timestamp recorded on each successful start for "最近启动" sort;
 - adaptive card sizing so the visible buttons shrink to fit the current window region instead of forcing a second scroll path;
 - custom-order dragging with a cursor-following ghost and live reorder preview so the redistribution is visible before drop;
 - context-menu `上移排序` / `下移排序` actions so reorder is not trapped behind drag gestures; if a drag preview is active, menu reorder first discards that preview and resolves against the last committed order;
@@ -218,7 +220,8 @@ The Avalonia mainline supports:
 - first-class launch group actions: save current selection as a new group, update the current group from current selection, and delete editable groups;
 - direct launch of the current group without rewriting checkbox selection first;
 - live preset-vs-selection difference feedback before applying a launch group, with no-op apply disabled when already matched;
-- three persisted sort modes: `自定义拖拽`, `更新时间`, and `首字母顺序`;
+- four persisted sort modes: `自定义拖拽`, `最近启动`, `更新时间`, and `首字母顺序`;
+- command templates from `settings.json` for repeated shell commands, with unknown template keys rejected at launch-plan build time;
 - global launch confirmation;
 - JSON persistence with temporary-file writes, `.bak` backup for normal config/preset saves, and rollback compensation for failed multi-file entry edits;
 - persistent selected checkbox state for one-click/batch launch;

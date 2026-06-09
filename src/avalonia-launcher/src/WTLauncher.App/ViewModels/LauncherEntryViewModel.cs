@@ -77,6 +77,13 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         RefreshDisplay();
     }
 
+    internal string RecordLaunchFromOwner(string launchedAtUtc)
+    {
+        var previous = _entry.LaunchedAtUtc;
+        _entry.LaunchedAtUtc = launchedAtUtc;
+        return previous;
+    }
+
     public void RefreshDisplay()
     {
         OnPropertyChanged(nameof(Id));
@@ -104,6 +111,9 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     [RelayCommand]
     private Task DeleteAsync() => _owner.DeleteEntryAsync(this);
+
+    [RelayCommand]
+    private Task CloneAsync() => _owner.CloneEntryAsync(this);
 
     [RelayCommand(CanExecute = nameof(CanMoveUp))]
     private void MoveUp() => _owner.MoveEntryUp(this);

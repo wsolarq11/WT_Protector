@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using System.Linq;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -15,14 +16,14 @@ public sealed class EntryDetailsWindow : Window
     private readonly CheckBox _selectedBox;
     private readonly TextBlock _errorText;
 
-    public EntryDetailsWindow(LaunchEntry? entry)
+    public EntryDetailsWindow(LaunchEntry? entry, int presetReferenceCount = 0, IReadOnlyDictionary<string, string>? commandTemplates = null)
     {
         var isEdit = entry is not null;
         Title = isEdit ? "编辑按钮" : "新增按钮";
         Width = 720;
-        Height = 520;
+        Height = 560;
         MinWidth = 560;
-        MinHeight = 420;
+        MinHeight = 460;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = Brushes.White;
 
@@ -46,26 +47,77 @@ public sealed class EntryDetailsWindow : Window
 
         var footer = LauncherDialogButtons.Footer(16, cancel, save);
 
-        var content = new StackPanel
+        var children = new List<Control>
         {
-            Spacing = 10,
-            Children =
-            {
-                LauncherDialogText.Title(isEdit ? "编辑启动按钮" : "新增启动按钮"),
-                LauncherDialogText.Label("ID（稳定唯一，不要重复）"),
-                _idBox,
-                LauncherDialogText.Label("名称"),
-                _nameBox,
-                LauncherDialogText.Label("目录"),
-                _directoryBox,
-                LauncherDialogText.Label("命令"),
-                _commandBox,
-                LauncherDialogText.Subtle("启动确认由主窗口顶部开关统一控制；开启时所有启动项统一确认，关闭时所有启动项直接启动。"),
-                _selectedBox,
-                _errorText,
-                footer,
-            },
+            LauncherDialogText.Title(isEdit ? "编辑启动按钮" : "新增启动按钮"),
+            LauncherDialogText.Label("ID（稳定唯一，不要重复）"),
+            _idBox,
         };
+
+        if (isEdit)
+        {
+            var hint = presetReferenceCount == 0
+                ? "此 ID 未被任何启动组引用"
+                : $"此 ID 被 {presetReferenceCount} 个启动组引用";
+            children.Add(LauncherDialogText.Subtle(hint));
+        }
+
+        children.Add(LauncherDialogText.Label("名称"));
+        children.Add(_nameBox);
+        children.Add(LauncherDialogText.Label("目录"));
+        children.Add(_directoryBox);
+        children.Add(LauncherDialogText.Label("命令"));
+        children.Add(_commandBox);
+        if (commandTemplates is not null && commandTemplates.Count > 0)
+        {
+            var templateKeys = string.Join("、", commandTemplates.Select(kv => $"${kv.Key}"));
+            children.Add(LauncherDialogText.Subtle($"可用模板：{templateKeys}"));
+            var templatePreview = new TextBlock
+            {
+                Foreground = new SolidColorBrush(Color.Parse("#0369A1")),
+                FontSize = 12,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 4),
+                IsVisible = false,
+            };
+            _commandBox.TextChanged += (_, _) =>
+            {
+                var cmd = LauncherEntryText.Normalize(_commandBox.Text);
+                if (cmd.StartsWith("$") && cmd.Length > 1)
+                {
+                    var key = cmd[1..];
+                    if (commandTemplates.TryGetValue(key, out var resolved))
+                        templatePreview.Text = $"→ {resolved}";
+                    else
+                        templatePreview.Text = $"⚠ 未定义的模板: ${key}";
+                    templatePreview.IsVisible = true;
+                }
+                else
+                {
+                    templatePreview.IsVisible = false;
+                }
+            };
+            // Trigger initial preview for edit mode
+            var initialCmd = LauncherEntryText.Normalize(_commandBox.Text ?? "");
+            if (initialCmd.StartsWith("$") && initialCmd.Length > 1)
+            {
+                var key = initialCmd[1..];
+                if (commandTemplates.TryGetValue(key, out var resolved))
+                {
+                    templatePreview.Text = $"→ {resolved}";
+                    templatePreview.IsVisible = true;
+                }
+            }
+            children.Add(templatePreview);
+        }
+        children.Add(LauncherDialogText.Subtle("启动确认由主窗口顶部开关统一控制；开启时所有启动项统一确认，关闭时所有启动项直接启动。"));
+        children.Add(_selectedBox);
+        children.Add(_errorText);
+        children.Add(footer);
+
+        var content = new StackPanel { Spacing = 10 };
+        foreach (var child in children)
+            content.Children.Add(child);
 
         Content = new Border
         {

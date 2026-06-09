@@ -281,7 +281,7 @@ $seenIds = @{}
 $selectedFields = 0
 $idx = 0
 foreach ($item in $configItems) {
-    Assert-OnlyJsonKeys $item @('id', 'name', 'directory', 'command', 'selected', 'updatedAtUtc') "Config item $idx"
+    Assert-OnlyJsonKeys $item @('id', 'name', 'directory', 'command', 'selected', 'updatedAtUtc', 'launchedAtUtc') "Config item $idx"
     foreach ($field in @('id', 'name', 'directory', 'command')) {
         if ([string]::IsNullOrWhiteSpace([string]$item.$field)) {
             throw "Config item $idx is missing field: $field"
@@ -364,7 +364,7 @@ $settingsPath = Get-LauncherSettingsPath
 if (-not (Test-Path -LiteralPath $settingsPath)) { throw "Missing portable settings: $settingsPath" }
 $settings = Get-Content -Raw -Encoding UTF8 -LiteralPath $settingsPath | ConvertFrom-Json
 if ($null -eq $settings) { throw "Settings parsed to null: $settingsPath" }
-Assert-OnlyJsonKeys $settings @('lastFilterText', 'sortMode', 'entryViewMode', 'requireConfirmationForLaunches', 'customEntryOrder', 'window') 'settings.json'
+Assert-OnlyJsonKeys $settings @('lastFilterText', 'sortMode', 'entryViewMode', 'requireConfirmationForLaunches', 'commandTemplates', 'searchHistory', 'customEntryOrder', 'window') 'settings.json'
 if ($null -eq $settings.lastFilterText) { throw 'settings.json lastFilterText is required' }
 if (-not ($settings.lastFilterText -is [string])) { throw 'settings.json lastFilterText must be string' }
 if ($null -eq $settings.customEntryOrder) { throw 'settings.json customEntryOrder is required' }

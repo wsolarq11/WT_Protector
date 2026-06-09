@@ -24,6 +24,12 @@ public sealed class LauncherSettings
     [JsonRequired]
     public List<string> CustomEntryOrder { get; set; } = [];
 
+    [JsonPropertyName("commandTemplates")]
+    public Dictionary<string, string> CommandTemplates { get; set; } = [];
+
+    [JsonPropertyName("searchHistory")]
+    public List<string> SearchHistory { get; set; } = [];
+
     [JsonPropertyName("window")]
     [JsonRequired]
     public LauncherWindowSettings Window { get; set; } = new();

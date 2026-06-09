@@ -25,4 +25,7 @@ public sealed record LaunchEntry
 
     [JsonPropertyName("updatedAtUtc")]
     public string UpdatedAtUtc { get; set; } = "";
+
+    [JsonPropertyName("launchedAtUtc")]
+    public string LaunchedAtUtc { get; set; } = "";
 }

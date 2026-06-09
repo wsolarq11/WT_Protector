@@ -16,14 +16,8 @@ public sealed record LauncherEntryDeleteTarget
 
     public string EntryName { get; }
 
-    private static string RequireEntryId(string? entryId)
-    {
-        var normalized = LauncherEntryIds.Normalize(entryId);
-        if (!LauncherEntryIds.IsUsable(normalized))
-            throw new InvalidOperationException("Launcher entry delete target id is required.");
-
-        return normalized;
-    }
+    private static string RequireEntryId(string? entryId) =>
+        LauncherEntryIds.RequireEntryId(entryId, nameof(entryId));
 
     private static string RequireEntryName(string? entryName)
     {

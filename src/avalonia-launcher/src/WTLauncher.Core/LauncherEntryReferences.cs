@@ -79,12 +79,6 @@ public static class LauncherEntryReferences
         }
     }
 
-    private static string RequireEntryId(string? entryId, string paramName)
-    {
-        var normalized = LauncherEntryIds.Normalize(entryId);
-        if (!LauncherEntryIds.IsUsable(normalized))
-            throw new ArgumentException("Entry id is required.", paramName);
-
-        return normalized;
-    }
+    private static string RequireEntryId(string? entryId, string paramName) =>
+        LauncherEntryIds.RequireEntryId(entryId, paramName);
 }

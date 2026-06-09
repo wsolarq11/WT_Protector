@@ -1,31 +1,33 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:WTLauncher.App.Views"
+        xmlns:core="clr-namespace:WTLauncher.Core;assembly=WTLauncher.Core"
         x:Class="WTLauncher.App.Views.MainWindow"
         Title="WT Launcher"
-        Width="1180"
-        Height="760"
-        MinWidth="940"
-        MinHeight="600"
-        Background="#F8FAFC"
+        Width="{StaticResource WindowDefaultWidth}"
+        Height="{StaticResource WindowDefaultHeight}"
+        MinWidth="{StaticResource WindowMinWidth}"
+        MinHeight="{StaticResource WindowMinHeight}"
+        Background="{StaticResource BackgroundBrush}"
         DragDrop.AllowDrop="True">
   <Window.Styles>
     <Style Selector="TextBlock.h1">
       <Setter Property="FontSize" Value="28"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="Foreground" Value="#0F172A"/>
+      <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
     </Style>
     <Style Selector="TextBlock.muted">
-      <Setter Property="Foreground" Value="#64748B"/>
+      <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
       <Setter Property="FontSize" Value="13"/>
     </Style>
     <Style Selector="Border.card">
-      <Setter Property="Background" Value="White"/>
-      <Setter Property="CornerRadius" Value="13"/>
-      <Setter Property="Padding" Value="13"/>
+      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
+      <Setter Property="Padding" Value="{StaticResource CardPadding}"/>
       <Setter Property="Margin" Value="0"/>
-      <Setter Property="BorderBrush" Value="#E2E8F0"/>
+      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="BoxShadow" Value="0 8 24 0 #120F172A"/>
+      <Setter Property="BoxShadow" Value="{StaticResource CardBoxShadow}"/>
       <Setter Property="Transitions">
         <Transitions>
           <DoubleTransition Property="Opacity" Duration="0:0:0.12"/>
@@ -33,6 +35,12 @@
           <ThicknessTransition Property="BorderThickness" Duration="0:0:0.12"/>
           <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12"/>
         </Transitions>
+      </Setter>
+    </Style>
+    <!-- P2: Disable transitions during drag to avoid layout thrashing -->
+    <Style Selector="ItemsControl.suppress-drag-transitions Border.card">
+      <Setter Property="Transitions">
+        <Transitions/>
       </Setter>
     </Style>
     <Style Selector="Border.card.compact">
@@ -50,52 +58,52 @@
       <Setter Property="CornerRadius" Value="0"/>
       <Setter Property="Margin" Value="0"/>
       <Setter Property="MinHeight" Value="24"/>
-      <Setter Property="BorderBrush" Value="#E2E8F0"/>
+      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
       <Setter Property="BorderThickness" Value="0,0,0,1"/>
       <Setter Property="BoxShadow" Value="0 0 0 0 #00000000"/>
     </Style>
     <Style Selector="Border.card.detail-row:pointerover">
-      <Setter Property="Background" Value="#F1F5F9"/>
+      <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
     </Style>
     <Style Selector="Border.card.detail-row.selected">
-      <Setter Property="Background" Value="#EEF2FF"/>
-      <Setter Property="BorderBrush" Value="#C7D2FE"/>
+      <Setter Property="Background" Value="{StaticResource SelectionBackgroundBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource SelectionBorderBrush}"/>
     </Style>
     <Style Selector="Border.card.detail-row.selected:pointerover">
-      <Setter Property="Background" Value="#E0E7FF"/>
+      <Setter Property="Background" Value="{StaticResource SelectionHoverBackgroundBrush}"/>
     </Style>
     <Style Selector="Border.detail-header">
-      <Setter Property="Background" Value="#F1F5F9"/>
-      <Setter Property="BorderBrush" Value="#E2E8F0"/>
+      <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
       <Setter Property="BorderThickness" Value="0,0,0,1"/>
       <Setter Property="Padding" Value="10,6"/>
     </Style>
     <Style Selector="TextBlock.detail-header-text">
       <Setter Property="FontSize" Value="12"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="Foreground" Value="#64748B"/>
+      <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
     </Style>
     <Style Selector="Border.card.name-tile">
-      <Setter Property="Background" Value="White"/>
+      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
       <Setter Property="Padding" Value="6,2"/>
       <Setter Property="CornerRadius" Value="6"/>
       <Setter Property="Margin" Value="0"/>
       <Setter Property="MinHeight" Value="24"/>
-      <Setter Property="BorderBrush" Value="#E2E8F0"/>
+      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="BoxShadow" Value="0 0 0 0 #00000000"/>
     </Style>
     <Style Selector="Border.card.name-tile:pointerover">
-      <Setter Property="Background" Value="#F1F5F9"/>
+      <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
     </Style>
     <Style Selector="Border.card.name-tile.selected">
-      <Setter Property="Background" Value="#EEF2FF"/>
-      <Setter Property="BorderBrush" Value="#C7D2FE"/>
+      <Setter Property="Background" Value="{StaticResource SelectionBackgroundBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource SelectionBorderBrush}"/>
     </Style>
     <Style Selector="TextBlock.name-title">
       <Setter Property="FontSize" Value="13"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="Foreground" Value="#0F172A"/>
+      <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
       <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
     <Style Selector="Border.card.name-tile Border.entry-drag-handle">
@@ -121,7 +129,7 @@
       <Setter Property="Background" Value="Transparent"/>
     </Style>
     <Style Selector="Border.card.drag-target">
-      <Setter Property="BorderBrush" Value="#38BDF8"/>
+      <Setter Property="BorderBrush" Value="{StaticResource DragHighlightBrush}"/>
       <Setter Property="BorderThickness" Value="2"/>
     </Style>
     <Style Selector="Border.card.drag-source">
@@ -129,7 +137,7 @@
     </Style>
     <Style Selector="Border.drag-insert">
       <Setter Property="CornerRadius" Value="2"/>
-      <Setter Property="Background" Value="#38BDF8"/>
+      <Setter Property="Background" Value="{StaticResource DragHighlightBrush}"/>
       <Setter Property="Opacity" Value="0.9"/>
       <Setter Property="IsHitTestVisible" Value="False"/>
     </Style>
@@ -151,13 +159,13 @@
     <Style Selector="TextBlock.card-title">
       <Setter Property="FontSize" Value="18"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="Foreground" Value="#0F172A"/>
+      <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
       <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
     <Style Selector="TextBlock.mono">
       <Setter Property="FontFamily" Value="Cascadia Code, Consolas"/>
       <Setter Property="FontSize" Value="12"/>
-      <Setter Property="Foreground" Value="#64748B"/>
+      <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
       <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
     <Style Selector="Grid.entry-header">
@@ -220,7 +228,7 @@
       <Setter Property="CornerRadius" Value="9"/>
     </Style>
     <Style Selector="Border.entry-drag-handle">
-      <Setter Property="Background" Value="#F1F5F9"/>
+      <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
       <Setter Property="CornerRadius" Value="8"/>
       <Setter Property="Padding" Value="8,4"/>
     </Style>
@@ -233,8 +241,8 @@
       <Setter Property="CornerRadius" Value="7"/>
     </Style>
     <Style Selector="Button.primary">
-      <Setter Property="Background" Value="#2563EB"/>
-      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+      <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="Padding" Value="16,8"/>
       <Setter Property="CornerRadius" Value="10"/>
@@ -242,23 +250,23 @@
       <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
     <Style Selector="Button.secondary">
-      <Setter Property="Background" Value="#EEF2FF"/>
-      <Setter Property="Foreground" Value="#1D4ED8"/>
+      <Setter Property="Background" Value="{StaticResource SecondaryButtonBackgroundBrush}"/>
+      <Setter Property="Foreground" Value="{StaticResource SecondaryButtonForegroundBrush}"/>
       <Setter Property="Padding" Value="14,8"/>
       <Setter Property="CornerRadius" Value="10"/>
       <Setter Property="HorizontalContentAlignment" Value="Center"/>
       <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
     <Style Selector="Border.control-box">
-      <Setter Property="Background" Value="#FFFFFF"/>
-      <Setter Property="BorderBrush" Value="#E2E8F0"/>
+      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="14"/>
       <Setter Property="Padding" Value="10"/>
       <Setter Property="VerticalAlignment" Value="Stretch"/>
     </Style>
     <Style Selector="TextBlock.control-box-label">
-      <Setter Property="Foreground" Value="#475569"/>
+      <Setter Property="Foreground" Value="{StaticResource ControlBoxLabelBrush}"/>
       <Setter Property="FontSize" Value="12"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="Margin" Value="0,0,0,6"/>
@@ -276,11 +284,11 @@
                   Orientation="Horizontal"
                   Spacing="10"
                   VerticalAlignment="Top">
-        <Border Background="#ECFDF5"
+        <Border Background="{StaticResource BadgeSuccessBackgroundBrush}"
                 CornerRadius="14"
                 Padding="12,8"
                 VerticalAlignment="Center">
-          <TextBlock Foreground="#047857">
+          <TextBlock Foreground="{StaticResource BadgeSuccessForegroundBrush}">
             <Run Text="已勾选 "/>
             <Run Text="{Binding SelectedCount}"/>
             <Run Text=" 项"/>
@@ -311,14 +319,15 @@
       <Grid x:Name="ControlBoxesGrid"
             Grid.Row="2"
             Grid.ColumnSpan="2"
-            ColumnDefinitions="2.2*,1.1*,1.1*,2.2*"
+            ColumnDefinitions="1.8*,1*,1*,2.8*"
             ColumnSpacing="12"
             Margin="0,12,0,0">
         <Border Classes="control-box">
           <StackPanel>
             <TextBlock Classes="control-box-label"
                        Text="搜索"/>
-            <TextBox PlaceholderText="搜索名称、目录或命令"
+            <TextBox x:Name="SearchTextBox"
+                     PlaceholderText="搜索名称、目录或命令"
                      Text="{Binding FilterText, Mode=TwoWay}"
                      FontSize="16"
                      Padding="12,8"/>
@@ -329,6 +338,7 @@
           <StackPanel>
             <TextBlock Classes="control-box-label"
                        Text="排序"/>
+            <!-- P3: Removed DropDownClosed — OnSelectedSortModeChanged already calls ApplyFilter -->
             <ComboBox ItemsSource="{Binding SortModes}"
                       SelectedItem="{Binding SelectedSortMode, Mode=TwoWay}"
                       HorizontalAlignment="Stretch"/>
@@ -339,6 +349,7 @@
           <StackPanel>
             <TextBlock Classes="control-box-label"
                        Text="视图"/>
+            <!-- P3: Removed DropDownClosed — OnSelectedDisplayModeChanged already calls Refresh+save -->
             <ComboBox ItemsSource="{Binding DisplayModes}"
                       SelectedItem="{Binding SelectedDisplayMode, Mode=TwoWay}"
                       HorizontalAlignment="Stretch"/>
@@ -366,12 +377,12 @@
             <Button Grid.Row="1"
                     Grid.Column="2"
                     Classes="secondary"
-                    Content="预演当前组"
+                    Content="预演"
                     Command="{Binding PreviewSelectedPresetCommand}"/>
             <Button Grid.Row="1"
                     Grid.Column="3"
                     Classes="primary"
-                    Content="启动当前组"
+                    Content="启动"
                     Command="{Binding LaunchSelectedPresetCommand}"/>
           </Grid>
         </Border>
@@ -393,12 +404,12 @@
         <Button Classes="secondary"
                 Content="删除当前启动组"
                 Command="{Binding DeleteSelectedPresetCommand}"/>
-        <Border Background="#E0F2FE"
+        <Border Background="{StaticResource BadgeInfoBackgroundBrush}"
                 CornerRadius="14"
                 Padding="12,7"
                 Margin="12,0,0,0"
                 VerticalAlignment="Center">
-          <TextBlock Foreground="#0369A1">
+          <TextBlock Foreground="{StaticResource BadgeInfoForegroundBrush}">
             <Run Text="{Binding VisibleCount}"/>
             <Run Text=" / "/>
             <Run Text="{Binding TotalCount}"/>
@@ -423,7 +434,7 @@
                       IsVisible="{Binding IsCardsViewMode}">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
-              <WrapPanel ItemSpacing="8" LineSpacing="8"/>
+              <views:FastWrapPanel ItemSpacing="{x:Static core:LauncherDesignTokens.SpacingSmall}" LineSpacing="{x:Static core:LauncherDesignTokens.SpacingSmall}"/>
             </ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
@@ -447,6 +458,8 @@
                               Command="{Binding MoveUpCommand}"/>
                     <MenuItem Header="下移排序"
                               Command="{Binding MoveDownCommand}"/>
+                    <MenuItem Header="复制"
+                              Command="{Binding CloneCommand}"/>
                     <MenuItem Header="编辑"
                               Command="{Binding EditCommand}"/>
                     <MenuItem Header="删除"
@@ -513,7 +526,7 @@
                             AutomationProperties.Name="拖拽排序"
                             PointerPressed="OnEntryDragPointerPressed">
                       <TextBlock Text="拖拽"
-                                 Foreground="#334155"
+                                 Foreground="{StaticResource DragHandleTextBrush}"
                                  FontSize="12"
                                  HorizontalAlignment="Center"
                                  VerticalAlignment="Center"/>
@@ -524,14 +537,18 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-
+        <TextBlock HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontSize="16"
+                   Foreground="{StaticResource TextMutedBrush}"
+                   Text="没有匹配的启动项"/>
       </Grid>
       </ScrollViewer>
 
       <Grid IsVisible="{Binding IsDetailedListMode}">
-        <Border Background="White"
-                CornerRadius="13"
-                BorderBrush="#E2E8F0"
+        <Border Background="{StaticResource SurfaceBrush}"
+                CornerRadius="{StaticResource CardBorderRadius}"
+                BorderBrush="{StaticResource CardBorderBrush}"
                 BorderThickness="1"
                 ClipToBounds="True">
           <Grid RowDefinitions="Auto,*">
@@ -578,11 +595,13 @@
                         <MenuItem Header="上移排序"
                                   Command="{Binding MoveUpCommand}"/>
                         <MenuItem Header="下移排序"
-                                  Command="{Binding MoveDownCommand}"/>
+                              Command="{Binding MoveDownCommand}"/>
+                        <MenuItem Header="复制"
+                              Command="{Binding CloneCommand}"/>
                         <MenuItem Header="编辑"
-                                  Command="{Binding EditCommand}"/>
+                              Command="{Binding EditCommand}"/>
                         <MenuItem Header="删除"
-                                  Command="{Binding DeleteCommand}"/>
+                              Command="{Binding DeleteCommand}"/>
                       </ContextMenu>
                     </Border.ContextMenu>
                     <Grid ColumnDefinitions="Auto,2*,2*,3*,Auto"
@@ -646,7 +665,7 @@
                                 AutomationProperties.Name="拖拽排序"
                                 PointerPressed="OnEntryDragPointerPressed">
                           <TextBlock Text="≡"
-                                     Foreground="#334155"
+                                     Foreground="{StaticResource DragHandleTextBrush}"
                                      FontSize="12"
                                      HorizontalAlignment="Center"
                                      VerticalAlignment="Center"/>
@@ -668,7 +687,7 @@
                       ItemsSource="{Binding VisibleEntries}">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
-              <WrapPanel ItemSpacing="6" LineSpacing="4"/>
+              <views:FastWrapPanel ItemSpacing="{x:Static core:LauncherDesignTokens.NameTileGap}" LineSpacing="{x:Static core:LauncherDesignTokens.NameTileRowGap}"/>
             </ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
@@ -692,6 +711,8 @@
                               Command="{Binding MoveUpCommand}"/>
                     <MenuItem Header="下移排序"
                               Command="{Binding MoveDownCommand}"/>
+                    <MenuItem Header="复制"
+                              Command="{Binding CloneCommand}"/>
                     <MenuItem Header="编辑"
                               Command="{Binding EditCommand}"/>
                     <MenuItem Header="删除"
@@ -730,7 +751,7 @@
                           AutomationProperties.Name="拖拽排序"
                           PointerPressed="OnEntryDragPointerPressed">
                     <TextBlock Text="≡"
-                               Foreground="#64748B"
+                               Foreground="{StaticResource TextMutedBrush}"
                                FontSize="11"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"/>
@@ -744,16 +765,16 @@
     </Grid>
 
     <Border Grid.Row="2"
-            Background="White"
+            Background="{StaticResource SurfaceBrush}"
             CornerRadius="16"
-            BorderBrush="#E2E8F0"
+            BorderBrush="{StaticResource CardBorderBrush}"
             BorderThickness="1"
             Padding="16">
       <Grid RowDefinitions="Auto,Auto">
         <TextBlock Text="{Binding StatusText}"
                    FontSize="14"
                    FontWeight="SemiBold"
-                   Foreground="#0F172A"/>
+                   Foreground="{StaticResource TextPrimaryBrush}"/>
         <TextBlock Grid.Row="1"
                    Margin="0,8,0,0"
                    Classes="mono"

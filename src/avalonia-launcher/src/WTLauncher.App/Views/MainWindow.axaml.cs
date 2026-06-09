@@ -11,6 +11,7 @@ public sealed partial class MainWindow : Window
 {
     private const double CardsRegionHorizontalChromeWidth = 48;
     private const double CardsRegionVerticalChromeHeight = 270;
+    private int _keyboardFocusIndex;
 
     public MainWindow()
     {
@@ -25,13 +26,14 @@ public sealed partial class MainWindow : Window
         viewModel.ConfirmBatchLaunchAsync = confirmation => new ConfirmBatchLaunchWindow(confirmation).ShowDialog<bool>(this);
         viewModel.RequestNewPresetAsync = target => new PresetDetailsWindow(target).ShowDialog<string?>(this);
         viewModel.ConfirmDeletePresetAsync = target => new ConfirmPresetDeleteWindow(target).ShowDialog<bool>(this);
-        viewModel.RequestEntryDraftAsync = entry => new EntryDetailsWindow(entry).ShowDialog<EntryDraft?>(this);
+        viewModel.RequestEntryDraftAsync = entry => new EntryDetailsWindow(entry, viewModel.GetPresetReferenceCount(entry?.Id ?? ""), viewModel.CommandTemplates).ShowDialog<EntryDraft?>(this);
         viewModel.ConfirmDeleteEntryAsync = target => new ConfirmEntryDeleteWindow(target).ShowDialog<bool>(this);
         DragDrop.AddDragOverHandler(this, OnEntryDragOver);
         DragDrop.AddDropHandler(this, OnEntryDrop);
         SizeChanged += (_, _) => UpdateCardRegionSize(viewModel);
         Opened += (_, _) => UpdateCardRegionSize(viewModel);
         Closing += OnClosing;
+        KeyDown += OnWindowKeyDown;
     }
 
     private void UpdateCardRegionSize(MainWindowViewModel viewModel)
@@ -75,10 +77,77 @@ public sealed partial class MainWindow : Window
         e.Handled = true;
     }
 
+    private void OnWindowKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+            return;
+
+        if (e.Key == Key.F && e.KeyModifiers == KeyModifiers.Control)
+        {
+            SearchTextBox.Focus();
+            SearchTextBox.SelectAll();
+            e.Handled = true;
+            return;
+        }
+
+        if (HandleKeyboardNavigation(e, viewModel))
+            return;
+    }
+
+    private bool HandleKeyboardNavigation(KeyEventArgs e, MainWindowViewModel viewModel)
+    {
+        var visibleCount = viewModel.VisibleEntries.Count;
+        if (visibleCount == 0)
+        {
+            if (e.Key == Key.Escape)
+            {
+                viewModel.FilterText = "";
+                e.Handled = true;
+                return true;
+            }
+            return false;
+        }
+
+        var searchFocused = SearchTextBox.IsFocused;
+        switch (e.Key)
+        {
+            case Key.Down when !searchFocused:
+                _keyboardFocusIndex = Math.Min(_keyboardFocusIndex + 1, visibleCount - 1);
+                e.Handled = true;
+                return true;
+            case Key.Up when !searchFocused:
+                _keyboardFocusIndex = Math.Max(_keyboardFocusIndex - 1, 0);
+                e.Handled = true;
+                return true;
+            case Key.Enter when !searchFocused:
+                if (_keyboardFocusIndex >= 0 && _keyboardFocusIndex < visibleCount)
+                {
+                    var entry = viewModel.VisibleEntries[_keyboardFocusIndex];
+                    if (entry.LaunchCommand.CanExecute(null))
+                        entry.LaunchCommand.Execute(null);
+                }
+                e.Handled = true;
+                return true;
+            case Key.Escape:
+                viewModel.FilterText = "";
+                _keyboardFocusIndex = 0;
+                e.Handled = true;
+                return true;
+        }
+
+        return false;
+    }
+
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
         if (DataContext is MainWindowViewModel viewModel)
             viewModel.TrySaveWindowBounds(Width, Height);
+    }
+
+    private void OnFilterDropDownClosed(object? sender, EventArgs e)
+    {
+        if (DataContext is MainWindowViewModel viewModel)
+            viewModel.ApplyFilterAfterDropDown();
     }
 }
 
