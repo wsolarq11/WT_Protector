@@ -23,7 +23,7 @@ public static class LauncherPresetFiles
 
         var presetRows = presets.Presets
             ?? throw new InvalidDataException("Launcher preset list is null.");
-        var normalizedPresets = new List<LauncherPreset>();
+        List<LauncherPreset> normalizedPresets = [];
         var usedPresetIds = new HashSet<string>(LauncherPresetIds.Comparer);
         var index = 0;
         foreach (var presetRow in presetRows)
