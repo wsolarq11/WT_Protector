@@ -187,3 +187,35 @@ var presetClone = LauncherPresetFiles.Clone(presetFile);
 - ❌ **Magic strings for identifiers** — use `const` fields from the paired helper class.
 - ❌ **Avalonia or CommunityToolkit types in Core** — zero UI dependencies in Layer 0.
 - ❌ **`Dictionary<string, object>` or `dynamic`** — always define a typed record or class.
+
+---
+
+## Accepted Design Decisions
+
+These patterns may appear suboptimal to automated reviewers but are intentional architectural choices:
+
+### String Timestamps (Not DateTimeOffset)
+
+`LaunchEntry.UpdatedAtUtc` and `LaunchEntry.LaunchedAtUtc` are typed as `string`, not `DateTimeOffset`.
+
+**Why:** JSON config files are human-readable and user-editable. ISO 8601 strings (`"2026-06-23T12:00:00Z"`) are universally parseable. Switching to `DateTimeOffset` with a custom converter would:
+1. Break all existing user config files (format change)
+2. Add serialization complexity without user benefit
+3. Require migration logic for zero functional gain
+
+The `ParseLaunchedAt`/`ParseUpdatedAt` helpers in `LauncherEntryVisibility` are the single validation point. String timestamps are validated at parse time, not at rest.
+
+### String Color Tokens (Not Typed Color/ARGB)
+
+`LauncherDesignTokens` stores colors as `const string` hex values (e.g., `"#2563EB"`).
+
+**Why:** Avalonia XAML resource dictionaries consume colors via `Brush.Parse()`. The const strings are directly assignable to `StaticResource` in XAML. Switching to a typed `Color`/`SolidColorBrush` would:
+1. Break XAML `StaticResource` references (XAML cannot consume C# constants of non-string types)
+2. Require runtime conversion in `App.axaml.cs` (already done — the string→Brush conversion happens ONCE at startup)
+3. Add a dependency on Avalonia.Media in Core layer (violates zero-UI-dependency invariant)
+
+### Enum + String ID Duality
+
+Every enum has a paired static helper class with `const string` IDs and `NormalizeId()`/`ToId()` methods.
+
+**Why:** JSON persistence uses string identifiers for forward compatibility. If a future version adds a new enum member, old config files with the string ID still deserialize correctly (the string is unrecognized → `InvalidDataException` with a clear message). If we serialized enum ordinals, adding a member would silently shift all values. See `LauncherEntryViewMode` + `LauncherEntryViewModes` for the canonical example.
