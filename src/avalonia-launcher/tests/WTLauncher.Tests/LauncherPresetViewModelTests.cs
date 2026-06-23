@@ -75,9 +75,7 @@ public sealed class LauncherPresetViewModelTests
             EntryIds = ["one", " one "],
         };
 
-        var viewModel = new LauncherPresetViewModel(preset);
-
-        var exception = Assert.Throws<ArgumentException>(() => viewModel.EntryCount);
+        var exception = Assert.Throws<ArgumentException>(() => new LauncherPresetViewModel(preset));
 
         Assert.Equal("EntryIds", exception.ParamName);
     }
@@ -93,9 +91,7 @@ public sealed class LauncherPresetViewModelTests
             Locked = true,
         };
 
-        var viewModel = new LauncherPresetViewModel(preset);
-
-        var exception = Assert.Throws<ArgumentException>(() => viewModel.Label);
+        var exception = Assert.Throws<ArgumentException>(() => new LauncherPresetViewModel(preset));
 
         Assert.Equal("EntryIds", exception.ParamName);
     }

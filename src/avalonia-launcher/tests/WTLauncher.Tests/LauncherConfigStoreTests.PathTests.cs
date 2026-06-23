@@ -7,21 +7,24 @@ public sealed partial class LauncherConfigStoreTests
     [Fact]
     public void ResolveConfigPath_PrefersExplicitPath()
     {
-        var explicitPath = Path.Combine("somewhere", LauncherConfigStore.ConfigFileName);
+        using var temp = new TempDirectory();
+        var config = WriteEmptyLauncherConfig(temp.Path);
 
-        var resolved = LauncherConfigStore.ResolveConfigPath(explicitPath, currentDirectory: "ignored", appBaseDirectory: "ignored");
+        var resolved = LauncherConfigStore.ResolveConfigPath(config, currentDirectory: "ignored", appBaseDirectory: "ignored");
 
-        Assert.EndsWith(Path.Combine("somewhere", LauncherConfigStore.ConfigFileName), resolved);
+        Assert.Equal(config, resolved);
     }
 
     [Fact]
     public void ResolveConfigPath_TrimsExplicitPath()
     {
-        var explicitPath = $" {Path.Combine("somewhere", LauncherConfigStore.ConfigFileName)} ";
+        using var temp = new TempDirectory();
+        var config = WriteEmptyLauncherConfig(temp.Path);
+        var untrimmedPath = $" {config} ";
 
-        var resolved = LauncherConfigStore.ResolveConfigPath(explicitPath, currentDirectory: "ignored", appBaseDirectory: "ignored");
+        var resolved = LauncherConfigStore.ResolveConfigPath(untrimmedPath, currentDirectory: "ignored", appBaseDirectory: "ignored");
 
-        Assert.EndsWith(Path.Combine("somewhere", LauncherConfigStore.ConfigFileName), resolved);
+        Assert.Equal(config, resolved);
     }
 
     [Theory]

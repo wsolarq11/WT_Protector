@@ -554,9 +554,15 @@
           <Grid RowDefinitions="Auto,*">
             <Border Classes="detail-header"
                     CornerRadius="13 13 0 0">
-              <Grid ColumnDefinitions="Auto,2*,2*,3*,Auto"
-                    ColumnSpacing="12"
+              <Grid ColumnSpacing="12"
                     VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="{StaticResource DetailsNameColumnWidth}"/>
+                  <ColumnDefinition Width="{StaticResource DetailsDirectoryColumnWidth}"/>
+                  <ColumnDefinition Width="{StaticResource DetailsCommandColumnWidth}"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
                 <!-- align with rows: checkbox + columns -->
                 <CheckBox IsEnabled="False"
                           Opacity="0"/>
@@ -604,9 +610,15 @@
                               Command="{Binding DeleteCommand}"/>
                       </ContextMenu>
                     </Border.ContextMenu>
-                    <Grid ColumnDefinitions="Auto,2*,2*,3*,Auto"
-                          ColumnSpacing="12"
+                    <Grid ColumnSpacing="12"
                           VerticalAlignment="Center">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="{StaticResource DetailsNameColumnWidth}"/>
+                        <ColumnDefinition Width="{StaticResource DetailsDirectoryColumnWidth}"/>
+                        <ColumnDefinition Width="{StaticResource DetailsCommandColumnWidth}"/>
+                        <ColumnDefinition Width="Auto"/>
+                      </Grid.ColumnDefinitions>
                       <!-- insertion preview -->
                       <Border Grid.ColumnSpan="5"
                               Classes="drag-insert"

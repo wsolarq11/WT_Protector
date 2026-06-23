@@ -21,8 +21,6 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `docs/reference/github-similar-projects-snapshot.json` — current GitHub similar-project evidence used by the feature north-star audit.
 - `tools/update-github-similar-projects-snapshot.ps1` — refreshes that market snapshot through `gh repo view`; the root gate rejects stale snapshots.
 - `docs/giants-shoulders/` — "巨人肩膀库": curated external project lessons and source links for future stack/reflection decisions.
-- `omx_wiki/` — project knowledge base for durable local decisions, patterns, and learning summaries.
-
 The old root `WT Launcher.exe`, old `src/winforms-launcher/`, and old `spikes/` directory are intentionally retired. The former Avalonia spike is now the source mainline under `src/avalonia-launcher/`.
 
 ## Configuration schema
@@ -92,6 +90,7 @@ Portable UI settings live beside the launch config:
   "entryViewMode": "cards",
   "requireConfirmationForLaunches": true,
   "customEntryOrder": ["启动脚本", "WT_Protector"],
+  "searchHistory": ["w", "wt"],
   "window": {
     "width": 1180,
     "height": 760
@@ -106,6 +105,7 @@ Additional settings fields:
 - `requireConfirmationForLaunches` — global launch-confirmation toggle persisted with the other portable UI settings.
 - `customEntryOrder` — stable entry-id order used by the "自定义拖拽" mode and persisted after drag-drop reorder.
 - `commandTemplates` — optional dictionary of reusable command templates. When a config entry's `command` starts with `$` followed by a key (e.g. `$codex`), the launcher resolves it to the template value from this map. Missing template keys cause a launch validation error.
+- `searchHistory` — optional deduplicated list of recent filter-text terms. Maintained as a JSON array of strings; the launcher validates the array must not be null but does not currently expose search history in the UI.
 
 ## Run the mainline app
 

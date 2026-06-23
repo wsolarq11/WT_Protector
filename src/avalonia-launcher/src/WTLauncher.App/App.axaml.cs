@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
@@ -60,6 +61,9 @@ public sealed partial class App : Application
         // ── Dimensions / Spacing ────────────────────────────
         Resources["CardBorderRadius"] = new CornerRadius(LauncherDesignTokens.CardBorderRadius);
         Resources["CardPadding"] = new Thickness(LauncherDesignTokens.CardPadding);
+        Resources["DetailsNameColumnWidth"] = new GridLength(LauncherDesignTokens.DetailsNameColumnWeight, GridUnitType.Star);
+        Resources["DetailsDirectoryColumnWidth"] = new GridLength(LauncherDesignTokens.DetailsDirectoryColumnWeight, GridUnitType.Star);
+        Resources["DetailsCommandColumnWidth"] = new GridLength(LauncherDesignTokens.DetailsCommandColumnWeight, GridUnitType.Star);
         Resources["WindowDefaultWidth"] = LauncherDesignTokens.WindowDefaultWidth;
         Resources["WindowDefaultHeight"] = LauncherDesignTokens.WindowDefaultHeight;
         Resources["WindowMinWidth"] = LauncherDesignTokens.WindowMinWidth;
@@ -71,30 +75,38 @@ public sealed partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        try
         {
-            var configPath = LauncherConfigStore.ResolveConfigPath(
-                LauncherStartupArguments.ReadConfigPath(desktop.Args),
-                Environment.CurrentDirectory,
-                AppContext.BaseDirectory);
-            var settingsPath = LauncherConfigStore.ResolveSettingsPath(configPath);
-            var settings = LauncherSettingsStore.Load(settingsPath);
-            var launchWorkflow = new LauncherLaunchWorkflow(new LauncherProcess());
-            var viewModel = new MainWindowViewModel(
-                configPath,
-                settingsPath,
-                settings,
-                launchWorkflow,
-                static () => DateTimeOffset.UtcNow);
-            var mainWindow = new MainWindow(viewModel)
+            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                Width = settings.Window.Width,
-                Height = settings.Window.Height,
-            };
-            desktop.MainWindow = mainWindow;
-        }
+                var configPath = LauncherConfigStore.ResolveConfigPath(
+                    LauncherStartupArguments.ReadConfigPath(desktop.Args),
+                    Environment.CurrentDirectory,
+                    AppContext.BaseDirectory);
+                var settingsPath = LauncherConfigStore.ResolveSettingsPath(configPath);
+                var settings = LauncherSettingsStore.Load(settingsPath);
+                var launchWorkflow = new LauncherLaunchWorkflow(new LauncherProcess());
+                var viewModel = new MainWindowViewModel(
+                    configPath,
+                    settingsPath,
+                    settings,
+                    launchWorkflow,
+                    static () => DateTimeOffset.UtcNow);
+                var mainWindow = new MainWindow(viewModel)
+                {
+                    Width = settings.Window.Width,
+                    Height = settings.Window.Height,
+                };
+                desktop.MainWindow = mainWindow;
+            }
 
-        base.OnFrameworkInitializationCompleted();
+            base.OnFrameworkInitializationCompleted();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[WTLauncher] Fatal startup error: {ex}");
+            Environment.ExitCode = 1;
+        }
     }
 
 }

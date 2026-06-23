@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace WTLauncher.Core;
 
-public sealed record LaunchEntry
+public sealed class LaunchEntry
 {
     [JsonPropertyName("id")]
     [JsonRequired]
@@ -28,4 +28,15 @@ public sealed record LaunchEntry
 
     [JsonPropertyName("launchedAtUtc")]
     public string LaunchedAtUtc { get; set; } = "";
+
+    public LaunchEntry Clone() => new()
+    {
+        Id = Id,
+        Name = Name,
+        Directory = Directory,
+        Command = Command,
+        Selected = Selected,
+        UpdatedAtUtc = UpdatedAtUtc,
+        LaunchedAtUtc = LaunchedAtUtc,
+    };
 }

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using WTLauncher.Core;
 
 namespace WTLauncher.Tests;

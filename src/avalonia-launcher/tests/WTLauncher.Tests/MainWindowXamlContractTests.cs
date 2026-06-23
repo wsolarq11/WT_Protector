@@ -122,7 +122,7 @@ public sealed class MainWindowXamlContractTests
         Assert.DoesNotContain("if (viewModel.PreviewMoveEntry", dragCodeBehind);
         // Lazy capture: WouldChangePreview guard runs first (O(1) string compare),
         // then PreviewMoveEntry only when target actually changed.
-        // FLIP animation (_reorderAnimationScheduler) skipped during active drag.
+        // FLIP animation infrastructure removed (dead code eliminated).
         AssertInOrder(
             dragCodeBehind,
             "WouldChangePreview(draggedId, target.Entry.Id, insertAfter)",
@@ -130,11 +130,9 @@ public sealed class MainWindowXamlContractTests
             "viewModel.PreviewMoveEntry");
         Assert.DoesNotContain("_pendingReorderAnimationAttached", dragCodeBehind);
         Assert.DoesNotContain("_pendingReorderAnimationSnapshot", dragCodeBehind);
-        Assert.DoesNotContain("_reorderAnimationScheduler.Schedule(", dragCodeBehind);
-        // FLIP animation scheduler infrastructure retained for future use;
-        // Schedule() not called during active drag (P2-3 optimization).
-        Assert.Contains("_reorderAnimationScheduler.Consume(", dragCodeBehind);
-        Assert.Contains("FLIP: jump back without transition", dragCodeBehind);
+        Assert.DoesNotContain("_reorderAnimationScheduler", dragCodeBehind);
+        Assert.DoesNotContain("OnEntriesLayoutUpdated", dragCodeBehind);
+        Assert.DoesNotContain("FLIP", dragCodeBehind);
     }
 
     [Fact]

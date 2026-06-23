@@ -18,7 +18,7 @@ public static class LauncherSettingsStore
         ArgumentNullException.ThrowIfNull(settings);
         ThrowIfSettingsPathMissing(settingsPath);
 
-        LauncherJson.Save(CloneNormalized(settings), settingsPath, backup: false);
+        LauncherJson.Save(CloneNormalized(settings), settingsPath, backup: true);
     }
 
     public static bool TrySaveWindowBounds(LauncherSettings settings, string settingsPath, double width, double height)
@@ -35,14 +35,14 @@ public static class LauncherSettingsStore
 
         try
         {
-            LauncherJson.Save(normalized, settingsPath, backup: false);
+            LauncherJson.Save(normalized, settingsPath, backup: true);
             LauncherSettingsCopies.CopyTo(normalized, settings);
             return true;
         }
         // Close-time bounds persistence must not leave unsaved sizes in memory.
         // Write failures can surface as IOException, UnauthorizedAccessException,
         // or other path/storage exceptions depending on the underlying cause.
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or InvalidDataException)
         {
             snapshot.Restore(settings);
             return false;

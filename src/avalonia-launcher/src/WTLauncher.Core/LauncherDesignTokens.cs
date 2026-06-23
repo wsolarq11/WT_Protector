@@ -58,6 +58,11 @@ public static class LauncherDesignTokens
     public const double NameTileGap = 6;
     public const double NameTileRowGap = 4;
 
+    // ── Details view column proportions ─────────────────────
+    public const double DetailsNameColumnWeight = 2;
+    public const double DetailsDirectoryColumnWeight = 2;
+    public const double DetailsCommandColumnWeight = 3;
+
     // ── Window ──────────────────────────────────────────────
     public const double WindowDefaultWidth = 1180;
     public const double WindowDefaultHeight = 760;

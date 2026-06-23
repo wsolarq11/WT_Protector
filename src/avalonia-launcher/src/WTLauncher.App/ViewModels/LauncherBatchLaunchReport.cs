@@ -10,6 +10,7 @@ public sealed class LauncherBatchLaunchReport
         int requestedCount = 0,
         int skippedCount = 0,
         string? lastCommandLine = null,
+        int? failureIndex = null,
         IEnumerable<string>? failureMessages = null)
     {
         if (requestedCount < 0)
@@ -26,6 +27,7 @@ public sealed class LauncherBatchLaunchReport
         RequestedCount = requestedCount;
         SkippedCount = skippedCount;
         LastCommandLine = lastCommandLine;
+        FailureIndex = failureIndex;
         _failureMessages = Array.AsReadOnly(CloneFailureMessages(failureMessages));
     }
 
@@ -36,6 +38,8 @@ public sealed class LauncherBatchLaunchReport
     public int SkippedCount { get; }
 
     public string? LastCommandLine { get; }
+
+    public int? FailureIndex { get; }
 
     public IReadOnlyList<string> FailureMessages => _failureMessages;
 
@@ -83,8 +87,10 @@ internal sealed class LauncherBatchLaunchReportBuilder
 
     public string? LastCommandLine { get; private set; }
 
+    public int? FailureIndex { get; private set; }
+
     public LauncherBatchLaunchReport ToReport() =>
-        new(RequestedCount, SkippedCount, LastCommandLine, _failures);
+        new(RequestedCount, SkippedCount, LastCommandLine, FailureIndex, _failures);
 
     public void RecordPlan(LaunchPlan plan)
     {
@@ -107,9 +113,20 @@ internal sealed class LauncherBatchLaunchReportBuilder
 
     public void RecordFailure(string entryName, Exception exception)
     {
+        RecordFailure(entryName, failureIndex: null, exception);
+    }
+
+    public void RecordFailure(string entryName, int failureIndex, Exception exception)
+    {
+        RecordFailure(entryName, (int?)failureIndex, exception);
+    }
+
+    private void RecordFailure(string entryName, int? failureIndex, Exception exception)
+    {
         ArgumentNullException.ThrowIfNull(entryName);
         ArgumentNullException.ThrowIfNull(exception);
         _failures.Add($"{RequireEntryName(entryName)}: {exception.Message}");
+        FailureIndex ??= failureIndex;
     }
 
     public void RecordFailure(Exception exception)

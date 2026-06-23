@@ -40,7 +40,11 @@ public static class LauncherConfigStore
             if (trimmedExplicitPath.Length == 0)
                 throw new ArgumentException("Explicit config path is required.", nameof(explicitPath));
 
-            return Path.GetFullPath(trimmedExplicitPath);
+            var fullPath = Path.GetFullPath(trimmedExplicitPath);
+            if (!File.Exists(fullPath))
+                throw new FileNotFoundException($"Config file not found: {fullPath}", fullPath);
+
+            return fullPath;
         }
 
         string?[] candidateRoots = [currentDirectory, appBaseDirectory];
@@ -179,13 +183,13 @@ public static class LauncherConfigStore
         entry.Name = RequireEntryText(entry.Name, index, "name");
         entry.Directory = RequireEntryText(entry.Directory, index, "directory");
         entry.Command = RequireEntryText(entry.Command, index, "command");
-        entry.UpdatedAtUtc = NormalizeOptionalEntryText(entry.UpdatedAtUtc, index, "updatedAtUtc");
-        entry.LaunchedAtUtc = NormalizeOptionalEntryText(entry.LaunchedAtUtc, index, "launchedAtUtc");
+        entry.UpdatedAtUtc = NormalizeTimestampEntryText(entry.UpdatedAtUtc, index, "updatedAtUtc");
+        entry.LaunchedAtUtc = NormalizeTimestampEntryText(entry.LaunchedAtUtc, index, "launchedAtUtc");
         return entry;
     }
 
     private static LaunchEntry CloneNormalized(LaunchEntry entry, int index, HashSet<string> seenIds) =>
-        Normalize(entry with { }, index, seenIds);
+        Normalize(entry.Clone(), index, seenIds);
 
     private static string RequireEntryId(string? id, int index, HashSet<string> seenIds)
     {
@@ -209,7 +213,7 @@ public static class LauncherConfigStore
         return normalized;
     }
 
-    private static string NormalizeOptionalEntryText(string? value, int index, string fieldName)
+    private static string NormalizeTimestampEntryText(string? value, int index, string fieldName)
     {
         if (value is null)
             throw new InvalidDataException($"Launcher config entry {index} {fieldName} is null.");

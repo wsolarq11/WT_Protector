@@ -22,12 +22,13 @@ public static class MainWindowDragGhostFactory
             Width = layout.Width,
             Height = layout.Height,
             Classes = { MainWindowEntryClasses.Card },
-            Background = Brushes.White,
-            BorderBrush = Brush.Parse("#38BDF8"),
+            Background = Brush.Parse(LauncherDesignTokens.SurfaceColor),
+            BorderBrush = Brush.Parse(LauncherDesignTokens.DragHighlightColor),
             BorderThickness = new Thickness(2),
-            CornerRadius = new CornerRadius(13),
+            CornerRadius = new CornerRadius(LauncherDesignTokens.CardBorderRadius),
             Opacity = 0.86,
             IsHitTestVisible = false,
+            // Drag ghost shadow uses alpha 22 (0x22 ≈ 13 %) vs CardBoxShadow alpha 12 (0x12 ≈ 7 %).
             BoxShadow = new BoxShadows(new BoxShadow
             {
                 OffsetX = 0,
@@ -38,7 +39,7 @@ public static class MainWindowDragGhostFactory
             }),
             Child = new StackPanel
             {
-                Margin = new Thickness(13),
+                Margin = new Thickness(LauncherDesignTokens.CardPadding),
                 Spacing = 8,
                 IsHitTestVisible = false,
                 Children =
@@ -48,7 +49,7 @@ public static class MainWindowDragGhostFactory
                         Text = name,
                         FontSize = titleFontSize,
                         FontWeight = FontWeight.SemiBold,
-                        Foreground = Brush.Parse("#0F172A"),
+                        Foreground = Brush.Parse(LauncherDesignTokens.TextPrimaryColor),
                         TextTrimming = TextTrimming.CharacterEllipsis,
                         IsHitTestVisible = false,
                     },
@@ -57,7 +58,7 @@ public static class MainWindowDragGhostFactory
                         Text = directory,
                         FontFamily = FontFamily.Parse("Cascadia Code, Consolas"),
                         FontSize = 12,
-                        Foreground = Brush.Parse("#64748B"),
+                        Foreground = Brush.Parse(LauncherDesignTokens.TextMutedColor),
                         TextTrimming = TextTrimming.CharacterEllipsis,
                         IsHitTestVisible = false,
                     },

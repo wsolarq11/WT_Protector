@@ -1,5 +1,4 @@
 using Avalonia;
-using Avalonia.Threading;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using WTLauncher.Core;
@@ -64,7 +63,6 @@ public sealed partial class MainWindowViewModel
     {
         var snapshot = CaptureSettingsMutationSnapshot();
         _settings.LastFilterText = value;
-        RecordSearchHistory(value);
         var saveFailure = SaveSettingsChange(snapshot);
         if (saveFailure is not null)
         {
@@ -76,24 +74,6 @@ public sealed partial class MainWindowViewModel
         }
 
         ApplyFilter();
-    }
-
-    private static void RecordSearchHistoryValue(List<string> history, string value)
-    {
-        var trimmed = LauncherEntryText.Normalize(value);
-        if (trimmed.Length == 0)
-            return;
-
-        history.RemoveAll(term => string.Equals(term, trimmed, StringComparison.OrdinalIgnoreCase));
-        history.Insert(0, trimmed);
-        const int maxHistory = 20;
-        if (history.Count > maxHistory)
-            history.RemoveRange(maxHistory, history.Count - maxHistory);
-    }
-
-    private void RecordSearchHistory(string value)
-    {
-        RecordSearchHistoryValue(_settings.SearchHistory, value);
     }
 
     partial void OnSelectedSortModeChanging(LauncherSortModeViewModel? value)

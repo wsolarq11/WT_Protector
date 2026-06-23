@@ -1,6 +1,6 @@
 # WT Launcher / WT Protector
 
-A local Windows Terminal launcher for quickly opening saved workspaces with a chosen shell command. Avalonia/.NET 8, win-x64 self-contained publish.
+A local Windows Terminal launcher for quickly opening saved workspaces with a chosen shell command. Avalonia/.NET 10, win-x64 self-contained publish.
 
 ## 全仓地图 (Repo Map)
 
@@ -17,11 +17,11 @@ WT_Protector/
 │   └── avalonia-launcher/ → 活动主线：Avalonia/.NET 源码 + 测试 + 构建
 │       ├── README.md      → 源码架构（5层模型）、构建与验证
 │       ├── src/
-│       │   ├── WTLauncher.Core/   → Layer 0: 纯数据/规则（24文件, 零Avalonia依赖）
+│       │   ├── WTLauncher.Core/   → Layer 0: 纯数据/规则（26文件, 零Avalonia依赖）
 │       │   └── WTLauncher.App/    → Layer 1-4: ViewModels + Views
 │       │       ├── ViewModels/    → 33文件, 单 MainWindowViewModel + 10 partial
 │       │       └── Views/        → 18文件, 单 MainWindow.axaml 三视图
-│       ├── tests/WTLauncher.Tests/ → 73测试文件, xUnit
+│       ├── tests/WTLauncher.Tests/ → 78测试文件, xUnit
 │       ├── run.ps1        → 开发运行
 │       └── verify.ps1     → 主线门禁（restore → test → publish → GUI smoke）
 ├── tools/                 → 🧰 脚本工具箱（详见下方）
@@ -30,9 +30,8 @@ WT_Protector/
 │   ├── design-benchmark-digest.md          → 12项外部设计基准 → 本地验收规则
 │   ├── giants-shoulders/  → 巨人肩膀库（外部项目教训）
 │   └── reference/         → GitHub对标快照 + 快捷方式退役清单
-├── retired/               → 退役归档（旧HTA启动器 + WinForms设计教训）
-│   └── README.md          → 退役说明
-└── omx_wiki/              → 项目知识库（持久化本地决策与模式总结）
+└── retired/               → 退役归档（旧HTA启动器 + WinForms设计教训）
+    └── README.md          → 退役说明
 ```
 
 ## 🧰 脚本工具箱 (tools/)

@@ -4,6 +4,9 @@ namespace WTLauncher.Core;
 
 public sealed class LauncherSettings
 {
+    [JsonPropertyName("schemaVersion")]
+    public int? SchemaVersion { get; set; } = 1;
+
     [JsonPropertyName("lastFilterText")]
     [JsonRequired]
     public string LastFilterText { get; set; } = "";
@@ -25,7 +28,7 @@ public sealed class LauncherSettings
     public List<string> CustomEntryOrder { get; set; } = [];
 
     [JsonPropertyName("commandTemplates")]
-    public Dictionary<string, string> CommandTemplates { get; set; } = [];
+    public Dictionary<string, string> CommandTemplates { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     [JsonPropertyName("searchHistory")]
     public List<string> SearchHistory { get; set; } = [];

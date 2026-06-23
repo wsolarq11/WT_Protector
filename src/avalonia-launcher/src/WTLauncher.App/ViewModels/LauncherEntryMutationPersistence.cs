@@ -43,7 +43,7 @@ public static class LauncherEntryMutationPersistence
         {
             LauncherSettingsStore.Save(settings, settingsPath);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
             return RestoreSnapshotOnPersistenceFailure(
                 rollbackSnapshot,
@@ -68,7 +68,7 @@ public static class LauncherEntryMutationPersistence
         {
             LauncherConfigStore.Save(snapshot.CloneEntries(), configPath, backup: false);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
             restoreErrors.Add($"config: {ex.Message}");
         }
@@ -79,7 +79,7 @@ public static class LauncherEntryMutationPersistence
             {
                 LauncherPresetStore.Save(snapshot.ClonePresetFile(), presetPath, backup: false);
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
             {
                 restoreErrors.Add($"presets: {ex.Message}");
             }

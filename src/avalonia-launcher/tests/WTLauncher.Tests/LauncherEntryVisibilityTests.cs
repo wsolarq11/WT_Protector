@@ -313,12 +313,157 @@ public sealed class LauncherEntryVisibilityTests
         Assert.Equal("Launcher entry updatedAtUtc is required for projection.", exception.Message);
     }
 
+    [Fact]
+    public void FilterAndSort_SortsByLaunchedAtDescendingThenNameThenId()
+    {
+        var entries = new[]
+        {
+            Entry("two", "Alpha", launchedAtUtc: "2026-05-28T12:00:00Z"),
+            Entry("one", "Alpha", launchedAtUtc: "2026-05-28T12:00:00Z"),
+            Entry("three", "Beta", launchedAtUtc: "2026-05-27T12:00:00Z"),
+            Entry("zero", "Zero", launchedAtUtc: ""),
+        };
+        var customOrder = new List<string> { "zero", "three", "two", "one" };
+
+        var visible = LauncherEntryVisibility.FilterAndSort(
+            entries,
+            string.Empty,
+            LauncherEntryVisibility.RecentSortModeId,
+            customOrder,
+            static entry => entry);
+
+        Assert.Equal(["one", "two", "three", "zero"], visible.Select(entry => entry.Id).ToArray());
+    }
+
+    [Fact]
+    public void FilterAndSort_RecentSortRejectsNullLaunchedAt()
+    {
+        var entries = new[]
+        {
+            Entry("one", "One", launchedAtUtc: "2026-05-28T12:00:00Z"),
+            Entry("two", "Two", launchedAtUtc: null!),
+        };
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherEntryVisibility.FilterAndSort(
+                entries,
+                string.Empty,
+                LauncherEntryVisibility.RecentSortModeId,
+                [],
+                static entry => entry));
+
+        Assert.Equal("Launcher entry launchedAtUtc is required for projection.", exception.Message);
+    }
+
+    [Fact]
+    public void FilterAndSort_RecentSortRejectsInvalidTimestamp()
+    {
+        var entries = new[]
+        {
+            Entry("one", "One", launchedAtUtc: "not-a-date"),
+            Entry("two", "Two", launchedAtUtc: "2026-05-28T12:00:00Z"),
+        };
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            LauncherEntryVisibility.FilterAndSort(
+                entries,
+                string.Empty,
+                LauncherEntryVisibility.RecentSortModeId,
+                [],
+                static entry => entry));
+
+        Assert.Equal("Invalid launcher entry launchedAtUtc: not-a-date.", exception.Message);
+    }
+
+    [Fact]
+    public void FilterAndSort_RecentSortTreatsEmptyLaunchedAtAsMinValue()
+    {
+        var entries = new[]
+        {
+            Entry("old", "Old", launchedAtUtc: "2025-01-01T00:00:00Z"),
+            Entry("newest", "Newest", launchedAtUtc: "2026-06-01T00:00:00Z"),
+            Entry("never", "Never", launchedAtUtc: ""),
+        };
+
+        var visible = LauncherEntryVisibility.FilterAndSort(
+            entries,
+            string.Empty,
+            LauncherEntryVisibility.RecentSortModeId,
+            [],
+            static entry => entry);
+
+        Assert.Equal(["newest", "old", "never"], visible.Select(entry => entry.Id).ToArray());
+    }
+
+    [Fact]
+    public void FilterAndSort_FiltersByMultipleTokensWithAndSemantics()
+    {
+        var entries = new[]
+        {
+            Entry("one", "One", directory: "D:\\pwsh-projects", command: "codex"),
+            Entry("two", "Two", directory: "D:\\other", command: "pwsh"),
+            Entry("three", "Three", directory: "D:\\pwsh-tools", command: "pwsh"),
+        };
+        var customOrder = new List<string> { "one", "two", "three" };
+
+        var visible = LauncherEntryVisibility.FilterAndSort(
+            entries,
+            "pwsh D:",
+            LauncherEntryVisibility.CustomSortModeId,
+            customOrder,
+            static entry => entry);
+
+        Assert.Equal(["one", "two", "three"], visible.Select(entry => entry.Id).ToArray());
+    }
+
+    [Fact]
+    public void FilterAndSort_MultiTokenRequiresAllTokensToMatch()
+    {
+        var entries = new[]
+        {
+            Entry("one", "One", directory: "D:\\foo", command: "pwsh"),
+            Entry("two", "Two", directory: "D:\\bar", command: "codex"),
+            Entry("three", "Three", directory: "D:\\foo", command: "codex"),
+        };
+        var customOrder = new List<string> { "one", "two", "three" };
+
+        var visible = LauncherEntryVisibility.FilterAndSort(
+            entries,
+            "pwsh foo",
+            LauncherEntryVisibility.CustomSortModeId,
+            customOrder,
+            static entry => entry);
+
+        Assert.Equal(["one"], visible.Select(entry => entry.Id).ToArray());
+    }
+
+    [Fact]
+    public void FilterAndSort_MultiTokenReturnsEmptyWhenNoEntryMatchesAll()
+    {
+        var entries = new[]
+        {
+            Entry("one", "One", directory: "D:\\foo", command: "pwsh"),
+            Entry("two", "Two", directory: "D:\\bar", command: "codex"),
+        };
+        var customOrder = new List<string> { "one", "two" };
+
+        var visible = LauncherEntryVisibility.FilterAndSort(
+            entries,
+            "pwsh bar",
+            LauncherEntryVisibility.CustomSortModeId,
+            customOrder,
+            static entry => entry);
+
+        Assert.Empty(visible);
+    }
+
     private static LaunchEntry Entry(
         string id,
         string name,
         string directory = "",
         string command = "",
-        string? updatedAtUtc = "") =>
+        string? updatedAtUtc = "",
+        string? launchedAtUtc = "") =>
         new()
         {
             Id = id,
@@ -326,5 +471,6 @@ public sealed class LauncherEntryVisibilityTests
             Directory = directory,
             Command = command,
             UpdatedAtUtc = updatedAtUtc!,
+            LaunchedAtUtc = launchedAtUtc!,
         };
 }

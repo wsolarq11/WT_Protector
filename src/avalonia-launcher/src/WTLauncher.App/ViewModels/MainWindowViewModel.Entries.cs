@@ -32,7 +32,7 @@ public sealed partial class MainWindowViewModel
         {
             draft = await RequestEntryDraftAsync(null).ConfigureAwait(true);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
         {
             StatusText = LauncherEntryStatus.AddDialogFailed(ex);
             return;
@@ -68,7 +68,7 @@ public sealed partial class MainWindowViewModel
         var source = item.SnapshotEntry();
         var cloneSource = new LaunchEntry
         {
-            Id = GenerateUniqueCloneId(source.Id),
+            Id = GenerateUniqueCloneId(source.Id, _entries.Select(e => e.Id)),
             Name = source.Name + " (副本)",
             Directory = source.Directory,
             Command = source.Command,
@@ -80,7 +80,7 @@ public sealed partial class MainWindowViewModel
         {
             draft = await RequestEntryDraftAsync(cloneSource).ConfigureAwait(true);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
         {
             StatusText = LauncherEntryStatus.AddDialogFailed(ex);
             return;
@@ -110,13 +110,13 @@ public sealed partial class MainWindowViewModel
         ApplyStatusText($"已复制按钮: {source.Name} → {entry.Name}（已保存）");
     }
 
-    private string GenerateUniqueCloneId(string sourceId)
+    public static string GenerateUniqueCloneId(string sourceId, IEnumerable<string> existingIds)
     {
         var baseId = sourceId + "-copy";
         var candidate = baseId;
         var index = 2;
-        var existingIds = _entries.Select(e => e.Id).ToHashSet(LauncherEntryIds.Comparer);
-        while (existingIds.Contains(candidate))
+        var idSet = existingIds.ToHashSet(LauncherEntryIds.Comparer);
+        while (idSet.Contains(candidate))
             candidate = $"{baseId}-{index++}";
         return candidate;
     }
@@ -129,7 +129,7 @@ public sealed partial class MainWindowViewModel
         {
             draft = await RequestEntryDraftAsync(item.SnapshotEntry()).ConfigureAwait(true);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
         {
             StatusText = LauncherEntryStatus.EditDialogFailed(item.Name, ex);
             return;
@@ -149,7 +149,18 @@ public sealed partial class MainWindowViewModel
         var snapshot = CaptureEntryMutationSnapshot();
         item.ReplaceEntryFromOwner(updated, CurrentTimestampUtc());
         if (!LauncherEntryIds.Same(oldId, item.Id))
-            LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, item.Id);
+        {
+            try
+            {
+                LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, item.Id);
+            }
+            catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+            {
+                RestoreEntryMutationSnapshot(snapshot);
+                StatusText = LauncherEntryStatus.EditDialogFailed(item.Name, ex);
+                return;
+            }
+        }
 
         if (!SaveEntryCollectionChanges(savePresets: true, snapshot))
             return;
@@ -161,15 +172,12 @@ public sealed partial class MainWindowViewModel
     {
         DiscardDragReorderPreview();
         var target = new LauncherEntryDeleteTarget(item.SnapshotEntry());
-        var snapshot = CaptureEntryMutationSnapshot();
         if (!await ConfirmDeleteEntryIfRequiredAsync(target).ConfigureAwait(true))
-        {
-            RestoreEntryMutationSnapshot(snapshot);
             return;
-        }
 
-        _entries.Remove(item);
+        var snapshot = CaptureEntryMutationSnapshot();
         LauncherEntryReferences.RemoveEntryId(_presetFile, _settings.CustomEntryOrder, target.EntryId);
+        _entries.Remove(item);
         if (!SaveEntryCollectionChanges(savePresets: true, snapshot))
             return;
 
@@ -183,7 +191,7 @@ public sealed partial class MainWindowViewModel
         {
             accepted = await ConfirmDeleteEntryAsync(target).ConfigureAwait(true);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
         {
             StatusText = LauncherEntryStatus.DeleteConfirmationFailed(target.EntryName, ex);
             return false;

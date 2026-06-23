@@ -334,6 +334,81 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task LaunchSelectedPresetConfirmationAcceptedStartsAllEntries()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex", selected: false),
+            Entry("two", directory: temp.Path, command: "opencode", selected: false));
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one", "two"));
+        var startedPlans = new List<LaunchPlan>();
+        LauncherBatchLaunchConfirmation? confirmation = null;
+        IReadOnlyList<LauncherBatchLaunchItem>? confirmedItems = null;
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = true },
+            vm => vm.ConfirmBatchLaunchAsync = candidate =>
+            {
+                confirmation = candidate;
+                confirmedItems = candidate.Items.ToArray();
+                return Task.FromResult(true);
+            },
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+
+        await viewModel.LaunchSelectedPresetCommand.ExecuteAsync(null);
+
+        Assert.NotNull(confirmation);
+        Assert.Equal("启动组“Daily”条目", confirmation!.TargetLabel);
+        Assert.NotNull(confirmedItems);
+        Assert.Equal(["one", "two"], confirmedItems!.Select(item => item.EntryId).ToArray());
+        Assert.Equal(["one", "two"], confirmedItems.Select(item => item.EntryName).ToArray());
+        Assert.All(confirmedItems, item => Assert.Contains("wt.exe", item.Plan.CommandLine));
+        Assert.Equal(["codex", "opencode"], startedPlans.Select(plan => plan.Command).ToArray());
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("• 已请求: one", viewModel.DryRunText);
+        Assert.Contains("• 已请求: two", viewModel.DryRunText);
+        Assert.Equal("启动组“Daily”: 已请求启动 2 个启动项", viewModel.StatusText);
+        var entries = LoadEntriesById(config);
+        Assert.All(entries, entry => Assert.False(entry.Selected));
+    }
+
+    [Fact]
+    public async Task LaunchSelectedPresetWithoutConfirmationDoesNotInvokeDelegate()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, presets) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex", selected: false),
+            Entry("two", directory: temp.Path, command: "opencode", selected: false));
+        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one", "two"));
+        var startedPlans = new List<LaunchPlan>();
+        var confirmCalls = 0;
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = false },
+            vm => vm.ConfirmBatchLaunchAsync = _ =>
+            {
+                confirmCalls++;
+                return Task.FromResult(true);
+            },
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+
+        await viewModel.LaunchSelectedPresetCommand.ExecuteAsync(null);
+
+        Assert.Equal(0, confirmCalls);
+        Assert.Equal(["codex", "opencode"], startedPlans.Select(plan => plan.Command).ToArray());
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("• 已请求: one", viewModel.DryRunText);
+        Assert.Contains("• 已请求: two", viewModel.DryRunText);
+        Assert.Equal("启动组“Daily”: 已请求启动 2 个启动项", viewModel.StatusText);
+        var entries = LoadEntriesById(config);
+        Assert.All(entries, entry => Assert.False(entry.Selected));
+    }
+
+    [Fact]
     public async Task LaunchSelectedPresetConfirmationFailurePreservesPresetNameAndStartsNothing()
     {
         using var temp = new TempDirectory();

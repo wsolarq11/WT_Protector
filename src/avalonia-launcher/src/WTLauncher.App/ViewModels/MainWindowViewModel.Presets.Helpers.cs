@@ -110,6 +110,7 @@ public sealed partial class MainWindowViewModel
 
     private bool CanApplyPreset() =>
         TryBuildPresetSelectionPreviewForCommand(out _, out var selection)
+        && selection.MissingConfigIds.Count == 0
         && selection.HasChanges;
 
     private bool CanLaunchSelectedPreset() =>
@@ -166,7 +167,13 @@ public sealed partial class MainWindowViewModel
 
     private List<LauncherEntryViewModel> GetPresetEntries(IEnumerable<string> entryIds)
     {
-        var entriesById = _entries.ToDictionary(entry => entry.Id, LauncherEntryIds.Comparer);
+        var entriesById = new Dictionary<string, LauncherEntryViewModel>(LauncherEntryIds.Comparer);
+        foreach (var entry in _entries)
+        {
+            if (!entriesById.ContainsKey(entry.Id))
+                entriesById[entry.Id] = entry;
+        }
+
         return LauncherEntryIds.ToRequiredUniqueList(entryIds, nameof(entryIds))
             .Select(id => entriesById[id])
             .ToList();

@@ -134,21 +134,29 @@ public sealed class EntryDetailsWindow : Window
 
     private void Submit()
     {
-        var rawDraft = new EntryDraft(
-            RequireSubmittedText(_idBox, "id"),
-            RequireSubmittedText(_nameBox, "name"),
-            RequireSubmittedText(_directoryBox, "directory"),
-            RequireSubmittedText(_commandBox, "command"),
-            _selectedBox.IsChecked == true);
-
-        if (!LauncherEntryDrafts.TryNormalizeRequiredDraft(rawDraft, out var draft, out var requiredFieldError))
+        try
         {
-            _errorText.Text = requiredFieldError;
-            _errorText.IsVisible = true;
-            return;
-        }
+            var rawDraft = new EntryDraft(
+                RequireSubmittedText(_idBox, "id"),
+                RequireSubmittedText(_nameBox, "name"),
+                RequireSubmittedText(_directoryBox, "directory"),
+                RequireSubmittedText(_commandBox, "command"),
+                _selectedBox.IsChecked == true);
 
-        Close(draft);
+            if (!LauncherEntryDrafts.TryNormalizeRequiredDraft(rawDraft, out var draft, out var requiredFieldError))
+            {
+                _errorText.Text = requiredFieldError;
+                _errorText.IsVisible = true;
+                return;
+            }
+
+            Close(draft);
+        }
+        catch (InvalidDataException ex)
+        {
+            _errorText.Text = ex.Message;
+            _errorText.IsVisible = true;
+        }
     }
 
     private static string RequireInitialEntryId(LaunchEntry? entry)

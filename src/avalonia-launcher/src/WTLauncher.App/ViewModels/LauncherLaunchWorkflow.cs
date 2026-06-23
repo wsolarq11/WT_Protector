@@ -12,7 +12,7 @@ public sealed class LauncherLaunchWorkflow
     {
         ArgumentNullException.ThrowIfNull(launcherProcess);
 
-        _start = plan => launcherProcess.Start(plan);
+        _start = plan => { using var process = launcherProcess.Start(plan); };
     }
 
     public LauncherLaunchWorkflow(Action<LaunchPlan> start)
@@ -53,7 +53,7 @@ public sealed class LauncherLaunchWorkflow
             {
                 items.Add(new LauncherBatchLaunchItem(entry, BuildPlan(entry, requireConfirmation)));
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
             {
                 RecordFailure(report, entry.Name, ex);
             }
@@ -83,9 +83,9 @@ public sealed class LauncherLaunchWorkflow
                 Start(item.Plan);
                 report.RecordRequested();
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
             {
-                RecordFailure(report, item.EntryName, ex);
+                RecordFailure(report, item.EntryName, index, ex);
                 report.RecordSkipped(items.Count - index - 1);
                 break;
             }
@@ -99,6 +99,15 @@ public sealed class LauncherLaunchWorkflow
         string? entryName,
         Exception exception)
     {
+        RecordFailure(report, entryName, failureIndex: null, exception);
+    }
+
+    private static void RecordFailure(
+        LauncherBatchLaunchReportBuilder report,
+        string? entryName,
+        int? failureIndex,
+        Exception exception)
+    {
         var normalizedName = LauncherEntryText.Normalize(entryName);
         if (normalizedName.Length == 0)
         {
@@ -106,6 +115,9 @@ public sealed class LauncherLaunchWorkflow
             return;
         }
 
-        report.RecordFailure(normalizedName, exception);
+        if (failureIndex is not null)
+            report.RecordFailure(normalizedName, failureIndex.Value, exception);
+        else
+            report.RecordFailure(normalizedName, exception);
     }
 }

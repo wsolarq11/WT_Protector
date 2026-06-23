@@ -11,7 +11,7 @@ public sealed class ConfirmEntryDeleteWindow : Window
     {
         ArgumentNullException.ThrowIfNull(target);
 
-        Title = "删除按钮";
+        Title = "删除启动按钮";
         Width = 520;
         Height = 260;
         MinWidth = 480;
@@ -22,7 +22,7 @@ public sealed class ConfirmEntryDeleteWindow : Window
         var cancel = LauncherDialogButtons.SafeDefaultCancel();
         cancel.Click += (_, _) => Close(false);
 
-        var delete = LauncherDialogButtons.Destructive("删除按钮");
+        var delete = LauncherDialogButtons.Destructive("删除启动按钮");
         delete.Click += (_, _) => Close(true);
 
         Content = new Border

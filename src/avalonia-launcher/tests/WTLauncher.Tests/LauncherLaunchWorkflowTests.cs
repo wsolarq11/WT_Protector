@@ -147,7 +147,7 @@ public sealed class LauncherLaunchWorkflowTests
 
         var preflight = workflow.PreflightBatch(
             [
-                Entry("one", temp.Path) with { Name = " " },
+                new LaunchEntry { Id = "one", Name = " ", Directory = temp.Path, Command = "pwsh" },
             ],
             requireConfirmation: false);
 
@@ -164,7 +164,7 @@ public sealed class LauncherLaunchWorkflowTests
 
         var preflight = workflow.PreflightBatch(
             [
-                Entry("one", temp.Path) with { Id = " " },
+                new LaunchEntry { Id = " ", Name = "one", Directory = temp.Path, Command = "pwsh" },
             ],
             requireConfirmation: false);
 

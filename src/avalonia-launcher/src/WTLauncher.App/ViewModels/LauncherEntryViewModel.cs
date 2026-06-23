@@ -18,7 +18,7 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         _isSelected = entry.Selected;
     }
 
-    public LaunchEntry SnapshotEntry() => _entry with { };
+    public LaunchEntry SnapshotEntry() => _entry.Clone();
 
     public string Id => _entry.Id;
 

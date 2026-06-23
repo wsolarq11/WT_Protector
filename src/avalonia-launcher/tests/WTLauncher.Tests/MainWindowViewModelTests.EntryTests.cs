@@ -418,6 +418,46 @@ public sealed partial class MainWindowViewModelTests
         AssertNoDragCues(viewModel);
     }
 
+    [Fact]
+    public void GenerateUniqueCloneIdReturnsSourceCopyWhenNoConflict()
+    {
+        var result = MainWindowViewModel.GenerateUniqueCloneId(
+            "myentry",
+            ["one", "two", "three"]);
+
+        Assert.Equal("myentry-copy", result);
+    }
+
+    [Fact]
+    public void GenerateUniqueCloneIdAppendsSuffixWhenCopyExists()
+    {
+        var result = MainWindowViewModel.GenerateUniqueCloneId(
+            "myentry",
+            ["one", "myentry-copy", "two"]);
+
+        Assert.Equal("myentry-copy-2", result);
+    }
+
+    [Fact]
+    public void GenerateUniqueCloneIdSkipsIntermediateCollisions()
+    {
+        var result = MainWindowViewModel.GenerateUniqueCloneId(
+            "myentry",
+            ["one", "myentry-copy", "myentry-copy-2", "myentry-copy-3"]);
+
+        Assert.Equal("myentry-copy-4", result);
+    }
+
+    [Fact]
+    public void GenerateUniqueCloneIdOnlyDetectsExactOrdinalCollision()
+    {
+        var result = MainWindowViewModel.GenerateUniqueCloneId(
+            "myentry",
+            [" myentry-copy "]);
+
+        Assert.Equal("myentry-copy", result);
+    }
+
     private static EntryDraft NewThreeEntryDraft() =>
         new("three", "Three", "D:\\three", "pwsh", Selected: true);
 

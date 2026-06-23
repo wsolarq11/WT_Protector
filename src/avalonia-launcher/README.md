@@ -80,7 +80,7 @@ The codebase is organized in five logical layers. Each layer depends only on the
 `src/WTLauncher.App/Views/`
 
 - XAML with three view modes: Cards / Details / Names
-- Drag reorder: `MainWindowDragGhostFactory` → `MainWindowReorderFlipAnimation` (FLIP-based)
+- Drag reorder: `MainWindowDragGhostFactory` with ghost overlay and insert preview
 - Focused view helpers remain for shared drag and hit-test behavior; one-off menu guards stay in `MainWindow`
 
 ### Key invariants

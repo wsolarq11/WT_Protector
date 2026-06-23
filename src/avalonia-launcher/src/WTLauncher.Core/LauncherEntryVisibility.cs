@@ -1,5 +1,7 @@
 namespace WTLauncher.Core;
 
+public enum LauncherSortMode { Recent, Updated, Alphabetical, Custom }
+
 public static class LauncherEntryVisibility
 {
     public const string CustomSortModeId = "custom";
@@ -56,18 +58,18 @@ public static class LauncherEntryVisibility
         switch (sortMode)
         {
             case RecentSortModeId:
-                comparison = (a, b) => CompareEntries(a, b, selectEntry, useRecent: true, customOrder: null);
+                comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Recent);
                 break;
             case UpdatedSortModeId:
-                comparison = (a, b) => CompareEntries(a, b, selectEntry, useUpdated: true, customOrder: null);
+                comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Updated);
                 break;
             case AlphabeticalSortModeId:
-                comparison = (a, b) => CompareEntries(a, b, selectEntry, useAlphabetical: true, customOrder: null);
+                comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Alphabetical);
                 break;
             default:
                 customOrder = LauncherEntryOrder.BuildIndex(customEntryOrder);
                 ValidateCustomOrder(source, customOrder, selectEntry);
-                comparison = (a, b) => CompareEntries(a, b, selectEntry, useCustom: true, customOrder: customOrder);
+                comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Custom, customOrder);
                 break;
         }
 
@@ -87,6 +89,9 @@ public static class LauncherEntryVisibility
             RequireEntryId(entry);
             RequireText(entry.Name, "name");
 
+            if (sortMode == RecentSortModeId)
+                ParseLaunchedAt(entry.LaunchedAtUtc);
+
             if (sortMode == UpdatedSortModeId)
                 ParseUpdatedAt(entry.UpdatedAtUtc);
         }
@@ -95,26 +100,25 @@ public static class LauncherEntryVisibility
     private static int CompareEntries<TEntry>(
         TEntry a, TEntry b,
         Func<TEntry, LaunchEntry> selectEntry,
-        bool useRecent = false, bool useUpdated = false, bool useAlphabetical = false, bool useCustom = false,
+        LauncherSortMode sortKind,
         IReadOnlyDictionary<string, int>? customOrder = null)
     {
         var entryA = selectEntry(a);
         var entryB = selectEntry(b);
 
-        int cmp;
-        if (useRecent)
-            cmp = ParseLaunchedAt(entryB.LaunchedAtUtc).CompareTo(ParseLaunchedAt(entryA.LaunchedAtUtc));
-        else if (useUpdated)
-            cmp = ParseUpdatedAt(entryB.UpdatedAtUtc).CompareTo(ParseUpdatedAt(entryA.UpdatedAtUtc));
-        else if (useAlphabetical)
-            cmp = StringComparer.CurrentCultureIgnoreCase.Compare(
-                RequireText(entryA.Name, "name"), RequireText(entryB.Name, "name"));
-        else // custom
-            cmp = customOrder![RequireEntryId(entryA)].CompareTo(customOrder[RequireEntryId(entryB)]);
+        int cmp = sortKind switch
+        {
+            LauncherSortMode.Recent => ParseLaunchedAt(entryB.LaunchedAtUtc).CompareTo(ParseLaunchedAt(entryA.LaunchedAtUtc)),
+            LauncherSortMode.Updated => ParseUpdatedAt(entryB.UpdatedAtUtc).CompareTo(ParseUpdatedAt(entryA.UpdatedAtUtc)),
+            LauncherSortMode.Alphabetical => StringComparer.OrdinalIgnoreCase.Compare(
+                RequireText(entryA.Name, "name"), RequireText(entryB.Name, "name")),
+            LauncherSortMode.Custom => customOrder![RequireEntryId(entryA)].CompareTo(customOrder[RequireEntryId(entryB)]),
+            _ => throw new ArgumentOutOfRangeException(nameof(sortKind), sortKind, null),
+        };
 
         if (cmp != 0) return cmp;
 
-        cmp = StringComparer.CurrentCultureIgnoreCase.Compare(
+        cmp = StringComparer.OrdinalIgnoreCase.Compare(
             RequireText(entryA.Name, "name"), RequireText(entryB.Name, "name"));
         if (cmp != 0) return cmp;
 
@@ -179,8 +183,9 @@ public static class LauncherEntryVisibility
 
     private static DateTimeOffset ParseLaunchedAt(string? value)
     {
+        // E6: Match ParseUpdatedAt strictness — null/invalid must surface, not silently degrade.
         if (value is null)
-            return DateTimeOffset.MinValue;
+            throw new InvalidDataException("Launcher entry launchedAtUtc is required for projection.");
 
         var normalized = LauncherEntryText.Normalize(value);
         if (normalized.Length == 0)
@@ -189,7 +194,7 @@ public static class LauncherEntryVisibility
         if (DateTimeOffset.TryParse(normalized, out var parsed))
             return parsed;
 
-        return DateTimeOffset.MinValue;
+        throw new InvalidDataException($"Invalid launcher entry launchedAtUtc: {normalized}.");
     }
 
     private static DateTimeOffset ParseUpdatedAt(string? value)

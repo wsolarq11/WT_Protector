@@ -2,8 +2,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
-using Avalonia.Threading;
 using Avalonia.VisualTree;
+using System.Diagnostics;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -13,10 +13,7 @@ public sealed partial class MainWindow
 {
     private OverlayLayer? _overlayLayer;
     private Border? _dragGhost;
-    private readonly MainWindowReorderAnimationScheduler _reorderAnimationScheduler = new();
     private string? _activeDragEntryId;
-    private Dictionary<string, (LauncherEntryViewModel Entry, Control Card)>? _dragCardCache;
-
     // P2: Suppress XAML transitions during active drag to avoid layout thrashing.
     private const string SuppressTransitionsClass = "suppress-drag-transitions";
 
@@ -38,7 +35,6 @@ public sealed partial class MainWindow
         e.Handled = true;
         _activeDragEntryId = item.Id;
         viewModel.BeginDragReorder(item.Id);
-        _dragCardCache = BuildDragCardCache();
         ShowDragGhost(item, card, e);
 
         // P2: Suppress 0.12s XAML transitions on all card entries during drag.
@@ -48,6 +44,11 @@ public sealed partial class MainWindow
         try
         {
             effect = await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[MainWindow] Drag reorder failed: {ex}");
+            effect = DragDropEffects.None;
         }
         finally
         {
@@ -60,8 +61,6 @@ public sealed partial class MainWindow
 
     private void FinishDragReorder(MainWindowViewModel viewModel, DragDropEffects effect)
     {
-        _dragCardCache = null;
-
         if (_activeDragEntryId is null)
             return;
 
@@ -150,10 +149,8 @@ public sealed partial class MainWindow
         if (!viewModel.WouldChangePreview(draggedId, target.Entry.Id, insertAfter))
             return;
 
-        // P0: Skip bounds capture during active drag. The FLIP animation is explicitly
-        // skipped during drag (ghost overlay provides feedback), and the real FLIP on
-        // commit happens through OnEntriesLayoutUpdated after ApplyFilter.
-        // The root selection + Capture() traverse all visual descendants and were pure waste.
+        // P0: Skip bounds capture during active drag. Ghost overlay provides visual feedback;
+        // real layout update happens through ApplyFilter on commit.
         viewModel.PreviewMoveEntry(draggedId, target.Entry.Id, insertAfter);
     }
 
@@ -163,31 +160,7 @@ public sealed partial class MainWindow
         if (direct is not null)
             return direct;
 
-        // Check the drag card cache before falling through to visual tree traversal.
-        if (_dragCardCache is not null)
-        {
-            var entryId = MainWindowDragEntryTransfer.TryGetEntryId(e.DataTransfer);
-            if (entryId is not null && _dragCardCache.TryGetValue(entryId, out var cached))
-                return cached;
-        }
-
         return MainWindowEntryCardResolver.ResolveFromSource(this.GetVisualAt(e.GetPosition(this)));
-    }
-
-    private Dictionary<string, (LauncherEntryViewModel, Control)> BuildDragCardCache()
-    {
-        var cache = new Dictionary<string, (LauncherEntryViewModel, Control)>();
-        foreach (var control in this.GetVisualDescendants())
-        {
-            if (control is Border border &&
-                border.DataContext is LauncherEntryViewModel entry &&
-                !string.IsNullOrWhiteSpace(entry.Id))
-            {
-                if (!cache.ContainsKey(entry.Id))
-                    cache[entry.Id] = (entry, border);
-            }
-        }
-        return cache;
     }
 
     private void ShowDragGhost(
@@ -239,38 +212,6 @@ public sealed partial class MainWindow
         _dragGhost = null;
     }
 
-    private void OnEntriesLayoutUpdated(object? sender, EventArgs e)
-    {
-        var root = sender as Control;
-        if (root is null)
-            return;
-
-        var before = _reorderAnimationScheduler.Consume(
-            OnEntriesLayoutUpdated,
-            handler => root.LayoutUpdated -= handler);
-        if (before is null || before.Count == 0)
-            return;
-
-        // Walk the visual tree once; share Borders between after-capture and FLIP target resolution.
-        var cards = root.GetVisualDescendants().OfType<Border>().ToList();
-        var after = MainWindowEntryCardBoundsCapture.Capture(
-            cards,
-            card => card.TranslatePoint(new Point(0, 0), this),
-            card => card.Bounds.Size);
-        if (after.Count == 0)
-            return;
-
-        foreach (var target in MainWindowReorderFlipAnimation.FindTargets(cards, before, after))
-        {
-            // FLIP: jump back without transition, then let the style transition animate to the final position.
-            MainWindowReorderFlipAnimation.ApplyStart(target.Card, target.Offset);
-
-            Dispatcher.UIThread.Post(() =>
-            {
-                MainWindowReorderFlipAnimation.TryApplyFinish(target.Card, target.Card.IsEffectivelyVisible);
-            }, DispatcherPriority.Render);
-        }
-    }
 }
 
 public static class MainWindowDragInsertDecision

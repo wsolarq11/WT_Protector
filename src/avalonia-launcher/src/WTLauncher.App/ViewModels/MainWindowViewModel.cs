@@ -99,12 +99,25 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ReplaceEntries(LauncherConfigStore.Load(_configPath));
         LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds());
 
+        // E10: Cross-validate $key command references against commandTemplates.
+        ValidateCommandTemplateReferences();
+
         LoadPresetFile(preferredPresetId: null);
 
         RefreshSelectionState();
         ApplyFilter();
         LauncherEntryLayoutPresentation.Refresh(_entries);
         StatusText = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
+    }
+
+    private void ValidateCommandTemplateReferences()
+    {
+        var missingKeys = LauncherCommandTemplateResolver.ValidateTemplateReferences(
+            _entries.Select(ToLaunchEntry),
+            _settings.CommandTemplates);
+
+        if (missingKeys.Count > 0)
+            StatusText = $"警告：以下命令模板键未定义: {string.Join(", ", missingKeys)}";
     }
 
     private void ApplyStatusText(string? statusText)
@@ -653,7 +666,7 @@ public static class LauncherBatchLaunchReceiptText
 
     private static string StatusFor(int index, LauncherBatchLaunchReport report)
     {
-        if (report.FailedCount > 0 && report.LastCommandLine is not null && index == report.RequestedCount)
+        if (report.FailureIndex == index)
             return "启动失败";
 
         return index < report.RequestedCount ? "已请求" : "未启动";

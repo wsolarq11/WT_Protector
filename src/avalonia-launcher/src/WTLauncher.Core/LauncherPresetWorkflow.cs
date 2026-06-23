@@ -48,8 +48,14 @@ public static class LauncherPresetWorkflow
     {
         ArgumentNullException.ThrowIfNull(presetFile);
         var preset = FindPreset(presetFile, presetId);
+        if (preset is null)
+        {
+            fallbackPresetId = string.Empty;
+            return null;
+        }
+
         fallbackPresetId = RequireDefaultPresetId(presetFile);
-        if (preset is null || !CanDeletePreset(presetFile, preset))
+        if (!CanDeletePreset(presetFile, preset))
             return null;
 
         fallbackPresetId = ResolveDefaultPresetIdAfterDelete(presetFile, preset, fallbackPresetId);
@@ -111,8 +117,11 @@ public static class LauncherPresetWorkflow
 
     private static string RequireFallbackPresetIdAfterDelete(LauncherPresetFile presetFile, LauncherPreset target)
     {
+        // E11: Don't require HasEntryReferences on the fallback — that deadlocks
+        // when the only other preset references stale or zero entries. Any other
+        // non-locked preset (including one with no entries) can serve as the new default.
         var fallback = presetFile.Presets.FirstOrDefault(preset =>
-            !LauncherPresetIds.Same(preset.Id, target.Id) && HasEntryReferences(preset));
+            !LauncherPresetIds.Same(preset.Id, target.Id) && !preset.Locked);
         if (fallback is null)
             throw new InvalidDataException("Launcher preset fallback id is required after delete.");
 
@@ -146,7 +155,10 @@ public static class LauncherPresetWorkflow
         if (target is null || target.Locked)
             return false;
 
-        return presetFile.Presets
-            .Any(preset => !LauncherPresetIds.Same(preset.Id, target.Id) && HasEntryReferences(preset));
+        // E11: Any other non-locked preset can serve as a fallback — don't
+        // deadlock when the only other preset references stale or zero entries.
+        // Single-preset deletion is also allowed (no fallback needed).
+        return presetFile.Presets.Count <= 1
+            || presetFile.Presets.Any(preset => !LauncherPresetIds.Same(preset.Id, target.Id) && !preset.Locked);
     }
 }

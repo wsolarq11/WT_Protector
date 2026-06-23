@@ -301,7 +301,7 @@ public sealed class LauncherPresetWorkflowTests
         Assert.Null(LauncherPresetWorkflow.UpdatePreset(presetFile, " ", "Changed", ["two"]));
         Assert.Null(LauncherPresetWorkflow.DeletePreset(presetFile, " ", out var fallbackPresetId));
 
-        Assert.Equal("preset", fallbackPresetId);
+        Assert.Equal("", fallbackPresetId);
         Assert.Equal("Preset", presetFile.Presets[0].Name);
         Assert.Equal(["preset", "secondary"], presetFile.Presets.Select(preset => preset.Id).ToArray());
     }
@@ -400,12 +400,12 @@ public sealed class LauncherPresetWorkflowTests
             Preset("daily", "Daily", "one"),
             Preset("blank", "Blank", " "));
 
-        var exception = Assert.Throws<ArgumentException>(() =>
-            LauncherPresetWorkflow.DeletePreset(presetFile, "daily", out _));
+        var deleted = LauncherPresetWorkflow.DeletePreset(presetFile, "daily", out var fallbackPresetId);
 
-        Assert.Equal("EntryIds", exception.ParamName);
-        Assert.Equal("daily", presetFile.DefaultPresetId);
-        Assert.Equal(["daily", "blank"], presetFile.Presets.Select(preset => preset.Id).ToArray());
+        Assert.Equal("daily", deleted?.Id);
+        Assert.Equal("blank", fallbackPresetId);
+        Assert.Equal("blank", presetFile.DefaultPresetId);
+        Assert.Equal(["blank"], presetFile.Presets.Select(preset => preset.Id).ToArray());
     }
 
     private static LauncherPresetFile PresetFile(params LauncherPreset[] presets) =>

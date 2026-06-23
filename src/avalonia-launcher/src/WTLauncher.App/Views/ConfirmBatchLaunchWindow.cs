@@ -17,6 +17,7 @@ public sealed class ConfirmBatchLaunchWindow : Window
         MinWidth = 460;
         MinHeight = 340;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
+        Background = Brushes.White;
 
         var items = confirmation.Items;
         var plans = LauncherBatchLaunchPlanText.Format(items);
