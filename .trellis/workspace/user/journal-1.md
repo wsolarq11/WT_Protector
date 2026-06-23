@@ -207,3 +207,36 @@ Wave A: 删除 7 处死代码 — OnFilterDropDownClosed, ApplyFilterAfterDropDo
 ### Next Steps
 
 - None - task complete
+
+
+## Session 7: /goal Wave D — LaunchPlan validation 双重路径澄清 + 误报排除
+
+**Date**: 2026-06-23
+**Task**: /goal Wave D — LaunchPlan validation 双重路径澄清 + 误报排除
+**Branch**: `main`
+
+### Summary
+
+Wave B workflow 发现 LaunchPlan auto-property 修复引入 bug: primary constructor 不走 init accessor, auto-property initializer 结果被覆盖。还原为 original 模式 (field init for construction + init for with) 并添加合同注释。验证 H2 (LaunchPlan redundancy) 和 H5 (CreateEntry drops LaunchedAtUtc) 均为误报。全 556 绿。教训: workflow agent 对 C# positional record 语义的推断需逐项验证。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `HEAD` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
