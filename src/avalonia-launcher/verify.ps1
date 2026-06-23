@@ -34,9 +34,10 @@ if ($totalTests -lt 1) { throw 'No tests were reported in the TRX result' }
 if ($failedTests -ne 0) { throw "TRX reported failed tests: $failedTests" }
 
 $isWindowsPlatform = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
-$guiSmoke = 'skipped-non-windows'
+$isCi = $env:CI -eq 'true'
+$guiSmoke = if ($isCi) { 'skipped-ci-headless' } else { 'skipped-non-windows' }
 
-if ($isWindowsPlatform) {
+if ($isWindowsPlatform -and -not $isCi) {
     Remove-Item -LiteralPath $smokeRoot -Recurse -Force -ErrorAction SilentlyContinue
     $smokeConfig = Join-Path $smokeRoot 'config\config.json'
     $smokeSettings = Join-Path $smokeRoot 'config\settings.json'
