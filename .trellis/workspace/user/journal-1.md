@@ -240,3 +240,38 @@ Wave B workflow 发现 LaunchPlan auto-property 修复引入 bug: primary constr
 ### Next Steps
 
 - None - task complete
+
+
+## Session 8: /goal Wave E — 集合表达式现代化 + Brush.Parse 缓存 + 设计决策文档化
+
+**Date**: 2026-06-23
+**Task**: /goal Wave E — 集合表达式现代化 + Brush.Parse 缓存 + 设计决策文档化
+**Branch**: `main`
+
+### Summary
+
+Wave E: 7 文件 new List<T>()→[] 替换、LauncherDialogButtons 2 brush + MainWindowDragGhostFactory 4 brush 缓存为 static readonly、EntryDetailsWindow Control[]→List<Control> 修复。Spec: 3 个「Accepted Design Decisions」文档化(string timestamps, color tokens, enum/string duality)消除误报致命/高危项。全 556 绿, verify PASS。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `537c7df` | (see git log) |
+| `9461b8b` | (see git log) |
+| `31c4d93` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
