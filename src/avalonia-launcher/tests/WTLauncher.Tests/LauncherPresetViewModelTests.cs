@@ -33,10 +33,7 @@ public sealed class LauncherPresetViewModelTests
         };
 
         var viewModel = new LauncherPresetViewModel(preset);
-        preset.Id = "broken";
-        preset.Name = "";
-        preset.EntryIds.Clear();
-        preset.Locked = false;
+        preset = preset with { Id = "broken", Name = "", EntryIds = [], Locked = false };
 
         Assert.Equal("daily", viewModel.Id);
         Assert.Equal("Daily", viewModel.Name);

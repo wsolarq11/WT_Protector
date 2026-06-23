@@ -12,9 +12,18 @@ public sealed class LauncherPresetMutationSnapshotTests
         var presetFile = PresetFile("daily", NamedPreset("daily", "Daily", "one"));
 
         var snapshot = LauncherPresetMutationSnapshot.Capture(presetFile, selectedPresetId: "daily");
-        presetFile.DefaultPresetId = "changed";
-        presetFile.Presets[0].Name = "Changed";
-        presetFile.Presets[0].EntryIds[0] = "changed";
+        presetFile = presetFile with
+        {
+            DefaultPresetId = "changed",
+            Presets =
+            [
+                presetFile.Presets[0] with
+                {
+                    Name = "Changed",
+                    EntryIds = ["changed"]
+                }
+            ]
+        };
 
         Assert.Equal("daily", snapshot.SelectedPresetId);
         Assert.Equal("daily", snapshot.PresetFile.DefaultPresetId);
@@ -31,7 +40,16 @@ public sealed class LauncherPresetMutationSnapshotTests
             selectedPresetId: "daily");
 
         var clone = snapshot.ClonePresetFile();
-        clone.Presets[0].EntryIds[0] = "changed";
+        clone = clone with
+        {
+            Presets =
+            [
+                clone.Presets[0] with
+                {
+                    EntryIds = ["changed"]
+                }
+            ]
+        };
 
         Assert.Equal("one", Assert.Single(snapshot.PresetFile.Presets[0].EntryIds));
     }
@@ -43,7 +61,17 @@ public sealed class LauncherPresetMutationSnapshotTests
             PresetFile("daily", NamedPreset("daily", "Daily", "one")),
             selectedPresetId: "daily");
 
-        snapshot.PresetFile.Presets[0].EntryIds[0] = "changed";
+        var pf = snapshot.PresetFile;
+        pf = pf with
+        {
+            Presets =
+            [
+                pf.Presets[0] with
+                {
+                    EntryIds = ["changed"]
+                }
+            ]
+        };
 
         Assert.Equal("one", Assert.Single(snapshot.ClonePresetFile().Presets[0].EntryIds));
     }

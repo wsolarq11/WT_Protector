@@ -2,55 +2,40 @@ using System.Text.Json.Serialization;
 
 namespace WTLauncher.Core;
 
-public sealed class LauncherPresetFile
+/// <summary>Immutable preset container. All properties are init-only — mutations
+/// produce a new instance via <c>with { }</c>, making every state change explicit.</summary>
+public sealed record LauncherPresetFile
 {
     [JsonPropertyName("schemaVersion")]
     [JsonRequired]
-    public int SchemaVersion { get; set; } = 1;
+    public int SchemaVersion { get; init; } = 1;
 
     [JsonPropertyName("defaultPresetId")]
     [JsonRequired]
-    public string DefaultPresetId { get; set; } = "";
+    public string DefaultPresetId { get; init; } = "";
 
     [JsonPropertyName("presets")]
     [JsonRequired]
-    public List<LauncherPreset> Presets { get; set; } = [];
-
-    public LauncherPresetFile Clone()
-    {
-        var clone = new LauncherPresetFile
-        {
-            SchemaVersion = SchemaVersion,
-            DefaultPresetId = DefaultPresetId,
-            Presets = Presets.Select(p => p.Clone()).ToList(),
-        };
-        return clone;
-    }
+    public List<LauncherPreset> Presets { get; init; } = [];
 }
 
-public sealed class LauncherPreset
+/// <summary>Immutable preset entry. All properties are init-only — mutations
+/// produce a new instance via <c>with { }</c>.</summary>
+public sealed record LauncherPreset
 {
     [JsonPropertyName("id")]
     [JsonRequired]
-    public string Id { get; set; } = "";
+    public string Id { get; init; } = "";
 
     [JsonPropertyName("name")]
     [JsonRequired]
-    public string Name { get; set; } = "";
+    public string Name { get; init; } = "";
 
     [JsonPropertyName("entryIds")]
     [JsonRequired]
-    public List<string> EntryIds { get; set; } = [];
+    public List<string> EntryIds { get; init; } = [];
 
     [JsonPropertyName("locked")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public bool Locked { get; set; }
-
-    public LauncherPreset Clone() => new()
-    {
-        Id = Id,
-        Name = Name,
-        EntryIds = [.. EntryIds],
-        Locked = Locked,
-    };
+    public bool Locked { get; init; }
 }

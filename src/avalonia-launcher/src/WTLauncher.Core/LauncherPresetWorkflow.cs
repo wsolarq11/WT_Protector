@@ -2,7 +2,7 @@ namespace WTLauncher.Core;
 
 public static class LauncherPresetWorkflow
 {
-    public static LauncherPreset AddPreset(LauncherPresetFile presetFile, string name, IReadOnlyList<string> entryIds)
+    public static LauncherPreset AddPreset(ref LauncherPresetFile presetFile, string name, IReadOnlyList<string> entryIds)
     {
         ArgumentNullException.ThrowIfNull(presetFile);
         var normalizedName = NormalizeRequiredName(name);
@@ -18,13 +18,16 @@ public static class LauncherPresetWorkflow
             EntryIds = normalizedEntryIds,
         };
         presetFile.Presets.Add(preset);
-        presetFile.DefaultPresetId = hasExistingPresets ? defaultPresetId : preset.Id;
+        presetFile = presetFile with
+        {
+            DefaultPresetId = hasExistingPresets ? defaultPresetId : preset.Id,
+        };
 
         return preset;
     }
 
     public static LauncherPreset? UpdatePreset(
-        LauncherPresetFile presetFile,
+        ref LauncherPresetFile presetFile,
         string presetId,
         string name,
         IReadOnlyList<string> entryIds)
@@ -36,13 +39,14 @@ public static class LauncherPresetWorkflow
 
         var normalizedName = NormalizeRequiredName(name);
         var normalizedEntryIds = NormalizeRequiredEntryIds(entryIds);
-        preset.Name = normalizedName;
-        preset.EntryIds = normalizedEntryIds;
-        return preset;
+        var updated = preset with { Name = normalizedName, EntryIds = normalizedEntryIds };
+        var index = presetFile.Presets.IndexOf(preset);
+        presetFile.Presets[index] = updated;
+        return updated;
     }
 
     public static LauncherPreset? DeletePreset(
-        LauncherPresetFile presetFile,
+        ref LauncherPresetFile presetFile,
         string presetId,
         out string fallbackPresetId)
     {
@@ -60,7 +64,7 @@ public static class LauncherPresetWorkflow
 
         fallbackPresetId = ResolveDefaultPresetIdAfterDelete(presetFile, preset, fallbackPresetId);
         presetFile.Presets.Remove(preset);
-        presetFile.DefaultPresetId = fallbackPresetId;
+        presetFile = presetFile with { DefaultPresetId = fallbackPresetId };
 
         return preset;
     }

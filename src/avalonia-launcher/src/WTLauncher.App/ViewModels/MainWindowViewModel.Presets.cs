@@ -100,7 +100,7 @@ public sealed partial class MainWindowViewModel
             return;
 
         var snapshot = CapturePresetMutationSnapshot();
-        var preset = LauncherPresetWorkflow.AddPreset(_presetFile, presetName, target.EntryIds);
+        var preset = LauncherPresetWorkflow.AddPreset(ref _presetFile, presetName, target.EntryIds);
         if (!SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset))
             return;
 
@@ -128,7 +128,7 @@ public sealed partial class MainWindowViewModel
         }
 
         var snapshot = CapturePresetMutationSnapshot();
-        var preset = LauncherPresetWorkflow.UpdatePreset(_presetFile, selectedPreset.Id, selectedPreset.Name, entryIds);
+        var preset = LauncherPresetWorkflow.UpdatePreset(ref _presetFile, selectedPreset.Id, selectedPreset.Name, entryIds);
         if (preset is null)
         {
             RestorePresetSnapshotAndReportMissing(snapshot);
@@ -166,7 +166,7 @@ public sealed partial class MainWindowViewModel
         }
 
         RestorePresetMutationSnapshot(snapshot);
-        var preset = LauncherPresetWorkflow.DeletePreset(_presetFile, target.PresetId, out var fallbackPresetId);
+        var preset = LauncherPresetWorkflow.DeletePreset(ref _presetFile, target.PresetId, out var fallbackPresetId);
         if (preset is null)
         {
             RestorePresetSnapshotAndReportMissing(snapshot);

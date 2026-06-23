@@ -11,8 +11,7 @@ public static class LauncherPresetStore
             throw new FileNotFoundException("Launcher presets not found.", presetPath);
 
         var presets = LauncherJson.LoadRequired<LauncherPresetFile>(presetPath, "Launcher presets");
-        LauncherPresetFiles.Validate(presets);
-        return presets;
+        return LauncherPresetFiles.Validate(presets);
     }
 
     public static void Save(LauncherPresetFile presets, string presetPath, bool backup)

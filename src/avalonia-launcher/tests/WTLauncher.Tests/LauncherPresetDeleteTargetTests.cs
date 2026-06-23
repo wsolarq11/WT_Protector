@@ -16,8 +16,7 @@ public sealed class LauncherPresetDeleteTargetTests
         };
 
         var target = new LauncherPresetDeleteTarget(preset);
-        preset.Id = "changed";
-        preset.Name = "Changed";
+        preset = preset with { Id = "changed", Name = "Changed" };
         preset.EntryIds.Clear();
 
         Assert.Equal("daily-group", target.PresetId);

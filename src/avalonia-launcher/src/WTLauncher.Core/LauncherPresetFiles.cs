@@ -5,19 +5,10 @@ public static class LauncherPresetFiles
     public static LauncherPresetFile Clone(LauncherPresetFile presetFile)
     {
         ArgumentNullException.ThrowIfNull(presetFile);
-
-        var clone = new LauncherPresetFile
-        {
-            SchemaVersion = presetFile.SchemaVersion,
-            DefaultPresetId = presetFile.DefaultPresetId,
-            Presets = ClonePresets(presetFile.Presets),
-        };
-
-        Validate(clone);
-        return clone;
+        return Validate(presetFile with { Presets = ClonePresets(presetFile.Presets) });
     }
 
-    internal static void Validate(LauncherPresetFile presets)
+    internal static LauncherPresetFile Validate(LauncherPresetFile presets)
     {
         ArgumentNullException.ThrowIfNull(presets);
 
@@ -35,18 +26,15 @@ public static class LauncherPresetFiles
 
             var name = NormalizePresetName(preset.Name, index);
             var entryIds = NormalizeEntryIds(preset.EntryIds, index);
-            normalizedPresets.Add(new LauncherPreset
-            {
-                Id = id,
-                Name = name,
-                EntryIds = entryIds,
-                Locked = preset.Locked,
-            });
+            normalizedPresets.Add(preset with { Id = id, Name = name, EntryIds = entryIds });
             index++;
         }
 
-        presets.Presets = normalizedPresets;
-        presets.DefaultPresetId = NormalizeDefaultPresetId(presets.DefaultPresetId, normalizedPresets);
+        return presets with
+        {
+            Presets = normalizedPresets,
+            DefaultPresetId = NormalizeDefaultPresetId(presets.DefaultPresetId, normalizedPresets),
+        };
     }
 
     private static List<LauncherPreset> ClonePresets(IEnumerable<LauncherPreset>? presets)
@@ -59,13 +47,7 @@ public static class LauncherPresetFiles
         foreach (var presetRow in presets)
         {
             var preset = RequirePreset(presetRow, index);
-            clone.Add(new LauncherPreset
-            {
-                Id = preset.Id,
-                Name = preset.Name,
-                EntryIds = [.. preset.EntryIds],
-                Locked = preset.Locked,
-            });
+            clone.Add(preset with { EntryIds = [.. preset.EntryIds] });
             index++;
         }
 

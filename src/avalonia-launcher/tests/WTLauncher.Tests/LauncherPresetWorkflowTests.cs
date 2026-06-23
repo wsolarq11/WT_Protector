@@ -44,13 +44,12 @@ public sealed class LauncherPresetWorkflowTests
     [Fact]
     public void ClonePresetFile_CreatesDeepCopyForRollback()
     {
-        var original = PresetFile("daily", Preset("daily", "Daily", true, "one"));
-        original.SchemaVersion = 1;
+        var original = PresetFile("daily", Preset("daily", "Daily", true, "one")) with { SchemaVersion = 1 };
 
         var clone = LauncherPresetFiles.Clone(original);
 
-        original.DefaultPresetId = "changed";
-        original.Presets[0].Name = "Changed";
+        original = original with { DefaultPresetId = "changed" };
+        original.Presets[0] = original.Presets[0] with { Name = "Changed" };
         original.Presets[0].EntryIds.Add("two");
 
         Assert.Equal("daily", clone.DefaultPresetId);
@@ -110,7 +109,7 @@ public sealed class LauncherPresetWorkflowTests
     {
         var presetFile = PresetFile(Preset("project-pair", "Existing", "one"));
 
-        var preset = LauncherPresetWorkflow.AddPreset(presetFile, " Project Pair ", ["one", "two"]);
+        var preset = LauncherPresetWorkflow.AddPreset(ref presetFile, " Project Pair ", ["one", "two"]);
 
         Assert.Equal("project-pair-2", preset.Id);
         Assert.Equal("Project Pair", preset.Name);
@@ -123,7 +122,7 @@ public sealed class LauncherPresetWorkflowTests
     {
         var presetFile = PresetFile();
 
-        var preset = LauncherPresetWorkflow.AddPreset(presetFile, "Project Pair", [" one ", "two "]);
+        var preset = LauncherPresetWorkflow.AddPreset(ref presetFile, "Project Pair", [" one ", "two "]);
 
         Assert.Equal(["one", "two"], preset.EntryIds);
     }
@@ -134,7 +133,7 @@ public sealed class LauncherPresetWorkflowTests
         var presetFile = PresetFile("daily", Preset("daily", "Daily", "one"));
 
         var exception = Assert.Throws<ArgumentException>(() =>
-            LauncherPresetWorkflow.AddPreset(presetFile, "Project Pair", ["one", " "]));
+            LauncherPresetWorkflow.AddPreset(ref presetFile, "Project Pair", ["one", " "]));
 
         Assert.Equal("entryIds", exception.ParamName);
         Assert.Equal("daily", presetFile.DefaultPresetId);
@@ -147,7 +146,7 @@ public sealed class LauncherPresetWorkflowTests
         var presetFile = PresetFile("daily", Preset("daily", "Daily", "one"));
 
         var exception = Assert.Throws<ArgumentException>(() =>
-            LauncherPresetWorkflow.AddPreset(presetFile, "Project Pair", ["one", " one "]));
+            LauncherPresetWorkflow.AddPreset(ref presetFile, "Project Pair", ["one", " one "]));
 
         Assert.Equal("entryIds", exception.ParamName);
         Assert.Equal("daily", presetFile.DefaultPresetId);
@@ -160,7 +159,7 @@ public sealed class LauncherPresetWorkflowTests
         var presetFile = PresetFile("missing", Preset("daily", "Daily", "one"));
 
         var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherPresetWorkflow.AddPreset(presetFile, " Project Pair ", ["one", "two"]));
+            LauncherPresetWorkflow.AddPreset(ref presetFile, " Project Pair ", ["one", "two"]));
 
         Assert.Equal("Launcher preset default id does not match any preset: missing.", exception.Message);
         Assert.Equal("missing", presetFile.DefaultPresetId);
@@ -172,7 +171,7 @@ public sealed class LauncherPresetWorkflowTests
     {
         var presetFile = PresetFile("daily", Preset("daily", "Daily", "one"));
 
-        LauncherPresetWorkflow.AddPreset(presetFile, " Project Pair ", ["one", "two"]);
+        LauncherPresetWorkflow.AddPreset(ref presetFile, " Project Pair ", ["one", "two"]);
 
         Assert.Equal("daily", presetFile.DefaultPresetId);
     }
@@ -182,7 +181,7 @@ public sealed class LauncherPresetWorkflowTests
     {
         var presetFile = PresetFile(" Daily ", Preset("daily", "Daily", "one"));
 
-        LauncherPresetWorkflow.AddPreset(presetFile, " Project Pair ", ["two"]);
+        LauncherPresetWorkflow.AddPreset(ref presetFile, " Project Pair ", ["two"]);
 
         Assert.Equal("daily", presetFile.DefaultPresetId);
     }
@@ -192,7 +191,7 @@ public sealed class LauncherPresetWorkflowTests
     {
         var presetFile = PresetFile(Preset("daily", "Daily", "one"));
 
-        AssertPresetNameRequired(() => LauncherPresetWorkflow.AddPreset(presetFile, " ", ["one"]));
+        AssertPresetNameRequired(() => LauncherPresetWorkflow.AddPreset(ref presetFile, " ", ["one"]));
         Assert.Single(presetFile.Presets);
     }
 
@@ -207,9 +206,9 @@ public sealed class LauncherPresetWorkflowTests
         Assert.False(LauncherPresetWorkflow.CanUpdatePreset(presetFile, "blank-manual"));
         Assert.False(LauncherPresetWorkflow.CanUpdatePreset(presetFile, "missing"));
 
-        var updated = LauncherPresetWorkflow.UpdatePreset(presetFile, "daily", " Daily Updated ", ["one", "two"]);
-        var locked = LauncherPresetWorkflow.UpdatePreset(presetFile, "blank-manual", "Changed", ["one"]);
-        var missing = LauncherPresetWorkflow.UpdatePreset(presetFile, "missing", "Missing", ["one"]);
+        var updated = LauncherPresetWorkflow.UpdatePreset(ref presetFile, "daily", " Daily Updated ", ["one", "two"]);
+        var locked = LauncherPresetWorkflow.UpdatePreset(ref presetFile, "blank-manual", "Changed", ["one"]);
+        var missing = LauncherPresetWorkflow.UpdatePreset(ref presetFile, "missing", "Missing", ["one"]);
 
         Assert.NotNull(updated);
         Assert.Equal("Daily Updated", updated.Name);
@@ -224,7 +223,7 @@ public sealed class LauncherPresetWorkflowTests
     {
         var presetFile = PresetFile(Preset("daily", "Daily", "one"));
 
-        AssertPresetNameRequired(() => LauncherPresetWorkflow.UpdatePreset(presetFile, "daily", " ", ["two"]));
+        AssertPresetNameRequired(() => LauncherPresetWorkflow.UpdatePreset(ref presetFile, "daily", " ", ["two"]));
         var preset = Assert.Single(presetFile.Presets);
         Assert.Equal("Daily", preset.Name);
         Assert.Equal(["one"], preset.EntryIds);
@@ -235,7 +234,7 @@ public sealed class LauncherPresetWorkflowTests
     {
         var presetFile = PresetFile(Preset("daily", "Daily", "one"));
 
-        var updated = LauncherPresetWorkflow.UpdatePreset(presetFile, "daily", "Daily Updated", [" one ", "two "]);
+        var updated = LauncherPresetWorkflow.UpdatePreset(ref presetFile, "daily", "Daily Updated", [" one ", "two "]);
 
         Assert.NotNull(updated);
         Assert.Equal(["one", "two"], presetFile.Presets.Single().EntryIds);
@@ -247,7 +246,7 @@ public sealed class LauncherPresetWorkflowTests
         var presetFile = PresetFile(Preset("daily", "Daily", "one"));
 
         var exception = Assert.Throws<ArgumentException>(() =>
-            LauncherPresetWorkflow.UpdatePreset(presetFile, "daily", "Daily Updated", [" "]));
+            LauncherPresetWorkflow.UpdatePreset(ref presetFile, "daily", "Daily Updated", [" "]));
 
         Assert.Equal("entryIds", exception.ParamName);
         var preset = Assert.Single(presetFile.Presets);
@@ -261,7 +260,7 @@ public sealed class LauncherPresetWorkflowTests
         var presetFile = PresetFile(Preset("daily", "Daily", "one"));
 
         var exception = Assert.Throws<ArgumentException>(() =>
-            LauncherPresetWorkflow.UpdatePreset(presetFile, "daily", "Daily Updated", ["one", " one "]));
+            LauncherPresetWorkflow.UpdatePreset(ref presetFile, "daily", "Daily Updated", ["one", " one "]));
 
         Assert.Equal("entryIds", exception.ParamName);
         var preset = Assert.Single(presetFile.Presets);
@@ -278,12 +277,12 @@ public sealed class LauncherPresetWorkflowTests
             Preset("secondary", "Secondary", "two"));
 
         Assert.True(LauncherPresetWorkflow.CanUpdatePreset(presetFile, " Daily "));
-        var updated = LauncherPresetWorkflow.UpdatePreset(presetFile, " Daily ", "Daily Updated", ["one"]);
+        var updated = LauncherPresetWorkflow.UpdatePreset(ref presetFile, " Daily ", "Daily Updated", ["one"]);
         Assert.NotNull(updated);
         Assert.Equal("Daily Updated", presetFile.Presets[0].Name);
 
         Assert.True(LauncherPresetWorkflow.CanDeletePreset(presetFile, " Daily "));
-        var deleted = LauncherPresetWorkflow.DeletePreset(presetFile, " Daily ", out var fallbackPresetId);
+        var deleted = LauncherPresetWorkflow.DeletePreset(ref presetFile, " Daily ", out var fallbackPresetId);
 
         Assert.Equal("daily", deleted?.Id);
         Assert.Equal("secondary", fallbackPresetId);
@@ -298,8 +297,8 @@ public sealed class LauncherPresetWorkflowTests
             Preset("secondary", "Secondary", "two"));
 
         Assert.False(LauncherPresetWorkflow.CanUpdatePreset(presetFile, " "));
-        Assert.Null(LauncherPresetWorkflow.UpdatePreset(presetFile, " ", "Changed", ["two"]));
-        Assert.Null(LauncherPresetWorkflow.DeletePreset(presetFile, " ", out var fallbackPresetId));
+        Assert.Null(LauncherPresetWorkflow.UpdatePreset(ref presetFile, " ", "Changed", ["two"]));
+        Assert.Null(LauncherPresetWorkflow.DeletePreset(ref presetFile, " ", out var fallbackPresetId));
 
         Assert.Equal("", fallbackPresetId);
         Assert.Equal("Preset", presetFile.Presets[0].Name);
@@ -317,8 +316,8 @@ public sealed class LauncherPresetWorkflowTests
 
         Assert.True(LauncherPresetWorkflow.CanDeletePreset(presetFile, "daily"));
 
-        var deleted = LauncherPresetWorkflow.DeletePreset(presetFile, "daily", out var fallbackPresetId);
-        var locked = LauncherPresetWorkflow.DeletePreset(presetFile, "blank-manual", out var lockedFallbackId);
+        var deleted = LauncherPresetWorkflow.DeletePreset(ref presetFile, "daily", out var fallbackPresetId);
+        var locked = LauncherPresetWorkflow.DeletePreset(ref presetFile, "blank-manual", out var lockedFallbackId);
 
         Assert.Equal("daily", deleted?.Id);
         Assert.Equal("secondary", fallbackPresetId);
@@ -338,7 +337,7 @@ public sealed class LauncherPresetWorkflowTests
             Preset("secondary", "Secondary", "two"));
 
         var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherPresetWorkflow.DeletePreset(presetFile, "secondary", out _));
+            LauncherPresetWorkflow.DeletePreset(ref presetFile, "secondary", out _));
 
         Assert.Equal("Launcher preset default id does not match any preset: missing.", exception.Message);
         Assert.Equal("missing", presetFile.DefaultPresetId);
@@ -353,7 +352,7 @@ public sealed class LauncherPresetWorkflowTests
             Preset("secondary", "Secondary", "two"),
             Preset("daily", "Daily", "one"));
 
-        var deleted = LauncherPresetWorkflow.DeletePreset(presetFile, "secondary", out var fallbackPresetId);
+        var deleted = LauncherPresetWorkflow.DeletePreset(ref presetFile, "secondary", out var fallbackPresetId);
 
         Assert.Equal("secondary", deleted?.Id);
         Assert.Equal("daily", fallbackPresetId);
@@ -369,7 +368,7 @@ public sealed class LauncherPresetWorkflowTests
             Preset("blank-manual", "Manual", locked: true),
             Preset("secondary", "Secondary", "two"));
 
-        var deleted = LauncherPresetWorkflow.DeletePreset(presetFile, "daily", out var fallbackPresetId);
+        var deleted = LauncherPresetWorkflow.DeletePreset(ref presetFile, "daily", out var fallbackPresetId);
 
         Assert.Equal("daily", deleted?.Id);
         Assert.Equal("secondary", fallbackPresetId);
@@ -385,7 +384,7 @@ public sealed class LauncherPresetWorkflowTests
             Preset(" ", "Broken", "two"));
 
         var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherPresetWorkflow.DeletePreset(presetFile, "daily", out _));
+            LauncherPresetWorkflow.DeletePreset(ref presetFile, "daily", out _));
 
         Assert.Equal("Launcher preset fallback id is required after delete.", exception.Message);
         Assert.Equal("daily", presetFile.DefaultPresetId);
@@ -400,7 +399,7 @@ public sealed class LauncherPresetWorkflowTests
             Preset("daily", "Daily", "one"),
             Preset("blank", "Blank", " "));
 
-        var deleted = LauncherPresetWorkflow.DeletePreset(presetFile, "daily", out var fallbackPresetId);
+        var deleted = LauncherPresetWorkflow.DeletePreset(ref presetFile, "daily", out var fallbackPresetId);
 
         Assert.Equal("daily", deleted?.Id);
         Assert.Equal("blank", fallbackPresetId);
