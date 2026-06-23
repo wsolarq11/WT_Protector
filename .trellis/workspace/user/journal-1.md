@@ -275,3 +275,36 @@ Wave E: 7 文件 new List<T>()→[] 替换、LauncherDialogButtons 2 brush + Mai
 ### Next Steps
 
 - None - task complete
+
+
+## Session 9: /goal Wave F — 全生产代码 new List<>() 清零 + 完成
+
+**Date**: 2026-06-23
+**Task**: /goal Wave F — 全生产代码 new List<>() 清零 + 完成
+**Branch**: `main`
+
+### Summary
+
+Wave F: 最后 1 个 new List<LauncherPreset>() → []。全部生产代码零遗留 new List<>() 无容量构造。所有 6 Waves 累计: 死代码 -17行, 重复消除 -16行, Brush.Parse 缓存 6处, 集合表达式 15+ 文件, SchemaVersion 修复, record/class 一致性 3类型, spec 设计决策文档化 3项, 禁止模式 3条。556 测试绿, verify PASS。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `691fbdb` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
