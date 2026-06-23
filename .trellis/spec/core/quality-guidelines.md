@@ -89,7 +89,7 @@ Core layer treats nullable warnings as compile errors. NullReferenceException is
 
 ### 2. Immutable Data Flow
 ```csharp
-// All shared data carriers use init-only properties
+// All shared data carriers use init-only properties + sealed record
 public sealed record LaunchEntry
 {
     public string Id { get; init; } = "";
@@ -99,6 +99,25 @@ public sealed record LaunchEntry
 entry = entry with { Selected = true };
 ```
 The compiler rejects `entry.Selected = true` — shared-mutation bugs are physically impossible.
+
+### 3. Immutable Workflow Mutation via `ref`
+When a static workflow method needs to modify an immutable record's scalar properties (while the `List<T>` contents remain mutable), use `ref` parameters:
+```csharp
+public static LauncherPreset AddPreset(ref LauncherPresetFile presetFile, ...)
+{
+    presetFile.Presets.Add(preset);          // List<T> is mutable
+    presetFile = presetFile with { DefaultPresetId = preset.Id }; // scalar → with { }
+    return preset;
+}
+```
+The `ref` keyword makes the replacement explicit at every call site (`ref _presetFile`).
+
+### 4. CI Headless Detection
+```powershell
+$isCi = $env:CI -eq 'true'
+if ($isWindowsPlatform -and -not $isCi) { ... }  # GUI smoke skipped in CI
+```
+GitHub Actions sets `CI=true`. Use this to skip checks requiring a display (GUI smoke) or user-specific paths (config directory existence). The receipt reports `'skipped-ci-headless'` for audit trail.
 
 ---
 
