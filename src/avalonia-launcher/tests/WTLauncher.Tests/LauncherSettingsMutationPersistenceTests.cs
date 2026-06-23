@@ -12,10 +12,10 @@ public sealed class LauncherSettingsMutationPersistenceTests
         var settingsPath = Path.Combine(temp.Path, "settings.json");
         var settings = Settings();
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
-        settings.LastFilterText = "new";
+        settings = settings with { LastFilterText = "new" };
 
         var saveFailure = LauncherSettingsMutationPersistence.Save(
-            settings,
+            ref settings,
             settingsPath,
             snapshot);
 
@@ -30,16 +30,19 @@ public sealed class LauncherSettingsMutationPersistenceTests
         using var temp = new TempDirectory();
         var settings = Settings();
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
-        settings.LastFilterText = "new";
-        settings.SortMode = LauncherEntryVisibility.UpdatedSortModeId;
-        settings.EntryViewMode = LauncherEntryViewModes.NamesId;
-        settings.RequireConfirmationForLaunches = false;
-        settings.CustomEntryOrder = ["two", "one"];
+        settings = settings with
+        {
+            LastFilterText = "new",
+            SortMode = LauncherEntryVisibility.UpdatedSortModeId,
+            EntryViewMode = LauncherEntryViewModes.NamesId,
+            RequireConfirmationForLaunches = false,
+            CustomEntryOrder = ["two", "one"],
+        };
 
         var saveFailure = LauncherSettingsMutationPersistence.Save(
-            settings: settings,
-            settingsPath: temp.Path,
-            snapshot: snapshot);
+            ref settings,
+            temp.Path,
+            snapshot);
 
         Assert.Contains("设置保存失败", saveFailure);
         Assert.Equal("old", settings.LastFilterText);
@@ -56,13 +59,13 @@ public sealed class LauncherSettingsMutationPersistenceTests
         var settingsPath = Path.Combine(temp.Path, "settings.json");
         var settings = Settings();
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
-        settings.SortMode = "missing";
+        settings = settings with { SortMode = "missing" };
 
         var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherSettingsMutationPersistence.Save(
-                settings,
-                settingsPath,
-                snapshot));
+        {
+            var s = settings;
+            LauncherSettingsMutationPersistence.Save(ref s, settingsPath, snapshot);
+        });
 
         Assert.Equal("Unknown launcher sort mode: missing.", exception.Message);
         Assert.Equal("missing", settings.SortMode);

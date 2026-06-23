@@ -24,6 +24,7 @@ public sealed partial class MainWindowViewModelTests
             settings,
             new LauncherSettings
             {
+                LastFilterText = "",
                 SortMode = LauncherEntryVisibility.CustomSortModeId,
                 CustomEntryOrder = ["three", "one", "two"],
             });
@@ -72,6 +73,7 @@ public sealed partial class MainWindowViewModelTests
 
         var launcherSettings = new LauncherSettings
         {
+            LastFilterText = "",
             SortMode = LauncherEntryVisibility.CustomSortModeId,
             EntryViewMode = LauncherEntryViewModes.CardsId,
             RequireConfirmationForLaunches = true,
@@ -88,18 +90,18 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == LauncherEntryVisibility.AlphabeticalSortModeId);
         Assert.Equal(LauncherEntryVisibility.CustomSortModeId, viewModel.SelectedSortMode?.Id);
-        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, launcherSettings.SortMode);
-        Assert.Equal(["one", "two"], launcherSettings.CustomEntryOrder);
+        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, viewModel.Settings.SortMode);
+        Assert.Equal(["one", "two"], viewModel.Settings.CustomEntryOrder);
         Assert.Contains("设置保存失败", viewModel.StatusText);
 
         viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == LauncherEntryViewModes.DetailsId);
         Assert.Equal(LauncherEntryViewModes.CardsId, viewModel.SelectedDisplayMode?.Id);
-        Assert.Equal(LauncherEntryViewModes.CardsId, launcherSettings.EntryViewMode);
+        Assert.Equal(LauncherEntryViewModes.CardsId, viewModel.Settings.EntryViewMode);
         Assert.Contains("设置保存失败", viewModel.StatusText);
 
         viewModel.RequireConfirmationForLaunches = false;
         Assert.True(viewModel.RequireConfirmationForLaunches);
-        Assert.True(launcherSettings.RequireConfirmationForLaunches);
+        Assert.True(viewModel.Settings.RequireConfirmationForLaunches);
         Assert.Contains("设置保存失败", viewModel.StatusText);
     }
 
@@ -116,7 +118,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.True(viewModel.TrySaveWindowBounds(width: 1320, height: 840));
 
         var savedSettings = LauncherSettingsStore.Load(settings);
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), savedSettings.CustomEntryOrder);
         Assert.Equal(1320d, savedSettings.Window.Width);
         Assert.Equal(840d, savedSettings.Window.Height);
@@ -136,7 +138,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.False(viewModel.TrySaveWindowBounds(width: 1320, height: 840));
 
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(LauncherSettingsStatus.WindowBoundsSaveFailed, viewModel.StatusText);
         AssertNoDragCues(viewModel);
         AssertNoStoreTempFiles(settings);

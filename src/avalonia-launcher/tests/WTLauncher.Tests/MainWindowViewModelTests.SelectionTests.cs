@@ -109,7 +109,7 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.Entries.Single(entry => entry.Id == "two").IsSelected = true;
 
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         AssertNoDragCues(viewModel);
     }

@@ -149,7 +149,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.NotNull(target);
         Assert.Equal(["one"], target!.EntryIds);
         Assert.Equal(1, target.EntryCount);
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
         Assert.Equal("已取消: 保存启动组", viewModel.StatusText);
     }

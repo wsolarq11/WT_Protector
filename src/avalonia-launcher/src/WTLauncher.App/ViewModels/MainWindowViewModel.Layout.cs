@@ -62,7 +62,7 @@ public sealed partial class MainWindowViewModel
     partial void OnFilterTextChanged(string value)
     {
         var snapshot = CaptureSettingsMutationSnapshot();
-        _settings.LastFilterText = value;
+        _settings = _settings with { LastFilterText = value };
         var saveFailure = SaveSettingsChange(snapshot);
         if (saveFailure is not null)
         {
@@ -87,7 +87,7 @@ public sealed partial class MainWindowViewModel
         OnPropertyChanged(nameof(IsCustomSortMode));
 
         var snapshot = CaptureSettingsMutationSnapshot();
-        _settings.SortMode = value.Id;
+        _settings = _settings with { SortMode = value.Id };
         EnsureCustomOrderContainsEntries();
         var saveFailure = SaveSettingsChange(snapshot);
         if (saveFailure is not null)
@@ -121,7 +121,7 @@ public sealed partial class MainWindowViewModel
         NotifyDisplayModeProjectionChanged();
 
         var snapshot = CaptureSettingsMutationSnapshot();
-        _settings.EntryViewMode = value.Id;
+        _settings = _settings with { EntryViewMode = value.Id };
         LauncherEntryLayoutPresentation.Refresh(_entries);
         var saveFailure = SaveSettingsChange(snapshot);
         if (saveFailure is not null)
@@ -249,7 +249,7 @@ public sealed partial class MainWindowViewModel
     public bool TrySaveWindowBounds(double width, double height)
     {
         DiscardDragReorderPreview();
-        if (LauncherSettingsStore.TrySaveWindowBounds(_settings, _settingsPath, width, height))
+        if (LauncherSettingsStore.TrySaveWindowBounds(ref _settings, _settingsPath, width, height))
             return true;
 
         StatusText = LauncherSettingsStatus.WindowBoundsSaveFailed;

@@ -16,7 +16,10 @@ public sealed partial class MainWindowViewModel
     {
         _lastPreviewParams = null; // reset debounce on new drag
         if (_dragReorderWorkflow.Begin(IsCustomSortMode, draggedEntryId))
+        {
+            _settings = _dragReorderWorkflow.Settings;
             ApplyFilter();
+        }
     }
 
     public bool PreviewMoveEntry(string draggedEntryId, string targetEntryId, bool insertAfter)
@@ -84,6 +87,7 @@ public sealed partial class MainWindowViewModel
     public void CommitDragReorder()
     {
         var result = _dragReorderWorkflow.Commit(IsCustomSortMode);
+        _settings = _dragReorderWorkflow.Settings;
         if (result.RefreshEntries)
             ApplyFilter();
         ApplyStatusText(result.Status);
@@ -92,6 +96,7 @@ public sealed partial class MainWindowViewModel
     public void CancelDragReorder()
     {
         var result = _dragReorderWorkflow.Cancel();
+        _settings = _dragReorderWorkflow.Settings;
         if (result.RefreshEntries)
             ApplyFilter();
         ApplyStatusText(result.Status);

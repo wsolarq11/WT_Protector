@@ -9,8 +9,7 @@ public static class LauncherSettingsStore
             throw new FileNotFoundException("Launcher settings not found.", settingsPath);
 
         var settings = LauncherJson.LoadRequired<LauncherSettings>(settingsPath, "Launcher settings");
-        Normalize(settings);
-        return settings;
+        return Normalize(settings);
     }
 
     public static void Save(LauncherSettings settings, string settingsPath)
@@ -21,22 +20,18 @@ public static class LauncherSettingsStore
         LauncherJson.Save(CloneNormalized(settings), settingsPath, backup: true);
     }
 
-    public static bool TrySaveWindowBounds(LauncherSettings settings, string settingsPath, double width, double height)
+    public static bool TrySaveWindowBounds(ref LauncherSettings settings, string settingsPath, double width, double height)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ThrowIfSettingsPathMissing(settingsPath);
 
-        var snapshot = LauncherSettingsSnapshot.Capture(settings);
-        var next = LauncherSettingsCopies.Clone(settings);
-        var window = RequireWindow(next.Window);
-        window.Width = width;
-        window.Height = height;
+        var next = settings with { Window = RequireWindow(settings.Window) with { Width = width, Height = height } };
         var normalized = CloneNormalized(next);
 
         try
         {
             LauncherJson.Save(normalized, settingsPath, backup: true);
-            LauncherSettingsCopies.CopyTo(normalized, settings);
+            settings = normalized;
             return true;
         }
         // Close-time bounds persistence must not leave unsaved sizes in memory.
@@ -44,7 +39,6 @@ public static class LauncherSettingsStore
         // or other path/storage exceptions depending on the underlying cause.
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or InvalidDataException)
         {
-            snapshot.Restore(settings);
             return false;
         }
     }
@@ -55,22 +49,23 @@ public static class LauncherSettingsStore
             throw new ArgumentException("Settings path is required.", nameof(settingsPath));
     }
 
-    private static void Normalize(LauncherSettings settings)
+    private static LauncherSettings Normalize(LauncherSettings settings)
     {
-        settings.LastFilterText = RequireNullableText(settings.LastFilterText, "lastFilterText");
-        settings.SortMode = NormalizeRequiredMode(settings.SortMode, "sortMode", LauncherEntryVisibility.NormalizeSortModeId);
-        settings.EntryViewMode = NormalizeRequiredMode(settings.EntryViewMode, "entryViewMode", LauncherEntryViewModes.NormalizeId);
-        settings.CommandTemplates = RequireCommandTemplates(settings.CommandTemplates);
-        settings.CustomEntryOrder = RequireCustomEntryOrder(settings.CustomEntryOrder);
-        settings.SearchHistory = RequireSearchHistory(settings.SearchHistory);
-        settings.Window = NormalizeWindow(RequireWindow(settings.Window));
+        return settings with
+        {
+            LastFilterText = RequireNullableText(settings.LastFilterText, "lastFilterText"),
+            SortMode = NormalizeRequiredMode(settings.SortMode, "sortMode", LauncherEntryVisibility.NormalizeSortModeId),
+            EntryViewMode = NormalizeRequiredMode(settings.EntryViewMode, "entryViewMode", LauncherEntryViewModes.NormalizeId),
+            CommandTemplates = RequireCommandTemplates(settings.CommandTemplates),
+            CustomEntryOrder = RequireCustomEntryOrder(settings.CustomEntryOrder),
+            SearchHistory = RequireSearchHistory(settings.SearchHistory),
+            Window = NormalizeWindow(RequireWindow(settings.Window)),
+        };
     }
 
     private static LauncherSettings CloneNormalized(LauncherSettings settings)
     {
-        var clone = LauncherSettingsCopies.Clone(settings);
-        Normalize(clone);
-        return clone;
+        return Normalize(LauncherSettingsCopies.Clone(settings));
     }
 
     private static List<string> RequireCustomEntryOrder(IReadOnlyList<string>? customEntryOrder)

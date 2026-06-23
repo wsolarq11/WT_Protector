@@ -151,7 +151,6 @@ public sealed partial class MainWindowViewModelTests
             Entry("three", "Three", directory: temp.Path));
         SavePresetFile(presets, "daily", Preset("daily", "Daily", "one", "two"));
         var launcherSettings = CreateDragSettings();
-        launcherSettings.RequireConfirmationForLaunches = false;
         var startedPlans = new List<LaunchPlan>();
         var viewModel = CreateViewModel(
             config,
@@ -164,7 +163,7 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.LaunchSelectedPresetCommand.ExecuteAsync(null);
 
         Assert.Equal(["codex", "opencode"], startedPlans.Select(plan => plan.Command).ToArray());
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         AssertNoDragCues(viewModel);
         Assert.All(LoadEntriesById(config), entry => Assert.False(entry.Selected));
@@ -223,7 +222,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Empty(startedPlans);
         Assert.Contains("wt.exe", viewModel.DryRunText);
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         AssertNoDragCues(viewModel);
         Assert.All(LoadEntriesById(config), entry => Assert.False(entry.Selected));
@@ -474,7 +473,7 @@ public sealed partial class MainWindowViewModelTests
         var presetFile = LauncherPresetStore.Load(presets);
         Assert.Equal(["daily", "secondary"], presetFile.Presets.Select(preset => preset.Id).ToArray());
         Assert.Equal("daily", viewModel.SelectedPreset?.Id);
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
         Assert.Equal("已取消: 删除启动组 Daily", viewModel.StatusText);
     }
@@ -504,7 +503,7 @@ public sealed partial class MainWindowViewModelTests
         var presetFile = LauncherPresetStore.Load(presets);
         Assert.Equal(["daily", "secondary"], presetFile.Presets.Select(preset => preset.Id).ToArray());
         Assert.Equal("daily", viewModel.SelectedPreset?.Id);
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
         Assert.Equal("删除启动组确认失败: Daily — dialog unavailable", viewModel.StatusText);
     }
@@ -539,7 +538,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("daily", viewModel.SelectedPreset?.Id);
         Assert.Equal("Daily", viewModel.SelectedPreset?.Name);
         Assert.Equal(["one"], viewModel.SelectedPreset!.EntryIds.ToArray());
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal("已取消: 删除启动组 Daily", viewModel.StatusText);
     }
 
@@ -596,7 +595,7 @@ public sealed partial class MainWindowViewModelTests
 
         await viewModel.DeleteSelectedPresetCommand.ExecuteAsync(null);
 
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         AssertNoDragCues(viewModel);
         var presetFile = LauncherPresetStore.Load(presets);

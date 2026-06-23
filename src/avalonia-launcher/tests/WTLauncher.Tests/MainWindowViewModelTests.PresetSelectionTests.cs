@@ -69,7 +69,7 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.ApplyPresetCommand.Execute(null);
 
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         AssertNoDragCues(viewModel);
         Assert.Equal(["one"], LoadEntriesById(config).Where(entry => entry.Selected).Select(entry => entry.Id).ToArray());

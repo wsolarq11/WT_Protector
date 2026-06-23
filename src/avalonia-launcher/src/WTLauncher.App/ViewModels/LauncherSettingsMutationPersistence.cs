@@ -5,7 +5,7 @@ namespace WTLauncher.App.ViewModels;
 public static class LauncherSettingsMutationPersistence
 {
     public static string? Save(
-        LauncherSettings settings,
+        ref LauncherSettings settings,
         string settingsPath,
         LauncherSettingsSnapshot snapshot)
     {
@@ -19,7 +19,7 @@ public static class LauncherSettingsMutationPersistence
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
-            snapshot.Restore(settings);
+            settings = snapshot.Restore(settings);
             return LauncherPersistenceStatus.SettingsSaveFailed(ex);
         }
     }

@@ -23,16 +23,19 @@ public sealed class LauncherSettingsSnapshot
         return new LauncherSettingsSnapshot(LauncherSettingsCopies.Clone(settings));
     }
 
-    public void Restore(LauncherSettings settings)
+    public LauncherSettings Restore(LauncherSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        LauncherSettingsCopies.CopyTo(_settings, settings);
+        return LauncherSettingsCopies.Clone(_settings);
     }
 
-    public void RestoreCustomEntryOrder(LauncherSettings settings)
+    public LauncherSettings RestoreCustomEntryOrder(LauncherSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        settings.CustomEntryOrder = LauncherSettingsCopies.CloneCustomEntryOrder(_settings)!;
+        return settings with
+        {
+            CustomEntryOrder = _settings.CustomEntryOrder is null ? null! : [.. _settings.CustomEntryOrder],
+        };
     }
 
 }

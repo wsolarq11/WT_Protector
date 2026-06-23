@@ -60,7 +60,7 @@ public sealed partial class MainWindowViewModelTests
         viewModel.CommitDragReorder();
 
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Contains("设置保存失败", viewModel.StatusText);
         AssertNoStoreTempFiles(settings);
     }
@@ -81,7 +81,7 @@ public sealed partial class MainWindowViewModelTests
         three.MoveUpCommand.Execute(null);
 
         Assert.Equal(["one", "three", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(["one", "three", "two"], launcherSettings.CustomEntryOrder);
+        Assert.Equal(["one", "three", "two"], viewModel.Settings.CustomEntryOrder);
         Assert.Equal(["one", "three", "two"], LauncherSettingsStore.Load(settings).CustomEntryOrder);
         Assert.Contains("已保存自定义排序", viewModel.StatusText);
         AssertNoDragCues(viewModel);
@@ -96,7 +96,7 @@ public sealed partial class MainWindowViewModelTests
         var (config, settings, _) = CreateDragFixture(temp);
 
         var launcherSettings = CreateDragSettings();
-        launcherSettings.SortMode = LauncherEntryVisibility.AlphabeticalSortModeId;
+        launcherSettings = launcherSettings with { SortMode = LauncherEntryVisibility.AlphabeticalSortModeId };
         var viewModel = CreateViewModel(config, settings, launcherSettings);
 
         Assert.All(viewModel.VisibleEntries, entry =>
@@ -119,7 +119,7 @@ public sealed partial class MainWindowViewModelTests
         viewModel.VisibleEntries.Single(entry => entry.Id == "three").MoveUpCommand.Execute(null);
 
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Contains("设置保存失败", viewModel.StatusText);
         AssertNoStoreTempFiles(settings);
     }
@@ -138,7 +138,7 @@ public sealed partial class MainWindowViewModelTests
         viewModel.Entries.Single(entry => entry.Id == "three").MoveDownCommand.Execute(null);
 
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(LauncherDragReorderStatus.MoveUnavailable, viewModel.StatusText);
         AssertNoDragCues(viewModel);
     }
@@ -154,12 +154,12 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.BeginDragReorder("missing");
         Assert.False(viewModel.PreviewMoveEntry("missing", "one", insertAfter: false));
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
 
         viewModel.BeginDragReorder("three");
         Assert.False(viewModel.PreviewMoveEntry("three", "missing", insertAfter: false));
 
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
     }
 
@@ -176,7 +176,7 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.BeginDragReorder("missing");
 
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         AssertNoDragCues(viewModel);
     }
@@ -194,7 +194,7 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.FilterText = "one";
 
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), LauncherSettingsStore.Load(settings).CustomEntryOrder);
         AssertNoDragCues(viewModel);
     }
@@ -212,7 +212,7 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.RefreshCommand.Execute(null);
 
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         AssertNoDragCues(viewModel);
     }
@@ -228,7 +228,10 @@ public sealed partial class MainWindowViewModelTests
             Entry(" three ", "Three"));
         var launcherSettings = new LauncherSettings
         {
+            LastFilterText = "",
             SortMode = LauncherEntryVisibility.CustomSortModeId,
+            EntryViewMode = LauncherEntryViewModes.CardsId,
+            RequireConfirmationForLaunches = false,
             CustomEntryOrder = [" one ", " two ", " three "],
         };
         var viewModel = CreateViewModel(config, settings, launcherSettings);
@@ -237,7 +240,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
 
         Assert.Equal(["three", "one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(["three", "one", "two"], launcherSettings.CustomEntryOrder);
+        Assert.Equal(["three", "one", "two"], viewModel.Settings.CustomEntryOrder);
     }
 
     [Fact]
@@ -289,7 +292,10 @@ public sealed partial class MainWindowViewModelTests
 
     private static LauncherSettings CreateDragSettings() => new()
     {
+        LastFilterText = "",
         SortMode = LauncherEntryVisibility.CustomSortModeId,
+        EntryViewMode = LauncherEntryViewModes.CardsId,
+        RequireConfirmationForLaunches = false,
         CustomEntryOrder = [.. DefaultDragOrder()],
     };
 
@@ -301,7 +307,7 @@ public sealed partial class MainWindowViewModelTests
     {
         viewModel.BeginDragReorder("three");
         Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
-        Assert.Equal(ReorderedDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(ReorderedDragOrder(), viewModel.Settings.CustomEntryOrder);
     }
 
     private static void AssertNoDragCues(MainWindowViewModel viewModel) =>

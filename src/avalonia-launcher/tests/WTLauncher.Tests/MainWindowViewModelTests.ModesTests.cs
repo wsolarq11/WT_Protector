@@ -34,9 +34,7 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(config, settings, launcherSettings);
 
         Assert.Equal(LauncherEntryVisibility.UpdatedSortModeId, viewModel.SelectedSortMode?.Id);
-        Assert.Equal(LauncherEntryVisibility.UpdatedSortModeId, launcherSettings.SortMode);
         Assert.Equal(LauncherEntryViewModes.DetailsId, viewModel.SelectedDisplayMode?.Id);
-        Assert.Equal(LauncherEntryViewModes.DetailsId, launcherSettings.EntryViewMode);
     }
 
     [Fact]

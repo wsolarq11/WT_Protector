@@ -22,7 +22,7 @@ public sealed partial class MainWindowViewModel
     partial void OnRequireConfirmationForLaunchesChanged(bool value)
     {
         var snapshot = CaptureSettingsMutationSnapshot();
-        _settings.RequireConfirmationForLaunches = value;
+        _settings = _settings with { RequireConfirmationForLaunches = value };
         RefreshLaunchConfirmationPresentation();
         var saveFailure = SaveSettingsChange(snapshot);
         if (saveFailure is not null)

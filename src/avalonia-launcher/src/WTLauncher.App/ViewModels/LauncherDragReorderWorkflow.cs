@@ -4,12 +4,16 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed class LauncherDragReorderWorkflow
 {
-    private readonly LauncherSettings _settings;
+    private LauncherSettings _settings;
     private readonly string _settingsPath;
     private readonly IReadOnlyList<LauncherEntryViewModel> _entries;
     private LauncherDragReorderSession? _session;
 
     public bool HasActiveSession => _session is not null;
+
+    /// <summary>The current settings. May be replaced during restore operations —
+    /// callers should sync their reference after Cancel/Discard.</summary>
+    public LauncherSettings Settings => _settings;
 
     public LauncherDragReorderWorkflow(
         LauncherSettings settings,
@@ -115,7 +119,7 @@ public sealed class LauncherDragReorderWorkflow
 
         var session = _session;
         var saveFailure = LauncherSettingsMutationPersistence.Save(
-            _settings,
+            ref _settings,
             _settingsPath,
             session.Snapshot);
         if (saveFailure is not null)
@@ -142,7 +146,7 @@ public sealed class LauncherDragReorderWorkflow
         if (session is null)
             return false;
 
-        session.Snapshot.RestoreCustomEntryOrder(_settings);
+        _settings = session.Snapshot.RestoreCustomEntryOrder(_settings);
         ClearPreviewState();
         return true;
     }

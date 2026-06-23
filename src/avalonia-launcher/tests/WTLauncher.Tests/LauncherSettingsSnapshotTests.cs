@@ -15,15 +15,17 @@ public sealed class LauncherSettingsSnapshotTests
             window: new LauncherWindowSettings { Width = 1200, Height = 800 });
 
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
-        settings.LastFilterText = "";
-        settings.SortMode = LauncherEntryVisibility.UpdatedSortModeId;
-        settings.EntryViewMode = LauncherEntryViewModes.NamesId;
-        settings.RequireConfirmationForLaunches = true;
-        settings.CustomEntryOrder[0] = "changed";
-        settings.Window.Width = 1;
-        settings.Window.Height = 2;
+        settings = settings with
+        {
+            LastFilterText = "",
+            SortMode = LauncherEntryVisibility.UpdatedSortModeId,
+            EntryViewMode = LauncherEntryViewModes.NamesId,
+            RequireConfirmationForLaunches = true,
+            CustomEntryOrder = ["changed", "two"],
+            Window = settings.Window with { Width = 1, Height = 2 },
+        };
 
-        snapshot.Restore(settings);
+        settings = snapshot.Restore(settings);
 
         Assert.Equal("codex", settings.LastFilterText);
         Assert.Equal(LauncherEntryVisibility.AlphabeticalSortModeId, settings.SortMode);
@@ -39,10 +41,13 @@ public sealed class LauncherSettingsSnapshotTests
     {
         var settings = Settings(lastFilterText: "old");
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
-        settings.LastFilterText = "new";
-        settings.CustomEntryOrder = ["two", "one"];
+        settings = settings with
+        {
+            LastFilterText = "new",
+            CustomEntryOrder = ["two", "one"],
+        };
 
-        snapshot.RestoreCustomEntryOrder(settings);
+        settings = snapshot.RestoreCustomEntryOrder(settings);
 
         Assert.Equal("new", settings.LastFilterText);
         Assert.Equal(["one", "two"], settings.CustomEntryOrder);
@@ -51,15 +56,20 @@ public sealed class LauncherSettingsSnapshotTests
     [Fact]
     public void CaptureRestoresNullOrderAndWindowWithoutInventingDefaults()
     {
-        var settings = Settings();
-        settings.CustomEntryOrder = null!;
-        settings.Window = null!;
+        var settings = Settings() with
+        {
+            CustomEntryOrder = null!,
+            Window = null!,
+        };
 
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
-        settings.CustomEntryOrder = ["one"];
-        settings.Window = new LauncherWindowSettings { Width = 1, Height = 2 };
+        settings = settings with
+        {
+            CustomEntryOrder = ["one"],
+            Window = new LauncherWindowSettings { Width = 1, Height = 2 },
+        };
 
-        snapshot.Restore(settings);
+        settings = snapshot.Restore(settings);
 
         Assert.Null(settings.CustomEntryOrder);
         Assert.Null(settings.Window);

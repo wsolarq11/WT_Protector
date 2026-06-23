@@ -32,7 +32,7 @@ public sealed partial class MainWindowViewModel
         EnsureCustomOrderContainsEntries();
         if (!LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, entry.Id, target.Id, insertAfter))
         {
-            snapshot.RestoreCustomEntryOrder(_settings);
+            _settings = snapshot.RestoreCustomEntryOrder(_settings);
             ApplyFilter();
             StatusText = LauncherDragReorderStatus.MoveUnavailable;
             return;

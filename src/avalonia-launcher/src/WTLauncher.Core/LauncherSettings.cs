@@ -2,43 +2,46 @@ using System.Text.Json.Serialization;
 
 namespace WTLauncher.Core;
 
-public sealed class LauncherSettings
+/// <summary>Immutable runtime settings. All properties are init-only — mutations
+/// produce a new instance via <c>with { }</c>.</summary>
+public sealed record LauncherSettings
 {
     [JsonPropertyName("schemaVersion")]
-    public int SchemaVersion { get; set; } = 1;
+    public int SchemaVersion { get; init; } = 1;
 
     [JsonPropertyName("lastFilterText")]
     [JsonRequired]
-    public string LastFilterText { get; set; } = "";
+    public string LastFilterText { get; init; } = "";
 
     [JsonPropertyName("sortMode")]
     [JsonRequired]
-    public string SortMode { get; set; } = LauncherEntryVisibility.CustomSortModeId;
+    public string SortMode { get; init; } = LauncherEntryVisibility.CustomSortModeId;
 
     [JsonPropertyName("entryViewMode")]
     [JsonRequired]
-    public string EntryViewMode { get; set; } = LauncherEntryViewModes.CardsId;
+    public string EntryViewMode { get; init; } = LauncherEntryViewModes.CardsId;
 
     [JsonPropertyName("requireConfirmationForLaunches")]
     [JsonRequired]
-    public bool RequireConfirmationForLaunches { get; set; } = true;
+    public bool RequireConfirmationForLaunches { get; init; } = true;
 
     [JsonPropertyName("customEntryOrder")]
     [JsonRequired]
-    public List<string> CustomEntryOrder { get; set; } = [];
+    public List<string> CustomEntryOrder { get; init; } = [];
 
     [JsonPropertyName("commandTemplates")]
-    public Dictionary<string, string> CommandTemplates { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, string> CommandTemplates { get; init; } = new(StringComparer.OrdinalIgnoreCase);
 
     [JsonPropertyName("searchHistory")]
-    public List<string> SearchHistory { get; set; } = [];
+    public List<string> SearchHistory { get; init; } = [];
 
     [JsonPropertyName("window")]
     [JsonRequired]
-    public LauncherWindowSettings Window { get; set; } = new();
+    public LauncherWindowSettings Window { get; init; } = new();
 }
 
-public sealed class LauncherWindowSettings
+/// <summary>Immutable window bounds. All properties are init-only.</summary>
+public sealed record LauncherWindowSettings
 {
     public const double DefaultWidth = 1180;
 
@@ -46,9 +49,9 @@ public sealed class LauncherWindowSettings
 
     [JsonPropertyName("width")]
     [JsonRequired]
-    public double Width { get; set; } = DefaultWidth;
+    public double Width { get; init; } = DefaultWidth;
 
     [JsonPropertyName("height")]
     [JsonRequired]
-    public double Height { get; set; } = DefaultHeight;
+    public double Height { get; init; } = DefaultHeight;
 }

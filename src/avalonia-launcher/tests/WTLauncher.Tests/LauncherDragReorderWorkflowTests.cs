@@ -111,7 +111,7 @@ public sealed class LauncherDragReorderWorkflowTests
         Assert.Equal(LauncherDragReorderStatus.Canceled, status);
         Assert.True(cancelRefresh);
         Assert.False(workflow.HasActiveSession);
-        Assert.Equal(["one", "two", "three"], settings.CustomEntryOrder);
+        Assert.Equal(["one", "two", "three"], workflow.Settings.CustomEntryOrder);
     }
 
     [Fact]

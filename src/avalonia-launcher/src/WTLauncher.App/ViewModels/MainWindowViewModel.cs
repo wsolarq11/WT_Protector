@@ -10,7 +10,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly string _configPath;
     private readonly string _presetPath;
     private readonly string _settingsPath;
-    private readonly LauncherSettings _settings;
+    private LauncherSettings _settings;
     private readonly LauncherLaunchWorkflow _launchWorkflow;
     private readonly Func<DateTimeOffset> _utcNow;
     private LauncherPresetFile _presetFile = new();
@@ -76,9 +76,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _filterText = RequireSettingsText(settings.LastFilterText, "lastFilterText");
         _requireConfirmationForLaunches = settings.RequireConfirmationForLaunches;
         _selectedSortMode = ResolveSortMode(settings.SortMode);
-        _settings.SortMode = _selectedSortMode.Id;
+        _settings = _settings with { SortMode = _selectedSortMode.Id };
         _selectedDisplayMode = ResolveDisplayMode(settings.EntryViewMode);
-        _settings.EntryViewMode = _selectedDisplayMode.Id;
+        _settings = _settings with { EntryViewMode = _selectedDisplayMode.Id };
         Refresh();
     }
 
@@ -87,6 +87,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public ReadOnlyObservableCollection<LauncherEntryViewModel> VisibleEntries { get; private set; }
 
     public ReadOnlyObservableCollection<LauncherPresetViewModel> Presets { get; }
+
+    /// <summary>Current settings snapshot. Immutable — replaced on every mutation.
+    /// Tests should read from this, not from a stale pre-construction reference.</summary>
+    public LauncherSettings Settings => _settings;
 
     public IReadOnlyDictionary<string, string>? CommandTemplates => _launchWorkflow.CommandTemplates;
 
@@ -141,6 +145,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private void DiscardDragReorderPreview()
     {
         var result = _dragReorderWorkflow.Cancel();
+        _settings = _dragReorderWorkflow.Settings;
         if (result.RefreshEntries)
             ApplyFilter();
     }
@@ -156,11 +161,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private static string RequireSettingsText(string? value, string fieldName) =>
         value ?? throw new InvalidDataException($"Launcher settings {fieldName} is null.");
 
-    private string? SaveSettingsChange(LauncherSettingsSnapshot snapshot) =>
-        LauncherSettingsMutationPersistence.Save(
-            _settings,
+    private string? SaveSettingsChange(LauncherSettingsSnapshot snapshot)
+    {
+        var saveFailure = LauncherSettingsMutationPersistence.Save(
+            ref _settings,
             _settingsPath,
             snapshot);
+        return saveFailure;
+    }
 
 }
 

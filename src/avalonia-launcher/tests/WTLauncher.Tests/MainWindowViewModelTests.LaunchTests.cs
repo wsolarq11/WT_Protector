@@ -207,14 +207,13 @@ public sealed partial class MainWindowViewModelTests
             Entry("two", directory: temp.Path, command: "opencode"),
             Entry("three", directory: temp.Path, command: "pwsh"));
         var launcherSettings = CreateDragSettings();
-        launcherSettings.RequireConfirmationForLaunches = false;
         var viewModel = CreateViewModel(config, settings, launcherSettings);
 
         StartDefaultDragPreview(viewModel, launcherSettings);
 
         await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
 
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
         Assert.Contains("启动回执", viewModel.DryRunText);
         Assert.Contains("已请求启动: one", viewModel.DryRunText);
@@ -306,14 +305,13 @@ public sealed partial class MainWindowViewModelTests
             Entry("two", directory: temp.Path, command: "opencode"),
             Entry("three", directory: temp.Path, command: "pwsh"));
         var launcherSettings = CreateDragSettings();
-        launcherSettings.RequireConfirmationForLaunches = false;
         var viewModel = CreateViewModel(config, settings, launcherSettings);
 
         StartDefaultDragPreview(viewModel, launcherSettings);
 
         viewModel.Entries.Single(entry => entry.Id == "one").DryRunCommand.Execute(null);
 
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
         Assert.Equal("预演: one", viewModel.StatusText);
     }
@@ -412,14 +410,13 @@ public sealed partial class MainWindowViewModelTests
             Entry("two", directory: temp.Path, command: "opencode"),
             Entry("three", directory: temp.Path, command: "pwsh"));
         var launcherSettings = CreateDragSettings();
-        launcherSettings.RequireConfirmationForLaunches = false;
         var viewModel = CreateViewModel(config, settings, launcherSettings);
 
         StartDefaultDragPreview(viewModel, launcherSettings);
 
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 
-        Assert.Equal(DefaultDragOrder(), launcherSettings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
         Assert.Contains("启动回执", viewModel.DryRunText);
         Assert.Contains("• 已请求: one", viewModel.DryRunText);
