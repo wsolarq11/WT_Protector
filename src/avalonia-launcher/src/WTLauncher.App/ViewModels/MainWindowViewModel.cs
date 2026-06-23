@@ -68,10 +68,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         Presets = new ReadOnlyObservableCollection<LauncherPresetViewModel>(_presets);
         SortModes = new ReadOnlyObservableCollection<LauncherSortModeViewModel>(_sortModes);
         DisplayModes = new ReadOnlyObservableCollection<LauncherDisplayModeViewModel>(_displayModes);
-        _dragReorderWorkflow = new LauncherDragReorderWorkflow(
-            _settings,
-            _settingsPath,
-            _entries);
         ConfigPathDisplay = LauncherMainWindowText.ConfigPathDisplay(configPath, _presetPath);
         _filterText = RequireSettingsText(settings.LastFilterText, "lastFilterText");
         _requireConfirmationForLaunches = settings.RequireConfirmationForLaunches;
@@ -79,6 +75,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settings = _settings with { SortMode = _selectedSortMode.Id };
         _selectedDisplayMode = ResolveDisplayMode(settings.EntryViewMode);
         _settings = _settings with { EntryViewMode = _selectedDisplayMode.Id };
+        // Construct workflow AFTER settings normalization so it captures
+        // the normalized values — DiscardDragReorderPreview syncs from it.
+        _dragReorderWorkflow = new LauncherDragReorderWorkflow(
+            _settings,
+            _settingsPath,
+            _entries);
         Refresh();
     }
 
