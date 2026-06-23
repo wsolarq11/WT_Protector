@@ -377,3 +377,36 @@ Step 1-7 完成序列: trellis-check(556绿,verify PASS), trellis-break-loop(共
 ### Next Steps
 
 - None - task complete
+
+
+## Session 12: /goal 7步完成序列 — Preset immutability + CI全绿 + spec固化
+
+**Date**: 2026-06-23
+**Task**: /goal 7步完成序列 — Preset immutability + CI全绿 + spec固化
+**Branch**: `main`
+
+### Summary
+
+Step 1 trellis-check: 556绿, 0 nullable warning. Step 2 break-loop: CI headless + Preset mutability 根因分析. Step 3 update-spec: ref 工作流模式 + CI检测模式写入架构不变量. Step 4 commit+push: 9文件, -7行净减少. CI: Native Gate PASS (28032784902). 全数据载体不可变化: LaunchEntry + LauncherPreset + LauncherPresetFile.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3b42c81` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
