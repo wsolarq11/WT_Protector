@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 9
+- **Total Sessions**: 10
 - **Last Active**: 2026-06-23
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~310 | Active |
+| `journal-1.md` | ~344 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 10 | 2026-06-23 | /goal 架构不可犯错性 — LaunchEntry 不可变化 + Nullable 编译期强制执行 | `9a2830f`, `2040727` | `main` |
 | 9 | 2026-06-23 | /goal Wave F — 全生产代码 new List<>() 清零 + 完成 | `691fbdb` | `main` |
 | 8 | 2026-06-23 | /goal Wave E — 集合表达式现代化 + Brush.Parse 缓存 + 设计决策文档化 | `537c7df`, `9461b8b`, `31c4d93` | `main` |
 | 7 | 2026-06-23 | /goal Wave D — LaunchPlan validation 双重路径澄清 + 误报排除 | HEAD | `main` |

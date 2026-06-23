@@ -308,3 +308,37 @@ Wave F: 最后 1 个 new List<LauncherPreset>() → []。全部生产代码零�
 ### Next Steps
 
 - None - task complete
+
+
+## Session 10: /goal 架构不可犯错性 — LaunchEntry 不可变化 + Nullable 编译期强制执行
+
+**Date**: 2026-06-23
+**Task**: /goal 架构不可犯错性 — LaunchEntry 不可变化 + Nullable 编译期强制执行
+**Branch**: `main`
+
+### Summary
+
+LaunchEntry: { get; set; } → { get; init; }, class → sealed record。消除 Clone()、CloneNormalizedEntries(-15行)。LauncherEntryViewModel 突变 → with{} + 引用替换。Core: Nullable enable + WarningsAsErrors, App: Nullable enable。两个项目均 0 nullable warnings。556 绿, verify PASS。物理上消除了共享突变 bug 类和 null 引用 bug 类。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9a2830f` | (see git log) |
+| `2040727` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
