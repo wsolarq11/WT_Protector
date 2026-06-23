@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 4
+- **Total Sessions**: 5
 - **Last Active**: 2026-06-23
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~141 | Active |
+| `journal-1.md` | ~174 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 5 | 2026-06-23 | /goal Wave 4 — SchemaVersion 数据丢失修复 + LaunchArgumentBuilder 死写入消除 | `9c148dd` | `main` |
 | 4 | 2026-06-23 | /goal 代码质量工程 — Read Every Struct + record/class 一致性修复 | `8f9354f` | `main` |
 | 3 | 2026-06-23 | trellis-check 全绿: Core 26 files + Views + XAML 零缺陷审计 | `2c7f1d9` | `main` |
 | 2 | 2026-06-23 | 北极星 UX + 架构复审: F13b 滚动保持, E8 预演确认, ADR/Spec 更新, 受阻项颠覆审计 | `10ded9c`, `1e7f0d1`, `da63f09` | `main` |
