@@ -13,10 +13,8 @@ public static class LaunchArgumentBuilder
         ArgumentNullException.ThrowIfNull(entry);
 
         var name = LauncherEntryText.Normalize(entry.Name);
-        var directory = LauncherEntryText.Normalize(entry.Directory);
-        directory = Environment.ExpandEnvironmentVariables(directory);
-        var command = LauncherEntryText.Normalize(entry.Command);
-        command = LauncherCommandTemplateResolver.Resolve(command, commandTemplates);
+        var directory = Environment.ExpandEnvironmentVariables(LauncherEntryText.Normalize(entry.Directory));
+        var command = LauncherCommandTemplateResolver.Resolve(LauncherEntryText.Normalize(entry.Command), commandTemplates);
 
         if (name.Length == 0)
             throw new InvalidOperationException("Launch entry name is empty.");
