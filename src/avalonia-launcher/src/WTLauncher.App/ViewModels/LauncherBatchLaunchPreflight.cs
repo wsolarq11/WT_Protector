@@ -56,7 +56,9 @@ public sealed record LauncherBatchLaunchConfirmation
 {
     public LauncherBatchLaunchConfirmation(
         IReadOnlyList<LauncherBatchLaunchItem> items,
-        string targetLabel)
+        string targetLabel,
+        int failedCount = 0,
+        IReadOnlyList<string>? failureMessages = null)
     {
         ArgumentNullException.ThrowIfNull(items);
 
@@ -65,11 +67,19 @@ public sealed record LauncherBatchLaunchConfirmation
             ArgumentNullException.ThrowIfNull(item);
 
         TargetLabel = RequireTargetLabel(targetLabel);
+        FailedCount = failedCount >= 0
+            ? failedCount
+            : throw new ArgumentOutOfRangeException(nameof(failedCount), failedCount, "Failed count must not be negative.");
+        FailureMessages = failureMessages?.ToArray() ?? [];
     }
 
     public IReadOnlyList<LauncherBatchLaunchItem> Items { get; }
 
     public string TargetLabel { get; }
+
+    public int FailedCount { get; }
+
+    public IReadOnlyList<string> FailureMessages { get; }
 
     private static string RequireTargetLabel(string? targetLabel)
     {

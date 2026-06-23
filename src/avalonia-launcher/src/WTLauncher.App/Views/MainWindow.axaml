@@ -350,7 +350,8 @@
             <TextBlock Classes="control-box-label"
                        Text="视图"/>
             <!-- P3: Removed DropDownClosed — OnSelectedDisplayModeChanged already calls Refresh+save -->
-            <ComboBox ItemsSource="{Binding DisplayModes}"
+            <ComboBox x:Name="DisplayModeComboBox"
+                      ItemsSource="{Binding DisplayModes}"
                       SelectedItem="{Binding SelectedDisplayMode, Mode=TwoWay}"
                       HorizontalAlignment="Stretch"/>
           </StackPanel>
@@ -425,7 +426,8 @@
 
     <Grid Grid.Row="1"
           Margin="0,16,0,14">
-      <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+      <ScrollViewer x:Name="CardsScrollViewer"
+                    HorizontalScrollBarVisibility="Disabled"
                     VerticalScrollBarVisibility="Auto"
                     IsVisible="{Binding IsCardsViewMode}">
         <Grid>
@@ -692,7 +694,8 @@
         </Border>
       </Grid>
 
-      <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+      <ScrollViewer x:Name="NamesScrollViewer"
+                    HorizontalScrollBarVisibility="Disabled"
                     VerticalScrollBarVisibility="Auto"
                     IsVisible="{Binding IsNamesViewMode}">
         <ItemsControl x:Name="NamesEntriesItemsControl"

@@ -11,18 +11,23 @@ public sealed class ConfirmBatchLaunchWindow : Window
     {
         ArgumentNullException.ThrowIfNull(confirmation);
 
-        Title = "确认一键启动";
+        var hasFailures = confirmation.FailedCount > 0;
+        Title = hasFailures ? "预演失败 - 确认一键启动" : "确认一键启动";
         Width = 760;
-        Height = 520;
+        Height = hasFailures ? 640 : 520;
         MinWidth = 460;
-        MinHeight = 340;
+        MinHeight = hasFailures ? 460 : 340;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = Brushes.White;
 
         var items = confirmation.Items;
         var plans = LauncherBatchLaunchPlanText.Format(items);
-        var message = $"将启动 {items.Count} 个{confirmation.TargetLabel}。请确认实际 wt.exe 命令。";
-        var title = LauncherDialogText.Title($"{confirmation.TargetLabel}启动确认？");
+        var message = hasFailures
+            ? $"预演发现 {confirmation.FailedCount} 个失败项。仍有 {items.Count} 个有效{confirmation.TargetLabel}。请确认实际 wt.exe 命令。"
+            : $"将启动 {items.Count} 个{confirmation.TargetLabel}。请确认实际 wt.exe 命令。";
+        var title = LauncherDialogText.Title(hasFailures
+            ? $"{confirmation.TargetLabel}启动确认（{confirmation.FailedCount} 项预演失败）？"
+            : $"{confirmation.TargetLabel}启动确认？");
         var messageText = LauncherDialogText.Body(message);
         messageText.Margin = new Thickness(0, 12, 0, 14);
         var plansText = new TextBox
@@ -36,22 +41,51 @@ public sealed class ConfirmBatchLaunchWindow : Window
             MinHeight = 220,
         };
 
-        var cancel = LauncherDialogButtons.Cancel(minWidth: 96);
-        cancel.Click += (_, _) => Close(false);
-
-        var launch = LauncherDialogButtons.Primary("确认启动", minWidth: 116);
-        launch.Click += (_, _) => Close(true);
-
-        Content = new Border
+        var mainGrid = new Grid
         {
-            Padding = new Thickness(22),
-            Child = new Grid
+            RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto"),
+            Children =
             {
-                RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto"),
+                title,
+                messageText.WithGridRow(1),
+                new Border
+                {
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(10),
+                    BorderBrush = Brushes.LightGray,
+                    Padding = new Thickness(12),
+                    Child = new ScrollViewer
+                    {
+                        Content = plansText,
+                    },
+                }.WithGridRow(2),
+            },
+        };
+
+        int footerRow;
+        if (hasFailures)
+        {
+            var failureLines = string.Join(
+                Environment.NewLine,
+                confirmation.FailureMessages.Select(f => $"- {f}"));
+            var failureHeader = LauncherDialogText.Body("预演失败项:");
+            failureHeader.FontWeight = FontWeight.Bold;
+            var failureText = new TextBox
+            {
+                Text = failureLines,
+                IsReadOnly = true,
+                FontFamily = new FontFamily("Cascadia Code, Consolas"),
+                FontSize = 12,
+                AcceptsReturn = true,
+                TextWrapping = TextWrapping.Wrap,
+                MinHeight = 60,
+            };
+            var failureSection = new StackPanel
+            {
+                Margin = new Thickness(0, 10, 0, 0),
                 Children =
                 {
-                    title,
-                    messageText.WithGridRow(1),
+                    failureHeader,
                     new Border
                     {
                         BorderThickness = new Thickness(1),
@@ -60,12 +94,34 @@ public sealed class ConfirmBatchLaunchWindow : Window
                         Padding = new Thickness(12),
                         Child = new ScrollViewer
                         {
-                            Content = plansText,
+                            Content = failureText,
                         },
-                    }.WithGridRow(2),
-                    LauncherDialogButtons.Footer(18, cancel, launch).WithGridRow(3),
+                    },
                 },
-            },
+            };
+            mainGrid.RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto,Auto");
+            mainGrid.Children.Add(failureSection.WithGridRow(3));
+            footerRow = 4;
+        }
+        else
+        {
+            footerRow = 3;
+        }
+
+        var cancel = LauncherDialogButtons.Cancel(minWidth: 96);
+        cancel.Click += (_, _) => Close(false);
+
+        var launch = LauncherDialogButtons.Primary(
+            hasFailures ? "仍然启动有效项" : "确认启动",
+            minWidth: hasFailures ? 140 : 116);
+        launch.Click += (_, _) => Close(true);
+
+        mainGrid.Children.Add(LauncherDialogButtons.Footer(18, cancel, launch).WithGridRow(footerRow));
+
+        Content = new Border
+        {
+            Padding = new Thickness(22),
+            Child = mainGrid,
         };
     }
 }

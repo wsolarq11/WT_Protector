@@ -1,8 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Input;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
+using WTLauncher.Core;
 using WTLauncher.App.ViewModels;
 
 namespace WTLauncher.App.Views;
@@ -34,6 +37,7 @@ public sealed partial class MainWindow : Window
         Opened += (_, _) => UpdateCardRegionSize(viewModel);
         Closing += OnClosing;
         KeyDown += OnWindowKeyDown;
+        DisplayModeComboBox.SelectionChanged += OnDisplayModeSelectionChanged;
     }
 
     private void UpdateCardRegionSize(MainWindowViewModel viewModel)
@@ -142,6 +146,63 @@ public sealed partial class MainWindow : Window
     {
         if (DataContext is MainWindowViewModel viewModel)
             viewModel.TrySaveWindowBounds(Width, Height);
+    }
+
+    private void OnDisplayModeSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+            return;
+
+        // F13b: Save scroll position of the view mode being left.
+        if (e.RemovedItems.Count > 0 && e.RemovedItems[0] is LauncherDisplayModeViewModel oldMode)
+        {
+            SaveScrollOffsetForMode(oldMode.Mode, viewModel);
+        }
+
+        // F13b: Restore scroll position of the new view mode after layout completes.
+        Dispatcher.UIThread.Post(RestoreCurrentScrollOffset, DispatcherPriority.Loaded);
+    }
+
+    private void SaveScrollOffsetForMode(LauncherEntryViewMode mode, MainWindowViewModel viewModel)
+    {
+        switch (mode)
+        {
+            case LauncherEntryViewMode.Cards:
+                viewModel.SaveScrollOffset(mode, CardsScrollViewer.Offset.Y);
+                break;
+            case LauncherEntryViewMode.Details:
+                viewModel.SaveScrollOffset(mode, GetDetailsScrollOffset());
+                break;
+            case LauncherEntryViewMode.Names:
+                viewModel.SaveScrollOffset(mode, NamesScrollViewer.Offset.Y);
+                break;
+        }
+    }
+
+    private void RestoreCurrentScrollOffset()
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+            return;
+
+        if (viewModel.IsCardsViewMode)
+            CardsScrollViewer.Offset = CardsScrollViewer.Offset.WithY(viewModel.GetScrollOffset(LauncherEntryViewMode.Cards));
+        else if (viewModel.IsDetailedListMode)
+            SetDetailsScrollOffset(viewModel.GetScrollOffset(LauncherEntryViewMode.Details));
+        else if (viewModel.IsNamesViewMode)
+            NamesScrollViewer.Offset = NamesScrollViewer.Offset.WithY(viewModel.GetScrollOffset(LauncherEntryViewMode.Names));
+    }
+
+    private double GetDetailsScrollOffset()
+    {
+        var scrollViewer = DetailsEntriesItemsControl.FindDescendantOfType<ScrollViewer>();
+        return scrollViewer?.Offset.Y ?? 0;
+    }
+
+    private void SetDetailsScrollOffset(double offset)
+    {
+        var scrollViewer = DetailsEntriesItemsControl.FindDescendantOfType<ScrollViewer>();
+        if (scrollViewer is not null)
+            scrollViewer.Offset = scrollViewer.Offset.WithY(offset);
     }
 
     private void OnFilterDropDownClosed(object? sender, EventArgs e)

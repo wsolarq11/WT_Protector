@@ -68,11 +68,6 @@ public sealed class LauncherLaunchWorkflow
 
         var items = preflight.Items;
         var report = new LauncherBatchLaunchReportBuilder(preflight.Report);
-        if (report.FailedCount > 0)
-        {
-            report.RecordSkipped(items.Count);
-            return report.ToReport();
-        }
 
         for (var index = 0; index < items.Count; index++)
         {

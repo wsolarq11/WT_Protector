@@ -104,6 +104,12 @@ public sealed partial class MainWindowViewModel
         StatusText = LauncherSettingsStatus.SortModeSaved(value.Label);
     }
 
+    private readonly Dictionary<LauncherEntryViewMode, double> _scrollOffsets = new();
+
+    public void SaveScrollOffset(LauncherEntryViewMode mode, double offset) => _scrollOffsets[mode] = offset;
+
+    public double GetScrollOffset(LauncherEntryViewMode mode) => _scrollOffsets.TryGetValue(mode, out var v) ? v : 0;
+
     partial void OnSelectedDisplayModeChanging(LauncherDisplayModeViewModel? value)
     {
         _ = RequireDisplayModeSelection(value);

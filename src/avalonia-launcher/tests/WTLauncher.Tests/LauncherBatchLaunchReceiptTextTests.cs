@@ -37,10 +37,17 @@ public sealed class LauncherBatchLaunchReceiptTextTests
     }
 
     [Fact]
-    public void ReceiptReportsPreflightFailuresWithoutStartedPlans()
+    public void ReceiptReportsPreflightFailuresWithStartedPlans()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+        // E8: Start delegate now fires for valid items even when preflight has failures.
+        var attempts = 0;
+        var workflow = new LauncherLaunchWorkflow(_ =>
+        {
+            attempts++;
+            if (attempts == 1)
+                throw new InvalidOperationException("blocked");
+        });
         var preflight = workflow.PreflightBatch(
             [
                 Entry("valid", temp.Path),
@@ -51,10 +58,9 @@ public sealed class LauncherBatchLaunchReceiptTextTests
         var report = workflow.StartBatch(preflight);
         var receipt = LauncherBatchLaunchReceiptText.Format(preflight, report);
 
-        Assert.Contains("已请求启动 0 项，失败 1 项，未启动 1 项", receipt);
-        Assert.Contains("• 未启动: valid", receipt);
+        Assert.Contains("已请求启动 0 项，失败 2 项，未启动 0 项", receipt);
+        Assert.Contains("• 启动失败: valid", receipt);
         Assert.Contains("missing:", receipt);
-        Assert.DoesNotContain("should not start", receipt);
     }
 
     [Fact]

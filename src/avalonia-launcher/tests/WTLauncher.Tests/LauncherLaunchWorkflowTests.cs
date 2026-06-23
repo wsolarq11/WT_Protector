@@ -101,9 +101,11 @@ public sealed class LauncherLaunchWorkflowTests
         Assert.Equal(1, preflight.Report.FailedCount);
         Assert.Equal(0, preflight.Report.RequestedCount);
         Assert.Equal(0, preflight.Report.SkippedCount);
-        Assert.Equal(1, report.FailedCount);
+        // E8: StartBatch now attempts to launch valid items even when preflight has failures.
+        // The start delegate throws, recording an additional failure but no skipped count.
+        Assert.Equal(2, report.FailedCount);
         Assert.Equal(0, report.RequestedCount);
-        Assert.Equal(1, report.SkippedCount);
+        Assert.Equal(0, report.SkippedCount);
     }
 
     [Fact]
@@ -120,11 +122,12 @@ public sealed class LauncherLaunchWorkflowTests
             ],
             requireConfirmation: false);
 
-        Assert.Empty(startedPlans);
-        Assert.Null(report.LastCommandLine);
-        Assert.Equal(0, report.RequestedCount);
+        // E8: Valid items launch even when preflight reports failures; only valid item starts.
+        Assert.Single(startedPlans);
+        Assert.NotNull(report.LastCommandLine);
+        Assert.Equal(1, report.RequestedCount);
         Assert.Equal(1, report.FailedCount);
-        Assert.Equal(1, report.SkippedCount);
+        Assert.Equal(0, report.SkippedCount);
         Assert.Contains(report.FailureMessages, failure => failure.StartsWith("missing:", StringComparison.Ordinal));
     }
 

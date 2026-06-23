@@ -355,7 +355,8 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(
             config,
             settings,
-            new LauncherSettings { RequireConfirmationForLaunches = false });
+            new LauncherSettings { RequireConfirmationForLaunches = false },
+            vm => vm.ConfirmBatchLaunchAsync = _ => Task.FromResult(true));
 
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 
@@ -369,29 +370,36 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task BatchLaunchPlanFailureSkipsConfirmation()
+    public async Task BatchLaunchPlanFailureShowsConfirmation()
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(
             temp,
             Entry("one", directory: Path.Combine(temp.Path, "missing-one"), command: "codex", selected: true));
         var confirmCalls = 0;
+        LauncherBatchLaunchConfirmation? confirmation = null;
         var viewModel = CreateViewModel(
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            vm => vm.ConfirmBatchLaunchAsync = _ =>
+            vm => vm.ConfirmBatchLaunchAsync = candidate =>
             {
                 confirmCalls++;
-                return Task.FromResult(true);
+                confirmation = candidate;
+                return Task.FromResult(false);
             });
 
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 
-        Assert.Equal(0, confirmCalls);
+        Assert.Equal(1, confirmCalls);
+        Assert.NotNull(confirmation);
+        Assert.Equal(1, confirmation!.FailedCount);
+        Assert.Single(confirmation.FailureMessages);
+        Assert.Contains("one", confirmation.FailureMessages[0]);
+        Assert.Equal("已勾选项", confirmation.TargetLabel);
         Assert.Contains("启动回执", viewModel.DryRunText);
-        Assert.Contains("已请求启动 0 项，失败 1 项，未启动 0 项", viewModel.DryRunText);
-        Assert.Contains("已请求启动 0 个勾选项，1 个失败", viewModel.StatusText);
+        Assert.Contains("已取消: 已请求启动 0 项，未启动 0 项", viewModel.DryRunText);
+        Assert.Equal("已取消: 批量启动 0 项", viewModel.StatusText);
     }
 
     [Fact]
