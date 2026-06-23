@@ -35,7 +35,7 @@ public static class LauncherEntryIds
     {
         ArgumentNullException.ThrowIfNull(ids);
 
-        var list = new List<string>();
+        List<string> list = [];
         var seen = new HashSet<string>(Comparer);
         var index = 0;
         foreach (var id in ids)

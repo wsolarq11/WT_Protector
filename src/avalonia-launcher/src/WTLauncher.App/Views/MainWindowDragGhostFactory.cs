@@ -7,6 +7,11 @@ namespace WTLauncher.App.Views;
 
 public static class MainWindowDragGhostFactory
 {
+    private static readonly IBrush SurfaceBrush = Brush.Parse(LauncherDesignTokens.SurfaceColor);
+    private static readonly IBrush DragHighlightBrush = Brush.Parse(LauncherDesignTokens.DragHighlightColor);
+    private static readonly IBrush TextPrimaryBrush = Brush.Parse(LauncherDesignTokens.TextPrimaryColor);
+    private static readonly IBrush TextMutedBrush = Brush.Parse(LauncherDesignTokens.TextMutedColor);
+
     public static (Border Control, double Left, double Top) Create(
         string name,
         string directory,
@@ -22,8 +27,8 @@ public static class MainWindowDragGhostFactory
             Width = layout.Width,
             Height = layout.Height,
             Classes = { MainWindowEntryClasses.Card },
-            Background = Brush.Parse(LauncherDesignTokens.SurfaceColor),
-            BorderBrush = Brush.Parse(LauncherDesignTokens.DragHighlightColor),
+            Background = SurfaceBrush,
+            BorderBrush = DragHighlightBrush,
             BorderThickness = new Thickness(2),
             CornerRadius = new CornerRadius(LauncherDesignTokens.CardBorderRadius),
             Opacity = 0.86,
@@ -49,7 +54,7 @@ public static class MainWindowDragGhostFactory
                         Text = name,
                         FontSize = titleFontSize,
                         FontWeight = FontWeight.SemiBold,
-                        Foreground = Brush.Parse(LauncherDesignTokens.TextPrimaryColor),
+                        Foreground = TextPrimaryBrush,
                         TextTrimming = TextTrimming.CharacterEllipsis,
                         IsHitTestVisible = false,
                     },
@@ -58,7 +63,7 @@ public static class MainWindowDragGhostFactory
                         Text = directory,
                         FontFamily = FontFamily.Parse("Cascadia Code, Consolas"),
                         FontSize = 12,
-                        Foreground = Brush.Parse(LauncherDesignTokens.TextMutedColor),
+                        Foreground = TextMutedBrush,
                         TextTrimming = TextTrimming.CharacterEllipsis,
                         IsHitTestVisible = false,
                     },

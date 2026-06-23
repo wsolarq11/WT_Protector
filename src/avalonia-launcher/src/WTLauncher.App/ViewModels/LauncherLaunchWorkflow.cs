@@ -45,7 +45,7 @@ public sealed class LauncherLaunchWorkflow
         ArgumentNullException.ThrowIfNull(entries);
 
         var report = new LauncherBatchLaunchReportBuilder();
-        var items = new List<LauncherBatchLaunchItem>();
+        List<LauncherBatchLaunchItem> items = [];
         foreach (var entry in entries)
         {
             ArgumentNullException.ThrowIfNull(entry);

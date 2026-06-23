@@ -54,7 +54,7 @@ public static class LauncherPresetFiles
         if (presets is null)
             throw new InvalidDataException("Launcher preset list is null.");
 
-        var clone = new List<LauncherPreset>();
+        List<LauncherPreset> clone = [];
         var index = 0;
         foreach (var presetRow in presets)
         {

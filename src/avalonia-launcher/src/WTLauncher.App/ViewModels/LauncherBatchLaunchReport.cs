@@ -48,7 +48,7 @@ public sealed record LauncherBatchLaunchReport
         if (failureMessages is null)
             return [];
 
-        var clone = new List<string>();
+        List<string> clone = [];
         foreach (var failure in failureMessages)
         {
             if (failure is null)

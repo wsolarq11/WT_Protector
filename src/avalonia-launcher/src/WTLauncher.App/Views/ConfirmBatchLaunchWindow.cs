@@ -7,6 +7,8 @@ namespace WTLauncher.App.Views;
 
 public sealed class ConfirmBatchLaunchWindow : Window
 {
+    private const string MonospaceFontFamily = "Cascadia Code, Consolas";
+
     public ConfirmBatchLaunchWindow(LauncherBatchLaunchConfirmation confirmation)
     {
         ArgumentNullException.ThrowIfNull(confirmation);
@@ -34,7 +36,7 @@ public sealed class ConfirmBatchLaunchWindow : Window
         {
             Text = plans,
             IsReadOnly = true,
-            FontFamily = new FontFamily("Cascadia Code, Consolas"),
+            FontFamily = new FontFamily(MonospaceFontFamily),
             FontSize = 12,
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
@@ -74,7 +76,7 @@ public sealed class ConfirmBatchLaunchWindow : Window
             {
                 Text = failureLines,
                 IsReadOnly = true,
-                FontFamily = new FontFamily("Cascadia Code, Consolas"),
+                FontFamily = new FontFamily(MonospaceFontFamily),
                 FontSize = 12,
                 AcceptsReturn = true,
                 TextWrapping = TextWrapping.Wrap,

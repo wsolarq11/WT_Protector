@@ -47,12 +47,10 @@ public sealed class EntryDetailsWindow : Window
 
         var footer = LauncherDialogButtons.Footer(16, cancel, save);
 
-        var children = new List<Control>
-        {
-            LauncherDialogText.Title(isEdit ? "编辑启动按钮" : "新增启动按钮"),
-            LauncherDialogText.Label("ID（稳定唯一，不要重复）"),
-            _idBox,
-        };
+        List<Control> children = [];
+        children.Add(LauncherDialogText.Title(isEdit ? "编辑启动按钮" : "新增启动按钮"));
+        children.Add(LauncherDialogText.Label("ID（稳定唯一，不要重复）"));
+        children.Add(_idBox);
 
         if (isEdit)
         {

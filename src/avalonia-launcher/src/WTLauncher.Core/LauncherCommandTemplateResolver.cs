@@ -35,7 +35,7 @@ public static class LauncherCommandTemplateResolver
     {
         ArgumentNullException.ThrowIfNull(entries);
 
-        var missingKeys = new List<string>();
+        List<string> missingKeys = [];
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var entry in entries)

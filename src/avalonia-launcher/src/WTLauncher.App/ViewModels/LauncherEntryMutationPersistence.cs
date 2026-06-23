@@ -63,7 +63,7 @@ public static class LauncherEntryMutationPersistence
         bool restorePresets,
         string currentStatus)
     {
-        var restoreErrors = new List<string>();
+        List<string> restoreErrors = [];
         try
         {
             LauncherConfigStore.Save(snapshot.CloneEntries(), configPath, backup: false);

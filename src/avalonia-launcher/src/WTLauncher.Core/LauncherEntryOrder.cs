@@ -10,7 +10,7 @@ public static class LauncherEntryOrder
         var knownSet = knownIds.ToHashSet(LauncherEntryIds.Comparer);
         var orderIds = NormalizeRequiredOrder(customOrder, nameof(customOrder));
 
-        var syncedOrder = new List<string>();
+        List<string> syncedOrder = [];
         var seen = new HashSet<string>(LauncherEntryIds.Comparer);
         foreach (var id in orderIds)
         {
@@ -87,7 +87,7 @@ public static class LauncherEntryOrder
     {
         ArgumentNullException.ThrowIfNull(customOrder);
 
-        var normalized = new List<string>();
+        List<string> normalized = [];
         var seen = new HashSet<string>(LauncherEntryIds.Comparer);
         var index = 0;
         foreach (var rawEntryId in customOrder)

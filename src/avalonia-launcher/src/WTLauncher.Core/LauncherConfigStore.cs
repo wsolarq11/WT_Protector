@@ -148,7 +148,7 @@ public static class LauncherConfigStore
 
     private static List<LaunchEntry> NormalizeEntries(IEnumerable<LaunchEntry?> entries)
     {
-        var normalized = new List<LaunchEntry>();
+        List<LaunchEntry> normalized = [];
         var seenIds = new HashSet<string>(LauncherEntryIds.Comparer);
         var index = 0;
         foreach (var entry in entries)
@@ -162,7 +162,7 @@ public static class LauncherConfigStore
 
     private static List<LaunchEntry> CloneNormalizedEntries(IEnumerable<LaunchEntry> entries)
     {
-        var normalized = new List<LaunchEntry>();
+        List<LaunchEntry> normalized = [];
         var seenIds = new HashSet<string>(LauncherEntryIds.Comparer);
         var index = 0;
         foreach (var entry in entries)

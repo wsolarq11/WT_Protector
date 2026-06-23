@@ -530,7 +530,7 @@ public static class LauncherBatchLaunchPlanText
     {
         ArgumentNullException.ThrowIfNull(items);
 
-        var lines = new List<string>();
+        List<string> lines = [];
         AppendPlanLines(lines, items, "• ");
         return JoinBlocks(lines);
     }
@@ -539,11 +539,10 @@ public static class LauncherBatchLaunchPlanText
     {
         ArgumentNullException.ThrowIfNull(preflight);
 
-        var lines = new List<string>
-        {
+        List<string> lines = [
             "预演回执",
             $"预演失败: 失败 {preflight.Report.FailedCount} 项，未启动 {preflight.Items.Count} 项",
-        };
+        ];
 
         AppendPlanLines(lines, preflight.Items, "• 未启动: ");
         AppendFailureLines(lines, preflight.Report.FailureMessages);
@@ -592,11 +591,10 @@ public static class LauncherBatchLaunchReceiptText
         ArgumentNullException.ThrowIfNull(preflight);
         ArgumentNullException.ThrowIfNull(report);
 
-        var lines = new List<string>
-        {
+        List<string> lines = [
             "启动回执",
             $"已请求启动 {report.RequestedCount} 项，失败 {report.FailedCount} 项，未启动 {report.SkippedCount} 项",
-        };
+        ];
 
         AppendPlanLines(lines, preflight.Items, report);
         AppendFailureLines(lines, report.FailureMessages);
@@ -607,11 +605,10 @@ public static class LauncherBatchLaunchReceiptText
     {
         ArgumentNullException.ThrowIfNull(items);
 
-        var lines = new List<string>
-        {
+        List<string> lines = [
             "启动回执",
             $"已取消: 已请求启动 0 项，未启动 {items.Count} 项",
-        };
+        ];
 
         AppendUnstartedPlanLines(lines, items);
 

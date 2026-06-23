@@ -9,6 +9,8 @@ namespace WTLauncher.App.Views;
 internal static class LauncherDialogButtons
 {
     private static readonly Thickness StandardPadding = new(16, 8);
+    private static readonly IBrush PrimaryBrush = Brush.Parse(LauncherDesignTokens.PrimaryColor);
+    private static readonly IBrush DestructiveBrush = Brush.Parse(LauncherDesignTokens.DestructiveColor);
 
     public static Button Cancel(double? minWidth = null, bool isDefault = false)
     {
@@ -28,7 +30,7 @@ internal static class LauncherDialogButtons
             content,
             isDefault: true,
             minWidth: minWidth,
-            background: Brush.Parse(LauncherDesignTokens.PrimaryColor),
+            background: PrimaryBrush,
             foreground: Brushes.White,
             fontWeight: FontWeight.SemiBold);
     }
@@ -38,7 +40,7 @@ internal static class LauncherDialogButtons
         return Create(
             content,
             minWidth: minWidth,
-            background: Brush.Parse(LauncherDesignTokens.DestructiveColor),
+            background: DestructiveBrush,
             foreground: Brushes.White,
             fontWeight: FontWeight.SemiBold);
     }
