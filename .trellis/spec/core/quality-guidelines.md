@@ -67,9 +67,12 @@ Per `DESIGN.md` token ownership rules:
 - ❌ **Direct `File.WriteAllText` outside `LauncherJson`** — always use the persistence wrapper.
 - ❌ **Adding a NuGet reference to Core** — Core must stay dependency-free (beyond BCL).
 - ❌ **Silent null-to-empty coercion without validation** — bad data should throw, not silently normalize.
-- ❌ **`catch (Exception)` without narrowing** — only catch specific types you can actually handle. In ViewModel command handlers, use `catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))` to avoid swallowing fatal exceptions. For UI delegate calls (dialog confirmations), bare `catch (Exception)` is acceptable because the delegate boundary is unknown. See [pitfalls §2.3](../guides/pitfalls.md#23-kiss-合并后-catch-过宽).
+- ❌ **`catch (Exception)` without narrowing** — only catch specific types you can actually handle. In ViewModel command handlers, use `catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))` — the shared filter in `ExceptionFilters.cs` centralizes the fatal-exception exclusion. For UI delegate calls (dialog confirmations), bare `catch (Exception)` is acceptable because the delegate boundary is unknown. See [pitfalls §2.3](../guides/pitfalls.md#23-kiss-合并后-catch-过宽).
 - ❌ **Snapshot captured before `await` in mutation methods** — snapshot must be captured AFTER async dialog confirmation, not before. Capturing before creates a window where concurrent operations can be lost on rollback. (Added 2026-06-23 ultrareview B6)
 - ❌ **Hardcoded counts in documentation** ("13 条规则", "55 类") — always say "持续更新". See [pitfalls §3.1](../guides/pitfalls.md#31-不要在文档里硬编码n-条n-类).
+- ❌ **Redundant backing fields on positional records** — if a positional record uses `{ get; init; }` with validation, use auto-properties with init-assigned defaults (`public string X { get; init; } = RequireText(X, nameof(X));`), NOT manual backing fields that duplicate the validation. (Added 2026-06-23 Read Every Struct H2)
+- ❌ **Unused `const` tokens in `LauncherDesignTokens`** — every token must have at least one consumer in `src/` (excluding tests). Unused tokens are dead code and must be removed. Verify with `grep -r <TokenName> src/ --include='*.cs' --include='*.axaml'`. (Added 2026-06-23 Read Every Struct)
+- ❌ **Event handlers with zero subscriptions** — a `private void On*` method in code-behind that has no `+=` subscription and no XAML event wiring is dead code. Remove it. (Added 2026-06-23 Read Every Struct H27)
 
 ---
 
