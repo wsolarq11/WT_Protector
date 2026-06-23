@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace WTLauncher.Core;
 
-public sealed record LauncherPresetFile
+public sealed class LauncherPresetFile
 {
     [JsonPropertyName("schemaVersion")]
     [JsonRequired]
@@ -15,9 +15,20 @@ public sealed record LauncherPresetFile
     [JsonPropertyName("presets")]
     [JsonRequired]
     public List<LauncherPreset> Presets { get; set; } = [];
+
+    public LauncherPresetFile Clone()
+    {
+        var clone = new LauncherPresetFile
+        {
+            SchemaVersion = SchemaVersion,
+            DefaultPresetId = DefaultPresetId,
+            Presets = Presets.Select(p => p.Clone()).ToList(),
+        };
+        return clone;
+    }
 }
 
-public sealed record LauncherPreset
+public sealed class LauncherPreset
 {
     [JsonPropertyName("id")]
     [JsonRequired]
@@ -34,4 +45,12 @@ public sealed record LauncherPreset
     [JsonPropertyName("locked")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public bool Locked { get; set; }
+
+    public LauncherPreset Clone() => new()
+    {
+        Id = Id,
+        Name = Name,
+        EntryIds = [.. EntryIds],
+        Locked = Locked,
+    };
 }

@@ -13,11 +13,7 @@ Views/
 ├── MainWindow.Drag.cs               # Drag-over / drop event handlers
 ├── MainWindowDragDropDecision.cs     # Pure drag-drop decision logic
 ├── MainWindowDragGhostFactory.cs     # Ghost card creation during drag
-├── MainWindowEntryCardBoundsCapture.cs  # Card bounding box capture
 ├── MainWindowEntryCardResolver.cs    # Card visual tree resolution
-├── MainWindowReorderAnimationScheduler.cs  # FLIP animation scheduling
-├── MainWindowReorderFlip.cs          # FLIP position calculation
-├── MainWindowReorderFlipAnimation.cs  # FLIP transition execution
 ├── FastWrapPanel.cs                  # Custom panel for name-wall layout
 ├── ConfirmLaunchWindow.cs            # Single launch confirmation dialog
 ├── ConfirmBatchLaunchWindow.cs       # Batch launch confirmation dialog

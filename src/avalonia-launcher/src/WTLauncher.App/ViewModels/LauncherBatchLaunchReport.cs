@@ -2,7 +2,7 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
-public sealed class LauncherBatchLaunchReport
+public sealed record LauncherBatchLaunchReport
 {
     private readonly IReadOnlyList<string> _failureMessages;
 

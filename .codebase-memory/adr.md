@@ -20,10 +20,14 @@ WT_Protector is a C# Avalonia-based launcher for managing and launching game/app
 
 ## PATTERNS
 - Partial class decomposition for ViewModels
-- Record types for truly immutable data (LaunchPlan, LauncherBatchLaunchReport); mutable entities use class (LaunchEntry)
+- **Immutable data carriers → `sealed record`**: LaunchPlan, LauncherBatchLaunchReport, LauncherBatchLaunchPreflight, LauncherBatchLaunchConfirmation, LauncherEntryDeleteTarget, LauncherPresetDeleteTarget, LauncherPresetSaveTarget, LauncherSingleLaunchConfirmation, EntryDraft — all get-only properties, value equality, `with` cloning
+- **Mutable persisted entities → `sealed class`**: LaunchEntry, LauncherPreset, LauncherPresetFile, LauncherSettings, LauncherWindowSettings — all have `Clone()` methods for snapshot/rollback
+- **ViewModel/workflow classes → `sealed class`**: LauncherEntryViewModel, LauncherPresetViewModel, LauncherDragReorderSession, LauncherLaunchWorkflow, etc.
 - Async command execution with ConfigureAwait
 - File-scoped namespaces throughout
 - Atomic temp-file writes with guaranteed cleanup — `.tmp-{Guid}` files used during `LauncherJson.Save` for crash-safe atomic writes; `finally` block ensures cleanup; tests verify no `.tmp` files are left behind
+- Collection expressions (`[]`, `[.. items]`) preferred over `new List<T>()`
+- `OrdinalIgnoreCase` for all internal string comparisons (sort, ID matching)
 
 ## TRADEOFFS
 - Partial classes keep files small but increase file count and navigation overhead

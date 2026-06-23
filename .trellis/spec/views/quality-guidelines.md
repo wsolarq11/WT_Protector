@@ -92,11 +92,8 @@ View-logic tests live in `WTLauncher.Tests/` and test **extracted pure functions
 | `MainWindowDragDropDecisionTests.cs` | Drop target resolution |
 | `MainWindowDragInsertDecisionTests.cs` | Insert position logic |
 | `MainWindowEntryCardResolverTests.cs` | Visual tree card detection |
-| `MainWindowEntryCardBoundsCaptureTests.cs` | Bounding box capture |
 | `MainWindowXamlContractTests.cs` | XAML class/name contracts |
 | `MainWindowEntriesRootSelectionTests.cs` | View mode root selection |
-| `MainWindowReorderFlipAnimationTests.cs` | FLIP animation logic |
-| `MainWindowReorderAnimationSchedulerTests.cs` | Animation scheduling |
 | `MainWindowEntryRowDoubleTapTests.cs` | Double-tap launch decision |
 
 **Pattern:** Extract the decision logic into a static method, test that. The XAML binding/visual behavior is verified by the `verify.ps1` GUI smoke step.

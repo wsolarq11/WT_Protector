@@ -63,7 +63,7 @@ public static class LauncherPresetFiles
             {
                 Id = preset.Id,
                 Name = preset.Name,
-                EntryIds = CloneEntryIds(preset.EntryIds, index),
+                EntryIds = [.. preset.EntryIds],
                 Locked = preset.Locked,
             });
             index++;
@@ -74,11 +74,6 @@ public static class LauncherPresetFiles
 
     private static LauncherPreset RequirePreset(LauncherPreset? preset, int index) =>
         preset ?? throw new InvalidDataException($"Launcher preset {index} is null.");
-
-    private static List<string> CloneEntryIds(IEnumerable<string>? entryIds, int index) =>
-        entryIds is null
-            ? throw new InvalidDataException($"Launcher preset {index} entryIds is null.")
-            : [.. entryIds];
 
     private static string NormalizePresetId(string? id, int index)
     {

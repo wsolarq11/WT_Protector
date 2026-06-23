@@ -4,16 +4,37 @@
 
 ---
 
-## Record Pattern
+## Record vs Class Decision
 
-All data types use C# `record` with `[JsonPropertyName]` and `[JsonRequired]` attributes for JSON serialization. Records are treated as **immutable-shaped** — mutation goes through `with { }` cloning.
+**Rule: immutable-shaped → `sealed record`; mutable entities → `sealed class`.**
 
-### Canonical Example
+- **Use `sealed record`** when ALL properties are `{ get; }` or `{ get; init; }` — the type is a pure data carrier, never mutated after construction. Records provide value equality, `with` cloning, and auto-generated `ToString()`.
+- **Use `sealed class`** when ANY property has `{ get; set; }` — the type is mutated after construction (e.g., JSON deserialization into mutable state). Classes use explicit `Clone()` methods for deep copying.
+
+### Record Pattern (immutable data carriers)
+
+**Source:** `src/avalonia-launcher/src/WTLauncher.App/ViewModels/LauncherBatchLaunchReport.cs`
+
+```csharp
+public sealed record LauncherBatchLaunchReport
+{
+    public LauncherBatchLaunchReport(...)
+    {
+        // validate + assign get-only properties
+    }
+
+    public int RequestedCount { get; }
+    public int SkippedCount { get; }
+    public string? LastCommandLine { get; }
+}
+```
+
+### Class Pattern (mutable persisted entities)
 
 **Source:** `src/avalonia-launcher/src/WTLauncher.Core/LaunchEntry.cs`
 
 ```csharp
-public sealed record LaunchEntry
+public sealed class LaunchEntry
 {
     [JsonPropertyName("id")]
     [JsonRequired]
@@ -39,16 +60,29 @@ public sealed record LaunchEntry
 
     [JsonPropertyName("launchedAtUtc")]
     public string LaunchedAtUtc { get; set; } = "";
+
+    public LaunchEntry Clone() => new()
+    {
+        Id = Id,
+        Name = Name,
+        Directory = Directory,
+        Command = Command,
+        Selected = Selected,
+        UpdatedAtUtc = UpdatedAtUtc,
+        LaunchedAtUtc = LaunchedAtUtc,
+    };
 }
 ```
 
 ### Rules
 
-1. **Use `sealed record`** for data types — enables `with { }` cloning and value semantics.
-2. **`[JsonRequired]` on all non-optional fields** — ensures schema enforcement on deserialization.
-3. **`[JsonPropertyName]` on every property** — explicit JSON contract, no implicit camelCase surprises.
-4. **String defaults `= ""`** — never `null` for JSON fields (prevents null-reference cascades).
-5. **No behaviour methods on records** — keep them as pure data carriers. Logic goes in static helpers.
+1. **Immutable data → `sealed record`** — get-only properties, value equality, `with` cloning.
+2. **Mutable data → `sealed class`** — get/set properties, explicit `Clone()` method, reference equality.
+3. **`[JsonRequired]` on all non-optional fields** — ensures schema enforcement on deserialization.
+4. **`[JsonPropertyName]` on every property** — explicit JSON contract, no implicit camelCase surprises.
+5. **String defaults `= ""`** — never `null` for JSON fields (prevents null-reference cascades).
+6. **No behaviour methods on data carriers** — keep them as pure data. Logic goes in static helpers.
+7. **Every mutable class provides `Clone()`** — returns a deep copy, used by snapshot/rollback infrastructure.
 
 ---
 
@@ -125,16 +159,20 @@ public static class LauncherDesignTokens
 
 ---
 
-## Immutable Cloning Pattern
+## Cloning Pattern
 
-Deep cloning is done via `record with { }`:
+**Immutable records** use `with { }` for shallow clones:
 
 ```csharp
-// Shallow clone sufficient for records with value-type/string properties
-var clone = entry with { };
+var clone = report with { };
+```
 
-// Snapshot captures a deep clone list
-var entries = sourceEntries.Select(e => e with { }).ToList();
+**Mutable classes** use explicit `Clone()` methods:
+
+```csharp
+// Deep clone for snapshot/rollback
+var entries = sourceEntries.Select(e => e.Clone()).ToList();
+var presetClone = LauncherPresetFiles.Clone(presetFile);
 ```
 
 **Source:** `src/avalonia-launcher/src/WTLauncher.App/ViewModels/LauncherEntryMutationSnapshot.cs`
@@ -148,4 +186,4 @@ var entries = sourceEntries.Select(e => e with { }).ToList();
 - ❌ **Logic methods on record types** — records are data carriers; put logic in static helpers.
 - ❌ **Magic strings for identifiers** — use `const` fields from the paired helper class.
 - ❌ **Avalonia or CommunityToolkit types in Core** — zero UI dependencies in Layer 0.
-- ❌ **`Dictionary<string, object>` or `dynamic`** — always define a typed record.
+- ❌ **`Dictionary<string, object>` or `dynamic`** — always define a typed record or class.
