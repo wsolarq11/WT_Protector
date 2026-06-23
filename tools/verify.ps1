@@ -296,7 +296,8 @@ foreach ($item in $configItems) {
     if (-not ($item.selected -is [bool])) {
         throw "Config item $idx selected field must be boolean"
     }
-    if (-not (Test-Path -LiteralPath ([string]$item.directory) -PathType Container)) {
+    # CI runners lack user workspace directories — skip existence check in CI
+    if ($env:CI -ne 'true' -and -not (Test-Path -LiteralPath ([string]$item.directory) -PathType Container)) {
         throw "Config item $idx directory does not exist: $($item.directory)"
     }
     $selectedFields++
