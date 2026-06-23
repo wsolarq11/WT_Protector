@@ -38,3 +38,38 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 2: 北极星 UX + 架构复审: F13b 滚动保持, E8 预演确认, ADR/Spec 更新, 受阻项颠覆审计
+
+**Date**: 2026-06-23
+**Task**: 北极星 UX + 架构复审: F13b 滚动保持, E8 预演确认, ADR/Spec 更新, 受阻项颠覆审计
+**Branch**: `main`
+
+### Summary
+
+Polaris UX fixes: F13b scroll position preservation across view modes (ViewModel _scrollOffsets dict), E8 preflight failure confirmation (always show dialog when FailedCount>0, StartBatch no longer skips valid items). Architecture review confirmed all constraints are correct — zero bugs caused by architecture. ADR updated: .NET 10, record→class, temp-file pattern, catch filters. Specs: views/quality-guidelines (scroll state + preflight contract), pitfalls M11 (UX = correctness). Blocked items re-audited: B14/Q8/F3 correctly blocked, E8/F13b overturned and implemented.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `10ded9c` | (see git log) |
+| `1e7f0d1` | (see git log) |
+| `da63f09` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
