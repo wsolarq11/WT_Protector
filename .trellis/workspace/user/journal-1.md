@@ -106,3 +106,36 @@ trellis-check complete: 0 FATAL, 0 HIGH, 0 MEDIUM, 0 LOW, 0 DESIGN. Read Every S
 ### Next Steps
 
 - None - task complete
+
+
+## Session 4: /goal 代码质量工程 — Read Every Struct + record/class 一致性修复
+
+**Date**: 2026-06-23
+**Task**: /goal 代码质量工程 — Read Every Struct + record/class 一致性修复
+**Branch**: `main`
+
+### Summary
+
+Wave 1: 77 文件扇出深度结构审查。Wave 2: 修复 3 个致命 record/class 类型不一致 — LauncherPreset/LauncherPresetFile 从 record 迁移到 class (mutable JSON 实体), LauncherBatchLaunchReport 从 class 迁移到 record (immutable)。更新 5 个 spec 文件对齐 ADR 模式，移除 4 个已删除 FLIP 文件引用，删除 CloneEntryIds 死代码。556 测试全绿，verify.ps1 PASS。固化模式: immutable→record, mutable→class。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8f9354f` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
