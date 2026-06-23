@@ -101,7 +101,7 @@ public sealed partial class MainWindowViewModel
             DryRunText = LauncherBatchLaunchReceiptText.Format(preflight, report);
             StatusText = completedStatus(report);
         }
-        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             DryRunText = LauncherBatchLaunchReceiptText.Failed(ex);
             StatusText = failedStatus(ex);
@@ -129,7 +129,7 @@ public sealed partial class MainWindowViewModel
         {
             accepted = await ConfirmBatchLaunchAsync(confirmation).ConfigureAwait(true);
         }
-        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             DryRunText = LauncherBatchLaunchReceiptText.ConfirmationFailed(confirmation.Items, ex);
             StatusText = failedStatus(ex);

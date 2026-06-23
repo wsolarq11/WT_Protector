@@ -43,11 +43,8 @@ public static class LauncherDesignTokens
 
     // ── Spacing / Rhythm (golden-ratio aligned) ─────────────
     public const double SpacingSmall = 8;
-    public const double SpacingMedium = 13;
-    public const double SpacingLarge = 21;
 
     // ── Dialog ──────────────────────────────────────────────
-    public const double DialogMinWidth = 420;
     public const double DialogFooterSpacing = 10;
 
     // ── Card ────────────────────────────────────────────────

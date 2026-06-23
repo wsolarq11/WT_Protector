@@ -53,7 +53,7 @@ public sealed class LauncherLaunchWorkflow
             {
                 items.Add(new LauncherBatchLaunchItem(entry, BuildPlan(entry, requireConfirmation)));
             }
-            catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+            catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
             {
                 RecordFailure(report, entry.Name, ex);
             }
@@ -78,7 +78,7 @@ public sealed class LauncherLaunchWorkflow
                 Start(item.Plan);
                 report.RecordRequested();
             }
-            catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+            catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
             {
                 RecordFailure(report, item.EntryName, index, ex);
                 report.RecordSkipped(items.Count - index - 1);

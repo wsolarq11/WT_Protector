@@ -48,7 +48,7 @@ public sealed partial class MainWindowViewModel
             DryRunText = plan.CommandLine;
             StatusText = LauncherSingleLaunchStatus.Preview(entryName, plan.RequiresConfirmation);
         }
-        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             if (entryName.Length == 0)
             {
@@ -81,7 +81,7 @@ public sealed partial class MainWindowViewModel
             DryRunText = LauncherSingleLaunchReceiptText.Requested(entryName, plan);
             StatusText = LauncherSingleLaunchStatus.Requested(entryName);
         }
-        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             if (entryName.Length == 0)
             {
@@ -111,7 +111,7 @@ public sealed partial class MainWindowViewModel
         {
             accepted = await ConfirmLaunchAsync(confirmation).ConfigureAwait(true);
         }
-        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             DryRunText = LauncherSingleLaunchReceiptText.ConfirmationFailed(entryName, plan, ex);
             StatusText = LauncherSingleLaunchStatus.Failed(entryName, ex);

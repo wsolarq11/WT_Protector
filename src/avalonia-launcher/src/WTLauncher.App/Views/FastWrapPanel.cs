@@ -4,10 +4,10 @@ using Avalonia.Controls;
 namespace WTLauncher.App.Views;
 
 /// <summary>
-/// A lightweight wrap panel that arranges children left-to-right with fixed item sizes.
-/// Unlike <see cref="WrapPanel"/>, this panel skips the expensive re-measurement
-/// of every child during arrange — it trusts the pre-calculated CardWidth/CardHeight
-/// from the ViewModel. This eliminates the O(n²) layout cost on every collection change.
+/// A lightweight wrap panel that arranges children left-to-right with uniform item
+/// sizes. Children are measured once during <see cref="MeasureOverride"/> and their
+/// <see cref="Layoutable.DesiredSize"/> is reused during <see cref="ArrangeOverride"/>,
+/// avoiding the re-measurement pass that <see cref="WrapPanel"/> performs.
 /// </summary>
 public sealed class FastWrapPanel : Panel
 {

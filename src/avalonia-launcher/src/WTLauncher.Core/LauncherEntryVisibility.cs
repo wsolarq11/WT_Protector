@@ -181,11 +181,16 @@ public static class LauncherEntryVisibility
         return normalized;
     }
 
-    private static DateTimeOffset ParseLaunchedAt(string? value)
+    private static DateTimeOffset ParseLaunchedAt(string? value) =>
+        ParseTimestamp(value, "launchedAtUtc");
+
+    private static DateTimeOffset ParseUpdatedAt(string? value) =>
+        ParseTimestamp(value, "updatedAtUtc");
+
+    private static DateTimeOffset ParseTimestamp(string? value, string fieldName)
     {
-        // E6: Match ParseUpdatedAt strictness — null/invalid must surface, not silently degrade.
         if (value is null)
-            throw new InvalidDataException("Launcher entry launchedAtUtc is required for projection.");
+            throw new InvalidDataException($"Launcher entry {fieldName} is required for projection.");
 
         var normalized = LauncherEntryText.Normalize(value);
         if (normalized.Length == 0)
@@ -194,21 +199,6 @@ public static class LauncherEntryVisibility
         if (DateTimeOffset.TryParse(normalized, out var parsed))
             return parsed;
 
-        throw new InvalidDataException($"Invalid launcher entry launchedAtUtc: {normalized}.");
-    }
-
-    private static DateTimeOffset ParseUpdatedAt(string? value)
-    {
-        if (value is null)
-            throw new InvalidDataException("Launcher entry updatedAtUtc is required for projection.");
-
-        var normalized = LauncherEntryText.Normalize(value);
-        if (normalized.Length == 0)
-            return DateTimeOffset.MinValue;
-
-        if (DateTimeOffset.TryParse(normalized, out var parsed))
-            return parsed;
-
-        throw new InvalidDataException($"Invalid launcher entry updatedAtUtc: {normalized}.");
+        throw new InvalidDataException($"Invalid launcher entry {fieldName}: {normalized}.");
     }
 }

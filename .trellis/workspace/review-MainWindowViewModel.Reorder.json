@@ -1,0 +1,47 @@
+{
+  "findings": [
+    {
+      "file": "D:/<PROJECT_ROOT>/WT_Protector/src/avalonia-launcher/src/WTLauncher.App/ViewModels/MainWindowViewModel.Reorder.cs",
+      "severity": "low",
+      "category": "special-cases",
+      "title": "CanMoveEntryUp/Down 不对称守卫模式",
+      "detail": "CanMoveEntryUp 仅用 `IndexOf(entry) > 0` 同时守卫了 not-found(-1) 和 at-top(0)。CanMoveEntryDown 则需要显式 `index >= 0`，因为 `index < _visibleEntries.Count - 1` 在 Count<=1 时无法排除 -1。逻辑正确但两种不一致的守卫风格增加了认知负担。\n\nCanMoveEntryUp (line 7-8): `_visibleEntries.IndexOf(entry) > 0`\nCanMoveEntryDown (line 12-13): `var index = _visibleEntries.IndexOf(entry); return IsCustomSortMode && index >= 0 && index < _visibleEntries.Count - 1;`",
+      "fix": "统一为显式局部变量模式，消除不对称：\n```csharp\npublic bool CanMoveEntryDown(LauncherEntryViewModel entry)\n{\n    var index = _visibleEntries.IndexOf(entry);\n    return IsCustomSortMode && index >= 0 && index < _visibleEntries.Count - 1;\n}\n// 同时将 CanMoveEntryUp 也改为同风格，或直接复用：\npublic bool CanMoveEntryUp(LauncherEntryViewModel entry) =>\n    CanMoveEntryDown(entry) && _visibleEntries.IndexOf(entry) != 0;\n```"
+    },
+    {
+      "file": "D:/<PROJECT_ROOT>/WT_Protector/src/avalonia-launcher/src/WTLauncher.App/ViewModels/MainWindowViewModel.Reorder.cs",
+      "severity": "low",
+      "category": "complexity",
+      "title": "TryResolveVisibleMoveTarget 单行4条件守卫过于密集",
+      "detail": "line 53: `if (!IsCustomSortMode || sourceIndex < 0 || targetIndex < 0 || targetIndex >= _visibleEntries.Count)` 四个不相关的失败原因被 OR 在一起，调试时无法区分是哪个条件触发了拒绝。不违反3层缩进规则但违背了失败原因的可观测性。",
+      "fix": "无需拆分——失败时统一返回 false 并且调用方已正确映射为 `MoveUnavailable`。四个条件的语义都是\"合法可见移动目标不存在\"，放在一起是可以接受的。保留现状。"
+    },
+    {
+      "file": "D:/<PROJECT_ROOT>/WT_Protector/src/avalonia-launcher/src/WTLauncher.App/ViewModels/MainWindowViewModel.Reorder.cs",
+      "severity": "medium",
+      "category": "data-design",
+      "title": "RefreshReorderCommandState 遍历全量 _entries 而非仅有可见条目",
+      "detail": "line 63-67: `foreach (var entry in _entries) entry.RefreshReorderCommands();` — _entries 包含所有启动项，但 reorder 命令只对可见条目有意义。在大型配置（数百个条目但只有少数可见）时这是不必要的 O(n) 开销。",
+      "fix": "改为遍历 `_visibleEntries`：`foreach (var entry in _visibleEntries) entry.RefreshReorderCommands();`。不可见条目不需要刷新 reorder 命令状态，因为它们不渲染 up/down 按钮。"
+    },
+    {
+      "file": "D:/<PROJECT_ROOT>/WT_Protector/src/avalonia-launcher/src/WTLauncher.App/ViewModels/MainWindowViewModel.Reorder.cs",
+      "severity": "low",
+      "category": "modernization",
+      "title": "MoveEntryRelative 的 out 参数可用元组返回值替代",
+      "detail": "line 46-48: `TryResolveVisibleMoveTarget(entry, targetOffset, out var target)` — Try* + out 是 C# 7 以前的惯用法。现代 C# 可用 `(bool Success, LauncherEntryViewModel Target)` 元组返回，消除 out 参数带来的副作用式调用。",
+      "fix": "改为 `var (ok, target) = ResolveVisibleMoveTarget(entry, targetOffset);` 并返回 `(false, entry)` 作为失败默认值。这是纯风格建议，不影响行为。"
+    },
+    {
+      "file": "D:/<PROJECT_ROOT>/WT_Protector/src/avalonia-launcher/src/WTLauncher.App/ViewModels/MainWindowViewModel.Reorder.cs",
+      "severity": "low",
+      "category": "special-cases",
+      "title": "MoveEntryRelative 中 EnsureCustomOrderContainsEntries 的副作用时机存疑",
+      "detail": "line 32: `EnsureCustomOrderContainsEntries()` 在 `TryResolveVisibleMoveTarget` 成功之后、`MoveRelative` 之前调用。它会 `Clear()` + `AddRange()` 整个 `_settings.CustomEntryOrder`。如果 `MoveRelative` 随后失败（entry.Id == target.Id），snapshot 恢复会覆盖这个修改——这是正确的。但如果多个操作并发（理论上不会），Clear 后的 AddRange 中间态可能被读到。",
+      "fix": "当前实现配合 snapshot 机制是正确的，但建议将 Ensure 移到 MoveRelative 内部或提前执行。不需要修改。"
+    }
+  ],
+  "modernizationScore": 7,
+  "deadCodeFound": [],
+  "summary": "MainWindowViewModel.Reorder.cs (68行): 结构紧凑、守卫齐全、无死代码。发现2个低风险问题：CanMoveUp/Down守卫风格不对称、RefreshReorderCommandState 遍历全量 entries 而非仅 visible。总体质量高，无需紧急修复。"
+}

@@ -268,8 +268,6 @@ public sealed partial class MainWindowViewModel
     private IEnumerable<string> GetEntryIds() =>
         _entries.Select(entry => entry.Id);
 
-    public void ApplyFilterAfterDropDown() => ApplyFilter();
-
     public int GetPresetReferenceCount(string entryId)
     {
         if (string.IsNullOrWhiteSpace(entryId))

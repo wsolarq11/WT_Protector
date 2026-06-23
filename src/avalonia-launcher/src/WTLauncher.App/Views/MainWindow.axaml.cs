@@ -205,11 +205,6 @@ public sealed partial class MainWindow : Window
             scrollViewer.Offset = scrollViewer.Offset.WithY(offset);
     }
 
-    private void OnFilterDropDownClosed(object? sender, EventArgs e)
-    {
-        if (DataContext is MainWindowViewModel viewModel)
-            viewModel.ApplyFilterAfterDropDown();
-    }
 }
 
 public static class MainWindowEntryClasses

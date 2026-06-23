@@ -32,7 +32,7 @@ public sealed partial class MainWindowViewModel
         {
             draft = await RequestEntryDraftAsync(null).ConfigureAwait(true);
         }
-        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             StatusText = LauncherEntryStatus.AddDialogFailed(ex);
             return;
@@ -80,7 +80,7 @@ public sealed partial class MainWindowViewModel
         {
             draft = await RequestEntryDraftAsync(cloneSource).ConfigureAwait(true);
         }
-        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             StatusText = LauncherEntryStatus.AddDialogFailed(ex);
             return;
@@ -129,7 +129,7 @@ public sealed partial class MainWindowViewModel
         {
             draft = await RequestEntryDraftAsync(item.SnapshotEntry()).ConfigureAwait(true);
         }
-        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             StatusText = LauncherEntryStatus.EditDialogFailed(item.Name, ex);
             return;
@@ -154,7 +154,7 @@ public sealed partial class MainWindowViewModel
             {
                 LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, item.Id);
             }
-            catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+            catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
             {
                 RestoreEntryMutationSnapshot(snapshot);
                 StatusText = LauncherEntryStatus.EditDialogFailed(item.Name, ex);
@@ -191,7 +191,7 @@ public sealed partial class MainWindowViewModel
         {
             accepted = await ConfirmDeleteEntryAsync(target).ConfigureAwait(true);
         }
-        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             StatusText = LauncherEntryStatus.DeleteConfirmationFailed(target.EntryName, ex);
             return false;

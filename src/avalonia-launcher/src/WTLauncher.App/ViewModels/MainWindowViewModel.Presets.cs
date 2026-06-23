@@ -77,7 +77,7 @@ public sealed partial class MainWindowViewModel
             DryRunText = LauncherBatchLaunchPlanText.Format(preflight.Items);
             StatusText = LauncherPresetStatus.Previewed(selectedPreset.Name, preflight.Items.Count);
         }
-        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             DryRunText = LauncherBatchLaunchPlanText.Failed(ex);
             StatusText = LauncherPresetStatus.PreviewFailed(selectedPreset.Name, ex);
