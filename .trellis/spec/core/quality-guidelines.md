@@ -73,6 +73,32 @@ Per `DESIGN.md` token ownership rules:
 - ❌ **Redundant backing fields on positional records** — if a positional record uses `{ get; init; }` with validation, use auto-properties with init-assigned defaults (`public string X { get; init; } = RequireText(X, nameof(X));`), NOT manual backing fields that duplicate the validation. (Added 2026-06-23 Read Every Struct H2)
 - ❌ **Unused `const` tokens in `LauncherDesignTokens`** — every token must have at least one consumer in `src/` (excluding tests). Unused tokens are dead code and must be removed. Verify with `grep -r <TokenName> src/ --include='*.cs' --include='*.axaml'`. (Added 2026-06-23 Read Every Struct)
 - ❌ **Event handlers with zero subscriptions** — a `private void On*` method in code-behind that has no `+=` subscription and no XAML event wiring is dead code. Remove it. (Added 2026-06-23 Read Every Struct H27)
+- ❌ **Mutable data carriers without compile-time mutation guard** — `{ get; set; }` on types shared across ViewModels allows invisible shared-mutation bugs (e.g., `_entry.Selected = true` in one ViewModel silently diverges from another's copy). All shared data carriers must use `{ get; init; }` + `sealed record` — mutations produce a new instance via `with { }`, making every state change explicit and traceable. (Added 2026-06-23 — LaunchEntry immutability hardening)
+
+## Architecture Invariants (Compile-Time Enforcement)
+
+These are not conventions — they are physically enforced by the build system.
+
+### 1. Null Safety
+```xml
+<!-- WTLauncher.Core.csproj -->
+<Nullable>enable</Nullable>
+<WarningsAsErrors>nullable</WarningsAsErrors>
+```
+Core layer treats nullable warnings as compile errors. NullReferenceException is physically impossible in the data layer.
+
+### 2. Immutable Data Flow
+```csharp
+// All shared data carriers use init-only properties
+public sealed record LaunchEntry
+{
+    public string Id { get; init; } = "";
+    // ...
+}
+// Mutation = new instance — explicit, traceable, compiler-enforced
+entry = entry with { Selected = true };
+```
+The compiler rejects `entry.Selected = true` — shared-mutation bugs are physically impossible.
 
 ---
 
