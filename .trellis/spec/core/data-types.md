@@ -29,50 +29,46 @@ public sealed record LauncherBatchLaunchReport
 }
 ```
 
-### Class Pattern (mutable persisted entities)
+### Record Pattern (immutable persisted entities)
 
 **Source:** `src/avalonia-launcher/src/WTLauncher.Core/LaunchEntry.cs`
 
 ```csharp
-public sealed class LaunchEntry
+public sealed record LaunchEntry
 {
     [JsonPropertyName("id")]
     [JsonRequired]
-    public string Id { get; set; } = "";
+    public string Id { get; init; } = "";
 
     [JsonPropertyName("name")]
     [JsonRequired]
-    public string Name { get; set; } = "";
+    public string Name { get; init; } = "";
 
     [JsonPropertyName("directory")]
     [JsonRequired]
-    public string Directory { get; set; } = "";
+    public string Directory { get; init; } = "";
 
     [JsonPropertyName("command")]
     [JsonRequired]
-    public string Command { get; set; } = "";
+    public string Command { get; init; } = "";
 
     [JsonPropertyName("selected")]
-    public bool Selected { get; set; }
+    public bool Selected { get; init; }
 
     [JsonPropertyName("updatedAtUtc")]
-    public string UpdatedAtUtc { get; set; } = "";
+    public string UpdatedAtUtc { get; init; } = "";
 
     [JsonPropertyName("launchedAtUtc")]
-    public string LaunchedAtUtc { get; set; } = "";
-
-    public LaunchEntry Clone() => new()
-    {
-        Id = Id,
-        Name = Name,
-        Directory = Directory,
-        Command = Command,
-        Selected = Selected,
-        UpdatedAtUtc = UpdatedAtUtc,
-        LaunchedAtUtc = LaunchedAtUtc,
-    };
+    public string LaunchedAtUtc { get; init; } = "";
 }
 ```
+
+Mutations produce a new instance via `with { }`:
+```csharp
+entry = entry with { Selected = true, UpdatedAtUtc = timestamp };
+```
+
+### Class Pattern (mutable persisted entities)
 
 ### Rules
 

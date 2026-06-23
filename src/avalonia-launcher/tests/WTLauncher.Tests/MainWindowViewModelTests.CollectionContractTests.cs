@@ -32,10 +32,7 @@ public sealed partial class MainWindowViewModelTests
         var entry = viewModel.Entries.Single();
 
         var snapshot = entry.SnapshotEntry();
-        snapshot.Id = "broken";
-        snapshot.Name = "";
-        snapshot.Command = "bad";
-        snapshot.Selected = false;
+        snapshot = snapshot with { Id = "broken", Name = "", Command = "bad", Selected = false };
 
         Assert.Equal("one", entry.Id);
         Assert.Equal("One", entry.Name);

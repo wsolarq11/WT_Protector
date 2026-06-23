@@ -117,8 +117,7 @@ public sealed class LauncherEntryMutationPersistenceTests
         var presetPath = Path.Combine(temp.Path, "presets.json");
         LauncherConfigStore.Save([Entry("one")], configPath, backup: true);
         LauncherPresetStore.Save(PresetFile("daily", Preset("daily", "one")), presetPath, backup: true);
-        var invalidEntry = Entry("one");
-        invalidEntry.Name = null!;
+        var invalidEntry = Entry("one") with { Name = null! };
         var snapshot = LauncherEntryMutationSnapshot.Capture(
             [invalidEntry],
             PresetFile("daily", Preset("daily", "one")),

@@ -27,7 +27,7 @@ public static class LauncherConfigStore
         ThrowIfConfigPathMissing(configPath);
 
         LauncherJson.Save(
-            CloneNormalizedEntries(entries),
+            NormalizeEntries(entries!),
             configPath,
             backup);
     }
@@ -160,36 +160,24 @@ public static class LauncherConfigStore
         return normalized;
     }
 
-    private static List<LaunchEntry> CloneNormalizedEntries(IEnumerable<LaunchEntry> entries)
-    {
-        List<LaunchEntry> normalized = [];
-        var seenIds = new HashSet<string>(LauncherEntryIds.Comparer);
-        var index = 0;
-        foreach (var entry in entries)
-        {
-            normalized.Add(CloneNormalized(RequireEntry(entry, index), index, seenIds));
-            index++;
-        }
-
-        return normalized;
-    }
-
     private static LaunchEntry RequireEntry(LaunchEntry? entry, int index) =>
         entry ?? throw new InvalidDataException($"Launcher config entry {index} is null.");
 
     private static LaunchEntry Normalize(LaunchEntry entry, int index, HashSet<string> seenIds)
     {
-        entry.Id = RequireEntryId(entry.Id, index, seenIds);
-        entry.Name = RequireEntryText(entry.Name, index, "name");
-        entry.Directory = RequireEntryText(entry.Directory, index, "directory");
-        entry.Command = RequireEntryText(entry.Command, index, "command");
-        entry.UpdatedAtUtc = NormalizeTimestampEntryText(entry.UpdatedAtUtc, index, "updatedAtUtc");
-        entry.LaunchedAtUtc = NormalizeTimestampEntryText(entry.LaunchedAtUtc, index, "launchedAtUtc");
-        return entry;
+        // LaunchEntry is immutable ({ get; init; }) — normalization returns a new instance
+        // instead of mutating, making every data transformation explicit and traceable.
+        return new LaunchEntry
+        {
+            Id = RequireEntryId(entry.Id, index, seenIds),
+            Name = RequireEntryText(entry.Name, index, "name"),
+            Directory = RequireEntryText(entry.Directory, index, "directory"),
+            Command = RequireEntryText(entry.Command, index, "command"),
+            UpdatedAtUtc = NormalizeTimestampEntryText(entry.UpdatedAtUtc, index, "updatedAtUtc"),
+            LaunchedAtUtc = NormalizeTimestampEntryText(entry.LaunchedAtUtc, index, "launchedAtUtc"),
+            Selected = entry.Selected,
+        };
     }
-
-    private static LaunchEntry CloneNormalized(LaunchEntry entry, int index, HashSet<string> seenIds) =>
-        Normalize(entry.Clone(), index, seenIds);
 
     private static string RequireEntryId(string? id, int index, HashSet<string> seenIds)
     {

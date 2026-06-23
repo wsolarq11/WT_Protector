@@ -2,41 +2,33 @@ using System.Text.Json.Serialization;
 
 namespace WTLauncher.Core;
 
-public sealed class LaunchEntry
+/// <summary>Immutable data carrier. All properties are init-only — every state
+/// change produces a new instance via <c>with { }</c>, making mutations explicit,
+/// traceable, and impossible to miss. No invisible shared-mutation bugs.</summary>
+public sealed record LaunchEntry
 {
     [JsonPropertyName("id")]
     [JsonRequired]
-    public string Id { get; set; } = "";
+    public string Id { get; init; } = "";
 
     [JsonPropertyName("name")]
     [JsonRequired]
-    public string Name { get; set; } = "";
+    public string Name { get; init; } = "";
 
     [JsonPropertyName("directory")]
     [JsonRequired]
-    public string Directory { get; set; } = "";
+    public string Directory { get; init; } = "";
 
     [JsonPropertyName("command")]
     [JsonRequired]
-    public string Command { get; set; } = "";
+    public string Command { get; init; } = "";
 
     [JsonPropertyName("selected")]
-    public bool Selected { get; set; }
+    public bool Selected { get; init; }
 
     [JsonPropertyName("updatedAtUtc")]
-    public string UpdatedAtUtc { get; set; } = "";
+    public string UpdatedAtUtc { get; init; } = "";
 
     [JsonPropertyName("launchedAtUtc")]
-    public string LaunchedAtUtc { get; set; } = "";
-
-    public LaunchEntry Clone() => new()
-    {
-        Id = Id,
-        Name = Name,
-        Directory = Directory,
-        Command = Command,
-        Selected = Selected,
-        UpdatedAtUtc = UpdatedAtUtc,
-        LaunchedAtUtc = LaunchedAtUtc,
-    };
+    public string LaunchedAtUtc { get; init; } = "";
 }

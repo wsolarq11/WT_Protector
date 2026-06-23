@@ -52,7 +52,7 @@ public sealed partial class MainWindowViewModel
             return;
 
         var snapshot = CaptureEntryMutationSnapshot();
-        entry.UpdatedAtUtc = CurrentTimestampUtc();
+        entry = entry with { UpdatedAtUtc = CurrentTimestampUtc() };
         _entries.Add(new LauncherEntryViewModel(entry, this));
         _settings.CustomEntryOrder.Add(entry.Id);
 
@@ -100,7 +100,7 @@ public sealed partial class MainWindowViewModel
             return;
 
         var snapshot = CaptureEntryMutationSnapshot();
-        entry.UpdatedAtUtc = CurrentTimestampUtc();
+        entry = entry with { UpdatedAtUtc = CurrentTimestampUtc() };
         _entries.Add(new LauncherEntryViewModel(entry, this));
         _settings.CustomEntryOrder.Add(entry.Id);
 

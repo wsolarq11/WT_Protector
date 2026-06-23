@@ -204,8 +204,8 @@ public sealed partial class MainWindowViewModelTests
             configure: vm => vm.RequestEntryDraftAsync = entry =>
             {
                 dialogEntry = entry;
-                entry!.Id = "broken";
-                entry.Name = "";
+                entry = entry! with { Id = "broken", Name = "" };
+                dialogEntry = entry;
                 return Task.FromResult<EntryDraft?>(null);
             });
 
@@ -236,8 +236,7 @@ public sealed partial class MainWindowViewModelTests
             launcherSettings,
             configure: vm => vm.RequestEntryDraftAsync = entry =>
             {
-                entry!.Id = "broken";
-                entry.Name = "";
+                entry = entry! with { Id = "broken", Name = "" };
                 return Task.FromResult<EntryDraft?>(RenamedOneEntryDraft());
             });
 
@@ -354,8 +353,7 @@ public sealed partial class MainWindowViewModelTests
         {
             target = candidate;
             externalSnapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
-            externalSnapshot.Id = "broken";
-            externalSnapshot.Name = "";
+            externalSnapshot = externalSnapshot! with { Id = "broken", Name = "" };
             return Task.FromResult(false);
         };
 
@@ -387,8 +385,7 @@ public sealed partial class MainWindowViewModelTests
         {
             target = candidate;
             externalSnapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
-            externalSnapshot.Id = "broken";
-            externalSnapshot.Name = "";
+            externalSnapshot = externalSnapshot! with { Id = "broken", Name = "" };
             return Task.FromResult(true);
         };
 

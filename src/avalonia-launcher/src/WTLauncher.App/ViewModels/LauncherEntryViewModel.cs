@@ -7,7 +7,7 @@ namespace WTLauncher.App.ViewModels;
 public sealed partial class LauncherEntryViewModel : ObservableObject
 {
     private readonly MainWindowViewModel _owner;
-    private readonly LaunchEntry _entry;
+    private LaunchEntry _entry;
 
     public LauncherEntryViewModel(LaunchEntry entry, MainWindowViewModel owner)
     {
@@ -18,7 +18,7 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         _isSelected = entry.Selected;
     }
 
-    public LaunchEntry SnapshotEntry() => _entry.Clone();
+    public LaunchEntry SnapshotEntry() => _entry with { };
 
     public string Id => _entry.Id;
 
@@ -54,33 +54,31 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     internal void SetSelectionFromOwner(bool selected)
     {
-        _entry.Selected = selected;
+        if (_entry.Selected != selected)
+            _entry = _entry with { Selected = selected };
         SetProperty(ref _isSelected, selected, nameof(IsSelected));
     }
 
     internal bool ReplaceEntrySelectionFromOwner(bool selected)
     {
         var previousSelected = _entry.Selected;
-        _entry.Selected = selected;
+        if (previousSelected != selected)
+            _entry = _entry with { Selected = selected };
         return previousSelected;
     }
 
     internal void ReplaceEntryFromOwner(LaunchEntry updated, string updatedAtUtc)
     {
         ArgumentNullException.ThrowIfNull(updated);
-        _entry.Id = updated.Id;
-        _entry.Name = updated.Name;
-        _entry.Directory = updated.Directory;
-        _entry.Command = updated.Command;
-        _entry.UpdatedAtUtc = updatedAtUtc;
-        SetSelectionFromOwner(updated.Selected);
+        _entry = updated with { UpdatedAtUtc = updatedAtUtc };
+        _isSelected = updated.Selected;
         RefreshDisplay();
     }
 
     internal string RecordLaunchFromOwner(string launchedAtUtc)
     {
         var previous = _entry.LaunchedAtUtc;
-        _entry.LaunchedAtUtc = launchedAtUtc;
+        _entry = _entry with { LaunchedAtUtc = launchedAtUtc };
         return previous;
     }
 

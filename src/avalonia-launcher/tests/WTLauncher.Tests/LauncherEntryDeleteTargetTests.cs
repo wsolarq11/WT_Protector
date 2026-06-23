@@ -15,8 +15,7 @@ public sealed class LauncherEntryDeleteTargetTests
         };
 
         var target = new LauncherEntryDeleteTarget(entry);
-        entry.Id = "changed";
-        entry.Name = "Changed";
+        entry = entry with { Id = "changed", Name = "Changed" };
 
         Assert.Equal("one", target.EntryId);
         Assert.Equal("One", target.EntryName);

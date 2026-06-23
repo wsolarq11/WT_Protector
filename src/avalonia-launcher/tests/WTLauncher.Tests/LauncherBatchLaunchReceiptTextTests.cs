@@ -70,7 +70,7 @@ public sealed class LauncherBatchLaunchReceiptTextTests
         var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("blocked"));
         var entry = Entry("one", temp.Path);
         var preflight = workflow.PreflightBatch([entry], requireConfirmation: false);
-        entry.Name = " ";
+        entry = entry with { Name = " " };
 
         var report = workflow.StartBatch(preflight);
         var receipt = LauncherBatchLaunchReceiptText.Format(preflight, report);

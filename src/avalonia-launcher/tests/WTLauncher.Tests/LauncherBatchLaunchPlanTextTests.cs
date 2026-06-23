@@ -12,7 +12,7 @@ public sealed class LauncherBatchLaunchPlanTextTests
         var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
         var entry = Entry("one", temp.Path);
         var preflight = workflow.PreflightBatch([entry], requireConfirmation: true);
-        entry.Name = " ";
+        entry = entry with { Name = " " };
 
         var text = LauncherBatchLaunchPlanText.Format(preflight.Items);
 

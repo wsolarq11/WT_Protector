@@ -13,7 +13,7 @@ public sealed class LauncherEntryMutationSnapshotTests
         var order = new List<string> { "one" };
 
         var snapshot = LauncherEntryMutationSnapshot.Capture([entry], presetFile, order, selectedPresetId: "daily");
-        entry.Id = "changed";
+        entry = entry with { Id = "changed" };
         presetFile.Presets[0].EntryIds[0] = "changed";
         order[0] = "changed";
 
@@ -42,7 +42,7 @@ public sealed class LauncherEntryMutationSnapshotTests
         var entries = snapshot.CloneEntries();
         var presets = snapshot.ClonePresetFile();
         var order = snapshot.CloneCustomEntryOrder();
-        entries[0].Id = "changed";
+        entries[0] = entries[0] with { Id = "changed" };
         presets.Presets[0].EntryIds[0] = "changed";
         order[0] = "changed";
 
@@ -60,7 +60,8 @@ public sealed class LauncherEntryMutationSnapshotTests
             ["one"],
             selectedPresetId: "daily");
 
-        Assert.Single(snapshot.Entries).Id = "changed";
+        var entry = Assert.Single(snapshot.Entries);
+        entry = entry with { Id = "changed" };
         snapshot.PresetFile.Presets[0].EntryIds[0] = "changed";
         var order = Assert.IsAssignableFrom<IList<string>>(snapshot.CustomEntryOrder);
 

@@ -114,7 +114,7 @@ public sealed partial class MainWindowViewModelTests
         {
             confirmation = candidate;
             externalSnapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
-            externalSnapshot.Name = "";
+            externalSnapshot = externalSnapshot! with { Name = "" };
             throw new InvalidOperationException("dialog unavailable");
         };
 
@@ -179,7 +179,7 @@ public sealed partial class MainWindowViewModelTests
         {
             confirmation = candidate;
             externalSnapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
-            externalSnapshot.Name = "";
+            externalSnapshot = externalSnapshot! with { Name = "" };
             return Task.FromResult(true);
         };
 
@@ -283,7 +283,7 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.DryRunText = "旧单项回执";
         var snapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
-        snapshot.Name = "";
+        snapshot = snapshot with { Name = "" };
 
         await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
 
@@ -332,7 +332,7 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.DryRunText = "旧预演";
         var snapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
-        snapshot.Name = "";
+        snapshot = snapshot with { Name = "" };
 
         viewModel.Entries.Single(entry => entry.Id == "one").DryRunCommand.Execute(null);
 
@@ -507,7 +507,7 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.DryRunText = "旧回执";
         var snapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
-        snapshot.Name = "";
+        snapshot = snapshot with { Name = "" };
 
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 

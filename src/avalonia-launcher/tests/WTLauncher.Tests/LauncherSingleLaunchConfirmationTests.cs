@@ -16,8 +16,7 @@ public sealed class LauncherSingleLaunchConfirmationTests
         var plan = Plan("codex --version");
 
         var confirmation = new LauncherSingleLaunchConfirmation(entry, plan);
-        entry.Id = "broken";
-        entry.Name = "";
+        entry = entry with { Id = "broken", Name = "" };
 
         Assert.Equal("one", confirmation.EntryId);
         Assert.Equal("One", confirmation.EntryName);

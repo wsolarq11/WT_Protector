@@ -33,8 +33,7 @@ public sealed class LauncherConfigMutationPersistenceTests
     {
         using var temp = new TempDirectory();
         var configPath = Path.Combine(temp.Path, "config.json");
-        var entry = Entry("one");
-        entry.Name = null!;
+        var entry = Entry("one") with { Name = null! };
 
         var exception = Assert.Throws<InvalidDataException>(() =>
             LauncherConfigMutationPersistence.Save([entry], configPath));
