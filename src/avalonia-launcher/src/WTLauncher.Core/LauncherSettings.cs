@@ -5,7 +5,7 @@ namespace WTLauncher.Core;
 public sealed class LauncherSettings
 {
     [JsonPropertyName("schemaVersion")]
-    public int? SchemaVersion { get; set; } = 1;
+    public int SchemaVersion { get; set; } = 1;
 
     [JsonPropertyName("lastFilterText")]
     [JsonRequired]
