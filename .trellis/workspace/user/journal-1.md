@@ -172,3 +172,38 @@ Workflow Read Every Struct (78 agents) 发现 386 项: 9 致命, 36 高危, 95 �
 ### Next Steps
 
 - None - task complete
+
+
+## Session 6: /goal Waves A-C — 死代码删除 + 重复消除 + SchemaVersion 现代化
+
+**Date**: 2026-06-23
+**Task**: /goal Waves A-C — 死代码删除 + 重复消除 + SchemaVersion 现代化
+**Branch**: `main`
+
+### Summary
+
+Wave A: 删除 7 处死代码 — OnFilterDropDownClosed, ApplyFilterAfterDropDown, HasEntryReferences, 3 个未使用 DesignTokens。Fix FastWrapPanel 误导性 doc comment。Wave B: 合并 ParseLaunchedAt/ParseUpdatedAt 为 ParseTimestamp (-16行), LaunchPlan 移除 4 个冗余 backing field (-12行)。Wave C: SchemaVersion int?→int 消除死 null-safety。更新 spec: 3 条新禁止模式。全 556 测试绿, verify.ps1 PASS。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ed39927` | (see git log) |
+| `e47db04` | (see git log) |
+| `0e8b651` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
