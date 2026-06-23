@@ -103,6 +103,38 @@ View-logic tests live in `WTLauncher.Tests/` and test **extracted pure functions
 
 ---
 
+---
+
+## View State Preservation
+
+When switching between Cards/Details/Names, Avalonia rebuilds the visual tree. Scroll position perishes unless explicitly preserved.
+
+### Pattern: ViewModel-backed scroll state (F13b, 2026-06-23)
+
+```csharp
+// ViewModel owns scroll state (survives template switch)
+private readonly Dictionary<LauncherEntryViewMode, double> _scrollOffsets = new();
+public void SaveScrollOffset(LauncherEntryViewMode mode, double offset)
+    => _scrollOffsets[mode] = offset;
+public double GetScrollOffset(LauncherEntryViewMode mode)
+    => _scrollOffsets.TryGetValue(mode, out var v) ? v : 0;
+```
+
+**Contract**: Scroll state in ViewModel. Save on mode change, restore on layout updated. Never cache scroll offset in View code-behind fields — they become garbage on template switch.
+
+## Preflight Failure Confirmation (E8, 2026-06-23)
+
+```csharp
+// OLD (removed): skip confirmation when FailedCount > 0
+// if (preflight.Report.FailedCount == 0 && !await Confirm...)
+
+// NEW: always confirm when preflight has failures
+if (!RequireConfirmationForLaunches && preflight.Report.FailedCount == 0)
+    return true;  // skip only when clean preflight + toggle off
+```
+
+`StartBatch` no longer unconditionally skips valid items when preflight partially fails. Users decide via the confirmation dialog.
+
 ## Code Review Checklist
 
 - [ ] No business logic in code-behind.

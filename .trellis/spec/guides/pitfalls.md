@@ -265,6 +265,14 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **修复** | 单 enum `LauncherSortMode { Recent, Updated, Alphabetical, Custom }` — 4 种合法状态，编译器强制穷尽。 |
 | **适用** | 任何 ≥2 个互斥 bool 参数的场景。 |
 
+### M11. UX 缺陷和正确性缺陷同等严重
+
+| 来源 | 2026-06-23 polaris F13b/E8 |
+|---|---|
+| **问题** | 视图切换丢失滚动位置被标记为"低优不影响功能"；预演失败跳过确认被标记为"UX 未定"。两者都是用户可感知的功能缺陷。 |
+| **修复** | F13b: ViewModel `_scrollOffsets` dict 保持每视图滚动状态，切换时存取。E8: 移除 `FailedCount>0` 早期跳过，强制展示确认+失败详情。 |
+| **适用** | 审计发现 UX 缺陷时，不要在严重级别上打折。"用户能忍"不是拒修理由——如果 VS Code / Docker 解决了，我们就该解决。 |
+
 ### M10. 收集数据但不消费 = 纯浪费（searchHistory 教训）
 
 | 来源 | 2026-06-23 ultrareview E1/Q6 |
