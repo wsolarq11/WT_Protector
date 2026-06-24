@@ -326,11 +326,15 @@
           <StackPanel>
             <TextBlock Classes="control-box-label"
                        Text="搜索"/>
-            <TextBox x:Name="SearchTextBox"
-                     PlaceholderText="搜索名称、目录或命令"
-                     Text="{Binding FilterText, Mode=TwoWay}"
-                     FontSize="16"
-                     Padding="12,8"/>
+            <AutoCompleteBox x:Name="SearchTextBox"
+                             PlaceholderText="搜索名称、目录或命令"
+                             Text="{Binding FilterText, Mode=TwoWay}"
+                             ItemsSource="{Binding SearchHistoryItems}"
+                             MinimumPrefixLength="1"
+                             MinimumPopulateDelay="150"
+                             IsTextCompletionEnabled="False"
+                             FontSize="16"
+                             Padding="12,8"/>
           </StackPanel>
         </Border>
         <Border Grid.Column="1"

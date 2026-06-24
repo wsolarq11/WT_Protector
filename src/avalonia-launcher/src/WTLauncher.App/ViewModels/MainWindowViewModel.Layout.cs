@@ -1,4 +1,5 @@
 using Avalonia;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using WTLauncher.Core;
@@ -16,6 +17,8 @@ public sealed partial class MainWindowViewModel
 
     [ObservableProperty]
     private string _filterText = "";
+
+    public IReadOnlyList<string> SearchHistoryItems => _settings.SearchHistory;
 
     [ObservableProperty]
     private LauncherSortModeViewModel? _selectedSortMode;
@@ -206,6 +209,48 @@ public sealed partial class MainWindowViewModel
         }
 
         VisibleCount = _visibleEntries.Count;
+    }
+
+    /// <summary>
+    /// Records the current FilterText into SearchHistory (dedup: moves to front;
+    /// cap: 20 entries). Persists via the standard snapshot/rollback path.
+    /// Only called on explicit commit (Enter key), not on every keystroke.
+    /// </summary>
+    public void RecordSearchTerm()
+    {
+        var term = FilterText;
+        if (string.IsNullOrWhiteSpace(term))
+            return;
+
+        var normalized = LauncherEntryText.Normalize(term);
+
+        // No-op when already the most recent entry.
+        if (_settings.SearchHistory.Count > 0 &&
+            string.Equals(_settings.SearchHistory[0], normalized, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var snapshot = CaptureSettingsMutationSnapshot();
+
+        // Remove existing match (case-insensitive) to dedup, then insert at front.
+        var newHistory = _settings.SearchHistory.RemoveAll(
+            t => string.Equals(t, normalized, StringComparison.OrdinalIgnoreCase));
+        newHistory = newHistory.Insert(0, normalized);
+
+        // Cap at 20.
+        if (newHistory.Count > 20)
+            newHistory = newHistory.RemoveRange(20, newHistory.Count - 20);
+
+        _settings = _settings with { SearchHistory = newHistory };
+        var saveFailure = SaveSettingsChange(snapshot);
+        if (saveFailure is not null)
+        {
+            _settings = snapshot.Restore();
+            OnPropertyChanged(nameof(SearchHistoryItems));
+            ApplyStatusText(saveFailure);
+            return;
+        }
+
+        OnPropertyChanged(nameof(SearchHistoryItems));
     }
 
     /// <summary>

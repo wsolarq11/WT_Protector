@@ -89,8 +89,17 @@ public sealed partial class MainWindow : Window
         if (e.Key == Key.F && e.KeyModifiers == KeyModifiers.Control)
         {
             SearchTextBox.Focus();
-            SearchTextBox.SelectAll();
             e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Enter && ReferenceEquals(e.Source, SearchTextBox))
+        {
+            // When the AutoCompleteBox dropdown is closed, Enter commits the
+            // current filter text to search history. When open, the
+            // AutoCompleteBox consumes Enter internally for selection.
+            if (!SearchTextBox.IsDropDownOpen)
+                viewModel.RecordSearchTerm();
             return;
         }
 

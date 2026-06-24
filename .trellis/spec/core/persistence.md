@@ -109,3 +109,33 @@ Parse JSON → Require each entry non-null → Require "selected" field exists
 - ❌ **Silently skipping missing `selected` field** — `RequireEntrySelectionFields()` throws.
 - ❌ **CRLF in persisted JSON** — always LF, verified by `verify.ps1`.
 - ❌ **Using `JsonSerializer.Serialize` directly** — always go through `LauncherJson.Save()`.
+
+---
+
+## Two-Layer Capped Collections
+
+当集合字段有最大条目限制时，上限在**两层**执行：
+
+1. **加载时（Store）**: `RequireXxx()` 在规范化加载后截断。防止手动编辑 JSON 绕过上限。
+2. **写入时（ViewModel）**: 写入方法在保存前截断。防止运行时逻辑 bug 超过上限。
+
+### 示例：SearchHistory（上限 20 条）
+
+**加载时** — `LauncherSettingsStore.RequireSearchHistory()`:
+```csharp
+// 去重 → 去空 → 去空白 → 上限 20
+if (normalized.Count > 20)
+    normalized.RemoveRange(20, normalized.Count - 20);
+```
+
+**写入时** — `MainWindowViewModel.RecordSearchTerm()`:
+```csharp
+// 去重移到最前 → 上限 20
+var newHistory = _settings.SearchHistory.RemoveAll(match).Insert(0, normalized);
+if (newHistory.Count > 20)
+    newHistory = newHistory.RemoveRange(20, newHistory.Count - 20);
+```
+
+**测试必须覆盖**: 两层都验证——VM 状态 + 文件持久化（round-trip via `LauncherSettingsStore.Load()`）。
+
+**Source:** `LauncherSettingsStore.cs` line 116, `MainWindowViewModel.Layout.cs` lines 234-242.

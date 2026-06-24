@@ -133,9 +133,58 @@ private Task LaunchAsync() => _owner.LaunchAsync(this);
 
 ---
 
+## AutoCompleteBox for Search
+
+**Decision:** 搜索框使用 `AutoCompleteBox` 而非 `TextBox`。AutoCompleteBox 内置前缀匹配过滤、键盘导航（↓↑/Enter/Escape）、下拉建议列表、和 MinimumPopulateDelay 防抖。
+
+**关键属性配置：**
+
+```xml
+<AutoCompleteBox x:Name="SearchTextBox"
+                 Text="{Binding FilterText, Mode=TwoWay}"
+                 ItemsSource="{Binding SearchHistoryItems}"
+                 MinimumPrefixLength="1"
+                 MinimumPopulateDelay="150"
+                 IsTextCompletionEnabled="False"/>
+```
+
+**规则：**
+1. `ItemsSource` 绑定到 ViewModel 的 `IReadOnlyList<string>` 属性——AutoCompleteBox 内置 `StartsWith`（大小写不敏感）过滤器匹配当前输入。
+2. `IsTextCompletionEnabled="False"` ——不禁用内联自动补全，用户输入不被自动替换。
+3. `MinimumPopulateDelay="150"` ——150ms 去抖，防止每次按键都刷新下拉。
+4. **不在 XAML 中设置 `FilterMode`** ——默认 `StartsWith` 已是大小写不敏感。
+
+**与 TextBox 的差异：**
+- AutoCompleteBox **没有 `SelectAll()` 方法**。Ctrl+F 聚焦搜索框时只做 `Focus()`，不选全文本。
+- `IsDropDownOpen` 属性可区分"下拉打开（用户浏览建议）"和"下拉关闭（用户输入文本）"。
+
+**Source:** `MainWindow.axaml` lines 329-336, `MainWindowViewModel.Layout.cs` `SearchHistoryItems`.
+
+---
+
+## Commit-on-Enter Pattern
+
+搜索历史写入使用"commit"语义——只在 Enter 键时写入，不在每次按键时写入：
+
+```
+Code-behind OnWindowKeyDown:
+  Enter + Source is SearchTextBox + !SearchTextBox.IsDropDownOpen
+    → viewModel.RecordSearchTerm()
+      → 去重（已有词条移到最前）
+      → 上限 20 条
+      → snapshot/rollback 持久化
+```
+
+**为什么不在 `OnFilterTextChanged` 里写搜索历史？** `FilterText` 每次按键都触发——LastFilterText 持久化是有意设计（保存/恢复搜索框文本）。但搜索历史应该是用户"确认"的搜索词（按 Enter 的动作），不是每次按键。
+
+**Source:** `MainWindow.axaml.cs` lines 96-104, `MainWindowViewModel.Layout.cs` `RecordSearchTerm()`.
+
+---
+
 ## Forbidden Patterns
 
 - ❌ **ViewModel creates a `new Window()`** — dialogs always injected via `Func<>`.
 - ❌ **XAML contains hardcoded colors/sizes** — use `{StaticResource}` from design tokens.
 - ❌ **Code-behind contains business `if/else`** — delegate to ViewModel.
 - ❌ **View references Core types as data contracts** — Views only bind to ViewModel properties.
+- ❌ **在 SearchTextBox 上调用 `SelectAll()`** — AutoCompleteBox 无此方法。仅用 `Focus()`。

@@ -113,6 +113,9 @@ public static class LauncherSettingsStore
                 normalized.Add(trimmed);
         }
 
+        if (normalized.Count > 20)
+            normalized.RemoveRange(20, normalized.Count - 20);
+
         return normalized.ToImmutableList();
     }
 
