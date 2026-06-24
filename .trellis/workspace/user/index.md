@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 13
+- **Total Sessions**: 14
 - **Last Active**: 2026-06-24
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~445 | Active |
+| `journal-1.md` | ~478 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 14 | 2026-06-24 | searchHistory autocomplete — AutoCompleteBox 激活死数据 | `37927e0` | `main` |
 | 13 | 2026-06-24 | UltraReview 全量修复 — 69 项缺陷 + 10 新测试 + Spec 更新 | `bd65841` | `main` |
 | 12 | 2026-06-23 | /goal 7步完成序列 — Preset immutability + CI全绿 + spec固化 | `3b42c81` | `main` |
 | 11 | 2026-06-23 | /goal 架构不可犯错性 完成序列 — trellis-check → break-loop → update-spec → push → finish-work | `9a2830f`, `2040727`, `15ce5ab` | `main` |

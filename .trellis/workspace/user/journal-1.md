@@ -443,3 +443,36 @@ UltraReview 发现 69 项问题（7 Critical + 15 High + 22 Medium + 25 Low）�
 ### Next Steps
 
 - None - task complete
+
+
+## Session 14: searchHistory autocomplete — AutoCompleteBox 激活死数据
+
+**Date**: 2026-06-24
+**Task**: searchHistory autocomplete — AutoCompleteBox 激活死数据
+**Branch**: `main`
+
+### Summary
+
+TextBox→AutoCompleteBox, RecordSearchTerm() with dedup/cap/snapshot-rollback, 7 tests (573/573), 2 spec files updated (mvvm-pattern + persistence)
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `37927e0` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
