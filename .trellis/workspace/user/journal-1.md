@@ -410,3 +410,36 @@ Step 1 trellis-check: 556绿, 0 nullable warning. Step 2 break-loop: CI headless
 ### Next Steps
 
 - None - task complete
+
+
+## Session 13: UltraReview 全量修复 — 69 项缺陷 + 10 新测试 + Spec 更新
+
+**Date**: 2026-06-24
+**Task**: UltraReview 全量修复 — 69 项缺陷 + 10 新测试 + Spec 更新
+**Branch**: `main`
+
+### Summary
+
+UltraReview 发现 69 项问题（7 Critical + 15 High + 22 Medium + 25 Low）。修复了 67 项（2 项有意豁免：M12 Avalonia 依赖/M15 空时间戳 ADR）。关键变更：pwsh -EncodedCommand Base64 编码消除 PowerShell 注入；ImmutableList/ImmutableDictionary 全面迁移实现真正的不可变 record；4 个 OnXxxChanged 可重入守卫防止磁盘满 StackOverflow；ErrorLog 覆盖全部 17 个 catch 块；566/566 测试通过（新增 10 个回归/等价性测试）。Spec 更新：data-types.md 新增 ImmutableList 和 record 引用共享决策；pitfalls.md 新增 4 条（API 变更传播、frozen snapshot、可空标记级联、.bak 测试契约）
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `bd65841` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
