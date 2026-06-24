@@ -46,7 +46,7 @@ public sealed partial class MainWindowViewModel
         {
             accepted = await ConfirmDeletePresetAsync(target).ConfigureAwait(true);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             StatusText = LauncherPresetStatus.DeleteConfirmationFailed(target.PresetName, ex);
             return false;
@@ -66,7 +66,7 @@ public sealed partial class MainWindowViewModel
         {
             presetName = await RequestNewPresetAsync(target).ConfigureAwait(true);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             StatusText = LauncherPresetStatus.SaveDialogFailed(ex);
             return null;
@@ -174,9 +174,19 @@ public sealed partial class MainWindowViewModel
                 entriesById[entry.Id] = entry;
         }
 
-        return LauncherEntryIds.ToRequiredUniqueList(entryIds, nameof(entryIds))
-            .Select(id => entriesById[id])
-            .ToList();
+        var uniqueIds = LauncherEntryIds.ToRequiredUniqueList(entryIds, nameof(entryIds));
+        var result = new List<LauncherEntryViewModel>(uniqueIds.Count);
+        foreach (var id in uniqueIds)
+        {
+            // M11: Use TryGetValue instead of indexer to give a clear error when
+            // a preset references an entry ID that does not exist in _entries.
+            if (!entriesById.TryGetValue(id, out var entry))
+                throw new InvalidDataException($"Preset entry ID '{id}' does not match any loaded entry.");
+
+            result.Add(entry);
+        }
+
+        return result;
     }
 
     private void NotifyPresetManagementCommands()

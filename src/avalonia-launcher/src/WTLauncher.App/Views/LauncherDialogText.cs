@@ -6,10 +6,26 @@ namespace WTLauncher.App.Views;
 
 internal static class LauncherDialogText
 {
-    private static readonly IBrush TitleBrush = Brush.Parse("#0F172A");
-    private static readonly IBrush BodyBrush = Brush.Parse("#475569");
-    private static readonly IBrush LabelBrush = Brush.Parse("#334155");
-    private static readonly IBrush SubtleBrush = Brush.Parse("#64748B");
+    /// <summary>
+    /// Parses a color string into an <see cref="IBrush"/>. If the design token is malformed,
+    /// falls back to a safe default instead of crashing the static initializer.
+    /// </summary>
+    private static IBrush SafeParseBrush(string color, IBrush fallback)
+    {
+        try
+        {
+            return Brush.Parse(color);
+        }
+        catch (Exception)
+        {
+            return fallback;
+        }
+    }
+
+    private static readonly IBrush TitleBrush = SafeParseBrush("#0F172A", Brushes.Black);
+    private static readonly IBrush BodyBrush = SafeParseBrush("#475569", Brushes.Gray);
+    private static readonly IBrush LabelBrush = SafeParseBrush("#334155", Brushes.DimGray);
+    private static readonly IBrush SubtleBrush = SafeParseBrush("#64748B", Brushes.Gray);
 
     public static TextBlock Title(string text)
     {

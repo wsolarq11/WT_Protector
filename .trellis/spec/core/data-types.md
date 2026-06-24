@@ -215,3 +215,17 @@ The `ParseLaunchedAt`/`ParseUpdatedAt` helpers in `LauncherEntryVisibility` are 
 Every enum has a paired static helper class with `const string` IDs and `NormalizeId()`/`ToId()` methods.
 
 **Why:** JSON persistence uses string identifiers for forward compatibility. If a future version adds a new enum member, old config files with the string ID still deserialize correctly (the string is unrecognized → `InvalidDataException` with a clear message). If we serialized enum ordinals, adding a member would silently shift all values. See `LauncherEntryViewMode` + `LauncherEntryViewModes` for the canonical example.
+
+### Immutable Collections in Records (Not Mutable `List<T>`)
+
+Record properties holding collections use `ImmutableList<T>` and `ImmutableDictionary<K,V>` — not `List<T>` or `Dictionary<K,V>`.
+
+**Why:** `sealed record` + `{ get; init; }` only protects the property reference from reassignment — the collection content remains mutable. `list.Clear(); list.AddRange(...)` silently mutates an "immutable" record. Immutable collections make the immutability contract enforceable at the type level. `System.Collections.Immutable` is built into .NET 8+ shared framework — zero additional NuGet dependency.
+
+**Migration rule:** When changing collection APIs from mutating (`void`) to immutable (returning new instance), every call site MUST consume the return value. C# does not warn on discarded return values. Audit all callers manually or use `[MustUseReturnValue]` if available. See `LauncherEntryOrder.SyncWithEntries` and `LauncherEntryOrder.MoveRelative` for the canonical pattern.
+
+### Record Reference Sharing Across Components
+
+When Component A holds a reference to Component B's `sealed record` instance, and Component B replaces that instance via `with { }`, Component A's copy becomes stale. This is NOT a bug in the record pattern — it's the expected behavior of immutable types. The fix: either (a) always access through a getter that reads the latest instance, or (b) synchronize the reference after every mutation.
+
+See `LauncherDragReorderWorkflow._settings` for the canonical pitfall — the workflow held a frozen copy from construction time, and `DiscardDragReorderPreview` overwrote the ViewModel's updated copy with the stale one.

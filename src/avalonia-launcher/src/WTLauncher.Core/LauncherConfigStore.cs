@@ -15,8 +15,14 @@ public static class LauncherConfigStore
         if (!File.Exists(configPath))
             throw new FileNotFoundException("Launcher config not found.", configPath);
 
-        RequireEntrySelectionFields(configPath);
-        var entries = LauncherJson.LoadRequired<List<LaunchEntry?>>(configPath, "Launcher config");
+        // Read the file ONCE. Previously RequireEntrySelectionFields and
+        // LauncherJson.LoadRequired each opened/parsed the file independently
+        // with slightly different options — a TOCTOU window and wasted IO.
+        var raw = File.ReadAllBytes(configPath);
+        RequireEntrySelectionFields(raw);
+        using var stream = new MemoryStream(raw);
+        var entries = JsonSerializer.Deserialize<List<LaunchEntry?>>(stream, LauncherJson.Options)
+            ?? throw new InvalidDataException("Launcher config parsed to null.");
 
         return NormalizeEntries(entries).AsReadOnly();
     }
@@ -122,9 +128,9 @@ public static class LauncherConfigStore
     private static string BuildRepositoryMarkerPath(string root) =>
         Path.Combine(Path.GetFullPath(root), RepositoryMarkerFileName);
 
-    private static void RequireEntrySelectionFields(string configPath)
+    private static void RequireEntrySelectionFields(byte[] raw)
     {
-        using var document = JsonDocument.Parse(File.ReadAllText(configPath), new JsonDocumentOptions
+        var document = JsonDocument.Parse(raw, new JsonDocumentOptions
         {
             AllowTrailingCommas = true,
             CommentHandling = JsonCommentHandling.Skip,
@@ -136,8 +142,10 @@ public static class LauncherConfigStore
         var index = 0;
         foreach (var entry in document.RootElement.EnumerateArray())
         {
-            if (entry.ValueKind == JsonValueKind.Object &&
-                !entry.TryGetProperty("selected", out _))
+            if (entry.ValueKind != JsonValueKind.Object)
+                throw new InvalidDataException($"Launcher config entry {index} must be an object, got {entry.ValueKind}.");
+
+            if (!entry.TryGetProperty("selected", out _))
             {
                 throw new InvalidDataException($"Launcher config entry {index} selected is missing.");
             }

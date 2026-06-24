@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace WTLauncher.Core;
 
 public static class LauncherSettingsStore
@@ -37,7 +39,12 @@ public static class LauncherSettingsStore
         // Close-time bounds persistence must not leave unsaved sizes in memory.
         // Write failures can surface as IOException, UnauthorizedAccessException,
         // or other path/storage exceptions depending on the underlying cause.
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or InvalidDataException)
+        catch (InvalidDataException)
+        {
+            // Data corruption — propagate, don't swallow at close-time.
+            throw;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
             return false;
         }
@@ -56,7 +63,7 @@ public static class LauncherSettingsStore
             LastFilterText = RequireNullableText(settings.LastFilterText, "lastFilterText"),
             SortMode = NormalizeRequiredMode(settings.SortMode, "sortMode", LauncherEntryVisibility.NormalizeSortModeId),
             EntryViewMode = NormalizeRequiredMode(settings.EntryViewMode, "entryViewMode", LauncherEntryViewModes.NormalizeId),
-            CommandTemplates = RequireCommandTemplates(settings.CommandTemplates),
+            CommandTemplates = NormalizeCommandTemplates(settings.CommandTemplates),
             CustomEntryOrder = RequireCustomEntryOrder(settings.CustomEntryOrder),
             SearchHistory = RequireSearchHistory(settings.SearchHistory),
             Window = NormalizeWindow(RequireWindow(settings.Window)),
@@ -68,7 +75,7 @@ public static class LauncherSettingsStore
         return Normalize(LauncherSettingsCopies.Clone(settings));
     }
 
-    private static List<string> RequireCustomEntryOrder(IReadOnlyList<string>? customEntryOrder)
+    private static ImmutableList<string> RequireCustomEntryOrder(IReadOnlyList<string>? customEntryOrder)
     {
         if (customEntryOrder is null)
             throw new InvalidDataException("Launcher settings customEntryOrder is null.");
@@ -87,10 +94,10 @@ public static class LauncherSettingsStore
             normalized.Add(entryId);
         }
 
-        return normalized;
+        return normalized.ToImmutableList();
     }
 
-    private static List<string> RequireSearchHistory(List<string>? searchHistory)
+    private static ImmutableList<string> RequireSearchHistory(ImmutableList<string>? searchHistory)
     {
         if (searchHistory is null)
             throw new InvalidDataException("Launcher settings searchHistory is null.");
@@ -106,7 +113,7 @@ public static class LauncherSettingsStore
                 normalized.Add(trimmed);
         }
 
-        return normalized;
+        return normalized.ToImmutableList();
     }
 
     private static string RequireNullableText(string? value, string fieldName) =>
@@ -142,12 +149,12 @@ public static class LauncherSettingsStore
             throw new InvalidDataException($"Launcher settings window {fieldName} must be positive.");
     }
 
-    private static Dictionary<string, string> RequireCommandTemplates(Dictionary<string, string>? templates)
+    private static ImmutableDictionary<string, string> NormalizeCommandTemplates(ImmutableDictionary<string, string>? templates)
     {
         if (templates is null)
-            return [];
+            return ImmutableDictionary<string, string>.Empty.WithComparers(StringComparer.OrdinalIgnoreCase);
 
-        var normalized = new Dictionary<string, string>(templates.Count, StringComparer.OrdinalIgnoreCase);
+        var builder = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var (key, value) in templates)
         {
             var trimmedKey = LauncherEntryText.Normalize(key);
@@ -158,10 +165,10 @@ public static class LauncherSettingsStore
             if (trimmedValue.Length == 0)
                 throw new InvalidDataException($"Launcher settings commandTemplates key '{trimmedKey}' has an empty value.");
 
-            if (!normalized.TryAdd(trimmedKey, trimmedValue))
+            if (!builder.TryAdd(trimmedKey, trimmedValue))
                 throw new InvalidDataException($"Launcher settings commandTemplates has duplicate key: {trimmedKey}.");
         }
 
-        return normalized;
+        return builder.ToImmutable();
     }
 }

@@ -23,9 +23,8 @@ public sealed class LauncherSettingsSnapshot
         return new LauncherSettingsSnapshot(LauncherSettingsCopies.Clone(settings));
     }
 
-    public LauncherSettings Restore(LauncherSettings settings)
+    public LauncherSettings Restore()
     {
-        ArgumentNullException.ThrowIfNull(settings);
         return LauncherSettingsCopies.Clone(_settings);
     }
 
@@ -34,7 +33,8 @@ public sealed class LauncherSettingsSnapshot
         ArgumentNullException.ThrowIfNull(settings);
         return settings with
         {
-            CustomEntryOrder = _settings.CustomEntryOrder is null ? null! : [.. _settings.CustomEntryOrder],
+            // ImmutableList has value semantics; no need to copy.
+            CustomEntryOrder = _settings.CustomEntryOrder,
         };
     }
 

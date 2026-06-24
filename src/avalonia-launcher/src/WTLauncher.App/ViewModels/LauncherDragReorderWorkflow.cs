@@ -30,6 +30,12 @@ public sealed class LauncherDragReorderWorkflow
         _entries = entries;
     }
 
+    /// <summary>
+    /// Begins a drag reorder operation. Returns <c>true</c> when the caller should
+    /// refresh visible entries (e.g. because a stale preview state was restored)
+    /// — NOT an indicator of whether a session was successfully created.
+    /// Use <see cref="HasActiveSession"/> to determine whether a session exists.
+    /// </summary>
     public bool Begin(bool isCustomSortMode, string draggedEntryId)
     {
         var refreshEntries = TryRestorePreviewState();
@@ -92,8 +98,10 @@ public sealed class LauncherDragReorderWorkflow
             return (false, refreshEntries);
 
         EnsureCustomOrderContainsEntries();
-        if (!LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, draggedEntryId, targetEntryId, insertAfter))
+        var (changed, updatedOrder) = LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, draggedEntryId, targetEntryId, insertAfter);
+        if (!changed)
             return (false, refreshEntries);
+        _settings = _settings with { CustomEntryOrder = updatedOrder };
 
         session.SetTarget(target, insertAfter);
         return (true, true);
@@ -102,8 +110,10 @@ public sealed class LauncherDragReorderWorkflow
     private LauncherEntryViewModel? FindEntry(string entryId) =>
         _entries.FirstOrDefault(entry => LauncherEntryIds.SameNormalized(entry.Id, entryId));
 
-    private void EnsureCustomOrderContainsEntries() =>
-        LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, _entries.Select(entry => entry.Id));
+    private void EnsureCustomOrderContainsEntries()
+    {
+        _settings = _settings with { CustomEntryOrder = LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, _entries.Select(entry => entry.Id)) };
+    }
 
     public void ClearHover()
     {
@@ -118,18 +128,21 @@ public sealed class LauncherDragReorderWorkflow
             return (null, false);
 
         var session = _session;
-        var saveFailure = LauncherSettingsMutationPersistence.Save(
-            ref _settings,
-            _settingsPath,
-            session.Snapshot);
-        if (saveFailure is not null)
+        try
+        {
+            var saveFailure = LauncherSettingsMutationPersistence.Save(
+                ref _settings,
+                _settingsPath,
+                session.Snapshot);
+            if (saveFailure is not null)
+                return (saveFailure, true);
+
+            return (LauncherDragReorderStatus.Saved, false);
+        }
+        finally
         {
             ClearPreviewState();
-            return (saveFailure, true);
         }
-
-        ClearPreviewState();
-        return (LauncherDragReorderStatus.Saved, false);
     }
 
     public (string? Status, bool RefreshEntries) Cancel()

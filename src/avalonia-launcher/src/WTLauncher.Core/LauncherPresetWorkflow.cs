@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace WTLauncher.Core;
 
 public static class LauncherPresetWorkflow
@@ -17,9 +19,9 @@ public static class LauncherPresetWorkflow
             Name = normalizedName,
             EntryIds = normalizedEntryIds,
         };
-        presetFile.Presets.Add(preset);
         presetFile = presetFile with
         {
+            Presets = presetFile.Presets.Add(preset),
             DefaultPresetId = hasExistingPresets ? defaultPresetId : preset.Id,
         };
 
@@ -41,7 +43,7 @@ public static class LauncherPresetWorkflow
         var normalizedEntryIds = NormalizeRequiredEntryIds(entryIds);
         var updated = preset with { Name = normalizedName, EntryIds = normalizedEntryIds };
         var index = presetFile.Presets.IndexOf(preset);
-        presetFile.Presets[index] = updated;
+        presetFile = presetFile with { Presets = presetFile.Presets.SetItem(index, updated) };
         return updated;
     }
 
@@ -63,8 +65,11 @@ public static class LauncherPresetWorkflow
             return null;
 
         fallbackPresetId = ResolveDefaultPresetIdAfterDelete(presetFile, preset, fallbackPresetId);
-        presetFile.Presets.Remove(preset);
-        presetFile = presetFile with { DefaultPresetId = fallbackPresetId };
+        presetFile = presetFile with
+        {
+            Presets = presetFile.Presets.Remove(preset),
+            DefaultPresetId = fallbackPresetId,
+        };
 
         return preset;
     }
@@ -145,8 +150,8 @@ public static class LauncherPresetWorkflow
         return normalizedName;
     }
 
-    private static List<string> NormalizeRequiredEntryIds(IReadOnlyList<string> entryIds)
-        => LauncherEntryIds.ToRequiredUniqueList(entryIds, nameof(entryIds));
+    private static ImmutableList<string> NormalizeRequiredEntryIds(IReadOnlyList<string> entryIds)
+        => LauncherEntryIds.ToRequiredUniqueList(entryIds, nameof(entryIds)).ToImmutableList();
 
     private static bool CanUpdatePreset(LauncherPreset target) =>
         !target.Locked;

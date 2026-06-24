@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -10,12 +11,11 @@ public sealed class LauncherEntryMutationSnapshotTests
     {
         var entry = Entry(selected: true, updatedAtUtc: "2026-05-20T00:00:00Z");
         var presetFile = PresetFile();
-        var order = new List<string> { "one" };
+        var order = ImmutableList.Create("one");
 
         var snapshot = LauncherEntryMutationSnapshot.Capture([entry], presetFile, order, selectedPresetId: "daily");
+        // Mutate originals after capture — snapshot must remain unchanged.
         entry = entry with { Id = "changed" };
-        presetFile.Presets[0].EntryIds[0] = "changed";
-        order[0] = "changed";
 
         Assert.Equal("daily", snapshot.SelectedPresetId);
         var snapshotEntry = Assert.Single(snapshot.Entries);
@@ -42,13 +42,16 @@ public sealed class LauncherEntryMutationSnapshotTests
         var entries = snapshot.CloneEntries();
         var presets = snapshot.ClonePresetFile();
         var order = snapshot.CloneCustomEntryOrder();
+        // CloneEntries returns mutable List<LaunchEntry> copies.
         entries[0] = entries[0] with { Id = "changed" };
-        presets.Presets[0].EntryIds[0] = "changed";
-        order[0] = "changed";
-
+        // ClonePresetFile and CloneCustomEntryOrder return immutable copies;
+        // verify the originals are unchanged.
         Assert.Equal("one", Assert.Single(snapshot.Entries).Id);
         Assert.Equal("one", Assert.Single(snapshot.PresetFile.Presets[0].EntryIds));
         Assert.Equal("one", Assert.Single(snapshot.CustomEntryOrder));
+        // Cloned copies carry the original values.
+        Assert.Equal("one", Assert.Single(presets.Presets[0].EntryIds));
+        Assert.Equal("one", Assert.Single(order));
     }
 
     [Fact]
@@ -61,8 +64,8 @@ public sealed class LauncherEntryMutationSnapshotTests
             selectedPresetId: "daily");
 
         var entry = Assert.Single(snapshot.Entries);
+        // Entries is a read-only projection; the underlying clone is protected.
         entry = entry with { Id = "changed" };
-        snapshot.PresetFile.Presets[0].EntryIds[0] = "changed";
         var order = Assert.IsAssignableFrom<IList<string>>(snapshot.CustomEntryOrder);
 
         Assert.True(order.IsReadOnly);
@@ -95,7 +98,7 @@ public sealed class LauncherEntryMutationSnapshotTests
                 {
                     Id = "daily",
                     Name = "Daily",
-                    EntryIds = ["one"],
+                    EntryIds = ImmutableList.Create("one"),
                 },
             ],
         };

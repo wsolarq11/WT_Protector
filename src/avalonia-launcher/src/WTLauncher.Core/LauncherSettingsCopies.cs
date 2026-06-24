@@ -1,24 +1,24 @@
+using System.Collections.Immutable;
+
 namespace WTLauncher.Core;
 
 internal static class LauncherSettingsCopies
 {
-    /// <summary>Deep-clones settings. Mutable collections (CommandTemplates, CustomEntryOrder,
-    /// SearchHistory) are copied; Window is a value-type record (cloned via `with { }`).</summary>
+    /// <summary>Deep-clones settings. All collection properties use ImmutableList/ImmutableDictionary
+    /// with value semantics — no defensive copy needed. Window is a value-type record (cloned via `with { }`).</summary>
     public static LauncherSettings Clone(LauncherSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
         return settings with
         {
-            CommandTemplates = CloneCommandTemplates(settings.CommandTemplates),
-            // Null-preserving: CustomEntryOrder can be null in edge cases (old-format settings,
-            // snapshot restore). [JsonRequired] prevents null from JSON, not from in-memory construction.
-            CustomEntryOrder = settings.CustomEntryOrder is null ? null! : [.. settings.CustomEntryOrder],
-            SearchHistory = [.. settings.SearchHistory],
-            // Null-preserving: Window can be null in edge cases (see CustomEntryOrder comment).
-            Window = settings.Window is null ? null! : settings.Window with { },
+            // Immutable collections have value semantics; no copy required.
+            CommandTemplates = settings.CommandTemplates,
+            CustomEntryOrder = settings.CustomEntryOrder,
+            SearchHistory = settings.SearchHistory,
+            Window = settings.Window,
         };
     }
 
-    public static Dictionary<string, string> CloneCommandTemplates(Dictionary<string, string> templates) =>
-        new(templates, StringComparer.OrdinalIgnoreCase);
+    public static ImmutableDictionary<string, string> CloneCommandTemplates(ImmutableDictionary<string, string> templates) =>
+        templates;
 }

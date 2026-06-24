@@ -30,8 +30,17 @@ public static class LauncherPresetIds
     public static string Normalize(string? value)
     {
         value ??= string.Empty;
+
+        // H15: Guard against maliciously long preset names that could cause OOM.
+        if (value.Length > 256)
+            throw new InvalidDataException($"Preset name length {value.Length} exceeds maximum of 256.");
+
         var builder = new StringBuilder(value.Length);
         var separatorPending = false;
+        // FormKC (compatibility decomposition + canonical composition) may change
+        // the visual appearance of some Unicode characters (e.g. fullwidth → ASCII,
+        // ligature → individual letters, superscript → regular). This is intentional:
+        // we produce stable, ASCII-adjacent IDs suitable for preset cross-references.
         foreach (var ch in value.Normalize(NormalizationForm.FormKC))
         {
             if (char.IsLetterOrDigit(ch))

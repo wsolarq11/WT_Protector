@@ -1,3 +1,4 @@
+using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -55,6 +56,7 @@ public sealed class LauncherLaunchWorkflow
             }
             catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
             {
+                ErrorLog.Write(ex, "Preflight");
                 RecordFailure(report, entry.Name, ex);
             }
         }
@@ -80,6 +82,7 @@ public sealed class LauncherLaunchWorkflow
             }
             catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
             {
+                ErrorLog.Write(ex, "StartBatch");
                 RecordFailure(report, item.EntryName, index, ex);
                 report.RecordSkipped(items.Count - index - 1);
                 break;

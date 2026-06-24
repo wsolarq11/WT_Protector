@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using WTLauncher.Core;
 
 namespace WTLauncher.Tests;
@@ -10,56 +11,56 @@ public sealed class LauncherEntryReferencesTests
         var presetFile = PresetFile(
             Preset("daily", "one", "two"),
             Preset("manual", "three"));
-        var customEntryOrder = new List<string> { "one", "two", "three" };
+        var customEntryOrder = ImmutableList.Create("one", "two", "three");
 
-        LauncherEntryReferences.RenameEntryId(
+        var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RenameEntryId(
             presetFile,
             customEntryOrder,
             oldEntryId: "one",
             newEntryId: "one-renamed");
 
-        Assert.Equal(["one-renamed", "two"], presetFile.Presets[0].EntryIds);
-        Assert.Equal(["three"], presetFile.Presets[1].EntryIds);
-        Assert.Equal(["one-renamed", "two", "three"], customEntryOrder);
+        Assert.Equal(["one-renamed", "two"], updatedPresetFile.Presets[0].EntryIds);
+        Assert.Equal(["three"], updatedPresetFile.Presets[1].EntryIds);
+        Assert.Equal(["one-renamed", "two", "three"], updatedOrder);
     }
 
     [Fact]
     public void RenameEntryIdMatchesTrimmedReferences()
     {
         var presetFile = PresetFile(Preset("daily", " one ", "two"));
-        var customEntryOrder = new List<string> { " one ", "two" };
+        var customEntryOrder = ImmutableList.Create(" one ", "two");
 
-        LauncherEntryReferences.RenameEntryId(
+        var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RenameEntryId(
             presetFile,
             customEntryOrder,
             oldEntryId: "one",
             newEntryId: "one-renamed");
 
-        Assert.Equal(["one-renamed", "two"], presetFile.Presets[0].EntryIds);
-        Assert.Equal(["one-renamed", "two"], customEntryOrder);
+        Assert.Equal(["one-renamed", "two"], updatedPresetFile.Presets[0].EntryIds);
+        Assert.Equal(["one-renamed", "two"], updatedOrder);
     }
 
     [Fact]
     public void RenameEntryIdNormalizesReplacementId()
     {
         var presetFile = PresetFile(Preset("daily", "one"));
-        var customEntryOrder = new List<string> { "one" };
+        var customEntryOrder = ImmutableList.Create("one");
 
-        LauncherEntryReferences.RenameEntryId(
+        var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RenameEntryId(
             presetFile,
             customEntryOrder,
             oldEntryId: "one",
             newEntryId: " one-renamed ");
 
-        Assert.Equal(["one-renamed"], presetFile.Presets[0].EntryIds);
-        Assert.Equal(["one-renamed"], customEntryOrder);
+        Assert.Equal(["one-renamed"], updatedPresetFile.Presets[0].EntryIds);
+        Assert.Equal(["one-renamed"], updatedOrder);
     }
 
     [Fact]
     public void RenameEntryIdRejectsBlankSourceBeforeMutatingReferences()
     {
         var presetFile = PresetFile(Preset("daily", "one", " "));
-        var customEntryOrder = new List<string> { "one", " " };
+        var customEntryOrder = ImmutableList.Create("one", " ");
 
         var exception = Assert.Throws<ArgumentException>(() =>
             LauncherEntryReferences.RenameEntryId(
@@ -69,15 +70,13 @@ public sealed class LauncherEntryReferencesTests
                 newEntryId: "one-renamed"));
 
         Assert.Equal("oldEntryId", exception.ParamName);
-        Assert.Equal(["one", " "], presetFile.Presets[0].EntryIds);
-        Assert.Equal(["one", " "], customEntryOrder);
     }
 
     [Fact]
     public void RenameEntryIdRejectsBlankReplacementBeforeMutatingReferences()
     {
         var presetFile = PresetFile(Preset("daily", "one"));
-        var customEntryOrder = new List<string> { "one" };
+        var customEntryOrder = ImmutableList.Create("one");
 
         var exception = Assert.Throws<ArgumentException>(() =>
             LauncherEntryReferences.RenameEntryId(
@@ -87,8 +86,6 @@ public sealed class LauncherEntryReferencesTests
                 newEntryId: " "));
 
         Assert.Equal("newEntryId", exception.ParamName);
-        Assert.Equal(["one"], presetFile.Presets[0].EntryIds);
-        Assert.Equal(["one"], customEntryOrder);
     }
 
     [Fact]
@@ -97,38 +94,38 @@ public sealed class LauncherEntryReferencesTests
         var presetFile = PresetFile(
             Preset("daily", "one", "two"),
             Preset("manual", "three"));
-        var customEntryOrder = new List<string> { "one", "two", "three" };
+        var customEntryOrder = ImmutableList.Create("one", "two", "three");
 
-        LauncherEntryReferences.RemoveEntryId(
+        var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RemoveEntryId(
             presetFile,
             customEntryOrder,
             entryId: "one");
 
-        Assert.Equal(["two"], presetFile.Presets[0].EntryIds);
-        Assert.Equal(["three"], presetFile.Presets[1].EntryIds);
-        Assert.Equal(["two", "three"], customEntryOrder);
+        Assert.Equal(["two"], updatedPresetFile.Presets[0].EntryIds);
+        Assert.Equal(["three"], updatedPresetFile.Presets[1].EntryIds);
+        Assert.Equal(["two", "three"], updatedOrder);
     }
 
     [Fact]
     public void RemoveEntryIdMatchesTrimmedReferences()
     {
         var presetFile = PresetFile(Preset("daily", " one ", "two"));
-        var customEntryOrder = new List<string> { " one ", "two" };
+        var customEntryOrder = ImmutableList.Create(" one ", "two");
 
-        LauncherEntryReferences.RemoveEntryId(
+        var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RemoveEntryId(
             presetFile,
             customEntryOrder,
             entryId: "one");
 
-        Assert.Equal(["two"], presetFile.Presets[0].EntryIds);
-        Assert.Equal(["two"], customEntryOrder);
+        Assert.Equal(["two"], updatedPresetFile.Presets[0].EntryIds);
+        Assert.Equal(["two"], updatedOrder);
     }
 
     [Fact]
     public void RenameEntryIdRejectsDuplicateReferencesBeforeMutatingReferences()
     {
         var presetFile = PresetFile(Preset("daily", "one", " one "));
-        var customEntryOrder = new List<string> { "one", "two" };
+        var customEntryOrder = ImmutableList.Create("one", "two");
 
         var exception = Assert.Throws<ArgumentException>(() =>
             LauncherEntryReferences.RenameEntryId(
@@ -138,15 +135,13 @@ public sealed class LauncherEntryReferencesTests
                 newEntryId: "one-renamed"));
 
         Assert.Equal("entryIds", exception.ParamName);
-        Assert.Equal(["one", " one "], presetFile.Presets[0].EntryIds);
-        Assert.Equal(["one", "two"], customEntryOrder);
     }
 
     [Fact]
     public void RenameEntryIdRejectsBlankReferencesBeforeMutatingAnyReferences()
     {
         var presetFile = PresetFile(Preset("daily", "one"));
-        var customEntryOrder = new List<string> { "one", " " };
+        var customEntryOrder = ImmutableList.Create("one", " ");
 
         var exception = Assert.Throws<ArgumentException>(() =>
             LauncherEntryReferences.RenameEntryId(
@@ -156,15 +151,13 @@ public sealed class LauncherEntryReferencesTests
                 newEntryId: "one-renamed"));
 
         Assert.Equal("entryIds", exception.ParamName);
-        Assert.Equal(["one"], presetFile.Presets[0].EntryIds);
-        Assert.Equal(["one", " "], customEntryOrder);
     }
 
     [Fact]
     public void RenameEntryIdRejectsResultingDuplicateReferencesBeforeMutatingReferences()
     {
         var presetFile = PresetFile(Preset("daily", "one", "two"));
-        var customEntryOrder = new List<string> { "one", "two" };
+        var customEntryOrder = ImmutableList.Create("one", "two");
 
         var exception = Assert.Throws<ArgumentException>(() =>
             LauncherEntryReferences.RenameEntryId(
@@ -173,16 +166,14 @@ public sealed class LauncherEntryReferencesTests
                 oldEntryId: "one",
                 newEntryId: "two"));
 
-        Assert.Equal("entryIds", exception.ParamName);
-        Assert.Equal(["one", "two"], presetFile.Presets[0].EntryIds);
-        Assert.Equal(["one", "two"], customEntryOrder);
+        Assert.Equal("newEntryId", exception.ParamName);
     }
 
     [Fact]
     public void RemoveEntryIdRejectsBlankEntryIdBeforeMutatingReferences()
     {
         var presetFile = PresetFile(Preset("daily", "one", " "));
-        var customEntryOrder = new List<string> { "one", " " };
+        var customEntryOrder = ImmutableList.Create("one", " ");
 
         var exception = Assert.Throws<ArgumentException>(() =>
             LauncherEntryReferences.RemoveEntryId(
@@ -191,15 +182,13 @@ public sealed class LauncherEntryReferencesTests
                 entryId: " "));
 
         Assert.Equal("entryId", exception.ParamName);
-        Assert.Equal(["one", " "], presetFile.Presets[0].EntryIds);
-        Assert.Equal(["one", " "], customEntryOrder);
     }
 
     [Fact]
     public void RemoveEntryIdRejectsDuplicateReferencesBeforeMutatingReferences()
     {
         var presetFile = PresetFile(Preset("daily", "one", "two"));
-        var customEntryOrder = new List<string> { "one", " two ", "two" };
+        var customEntryOrder = ImmutableList.Create("one", " two ", "two");
 
         var exception = Assert.Throws<ArgumentException>(() =>
             LauncherEntryReferences.RemoveEntryId(
@@ -208,14 +197,12 @@ public sealed class LauncherEntryReferencesTests
                 entryId: "one"));
 
         Assert.Equal("entryIds", exception.ParamName);
-        Assert.Equal(["one", "two"], presetFile.Presets[0].EntryIds);
-        Assert.Equal(["one", " two ", "two"], customEntryOrder);
     }
 
     private static LauncherPresetFile PresetFile(params LauncherPreset[] presets) =>
         new()
         {
-            Presets = [.. presets],
+            Presets = presets.ToImmutableList(),
         };
 
     private static LauncherPreset Preset(string id, params string[] entryIds) =>
@@ -223,6 +210,6 @@ public sealed class LauncherEntryReferencesTests
         {
             Id = id,
             Name = id,
-            EntryIds = [.. entryIds],
+            EntryIds = entryIds.ToImmutableList(),
         };
 }

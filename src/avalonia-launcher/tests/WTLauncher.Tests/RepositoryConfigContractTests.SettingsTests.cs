@@ -16,7 +16,7 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Contains(settings.EntryViewMode, new[] { LauncherEntryViewModes.CardsId, LauncherEntryViewModes.DetailsId, LauncherEntryViewModes.NamesId });
         Assert.False(settings.RequireConfirmationForLaunches);
         Assert.NotEmpty(settings.CustomEntryOrder!);
-        Assert.Equal(LauncherWindowSettings.DefaultWidth, settings.Window.Width);
-        Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window.Height);
+        Assert.Equal(LauncherWindowSettings.DefaultWidth, settings.Window!.Width);
+        Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window!.Height);
     }
 }

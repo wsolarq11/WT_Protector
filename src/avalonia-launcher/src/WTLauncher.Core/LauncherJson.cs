@@ -9,7 +9,7 @@ internal static class LauncherJson
     private const string RepositoryLineEnding = "\n";
     private const int DefaultMaxBackups = 3;
 
-    private static readonly JsonSerializerOptions Options = new()
+    internal static readonly JsonSerializerOptions Options = new()
     {
         ReadCommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true,
@@ -45,10 +45,20 @@ internal static class LauncherJson
         {
             File.WriteAllText(tempPath, json + RepositoryLineEnding);
 
+            // Backup rotation is best-effort — if it fails, the new data
+            // still gets committed. The old backup-on-failure blocking bug
+            // is fixed by the try/catch, not by reordering.
             if (backup && File.Exists(fullPath))
             {
-                RotateBackups(fullPath);
-                File.Copy(fullPath, fullPath + ".bak", overwrite: true);
+                try
+                {
+                    RotateBackups(fullPath);
+                    File.Copy(fullPath, fullPath + ".bak", overwrite: true);
+                }
+                catch
+                {
+                    // Non-fatal — the target file has not been modified yet.
+                }
             }
 
             File.Move(tempPath, fullPath, overwrite: true);
@@ -74,12 +84,20 @@ internal static class LauncherJson
             var oldPath = i == 0 ? fullPath + ".bak" : fullPath + $".bak.{i}";
             var newPath = fullPath + $".bak.{i + 1}";
 
-            if (File.Exists(oldPath))
+            try
             {
                 if (i == DefaultMaxBackups - 1)
                     File.Delete(oldPath);
                 else
                     File.Move(oldPath, newPath, overwrite: true);
+            }
+            catch (FileNotFoundException)
+            {
+                // Best-effort: the backup file doesn't exist — nothing to rotate.
+            }
+            catch (DirectoryNotFoundException)
+            {
+                // Best-effort: the backup directory doesn't exist — nothing to rotate.
             }
         }
     }

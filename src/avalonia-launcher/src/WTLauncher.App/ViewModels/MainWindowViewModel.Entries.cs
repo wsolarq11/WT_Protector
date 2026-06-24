@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -34,6 +35,7 @@ public sealed partial class MainWindowViewModel
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
+            ErrorLog.Write(ex, "AddEntry");
             StatusText = LauncherEntryStatus.AddDialogFailed(ex);
             return;
         }
@@ -54,7 +56,7 @@ public sealed partial class MainWindowViewModel
         var snapshot = CaptureEntryMutationSnapshot();
         entry = entry with { UpdatedAtUtc = CurrentTimestampUtc() };
         _entries.Add(new LauncherEntryViewModel(entry, this));
-        _settings.CustomEntryOrder.Add(entry.Id);
+        _settings = _settings with { CustomEntryOrder = _settings.CustomEntryOrder.Add(entry.Id) };
 
         if (!SaveEntryCollectionChanges(savePresets: false, snapshot))
             return;
@@ -82,6 +84,7 @@ public sealed partial class MainWindowViewModel
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
+            ErrorLog.Write(ex, "CloneEntry");
             StatusText = LauncherEntryStatus.AddDialogFailed(ex);
             return;
         }
@@ -102,7 +105,7 @@ public sealed partial class MainWindowViewModel
         var snapshot = CaptureEntryMutationSnapshot();
         entry = entry with { UpdatedAtUtc = CurrentTimestampUtc() };
         _entries.Add(new LauncherEntryViewModel(entry, this));
-        _settings.CustomEntryOrder.Add(entry.Id);
+        _settings = _settings with { CustomEntryOrder = _settings.CustomEntryOrder.Add(entry.Id) };
 
         if (!SaveEntryCollectionChanges(savePresets: false, snapshot))
             return;
@@ -131,6 +134,7 @@ public sealed partial class MainWindowViewModel
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
+            ErrorLog.Write(ex, "EditEntry.Draft");
             StatusText = LauncherEntryStatus.EditDialogFailed(item.Name, ex);
             return;
         }
@@ -152,10 +156,13 @@ public sealed partial class MainWindowViewModel
         {
             try
             {
-                LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, item.Id);
+                var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, item.Id);
+                _presetFile = updatedPresetFile;
+                _settings = _settings with { CustomEntryOrder = updatedOrder };
             }
             catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
             {
+                ErrorLog.Write(ex, "EditEntry.RenameReference");
                 RestoreEntryMutationSnapshot(snapshot);
                 StatusText = LauncherEntryStatus.EditDialogFailed(item.Name, ex);
                 return;
@@ -176,7 +183,9 @@ public sealed partial class MainWindowViewModel
             return;
 
         var snapshot = CaptureEntryMutationSnapshot();
-        LauncherEntryReferences.RemoveEntryId(_presetFile, _settings.CustomEntryOrder, target.EntryId);
+        var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RemoveEntryId(_presetFile, _settings.CustomEntryOrder, target.EntryId);
+        _presetFile = updatedPresetFile;
+        _settings = _settings with { CustomEntryOrder = updatedOrder };
         _entries.Remove(item);
         if (!SaveEntryCollectionChanges(savePresets: true, snapshot))
             return;
@@ -193,6 +202,7 @@ public sealed partial class MainWindowViewModel
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
+            ErrorLog.Write(ex, "DeleteConfirmation");
             StatusText = LauncherEntryStatus.DeleteConfirmationFailed(target.EntryName, ex);
             return false;
         }

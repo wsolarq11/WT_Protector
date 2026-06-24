@@ -1,8 +1,10 @@
+using System.Collections.Immutable;
+
 namespace WTLauncher.Core;
 
 public static class LauncherEntryOrder
 {
-    public static void SyncWithEntries(List<string> customOrder, IEnumerable<string> entryIds)
+    public static ImmutableList<string> SyncWithEntries(ImmutableList<string> customOrder, IEnumerable<string> entryIds)
     {
         ArgumentNullException.ThrowIfNull(customOrder);
 
@@ -29,8 +31,7 @@ public static class LauncherEntryOrder
             }
         }
 
-        customOrder.Clear();
-        customOrder.AddRange(syncedOrder);
+        return syncedOrder.ToImmutableList();
     }
 
     public static IReadOnlyDictionary<string, int> BuildIndex(IEnumerable<string> customOrder)
@@ -45,8 +46,8 @@ public static class LauncherEntryOrder
         return new System.Collections.ObjectModel.ReadOnlyDictionary<string, int>(indexById);
     }
 
-    public static bool MoveRelative(
-        List<string> customOrder,
+    public static (bool Changed, ImmutableList<string> Result) MoveRelative(
+        ImmutableList<string> customOrder,
         string draggedEntryId,
         string targetEntryId,
         bool insertAfter)
@@ -54,7 +55,7 @@ public static class LauncherEntryOrder
         var draggedId = RequireEntryId(draggedEntryId, nameof(draggedEntryId));
         var targetId = RequireEntryId(targetEntryId, nameof(targetEntryId));
         if (LauncherEntryIds.Same(draggedId, targetId))
-            return false;
+            return (false, customOrder);
 
         var normalizedOrder = NormalizeRequiredOrder(customOrder, nameof(customOrder));
         var draggedIndex = normalizedOrder.FindIndex(id => LauncherEntryIds.Same(id, draggedId));
@@ -75,9 +76,7 @@ public static class LauncherEntryOrder
             targetIndex++;
         targetIndex = Math.Min(targetIndex, normalizedOrder.Count);
         normalizedOrder.Insert(targetIndex, draggedId);
-        customOrder.Clear();
-        customOrder.AddRange(normalizedOrder);
-        return true;
+        return (true, normalizedOrder.ToImmutableList());
     }
 
     private static string RequireEntryId(string entryId, string paramName) =>

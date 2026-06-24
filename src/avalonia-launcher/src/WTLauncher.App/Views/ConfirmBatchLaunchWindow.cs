@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using WTLauncher.App.ViewModels;
+using WTLauncher.Core;
 
 namespace WTLauncher.App.Views;
 
@@ -20,7 +21,7 @@ public sealed class ConfirmBatchLaunchWindow : Window
         MinWidth = 460;
         MinHeight = hasFailures ? 460 : 340;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        Background = Brushes.White;
+        Background = Brush.Parse(LauncherDesignTokens.SurfaceColor);
 
         var items = confirmation.Items;
         var plans = LauncherBatchLaunchPlanText.Format(items);
@@ -54,7 +55,7 @@ public sealed class ConfirmBatchLaunchWindow : Window
                 {
                     BorderThickness = new Thickness(1),
                     CornerRadius = new CornerRadius(10),
-                    BorderBrush = Brushes.LightGray,
+                    BorderBrush = Brush.Parse(LauncherDesignTokens.BorderColor),
                     Padding = new Thickness(12),
                     Child = new ScrollViewer
                     {
@@ -92,7 +93,7 @@ public sealed class ConfirmBatchLaunchWindow : Window
                     {
                         BorderThickness = new Thickness(1),
                         CornerRadius = new CornerRadius(10),
-                        BorderBrush = Brushes.LightGray,
+                        BorderBrush = Brush.Parse(LauncherDesignTokens.BorderColor),
                         Padding = new Thickness(12),
                         Child = new ScrollViewer
                         {

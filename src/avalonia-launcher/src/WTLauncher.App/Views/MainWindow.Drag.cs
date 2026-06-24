@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.VisualTree;
 using System.Diagnostics;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -13,7 +14,13 @@ public sealed partial class MainWindow
 {
     private OverlayLayer? _overlayLayer;
     private Border? _dragGhost;
+    // LIFECYCLE: Set in DoDragReorderAsync (drag begin) and optionally
+    // overwritten in OnEntryDrop (drop finalize). Always cleared in the
+    // finally block of DoDragReorderAsync. Cross-window drag not supported.
     private string? _activeDragEntryId;
+    /// <summary>Last ShouldInsertAfter decision — used to provide hysteresis
+    /// so the decision doesn't flip-flop near card boundaries.</summary>
+    private bool _lastDragInsertAfterDecision;
     // P2: Suppress XAML transitions during active drag to avoid layout thrashing.
     private const string SuppressTransitionsClass = "suppress-drag-transitions";
 
@@ -29,7 +36,15 @@ public sealed partial class MainWindow
             return;
 
         var (item, card) = resolved.Value;
+        await DoDragReorderAsync(viewModel, item, card, e);
+    }
 
+    private async Task DoDragReorderAsync(
+        MainWindowViewModel viewModel,
+        LauncherEntryViewModel item,
+        Control card,
+        PointerPressedEventArgs e)
+    {
         var data = new DataTransfer();
         MainWindowDragEntryTransfer.SetEntryId(data, item.Id);
         e.Handled = true;
@@ -45,9 +60,10 @@ public sealed partial class MainWindow
         {
             effect = await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move).ConfigureAwait(true);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             Debug.WriteLine($"[MainWindow] Drag reorder failed: {ex}");
+            ErrorLog.Write(ex, "DragReorder");
             effect = DragDropEffects.None;
         }
         finally
@@ -114,7 +130,10 @@ public sealed partial class MainWindow
             return;
         }
 
-        ApplyDragReorderPreview(e, viewModel, decision.PreviewDraggedEntryId!, resolved!.Value);
+        if (decision.PreviewDraggedEntryId is null || resolved is null)
+            return;
+
+        ApplyDragReorderPreview(e, viewModel, decision.PreviewDraggedEntryId, resolved.Value);
     }
 
     private void OnEntryDrop(object? sender, DragEventArgs e)
@@ -128,7 +147,10 @@ public sealed partial class MainWindow
             return;
 
         _activeDragEntryId = decision.DraggedEntryId;
-        ApplyDragReorderPreview(e, viewModel, decision.DraggedEntryId!, resolved!.Value);
+        if (decision.DraggedEntryId is null || resolved is null)
+            return;
+
+        ApplyDragReorderPreview(e, viewModel, decision.DraggedEntryId, resolved.Value);
         e.DragEffects = decision.Effects;
         e.Handled = decision.Handled;
     }
@@ -142,7 +164,9 @@ public sealed partial class MainWindow
         var insertAfter = MainWindowDragInsertDecision.ShouldInsertAfter(
             e.GetPosition(target.Card),
             target.Card.Bounds.Size,
-            viewModel.IsDetailedListMode);
+            viewModel.IsDetailedListMode,
+            _lastDragInsertAfterDecision);
+        _lastDragInsertAfterDecision = insertAfter;
 
         // Lazy capture: only walk the visual tree when the reorder target actually changed.
         // WouldChangePreview does a cheap O(1) string comparison — no visual tree traversal.
@@ -216,10 +240,22 @@ public sealed partial class MainWindow
 
 public static class MainWindowDragInsertDecision
 {
-    public static bool ShouldInsertAfter(Point positionInCard, Size cardSize, bool isDetailedListMode) =>
-        isDetailedListMode
-            ? positionInCard.Y >= cardSize.Height * 0.5
-            : positionInCard.X >= cardSize.Width * 0.5;
+    public static bool ShouldInsertAfter(Point positionInCard, Size cardSize, bool isDetailedListMode, bool? currentInsertAfter = null)
+    {
+        // ±5% hysteresis to prevent jitter when the pointer is near the card midpoint.
+        // If currently inserted after (true), the pointer must cross below 45% to flip.
+        // If currently inserted before (false), the pointer must cross above 55% to flip.
+        double threshold = currentInsertAfter switch
+        {
+            true => 0.45,
+            false => 0.55,
+            null => 0.5,
+        };
+
+        return isDetailedListMode
+            ? positionInCard.Y >= cardSize.Height * threshold
+            : positionInCard.X >= cardSize.Width * threshold;
+    }
 }
 
 public static class MainWindowDragEntryTransfer

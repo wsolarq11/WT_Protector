@@ -31,7 +31,7 @@ internal static class LauncherDialogButtons
             isDefault: true,
             minWidth: minWidth,
             background: PrimaryBrush,
-            foreground: Brushes.White,
+            foreground: Brush.Parse(LauncherDesignTokens.SurfaceColor),
             fontWeight: FontWeight.SemiBold);
     }
 
@@ -41,7 +41,7 @@ internal static class LauncherDialogButtons
             content,
             minWidth: minWidth,
             background: DestructiveBrush,
-            foreground: Brushes.White,
+            foreground: Brush.Parse(LauncherDesignTokens.SurfaceColor),
             fontWeight: FontWeight.SemiBold);
     }
 

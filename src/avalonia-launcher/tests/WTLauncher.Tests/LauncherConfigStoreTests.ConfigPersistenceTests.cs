@@ -137,7 +137,7 @@ public sealed partial class LauncherConfigStoreTests
 
         var exception = Assert.Throws<InvalidDataException>(() => LauncherConfigStore.Load(config));
 
-        Assert.Equal("Launcher config entry 0 is null.", exception.Message);
+        Assert.Equal("Launcher config entry 0 must be an object, got Null.", exception.Message);
     }
 
     [Fact]

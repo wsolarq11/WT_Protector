@@ -3,6 +3,8 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
+using Avalonia.Threading;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
 using WTLauncher.App.Views;
 using WTLauncher.Core;
@@ -75,6 +77,14 @@ public sealed partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        // Prevent a single binding error or UI-thread exception from crashing the process.
+        Dispatcher.UIThread.UnhandledException += (_, e) =>
+        {
+            ErrorLog.Write(e.Exception, "Dispatcher.UIThread");
+            Console.Error.WriteLine($"[WTLauncher] UI thread exception: {e.Exception}");
+            e.Handled = true;
+        };
+
         try
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -92,20 +102,25 @@ public sealed partial class App : Application
                     settings,
                     launchWorkflow,
                     static () => DateTimeOffset.UtcNow);
+                var windowSettings = settings.Window;
                 var mainWindow = new MainWindow(viewModel)
                 {
-                    Width = settings.Window.Width,
-                    Height = settings.Window.Height,
+                    Width = windowSettings.Width,
+                    Height = windowSettings.Height,
                 };
                 desktop.MainWindow = mainWindow;
             }
-
-            base.OnFrameworkInitializationCompleted();
         }
         catch (Exception ex)
         {
+            ErrorLog.Write(ex, "Startup");
             Console.Error.WriteLine($"[WTLauncher] Fatal startup error: {ex}");
             Environment.ExitCode = 1;
+        }
+        finally
+        {
+            // Must always be called — Avalonia expects this to start the message loop.
+            base.OnFrameworkInitializationCompleted();
         }
     }
 

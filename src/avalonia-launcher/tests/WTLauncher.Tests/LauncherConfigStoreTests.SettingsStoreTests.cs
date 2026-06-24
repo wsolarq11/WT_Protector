@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using WTLauncher.Core;
 
 namespace WTLauncher.Tests;
@@ -28,9 +29,9 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Equal(LauncherEntryVisibility.AlphabeticalSortModeId, loaded.SortMode);
         Assert.Equal(LauncherEntryViewModes.DetailsId, loaded.EntryViewMode);
         Assert.False(loaded.RequireConfirmationForLaunches);
-        Assert.Equal(["two", "one"], loaded.CustomEntryOrder);
-        Assert.Equal(1200d, loaded.Window.Width);
-        Assert.Equal(800d, loaded.Window.Height);
+        Assert.Equal(["two", "one"], loaded.CustomEntryOrder!);
+        Assert.Equal(1200d, loaded.Window!.Width);
+        Assert.Equal(800d, loaded.Window!.Height);
         var savedJson = File.ReadAllText(settings);
         Assert.Contains("爬虫", savedJson);
         Assert.Contains("alphabetical", savedJson);
@@ -63,7 +64,7 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Equal("爬虫", loaded.LastFilterText);
         Assert.Equal(LauncherEntryVisibility.CustomSortModeId, loaded.SortMode);
         Assert.Equal(LauncherEntryViewModes.CardsId, loaded.EntryViewMode);
-        Assert.Equal(["one", "two"], loaded.CustomEntryOrder);
+        Assert.Equal(["one", "two"], loaded.CustomEntryOrder!);
         Assert.NotNull(loaded.Window);
     }
 
@@ -368,7 +369,7 @@ public sealed partial class LauncherConfigStoreTests
 
         var loaded = LauncherSettingsStore.Load(settings);
 
-        Assert.Equal(["one", "two"], loaded.CustomEntryOrder);
+        Assert.Equal(["one", "two"], loaded.CustomEntryOrder!);
     }
 
     [Fact]
@@ -543,22 +544,22 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void SettingsStore_RejectsNullCustomEntryOrderBeforeWriting()
+    public void SettingsStore_AcceptsEmptyCustomEntryOrderAsDefault()
     {
         using var temp = new TempDirectory();
         var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
 
-        var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherSettingsStore.Save(
-                new LauncherSettings
-                {
-                    LastFilterText = "",
-                    CustomEntryOrder = null!,
-                },
-                settingsPath));
+        LauncherSettingsStore.Save(
+            new LauncherSettings
+            {
+                LastFilterText = "",
+                CustomEntryOrder = ImmutableList<string>.Empty,
+            },
+            settingsPath);
 
-        Assert.Equal("Launcher settings customEntryOrder is null.", exception.Message);
-        Assert.False(File.Exists(settingsPath));
+        Assert.True(File.Exists(settingsPath));
+        var loaded = LauncherSettingsStore.Load(settingsPath);
+        Assert.Empty(loaded.CustomEntryOrder!);
     }
 
     [Fact]
@@ -580,11 +581,11 @@ public sealed partial class LauncherConfigStoreTests
         var saved = LauncherSettingsStore.TrySaveWindowBounds(ref settings, settingsPath, width: 1320, height: 840);
 
         Assert.True(saved);
-        Assert.Equal(1320d, settings.Window.Width);
-        Assert.Equal(840d, settings.Window.Height);
+        Assert.Equal(1320d, settings.Window!.Width);
+        Assert.Equal(840d, settings.Window!.Height);
         var loaded = LauncherSettingsStore.Load(settingsPath);
-        Assert.Equal(1320d, loaded.Window.Width);
-        Assert.Equal(840d, loaded.Window.Height);
+        Assert.Equal(1320d, loaded.Window!.Width);
+        Assert.Equal(840d, loaded.Window!.Height);
     }
 
     [Fact]
@@ -612,9 +613,9 @@ public sealed partial class LauncherConfigStoreTests
         Assert.False(saved);
         Assert.Equal(LauncherEntryVisibility.CustomSortModeId, settings.SortMode);
         Assert.Equal(LauncherEntryViewModes.CardsId, settings.EntryViewMode);
-        Assert.Equal(["one", "two"], settings.CustomEntryOrder);
-        Assert.Equal(LauncherWindowSettings.DefaultWidth, settings.Window.Width);
-        Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window.Height);
+        Assert.Equal(["one", "two"], settings.CustomEntryOrder!);
+        Assert.Equal(LauncherWindowSettings.DefaultWidth, settings.Window!.Width);
+        Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window!.Height);
         Assert.Empty(Directory.EnumerateFiles(configDir, $"{LauncherConfigStore.SettingsFileName}.tmp-*"));
     }
 

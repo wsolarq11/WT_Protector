@@ -4,9 +4,26 @@ namespace WTLauncher.Core;
 
 public static class LaunchArgumentBuilder
 {
-    public const string TerminalExecutable = "wt.exe";
     public const string WorkingDirectoryOption = "-d";
-    public const string ShellCommandPrefix = "pwsh -NoExit -Command";
+    public const string ShellCommandPrefix = "pwsh -NoExit -EncodedCommand";
+
+    /// <summary>Resolved full path to Windows Terminal executable.</summary>
+    public static string TerminalExecutable => ResolveTerminalExecutable();
+
+    /// <summary>
+    /// Resolves wt.exe full path from the Windows Apps alias directory.
+    /// Falls back to "wt.exe" bare name only when LOCALAPPDATA is unavailable
+    /// (should never happen on Windows desktop).
+    /// </summary>
+    internal static string ResolveTerminalExecutable()
+    {
+        var localAppData = Environment.GetEnvironmentVariable("LOCALAPPDATA");
+        if (string.IsNullOrEmpty(localAppData))
+            return "wt.exe";
+
+        var wtPath = Path.Combine(localAppData, @"Microsoft\WindowsApps\wt.exe");
+        return File.Exists(wtPath) ? wtPath : "wt.exe";
+    }
 
     public static LaunchPlan Build(LaunchEntry entry, bool validateDirectory, bool requireConfirmation, IReadOnlyDictionary<string, string>? commandTemplates = null)
     {
@@ -25,9 +42,14 @@ public static class LaunchArgumentBuilder
         if (command.Length == 0)
             throw new InvalidOperationException($"Launch entry '{name}' has an empty command.");
 
-        var arguments = $"{WorkingDirectoryOption} {QuoteArgument(directory)} --title {QuoteArgument(name)} {ShellCommandPrefix} {QuoteArgument(command)}";
+        // Encode command as Base64 to eliminate PowerShell metacharacter interpretation.
+        // -EncodedCommand treats the payload as opaque bytes — $(), backtick, and other
+        // PS expansion syntax are never evaluated.
+        var encodedCommand = Convert.ToBase64String(Encoding.UTF8.GetBytes(command));
+
+        var arguments = $"{WorkingDirectoryOption} {QuoteArgument(directory)} --title {QuoteArgument(name)} {ShellCommandPrefix} {encodedCommand}";
         return new LaunchPlan(
-            TerminalExecutable,
+            ResolveTerminalExecutable(),
             arguments,
             directory,
             command,

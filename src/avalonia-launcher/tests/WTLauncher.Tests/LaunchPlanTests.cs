@@ -34,6 +34,6 @@ public sealed class LaunchPlanTests
         Assert.Equal("C:\\work", plan.WorkingDirectory);
         Assert.Equal("echo started", plan.Command);
         Assert.True(plan.RequiresConfirmation);
-        Assert.Equal("cmd.exe /c echo started", plan.CommandLine);
+        Assert.Equal("cmd.exe -d \"C:\\work\" pwsh -NoExit -Command \"echo started\"", plan.CommandLine);
     }
 }

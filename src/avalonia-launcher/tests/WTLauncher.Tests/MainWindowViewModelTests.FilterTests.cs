@@ -93,4 +93,20 @@ public sealed partial class MainWindowViewModelTests
         var visible = Assert.Single(viewModel.VisibleEntries);
         Assert.Equal("one", visible.Id);
     }
+
+    [Fact]
+    public void FilterTextDoesNotStackOverflowWhenSaveFailsRepeatedly()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        var viewModel = CreateViewModel(config, settings);
+        // Make settings path a directory so LauncherSettingsStore.Save always fails
+        File.Delete(settings);
+        Directory.CreateDirectory(settings);
+        // Rapid filter changes should NOT stack overflow (H1 guard)
+        for (var i = 0; i < 10; i++)
+            viewModel.FilterText = $"filter-{i}";
+        // After all failed saves, filter should be back to the last successful value
+        Assert.Equal("", viewModel.FilterText);
+    }
 }

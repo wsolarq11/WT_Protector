@@ -86,7 +86,7 @@
     <Style Selector="Border.card.name-tile">
       <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
       <Setter Property="Padding" Value="6,2"/>
-      <Setter Property="CornerRadius" Value="6"/>
+      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
       <Setter Property="Margin" Value="0"/>
       <Setter Property="MinHeight" Value="24"/>
       <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
@@ -108,7 +108,7 @@
     </Style>
     <Style Selector="Border.card.name-tile Border.entry-drag-handle">
       <Setter Property="Padding" Value="4,0"/>
-      <Setter Property="CornerRadius" Value="5"/>
+      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
     </Style>
     <Style Selector="ListBox.details-list">
       <Setter Property="Background" Value="Transparent"/>
@@ -143,18 +143,18 @@
     </Style>
     <Style Selector="Border.card.detail-row Button.primary">
       <Setter Property="Padding" Value="8,2"/>
-      <Setter Property="CornerRadius" Value="6"/>
+      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
       <Setter Property="FontSize" Value="12"/>
     </Style>
     <Style Selector="Border.card.detail-row Button.more">
       <Setter Property="Padding" Value="7,2"/>
-      <Setter Property="CornerRadius" Value="6"/>
+      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
       <Setter Property="MinWidth" Value="28"/>
       <Setter Property="FontSize" Value="12"/>
     </Style>
     <Style Selector="Border.card.detail-row Border.entry-drag-handle">
       <Setter Property="Padding" Value="5,0"/>
-      <Setter Property="CornerRadius" Value="6"/>
+      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
     </Style>
     <Style Selector="TextBlock.card-title">
       <Setter Property="FontSize" Value="18"/>
@@ -229,16 +229,16 @@
     </Style>
     <Style Selector="Border.entry-drag-handle">
       <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
-      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
       <Setter Property="Padding" Value="8,4"/>
     </Style>
     <Style Selector="Border.card.compact Border.entry-drag-handle">
       <Setter Property="Padding" Value="7,3"/>
-      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
     </Style>
     <Style Selector="Border.card.micro Border.entry-drag-handle">
       <Setter Property="Padding" Value="6,2"/>
-      <Setter Property="CornerRadius" Value="7"/>
+      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
     </Style>
     <Style Selector="Button.primary">
       <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
@@ -555,7 +555,7 @@
                 ClipToBounds="True">
           <Grid RowDefinitions="Auto,*">
             <Border Classes="detail-header"
-                    CornerRadius="13 13 0 0">
+                    CornerRadius="{StaticResource CardBorderRadius}">
               <Grid ColumnSpacing="12"
                     VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>

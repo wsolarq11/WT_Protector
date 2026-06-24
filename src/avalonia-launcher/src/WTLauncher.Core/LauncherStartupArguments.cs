@@ -11,7 +11,9 @@ public static class LauncherStartupArguments
         {
             var arg = args[i];
             if (!string.Equals(arg, "--config", StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException($"Unknown startup argument: {arg}.", nameof(args));
+                throw new ArgumentException(
+                    $"Unknown startup argument: '{arg}'. Only --config <path> is supported for specifying a configuration file.",
+                    nameof(args));
 
             if (configPath is not null)
                 throw new ArgumentException("Config path flag must appear at most once.", nameof(args));

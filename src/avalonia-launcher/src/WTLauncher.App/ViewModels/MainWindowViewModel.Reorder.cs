@@ -30,13 +30,15 @@ public sealed partial class MainWindowViewModel
         }
 
         EnsureCustomOrderContainsEntries();
-        if (!LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, entry.Id, target.Id, insertAfter))
+        var (changed, updatedOrder) = LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, entry.Id, target.Id, insertAfter);
+        if (!changed)
         {
             _settings = snapshot.RestoreCustomEntryOrder(_settings);
             ApplyFilter();
             StatusText = LauncherDragReorderStatus.MoveUnavailable;
             return;
         }
+        _settings = _settings with { CustomEntryOrder = updatedOrder };
 
         var saveFailure = SaveSettingsChange(snapshot);
         ApplyFilter();

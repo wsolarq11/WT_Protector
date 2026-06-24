@@ -20,7 +20,12 @@ public sealed record LaunchPlan(
     public string WorkingDirectory { get => _workingDirectory; init => _workingDirectory = RequireText(value, nameof(WorkingDirectory)); }
     public string Command { get => _command; init => _command = RequireText(value, nameof(Command)); }
 
-    public string CommandLine => $"{Executable} {Arguments}";
+    /// <summary>
+    /// Human-readable command-line preview for UI display (DryRun, receipts).
+    /// The actual execution transmits the command via Base64-encoded
+    /// -EncodedCommand (see <see cref="Arguments"/>).
+    /// </summary>
+    public string CommandLine => $"{Executable} -d \"{WorkingDirectory}\" pwsh -NoExit -Command \"{Command}\"";
 
     private static string RequireText(string? value, string paramName)
     {

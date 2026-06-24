@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using WTLauncher.App.ViewModels;
+using WTLauncher.Core;
 
 namespace WTLauncher.App.Views;
 
@@ -17,7 +18,7 @@ public sealed class ConfirmPresetDeleteWindow : Window
         MinWidth = 460;
         MinHeight = 220;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        Background = Brushes.White;
+        Background = Brush.Parse(LauncherDesignTokens.SurfaceColor);
 
         var cancel = LauncherDialogButtons.SafeDefaultCancel();
         cancel.Click += (_, _) => Close(false);

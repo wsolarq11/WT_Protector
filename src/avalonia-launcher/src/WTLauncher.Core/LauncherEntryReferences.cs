@@ -1,10 +1,12 @@
+using System.Collections.Immutable;
+
 namespace WTLauncher.Core;
 
 public static class LauncherEntryReferences
 {
-    public static void RenameEntryId(
+    public static (LauncherPresetFile PresetFile, ImmutableList<string> CustomEntryOrder) RenameEntryId(
         LauncherPresetFile presetFile,
-        List<string> customEntryOrder,
+        ImmutableList<string> customEntryOrder,
         string oldEntryId,
         string newEntryId)
     {
@@ -13,27 +15,71 @@ public static class LauncherEntryReferences
 
         var normalizedOldEntryId = RequireEntryId(oldEntryId, nameof(oldEntryId));
         var normalizedNewEntryId = RequireEntryId(newEntryId, nameof(newEntryId));
-        var updates = EntryReferenceLists(presetFile, customEntryOrder)
-            .Select(entryIds => (Target: entryIds, EntryIds: RenameReferences(entryIds, normalizedOldEntryId, normalizedNewEntryId)))
-            .ToList();
 
-        ApplyUpdates(updates);
+        // H4: Pre-check all reference lists for target ID conflict before modifying anything.
+        // Using mutable List copies for the rename operation; reconstruct preset file at the end.
+        var mutableOrder = customEntryOrder.ToList();
+        var mutablePresetLists = new List<List<string>>(presetFile.Presets.Count);
+        foreach (var p in presetFile.Presets)
+            mutablePresetLists.Add([.. p.EntryIds]);
+
+        foreach (var list in mutablePresetLists)
+        {
+            if (list.Any(id => LauncherEntryIds.Same(id, normalizedNewEntryId) && !LauncherEntryIds.Same(id, normalizedOldEntryId)))
+                throw new ArgumentException(
+                    $"Cannot rename to '{normalizedNewEntryId}' because that ID is already present.",
+                    nameof(newEntryId));
+        }
+        if (mutableOrder.Any(id => LauncherEntryIds.Same(id, normalizedNewEntryId) && !LauncherEntryIds.Same(id, normalizedOldEntryId)))
+            throw new ArgumentException(
+                $"Cannot rename to '{normalizedNewEntryId}' because that ID is already present.",
+                nameof(newEntryId));
+
+        // Rename in custom order
+        var updatedOrder = RenameReferences(mutableOrder, normalizedOldEntryId, normalizedNewEntryId);
+
+        // Rename in each preset's entry list
+        for (var i = 0; i < mutablePresetLists.Count; i++)
+            mutablePresetLists[i] = RenameReferences(mutablePresetLists[i], normalizedOldEntryId, normalizedNewEntryId);
+
+        // Reconstruct preset file with updated entry IDs
+        var updatedPresets = presetFile.Presets
+            .Zip(mutablePresetLists, (preset, ids) => preset with { EntryIds = ids.ToImmutableList() })
+            .ToImmutableList();
+        var updatedPresetFile = presetFile with { Presets = updatedPresets };
+
+        return (updatedPresetFile, updatedOrder.ToImmutableList());
     }
 
-    public static void RemoveEntryId(
+    public static (LauncherPresetFile PresetFile, ImmutableList<string> CustomEntryOrder) RemoveEntryId(
         LauncherPresetFile presetFile,
-        List<string> customEntryOrder,
+        ImmutableList<string> customEntryOrder,
         string entryId)
     {
         ArgumentNullException.ThrowIfNull(presetFile);
         ArgumentNullException.ThrowIfNull(customEntryOrder);
 
         var normalizedEntryId = RequireEntryId(entryId, nameof(entryId));
-        var updates = EntryReferenceLists(presetFile, customEntryOrder)
-            .Select(entryIds => (Target: entryIds, EntryIds: RemoveReferences(entryIds, normalizedEntryId)))
-            .ToList();
 
-        ApplyUpdates(updates);
+        var mutableOrder = customEntryOrder.ToList();
+        var mutablePresetLists = new List<List<string>>(presetFile.Presets.Count);
+        foreach (var p in presetFile.Presets)
+            mutablePresetLists.Add([.. p.EntryIds]);
+
+        // Remove from custom order
+        var updatedOrder = RemoveReferences(mutableOrder, normalizedEntryId);
+
+        // Remove from each preset's entry list
+        for (var i = 0; i < mutablePresetLists.Count; i++)
+            mutablePresetLists[i] = RemoveReferences(mutablePresetLists[i], normalizedEntryId);
+
+        // Reconstruct preset file with updated entry IDs
+        var updatedPresets = presetFile.Presets
+            .Zip(mutablePresetLists, (preset, ids) => preset with { EntryIds = ids.ToImmutableList() })
+            .ToImmutableList();
+        var updatedPresetFile = presetFile with { Presets = updatedPresets };
+
+        return (updatedPresetFile, updatedOrder.ToImmutableList());
     }
 
     private static List<string> RenameReferences(
@@ -56,27 +102,6 @@ public static class LauncherEntryReferences
         return LauncherEntryIds.ToRequiredUniqueList(entryIds, nameof(entryIds))
             .Where(id => !LauncherEntryIds.Same(id, entryId))
             .ToList();
-    }
-
-    private static IEnumerable<List<string>> EntryReferenceLists(
-        LauncherPresetFile presetFile,
-        List<string> customEntryOrder)
-    {
-        foreach (var preset in presetFile.Presets)
-        {
-            yield return preset.EntryIds;
-        }
-
-        yield return customEntryOrder;
-    }
-
-    private static void ApplyUpdates(IEnumerable<(List<string> Target, List<string> EntryIds)> updates)
-    {
-        foreach (var update in updates)
-        {
-            update.Target.Clear();
-            update.Target.AddRange(update.EntryIds);
-        }
     }
 
     private static string RequireEntryId(string? entryId, string paramName) =>

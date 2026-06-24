@@ -19,7 +19,7 @@ public static class LauncherSettingsMutationPersistence
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
-            settings = snapshot.Restore(settings);
+            settings = snapshot.Restore();
             return LauncherPersistenceStatus.SettingsSaveFailed(ex);
         }
     }

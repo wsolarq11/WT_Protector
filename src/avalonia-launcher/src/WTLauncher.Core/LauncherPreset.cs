@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 
 namespace WTLauncher.Core;
@@ -16,7 +17,7 @@ public sealed record LauncherPresetFile
 
     [JsonPropertyName("presets")]
     [JsonRequired]
-    public List<LauncherPreset> Presets { get; init; } = [];
+    public ImmutableList<LauncherPreset> Presets { get; init; } = ImmutableList<LauncherPreset>.Empty;
 }
 
 /// <summary>Immutable preset entry. All properties are init-only — mutations
@@ -33,7 +34,7 @@ public sealed record LauncherPreset
 
     [JsonPropertyName("entryIds")]
     [JsonRequired]
-    public List<string> EntryIds { get; init; } = [];
+    public ImmutableList<string> EntryIds { get; init; } = ImmutableList<string>.Empty;
 
     [JsonPropertyName("locked")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]

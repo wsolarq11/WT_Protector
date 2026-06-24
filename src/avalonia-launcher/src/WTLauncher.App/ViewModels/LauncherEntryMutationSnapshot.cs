@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -6,12 +7,12 @@ public sealed class LauncherEntryMutationSnapshot
 {
     private readonly List<LaunchEntry> _entries;
     private readonly LauncherPresetFile _presetFile;
-    private readonly List<string> _customEntryOrder;
+    private readonly ImmutableList<string> _customEntryOrder;
 
     private LauncherEntryMutationSnapshot(
         List<LaunchEntry> entries,
         LauncherPresetFile presetFile,
-        List<string> customEntryOrder,
+        ImmutableList<string> customEntryOrder,
         string? selectedPresetId)
     {
         _entries = entries;
@@ -24,7 +25,7 @@ public sealed class LauncherEntryMutationSnapshot
 
     public LauncherPresetFile PresetFile => ClonePresetFile();
 
-    public IReadOnlyList<string> CustomEntryOrder => CloneCustomEntryOrder().AsReadOnly();
+    public IReadOnlyList<string> CustomEntryOrder => CloneCustomEntryOrder();
 
     public string? SelectedPresetId { get; }
 
@@ -37,7 +38,7 @@ public sealed class LauncherEntryMutationSnapshot
         return new LauncherEntryMutationSnapshot(
             [.. entries.Select(entry => entry with { })],
             LauncherPresetFiles.Clone(presetFile),
-            [.. customEntryOrder],
+            customEntryOrder.ToImmutableList(),
             selectedPresetId);
     }
 
@@ -51,8 +52,8 @@ public sealed class LauncherEntryMutationSnapshot
         return LauncherPresetFiles.Clone(_presetFile);
     }
 
-    public List<string> CloneCustomEntryOrder()
+    public ImmutableList<string> CloneCustomEntryOrder()
     {
-        return [.. _customEntryOrder];
+        return _customEntryOrder;
     }
 }

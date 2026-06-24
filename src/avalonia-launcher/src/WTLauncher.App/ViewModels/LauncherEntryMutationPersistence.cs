@@ -34,7 +34,7 @@ public static class LauncherEntryMutationPersistence
                     rollbackSnapshot,
                     configPath,
                     presetPath,
-                    restorePresets: false,
+                    restorePresets: true,
                     currentStatus: presetSaveFailure);
             }
         }

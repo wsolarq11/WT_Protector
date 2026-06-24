@@ -21,7 +21,7 @@ public sealed class PresetDetailsWindow : Window
         MinWidth = 480;
         MinHeight = 220;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        Background = Brushes.White;
+        Background = Brush.Parse(LauncherDesignTokens.SurfaceColor);
 
         _nameBox = LauncherDialogText.Input("新启动组");
 

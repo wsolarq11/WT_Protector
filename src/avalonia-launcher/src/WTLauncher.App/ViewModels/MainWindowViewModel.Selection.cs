@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -103,6 +104,7 @@ public sealed partial class MainWindowViewModel
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
+            ErrorLog.Write(ex, "BatchLaunch");
             DryRunText = LauncherBatchLaunchReceiptText.Failed(ex);
             StatusText = failedStatus(ex);
         }
@@ -116,7 +118,8 @@ public sealed partial class MainWindowViewModel
         Func<Exception, string> failedStatus)
     {
         // E8: Always confirm when preflight reports failures, regardless of RequireConfirmationForLaunches.
-        if (!RequireConfirmationForLaunches && report.FailedCount == 0)
+        // H11: Also confirm when any individual item's plan requires confirmation (per-entry override).
+        if (!RequireConfirmationForLaunches && report.FailedCount == 0 && !items.Any(i => i.Plan.RequiresConfirmation))
             return true;
 
         bool accepted;
@@ -131,6 +134,7 @@ public sealed partial class MainWindowViewModel
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
+            ErrorLog.Write(ex, "BatchLaunchConfirmation");
             DryRunText = LauncherBatchLaunchReceiptText.ConfirmationFailed(confirmation.Items, ex);
             StatusText = failedStatus(ex);
             return false;

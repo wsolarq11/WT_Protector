@@ -25,4 +25,30 @@ public static class LauncherDragGhostLayoutCalculator
     {
         return (pointerX + PointerOffsetX, pointerY + PointerOffsetY);
     }
+
+    /// <summary>
+    /// Calculates the drag ghost position with window bounds clamping so the ghost
+    /// stays mostly visible. Allows up to 50% of the ghost to extend beyond container
+    /// edges to prevent the ghost from jumping when the pointer is near the boundary.
+    /// </summary>
+    public static (double Left, double Top) CalculatePosition(
+        double pointerX,
+        double pointerY,
+        double containerWidth,
+        double containerHeight,
+        double ghostWidth = MinWidth,
+        double ghostHeight = MinHeight)
+    {
+        var left = pointerX + PointerOffsetX;
+        var top = pointerY + PointerOffsetY;
+
+        // Clamp so at least 50% of the ghost remains visible within the container.
+        var halfW = ghostWidth * 0.5;
+        var halfH = ghostHeight * 0.5;
+
+        left = Math.Max(-halfW, Math.Min(left, containerWidth - halfW));
+        top = Math.Max(-halfH, Math.Min(top, containerHeight - halfH));
+
+        return (left, top);
+    }
 }

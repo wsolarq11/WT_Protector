@@ -289,3 +289,43 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 2. **不写硬数字**: 禁止"本文档含 31 条坑"。说"持续更新"。
 3. **过期清理**: 如果某坑的根因已从代码层面消除（如新增 hook 拦截），标记 `[已修复]` 但不删除 — 保留根因分析供参考。
 4. **关联 spec**: 如果某坑需要修改编码规范 → 同步更新 `core/quality-guidelines.md` 或 `views/quality-guidelines.md`。
+
+## 5. 新增教训 — UltraReview 全量修复 (2026-06-24)
+
+### 5.1 可变API→不可变API 的变更传播
+
+| 属性 | 值 |
+|---|---|
+| **证据** | UltraReview fix session, H2 ImmutableList 迁移 |
+| **问题** | `LauncherEntryOrder.SyncWithEntries` 和 `MoveRelative` 从 `void`（就地变异 `List<T>`）改为返回 `ImmutableList<T>`（新实例）。3 个调用方中有 1 个（`Refresh()`）丢弃了返回值。 |
+| **后果** | `Refresh()` 中 `CustomEntryOrder` 永远不被更新，导致 `ValidateCustomOrder` 测试全部挂掉。 |
+| **预防** | 变更返回类型从 `void` → `T` 时，**每个调用方必须确认返回值被使用**。用 `dotnet build` 检查：丢弃返回值不产生编译器警告（C# 默认允许），必须人工审计所有调用方。更好的方案：如果返回值必须被消费，用 `[MustUseReturnValue]` 或返回 `out` 参数。 |
+| **适用** | 任何 API 从 mutating → immutable 的重构。 |
+
+### 5.2 Frozen snapshot 破坏 `with { }` 的引用一致性
+
+| 属性 | 值 |
+|---|---|
+| **证据** | UltraReview fix session, `DiscardDragReorderPreview` bug |
+| **问题** | `LauncherDragReorderWorkflow` 在构造时持有 `_settings` 引用。`Refresh()` 通过 `_settings = _settings with { ... }` 创建新 record 实例后，workflow 持有的是**旧实例**。`DiscardDragReorderPreview` 无条件 `_settings = _dragReorderWorkflow.Settings`，覆盖了所有 `Refresh()` 的变更。 |
+| **根因** | Immutable record 的 `with { }` 创建**新实例**。之前 `List<T>.Clear()/AddRange()` 是**原地变异**，workflow 持有的引用自动同步。 |
+| **预防** | 任何组件持有另一个组件的 record 引用时，如果引用方可能通过 `with { }` 替换实例，持有方必须在每次变更后同步。首选方案：不持有引用，每次通过 getter 访问。 |
+| **适用** | 任何 `sealed record` + `with { }` 的快照模式。 |
+
+### 5.3 `?` 可空标记的级联效应
+
+| 属性 | 值 |
+|---|---|
+| **证据** | UltraReview fix session, M3 fix → 28 测试失败 |
+| **问题** | 给 `CustomEntryOrder: ImmutableList<string>?` 加 `?` 导致所有消费方需要 `!` / `??` / null 检查。28 个测试失败，8 处空合并死代码。 |
+| **教训** | 消除 `null!` 的正确方向是**消除 null 源**（保证 Normalize 后永不为 null），而不是给类型加 `?`。类型放宽 → 消费方爆炸。类型收窄 → 根源修复。 |
+| **适用** | 任何 nullable reference type 的修改。 |
+
+### 5.4 `.bak` 测试契约与实现语义耦合
+
+| 属性 | 值 |
+|---|---|
+| **证据** | UltraReview fix session, C6 备份重排序 |
+| **问题** | 测试用 `Directory.CreateDirectory(config + ".bak")` 模拟备份失败来触发 save failure。C6 将备份移到 try/catch 内后，这个技巧不再有效——save 不会因备份失败而失败。 |
+| **教训** | 测试如果依赖实现的副作用（而非契约行为），实现变更时测试会无辜挂掉。模拟 I/O 失败的正确方式是**阻塞核心路径**（如 `File.Delete + Directory.CreateDirectory(mainPath)`），而不是依赖非关键路径。 |
+| **适用** | 所有 I/O 故障注入测试。 |

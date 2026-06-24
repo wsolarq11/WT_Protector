@@ -1,3 +1,4 @@
+using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -21,20 +22,29 @@ public sealed partial class MainWindowViewModel
 
     partial void OnRequireConfirmationForLaunchesChanged(bool value)
     {
-        var snapshot = CaptureSettingsMutationSnapshot();
-        _settings = _settings with { RequireConfirmationForLaunches = value };
-        RefreshLaunchConfirmationPresentation();
-        var saveFailure = SaveSettingsChange(snapshot);
-        if (saveFailure is not null)
+        if (_isHandlingSettingsChange) return;
+        _isHandlingSettingsChange = true;
+        try
         {
-            _requireConfirmationForLaunches = snapshot.RequireConfirmationForLaunches;
-            OnPropertyChanged(nameof(RequireConfirmationForLaunches));
+            var snapshot = CaptureSettingsMutationSnapshot();
+            _settings = _settings with { RequireConfirmationForLaunches = value };
             RefreshLaunchConfirmationPresentation();
-            ApplyStatusText(saveFailure);
-            return;
-        }
+            var saveFailure = SaveSettingsChange(snapshot);
+            if (saveFailure is not null)
+            {
+                _requireConfirmationForLaunches = snapshot.RequireConfirmationForLaunches;
+                OnPropertyChanged(nameof(RequireConfirmationForLaunches));
+                RefreshLaunchConfirmationPresentation();
+                ApplyStatusText(saveFailure);
+                return;
+            }
 
-        StatusText = LauncherSettingsStatus.LaunchConfirmationSaved(value);
+            StatusText = LauncherSettingsStatus.LaunchConfirmationSaved(value);
+        }
+        finally
+        {
+            _isHandlingSettingsChange = false;
+        }
     }
 
     internal void ShowDryRun(LauncherEntryViewModel item)
@@ -50,6 +60,7 @@ public sealed partial class MainWindowViewModel
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
+            ErrorLog.Write(ex, "ShowDryRun");
             if (entryName.Length == 0)
             {
                 DryRunText = LauncherSingleLaunchReceiptText.PreviewFailed(ex);
@@ -83,6 +94,7 @@ public sealed partial class MainWindowViewModel
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
+            ErrorLog.Write(ex, "Launch");
             if (entryName.Length == 0)
             {
                 DryRunText = LauncherSingleLaunchReceiptText.Failed(ex);
@@ -113,6 +125,7 @@ public sealed partial class MainWindowViewModel
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
+            ErrorLog.Write(ex, "LaunchConfirmation");
             DryRunText = LauncherSingleLaunchReceiptText.ConfirmationFailed(entryName, plan, ex);
             StatusText = LauncherSingleLaunchStatus.Failed(entryName, ex);
             return false;

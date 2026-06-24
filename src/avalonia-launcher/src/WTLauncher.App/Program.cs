@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using System.Diagnostics;
+using WTLauncher.App.Infrastructure;
 
 namespace WTLauncher.App;
 
@@ -12,14 +13,22 @@ internal static class Program
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
             var ex = e.ExceptionObject as Exception;
-            Debug.WriteLine($"[WTLauncher] Unhandled domain exception: {ex}");
-            Trace.WriteLine($"[WTLauncher] Unhandled domain exception: {ex}");
+            var message = $"[WTLauncher] Unhandled domain exception: {ex}";
+            Debug.WriteLine(message);
+            Trace.WriteLine(message);
+            Console.Error.WriteLine(message);
+            if (ex is not null)
+                ErrorLog.Write(ex, "AppDomain.UnhandledException");
+            Environment.ExitCode = 2;
         };
 
         TaskScheduler.UnobservedTaskException += (_, e) =>
         {
-            Debug.WriteLine($"[WTLauncher] Unobserved task exception: {e.Exception}");
-            Trace.WriteLine($"[WTLauncher] Unobserved task exception: {e.Exception}");
+            var message = $"[WTLauncher] Unobserved task exception: {e.Exception}";
+            Debug.WriteLine(message);
+            Trace.WriteLine(message);
+            Console.Error.WriteLine(message);
+            ErrorLog.Write(e.Exception, "TaskScheduler.UnobservedTaskException");
             e.SetObserved();
         };
 

@@ -25,7 +25,7 @@ public sealed class EntryDetailsWindow : Window
         MinWidth = 560;
         MinHeight = 460;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        Background = Brushes.White;
+        Background = Brush.Parse(LauncherDesignTokens.SurfaceColor);
 
         _idBox = LauncherDialogText.Input(RequireInitialEntryId(entry));
         _nameBox = LauncherDialogText.Input(RequireInitialEntryText(entry, static item => item.Name, "name"));

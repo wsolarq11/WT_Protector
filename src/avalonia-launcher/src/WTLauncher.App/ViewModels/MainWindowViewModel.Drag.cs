@@ -25,6 +25,7 @@ public sealed partial class MainWindowViewModel
     public bool PreviewMoveEntry(string draggedEntryId, string targetEntryId, bool insertAfter)
     {
         var result = _dragReorderWorkflow.Preview(IsCustomSortMode, draggedEntryId, targetEntryId, insertAfter);
+        _settings = _dragReorderWorkflow.Settings;
         if (result.RefreshEntries)
         {
             // Debounce: skip redundant reorder with same drag params within 16ms.
@@ -55,6 +56,13 @@ public sealed partial class MainWindowViewModel
     /// Avoids the full FilterAndSort → SyncVisibleEntries → ApplyCardSize chain.
     /// O(n) single pass to find indices, then one Move() call.
     /// </summary>
+    /// <remarks>
+    /// NOTE: This method's equivalence to "FilterAndSort + modified CustomEntryOrder"
+    /// is NOT formally verified. The current manual testing shows correct behavior,
+    /// but a property-based test (e.g. FsCheck / CsCheck) that asserts the resulting
+    /// _visibleEntries matches the output of a full ApplyFilter() would be ideal
+    /// for future confidence.
+    /// </remarks>
     private void ReorderVisibleEntryForDrag(string draggedId, string targetId, bool insertAfter)
     {
         int dragIdx = -1, targetIdx = -1;
@@ -84,6 +92,12 @@ public sealed partial class MainWindowViewModel
         _dragReorderWorkflow.ClearHover();
     }
 
+    /// <remarks>
+    /// Exceptions from <see cref="LauncherDragReorderWorkflow.Commit"/> propagate
+    /// to the UI event handler (<see cref="Views.MainWindow.OnEntryDragPointerPressed"/>
+    /// / DoDragReorderAsync's catch block), which sets <c>DragDropEffects.None</c>.
+    /// We intentionally do not swallow exceptions here — the caller owns the error path.
+    /// </remarks>
     public void CommitDragReorder()
     {
         var result = _dragReorderWorkflow.Commit(IsCustomSortMode);
@@ -93,6 +107,11 @@ public sealed partial class MainWindowViewModel
         ApplyStatusText(result.Status);
     }
 
+    /// <remarks>
+    /// Exceptions from <see cref="LauncherDragReorderWorkflow.Cancel"/> propagate
+    /// to the UI event handler (same path as <see cref="CommitDragReorder"/>).
+    /// The caller sets <c>DragDropEffects.None</c> on failure.
+    /// </remarks>
     public void CancelDragReorder()
     {
         var result = _dragReorderWorkflow.Cancel();

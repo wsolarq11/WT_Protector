@@ -120,8 +120,8 @@ public sealed partial class MainWindowViewModelTests
         var savedSettings = LauncherSettingsStore.Load(settings);
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), savedSettings.CustomEntryOrder);
-        Assert.Equal(1320d, savedSettings.Window.Width);
-        Assert.Equal(840d, savedSettings.Window.Height);
+        Assert.Equal(1320d, savedSettings.Window!.Width);
+        Assert.Equal(840d, savedSettings.Window!.Height);
         AssertNoDragCues(viewModel);
     }
 

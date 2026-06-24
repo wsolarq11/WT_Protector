@@ -73,12 +73,12 @@ public static class LauncherEntryVisibility
                 break;
         }
 
-        ValidateSortProjection(filtered, sortMode, selectEntry);
+        ThrowIfInvalidProjection(filtered, sortMode, selectEntry);
         filtered.Sort(comparison);
         return filtered.AsReadOnly();
     }
 
-    private static void ValidateSortProjection<TEntry>(
+    private static void ThrowIfInvalidProjection<TEntry>(
         IEnumerable<TEntry> entries,
         string sortMode,
         Func<TEntry, LaunchEntry> selectEntry)

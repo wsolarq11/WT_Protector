@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -79,6 +80,7 @@ public sealed partial class MainWindowViewModel
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
+            ErrorLog.Write(ex, "PresetPreview");
             DryRunText = LauncherBatchLaunchPlanText.Failed(ex);
             StatusText = LauncherPresetStatus.PreviewFailed(selectedPreset.Name, ex);
         }
@@ -165,7 +167,6 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
-        RestorePresetMutationSnapshot(snapshot);
         var preset = LauncherPresetWorkflow.DeletePreset(ref _presetFile, target.PresetId, out var fallbackPresetId);
         if (preset is null)
         {

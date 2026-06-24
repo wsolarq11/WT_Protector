@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using WTLauncher.Core;
 
 namespace WTLauncher.Tests;
@@ -21,19 +22,19 @@ public sealed class LauncherSettingsSnapshotTests
             SortMode = LauncherEntryVisibility.UpdatedSortModeId,
             EntryViewMode = LauncherEntryViewModes.NamesId,
             RequireConfirmationForLaunches = true,
-            CustomEntryOrder = ["changed", "two"],
-            Window = settings.Window with { Width = 1, Height = 2 },
+            CustomEntryOrder = ImmutableList.Create("changed", "two"),
+            Window = settings.Window! with { Width = 1, Height = 2 },
         };
 
-        settings = snapshot.Restore(settings);
+        settings = snapshot.Restore();
 
         Assert.Equal("codex", settings.LastFilterText);
         Assert.Equal(LauncherEntryVisibility.AlphabeticalSortModeId, settings.SortMode);
         Assert.Equal(LauncherEntryViewModes.DetailsId, settings.EntryViewMode);
         Assert.False(settings.RequireConfirmationForLaunches);
-        Assert.Equal(["one", "two"], settings.CustomEntryOrder);
-        Assert.Equal(1200d, settings.Window.Width);
-        Assert.Equal(800d, settings.Window.Height);
+        Assert.Equal(["one", "two"], settings.CustomEntryOrder!);
+        Assert.Equal(1200d, settings.Window!.Width);
+        Assert.Equal(800d, settings.Window!.Height);
     }
 
     [Fact]
@@ -54,25 +55,26 @@ public sealed class LauncherSettingsSnapshotTests
     }
 
     [Fact]
-    public void CaptureRestoresNullOrderAndWindowWithoutInventingDefaults()
+    public void CaptureRestoresEmptyOrderAndDefaultWindow()
     {
         var settings = Settings() with
         {
-            CustomEntryOrder = null!,
-            Window = null!,
+            CustomEntryOrder = ImmutableList<string>.Empty,
+            Window = new LauncherWindowSettings(),
         };
 
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
         settings = settings with
         {
-            CustomEntryOrder = ["one"],
+            CustomEntryOrder = ImmutableList.Create("one"),
             Window = new LauncherWindowSettings { Width = 1, Height = 2 },
         };
 
-        settings = snapshot.Restore(settings);
+        settings = snapshot.Restore();
 
-        Assert.Null(settings.CustomEntryOrder);
-        Assert.Null(settings.Window);
+        Assert.Empty(settings.CustomEntryOrder!);
+        Assert.Equal(LauncherWindowSettings.DefaultWidth, settings.Window!.Width);
+        Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window!.Height);
     }
 
     private static LauncherSettings Settings(

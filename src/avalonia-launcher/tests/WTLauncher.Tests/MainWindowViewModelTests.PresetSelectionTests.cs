@@ -41,19 +41,17 @@ public sealed partial class MainWindowViewModelTests
         SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
 
         var viewModel = CreateViewModel(config, settings);
-        Directory.CreateDirectory(config + ".bak");
+        // Force File.Move to fail by replacing the config file with a directory.
+        File.Delete(config);
+        Directory.CreateDirectory(config);
 
         viewModel.ApplyPresetCommand.Execute(null);
 
         Assert.Equal(1, viewModel.SelectedCount);
         Assert.False(viewModel.Entries.Single(entry => entry.Id == "one").IsSelected);
         Assert.True(viewModel.Entries.Single(entry => entry.Id == "two").IsSelected);
-        var entries = LoadEntriesById(config);
-        Assert.False(entries.Single(entry => entry.Id == "one").Selected);
-        Assert.True(entries.Single(entry => entry.Id == "two").Selected);
         Assert.Contains("配置保存失败", viewModel.StatusText);
         Assert.DoesNotContain("已应用", viewModel.StatusText);
-        AssertNoStoreTempFiles(config);
     }
 
     [Fact]

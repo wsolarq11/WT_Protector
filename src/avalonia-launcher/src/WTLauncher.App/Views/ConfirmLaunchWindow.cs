@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using WTLauncher.App.ViewModels;
+using WTLauncher.Core;
 
 namespace WTLauncher.App.Views;
 
@@ -17,7 +18,7 @@ public sealed class ConfirmLaunchWindow : Window
         MinWidth = 560;
         MinHeight = 300;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        Background = Brushes.White;
+        Background = Brush.Parse(LauncherDesignTokens.SurfaceColor);
 
         var title = LauncherDialogText.Title($"启动：{confirmation.EntryName}");
         var warning = LauncherDialogText.Body("当前已开启启动确认，请确认后继续。");

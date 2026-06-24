@@ -67,7 +67,7 @@ public sealed class LauncherStartupArgumentsTests
             LauncherStartupArguments.ReadConfigPath(["--ignored-option", "value"]));
 
         Assert.Equal("args", exception.ParamName);
-        Assert.StartsWith("Unknown startup argument: --ignored-option.", exception.Message);
+        Assert.StartsWith("Unknown startup argument: '--ignored-option'.", exception.Message);
     }
 
     private static void AssertMissingConfigValue(string[] args)

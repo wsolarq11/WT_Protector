@@ -86,7 +86,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public ReadOnlyObservableCollection<LauncherEntryViewModel> Entries { get; }
 
-    public ReadOnlyObservableCollection<LauncherEntryViewModel> VisibleEntries { get; private set; }
+    public ReadOnlyObservableCollection<LauncherEntryViewModel> VisibleEntries { get; }
 
     public ReadOnlyObservableCollection<LauncherPresetViewModel> Presets { get; }
 
@@ -96,6 +96,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public IReadOnlyDictionary<string, string>? CommandTemplates => _launchWorkflow.CommandTemplates;
 
+
     public string ConfigPathDisplay { get; }
 
     [RelayCommand]
@@ -103,7 +104,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         DiscardDragReorderPreview();
         ReplaceEntries(LauncherConfigStore.Load(_configPath));
-        LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds());
+        _settings = _settings with { CustomEntryOrder = LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds()) };
 
         // E10: Cross-validate $key command references against commandTemplates.
         ValidateCommandTemplateReferences();
@@ -147,9 +148,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private void DiscardDragReorderPreview()
     {
         var result = _dragReorderWorkflow.Cancel();
-        _settings = _dragReorderWorkflow.Settings;
+        // Only overwrite _settings when an active session was cancelled —
+        // the workflow holds a frozen snapshot that replaced _settings during
+        // Begin/Preview. Otherwise keep our current (post-Refresh) copy.
         if (result.RefreshEntries)
+        {
+            _settings = _dragReorderWorkflow.Settings;
             ApplyFilter();
+        }
     }
 
     private LauncherSettingsSnapshot CaptureSettingsMutationSnapshot()
@@ -188,7 +194,7 @@ public sealed record LauncherDisplayModeViewModel(LauncherEntryViewMode Mode, st
 
 public static class LauncherMainWindowText
 {
-    public static string Ready => "Ready";
+    public static string Ready => "就绪";
 
     public static string DryRunPlaceholder => "选择一个启动项查看预演命令。";
 
@@ -220,7 +226,16 @@ public static class LauncherPersistenceStatus
     private static string Failed(string prefix, Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        return $"{prefix}: {exception.Message}";
+        // Prevent file-system paths from leaking into the status bar.
+        // FileNotFoundException.Message includes the full path; replace with
+        // a generic message so the UI never exposes disk layout to the user.
+        var message = exception switch
+        {
+            FileNotFoundException => "配置文件无法访问",
+            DirectoryNotFoundException => "配置目录无法访问",
+            _ => exception.Message,
+        };
+        return $"{prefix}: {message}";
     }
 }
 

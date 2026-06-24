@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace WTLauncher.Core;
 
 public static class LauncherPresetFiles
@@ -14,8 +16,14 @@ public static class LauncherPresetFiles
 
         var presetRows = presets.Presets
             ?? throw new InvalidDataException("Launcher preset list is null.");
+
+        // H15: Guard against maliciously large preset files.
+        if (presetRows.Count > 1000)
+            throw new InvalidDataException($"Launcher preset count {presetRows.Count} exceeds maximum of 1000.");
+
         List<LauncherPreset> normalizedPresets = [];
         var usedPresetIds = new HashSet<string>(LauncherPresetIds.Comparer);
+        var usedPresetNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var index = 0;
         foreach (var presetRow in presetRows)
         {
@@ -25,19 +33,22 @@ public static class LauncherPresetFiles
                 throw new InvalidDataException($"Launcher preset {index} id is duplicate: {id}.");
 
             var name = NormalizePresetName(preset.Name, index);
+            if (!usedPresetNames.Add(name))
+                throw new InvalidDataException($"Launcher preset {index} name is duplicate: {name}.");
+
             var entryIds = NormalizeEntryIds(preset.EntryIds, index);
-            normalizedPresets.Add(preset with { Id = id, Name = name, EntryIds = entryIds });
+            normalizedPresets.Add(preset with { Id = id, Name = name, EntryIds = entryIds.ToImmutableList() });
             index++;
         }
 
         return presets with
         {
-            Presets = normalizedPresets,
+            Presets = normalizedPresets.ToImmutableList(),
             DefaultPresetId = NormalizeDefaultPresetId(presets.DefaultPresetId, normalizedPresets),
         };
     }
 
-    private static List<LauncherPreset> ClonePresets(IEnumerable<LauncherPreset>? presets)
+    private static ImmutableList<LauncherPreset> ClonePresets(IEnumerable<LauncherPreset>? presets)
     {
         if (presets is null)
             throw new InvalidDataException("Launcher preset list is null.");
@@ -47,11 +58,11 @@ public static class LauncherPresetFiles
         foreach (var presetRow in presets)
         {
             var preset = RequirePreset(presetRow, index);
-            clone.Add(preset with { EntryIds = [.. preset.EntryIds] });
+            clone.Add(preset with { EntryIds = preset.EntryIds });
             index++;
         }
 
-        return clone;
+        return clone.ToImmutableList();
     }
 
     private static LauncherPreset RequirePreset(LauncherPreset? preset, int index) =>
@@ -78,6 +89,11 @@ public static class LauncherPresetFiles
     private static List<string> NormalizeEntryIds(IReadOnlyList<string>? entryIds, int index)
     {
         var source = entryIds ?? throw new InvalidDataException($"Launcher preset {index} entryIds is null.");
+
+        // H15: Guard against maliciously large entryId lists.
+        if (source.Count > 10000)
+            throw new InvalidDataException($"Launcher preset {index} entryIds count {source.Count} exceeds maximum of 10000.");
+
         var normalized = new List<string>(source.Count);
         var seen = new HashSet<string>(LauncherEntryIds.Comparer);
         for (var i = 0; i < source.Count; i++)

@@ -1,9 +1,11 @@
+using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 
 namespace WTLauncher.Core;
 
 /// <summary>Immutable runtime settings. All properties are init-only — mutations
-/// produce a new instance via <c>with { }</c>.</summary>
+/// produce a new instance via <c>with { }</c>. Collection properties use
+/// ImmutableList/ImmutableDictionary for true immutability.</summary>
 public sealed record LauncherSettings
 {
     [JsonPropertyName("schemaVersion")]
@@ -27,13 +29,13 @@ public sealed record LauncherSettings
 
     [JsonPropertyName("customEntryOrder")]
     [JsonRequired]
-    public List<string> CustomEntryOrder { get; init; } = [];
+    public ImmutableList<string> CustomEntryOrder { get; init; } = ImmutableList<string>.Empty;
 
     [JsonPropertyName("commandTemplates")]
-    public Dictionary<string, string> CommandTemplates { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+    public ImmutableDictionary<string, string> CommandTemplates { get; init; } = ImmutableDictionary<string, string>.Empty.WithComparers(StringComparer.OrdinalIgnoreCase);
 
     [JsonPropertyName("searchHistory")]
-    public List<string> SearchHistory { get; init; } = [];
+    public ImmutableList<string> SearchHistory { get; init; } = ImmutableList<string>.Empty;
 
     [JsonPropertyName("window")]
     [JsonRequired]

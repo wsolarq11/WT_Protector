@@ -7,11 +7,31 @@ namespace WTLauncher.App.Views;
 
 public static class MainWindowDragGhostFactory
 {
-    private static readonly IBrush SurfaceBrush = Brush.Parse(LauncherDesignTokens.SurfaceColor);
-    private static readonly IBrush DragHighlightBrush = Brush.Parse(LauncherDesignTokens.DragHighlightColor);
-    private static readonly IBrush TextPrimaryBrush = Brush.Parse(LauncherDesignTokens.TextPrimaryColor);
-    private static readonly IBrush TextMutedBrush = Brush.Parse(LauncherDesignTokens.TextMutedColor);
+    private static readonly IBrush SurfaceBrush = SafeParseBrush(LauncherDesignTokens.SurfaceColor, Brushes.White);
+    private static readonly IBrush DragHighlightBrush = SafeParseBrush(LauncherDesignTokens.DragHighlightColor, Brushes.CornflowerBlue);
+    private static readonly IBrush TextPrimaryBrush = SafeParseBrush(LauncherDesignTokens.TextPrimaryColor, Brushes.Black);
+    private static readonly IBrush TextMutedBrush = SafeParseBrush(LauncherDesignTokens.TextMutedColor, Brushes.Gray);
 
+    /// <summary>
+    /// Parses a color string into an <see cref="IBrush"/>. If the design token is malformed
+    /// (e.g. a typo in LauncherDesignTokens), falls back to a safe default instead of
+    /// crashing the static initializer with <see cref="TypeInitializationException"/>.
+    /// </summary>
+    private static IBrush SafeParseBrush(string color, IBrush fallback)
+    {
+        try
+        {
+            return Brush.Parse(color);
+        }
+        catch (Exception)
+        {
+            return fallback;
+        }
+    }
+
+    // NOTE: Every drag allocates a fresh Border + StackPanel + 2 TextBlocks visual tree.
+    // There is no pooling — the ghost is short-lived (visible only during a drag gesture)
+    // and drag frequency is inherently low, so the allocation cost is negligible.
     public static (Border Control, double Left, double Top) Create(
         string name,
         string directory,

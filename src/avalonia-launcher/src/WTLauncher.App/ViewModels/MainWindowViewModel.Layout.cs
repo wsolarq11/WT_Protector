@@ -10,6 +10,10 @@ public sealed partial class MainWindowViewModel
     private Size _cardsAvailableSize = new(900, 420);
     private Size _lastAppliedCardsAvailableSize;
 
+    // Prevents infinite recursion when a settings save failure triggers
+    // a property rollback that re-enters the OnXxxChanged callback.
+    private bool _isHandlingSettingsChange;
+
     [ObservableProperty]
     private string _filterText = "";
 
@@ -61,19 +65,28 @@ public sealed partial class MainWindowViewModel
 
     partial void OnFilterTextChanged(string value)
     {
-        var snapshot = CaptureSettingsMutationSnapshot();
-        _settings = _settings with { LastFilterText = value };
-        var saveFailure = SaveSettingsChange(snapshot);
-        if (saveFailure is not null)
+        if (_isHandlingSettingsChange) return;
+        _isHandlingSettingsChange = true;
+        try
         {
-            _filterText = snapshot.LastFilterText;
-            OnPropertyChanged(nameof(FilterText));
-            ApplyFilter();
-            ApplyStatusText(saveFailure);
-            return;
-        }
+            var snapshot = CaptureSettingsMutationSnapshot();
+            _settings = _settings with { LastFilterText = value };
+            var saveFailure = SaveSettingsChange(snapshot);
+            if (saveFailure is not null)
+            {
+                _filterText = snapshot.LastFilterText;
+                OnPropertyChanged(nameof(FilterText));
+                ApplyFilter();
+                ApplyStatusText(saveFailure);
+                return;
+            }
 
-        ApplyFilter();
+            ApplyFilter();
+        }
+        finally
+        {
+            _isHandlingSettingsChange = false;
+        }
     }
 
     partial void OnSelectedSortModeChanging(LauncherSortModeViewModel? value)
@@ -83,25 +96,34 @@ public sealed partial class MainWindowViewModel
 
     partial void OnSelectedSortModeChanged(LauncherSortModeViewModel? value)
     {
-        value = RequireSortModeSelection(value);
-        OnPropertyChanged(nameof(IsCustomSortMode));
-
-        var snapshot = CaptureSettingsMutationSnapshot();
-        _settings = _settings with { SortMode = value.Id };
-        EnsureCustomOrderContainsEntries();
-        var saveFailure = SaveSettingsChange(snapshot);
-        if (saveFailure is not null)
+        if (_isHandlingSettingsChange) return;
+        _isHandlingSettingsChange = true;
+        try
         {
-            _selectedSortMode = ResolveSortMode(snapshot.SortMode);
-            OnPropertyChanged(nameof(SelectedSortMode));
+            value = RequireSortModeSelection(value);
             OnPropertyChanged(nameof(IsCustomSortMode));
-            ApplyFilter();
-            ApplyStatusText(saveFailure);
-            return;
-        }
 
-        ApplyFilter();
-        StatusText = LauncherSettingsStatus.SortModeSaved(value.Label);
+            var snapshot = CaptureSettingsMutationSnapshot();
+            _settings = _settings with { SortMode = value.Id };
+            EnsureCustomOrderContainsEntries();
+            var saveFailure = SaveSettingsChange(snapshot);
+            if (saveFailure is not null)
+            {
+                _selectedSortMode = ResolveSortMode(snapshot.SortMode);
+                OnPropertyChanged(nameof(SelectedSortMode));
+                OnPropertyChanged(nameof(IsCustomSortMode));
+                ApplyFilter();
+                ApplyStatusText(saveFailure);
+                return;
+            }
+
+            ApplyFilter();
+            StatusText = LauncherSettingsStatus.SortModeSaved(value.Label);
+        }
+        finally
+        {
+            _isHandlingSettingsChange = false;
+        }
     }
 
     private readonly Dictionary<LauncherEntryViewMode, double> _scrollOffsets = new();
@@ -117,24 +139,33 @@ public sealed partial class MainWindowViewModel
 
     partial void OnSelectedDisplayModeChanged(LauncherDisplayModeViewModel? value)
     {
-        value = RequireDisplayModeSelection(value);
-        NotifyDisplayModeProjectionChanged();
-
-        var snapshot = CaptureSettingsMutationSnapshot();
-        _settings = _settings with { EntryViewMode = value.Id };
-        LauncherEntryLayoutPresentation.Refresh(_entries);
-        var saveFailure = SaveSettingsChange(snapshot);
-        if (saveFailure is not null)
+        if (_isHandlingSettingsChange) return;
+        _isHandlingSettingsChange = true;
+        try
         {
-            _selectedDisplayMode = ResolveDisplayMode(snapshot.EntryViewMode);
-            OnPropertyChanged(nameof(SelectedDisplayMode));
+            value = RequireDisplayModeSelection(value);
             NotifyDisplayModeProjectionChanged();
-            LauncherEntryLayoutPresentation.Refresh(_entries);
-            ApplyStatusText(saveFailure);
-            return;
-        }
 
-        StatusText = LauncherSettingsStatus.DisplayModeSaved(value.Label);
+            var snapshot = CaptureSettingsMutationSnapshot();
+            _settings = _settings with { EntryViewMode = value.Id };
+            LauncherEntryLayoutPresentation.Refresh(_entries);
+            var saveFailure = SaveSettingsChange(snapshot);
+            if (saveFailure is not null)
+            {
+                _selectedDisplayMode = ResolveDisplayMode(snapshot.EntryViewMode);
+                OnPropertyChanged(nameof(SelectedDisplayMode));
+                NotifyDisplayModeProjectionChanged();
+                LauncherEntryLayoutPresentation.Refresh(_entries);
+                ApplyStatusText(saveFailure);
+                return;
+            }
+
+            StatusText = LauncherSettingsStatus.DisplayModeSaved(value.Label);
+        }
+        finally
+        {
+            _isHandlingSettingsChange = false;
+        }
     }
 
     private void NotifyDisplayModeProjectionChanged()
@@ -182,6 +213,10 @@ public sealed partial class MainWindowViewModel
     /// Removes disappeared entries, inserts new ones, and reorders existing
     /// ones via Move — preserving Avalonia containers.
     /// Updates position map incrementally instead of rebuilding after each operation.
+    /// Each RemoveAt / Move / Insert call triggers a CollectionChanged event on the
+    /// ObservableCollection. For current data sizes (typically &lt; 200 entries),
+    /// Avalonia's ItemContainerGenerator virtualization absorbs the notification
+    /// volume efficiently — batching is unnecessary overhead at this scale.
     /// </summary>
     private void SyncVisibleEntries(IReadOnlyList<LauncherEntryViewModel> sorted)
     {
@@ -209,6 +244,10 @@ public sealed partial class MainWindowViewModel
                     _visibleEntries.Move(currentIndex, targetIndex);
                     // P5: Update positions incrementally instead of rebuilding the dictionary.
                     // After Move(from, to), entries in [min, max] shift by ±1.
+                    // NOTE: The rotation interval is [from, to) when moving forward
+                    // and (to, from] when moving backward — these ranges are correct but
+                    // fragile: changing the loop boundaries without adjusting both branches
+                    // would cause a persistent off-by-one offset for all subsequent entries.
                     var from = currentIndex;
                     var to = targetIndex;
                     if (from < to)
@@ -257,7 +296,7 @@ public sealed partial class MainWindowViewModel
     }
 
     private void EnsureCustomOrderContainsEntries() =>
-        LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds());
+        _settings = _settings with { CustomEntryOrder = LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds()) };
 
     private static LauncherSortModeViewModel RequireSortModeSelection(LauncherSortModeViewModel? value) =>
         value ?? throw new InvalidOperationException("Launcher sort mode selection is required.");

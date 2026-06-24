@@ -48,9 +48,15 @@ public sealed class LauncherPresetWorkflowTests
 
         var clone = LauncherPresetFiles.Clone(original);
 
-        original = original with { DefaultPresetId = "changed" };
-        original.Presets[0] = original.Presets[0] with { Name = "Changed" };
-        original.Presets[0].EntryIds.Add("two");
+        original = original with
+        {
+            DefaultPresetId = "changed",
+            Presets = original.Presets.SetItem(0, original.Presets[0] with
+            {
+                Name = "Changed",
+                EntryIds = original.Presets[0].EntryIds.Add("two"),
+            }),
+        };
 
         Assert.Equal("daily", clone.DefaultPresetId);
         var preset = Assert.Single(clone.Presets);

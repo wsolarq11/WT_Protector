@@ -78,7 +78,7 @@ public sealed class LauncherDragReorderWorkflowTests
             insertAfter: false);
         Assert.True(accepted);
         Assert.True(refreshEntries);
-        Assert.Equal(["three", "one", "two"], settings.CustomEntryOrder);
+        Assert.Equal(["three", "one", "two"], workflow.Settings.CustomEntryOrder!);
 
         var (status, commitRefresh) = workflow.Commit(isCustomSortMode: true);
         Assert.Equal(LauncherDragReorderStatus.Saved, status);
@@ -105,7 +105,7 @@ public sealed class LauncherDragReorderWorkflowTests
             insertAfter: false);
         Assert.True(accepted);
         Assert.True(refreshEntries);
-        Assert.Equal(["three", "one", "two"], settings.CustomEntryOrder);
+        Assert.Equal(["three", "one", "two"], workflow.Settings.CustomEntryOrder!);
 
         var (status, cancelRefresh) = workflow.Cancel();
         Assert.Equal(LauncherDragReorderStatus.Canceled, status);
