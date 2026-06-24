@@ -62,7 +62,22 @@ public sealed partial class LauncherEntryViewModel
         RefreshLayoutPresentation();
     }
 
+    /// <summary>
+    /// L36: 5px hysteresis band to prevent rapid toggling between density levels
+    /// when card dimensions oscillate near a threshold. Evaluates at both the
+    /// current size and at size+5, returning the least-dense result. This means
+    /// shrinking must pass 5px beyond the nominal threshold to switch denser,
+    /// while expanding switches back at the nominal threshold — a clean 5px dead
+    /// band that eliminates flicker.
+    /// </summary>
     private static LauncherEntryLayoutDensity MeasureLayoutDensity(double width, double height)
+    {
+        return LeastDense(
+            MeasureDensityAtSize(width, height),
+            MeasureDensityAtSize(width + 5, height + 5));
+    }
+
+    private static LauncherEntryLayoutDensity MeasureDensityAtSize(double width, double height)
     {
         if (height <= MicroLayoutMaxHeight || width <= MicroLayoutMaxWidth)
             return LauncherEntryLayoutDensity.Micro;
@@ -72,6 +87,9 @@ public sealed partial class LauncherEntryViewModel
 
         return LauncherEntryLayoutDensity.Normal;
     }
+
+    private static LauncherEntryLayoutDensity LeastDense(LauncherEntryLayoutDensity a, LauncherEntryLayoutDensity b)
+        => (int)a < (int)b ? a : b;
 }
 
 internal enum LauncherEntryLayoutDensity

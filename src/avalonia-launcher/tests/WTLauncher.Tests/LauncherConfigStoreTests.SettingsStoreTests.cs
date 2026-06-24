@@ -338,15 +338,21 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void SettingsStore_RejectsMissingSettingsFile()
+    public void SettingsStore_ReturnsDefaultsForMissingSettingsFile()
     {
         using var temp = new TempDirectory();
         var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
 
-        var exception = Assert.Throws<FileNotFoundException>(() => LauncherSettingsStore.Load(settingsPath));
+        var settings = LauncherSettingsStore.Load(settingsPath);
 
-        Assert.Equal("Launcher settings not found.", exception.Message);
-        Assert.Equal(settingsPath, exception.FileName);
+        Assert.Equal("", settings.LastFilterText);
+        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, settings.SortMode);
+        Assert.Equal(LauncherEntryViewModes.CardsId, settings.EntryViewMode);
+        Assert.True(settings.RequireConfirmationForLaunches);
+        Assert.Empty(settings.CustomEntryOrder!);
+        Assert.NotNull(settings.Window);
+        Assert.Equal(LauncherWindowSettings.DefaultWidth, settings.Window!.Width);
+        Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window!.Height);
     }
 
     [Fact]

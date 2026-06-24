@@ -329,3 +329,50 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **问题** | 测试用 `Directory.CreateDirectory(config + ".bak")` 模拟备份失败来触发 save failure。C6 将备份移到 try/catch 内后，这个技巧不再有效——save 不会因备份失败而失败。 |
 | **教训** | 测试如果依赖实现的副作用（而非契约行为），实现变更时测试会无辜挂掉。模拟 I/O 失败的正确方式是**阻塞核心路径**（如 `File.Delete + Directory.CreateDirectory(mainPath)`），而不是依赖非关键路径。 |
 | **适用** | 所有 I/O 故障注入测试。 |
+
+### 5.5 修改序列化 record 字段 → 合约测试必挂
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-24 ultrareview 全量修复, L33 LastUsedPresetId / M11 window X/Y/WindowState |
+| **问题** | 给 `LauncherSettings` record 加 `LastUsedPresetId` 字段（带 `[JsonPropertyName]`）→ 93 个测试因 JSON shape 变化而失败。给 `LauncherWindowSettings` 加 `X`/`Y`/`WindowState` → 57 个测试失败。 |
+| **根因** | 合约测试断言精确的 JSON 字段集合。任何新字段改变序列化输出 → 合约测试全部挂。 |
+| **预防** | 给序列化 record 加字段时，默认 `[JsonIgnore]`，仅显式 opt-in 序列化。运行时状态字段一律 `[JsonIgnore]`。必须序列化的新字段需同步更新所有合约测试。 |
+| **适用** | 任何 `[JsonPropertyName]` record 的字段新增。 |
+
+### 5.6 异常类型是公共 API — 变更前审计全部调用方
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-24 M24 RequireNonEmpty 统一异常类型 → 153 测试失败 |
+| **问题** | 将 6 个文件中各自抛出的 `InvalidOperationException`/`InvalidDataException` 统一为 `ArgumentException`。测试用 `Assert.Throws<InvalidOperationException>` 精确匹配 → 全部挂。 |
+| **教训** | 异常类型是抛给调用方的**公共合约**。统一异常类型之前，必须先审计所有 `Assert.Throws<T>` 测试。如果统一的价值小于测试修改的成本，不做统一。 |
+| **适用** | 任何 `throw new TException` 的类型变更。 |
+
+### 5.7 `CanXxx` 和 `DoXxx` 的守卫逻辑必须一致
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-24 C2 删除唯一预设崩溃 |
+| **问题** | `CanDeletePreset` 允许单预设删除（`Count <= 1` 返回 `true`），但 `DeletePreset` 的 `RequireFallbackPresetIdAfterDelete` 在无回退时抛异常。UI 按钮可用但点击即崩溃。 |
+| **预防** | `CanXxx` 不仅要检查权限/锁定，还要检查**操作执行所需的全部前置条件**。如果 `DoXxx` 的方法体里有 `FirstOrDefault(...) ?? throw`，`CanXxx` 必须验证 `FirstOrDefault` 的非 null 条件。 |
+| **适用** | 所有 `CanExecute` / `CanXxx` + `DoXxx` 的配对方法。 |
+
+### 5.8 `File.Replace` 要求目标已存在 — 首次保存不可用
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-24 L1 File.Replace → 163 测试失败 |
+| **问题** | 将 `File.Move(temp, target, overwrite: true)` 改为 `File.Replace(temp, target, ...)` 追求原子性。但 `File.Replace` 要求目标文件必须存在。首次保存到空目录时 → `IOException`。 |
+| **教训** | `File.Replace` 只适用于**已知目标文件已存在**的替换场景。首次创建用 `File.Move`。对于单进程桌面应用，`File.Move` + temp file 足够安全。 |
+| **适用** | 所有文件 I/O 的原子化尝试。 |
+
+### 5.9 校验延迟到持久化层 = 崩溃风险
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-24 H5 重复预设名 + M8 catch 过窄 |
+| **问题** | 预设名的唯一性校验在 `Save()` → `Validate()` 中执行，不在 `AddPreset()`/`UpdatePreset()` 中。持久化层抛出的 `InvalidDataException` 逃逸了仅捕获 `IOException | UnauthorizedAccessException | SecurityException` 的窄 catch 过滤器 → 应用崩溃。 |
+| **根因** | 校验离突变点太远。用户在对话框中输入 → 对话框关闭（以为成功）→ Save 校验失败 → 异常逃逸 → 崩溃。用户看不到任何错误反馈。 |
+| **预防** | **校验在突变点执行，不在持久化层执行**。持久化层的校验是最后兜底（防御手动编辑 JSON 绕过 UI 校验），不是主校验路径。突变点之前的不变量检查必须覆盖可预见的重复/无效/越界场景。 |
+| **适用** | 所有 CRUD 操作的校验逻辑。 |

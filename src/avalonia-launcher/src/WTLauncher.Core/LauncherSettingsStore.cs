@@ -4,13 +4,28 @@ namespace WTLauncher.Core;
 
 public static class LauncherSettingsStore
 {
+    public const int ExpectedSettingsSchemaVersion = 1;
+    public const int MaxSearchHistoryTerms = 20;
+
     public static LauncherSettings Load(string settingsPath)
     {
         ThrowIfSettingsPathMissing(settingsPath);
         if (!File.Exists(settingsPath))
-            throw new FileNotFoundException("Launcher settings not found.", settingsPath);
+        {
+            var backupPath = settingsPath + ".bak";
+            if (File.Exists(backupPath))
+            {
+                File.Copy(backupPath, settingsPath);
+            }
+            else
+            {
+                return new LauncherSettings();
+            }
+        }
 
         var settings = LauncherJson.LoadRequired<LauncherSettings>(settingsPath, "Launcher settings");
+        if (settings.SchemaVersion != ExpectedSettingsSchemaVersion)
+            throw new InvalidDataException($"Launcher settings schema version mismatch: expected {ExpectedSettingsSchemaVersion}, got {settings.SchemaVersion}.");
         return Normalize(settings);
     }
 
@@ -22,12 +37,14 @@ public static class LauncherSettingsStore
         LauncherJson.Save(CloneNormalized(settings), settingsPath, backup: true);
     }
 
-    public static bool TrySaveWindowBounds(ref LauncherSettings settings, string settingsPath, double width, double height)
+    public static bool TrySaveWindowBounds(ref LauncherSettings settings, string settingsPath,
+        double width, double height,
+        double x = 0, double y = 0, string windowState = "Normal")
     {
         ArgumentNullException.ThrowIfNull(settings);
         ThrowIfSettingsPathMissing(settingsPath);
 
-        var next = settings with { Window = RequireWindow(settings.Window) with { Width = width, Height = height } };
+        var next = settings with { Window = RequireWindow(settings.Window) with { Width = width, Height = height, X = x, Y = y, WindowState = windowState } };
         var normalized = CloneNormalized(next);
 
         try
@@ -60,7 +77,7 @@ public static class LauncherSettingsStore
     {
         return settings with
         {
-            LastFilterText = RequireNullableText(settings.LastFilterText, "lastFilterText"),
+            LastFilterText = NormalizeFilterText(settings.LastFilterText),
             SortMode = NormalizeRequiredMode(settings.SortMode, "sortMode", LauncherEntryVisibility.NormalizeSortModeId),
             EntryViewMode = NormalizeRequiredMode(settings.EntryViewMode, "entryViewMode", LauncherEntryViewModes.NormalizeId),
             CommandTemplates = NormalizeCommandTemplates(settings.CommandTemplates),
@@ -79,6 +96,9 @@ public static class LauncherSettingsStore
     {
         if (customEntryOrder is null)
             throw new InvalidDataException("Launcher settings customEntryOrder is null.");
+
+        if (customEntryOrder.Count > 10000)
+            throw new InvalidDataException("Launcher settings customEntryOrder exceeds 10000 entry limit.");
 
         var normalized = new List<string>(customEntryOrder.Count);
         var seen = new HashSet<string>(LauncherEntryIds.Comparer);
@@ -106,21 +126,33 @@ public static class LauncherSettingsStore
         foreach (var term in searchHistory)
         {
             var trimmed = LauncherEntryText.Normalize(term);
-            if (trimmed.Length == 0)
+            if (trimmed.Length == 0 || trimmed.Length > 200)
                 continue;
 
             if (!normalized.Contains(trimmed, StringComparer.OrdinalIgnoreCase))
                 normalized.Add(trimmed);
         }
 
-        if (normalized.Count > 20)
-            normalized.RemoveRange(20, normalized.Count - 20);
+        if (normalized.Count > MaxSearchHistoryTerms)
+            normalized.RemoveRange(MaxSearchHistoryTerms, normalized.Count - MaxSearchHistoryTerms);
 
         return normalized.ToImmutableList();
     }
 
     private static string RequireNullableText(string? value, string fieldName) =>
         value ?? throw new InvalidDataException($"Launcher settings {fieldName} is null.");
+
+    private static string NormalizeFilterText(string? value)
+    {
+        if (value is null)
+            throw new InvalidDataException("Launcher settings lastFilterText is null.");
+
+        var normalized = LauncherEntryText.Normalize(value);
+        if (normalized.Length > 500)
+            throw new InvalidDataException("Launcher settings lastFilterText exceeds 500 character limit.");
+
+        return normalized;
+    }
 
     private static string NormalizeRequiredMode(
         string? value,
@@ -143,6 +175,14 @@ public static class LauncherSettingsStore
     {
         ValidateWindowSize(window.Width, "width");
         ValidateWindowSize(window.Height, "height");
+        // M11: Validate optional position fields. NaN is valid (not yet persisted).
+        // Negative values are valid on multi-monitor setups.
+        if (double.IsInfinity(window.X))
+            throw new InvalidDataException("Launcher settings window x must not be infinite.");
+        if (double.IsInfinity(window.Y))
+            throw new InvalidDataException("Launcher settings window y must not be infinite.");
+        if (window.WindowState is not "Normal" and not "Maximized" and not "Minimized")
+            throw new InvalidDataException($"Launcher settings window state must be Normal, Maximized, or Minimized. Got: '{window.WindowState}'.");
         return window;
     }
 
@@ -157,16 +197,23 @@ public static class LauncherSettingsStore
         if (templates is null)
             return ImmutableDictionary<string, string>.Empty.WithComparers(StringComparer.OrdinalIgnoreCase);
 
+        if (templates.Count > 1000)
+            throw new InvalidDataException("Launcher settings commandTemplates exceeds 1000 template limit.");
+
         var builder = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var (key, value) in templates)
         {
             var trimmedKey = LauncherEntryText.Normalize(key);
             if (trimmedKey.Length == 0)
                 throw new InvalidDataException("Launcher settings commandTemplates has an empty key.");
+            if (trimmedKey.Length > 256)
+                throw new InvalidDataException($"Launcher settings commandTemplates key exceeds 256 character limit: '{trimmedKey[..50]}...'.");
 
             var trimmedValue = LauncherEntryText.Normalize(value);
             if (trimmedValue.Length == 0)
                 throw new InvalidDataException($"Launcher settings commandTemplates key '{trimmedKey}' has an empty value.");
+            if (trimmedValue.Length > 8192)
+                throw new InvalidDataException($"Launcher settings commandTemplates value for key '{trimmedKey}' exceeds 8192 character limit.");
 
             if (!builder.TryAdd(trimmedKey, trimmedValue))
                 throw new InvalidDataException($"Launcher settings commandTemplates has duplicate key: {trimmedKey}.");

@@ -12,7 +12,7 @@ public sealed partial class MainWindowViewModel
         : "所有启动项直接启动，不弹确认。";
 
     private Func<LauncherSingleLaunchConfirmation, Task<bool>> _confirmLaunchAsync =
-        static _ => Task.FromResult(false);
+        static _ => throw new InvalidOperationException("ConfirmLaunchAsync is not bound by the View.");
 
     public Func<LauncherSingleLaunchConfirmation, Task<bool>> ConfirmLaunchAsync
     {
@@ -26,20 +26,20 @@ public sealed partial class MainWindowViewModel
         _isHandlingSettingsChange = true;
         try
         {
-            var snapshot = CaptureSettingsMutationSnapshot();
-            _settings = _settings with { RequireConfirmationForLaunches = value };
             RefreshLaunchConfirmationPresentation();
-            var saveFailure = SaveSettingsChange(snapshot);
-            if (saveFailure is not null)
+
+            if (TryPersistSettingsChange(
+                s => s with { RequireConfirmationForLaunches = value },
+                LauncherSettingsStatus.LaunchConfirmationSaved(value)))
             {
-                _requireConfirmationForLaunches = snapshot.RequireConfirmationForLaunches;
+                // Success — status and presentation already applied.
+            }
+            else
+            {
+                _requireConfirmationForLaunches = _settings.RequireConfirmationForLaunches;
                 OnPropertyChanged(nameof(RequireConfirmationForLaunches));
                 RefreshLaunchConfirmationPresentation();
-                ApplyStatusText(saveFailure);
-                return;
             }
-
-            StatusText = LauncherSettingsStatus.LaunchConfirmationSaved(value);
         }
         finally
         {

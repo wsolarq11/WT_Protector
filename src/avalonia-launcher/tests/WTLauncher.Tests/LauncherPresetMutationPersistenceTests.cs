@@ -40,12 +40,11 @@ public sealed class LauncherPresetMutationPersistenceTests
         using var temp = new TempDirectory();
         var presetPath = Path.Combine(temp.Path, "presets.json");
 
-        var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherPresetMutationPersistence.Save(
-                PresetFile("missing", NamedPreset("daily", "Daily", "one")),
-                presetPath));
+        var saveFailure = LauncherPresetMutationPersistence.Save(
+            PresetFile("missing", NamedPreset("daily", "Daily", "one")),
+            presetPath);
 
-        Assert.Equal("Launcher preset default id does not match any preset: missing.", exception.Message);
+        Assert.NotNull(saveFailure);
         Assert.False(File.Exists(presetPath));
     }
 }

@@ -52,6 +52,9 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     [ObservableProperty]
     private double _nameTileHeight = 24;
 
+    [ObservableProperty]
+    private bool _isKeyboardFocused;
+
     internal void SetSelectionFromOwner(bool selected)
     {
         if (_entry.Selected != selected)
@@ -59,6 +62,31 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         SetProperty(ref _isSelected, selected, nameof(IsSelected));
     }
 
+    /// <summary>
+    /// <para><b>Fragile dual-update contract — read carefully before touching.</b></para>
+    /// <para>
+    /// This method is part of a two-phase selection mutation protocol between
+    /// <see cref="MainWindowViewModel.UpdateSelection"/> and this ViewModel.
+    /// The caller MUST have already updated <see cref="_isSelected"/> via
+    /// <see cref="ObservableObject.SetProperty{T}"/> (which raises
+    /// <c>PropertyChanged</c> for <see cref="IsSelected"/>) BEFORE calling
+    /// this method. This method ONLY updates the backing <see cref="_entry"/>
+    /// data (<c>LaunchEntry.Selected</c>) and returns the previous value so
+    /// the caller can capture a restore snapshot.
+    /// </para>
+    /// <para>
+    /// It deliberately does NOT touch <see cref="_isSelected"/> — doing so
+    /// would re-trigger <see cref="IsSelected"/>'s setter, which would call
+    /// <see cref="MainWindowViewModel.UpdateSelection"/> again, creating an
+    /// infinite loop. This is why <see cref="SetSelectionFromOwner"/> exists
+    /// as a separate method for the simpler "replace all" path that can safely
+    /// update both fields at once.
+    /// </para>
+    /// </summary>
+    /// <param name="selected">The new selection state (already applied to
+    /// <see cref="_isSelected"/> by the caller).</param>
+    /// <returns>The previous <c>_entry.Selected</c> value, used by the caller
+    /// to construct a <see cref="LauncherSelectionMutationSnapshot"/>.</returns>
     internal bool ReplaceEntrySelectionFromOwner(bool selected)
     {
         var previousSelected = _entry.Selected;
@@ -67,11 +95,19 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         return previousSelected;
     }
 
+    /// <summary>
+    /// Replaces backing entry data from the owner ViewModel (e.g. after edit).
+    /// <see cref="_isSelected"/> is set directly (not via the property setter)
+    /// to avoid re-triggering <see cref="MainWindowViewModel.UpdateSelection"/>,
+    /// which would double-save during entry mutation rollback. The explicit
+    /// <c>OnPropertyChanged</c> keeps Avalonia bindings in sync.
+    /// </summary>
     internal void ReplaceEntryFromOwner(LaunchEntry updated, string updatedAtUtc)
     {
         ArgumentNullException.ThrowIfNull(updated);
         _entry = updated with { UpdatedAtUtc = updatedAtUtc };
         _isSelected = updated.Selected;
+        OnPropertyChanged(nameof(IsSelected));
         RefreshDisplay();
     }
 

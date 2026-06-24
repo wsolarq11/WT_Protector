@@ -78,6 +78,21 @@ public sealed class LauncherDragReorderSessionTests
         Assert.Contains(nameof(LauncherDragReorderSession.DraggedEntryId), properties);
     }
 
+    /// <summary>
+    /// <para>
+    /// Creates a drag-reorder session for testing. The <see cref="TempDirectory"/>
+    /// is disposed immediately after this method returns; the returned session and
+    /// its <see cref="LauncherEntryViewModel"/> owner still hold references to
+    /// paths inside the temp directory (via <c>MainWindowViewModel._configPath</c>
+    /// and <c>_settingsPath</c>). This is intentional and harmless: the tests only
+    /// exercise session logic (preview recording, hover clearing, id normalization)
+    /// and never touch those file paths after construction.
+    /// </para>
+    /// <para>
+    /// L61: Do not add tests that save config or persist settings using sessions
+    /// created by this helper — the underlying temp directory no longer exists.
+    /// </para>
+    /// </summary>
     private static LauncherDragReorderSession StartSession(string draggedEntryId = "three")
     {
         using var temp = new TempDirectory();

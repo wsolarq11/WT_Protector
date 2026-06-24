@@ -4,12 +4,15 @@ namespace WTLauncher.Tests;
 
 internal static class LauncherPersistenceTestFixtures
 {
+    private static readonly string RootDrive = Path.GetPathRoot(Environment.CurrentDirectory)
+        ?? Path.DirectorySeparatorChar.ToString();
+
     public static LaunchEntry Entry(string id) =>
         new()
         {
             Id = id,
             Name = id,
-            Directory = $"D:\\{id}",
+            Directory = Path.Combine(RootDrive, id),
             Command = "pwsh",
         };
 

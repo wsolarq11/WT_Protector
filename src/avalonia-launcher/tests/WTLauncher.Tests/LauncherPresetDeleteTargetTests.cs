@@ -15,7 +15,7 @@ public sealed class LauncherPresetDeleteTargetTests
             EntryIds = [" one ", " two "],
         };
 
-        var target = new LauncherPresetDeleteTarget(preset);
+        var target = new LauncherPresetDeleteTarget(preset.Id, preset.Name, preset.EntryIds);
         preset = preset with { Id = "changed", Name = "Changed" };
         preset.EntryIds.Clear();
 
@@ -49,7 +49,7 @@ public sealed class LauncherPresetDeleteTargetTests
             EntryIds = ["one"],
         };
 
-        var exception = Assert.Throws<InvalidOperationException>(() => new LauncherPresetDeleteTarget(preset));
+        var exception = Assert.Throws<InvalidOperationException>(() => new LauncherPresetDeleteTarget(preset.Id, preset.Name, preset.EntryIds));
 
         Assert.Equal(expected, exception.Message);
     }
@@ -64,9 +64,9 @@ public sealed class LauncherPresetDeleteTargetTests
             EntryIds = ["one", " "],
         };
 
-        var exception = Assert.Throws<ArgumentException>(() => new LauncherPresetDeleteTarget(preset));
+        var exception = Assert.Throws<ArgumentException>(() => new LauncherPresetDeleteTarget(preset.Id, preset.Name, preset.EntryIds));
 
-        Assert.Equal("EntryIds", exception.ParamName);
+        Assert.Equal("entryIds", exception.ParamName);
         Assert.Contains("Entry id 1 is required.", exception.Message);
     }
 }

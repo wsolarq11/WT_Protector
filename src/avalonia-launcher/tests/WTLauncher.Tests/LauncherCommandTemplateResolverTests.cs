@@ -70,7 +70,7 @@ public sealed class LauncherCommandTemplateResolverTests
             ["pwsh"] = "C:\\pwsh.exe",
         };
 
-        var exception = Assert.Throws<InvalidOperationException>(() =>
+        var exception = Assert.Throws<InvalidDataException>(() =>
             LauncherCommandTemplateResolver.Resolve("$notfound", templates));
 
         Assert.Equal(

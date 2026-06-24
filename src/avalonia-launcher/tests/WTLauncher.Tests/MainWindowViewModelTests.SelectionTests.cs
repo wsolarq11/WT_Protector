@@ -118,6 +118,31 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void SelectVisibleOnlySelectsFilteredEntries()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", "One", command: "codex", selected: false),
+            Entry("two", "Two", command: "opencode", selected: false),
+            Entry("three", "Three", command: "someexe", selected: false));
+
+        var viewModel = CreateViewModel(config, settings);
+
+        // Set filter to show only 2 of 3 entries
+        viewModel.FilterText = "code";
+
+        Assert.Equal(2, viewModel.VisibleCount);
+
+        viewModel.SelectVisibleCommand.Execute(null);
+
+        Assert.Equal(2, viewModel.SelectedCount);
+        Assert.True(viewModel.Entries.Single(entry => entry.Id == "one").IsSelected);
+        Assert.True(viewModel.Entries.Single(entry => entry.Id == "two").IsSelected);
+        Assert.False(viewModel.Entries.Single(entry => entry.Id == "three").IsSelected);
+    }
+
+    [Fact]
     public void SelectionRollbackUsesTypedSnapshot()
     {
         Assert.Null(typeof(MainWindowViewModel).GetMethod("CaptureSelectionSnapshot", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static));

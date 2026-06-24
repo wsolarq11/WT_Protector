@@ -3,8 +3,6 @@ using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 using Xunit;
 
-[assembly: CollectionBehavior(DisableTestParallelization = true)]
-
 namespace WTLauncher.Tests;
 
 /// <summary>

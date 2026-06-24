@@ -22,7 +22,7 @@ public sealed partial class RepositoryConfigContractTests
         var readme = File.ReadAllText(readmePath);
 
         Assert.Contains("Purpose: evaluate whether each active WT Launcher feature mapping solves a real user problem", audit);
-        Assert.Contains("Reviewed on: 2026-06-02", audit);
+        Assert.Contains("Reviewed on: 2026-06-24", audit);
         Assert.Contains("It does not evaluate ignored `.snow/` local runtime/index state.", audit);
         Assert.Contains("## Fresh external yardstick spot-check", audit);
         Assert.Contains("External source class tokens used below:", audit);

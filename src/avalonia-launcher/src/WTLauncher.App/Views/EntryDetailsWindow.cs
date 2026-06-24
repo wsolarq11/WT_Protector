@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Threading;
 using System.Linq;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
@@ -125,8 +126,13 @@ public sealed class EntryDetailsWindow : Window
 
         Opened += (_, _) =>
         {
-            (isEdit ? _nameBox : _idBox).Focus();
-            (isEdit ? _nameBox : _idBox).SelectAll();
+            // L46: Defer SelectAll to Loaded priority so the TextBox has fully
+            // acquired keyboard focus before the selection is applied. Calling
+            // SelectAll immediately after Focus() can lose the selection because
+            // the focus handler hasn't completed yet.
+            var target = isEdit ? _nameBox : _idBox;
+            target.Focus();
+            Dispatcher.UIThread.Post(() => target.SelectAll(), DispatcherPriority.Loaded);
         };
     }
 
@@ -184,7 +190,10 @@ public sealed class EntryDetailsWindow : Window
         return text;
     }
 
+    /// <summary>
+    /// Avalonia <see cref="TextBox.Text"/> never returns null — it coalesces to "".
+    /// The null-coalescing guard was dead code and has been removed.
+    /// </summary>
     private static string RequireSubmittedText(TextBox textBox, string fieldName) =>
-        textBox.Text
-        ?? throw new InvalidDataException($"Launcher entry dialog submitted {fieldName} text is null.");
+        textBox.Text!; // Avalonia TextBox.Text never returns null — coalesces to ""
 }

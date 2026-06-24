@@ -91,15 +91,16 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void PresetStore_RejectsMissingPresetFile()
+    public void PresetStore_ReturnsDefaultsForMissingPresetFile()
     {
         using var temp = new TempDirectory();
         var presetPath = ConfigFilePath(temp.Path, LauncherPresetStore.PresetsFileName);
 
-        var exception = Assert.Throws<FileNotFoundException>(() => LauncherPresetStore.Load(presetPath));
+        var presetFile = LauncherPresetStore.Load(presetPath);
 
-        Assert.Equal("Launcher presets not found.", exception.Message);
-        Assert.Equal(presetPath, exception.FileName);
+        Assert.Equal(1, presetFile.SchemaVersion);
+        Assert.Equal("", presetFile.DefaultPresetId);
+        Assert.Empty(presetFile.Presets);
     }
 
     [Fact]
@@ -304,6 +305,38 @@ public sealed partial class LauncherConfigStoreTests
 
         Assert.Equal("Launcher preset 0 is null.", exception.Message);
         Assert.False(File.Exists(presetPath));
+    }
+
+    [Fact]
+    public void PresetStore_BackupContentMatchesOriginal()
+    {
+        using var temp = new TempDirectory();
+        var presetPath = ConfigFilePath(temp.Path, LauncherPresetStore.PresetsFileName);
+
+        // Write initial file so backup:true has something to back up.
+        LauncherPresetStore.Save(
+            PresetFile("初始组", "zero"),
+            presetPath,
+            backup: false);
+
+        var initialText = File.ReadAllText(presetPath);
+
+        LauncherPresetStore.Save(
+            PresetFile("日常启动", "one", "two"),
+            presetPath,
+            backup: true);
+
+        var backupPath = presetPath + ".bak";
+        Assert.True(File.Exists(backupPath), "backup file should exist after save with backup: true");
+
+        var backupText = File.ReadAllText(backupPath);
+        Assert.Equal(initialText, backupText);
+
+        var loaded = LauncherPresetStore.Load(backupPath);
+        Assert.Equal("daily", loaded.DefaultPresetId);
+        var preset = Assert.Single(loaded.Presets);
+        Assert.Equal("初始组", preset.Name);
+        Assert.Equal(["zero"], preset.EntryIds);
     }
 
     [Fact]

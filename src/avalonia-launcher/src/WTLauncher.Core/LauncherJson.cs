@@ -1,10 +1,11 @@
+using System.Diagnostics;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace WTLauncher.Core;
 
-internal static class LauncherJson
+public static class LauncherJson
 {
     private const string RepositoryLineEnding = "\n";
     private const int DefaultMaxBackups = 3;
@@ -15,6 +16,9 @@ internal static class LauncherJson
         AllowTrailingCommas = true,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
         WriteIndented = true,
+        // UnsafeRelaxedJsonEscaping does not escape HTML-sensitive characters
+        // (< > &). This is acceptable because config/settings JSON is never
+        // rendered in a browser — it is consumed exclusively by System.Text.Json.
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
@@ -37,6 +41,8 @@ internal static class LauncherJson
         var fullPath = Path.GetFullPath(path);
         var directory = Path.GetDirectoryName(fullPath);
         if (!string.IsNullOrWhiteSpace(directory))
+            // Directory.CreateDirectory inherits the parent directory's ACL.
+            // No explicit permission set is needed — the OS default is correct.
             Directory.CreateDirectory(directory);
 
         var json = NormalizeLineEndings(JsonSerializer.Serialize(value, Options));
@@ -55,12 +61,17 @@ internal static class LauncherJson
                     RotateBackups(fullPath);
                     File.Copy(fullPath, fullPath + ".bak", overwrite: true);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Debug.WriteLine($"[LauncherJson] Backup rotation failed: {ex.Message}");
                     // Non-fatal — the target file has not been modified yet.
                 }
             }
 
+            // File.Move with overwrite:true is not atomic on NTFS (delete+rename),
+            // but for a single-process desktop app with temp-file+rename pattern,
+            // it is sufficient. File.Replace requires the destination to exist,
+            // which fails on first save to a new directory.
             File.Move(tempPath, fullPath, overwrite: true);
         }
         finally
@@ -73,10 +84,34 @@ internal static class LauncherJson
     private static string NormalizeLineEndings(string text)
     {
         return text
-            .Replace("\r\n", RepositoryLineEnding)
-            .Replace("\r", RepositoryLineEnding);
+            .Replace("\r\n", RepositoryLineEnding);
     }
 
+    /// <summary>Delete all <c>*.tmp-*</c> files left behind by crashed Save()
+    /// operations. Safe to call at startup — failures are silently ignored.</summary>
+    public static void CleanupStaleTempFiles(string configDir)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(configDir);
+
+        if (!Directory.Exists(configDir))
+            return;
+
+        foreach (var tmp in Directory.EnumerateFiles(configDir, "*.tmp-*", SearchOption.TopDirectoryOnly))
+        {
+            try
+            {
+                File.Delete(tmp);
+            }
+            catch
+            {
+                // Best-effort: stale temp files are non-critical.
+            }
+        }
+    }
+
+    // File.Move and File.Delete in this method follow NTFS symlinks by design.
+    // The backup directory is always a real directory on the same volume, so
+    // symlink traversal is the correct behavior — reparse points are followed.
     private static void RotateBackups(string fullPath)
     {
         for (var i = DefaultMaxBackups - 1; i >= 0; i--)

@@ -6,16 +6,16 @@ namespace WTLauncher.Tests;
 public sealed partial class MainWindowViewModelTests
 {
     [Fact]
-    public void MissingPresetFileFailsBeforeViewModelStateIsBuilt()
+    public void MissingPresetFileDefaultsToEmptyPresets()
     {
         using var temp = new TempDirectory();
         var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: true, twoSelected: false);
         File.Delete(presets);
 
-        var exception = Assert.Throws<FileNotFoundException>(() => CreateViewModel(config, settings));
+        var viewModel = CreateViewModel(config, settings);
 
-        Assert.Equal("Launcher presets not found.", exception.Message);
-        Assert.Equal(presets, exception.FileName);
+        Assert.Equal(0, viewModel.PresetCount);
+        Assert.Null(viewModel.SelectedPreset);
     }
 
     [Fact]

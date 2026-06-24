@@ -2,7 +2,7 @@
 
 ## Source of truth
 - Status: Active
-- Last refreshed: 2026-05-20
+- Last refreshed: 2026-06-24
 - Primary product surfaces: `src/avalonia-launcher/src/WTLauncher.App/Views/MainWindow.axaml` + code-behind + `src/avalonia-launcher/src/WTLauncher.App/ViewModels/*`
 - Evidence reviewed: `README.md`, `src/avalonia-launcher/README.md`, `docs/design-benchmark-digest.md`, current Avalonia mainline implementation, `tools/verify.ps1`, `tools/build-release.ps1`, Microsoft Windows controls guidance for ToggleSwitch / ListView / GridView / Win32 List-View details modes, Microsoft Fluent 2 layout guidance, Apple HIG layout guidance, Material Design layout guidance
 
@@ -91,11 +91,13 @@
   - `ContextMenu`
   - 右键/更多菜单承载次级操作
 - New/changed components:
+  - 右键 "复制副本" 菜单项：深度拷贝当前条目为新条目，保留所有字段，名称追加 "的副本"
   - 拖拽 ghost（覆盖层上的半透明卡片）
   - 拖拽插入指示（卡片左/右高亮线）
   - 三档密度卡片布局（Normal / Compact / Micro）
   - Cards / 详细列表 / 名称墙三视图：卡片保留可读操作，详细列表用于紧凑字段扫描，名称墙只显示名称并自适应多列
   - 四框控制行：搜索框、排序模式框、视图模式框、启动组框，必须一个父 Grid 管理，列宽可响应但总宽刚好占满当前内容区
+  - 搜索框 AutoCompleteBox 下拉：搜索框集成 AutoCompleteBox，根据 `settings.json` 的 `searchHistory` 提供历史搜索词匹配下拉；按 Enter 提交时将当前搜索词写入搜索历史（去重、上限裁切）
   - 全局启动确认 ToggleSwitch：放在动作行或启动区附近显示“启动需确认 / 启动无需确认”，立即保存，所有启动项按同一规则处理
 - Variants and states:
   - Normal：展示名称、目录、命令摘要、启动

@@ -389,12 +389,12 @@ public sealed class LauncherPresetWorkflowTests
             Preset("daily", "Daily", "one"),
             Preset(" ", "Broken", "two"));
 
-        var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherPresetWorkflow.DeletePreset(ref presetFile, "daily", out _));
+        var deleted = LauncherPresetWorkflow.DeletePreset(ref presetFile, "daily", out var fallbackPresetId);
 
-        Assert.Equal("Launcher preset fallback id is required after delete.", exception.Message);
-        Assert.Equal("daily", presetFile.DefaultPresetId);
-        Assert.Equal(["daily", " "], presetFile.Presets.Select(preset => preset.Id).ToArray());
+        Assert.NotNull(deleted);
+        Assert.Equal("", presetFile.DefaultPresetId);
+        Assert.Equal("", fallbackPresetId);
+        Assert.Equal([" "], presetFile.Presets.Select(preset => preset.Id).ToArray());
     }
 
     [Fact]

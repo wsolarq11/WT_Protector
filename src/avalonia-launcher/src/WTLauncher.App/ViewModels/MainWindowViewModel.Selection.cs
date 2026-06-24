@@ -7,7 +7,7 @@ namespace WTLauncher.App.ViewModels;
 public sealed partial class MainWindowViewModel
 {
     private Func<LauncherBatchLaunchConfirmation, Task<bool>> _confirmBatchLaunchAsync =
-        static _ => Task.FromResult(false);
+        static _ => throw new InvalidOperationException("ConfirmBatchLaunchAsync is not bound by the View.");
 
     public Func<LauncherBatchLaunchConfirmation, Task<bool>> ConfirmBatchLaunchAsync
     {
@@ -32,10 +32,35 @@ public sealed partial class MainWindowViewModel
             ApplyStatusText(LauncherSelectionStatus.VisibleSelected(targets.Count));
     }
 
+    /// <summary>
+    /// Clears selection on ALL entries (including hidden ones behind the current
+    /// filter). This is a programmatic "deselect everything" — the View data-binds
+    /// to this command for the "clear selection" toolbar button.
+    ///
+    /// For a user-facing "clear visible only" variant, see <see cref="ClearVisibleSelection"/>.
+    /// </summary>
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private void ClearSelection()
     {
         var targets = GetSelectedEntries();
+        if (targets.Count == 0)
+        {
+            ApplyStatusText(LauncherSelectionStatus.NoSelectedEntriesToClear);
+            return;
+        }
+
+        if (SetSelection(targets, selected: false))
+            ApplyStatusText(LauncherSelectionStatus.Cleared(targets.Count));
+    }
+
+    /// <summary>
+    /// L32: Clears selection only on VISIBLE entries — the user-facing behavior
+    /// that matches "what you see is what you act on."
+    /// Call this when the user explicitly wants to clear only filtered results.
+    /// </summary>
+    public void ClearVisibleSelection()
+    {
+        var targets = _visibleEntries.Where(entry => entry.IsSelected).ToList();
         if (targets.Count == 0)
         {
             ApplyStatusText(LauncherSelectionStatus.NoSelectedEntriesToClear);
@@ -91,10 +116,11 @@ public sealed partial class MainWindowViewModel
             var timestamp = CurrentTimestampUtc();
             var startedCount = report.RequestedCount;
             var preflightItems = preflight.Items;
+            var entryById = _entries.ToDictionary(e => e.Id, LauncherEntryIds.Comparer);
             for (var i = 0; i < startedCount && i < preflightItems.Count; i++)
             {
                 var preflightItem = preflightItems[i];
-                var entryVm = _entries.FirstOrDefault(e => LauncherEntryIds.Same(e.Id, preflightItem.EntryId));
+                entryById.TryGetValue(preflightItem.EntryId, out var entryVm);
                 entryVm?.RecordLaunchFromOwner(timestamp);
             }
             if (startedCount > 0)
@@ -160,23 +186,45 @@ public sealed partial class MainWindowViewModel
     private bool SetSelection(IReadOnlyList<LauncherEntryViewModel> entries, bool selected)
     {
         var snapshot = CaptureSelectionMutationSnapshot(entries);
-        foreach (var entry in entries)
+        try
         {
-            entry.SetSelectionFromOwner(selected);
-        }
+            foreach (var entry in entries)
+            {
+                entry.SetSelectionFromOwner(selected);
+            }
 
-        return SaveSelectionChangeOrRestore(snapshot);
+            return SaveSelectionChangeOrRestore(snapshot);
+        }
+        catch
+        {
+            // L30: If a PropertyChanged handler throws mid-loop, restore
+            // the pre-mutation state so the ViewModel is not left in an
+            // inconsistent half-selected condition.
+            snapshot.Restore();
+            throw;
+        }
     }
 
     private bool ReplaceSelection(IReadOnlySet<string> selectedIds)
     {
         var snapshot = CaptureSelectionMutationSnapshot(_entries);
-        foreach (var entry in _entries)
+        try
         {
-            entry.SetSelectionFromOwner(selectedIds.Contains(entry.Id));
-        }
+            foreach (var entry in _entries)
+            {
+                entry.SetSelectionFromOwner(selectedIds.Contains(entry.Id));
+            }
 
-        return SaveSelectionChangeOrRestore(snapshot);
+            return SaveSelectionChangeOrRestore(snapshot);
+        }
+        catch
+        {
+            // L30: If a PropertyChanged handler throws mid-loop, restore
+            // the pre-mutation state so the ViewModel is not left in an
+            // inconsistent half-selected condition.
+            snapshot.Restore();
+            throw;
+        }
     }
 
     private LauncherSelectionMutationSnapshot CaptureSelectionMutationSnapshot(

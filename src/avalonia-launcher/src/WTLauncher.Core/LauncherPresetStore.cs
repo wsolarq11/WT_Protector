@@ -3,14 +3,27 @@ namespace WTLauncher.Core;
 public static class LauncherPresetStore
 {
     public const string PresetsFileName = "presets.json";
+    public const int ExpectedPresetSchemaVersion = 1;
 
     public static LauncherPresetFile Load(string presetPath)
     {
         ThrowIfPresetPathMissing(presetPath);
         if (!File.Exists(presetPath))
-            throw new FileNotFoundException("Launcher presets not found.", presetPath);
+        {
+            var backupPath = presetPath + ".bak";
+            if (File.Exists(backupPath))
+            {
+                File.Copy(backupPath, presetPath);
+            }
+            else
+            {
+                return new LauncherPresetFile();
+            }
+        }
 
         var presets = LauncherJson.LoadRequired<LauncherPresetFile>(presetPath, "Launcher presets");
+        if (presets.SchemaVersion != ExpectedPresetSchemaVersion)
+            throw new InvalidDataException($"Launcher presets schema version mismatch: expected {ExpectedPresetSchemaVersion}, got {presets.SchemaVersion}.");
         return LauncherPresetFiles.Validate(presets);
     }
 

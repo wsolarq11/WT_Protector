@@ -67,7 +67,7 @@ public sealed partial class MainWindowViewModelTests
         viewModel.FilterText = "   ";
 
         Assert.Equal(["one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.Equal("   ", LauncherSettingsStore.Load(settings).LastFilterText);
+        Assert.Equal("", LauncherSettingsStore.Load(settings).LastFilterText);
 
         viewModel.FilterText = "missing";
 
@@ -108,5 +108,35 @@ public sealed partial class MainWindowViewModelTests
             viewModel.FilterText = $"filter-{i}";
         // After all failed saves, filter should be back to the last successful value
         Assert.Equal("", viewModel.FilterText);
+    }
+
+    [Fact]
+    public void ClearVisibleSelectionOnlyClearsFilteredEntries()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", "One", command: "codex", selected: true),
+            Entry("two", "Two", command: "opencode", selected: true),
+            Entry("three", "Three", command: "someexe", selected: true));
+
+        var viewModel = CreateViewModel(config, settings);
+
+        // All 3 entries are selected initially
+        Assert.Equal(3, viewModel.SelectedCount);
+
+        // Filter to show only 2 of 3 entries
+        viewModel.FilterText = "code";
+
+        Assert.Equal(2, viewModel.VisibleCount);
+
+        // Clear selection only on visible entries
+        viewModel.ClearVisibleSelection();
+
+        // Visible entries are deselected; hidden entry stays selected
+        Assert.False(viewModel.Entries.Single(entry => entry.Id == "one").IsSelected);
+        Assert.False(viewModel.Entries.Single(entry => entry.Id == "two").IsSelected);
+        Assert.True(viewModel.Entries.Single(entry => entry.Id == "three").IsSelected);
+        Assert.Equal(1, viewModel.SelectedCount);
     }
 }

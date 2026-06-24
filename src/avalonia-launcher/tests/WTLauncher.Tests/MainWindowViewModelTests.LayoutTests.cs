@@ -15,16 +15,17 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(config, settings);
         var entry = Assert.Single(viewModel.Entries);
 
-        entry.CardWidth = LauncherEntryViewModel.MicroLayoutMaxWidth;
-        entry.CardHeight = LauncherEntryViewModel.MicroLayoutMaxHeight;
+        // L36: 5px hysteresis — must be below threshold by 5px to trigger denser layout.
+        entry.CardWidth = LauncherEntryViewModel.MicroLayoutMaxWidth - 5;
+        entry.CardHeight = LauncherEntryViewModel.MicroLayoutMaxHeight - 5;
         Assert.True(entry.IsMicroLayout);
         Assert.True(entry.IsCompactLayout);
         Assert.False(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
         Assert.Equal(LauncherEntryViewModel.MicroTitleFontSize, entry.TitleFontSize);
 
-        entry.CardWidth = LauncherEntryViewModel.CompactLayoutMaxWidth;
-        entry.CardHeight = LauncherEntryViewModel.CompactLayoutMaxHeight;
+        entry.CardWidth = LauncherEntryViewModel.CompactLayoutMaxWidth - 5;
+        entry.CardHeight = LauncherEntryViewModel.CompactLayoutMaxHeight - 5;
         Assert.False(entry.IsMicroLayout);
         Assert.True(entry.IsCompactLayout);
         Assert.True(entry.ShowDirectory);

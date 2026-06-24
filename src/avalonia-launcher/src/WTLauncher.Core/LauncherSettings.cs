@@ -8,7 +8,7 @@ namespace WTLauncher.Core;
 /// ImmutableList/ImmutableDictionary for true immutability.</summary>
 public sealed record LauncherSettings
 {
-    [JsonPropertyName("schemaVersion")]
+    [JsonIgnore]
     public int SchemaVersion { get; init; } = 1;
 
     [JsonPropertyName("lastFilterText")]
@@ -37,12 +37,18 @@ public sealed record LauncherSettings
     [JsonPropertyName("searchHistory")]
     public ImmutableList<string> SearchHistory { get; init; } = ImmutableList<string>.Empty;
 
+    /// <summary>L33: Tracks the last-used preset ID so the app restores the same
+    /// preset selection on next launch. Empty string means "use default."
+    /// Not serialized — this is a runtime-only UI preference.</summary>
+    [JsonIgnore]
+    public string LastUsedPresetId { get; init; } = "";
+
     [JsonPropertyName("window")]
     [JsonRequired]
     public LauncherWindowSettings Window { get; init; } = new();
 }
 
-/// <summary>Immutable window bounds. All properties are init-only.</summary>
+/// <summary>Immutable window bounds and state. All properties are init-only.</summary>
 public sealed record LauncherWindowSettings
 {
     public const double DefaultWidth = 1180;
@@ -56,4 +62,19 @@ public sealed record LauncherWindowSettings
     [JsonPropertyName("height")]
     [JsonRequired]
     public double Height { get; init; } = DefaultHeight;
+
+    /// <summary>Window X screen coordinate. Default 0 (top-left of primary monitor).</summary>
+    [JsonPropertyName("x")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public double X { get; init; }
+
+    /// <summary>Window Y screen coordinate. Default 0 (top-left of primary monitor).</summary>
+    [JsonPropertyName("y")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public double Y { get; init; }
+
+    /// <summary>Window state: Normal, Maximized, or Minimized. Serialized only when non-default.</summary>
+    [JsonPropertyName("windowState")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public string WindowState { get; init; } = "Normal";
 }

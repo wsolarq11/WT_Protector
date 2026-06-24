@@ -8,6 +8,8 @@ public static class LauncherPresetWorkflow
     {
         ArgumentNullException.ThrowIfNull(presetFile);
         var normalizedName = NormalizeRequiredName(name);
+        if (presetFile.Presets.Any(p => string.Equals(p.Name, normalizedName, StringComparison.OrdinalIgnoreCase)))
+            throw new ArgumentException($"A preset with the name \"{normalizedName}\" already exists.", nameof(name));
         var hasExistingPresets = presetFile.Presets.Count > 0;
         var defaultPresetId = hasExistingPresets
             ? RequireDefaultPresetId(presetFile)
@@ -40,6 +42,9 @@ public static class LauncherPresetWorkflow
             return null;
 
         var normalizedName = NormalizeRequiredName(name);
+        if (presetFile.Presets.Any(p => !LauncherPresetIds.Same(p.Id, presetId)
+            && string.Equals(p.Name, normalizedName, StringComparison.OrdinalIgnoreCase)))
+            throw new ArgumentException($"A preset with the name \"{normalizedName}\" already exists.", nameof(name));
         var normalizedEntryIds = NormalizeRequiredEntryIds(entryIds);
         var updated = preset with { Name = normalizedName, EntryIds = normalizedEntryIds };
         var index = presetFile.Presets.IndexOf(preset);
@@ -132,11 +137,11 @@ public static class LauncherPresetWorkflow
         var fallback = presetFile.Presets.FirstOrDefault(preset =>
             !LauncherPresetIds.Same(preset.Id, target.Id) && !preset.Locked);
         if (fallback is null)
-            throw new InvalidDataException("Launcher preset fallback id is required after delete.");
+            return string.Empty;
 
         var fallbackPresetId = LauncherPresetIds.NormalizeReference(fallback.Id);
         if (fallbackPresetId.Length == 0)
-            throw new InvalidDataException("Launcher preset fallback id is required after delete.");
+            return string.Empty;
 
         return fallbackPresetId;
     }

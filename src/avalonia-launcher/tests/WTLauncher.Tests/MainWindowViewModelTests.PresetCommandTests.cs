@@ -31,7 +31,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("Project Pair", created.Name);
         Assert.Equal(["one"], created.EntryIds);
         Assert.False(created.Locked);
-        Assert.False(viewModel.ApplyPresetCommand.CanExecute(null));
+        Assert.True(viewModel.ApplyPresetCommand.CanExecute(null));
 
         viewModel.Entries.Single(entry => entry.Id == "two").IsSelected = true;
 
@@ -62,7 +62,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.True(viewModel.SelectedPreset.IsLocked);
         Assert.False(viewModel.UpdateSelectedPresetCommand.CanExecute(null));
         Assert.False(viewModel.DeleteSelectedPresetCommand.CanExecute(null));
-        Assert.True(viewModel.ApplyPresetCommand.CanExecute(null));
+        Assert.False(viewModel.ApplyPresetCommand.CanExecute(null));
     }
 
     [Fact]

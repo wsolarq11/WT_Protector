@@ -111,6 +111,45 @@ catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
 
 **Rule:** Catch **specific** exception types, not bare `Exception`. Use `when` filters for precision.
 
+**Exception type selection guide (2026-06-24):**
+
+| Exception | When to use |
+|-----------|-------------|
+| `ArgumentException` | Programming error — wrong argument passed by developer |
+| `InvalidDataException` | Corrupted/malformed data from file or user input |
+| `InvalidOperationException` | Object is in wrong state for the requested operation |
+| `IOException` | File I/O failure (disk full, permission denied, locked file) |
+
+**CRITICAL:** Exception types are public API. Changing them requires auditing all `Assert.Throws<T>` tests.
+
+---
+
+## Exception Message Sanitization (2026-06-24)
+
+**Source:** `MainWindowViewModel.ExceptionMessageFormatter`
+
+Exceptions displayed in the UI status bar MUST be sanitized to avoid leaking file paths:
+
+```csharp
+internal static class ExceptionMessageFormatter
+{
+    public static string ForUser(Exception exception) => exception switch
+    {
+        FileNotFoundException => "配置文件无法访问",
+        DirectoryNotFoundException => "配置目录无法访问",
+        UnauthorizedAccessException => "文件访问权限不足",
+        IOException => "文件操作失败",
+        _ => exception.Message,
+    };
+}
+```
+
+**Rules:**
+1. All status text methods taking `Exception` MUST route through `ExceptionMessageFormatter.ForUser()`.
+2. Never use raw `exception.Message` in `StatusText = $"...{exception.Message}"`.
+3. `FileNotFoundException.Message` includes the full file path — always sanitize.
+4. `LauncherPersistenceStatus.Failed()` is the reference implementation.
+
 ---
 
 ## Forbidden Patterns
@@ -120,3 +159,5 @@ catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
 - ❌ **Returning `null` for "not found" without documentation** — use exceptions for unexpected absence.
 - ❌ **English status text** — all user-facing text in Chinese.
 - ❌ **Inline string concatenation for status** — use the static text factory method.
+- ❌ **Raw `exception.Message` in UI** — use `ExceptionMessageFormatter.ForUser()`.
+- ❌ **Catching `Exception` without `ExceptionFilters.IsRecoverable(ex)` in UI callbacks** — OOM/StackOverflow must propagate.

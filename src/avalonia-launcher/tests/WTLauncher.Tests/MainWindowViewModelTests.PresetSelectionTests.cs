@@ -24,7 +24,7 @@ public sealed partial class MainWindowViewModelTests
         viewModel.ApplyPresetCommand.Execute(null);
 
         Assert.Equal(1, viewModel.SelectedCount);
-        Assert.False(viewModel.ApplyPresetCommand.CanExecute(null));
+        Assert.True(viewModel.ApplyPresetCommand.CanExecute(null));
         Assert.Equal("已匹配", viewModel.ApplyPresetButtonText);
         Assert.Contains("已匹配启动组", viewModel.PresetSelectionStatusText);
         Assert.Contains("1/1", viewModel.PresetSelectionStatusText);

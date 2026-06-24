@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -36,6 +37,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private int _visibleCount;
 
+    public bool IsVisibleEmpty => VisibleCount == 0;
+
+    partial void OnVisibleCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(IsVisibleEmpty));
+    }
+
     [ObservableProperty]
     private int _selectedCount;
 
@@ -47,6 +55,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _requireConfirmationForLaunches;
+
+    private string? _keyboardFocusedEntryId;
+
+    public string? KeyboardFocusedEntryId
+    {
+        get => _keyboardFocusedEntryId;
+        set => SetKeyboardFocusedEntryId(value);
+    }
 
     public MainWindowViewModel(
         string configPath,
@@ -75,6 +91,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settings = _settings with { SortMode = _selectedSortMode.Id };
         _selectedDisplayMode = ResolveDisplayMode(settings.EntryViewMode);
         _settings = _settings with { EntryViewMode = _selectedDisplayMode.Id };
+        // L28: The constructor sets _selectedDisplayMode directly (bypassing the
+        // ObservableProperty setter), so OnSelectedDisplayModeChanged never fires.
+        // Raise PropertyChanged for the IsCardsViewMode / IsDetailedListMode /
+        // IsNamesViewMode projection properties so Avalonia bindings see the
+        // initial values before the window is shown.
+        NotifyDisplayModeProjectionChanged();
         // Construct workflow AFTER settings normalization so it captures
         // the normalized values — DiscardDragReorderPreview syncs from it.
         _dragReorderWorkflow = new LauncherDragReorderWorkflow(
@@ -111,6 +133,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         LoadPresetFile(preferredPresetId: null);
 
+        ValidatePresetEntryReferences();
+
         RefreshSelectionState();
         ApplyFilter();
         LauncherEntryLayoutPresentation.Refresh(_entries);
@@ -125,6 +149,28 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         if (missingKeys.Count > 0)
             StatusText = $"警告：以下命令模板键未定义: {string.Join(", ", missingKeys)}";
+    }
+
+    /// <summary>
+    /// M7: Cross-validate that every preset entry ID references a loaded entry.
+    /// Logs dangling references to ErrorLog but does not block loading.
+    /// </summary>
+    private void ValidatePresetEntryReferences()
+    {
+        var entryIdSet = GetEntryIds().ToHashSet(LauncherEntryIds.Comparer);
+        foreach (var preset in _presetFile.Presets)
+        {
+            foreach (var entryId in preset.EntryIds)
+            {
+                if (!entryIdSet.Contains(entryId))
+                {
+                    ErrorLog.Write(
+                        new InvalidDataException(
+                            $"启动组 \"{preset.Name}\" 引用了不存在的启动项 ID: {entryId}"),
+                        "PresetValidation");
+                }
+            }
+        }
     }
 
     private void ApplyStatusText(string? statusText)
@@ -178,6 +224,36 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return saveFailure;
     }
 
+    internal void SetKeyboardFocusedEntryId(string? value)
+    {
+        if (LauncherEntryIds.Same(_keyboardFocusedEntryId, value))
+            return;
+
+        // Clear old focus.
+        if (_keyboardFocusedEntryId is not null)
+        {
+            foreach (var e in _entries)
+            {
+                if (LauncherEntryIds.Same(e.Id, _keyboardFocusedEntryId))
+                    e.IsKeyboardFocused = false;
+            }
+        }
+
+        _keyboardFocusedEntryId = value;
+
+        // Set new focus.
+        if (value is not null)
+        {
+            foreach (var e in _entries)
+            {
+                if (LauncherEntryIds.Same(e.Id, value))
+                    e.IsKeyboardFocused = true;
+            }
+        }
+
+        OnPropertyChanged(nameof(KeyboardFocusedEntryId));
+    }
+
 }
 
 public sealed record LauncherSortModeViewModel(string Id, string Label)
@@ -207,6 +283,27 @@ public static class LauncherMainWindowText
         $"已加载 {entryCount} 个启动项、{presetCount} 个启动组；勾选自动保存到 config\\config.json";
 }
 
+public static class ExceptionMessageFormatter
+{
+    /// <summary>
+    /// Sanitize exception messages for user-facing display.
+    /// File-system exceptions leak paths in their Message property;
+    /// this replaces them with stable, user-safe strings.
+    /// </summary>
+    public static string ForUser(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+        return exception switch
+        {
+            FileNotFoundException => "找不到文件",
+            DirectoryNotFoundException => "找不到目录",
+            UnauthorizedAccessException => "没有访问权限",
+            IOException => "文件操作失败",
+            _ => exception.Message,
+        };
+    }
+}
+
 public static class LauncherPersistenceStatus
 {
     public static string ConfigSaveFailed(Exception exception) =>
@@ -226,16 +323,7 @@ public static class LauncherPersistenceStatus
     private static string Failed(string prefix, Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        // Prevent file-system paths from leaking into the status bar.
-        // FileNotFoundException.Message includes the full path; replace with
-        // a generic message so the UI never exposes disk layout to the user.
-        var message = exception switch
-        {
-            FileNotFoundException => "配置文件无法访问",
-            DirectoryNotFoundException => "配置目录无法访问",
-            _ => exception.Message,
-        };
-        return $"{prefix}: {message}";
+        return $"{prefix}: {ExceptionMessageFormatter.ForUser(exception)}";
     }
 }
 
@@ -244,19 +332,19 @@ public static class LauncherEntryStatus
     public static string AddCanceled => "已取消: 新增按钮";
 
     public static string AddDialogFailed(Exception exception) =>
-        $"新增按钮对话框失败: {exception.Message}";
+        $"新增按钮对话框失败: {ExceptionMessageFormatter.ForUser(exception)}";
 
     public static string EditCanceled(string entryName) =>
         $"已取消: 编辑 {entryName}";
 
     public static string EditDialogFailed(string entryName, Exception exception) =>
-        $"编辑 {entryName} 对话框失败: {exception.Message}";
+        $"编辑 {entryName} 对话框失败: {ExceptionMessageFormatter.ForUser(exception)}";
 
     public static string DeleteCanceled(string entryName) =>
         $"已取消: 删除 {entryName}";
 
     public static string DeleteConfirmationFailed(string entryName, Exception exception) =>
-        $"删除确认失败: {entryName} — {exception.Message}";
+        $"删除确认失败: {entryName} — {ExceptionMessageFormatter.ForUser(exception)}";
 
     public static string Added(string entryName) =>
         $"已新增按钮: {entryName}（已保存）";
@@ -275,7 +363,7 @@ public static class LauncherPresetStatus
     public static string SaveCanceled => "已取消: 保存启动组";
 
     public static string SaveDialogFailed(Exception exception) =>
-        $"保存启动组对话框失败: {exception.Message}";
+        $"保存启动组对话框失败: {ExceptionMessageFormatter.ForUser(exception)}";
 
     public static string NameRequired => "启动组名称不能为空";
 
@@ -302,7 +390,7 @@ public static class LauncherPresetStatus
     public static string PreviewFailed(string presetName, Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        return $"启动组\u201c{presetName}\u201d预演失败: {exception.Message}";
+        return $"启动组\u201c{presetName}\u201d预演失败: {ExceptionMessageFormatter.ForUser(exception)}";
     }
 
     public static string Launched(string presetName, LauncherBatchLaunchReport report) =>
@@ -314,7 +402,7 @@ public static class LauncherPresetStatus
     public static string LaunchFailed(string presetName, Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        return $"启动组\u201c{presetName}\u201d启动失败: {exception.Message}";
+        return $"启动组\u201c{presetName}\u201d启动失败: {ExceptionMessageFormatter.ForUser(exception)}";
     }
 
     public static string Saved(string presetName, int entryCount) =>
@@ -333,7 +421,7 @@ public static class LauncherPresetStatus
         $"已取消: 删除启动组 {presetName}";
 
     public static string DeleteConfirmationFailed(string presetName, Exception exception) =>
-        $"删除启动组确认失败: {presetName} \u2014 {exception.Message}";
+        $"删除启动组确认失败: {presetName} \u2014 {ExceptionMessageFormatter.ForUser(exception)}";
 
     public static string Deleted(string presetName, string selectedPresetName) =>
         $"已删除启动组: {presetName}；当前启动组: {selectedPresetName}";
@@ -380,7 +468,7 @@ public static class LauncherSelectionStatus
     public static string BatchLaunchFailed(Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        return $"批量启动失败: {exception.Message}";
+        return $"批量启动失败: {ExceptionMessageFormatter.ForUser(exception)}";
     }
 
     private static string FormatBatchFailures(IReadOnlyList<string> failures)
@@ -423,7 +511,7 @@ public static class LauncherSingleLaunchStatus
     public static string PreviewFailed(Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        return $"预演失败: {exception.Message}";
+        return $"预演失败: {ExceptionMessageFormatter.ForUser(exception)}";
     }
 
     public static string Canceled(string entryName) =>
@@ -435,13 +523,13 @@ public static class LauncherSingleLaunchStatus
     public static string Failed(string entryName, Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        return $"启动失败: {entryName} — {exception.Message}";
+        return $"启动失败: {entryName} — {ExceptionMessageFormatter.ForUser(exception)}";
     }
 
     public static string Failed(Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        return $"启动失败: {exception.Message}";
+        return $"启动失败: {ExceptionMessageFormatter.ForUser(exception)}";
     }
 }
 
@@ -477,7 +565,7 @@ public static class LauncherSingleLaunchReceiptText
             Environment.NewLine,
             "预演回执",
             $"预演失败: {RequireName(entryName)}",
-            $"错误: {exception.Message}");
+            $"错误: {ExceptionMessageFormatter.ForUser(exception)}");
     }
 
     public static string PreviewFailed(Exception exception)
@@ -487,7 +575,7 @@ public static class LauncherSingleLaunchReceiptText
         return string.Join(
             Environment.NewLine,
             "预演回执",
-            $"预演失败: {exception.Message}");
+            $"预演失败: {ExceptionMessageFormatter.ForUser(exception)}");
     }
 
     public static string ConfirmationFailed(string entryName, LaunchPlan plan, Exception exception)
@@ -500,7 +588,7 @@ public static class LauncherSingleLaunchReceiptText
             "启动回执",
             $"启动确认失败: {RequireName(entryName)}",
             plan.CommandLine,
-            $"错误: {exception.Message}");
+            $"错误: {ExceptionMessageFormatter.ForUser(exception)}");
     }
 
     public static string Failed(string entryName, Exception exception)
@@ -511,7 +599,7 @@ public static class LauncherSingleLaunchReceiptText
             Environment.NewLine,
             "启动回执",
             $"启动失败: {RequireName(entryName)}",
-            $"错误: {exception.Message}");
+            $"错误: {ExceptionMessageFormatter.ForUser(exception)}");
     }
 
     public static string Failed(Exception exception)
@@ -521,7 +609,7 @@ public static class LauncherSingleLaunchReceiptText
         return string.Join(
             Environment.NewLine,
             "启动回执",
-            $"启动失败: {exception.Message}");
+            $"启动失败: {ExceptionMessageFormatter.ForUser(exception)}");
     }
 
     public static string Failed(string entryName, LaunchPlan plan, Exception exception)
@@ -534,7 +622,7 @@ public static class LauncherSingleLaunchReceiptText
             "启动回执",
             $"启动失败: {RequireName(entryName)}",
             plan.CommandLine,
-            $"错误: {exception.Message}");
+            $"错误: {ExceptionMessageFormatter.ForUser(exception)}");
     }
 
     private static string RequireName(string entryName)
@@ -581,7 +669,7 @@ public static class LauncherBatchLaunchPlanText
         return JoinBlocks(
         [
             "预演回执",
-            $"预演失败: {exception.Message}",
+            $"预演失败: {ExceptionMessageFormatter.ForUser(exception)}",
         ]);
     }
 
@@ -650,7 +738,7 @@ public static class LauncherBatchLaunchReceiptText
         var lines = new List<string>
         {
             "启动回执",
-            $"启动确认失败: {exception.Message}",
+            $"启动确认失败: {ExceptionMessageFormatter.ForUser(exception)}",
             $"已请求启动 0 项，未启动 {items.Count} 项",
         };
 
@@ -666,7 +754,7 @@ public static class LauncherBatchLaunchReceiptText
         return string.Join(
             Environment.NewLine,
             "启动回执",
-            $"批量启动失败: {exception.Message}");
+            $"批量启动失败: {ExceptionMessageFormatter.ForUser(exception)}");
     }
 
     private static void AppendPlanLines(

@@ -11,15 +11,6 @@ public sealed record LauncherPresetDeleteTarget
         EntryCount = LauncherEntryIds.ToRequiredUniqueList(entryIds, nameof(entryIds)).Count;
     }
 
-    public LauncherPresetDeleteTarget(LauncherPreset preset)
-    {
-        ArgumentNullException.ThrowIfNull(preset);
-
-        PresetId = RequirePresetId(preset.Id);
-        PresetName = RequirePresetName(preset.Name);
-        EntryCount = LauncherEntryIds.ToRequiredUniqueList(preset.EntryIds, nameof(preset.EntryIds)).Count;
-    }
-
     public string PresetId { get; }
 
     public string PresetName { get; }

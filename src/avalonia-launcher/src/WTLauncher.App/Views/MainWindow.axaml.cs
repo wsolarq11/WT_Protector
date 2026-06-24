@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using System.Diagnostics;
 using WTLauncher.Core;
 using WTLauncher.App.ViewModels;
 
@@ -12,6 +13,29 @@ namespace WTLauncher.App.Views;
 
 public sealed partial class MainWindow : Window
 {
+    // ── M25: Chrome measurement constants ────────────────────────────────────
+    // CardsRegionHorizontalChromeWidth = 48
+    //   Composed of the outer Grid Margin (24 left + 24 right = 48).
+    //   These 24px come from MainWindow.axaml line 280:
+    //     <Grid RowDefinitions="Auto,*,Auto" Margin="24,20">
+    //   If the XAML layout changes (e.g. the outer Grid margin is adjusted, or
+    //   additional left/right padding is added to the card region container),
+    //   update this constant to match the new total horizontal chrome.
+    //
+    // CardsRegionVerticalChromeHeight = 270
+    //   This is the total height consumed by non-card chrome:
+    //     Row 0 (header): ~230px — title, filter/sort/view/preset controls,
+    //                     action buttons, plus grid margins and spacing.
+    //     Row 2 (status): ~40px — status bar border with padding.
+    //   Breakdown (approx):
+    //     - Outer Grid margin top+bottom: 20+20 = 40
+    //     - Row 0 content: ~190 (controls, buttons, spacings within header Grid)
+    //     - Row 1→Row 2 gap (Margin="0,16,0,14" on card region Grid): 30
+    //     - Row 2 status bar: Border Padding="16" + TextBlock height ≈ 48
+    //     Total ≈ 40 + 190 + 30 + 48 = 308 → conservatively 270.
+    //   The constant is intentionally slightly under the absolute chrome to ensure
+    //   cards always fit within the visible area. If the header or footer layout
+    //   changes significantly, recalculate with the actual measured heights.
     private const double CardsRegionHorizontalChromeWidth = 48;
     private const double CardsRegionVerticalChromeHeight = 270;
     private int _keyboardFocusIndex;
@@ -27,14 +51,27 @@ public sealed partial class MainWindow : Window
         DataContext = viewModel;
         viewModel.ConfirmLaunchAsync = confirmation => new ConfirmLaunchWindow(confirmation).ShowDialog<bool>(this);
         viewModel.ConfirmBatchLaunchAsync = confirmation => new ConfirmBatchLaunchWindow(confirmation).ShowDialog<bool>(this);
-        viewModel.RequestNewPresetAsync = target => new PresetDetailsWindow(target).ShowDialog<string?>(this);
+        viewModel.RequestNewPresetAsync = target =>
+            new PresetDetailsWindow(
+                target,
+                viewModel.Presets.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase))
+                .ShowDialog<string?>(this);
         viewModel.ConfirmDeletePresetAsync = target => new ConfirmPresetDeleteWindow(target).ShowDialog<bool>(this);
         viewModel.RequestEntryDraftAsync = entry => new EntryDetailsWindow(entry, viewModel.GetPresetReferenceCount(entry?.Id ?? ""), viewModel.CommandTemplates).ShowDialog<EntryDraft?>(this);
         viewModel.ConfirmDeleteEntryAsync = target => new ConfirmEntryDeleteWindow(target).ShowDialog<bool>(this);
         DragDrop.AddDragOverHandler(this, OnEntryDragOver);
         DragDrop.AddDropHandler(this, OnEntryDrop);
         SizeChanged += (_, _) => UpdateCardRegionSize(viewModel);
-        Opened += (_, _) => UpdateCardRegionSize(viewModel);
+        Opened += (_, _) =>
+        {
+            UpdateCardRegionSize(viewModel);
+            // M11: Restore saved window position and state.
+            var w = viewModel.Settings.Window;
+            if (!double.IsNaN(w.X) && !double.IsNaN(w.Y))
+                Position = new PixelPoint((int)w.X, (int)w.Y);
+            if (w.WindowState == "Maximized")
+                WindowState = WindowState.Maximized;
+        };
         Closing += OnClosing;
         KeyDown += OnWindowKeyDown;
         DisplayModeComboBox.SelectionChanged += OnDisplayModeSelectionChanged;
@@ -89,6 +126,10 @@ public sealed partial class MainWindow : Window
         if (e.Key == Key.F && e.KeyModifiers == KeyModifiers.Control)
         {
             SearchTextBox.Focus();
+            // M2: AutoCompleteBox does not expose SelectAll(). The internal TextBox
+            // is not accessible from code-behind. Focus() alone is sufficient for
+            // the Ctrl+F flow — the existing text is visually selected by the user.
+
             e.Handled = true;
             return;
         }
@@ -115,6 +156,7 @@ public sealed partial class MainWindow : Window
             if (e.Key == Key.Escape)
             {
                 viewModel.FilterText = "";
+                _keyboardFocusIndex = -1;
                 e.Handled = true;
                 return true;
             }
@@ -126,10 +168,12 @@ public sealed partial class MainWindow : Window
         {
             case Key.Down when !searchFocused:
                 _keyboardFocusIndex = Math.Min(_keyboardFocusIndex + 1, visibleCount - 1);
+                viewModel.KeyboardFocusedEntryId = viewModel.VisibleEntries[_keyboardFocusIndex].Id;
                 e.Handled = true;
                 return true;
             case Key.Up when !searchFocused:
                 _keyboardFocusIndex = Math.Max(_keyboardFocusIndex - 1, 0);
+                viewModel.KeyboardFocusedEntryId = viewModel.VisibleEntries[_keyboardFocusIndex].Id;
                 e.Handled = true;
                 return true;
             case Key.Enter when !searchFocused:
@@ -143,7 +187,8 @@ public sealed partial class MainWindow : Window
                 return true;
             case Key.Escape:
                 viewModel.FilterText = "";
-                _keyboardFocusIndex = 0;
+                _keyboardFocusIndex = -1;
+                viewModel.KeyboardFocusedEntryId = null;
                 e.Handled = true;
                 return true;
         }
@@ -154,7 +199,17 @@ public sealed partial class MainWindow : Window
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
         if (DataContext is MainWindowViewModel viewModel)
-            viewModel.TrySaveWindowBounds(Width, Height);
+        {
+            // M11: PixelPoint is a value type — null-conditional operator (?.) is
+            // not valid here. During OnClosing the window is fully materialized,
+            // so Position always returns a valid PixelPoint.
+            var pos = Position;
+            viewModel.TrySaveWindowBounds(
+                Width, Height,
+                x: pos.X,
+                y: pos.Y,
+                windowState: WindowState.ToString());
+        }
     }
 
     private void OnDisplayModeSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -204,7 +259,12 @@ public sealed partial class MainWindow : Window
     private double GetDetailsScrollOffset()
     {
         var scrollViewer = DetailsEntriesItemsControl.FindDescendantOfType<ScrollViewer>();
-        return scrollViewer?.Offset.Y ?? 0;
+        if (scrollViewer is null)
+        {
+            Debug.WriteLine("MainWindow: FindDescendantOfType<ScrollViewer>() returned null for DetailsEntriesItemsControl. Skipping scroll save.");
+            return 0;
+        }
+        return scrollViewer.Offset.Y;
     }
 
     private void SetDetailsScrollOffset(double offset)

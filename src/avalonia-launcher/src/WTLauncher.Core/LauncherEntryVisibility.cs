@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace WTLauncher.Core;
 
 public enum LauncherSortMode { Recent, Updated, Alphabetical, Custom }
@@ -28,6 +30,7 @@ public static class LauncherEntryVisibility
         string? sortModeId,
         IEnumerable<string> customEntryOrder,
         Func<TEntry, LaunchEntry> selectEntry)
+        where TEntry : notnull
     {
         ArgumentNullException.ThrowIfNull(entries);
         ArgumentNullException.ThrowIfNull(filterText);
@@ -43,16 +46,18 @@ public static class LauncherEntryVisibility
         }
         else
         {
+            var tokens = normalizedFilter.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             filtered = new List<TEntry>(source.Count);
             foreach (var entry in source)
             {
-                if (MatchesFilter(selectEntry(entry), normalizedFilter))
+                if (MatchesFilter(selectEntry(entry), tokens))
                     filtered.Add(entry);
             }
         }
 
         var sortMode = NormalizeSortModeId(sortModeId);
         IReadOnlyDictionary<string, int>? customOrder = null;
+        Dictionary<TEntry, string>? nameCache = null;
         Comparison<TEntry> comparison;
 
         switch (sortMode)
@@ -64,7 +69,10 @@ public static class LauncherEntryVisibility
                 comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Updated);
                 break;
             case AlphabeticalSortModeId:
-                comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Alphabetical);
+                nameCache = new Dictionary<TEntry, string>(filtered.Count);
+                foreach (var entry in filtered)
+                    nameCache[entry] = RequireText(selectEntry(entry).Name, "name");
+                comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Alphabetical, nameCache: nameCache);
                 break;
             default:
                 customOrder = LauncherEntryOrder.BuildIndex(customEntryOrder);
@@ -82,6 +90,7 @@ public static class LauncherEntryVisibility
         IEnumerable<TEntry> entries,
         string sortMode,
         Func<TEntry, LaunchEntry> selectEntry)
+        where TEntry : notnull
     {
         foreach (var item in entries)
         {
@@ -101,7 +110,9 @@ public static class LauncherEntryVisibility
         TEntry a, TEntry b,
         Func<TEntry, LaunchEntry> selectEntry,
         LauncherSortMode sortKind,
-        IReadOnlyDictionary<string, int>? customOrder = null)
+        IReadOnlyDictionary<string, int>? customOrder = null,
+        IReadOnlyDictionary<TEntry, string>? nameCache = null)
+        where TEntry : notnull
     {
         var entryA = selectEntry(a);
         var entryB = selectEntry(b);
@@ -111,7 +122,7 @@ public static class LauncherEntryVisibility
             LauncherSortMode.Recent => ParseLaunchedAt(entryB.LaunchedAtUtc).CompareTo(ParseLaunchedAt(entryA.LaunchedAtUtc)),
             LauncherSortMode.Updated => ParseUpdatedAt(entryB.UpdatedAtUtc).CompareTo(ParseUpdatedAt(entryA.UpdatedAtUtc)),
             LauncherSortMode.Alphabetical => StringComparer.OrdinalIgnoreCase.Compare(
-                RequireText(entryA.Name, "name"), RequireText(entryB.Name, "name")),
+                ResolveName(entryA, a, nameCache), ResolveName(entryB, b, nameCache)),
             LauncherSortMode.Custom => customOrder![RequireEntryId(entryA)].CompareTo(customOrder[RequireEntryId(entryB)]),
             _ => throw new ArgumentOutOfRangeException(nameof(sortKind), sortKind, null),
         };
@@ -119,24 +130,36 @@ public static class LauncherEntryVisibility
         if (cmp != 0) return cmp;
 
         cmp = StringComparer.OrdinalIgnoreCase.Compare(
-            RequireText(entryA.Name, "name"), RequireText(entryB.Name, "name"));
+            ResolveName(entryA, a, nameCache), ResolveName(entryB, b, nameCache));
         if (cmp != 0) return cmp;
 
         return LauncherEntryIds.Comparer.Compare(RequireEntryId(entryA), RequireEntryId(entryB));
     }
 
-    private static bool MatchesFilter(LaunchEntry entry, string filterText)
+    private static string ResolveName<TEntry>(LaunchEntry entry, TEntry key, IReadOnlyDictionary<TEntry, string>? nameCache)
+        where TEntry : notnull
     {
+        if (nameCache is not null && nameCache.TryGetValue(key, out var cached))
+            return cached;
+
+        return RequireText(entry.Name, "name");
+    }
+
+    private static bool MatchesFilter(LaunchEntry entry, string[] tokens)
+    {
+        if (tokens.Length == 0)
+            return true;
+
         var name = RequireText(entry.Name, "name");
         var directory = RequireText(entry.Directory, "directory");
         var command = RequireText(entry.Command, "command");
 
-        var tokens = filterText.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        if (tokens.Length <= 1)
+        if (tokens.Length == 1)
         {
-            return name.Contains(filterText, StringComparison.OrdinalIgnoreCase)
-                || directory.Contains(filterText, StringComparison.OrdinalIgnoreCase)
-                || command.Contains(filterText, StringComparison.OrdinalIgnoreCase);
+            var token = tokens[0];
+            return name.Contains(token, StringComparison.OrdinalIgnoreCase)
+                || directory.Contains(token, StringComparison.OrdinalIgnoreCase)
+                || command.Contains(token, StringComparison.OrdinalIgnoreCase);
         }
 
         return tokens.All(token =>
@@ -149,6 +172,7 @@ public static class LauncherEntryVisibility
         IReadOnlyList<TEntry> entries,
         IReadOnlyDictionary<string, int> customOrder,
         Func<TEntry, LaunchEntry> selectEntry)
+        where TEntry : notnull
     {
         var entryIds = entries
             .Select(entry => RequireEntryId(selectEntry(entry)))
@@ -196,7 +220,7 @@ public static class LauncherEntryVisibility
         if (normalized.Length == 0)
             return DateTimeOffset.MinValue;
 
-        if (DateTimeOffset.TryParse(normalized, out var parsed))
+        if (DateTimeOffset.TryParse(normalized, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsed))
             return parsed;
 
         throw new InvalidDataException($"Invalid launcher entry {fieldName}: {normalized}.");

@@ -43,13 +43,15 @@
         <Transitions/>
       </Setter>
     </Style>
+    <!-- L41: Compact/micro spacing snapped to the 8/13/21 DESIGN.md rhythm.
+         12→13, 10→8 (nearest Fibonacci-aligned value), 11→13. -->
     <Style Selector="Border.card.compact">
-      <Setter Property="Padding" Value="12"/>
-      <Setter Property="CornerRadius" Value="12"/>
+      <Setter Property="Padding" Value="13"/>
+      <Setter Property="CornerRadius" Value="13"/>
     </Style>
     <Style Selector="Border.card.micro">
-      <Setter Property="Padding" Value="10"/>
-      <Setter Property="CornerRadius" Value="11"/>
+      <Setter Property="Padding" Value="8"/>
+      <Setter Property="CornerRadius" Value="13"/>
     </Style>
     <Style Selector="Border.card.detail-row">
       <!-- Details list should feel closer to Windows Explorer: compact, column-aligned, flat rows. -->
@@ -71,6 +73,10 @@
     </Style>
     <Style Selector="Border.card.detail-row.selected:pointerover">
       <Setter Property="Background" Value="{StaticResource SelectionHoverBackgroundBrush}"/>
+    </Style>
+    <Style Selector="Border.card.keyboard-focused">
+      <Setter Property="BorderBrush" Value="{StaticResource SelectionBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="2"/>
     </Style>
     <Style Selector="Border.detail-header">
       <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
@@ -222,9 +228,11 @@
       <Setter Property="MinWidth" Value="38"/>
       <Setter Property="CornerRadius" Value="9"/>
     </Style>
+    <!-- L39: Minimum 32px height for reasonable touch/mouse hit target even at micro density -->
     <Style Selector="Border.card.micro Button.more">
       <Setter Property="Padding" Value="10,6"/>
       <Setter Property="MinWidth" Value="36"/>
+      <Setter Property="MinHeight" Value="32"/>
       <Setter Property="CornerRadius" Value="9"/>
     </Style>
     <Style Selector="Border.entry-drag-handle">
@@ -316,6 +324,9 @@
                  Margin="0,8,0,0"
                  Classes="muted"
                  Text="{Binding ConfigPathDisplay}"/>
+      <!-- L40: Four-box row weights: Search (1.8* — needs room for typeahead text),
+           Sort (1* — compact dropdown), View (1* — compact dropdown),
+           PresetGroup (2.8* — widest: ComboBox + 3 buttons + label). -->
       <Grid x:Name="ControlBoxesGrid"
             Grid.Row="2"
             Grid.ColumnSpan="2"
@@ -450,10 +461,12 @@
                       Classes.drag-source="{Binding IsDragPreviewSource}"
                       Classes.compact="{Binding IsCompactLayout}"
                       Classes.micro="{Binding IsMicroLayout}"
+                      Classes.keyboard-focused="{Binding IsKeyboardFocused}"
                       Width="{Binding CardWidth}"
                       Height="{Binding CardHeight}"
                       ClipToBounds="True"
                       DragDrop.AllowDrop="True">
+                <!-- L51: Keyboard accelerators for context menu discoverability -->
                 <Border.ContextMenu>
                   <ContextMenu>
                     <MenuItem Header="启动"
@@ -461,14 +474,19 @@
                     <MenuItem Header="预演"
                               Command="{Binding DryRunCommand}"/>
                     <MenuItem Header="上移排序"
+                              InputGesture="Ctrl+Up"
                               Command="{Binding MoveUpCommand}"/>
                     <MenuItem Header="下移排序"
+                              InputGesture="Ctrl+Down"
                               Command="{Binding MoveDownCommand}"/>
                     <MenuItem Header="复制"
+                              InputGesture="Ctrl+D"
                               Command="{Binding CloneCommand}"/>
                     <MenuItem Header="编辑"
+                              InputGesture="F2"
                               Command="{Binding EditCommand}"/>
                     <MenuItem Header="删除"
+                              InputGesture="Delete"
                               Command="{Binding DeleteCommand}"/>
                   </ContextMenu>
                 </Border.ContextMenu>
@@ -543,11 +561,15 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
+        <!-- L47: Intentional z-order overlay — empty-state TextBlock and ItemsControl
+             are siblings in a single-cell Grid. IsVisible binding ensures only one is
+             visible at any time, so there is no visual overlap during normal use. -->
         <TextBlock HorizontalAlignment="Center"
                    VerticalAlignment="Center"
                    FontSize="16"
                    Foreground="{StaticResource TextMutedBrush}"
-                   Text="没有匹配的启动项"/>
+                   Text="没有匹配的启动项"
+                   IsVisible="{Binding IsVisibleEmpty}"/>
       </Grid>
       </ScrollViewer>
 
@@ -569,9 +591,13 @@
                   <ColumnDefinition Width="{StaticResource DetailsCommandColumnWidth}"/>
                   <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <!-- align with rows: checkbox + columns -->
+                <!-- L48: Decorative checkbox for visual column alignment only.
+                     Not interactive — blocked from hit-testing and focus to avoid
+                     confusing screen readers and keyboard navigation. -->
                 <CheckBox IsEnabled="False"
-                          Opacity="0"/>
+                          Opacity="0"
+                          IsHitTestVisible="False"
+                          Focusable="False"/>
                 <TextBlock Grid.Column="1"
                            Classes="detail-header-text"
                            Text="名称"/>
@@ -594,10 +620,12 @@
                           Classes.drag-target="{Binding IsDragPreviewTarget}"
                           Classes.drag-source="{Binding IsDragPreviewSource}"
                           Classes.selected="{Binding IsSelected}"
+                          Classes.keyboard-focused="{Binding IsKeyboardFocused}"
                           ClipToBounds="True"
                           HorizontalAlignment="Stretch"
                           DoubleTapped="OnEntryRowDoubleTapped"
                           DragDrop.AllowDrop="True">
+                    <!-- L51: Keyboard accelerators for context menu discoverability -->
                     <Border.ContextMenu>
                       <ContextMenu>
                         <MenuItem Header="启动"
@@ -605,15 +633,20 @@
                         <MenuItem Header="预演"
                                   Command="{Binding DryRunCommand}"/>
                         <MenuItem Header="上移排序"
+                                  InputGesture="Ctrl+Up"
                                   Command="{Binding MoveUpCommand}"/>
                         <MenuItem Header="下移排序"
-                              Command="{Binding MoveDownCommand}"/>
+                                  InputGesture="Ctrl+Down"
+                                  Command="{Binding MoveDownCommand}"/>
                         <MenuItem Header="复制"
-                              Command="{Binding CloneCommand}"/>
+                                  InputGesture="Ctrl+D"
+                                  Command="{Binding CloneCommand}"/>
                         <MenuItem Header="编辑"
-                              Command="{Binding EditCommand}"/>
+                                  InputGesture="F2"
+                                  Command="{Binding EditCommand}"/>
                         <MenuItem Header="删除"
-                              Command="{Binding DeleteCommand}"/>
+                                  InputGesture="Delete"
+                                  Command="{Binding DeleteCommand}"/>
                       </ContextMenu>
                     </Border.ContextMenu>
                     <Grid ColumnSpacing="12"
@@ -696,12 +729,19 @@
             </ListBox>
           </Grid>
         </Border>
+      <TextBlock HorizontalAlignment="Center"
+                 VerticalAlignment="Center"
+                 FontSize="16"
+                 Foreground="{StaticResource TextMutedBrush}"
+                 Text="没有匹配的启动项"
+                 IsVisible="{Binding IsVisibleEmpty}"/>
       </Grid>
 
       <ScrollViewer x:Name="NamesScrollViewer"
                     HorizontalScrollBarVisibility="Disabled"
                     VerticalScrollBarVisibility="Auto"
                     IsVisible="{Binding IsNamesViewMode}">
+        <Grid>
         <ItemsControl x:Name="NamesEntriesItemsControl"
                       ItemsSource="{Binding VisibleEntries}">
           <ItemsControl.ItemsPanel>
@@ -715,11 +755,13 @@
                       Classes.drag-target="{Binding IsDragPreviewTarget}"
                       Classes.drag-source="{Binding IsDragPreviewSource}"
                       Classes.selected="{Binding IsSelected}"
+                      Classes.keyboard-focused="{Binding IsKeyboardFocused}"
                       Width="{Binding NameTileWidth}"
                       Height="{Binding NameTileHeight}"
                       ClipToBounds="True"
                       DoubleTapped="OnEntryRowDoubleTapped"
                       DragDrop.AllowDrop="True">
+                <!-- L51: Keyboard accelerators for context menu discoverability -->
                 <Border.ContextMenu>
                   <ContextMenu>
                     <MenuItem Header="启动"
@@ -727,14 +769,19 @@
                     <MenuItem Header="预演"
                               Command="{Binding DryRunCommand}"/>
                     <MenuItem Header="上移排序"
+                              InputGesture="Ctrl+Up"
                               Command="{Binding MoveUpCommand}"/>
                     <MenuItem Header="下移排序"
+                              InputGesture="Ctrl+Down"
                               Command="{Binding MoveDownCommand}"/>
                     <MenuItem Header="复制"
+                              InputGesture="Ctrl+D"
                               Command="{Binding CloneCommand}"/>
                     <MenuItem Header="编辑"
+                              InputGesture="F2"
                               Command="{Binding EditCommand}"/>
                     <MenuItem Header="删除"
+                              InputGesture="Delete"
                               Command="{Binding DeleteCommand}"/>
                   </ContextMenu>
                 </Border.ContextMenu>
@@ -780,6 +827,13 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
+        <TextBlock HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontSize="16"
+                   Foreground="{StaticResource TextMutedBrush}"
+                   Text="没有匹配的启动项"
+                   IsVisible="{Binding IsVisibleEmpty}"/>
+        </Grid>
       </ScrollViewer>
     </Grid>
 

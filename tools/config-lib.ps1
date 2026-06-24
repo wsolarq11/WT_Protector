@@ -84,8 +84,19 @@ function Get-WinFormsRetiredDesignPath {
 
 function Read-ConfigItems([string]$Path) {
     if (-not (Test-Path -LiteralPath $Path)) { throw "Missing config: $Path" }
+    # UTF-8 encoding is assumed throughout all scripts. Get-Content calls use -Encoding UTF8
+    # explicitly. If a UTF-16 LE file is encountered without BOM handling, it may be misread.
     $json = Get-Content -Raw -Encoding UTF8 -LiteralPath $Path | ConvertFrom-Json
     if ($null -eq $json) { throw "Config parsed to null: $Path" }
+    $idx = 0
+    foreach ($item in @($json)) {
+        foreach ($field in @('id', 'name', 'directory', 'command')) {
+            if ([string]::IsNullOrWhiteSpace([string]$item.$field)) {
+                throw "Config item $idx is missing required field: $field"
+            }
+        }
+        $idx++
+    }
     return @($json)
 }
 

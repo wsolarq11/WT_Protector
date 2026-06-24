@@ -1,6 +1,6 @@
 # Feature reality and north-star audit
 
-Reviewed on: 2026-06-02
+Reviewed on: 2026-06-24
 
 Purpose: evaluate whether each active WT Launcher feature mapping solves a real user problem and whether the implementation is already a domain north star. This is an audit document, not marketing copy.
 

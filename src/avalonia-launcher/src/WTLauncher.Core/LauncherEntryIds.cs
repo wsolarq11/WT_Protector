@@ -1,10 +1,43 @@
+using System.Text;
+
 namespace WTLauncher.Core;
 
 public static class LauncherEntryIds
 {
     public static StringComparer Comparer => StringComparer.Ordinal;
 
-    public static string Normalize(string? id) => (id ?? string.Empty).Trim();
+    public static string Normalize(string? id)
+    {
+        if (string.IsNullOrEmpty(id))
+            return string.Empty;
+
+        var trimmed = id.Trim();
+        if (trimmed.Length > 256)
+            trimmed = trimmed.Substring(0, 256);
+
+        // Fast path: no control characters.
+        var hasControl = false;
+        for (var i = 0; i < trimmed.Length; i++)
+        {
+            if (char.IsControl(trimmed[i]))
+            {
+                hasControl = true;
+                break;
+            }
+        }
+
+        if (!hasControl)
+            return trimmed;
+
+        var sb = new StringBuilder(trimmed.Length);
+        foreach (var ch in trimmed)
+        {
+            if (!char.IsControl(ch))
+                sb.Append(ch);
+        }
+
+        return sb.ToString();
+    }
 
     public static bool IsUsable(string? id) => !string.IsNullOrWhiteSpace(id);
 

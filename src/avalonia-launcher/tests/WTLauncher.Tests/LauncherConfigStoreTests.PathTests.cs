@@ -113,7 +113,7 @@ public sealed partial class LauncherConfigStoreTests
             LauncherConfigStore.ResolveConfigPath(null, currentDirectory: null, appBaseDirectory: null));
 
         Assert.Equal("currentDirectory", exception.ParamName);
-        Assert.StartsWith("Config search root is required when config path is not explicit.", exception.Message);
+        Assert.StartsWith("Cannot resolve config path: no explicit path was p", exception.Message);
     }
 
     [Fact]

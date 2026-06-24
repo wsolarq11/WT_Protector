@@ -70,8 +70,9 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(config, settings);
         var entry = Assert.Single(viewModel.Entries);
 
-        entry.CardWidth = LauncherEntryViewModel.MicroLayoutMaxWidth;
-        entry.CardHeight = LauncherEntryViewModel.MicroLayoutMaxHeight;
+        // L36: 5px hysteresis — must be below threshold by 5px to trigger denser layout.
+        entry.CardWidth = LauncherEntryViewModel.MicroLayoutMaxWidth - 5;
+        entry.CardHeight = LauncherEntryViewModel.MicroLayoutMaxHeight - 5;
         Assert.False(viewModel.IsDetailedListMode);
         Assert.True(viewModel.IsCardsViewMode);
         Assert.False(entry.ShowDirectory);

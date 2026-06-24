@@ -4,8 +4,22 @@ public static class LauncherCommandTemplateResolver
 {
     public const string TemplatePrefix = "$";
 
+    /// <summary>
+    /// Resolves a command string against the configured templates dictionary.
+    /// </summary>
+    /// <remarks>
+    /// <para>Commands starting with <c>$</c> are treated as template lookups:
+    /// <c>$key</c> is replaced with the value defined for <c>key</c>.</para>
+    /// <para>To emit a literal <c>$</c> prefix without template lookup, use
+    /// a double-dollar escape: <c>$$env:USERPROFILE</c> becomes
+    /// <c>$env:USERPROFILE</c>.</para>
+    /// </remarks>
     public static string Resolve(string command, IReadOnlyDictionary<string, string>? templates)
     {
+        // $$ escape sequence: treat as literal $ prefix — strip one $ and return the rest.
+        if (command.StartsWith("$$", StringComparison.Ordinal))
+            return command[1..];
+
         if (templates is null || templates.Count == 0)
             return command;
 
@@ -19,7 +33,7 @@ public static class LauncherCommandTemplateResolver
         if (templates.TryGetValue(key, out var resolved))
             return resolved;
 
-        throw new InvalidOperationException(
+        throw new InvalidDataException(
             $"Command template '{key}' is not defined.");
     }
 

@@ -24,7 +24,10 @@ public sealed partial class LauncherConfigStoreTests
         {
             Id = "demo",
             Name = "演示",
-            Directory = "D:\\demo",
+            Directory = Path.Combine(
+                Path.GetPathRoot(Environment.CurrentDirectory)
+                    ?? Path.DirectorySeparatorChar.ToString(),
+                "demo"),
             Command = "codex",
             Selected = selected,
         };

@@ -41,7 +41,10 @@ public sealed class FastWrapPanel : Panel
 
         foreach (var child in Children)
         {
-            child.Measure(availableSize);
+            // L37: Constrain child measure to the panel width so children don't
+            // report DesiredSize wider than the available space, preventing overflow
+            // at row start.
+            child.Measure(new Size(width, availableSize.Height));
             var childWidth = child.DesiredSize.Width;
             var childHeight = child.DesiredSize.Height;
 
@@ -73,7 +76,9 @@ public sealed class FastWrapPanel : Panel
 
         foreach (var child in Children)
         {
-            var childWidth = child.DesiredSize.Width;
+            // L37: Clamp child width to panel width to prevent overflow at row start,
+            // even if the child's DesiredSize exceeds the panel bounds.
+            var childWidth = Math.Min(child.DesiredSize.Width, finalSize.Width);
             var childHeight = child.DesiredSize.Height;
 
             if (x + childWidth > finalSize.Width && x > 0)

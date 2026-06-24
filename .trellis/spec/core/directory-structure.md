@@ -22,7 +22,7 @@ Layer 4 ─ Views/                     XAML + code-behind + drag-drop
 
 ## Layer 0 — Pure Data & Contracts (Core)
 
-`src/WTLauncher.Core/` — 24 files, zero framework dependencies.
+`src/WTLauncher.Core/` — 26 files, zero framework dependencies.
 
 | Responsibility | Key Files |
 |---------------|-----------|
@@ -65,7 +65,7 @@ Key files:
 
 ## Layer 3 — ViewModel Orchestration
 
-`src/WTLauncher.App/ViewModels/MainWindowViewModel.cs` (12 partial class files)
+`src/WTLauncher.App/ViewModels/MainWindowViewModel.cs` (9 partial class files)
 
 - The single writable owner of launcher UI state.
 - Delegates reusable rules to Core helpers.
@@ -78,22 +78,21 @@ Partial file breakdown:
 | `MainWindowViewModel.Entries.cs` | Add/edit/delete/clone commands |
 | `MainWindowViewModel.Launch.cs` | Single + batch launch workflows |
 | `MainWindowViewModel.Selection.cs` | Checkbox selection + batch select/clear |
-| `MainWindowViewModel.Layout.cs` | Card density, view modes, sizing |
+| `MainWindowViewModel.Layout.cs` | Card density, view modes, sizing, search/filter + sort |
 | `MainWindowViewModel.Presets.cs` | Preset selection + application |
 | `MainWindowViewModel.Presets.Persistence.cs` | Preset save/update/delete |
 | `MainWindowViewModel.Presets.Helpers.cs` | Preset reference counting |
 | `MainWindowViewModel.Drag.cs` | Drag reorder session management |
 | `MainWindowViewModel.Reorder.cs` | Move up/down commands |
-| `MainWindowViewModel.Filter.cs` | Search/filter + sort |
 
 ---
 
 ## Layer 4 — Views & Drag-Drop
 
-`src/WTLauncher.App/Views/` — 18 files
+`src/WTLauncher.App/Views/` — 15 files
 
 - XAML with three view modes: Cards / Details / Names.
-- Drag reorder: ghost factory → FLIP animation.
+- Drag reorder: ghost factory (FLIP animation removed 2026-06-23).
 - Dialog windows: confirmations, entry editor, preset editor.
 - Focused view helpers for shared drag/hit-test behavior.
 
@@ -107,13 +106,13 @@ src/avalonia-launcher/
 ├── run.ps1                             # Dev run script
 ├── verify.ps1                          # Mainline gate (restore → test → publish → smoke)
 ├── src/
-│   ├── WTLauncher.Core/                # Layer 0: 24 files
+│   ├── WTLauncher.Core/                # Layer 0: 26 files
 │   └── WTLauncher.App/
 │       ├── Program.cs                  # Entry point
 │       ├── App.axaml / App.axaml.cs    # Design token injection
-│       ├── ViewModels/                 # Layer 1-3: 33 files
-│       └── Views/                      # Layer 4: 18 files
-├── tests/WTLauncher.Tests/             # 73 xUnit test files
+│       ├── ViewModels/                 # Layer 1-3: 34 files
+│       └── Views/                      # Layer 4: 15 files
+├── tests/WTLauncher.Tests/             # 77 xUnit test files
 └── artifacts/                          # Build outputs (gitignored)
 ```
 

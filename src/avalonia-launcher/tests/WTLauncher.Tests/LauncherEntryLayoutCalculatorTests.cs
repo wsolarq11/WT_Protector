@@ -10,6 +10,12 @@ public sealed class LauncherEntryLayoutCalculatorTests
         var layout = LauncherEntryLayoutCalculator.Calculate(900, 520, 6);
 
         var actualRatio = layout.CardWidth / layout.CardHeight;
+        // Epsilon 0.02 accounts for rounding from integer pixel arithmetic in
+        // LauncherEntryLayoutCalculator. The calculator works in integral pixel
+        // values (card width/height are rounded to integers), so the ratio cannot
+        // exactly match the floating-point CardGoldenRatio constant. 0.02 is wide
+        // enough to tolerate the worst case across all supported column counts
+        // (1–6) and screen widths (800–2560) while still catching algorithm drift.
         Assert.InRange(
             actualRatio,
             LauncherEntryLayoutCalculator.CardGoldenRatio - 0.02,

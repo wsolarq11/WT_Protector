@@ -160,12 +160,14 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
-        var snapshot = CapturePresetMutationSnapshot();
+        // L26: Defer snapshot capture until after user confirmation — avoids
+        // wasteful snapshot/restore cycle when the user cancels.
         if (!await ConfirmDeletePresetIfRequiredAsync(target).ConfigureAwait(true))
         {
-            RestorePresetMutationSnapshot(snapshot);
             return;
         }
+
+        var snapshot = CapturePresetMutationSnapshot();
 
         var preset = LauncherPresetWorkflow.DeletePreset(ref _presetFile, target.PresetId, out var fallbackPresetId);
         if (preset is null)

@@ -122,7 +122,7 @@ Test extracted pure functions, not Avalonia controls.
 - `MainWindowDragDropDecisionTests.cs` — pure drop target logic
 - `MainWindowDragGhostFactoryTests.cs` — ghost creation
 - `MainWindowEntryCardResolverTests.cs` — visual tree resolution
-- `MainWindowReorderFlipAnimationTests.cs` — FLIP math
+- `MainWindowReorderFlipAnimationTests.cs` — FLIP math (removed 2026-06-23; FLIP animation retired)
 
 ### Contract Tests
 

@@ -79,11 +79,8 @@ internal static class LauncherDialogButtons
             IsCancel = isCancel,
         };
 
-        if (minWidth is null)
-        {
-            button.Padding = StandardPadding;
-        }
-        else
+        button.Padding = StandardPadding;
+        if (minWidth is not null)
         {
             button.MinWidth = minWidth.Value;
         }

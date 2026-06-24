@@ -13,7 +13,7 @@ public static class LauncherPresetMutationPersistence
             LauncherPresetStore.Save(presetFile, presetPath, backup: true);
             return null;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or InvalidDataException)
         {
             return LauncherPersistenceStatus.PresetSaveFailed(ex);
         }

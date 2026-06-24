@@ -30,7 +30,7 @@ public sealed class DialogLayoutContractTests
     {
         var source = File.ReadAllText(TestRepositoryPaths.View("PresetDetailsWindow.cs"));
 
-        Assert.Contains("PresetDetailsWindow(LauncherPresetSaveTarget target)", source);
+        Assert.Contains("PresetDetailsWindow(LauncherPresetSaveTarget target, IReadOnlySet<string> existingPresetNames)", source);
         Assert.Contains("ArgumentNullException.ThrowIfNull(target);", source);
         Assert.Contains("target.EntryCount", source);
         Assert.DoesNotContain("IReadOnlyList<string> selectedEntryIds", source);

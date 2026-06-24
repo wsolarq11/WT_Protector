@@ -94,7 +94,7 @@ public static class LauncherEntryReferences
                 normalized[i] = newEntryId;
         }
 
-        return LauncherEntryIds.ToRequiredUniqueList(normalized, nameof(entryIds));
+        return normalized;
     }
 
     private static List<string> RemoveReferences(IEnumerable<string> entryIds, string entryId)

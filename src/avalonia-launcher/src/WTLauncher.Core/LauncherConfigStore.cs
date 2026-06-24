@@ -13,11 +13,24 @@ public static class LauncherConfigStore
     {
         ThrowIfConfigPathMissing(configPath);
         if (!File.Exists(configPath))
-            throw new FileNotFoundException("Launcher config not found.", configPath);
+        {
+            var backupPath = configPath + ".bak";
+            if (File.Exists(backupPath))
+            {
+                File.Copy(backupPath, configPath);
+            }
+            else
+            {
+                return Array.Empty<LaunchEntry>();
+            }
+        }
 
         // Read the file ONCE. Previously RequireEntrySelectionFields and
         // LauncherJson.LoadRequired each opened/parsed the file independently
         // with slightly different options — a TOCTOU window and wasted IO.
+        var fileInfo = new FileInfo(configPath);
+        if (fileInfo.Length > 10 * 1024 * 1024)
+            throw new InvalidDataException("Launcher config file exceeds 10 MB size limit.");
         var raw = File.ReadAllBytes(configPath);
         RequireEntrySelectionFields(raw);
         using var stream = new MemoryStream(raw);
@@ -38,6 +51,9 @@ public static class LauncherConfigStore
             backup);
     }
 
+    // Path.GetFullPath follows NTFS symlinks and junction points by design —
+    // it always resolves to the final, real path. This is the correct behavior
+    // for config resolution: we want canonical paths, not symlink aliases.
     public static string ResolveConfigPath(string? explicitPath, string? currentDirectory = null, string? appBaseDirectory = null)
     {
         if (explicitPath is not null)
@@ -49,6 +65,14 @@ public static class LauncherConfigStore
             var fullPath = Path.GetFullPath(trimmedExplicitPath);
             if (!File.Exists(fullPath))
                 throw new FileNotFoundException($"Config file not found: {fullPath}", fullPath);
+
+            var fileName = Path.GetFileName(fullPath);
+            var dirName = Path.GetFileName(Path.GetDirectoryName(fullPath));
+            if (!string.Equals(fileName, ConfigFileName, StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(dirName, ConfigDirectoryName, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException(
+                    $"Explicit config path must end with {ConfigDirectoryName}/{ConfigFileName}, got: {fullPath}",
+                    nameof(explicitPath));
 
             return fullPath;
         }
@@ -118,7 +142,7 @@ public static class LauncherConfigStore
         }
 
         throw new ArgumentException(
-            "Config search root is required when config path is not explicit.",
+            "Cannot resolve config path: no explicit path was provided and both currentDirectory and appBaseDirectory are null or empty — nowhere to search for the config directory.",
             "currentDirectory");
     }
 
@@ -130,7 +154,7 @@ public static class LauncherConfigStore
 
     private static void RequireEntrySelectionFields(byte[] raw)
     {
-        var document = JsonDocument.Parse(raw, new JsonDocumentOptions
+        using var document = JsonDocument.Parse(raw, new JsonDocumentOptions
         {
             AllowTrailingCommas = true,
             CommentHandling = JsonCommentHandling.Skip,
@@ -161,6 +185,8 @@ public static class LauncherConfigStore
         var index = 0;
         foreach (var entry in entries)
         {
+            if (index >= 10000)
+                throw new InvalidDataException("Launcher config exceeds 10000 entry limit.");
             normalized.Add(Normalize(RequireEntry(entry, index), index, seenIds));
             index++;
         }
@@ -203,6 +229,8 @@ public static class LauncherConfigStore
             throw new InvalidDataException($"Launcher config entry {index} {fieldName} is null.");
 
         var normalized = LauncherEntryText.Normalize(value);
+        if (normalized.Length > 4096)
+            throw new InvalidDataException($"Launcher config entry {index} {fieldName} exceeds 4096 character length limit.");
         if (normalized.Length == 0)
             throw new InvalidDataException($"Launcher config entry {index} {fieldName} is empty.");
 

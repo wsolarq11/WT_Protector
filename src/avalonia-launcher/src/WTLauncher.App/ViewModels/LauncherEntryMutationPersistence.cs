@@ -63,6 +63,11 @@ public static class LauncherEntryMutationPersistence
         bool restorePresets,
         string currentStatus)
     {
+        // WARNING: Config and preset rollback are independent — one can succeed while the
+        // other fails. If config rollback succeeds but preset rollback fails, the config
+        // and presets files will be inconsistent (config rolled back, presets not). This
+        // is intentionally best-effort: an inconsistent state after a double failure is
+        // less bad than losing data from the original save attempt.
         List<string> restoreErrors = [];
         try
         {

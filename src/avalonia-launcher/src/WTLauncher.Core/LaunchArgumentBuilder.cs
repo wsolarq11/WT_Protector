@@ -29,9 +29,9 @@ public static class LaunchArgumentBuilder
     {
         ArgumentNullException.ThrowIfNull(entry);
 
-        var name = LauncherEntryText.Normalize(entry.Name);
-        var directory = Environment.ExpandEnvironmentVariables(LauncherEntryText.Normalize(entry.Directory));
-        var command = LauncherCommandTemplateResolver.Resolve(LauncherEntryText.Normalize(entry.Command), commandTemplates);
+        var name = StripControlCharacters(LauncherEntryText.Normalize(entry.Name));
+        var directory = StripControlCharacters(Environment.ExpandEnvironmentVariables(LauncherEntryText.Normalize(entry.Directory)));
+        var command = StripControlCharacters(LauncherCommandTemplateResolver.Resolve(LauncherEntryText.Normalize(entry.Command), commandTemplates));
 
         if (name.Length == 0)
             throw new InvalidOperationException("Launch entry name is empty.");
@@ -54,6 +54,19 @@ public static class LaunchArgumentBuilder
             directory,
             command,
             requireConfirmation);
+    }
+
+    /// <summary>Strips control characters (\0, \r, \n, etc.) to prevent CreateProcessW boundary issues.</summary>
+    private static string StripControlCharacters(string value)
+    {
+        var sb = new StringBuilder(value.Length);
+        foreach (var ch in value)
+        {
+            if (!char.IsControl(ch))
+                sb.Append(ch);
+        }
+
+        return sb.ToString();
     }
 
     public static string QuoteArgument(string value)

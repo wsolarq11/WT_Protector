@@ -33,9 +33,10 @@ Each active config file is a JSON array of launch items:
     "id": "example",
     "name": "example",
     "directory": "D:\\path\\to\\workspace",
-    "command": "codex --enable goals --dangerously-bypass-approvals-and-sandbox",
+    "command": "$codex",
     "selected": false,
-    "updatedAtUtc": "2026-05-18T09:30:00.0000000Z"
+    "updatedAtUtc": "2026-05-18T09:30:00.0000000Z",
+    "launchedAtUtc": ""
   }
 ]
 ```
@@ -88,8 +89,11 @@ Portable UI settings live beside the launch config:
   "lastFilterText": "",
   "sortMode": "custom",
   "entryViewMode": "cards",
-  "requireConfirmationForLaunches": true,
+  "requireConfirmationForLaunches": false,
   "customEntryOrder": ["启动脚本", "WT_Protector"],
+  "commandTemplates": {
+    "codex": "codex --enable goals --dangerously-bypass-approvals-and-sandbox"
+  },
   "searchHistory": ["w", "wt"],
   "window": {
     "width": 1180,
@@ -105,7 +109,7 @@ Additional settings fields:
 - `requireConfirmationForLaunches` — global launch-confirmation toggle persisted with the other portable UI settings.
 - `customEntryOrder` — stable entry-id order used by the "自定义拖拽" mode and persisted after drag-drop reorder.
 - `commandTemplates` — optional dictionary of reusable command templates. When a config entry's `command` starts with `$` followed by a key (e.g. `$codex`), the launcher resolves it to the template value from this map. Missing template keys cause a launch validation error.
-- `searchHistory` — optional deduplicated list of recent filter-text terms. Maintained as a JSON array of strings; the launcher validates the array must not be null but does not currently expose search history in the UI.
+- `searchHistory` — optional deduplicated list of recent filter-text terms. Maintained as a JSON array of strings; the launcher validates the array must not be null. Search history is exposed in the UI via an AutoCompleteBox dropdown on the search input.
 
 ## Run the mainline app
 
@@ -215,7 +219,7 @@ The Avalonia mainline supports:
 - three density states (Normal / Compact / Micro) that keep card content readable while the scroll view remains the fallback;
 - a Cards / Details (“详细列表”) / Names (“名称墙”) view mode toggle for readable actions, dense scanning, and overview;
 - header actions for selecting all visible items or clearing the saved selection;
-- add/edit/delete launch buttons inside the app, with every editable field saved back to portable config;
+- add/edit/delete/clone launch buttons inside the app, with every editable field saved back to portable config; right-click "复制副本" creates a deep copy of an entry;
 - named launch groups/presets that replace the saved selection through explicit apply;
 - first-class launch group actions: save current selection as a new group, update the current group from current selection, and delete editable groups;
 - direct launch of the current group without rewriting checkbox selection first;

@@ -13,6 +13,8 @@ namespace WTLauncher.App;
 
 public sealed partial class App : Application
 {
+    private bool _isInitialized;
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -77,6 +79,9 @@ public sealed partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        if (_isInitialized)
+            return;
+
         // Prevent a single binding error or UI-thread exception from crashing the process.
         Dispatcher.UIThread.UnhandledException += (_, e) =>
         {
@@ -85,15 +90,37 @@ public sealed partial class App : Application
             e.Handled = true;
         };
 
+        IClassicDesktopStyleApplicationLifetime? desktopLifetime = null;
         try
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
+                desktopLifetime = desktop;
                 var configPath = LauncherConfigStore.ResolveConfigPath(
                     LauncherStartupArguments.ReadConfigPath(desktop.Args),
                     Environment.CurrentDirectory,
                     AppContext.BaseDirectory);
                 var settingsPath = LauncherConfigStore.ResolveSettingsPath(configPath);
+
+                // L21: Verify config directory is writable before loading settings.
+                // A stale file lock or permission denial would otherwise surface as a
+                // cryptic crash later during save. Early detection gives a clear warning.
+                var configDirectory = Path.GetDirectoryName(configPath);
+                if (!string.IsNullOrEmpty(configDirectory) && Directory.Exists(configDirectory))
+                {
+                    try
+                    {
+                        var testPath = Path.Combine(configDirectory, ".write-test");
+                        File.WriteAllText(testPath, "test");
+                        File.Delete(testPath);
+                    }
+                    catch
+                    {
+                        Console.Error.WriteLine(
+                            $"[WTLauncher] WARNING: Config directory is not writable: {configDirectory}");
+                    }
+                }
+
                 var settings = LauncherSettingsStore.Load(settingsPath);
                 var launchWorkflow = new LauncherLaunchWorkflow(new LauncherProcess());
                 var viewModel = new MainWindowViewModel(
@@ -119,6 +146,28 @@ public sealed partial class App : Application
         }
         finally
         {
+            // M10: If desktop lifetime was resolved but MainWindow is still null after
+            // a startup exception, show a user-facing error before Avalonia starts the
+            // message loop with no window (which would hang the process invisibly).
+            if (desktopLifetime is not null && desktopLifetime.MainWindow is null)
+            {
+                var messageBox = new Window
+                {
+                    Title = "启动失败",
+                    Width = 480,
+                    Height = 200,
+                    WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                    Content = new TextBlock
+                    {
+                        Text = "启动失败：配置加载异常，请检查日志后重试。",
+                        Margin = new Thickness(24),
+                        TextWrapping = TextWrapping.Wrap,
+                    },
+                };
+                desktopLifetime.MainWindow = messageBox;
+            }
+
+            _isInitialized = true;
             // Must always be called — Avalonia expects this to start the message loop.
             base.OnFrameworkInitializationCompleted();
         }

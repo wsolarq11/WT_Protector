@@ -19,9 +19,9 @@ WT_Protector/
 │       ├── src/
 │       │   ├── WTLauncher.Core/   → Layer 0: 纯数据/规则（26文件, 零Avalonia依赖）
 │       │   └── WTLauncher.App/    → Layer 1-4: ViewModels + Views
-│       │       ├── ViewModels/    → 33文件, 单 MainWindowViewModel + 10 partial
-│       │       └── Views/        → 18文件, 单 MainWindow.axaml 三视图
-│       ├── tests/WTLauncher.Tests/ → 78测试文件, xUnit
+│       │       ├── ViewModels/    → 34文件, 单 MainWindowViewModel + 9 partial
+│       │       └── Views/        → 15文件, 单 MainWindow.axaml 三视图
+│       ├── tests/WTLauncher.Tests/ → 77测试文件, xUnit
 │       ├── run.ps1        → 开发运行
 │       └── verify.ps1     → 主线门禁（restore → test → publish → GUI smoke）
 ├── tools/                 → 🧰 脚本工具箱（详见下方）

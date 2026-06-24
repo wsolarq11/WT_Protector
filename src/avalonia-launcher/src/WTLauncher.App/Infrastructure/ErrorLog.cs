@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Threading;
 
 namespace WTLauncher.App.Infrastructure;
 
@@ -17,6 +18,8 @@ internal static class ErrorLog
 
     private static readonly string LogPath = Path.Combine(LogDirectory, "errors.log");
 
+    private static int _isWriting;
+
     /// <summary>
     /// Write an exception with a human-readable context tag.
     /// Never throws — if logging itself fails we fall back to
@@ -26,6 +29,9 @@ internal static class ErrorLog
     {
         ArgumentNullException.ThrowIfNull(exception);
 
+        if (Interlocked.Exchange(ref _isWriting, 1) == 1)
+            return;
+
         try
         {
             Directory.CreateDirectory(LogDirectory);
@@ -34,9 +40,20 @@ internal static class ErrorLog
         }
         catch
         {
-            // Last resort — logging must not cause a secondary crash.
-            Debug.WriteLine($"[ErrorLog] Failed to write: {exception}");
-            Trace.WriteLine($"[ErrorLog] Failed to write: {exception}");
+            try
+            {
+                // Last resort — logging must not cause a secondary crash.
+                Debug.WriteLine($"[ErrorLog] Failed to write: {exception}");
+                Trace.WriteLine($"[ErrorLog] Failed to write: {exception}");
+            }
+            catch
+            {
+                // Debug/Trace themselves can fail — swallow everything.
+            }
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _isWriting, 0);
         }
     }
 }

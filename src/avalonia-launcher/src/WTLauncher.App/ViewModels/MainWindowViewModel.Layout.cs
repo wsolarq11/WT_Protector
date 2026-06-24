@@ -15,6 +15,8 @@ public sealed partial class MainWindowViewModel
     // a property rollback that re-enters the OnXxxChanged callback.
     private bool _isHandlingSettingsChange;
 
+    // Other fields: MainWindowViewModel.cs, MainWindowViewModel.Drag.cs
+
     [ObservableProperty]
     private string _filterText = "";
 
@@ -72,19 +74,16 @@ public sealed partial class MainWindowViewModel
         _isHandlingSettingsChange = true;
         try
         {
-            var snapshot = CaptureSettingsMutationSnapshot();
-            _settings = _settings with { LastFilterText = value };
-            var saveFailure = SaveSettingsChange(snapshot);
-            if (saveFailure is not null)
+            if (TryPersistSettingsChange(s => s with { LastFilterText = value }))
             {
-                _filterText = snapshot.LastFilterText;
+                ApplyFilter();
+            }
+            else
+            {
+                _filterText = _settings.LastFilterText;
                 OnPropertyChanged(nameof(FilterText));
                 ApplyFilter();
-                ApplyStatusText(saveFailure);
-                return;
             }
-
-            ApplyFilter();
         }
         finally
         {
@@ -105,23 +104,21 @@ public sealed partial class MainWindowViewModel
         {
             value = RequireSortModeSelection(value);
             OnPropertyChanged(nameof(IsCustomSortMode));
-
-            var snapshot = CaptureSettingsMutationSnapshot();
-            _settings = _settings with { SortMode = value.Id };
             EnsureCustomOrderContainsEntries();
-            var saveFailure = SaveSettingsChange(snapshot);
-            if (saveFailure is not null)
+
+            if (TryPersistSettingsChange(
+                s => s with { SortMode = value.Id },
+                LauncherSettingsStatus.SortModeSaved(value.Label)))
             {
-                _selectedSortMode = ResolveSortMode(snapshot.SortMode);
+                ApplyFilter();
+            }
+            else
+            {
+                _selectedSortMode = ResolveSortMode(_settings.SortMode);
                 OnPropertyChanged(nameof(SelectedSortMode));
                 OnPropertyChanged(nameof(IsCustomSortMode));
                 ApplyFilter();
-                ApplyStatusText(saveFailure);
-                return;
             }
-
-            ApplyFilter();
-            StatusText = LauncherSettingsStatus.SortModeSaved(value.Label);
         }
         finally
         {
@@ -148,27 +145,55 @@ public sealed partial class MainWindowViewModel
         {
             value = RequireDisplayModeSelection(value);
             NotifyDisplayModeProjectionChanged();
-
-            var snapshot = CaptureSettingsMutationSnapshot();
-            _settings = _settings with { EntryViewMode = value.Id };
             LauncherEntryLayoutPresentation.Refresh(_entries);
-            var saveFailure = SaveSettingsChange(snapshot);
-            if (saveFailure is not null)
+
+            if (TryPersistSettingsChange(
+                s => s with { EntryViewMode = value.Id },
+                LauncherSettingsStatus.DisplayModeSaved(value.Label)))
             {
-                _selectedDisplayMode = ResolveDisplayMode(snapshot.EntryViewMode);
+                // Success — status already set by helper.
+            }
+            else
+            {
+                _selectedDisplayMode = ResolveDisplayMode(_settings.EntryViewMode);
                 OnPropertyChanged(nameof(SelectedDisplayMode));
                 NotifyDisplayModeProjectionChanged();
                 LauncherEntryLayoutPresentation.Refresh(_entries);
-                ApplyStatusText(saveFailure);
-                return;
             }
-
-            StatusText = LauncherSettingsStatus.DisplayModeSaved(value.Label);
         }
         finally
         {
             _isHandlingSettingsChange = false;
         }
+    }
+
+    /// <summary>
+    /// M23: Encapsulates the CaptureSettingsMutationSnapshot → mutate _settings →
+    /// SaveSettingsChange → rollback-on-failure boilerplate repeated across settings
+    /// mutation callbacks.
+    /// On success, sets <see cref="StatusText"/> to <paramref name="successStatus"/>
+    /// (when non-null) and returns true.
+    /// On failure, restores _settings from the snapshot, applies the save failure
+    /// status, and returns false — callers must then re-sync their own UI properties.
+    /// </summary>
+    private bool TryPersistSettingsChange(
+        Func<LauncherSettings, LauncherSettings> mutator,
+        string? successStatus = null)
+    {
+        var snapshot = CaptureSettingsMutationSnapshot();
+        _settings = mutator(_settings);
+        var saveFailure = SaveSettingsChange(snapshot);
+        if (saveFailure is not null)
+        {
+            _settings = snapshot.Restore();
+            ApplyStatusText(saveFailure);
+            return false;
+        }
+
+        if (successStatus is not null)
+            StatusText = successStatus;
+
+        return true;
     }
 
     private void NotifyDisplayModeProjectionChanged()
@@ -229,28 +254,23 @@ public sealed partial class MainWindowViewModel
             string.Equals(_settings.SearchHistory[0], normalized, StringComparison.OrdinalIgnoreCase))
             return;
 
-        var snapshot = CaptureSettingsMutationSnapshot();
-
         // Remove existing match (case-insensitive) to dedup, then insert at front.
         var newHistory = _settings.SearchHistory.RemoveAll(
             t => string.Equals(t, normalized, StringComparison.OrdinalIgnoreCase));
         newHistory = newHistory.Insert(0, normalized);
 
-        // Cap at 20.
-        if (newHistory.Count > 20)
-            newHistory = newHistory.RemoveRange(20, newHistory.Count - 20);
+        // Cap at MaxSearchHistoryTerms.
+        if (newHistory.Count > LauncherSettingsStore.MaxSearchHistoryTerms)
+            newHistory = newHistory.RemoveRange(LauncherSettingsStore.MaxSearchHistoryTerms, newHistory.Count - LauncherSettingsStore.MaxSearchHistoryTerms);
 
-        _settings = _settings with { SearchHistory = newHistory };
-        var saveFailure = SaveSettingsChange(snapshot);
-        if (saveFailure is not null)
+        if (TryPersistSettingsChange(s => s with { SearchHistory = newHistory }))
         {
-            _settings = snapshot.Restore();
             OnPropertyChanged(nameof(SearchHistoryItems));
-            ApplyStatusText(saveFailure);
-            return;
         }
-
-        OnPropertyChanged(nameof(SearchHistoryItems));
+        else
+        {
+            OnPropertyChanged(nameof(SearchHistoryItems));
+        }
     }
 
     /// <summary>
@@ -330,10 +350,10 @@ public sealed partial class MainWindowViewModel
         _lastAppliedCardsAvailableSize = _cardsAvailableSize;
     }
 
-    public bool TrySaveWindowBounds(double width, double height)
+    public bool TrySaveWindowBounds(double width, double height, double x = 0, double y = 0, string windowState = "Normal")
     {
         DiscardDragReorderPreview();
-        if (LauncherSettingsStore.TrySaveWindowBounds(ref _settings, _settingsPath, width, height))
+        if (LauncherSettingsStore.TrySaveWindowBounds(ref _settings, _settingsPath, width, height, x, y, windowState))
             return true;
 
         StatusText = LauncherSettingsStatus.WindowBoundsSaveFailed;

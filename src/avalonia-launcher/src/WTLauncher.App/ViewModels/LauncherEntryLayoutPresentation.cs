@@ -6,6 +6,11 @@ namespace WTLauncher.App.ViewModels;
 public static class LauncherEntryLayoutPresentation
 {
     public const double MinimumCardsWidth = 220;
+    // L43: MinimumCardsHeight (140) > CompactLayoutMaxHeight (124) because cards need
+    // a minimum height for readable content (button labels, command preview, title +
+    // directory lines) even in compact mode. CompactLayoutMaxHeight only governs the
+    // density threshold at which an individual card switches to compact layout; it is
+    // not the minimum card height the layout system will actually produce.
     public const double MinimumCardsHeight = 140;
 
     public static Size NormalizeAvailableSize(Size availableSize)

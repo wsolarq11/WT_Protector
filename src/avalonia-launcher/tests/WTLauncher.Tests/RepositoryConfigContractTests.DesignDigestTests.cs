@@ -61,7 +61,7 @@ public sealed partial class RepositoryConfigContractTests
         }
 
         Assert.Contains("docs/design-benchmark-digest.md", design);
-        Assert.Contains("- Last refreshed: 2026-05-20", design);
+        Assert.Contains("- Last refreshed: 2026-06-24", design);
         Assert.Contains("Border.drag-insert", design);
 
         Assert.Contains("This is a reference library, not an authority layer.", giantsReadme);

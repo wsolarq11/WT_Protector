@@ -10,10 +10,14 @@ public sealed class PresetDetailsWindow : Window
 {
     private readonly TextBox _nameBox;
     private readonly TextBlock _errorText;
+    private readonly IReadOnlySet<string> _existingPresetNames;
 
-    public PresetDetailsWindow(LauncherPresetSaveTarget target)
+    public PresetDetailsWindow(LauncherPresetSaveTarget target, IReadOnlySet<string> existingPresetNames)
     {
         ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(existingPresetNames);
+
+        _existingPresetNames = existingPresetNames;
 
         Title = "保存为启动组";
         Width = 560;
@@ -69,6 +73,14 @@ public sealed class PresetDetailsWindow : Window
         if (name.Length == 0)
         {
             _errorText.Text = "请输入启动组名称。";
+            _errorText.IsVisible = true;
+            _nameBox.Focus();
+            return;
+        }
+
+        if (_existingPresetNames.Contains(name))
+        {
+            _errorText.Text = "该名称已存在，请使用其他名称。";
             _errorText.IsVisible = true;
             _nameBox.Focus();
             return;

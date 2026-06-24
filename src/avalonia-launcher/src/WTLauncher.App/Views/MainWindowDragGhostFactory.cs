@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.Views;
@@ -23,7 +24,7 @@ public static class MainWindowDragGhostFactory
         {
             return Brush.Parse(color);
         }
-        catch (Exception)
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             return fallback;
         }

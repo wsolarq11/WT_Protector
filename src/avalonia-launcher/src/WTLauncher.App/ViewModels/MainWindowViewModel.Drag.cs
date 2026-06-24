@@ -58,10 +58,11 @@ public sealed partial class MainWindowViewModel
     /// </summary>
     /// <remarks>
     /// NOTE: This method's equivalence to "FilterAndSort + modified CustomEntryOrder"
-    /// is NOT formally verified. The current manual testing shows correct behavior,
-    /// but a property-based test (e.g. FsCheck / CsCheck) that asserts the resulting
-    /// _visibleEntries matches the output of a full ApplyFilter() would be ideal
-    /// for future confidence.
+    /// is verified by 7 example-based drag equivalence tests in
+    /// MainWindowViewModelTests.DragTests.cs. The tests cover single-move, multi-move,
+    /// insert-before, insert-after, and edge cases with filtered entries.
+    /// A property-based test (e.g. FsCheck / CsCheck) would still be ideal
+    /// for exhaustive future confidence.
     /// </remarks>
     private void ReorderVisibleEntryForDrag(string draggedId, string targetId, bool insertAfter)
     {
