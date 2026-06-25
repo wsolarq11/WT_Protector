@@ -271,7 +271,7 @@ public sealed partial class MainWindowViewModel
     private void RestoreEntryMutationSnapshot(LauncherEntryMutationSnapshot snapshot)
     {
         ReplaceEntries(snapshot.CloneEntries());
-        _settings = _settings with { CustomEntryOrder = snapshot.CloneCustomEntryOrder() };
+        _settings = _settings with { CustomEntryOrder = snapshot.GetCustomEntryOrder() };
         ApplyPresetFileState(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
         RefreshSelectionState();
         ApplyFilter();

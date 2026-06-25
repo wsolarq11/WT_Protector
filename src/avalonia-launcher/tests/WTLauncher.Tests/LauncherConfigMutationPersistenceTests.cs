@@ -35,10 +35,9 @@ public sealed class LauncherConfigMutationPersistenceTests
         var configPath = Path.Combine(temp.Path, "config.json");
         var entry = Entry("one") with { Name = null! };
 
-        var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherConfigMutationPersistence.Save([entry], configPath));
+        var saveFailure = LauncherConfigMutationPersistence.Save([entry], configPath);
 
-        Assert.Equal("Launcher config entry 0 name is null.", exception.Message);
+        Assert.NotNull(saveFailure);
         Assert.False(File.Exists(configPath));
     }
 }

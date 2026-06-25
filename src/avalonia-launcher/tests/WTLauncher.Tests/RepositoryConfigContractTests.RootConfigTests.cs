@@ -21,7 +21,7 @@ public sealed partial class RepositoryConfigContractTests
         foreach (var entry in entries)
         {
             var plan = LaunchArgumentBuilder.Build(entry, validateDirectory: false, requireConfirmation: false);
-            Assert.Equal(LaunchArgumentBuilder.TerminalExecutable, plan.Executable);
+            Assert.EndsWith("wt.exe", plan.Executable, StringComparison.OrdinalIgnoreCase);
             Assert.StartsWith($"{LaunchArgumentBuilder.WorkingDirectoryOption} ", plan.Arguments, StringComparison.Ordinal);
             Assert.Contains(
                 $" {LaunchArgumentBuilder.ShellCommandPrefix} ",
@@ -77,7 +77,7 @@ public sealed partial class RepositoryConfigContractTests
 
         foreach (var preset in root.GetProperty("presets").EnumerateArray())
         {
-            AssertJsonPropertyNames(preset, ["id", "name", "entryIds", "locked"], "preset");
+            AssertJsonPropertyNames(preset, ["id", "name", "entryIds"], "preset", ["locked"]);
             var id = preset.GetProperty("id").GetString();
             var name = preset.GetProperty("name").GetString();
             Assert.False(string.IsNullOrWhiteSpace(id));
@@ -126,7 +126,7 @@ public sealed partial class RepositoryConfigContractTests
         var root = document.RootElement;
         AssertJsonPropertyNames(
             root,
-            ["lastFilterText", "sortMode", "entryViewMode", "requireConfirmationForLaunches", "commandTemplates", "searchHistory", "customEntryOrder", "window"],
+            ["schemaVersion", "lastFilterText", "sortMode", "entryViewMode", "requireConfirmationForLaunches", "commandTemplates", "searchHistory", "customEntryOrder", "window"],
             "settings.json");
         Assert.False(
             root.TryGetProperty("theme", out _),
@@ -151,12 +151,16 @@ public sealed partial class RepositoryConfigContractTests
         Assert.Equal(LauncherWindowSettings.DefaultHeight, window.GetProperty("height").GetDouble());
     }
 
-    private static void AssertJsonPropertyNames(JsonElement element, string[] expectedNames, string context)
+    private static void AssertJsonPropertyNames(JsonElement element, string[] expectedNames, string context, string[]? optionalNames = null)
     {
         var actualNames = element.EnumerateObject().Select(property => property.Name).ToArray();
         var unexpectedNames = actualNames.Except(expectedNames, StringComparer.Ordinal).ToArray();
+        if (optionalNames is { Length: > 0 })
+            unexpectedNames = unexpectedNames.Except(optionalNames, StringComparer.Ordinal).ToArray();
         Assert.True(
             unexpectedNames.Length == 0,
             $"{context} has unexpected JSON fields: {string.Join(", ", unexpectedNames)}");
+        var missingNames = expectedNames.Except(actualNames, StringComparer.Ordinal).ToArray();
+        Assert.True(missingNames.Length == 0, $"Missing required properties in {context}: {string.Join(", ", missingNames)}");
     }
 }

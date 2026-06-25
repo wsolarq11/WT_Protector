@@ -39,7 +39,13 @@ public static class LauncherPresetIds
         // safe form — validation is the caller's responsibility.
         // Consistent with LauncherEntryIds.Normalize (both use MaxIdLength = 256).
         if (value.Length > MaxIdLength)
-            value = value[..MaxIdLength];
+        {
+            // Truncate at a code-point boundary to avoid splitting a surrogate pair.
+            var span = value.AsSpan(0, MaxIdLength);
+            if (char.IsHighSurrogate(span[^1]) && value.Length > MaxIdLength + 1)
+                span = value.AsSpan(0, MaxIdLength + 1);
+            value = span.ToString();
+        }
 
         var builder = new StringBuilder(value.Length);
         var separatorPending = false;

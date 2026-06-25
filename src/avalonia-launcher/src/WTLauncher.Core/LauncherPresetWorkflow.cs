@@ -47,7 +47,7 @@ public static class LauncherPresetWorkflow
             throw new ArgumentException($"A preset with the name \"{normalizedName}\" already exists.", nameof(name));
         var normalizedEntryIds = NormalizeRequiredEntryIds(entryIds);
         var updated = preset with { Name = normalizedName, EntryIds = normalizedEntryIds };
-        var index = presetFile.Presets.IndexOf(preset);
+        var index = presetFile.Presets.FindIndex(p => LauncherPresetIds.Same(p.Id, preset.Id));
         presetFile = presetFile with { Presets = presetFile.Presets.SetItem(index, updated) };
         return updated;
     }

@@ -15,6 +15,12 @@ public sealed partial class MainWindowViewModel
     // a property rollback that re-enters the OnXxxChanged callback.
     private bool _isHandlingSettingsChange;
 
+    // P1: Reusable collections for SyncVisibleEntries — Clear() preserves internal
+    // bucket array capacity in .NET, eliminating per-call GC allocations (~2-3KB
+    // per keystroke for ~200 entries).
+    private readonly HashSet<LauncherEntryViewModel> _syncSortedSet = new();
+    private readonly Dictionary<LauncherEntryViewModel, int> _syncPositionByEntry = new();
+
     // Other fields: MainWindowViewModel.cs, MainWindowViewModel.Drag.cs
 
     [ObservableProperty]
@@ -265,14 +271,8 @@ public sealed partial class MainWindowViewModel
         if (newHistory.Count > LauncherSettingsStore.MaxSearchHistoryTerms)
             newHistory = newHistory.RemoveRange(LauncherSettingsStore.MaxSearchHistoryTerms, newHistory.Count - LauncherSettingsStore.MaxSearchHistoryTerms);
 
-        if (TryPersistSettingsChange(s => s with { SearchHistory = newHistory }))
-        {
-            OnPropertyChanged(nameof(SearchHistoryItems));
-        }
-        else
-        {
-            OnPropertyChanged(nameof(SearchHistoryItems));
-        }
+        TryPersistSettingsChange(s => s with { SearchHistory = newHistory });
+        OnPropertyChanged(nameof(SearchHistoryItems));
     }
 
     /// <summary>
@@ -288,23 +288,27 @@ public sealed partial class MainWindowViewModel
     private void SyncVisibleEntries(IReadOnlyList<LauncherEntryViewModel> sorted)
     {
         // Remove entries no longer visible (iterate backwards for safe removal).
-        var sortedSet = new HashSet<LauncherEntryViewModel>(sorted);
+        // P1: Reuse instance field, Clear() preserves internal bucket capacity.
+        _syncSortedSet.Clear();
+        foreach (var item in sorted)
+            _syncSortedSet.Add(item);
         for (var i = _visibleEntries.Count - 1; i >= 0; i--)
         {
-            if (!sortedSet.Contains(_visibleEntries[i]))
+            if (!_syncSortedSet.Contains(_visibleEntries[i]))
                 _visibleEntries.RemoveAt(i);
         }
 
         // Build position map for O(1) lookups instead of O(n) IndexOf.
-        var positionByEntry = new Dictionary<LauncherEntryViewModel, int>(_visibleEntries.Count);
+        // P1: Reuse instance field, Clear() preserves internal bucket capacity.
+        _syncPositionByEntry.Clear();
         for (var i = 0; i < _visibleEntries.Count; i++)
-            positionByEntry[_visibleEntries[i]] = i;
+            _syncPositionByEntry[_visibleEntries[i]] = i;
 
         // Insert new entries and move existing ones to correct positions.
         for (var targetIndex = 0; targetIndex < sorted.Count; targetIndex++)
         {
             var entry = sorted[targetIndex];
-            if (positionByEntry.TryGetValue(entry, out var currentIndex))
+            if (_syncPositionByEntry.TryGetValue(entry, out var currentIndex))
             {
                 if (currentIndex != targetIndex)
                 {
@@ -320,14 +324,14 @@ public sealed partial class MainWindowViewModel
                     if (from < to)
                     {
                         for (var j = from; j < to; j++)
-                            positionByEntry[_visibleEntries[j]] = j;
+                            _syncPositionByEntry[_visibleEntries[j]] = j;
                     }
                     else
                     {
                         for (var j = to + 1; j <= from; j++)
-                            positionByEntry[_visibleEntries[j]] = j;
+                            _syncPositionByEntry[_visibleEntries[j]] = j;
                     }
-                    positionByEntry[entry] = to;
+                    _syncPositionByEntry[entry] = to;
                 }
             }
             else
@@ -335,8 +339,8 @@ public sealed partial class MainWindowViewModel
                 _visibleEntries.Insert(targetIndex, entry);
                 // P5: Shift positions for entries after the insertion point.
                 for (var j = targetIndex + 1; j < _visibleEntries.Count; j++)
-                    positionByEntry[_visibleEntries[j]] = j;
-                positionByEntry[entry] = targetIndex;
+                    _syncPositionByEntry[_visibleEntries[j]] = j;
+                _syncPositionByEntry[entry] = targetIndex;
             }
         }
     }

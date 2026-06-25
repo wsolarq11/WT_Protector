@@ -129,6 +129,18 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
+        // Defense-in-depth: skip the update if the selection already matches
+        // the preset — avoids unnecessary snapshot capture and file I/O.
+        // CanUpdateSelectedPreset already guards against this (via HasChanges),
+        // but repeating the check here protects against future callers that
+        // might bypass the CanExecute guard.
+        var preview = BuildPresetSelectionPreview(selectedPreset, entryIds);
+        if (!preview.HasChanges)
+        {
+            StatusText = $"启动组已是最新状态: {selectedPreset.Name}";
+            return;
+        }
+
         var snapshot = CapturePresetMutationSnapshot();
         var preset = LauncherPresetWorkflow.UpdatePreset(ref _presetFile, selectedPreset.Id, selectedPreset.Name, entryIds);
         if (preset is null)

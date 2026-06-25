@@ -1,3 +1,4 @@
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WTLauncher.Core;
@@ -113,6 +114,8 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     internal string RecordLaunchFromOwner(string launchedAtUtc)
     {
+        if (launchedAtUtc.Length > 0 && !DateTimeOffset.TryParse(launchedAtUtc, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out _))
+            throw new ArgumentException("Invalid ISO 8601 timestamp format.", nameof(launchedAtUtc));
         var previous = _entry.LaunchedAtUtc;
         _entry = _entry with { LaunchedAtUtc = launchedAtUtc };
         return previous;

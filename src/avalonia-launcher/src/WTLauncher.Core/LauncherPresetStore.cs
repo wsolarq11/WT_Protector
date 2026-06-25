@@ -14,27 +14,48 @@ public static class LauncherPresetStore
         LauncherPresetFile LoadAndValidate(string path)
         {
             var presets = LauncherJson.LoadRequired<LauncherPresetFile>(path, "Launcher presets");
-            if (presets.SchemaVersion != ExpectedPresetSchemaVersion)
-                throw new InvalidDataException($"Launcher presets schema version mismatch: expected {ExpectedPresetSchemaVersion}, got {presets.SchemaVersion}.");
+
+            // Schema migration contract:
+            // - SchemaVersion indicates the format version of this file.
+            // - OLDER versions (schema < expected): rejected — the app cannot read them.
+            // - EXACT version: loaded normally.
+            // - NEWER versions (schema > expected): rejected with an upgrade message.
+            //   This prevents data loss from downgrading after a schema change.
+            // - When bumping ExpectedSchemaVersion, add a migration path that reads
+            //   the old version and transforms it to the new format before validation.
+            if (presets.SchemaVersion < ExpectedPresetSchemaVersion)
+                throw new InvalidDataException($"Launcher presets schema version {presets.SchemaVersion} is too old (expected at least {ExpectedPresetSchemaVersion}).");
+            if (presets.SchemaVersion > ExpectedPresetSchemaVersion)
+                throw new InvalidDataException($"Launcher presets schema version {presets.SchemaVersion} is from a newer version of the app. Please upgrade WT Launcher.");
             return LauncherPresetFiles.Validate(presets);
         }
 
         if (File.Exists(presetPath))
         {
+            Exception? loadException = null;
             try
             {
                 return LoadAndValidate(presetPath);
             }
-            catch (Exception ex) when (ex is JsonException or InvalidDataException)
+            catch (Exception ex) when (ex is JsonException or InvalidDataException or FileNotFoundException)
+            {
+                loadException = ex;
+            }
+
+            if (loadException is not null)
             {
                 // Main file is corrupt — try .bak recovery.
                 var backupPath = presetPath + ".bak";
                 if (File.Exists(backupPath))
                 {
-                    File.Copy(backupPath, presetPath, overwrite: true);
+                    var recoveryTempPath = presetPath + $".recovery-{Guid.NewGuid():N}";
+                    File.Copy(backupPath, recoveryTempPath, overwrite: true);
+                    File.Move(recoveryTempPath, presetPath, overwrite: true);
+                    // Retry outside try/catch — if backup is also corrupt, the exception
+                    // propagates naturally without looping.
                     return LoadAndValidate(presetPath);
                 }
-                throw; // No backup available — propagate original exception.
+                throw loadException; // No backup available — propagate original exception.
             }
         }
 
@@ -42,7 +63,9 @@ public static class LauncherPresetStore
         var backupPathForMissing = presetPath + ".bak";
         if (File.Exists(backupPathForMissing))
         {
-            File.Copy(backupPathForMissing, presetPath);
+            var recoveryTempPath = presetPath + $".recovery-{Guid.NewGuid():N}";
+            File.Copy(backupPathForMissing, recoveryTempPath, overwrite: true);
+            File.Move(recoveryTempPath, presetPath, overwrite: true);
             return LoadAndValidate(presetPath);
         }
 

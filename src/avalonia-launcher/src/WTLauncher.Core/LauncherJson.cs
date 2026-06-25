@@ -14,7 +14,7 @@ public static class LauncherJson
     {
         ReadCommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true,
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Skip,
         WriteIndented = true,
         // UnsafeRelaxedJsonEscaping does not escape HTML-sensitive characters
         // (< > &). This is acceptable because config/settings JSON is never
@@ -50,6 +50,10 @@ public static class LauncherJson
         try
         {
             File.WriteAllText(tempPath, json + RepositoryLineEnding);
+            using (var fs = new FileStream(tempPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                fs.Flush(true); // FlushFileBuffers on Windows
+            }
 
             // Backup rotation is best-effort — if it fails, the new data
             // still gets committed. The old backup-on-failure blocking bug
@@ -59,11 +63,15 @@ public static class LauncherJson
                 try
                 {
                     RotateBackups(fullPath);
-                    File.Copy(fullPath, fullPath + ".bak", overwrite: true);
+                    var bakTempPath = fullPath + $".bak-tmp-{Guid.NewGuid():N}";
+                    File.Copy(fullPath, bakTempPath, overwrite: true);
+                    File.Move(bakTempPath, fullPath + ".bak", overwrite: true);
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"[LauncherJson] Backup rotation failed: {ex.Message}");
+                    var msg = $"[LauncherJson] Backup rotation failed: {ex.Message}";
+                    Debug.WriteLine(msg);
+                    Trace.WriteLine(msg);
                     // Non-fatal — the target file has not been modified yet.
                 }
             }
@@ -76,8 +84,15 @@ public static class LauncherJson
         }
         finally
         {
-            if (File.Exists(tempPath))
-                File.Delete(tempPath);
+            try
+            {
+                if (File.Exists(tempPath))
+                    File.Delete(tempPath);
+            }
+            catch
+            {
+                // Best-effort cleanup — don't replace the original exception.
+            }
         }
     }
 
@@ -98,13 +113,20 @@ public static class LauncherJson
 
         foreach (var tmp in Directory.EnumerateFiles(configDir, "*.tmp-*", SearchOption.TopDirectoryOnly))
         {
+            var fileName = Path.GetFileName(tmp);
+            // Only clean up temp files matching the app's naming convention:
+            // *.tmp-{Guid:N} (32+ lowercase hex characters). This avoids
+            // matching unrelated *.tmp-* files from other applications.
+            if (!System.Text.RegularExpressions.Regex.IsMatch(fileName, @"\.tmp-[0-9a-f]{32,}$"))
+                continue;
             try
             {
                 File.Delete(tmp);
             }
-            catch
+            catch (Exception ex)
             {
-                // Best-effort: stale temp files are non-critical.
+                Debug.WriteLine($"[LauncherJson] Stale temp cleanup failed: {ex.Message}");
+                Trace.WriteLine($"[LauncherJson] Stale temp cleanup failed: {ex.Message}");
             }
         }
     }

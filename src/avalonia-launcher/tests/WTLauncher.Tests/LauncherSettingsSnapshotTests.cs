@@ -77,6 +77,19 @@ public sealed class LauncherSettingsSnapshotTests
         Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window!.Height);
     }
 
+    [Fact]
+    public void Capture_WithNullSettings_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => LauncherSettingsSnapshot.Capture(null!));
+    }
+
+    [Fact]
+    public void RestoreCustomEntryOrder_WithNullSettings_ThrowsArgumentNullException()
+    {
+        var snapshot = LauncherSettingsSnapshot.Capture(new LauncherSettings());
+        Assert.Throws<ArgumentNullException>(() => snapshot.RestoreCustomEntryOrder(null!));
+    }
+
     private static LauncherSettings Settings(
         string lastFilterText = "",
         string sortMode = LauncherEntryVisibility.CustomSortModeId,

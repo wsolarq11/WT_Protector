@@ -13,7 +13,7 @@ public static class LauncherConfigMutationPersistence
             LauncherConfigStore.Save(entries, configPath, backup: true);
             return null;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or System.Security.SecurityException)
         {
             return LauncherPersistenceStatus.ConfigSaveFailed(ex);
         }

@@ -399,6 +399,7 @@
                     Grid.Column="3"
                     Classes="primary"
                     Content="启动"
+                    AutomationProperties.Name="启动"
                     Command="{Binding LaunchSelectedPresetCommand}"/>
           </Grid>
         </Border>
@@ -470,22 +471,29 @@
                 <Border.ContextMenu>
                   <ContextMenu>
                     <MenuItem Header="启动"
+                              AutomationProperties.Name="启动"
                               Command="{Binding LaunchCommand}"/>
                     <MenuItem Header="预演"
+                              AutomationProperties.Name="预演"
                               Command="{Binding DryRunCommand}"/>
                     <MenuItem Header="上移排序"
+                              AutomationProperties.Name="上移排序"
                               InputGesture="Ctrl+Up"
                               Command="{Binding MoveUpCommand}"/>
                     <MenuItem Header="下移排序"
+                              AutomationProperties.Name="下移排序"
                               InputGesture="Ctrl+Down"
                               Command="{Binding MoveDownCommand}"/>
                     <MenuItem Header="复制"
+                              AutomationProperties.Name="复制"
                               InputGesture="Ctrl+D"
                               Command="{Binding CloneCommand}"/>
                     <MenuItem Header="编辑"
+                              AutomationProperties.Name="编辑"
                               InputGesture="F2"
                               Command="{Binding EditCommand}"/>
                     <MenuItem Header="删除"
+                              AutomationProperties.Name="删除"
                               InputGesture="Delete"
                               Command="{Binding DeleteCommand}"/>
                   </ContextMenu>
@@ -532,6 +540,7 @@
                         ColumnDefinitions="*,Auto">
                     <Button Classes="primary"
                             Content="启动"
+                            AutomationProperties.Name="启动"
                             Command="{Binding LaunchCommand}"/>
                     <Button Grid.Column="1"
                             Classes="secondary more"
@@ -549,7 +558,7 @@
                             ToolTip.Tip="拖拽排序"
                             AutomationProperties.Name="拖拽排序"
                             PointerPressed="OnEntryDragPointerPressed">
-                      <TextBlock Text="拖拽"
+                      <TextBlock Text="≡"
                                  Foreground="{StaticResource DragHandleTextBrush}"
                                  FontSize="12"
                                  HorizontalAlignment="Center"
@@ -629,22 +638,29 @@
                     <Border.ContextMenu>
                       <ContextMenu>
                         <MenuItem Header="启动"
+                                  AutomationProperties.Name="启动"
                                   Command="{Binding LaunchCommand}"/>
                         <MenuItem Header="预演"
+                                  AutomationProperties.Name="预演"
                                   Command="{Binding DryRunCommand}"/>
                         <MenuItem Header="上移排序"
+                                  AutomationProperties.Name="上移排序"
                                   InputGesture="Ctrl+Up"
                                   Command="{Binding MoveUpCommand}"/>
                         <MenuItem Header="下移排序"
+                                  AutomationProperties.Name="下移排序"
                                   InputGesture="Ctrl+Down"
                                   Command="{Binding MoveDownCommand}"/>
                         <MenuItem Header="复制"
+                                  AutomationProperties.Name="复制"
                                   InputGesture="Ctrl+D"
                                   Command="{Binding CloneCommand}"/>
                         <MenuItem Header="编辑"
+                                  AutomationProperties.Name="编辑"
                                   InputGesture="F2"
                                   Command="{Binding EditCommand}"/>
                         <MenuItem Header="删除"
+                                  AutomationProperties.Name="删除"
                                   InputGesture="Delete"
                                   Command="{Binding DeleteCommand}"/>
                       </ContextMenu>
@@ -704,6 +720,7 @@
                                   VerticalAlignment="Center">
                         <Button Classes="primary"
                                 Content="启动"
+                                AutomationProperties.Name="启动"
                                 Command="{Binding LaunchCommand}"/>
                         <Button Classes="secondary more"
                                 Content="⋯"
@@ -765,22 +782,29 @@
                 <Border.ContextMenu>
                   <ContextMenu>
                     <MenuItem Header="启动"
+                              AutomationProperties.Name="启动"
                               Command="{Binding LaunchCommand}"/>
                     <MenuItem Header="预演"
+                              AutomationProperties.Name="预演"
                               Command="{Binding DryRunCommand}"/>
                     <MenuItem Header="上移排序"
+                              AutomationProperties.Name="上移排序"
                               InputGesture="Ctrl+Up"
                               Command="{Binding MoveUpCommand}"/>
                     <MenuItem Header="下移排序"
+                              AutomationProperties.Name="下移排序"
                               InputGesture="Ctrl+Down"
                               Command="{Binding MoveDownCommand}"/>
                     <MenuItem Header="复制"
+                              AutomationProperties.Name="复制"
                               InputGesture="Ctrl+D"
                               Command="{Binding CloneCommand}"/>
                     <MenuItem Header="编辑"
+                              AutomationProperties.Name="编辑"
                               InputGesture="F2"
                               Command="{Binding EditCommand}"/>
                     <MenuItem Header="删除"
+                              AutomationProperties.Name="删除"
                               InputGesture="Delete"
                               Command="{Binding DeleteCommand}"/>
                   </ContextMenu>

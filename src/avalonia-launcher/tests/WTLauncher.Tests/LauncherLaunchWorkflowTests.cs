@@ -273,7 +273,7 @@ public sealed class LauncherLaunchWorkflowTests
     }
 
     [Fact]
-    public void StartBatch_FailureIndexRecordsLastFailure()
+    public void StartBatch_FailureIndexRecordsFirstFailure()
     {
         using var temp = new TempDirectory();
         var attempted = new List<string>();
@@ -293,12 +293,12 @@ public sealed class LauncherLaunchWorkflowTests
             requireConfirmation: false);
 
         // Items at index 0 and 2 fail, item at index 1 succeeds.
-        // FailureIndex must point to the last failure (index 2), not the first.
+        // FailureIndex captures the first failure (index 0), not the last.
         Assert.Equal(3, attempted.Count);
         Assert.Equal(1, report.RequestedCount);
         Assert.Equal(2, report.FailedCount);
         Assert.Equal(0, report.SkippedCount);
-        Assert.Equal(2, report.FailureIndex);
+        Assert.Equal(0, report.FailureIndex);
     }
 
     [Fact]

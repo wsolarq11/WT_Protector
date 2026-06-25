@@ -56,7 +56,7 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void Load_RejectsObsoleteConfirmFieldFromConfig()
+    public void Load_SilentlySkipsObsoleteConfirmFieldFromConfig()
     {
         using var temp = new TempDirectory();
         var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
@@ -72,13 +72,16 @@ public sealed partial class LauncherConfigStoreTests
         ]
         """);
 
-        var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherConfigStore.Load(config));
+        var entries = LauncherConfigStore.Load(config);
 
-        Assert.Contains("confirm", exception.Message);
+        // Obsolete "confirm" field is silently skipped (forward-compatible).
+        var entry = Assert.Single(entries);
+        Assert.Equal("demo", entry.Id);
+        Assert.True(entry.Selected);
     }
 
     [Fact]
-    public void Load_RejectsWrongCaseEntryFieldsFromConfig()
+    public void Load_RejectsWrongCaseEntryIdFieldFromConfig()
     {
         using var temp = new TempDirectory();
         var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
@@ -93,14 +96,22 @@ public sealed partial class LauncherConfigStoreTests
         ]
         """);
 
+        // Wrong-case "Id" is silently skipped by UnmappedMemberHandling.Skip,
+        // but "id" is a required field ($id metadata in LaunchEntry JSON).
+        // System.Text.Json is case-sensitive, so "Id" does not bind to "id".
         var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherConfigStore.Load(config));
 
-        Assert.Contains("Id", exception.Message);
+        Assert.Contains("id", exception.Message);
     }
 
     [Fact]
-    public void Load_RejectsMissingSelectedFieldFromConfig()
+    public void Load_AcceptsMissingSelectedFieldAndDefaultsToFalse()
     {
+        // Since LaunchEntry.Selected is bool (non-nullable value type), a missing
+        // "selected" field in the JSON defaults to false after deserialization.
+        // This is standard JSON semantics — there is no reason to reject a config
+        // file that omits an optional boolean field. The double-JsonDocument pass
+        // (R3.10) used to reject this unnecessarily.
         using var temp = new TempDirectory();
         var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
         [
@@ -113,9 +124,11 @@ public sealed partial class LauncherConfigStoreTests
         ]
         """);
 
-        var exception = Assert.Throws<InvalidDataException>(() => LauncherConfigStore.Load(config));
+        var entries = LauncherConfigStore.Load(config);
 
-        Assert.Equal("Launcher config entry 0 selected is missing.", exception.Message);
+        var entry = Assert.Single(entries);
+        Assert.Equal("demo", entry.Id);
+        Assert.False(entry.Selected);
     }
 
     [Fact]
@@ -137,7 +150,7 @@ public sealed partial class LauncherConfigStoreTests
 
         var exception = Assert.Throws<InvalidDataException>(() => LauncherConfigStore.Load(config));
 
-        Assert.Equal("Launcher config entry 0 must be an object, got Null.", exception.Message);
+        Assert.Equal("Launcher config entry 0 is null.", exception.Message);
     }
 
     [Fact]
@@ -438,8 +451,8 @@ public sealed partial class LauncherConfigStoreTests
         ]
         """);
 
-        // Valid JSON with an unknown field — triggers JsonException via
-        // LauncherJson.Options.UnmappedMemberHandling.Disallow.
+        // Truncated JSON (missing closing bracket) — triggers JsonException
+        // regardless of UnmappedMemberHandling mode.
         File.WriteAllText(config, """
         [
           {
@@ -447,10 +460,7 @@ public sealed partial class LauncherConfigStoreTests
             "name": "x",
             "directory": "D:\\x",
             "command": "x",
-            "selected": true,
-            "unknownField": 1
-          }
-        ]
+            "selected": true
         """);
 
         var entries = LauncherConfigStore.Load(config);

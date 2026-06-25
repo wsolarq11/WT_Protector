@@ -106,16 +106,6 @@ public sealed partial class MainWindowViewModel
     partial void OnSelectedPresetChanged(LauncherPresetViewModel? value)
     {
         RefreshSelectionState();
-
-        // Persist last-used preset ID so it is restored on next launch.
-        // Skip persistence during bulk-load/restore operations (handled by
-        // _isLoadingPresets guard in MainWindowViewModel.Presets.Persistence.cs).
-        if (_isLoadingPresets || value is null)
-            return;
-
-        // Use the shared helper — no success status to avoid overwriting the
-        // status bar when the user simply clicks a different preset.
-        TryPersistSettingsChange(s => s with { LastUsedPresetId = value.Id });
     }
 
     /// <summary>

@@ -16,7 +16,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly Func<DateTimeOffset> _utcNow;
     private LauncherPresetFile _presetFile = new();
     private readonly ObservableCollection<LauncherEntryViewModel> _entries = [];
-    private ObservableCollection<LauncherEntryViewModel> _visibleEntries = [];
+    private readonly ObservableCollection<LauncherEntryViewModel> _visibleEntries = [];
     private readonly ObservableCollection<LauncherPresetViewModel> _presets = [];
 
     [ObservableProperty]
@@ -87,6 +87,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ConfigPathDisplay = LauncherMainWindowText.ConfigPathDisplay(configPath, _presetPath);
         _filterText = RequireSettingsText(settings.LastFilterText, "lastFilterText");
         _requireConfirmationForLaunches = settings.RequireConfirmationForLaunches;
+        // The constructor sets _requireConfirmationForLaunches directly (bypassing
+        // the ObservableProperty setter), so OnRequireConfirmationForLaunchesChanged
+        // never fires. Raise PropertyChanged for the presentation properties that
+        // depend on it so Avalonia bindings see the initial values.
+        OnPropertyChanged(nameof(LaunchConfirmationToggleText));
+        OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
         _selectedSortMode = ResolveSortMode(settings.SortMode);
         _settings = _settings with { SortMode = _selectedSortMode.Id };
         _selectedDisplayMode = ResolveDisplayMode(settings.EntryViewMode);
@@ -124,16 +130,35 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void Refresh()
     {
-        DiscardDragReorderPreview();
-        ReplaceEntries(LauncherConfigStore.Load(_configPath));
-        _settings = _settings with { CustomEntryOrder = LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds()) };
+        try
+        {
+            DiscardDragReorderPreview();
+            ReplaceEntries(LauncherConfigStore.Load(_configPath));
+        }
+        catch (Exception ex)
+        {
+            ErrorLog.Write(ex, "Refresh.LoadConfig");
+            StatusText = $"配置加载失败: {ExceptionMessageFormatter.ForUser(ex)}";
+            return;
+        }
 
-        // Cross-validate $key command references against commandTemplates.
-        ValidateCommandTemplateReferences();
+        try
+        {
+            _settings = _settings with { CustomEntryOrder = LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds()) };
 
-        LoadPresetFile(preferredPresetId: null);
+            // Cross-validate $key command references against commandTemplates.
+            ValidateCommandTemplateReferences();
 
-        ValidatePresetEntryReferences();
+            LoadPresetFile(preferredPresetId: null);
+
+            ValidatePresetEntryReferences();
+        }
+        catch (Exception ex)
+        {
+            ErrorLog.Write(ex, "Refresh.Validate");
+            StatusText = $"配置验证失败: {ExceptionMessageFormatter.ForUser(ex)}";
+            return;
+        }
 
         RefreshSelectionState();
         ApplyFilter();
@@ -234,6 +259,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             foreach (var e in _entries)
             {
+                if (e is null) continue;
                 if (LauncherEntryIds.Same(e.Id, _keyboardFocusedEntryId))
                     e.IsKeyboardFocused = false;
             }
@@ -246,6 +272,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             foreach (var e in _entries)
             {
+                if (e is null) continue;
                 if (LauncherEntryIds.Same(e.Id, value))
                     e.IsKeyboardFocused = true;
             }

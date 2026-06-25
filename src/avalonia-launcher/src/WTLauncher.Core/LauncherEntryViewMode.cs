@@ -16,6 +16,8 @@ public static class LauncherEntryViewModes
     public static string NormalizeId(string? entryViewMode)
     {
         var normalized = (entryViewMode ?? string.Empty).Trim();
+        if (normalized.Length == 0)
+            throw new InvalidDataException("Launcher entry view mode is required.");
         return normalized switch
         {
             CardsId => CardsId,

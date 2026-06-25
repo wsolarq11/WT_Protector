@@ -30,7 +30,7 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void PresetStore_RejectsUnknownPresetFieldsFromConfig()
+    public void PresetStore_SilentlySkipsUnknownPresetFieldsFromConfig()
     {
         using var temp = new TempDirectory();
         var presetPath = WriteConfigDirectoryFile(temp.Path, LauncherPresetStore.PresetsFileName, """
@@ -48,9 +48,13 @@ public sealed partial class LauncherConfigStoreTests
         }
         """);
 
-        var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherPresetStore.Load(presetPath));
+        var presets = LauncherPresetStore.Load(presetPath);
 
-        Assert.Contains("shortcut", exception.Message);
+        // Unknown field "shortcut" is silently skipped (forward-compatible).
+        Assert.Equal("daily", presets.DefaultPresetId);
+        var preset = Assert.Single(presets.Presets);
+        Assert.Equal("Daily", preset.Name);
+        Assert.Equal(["one"], preset.EntryIds);
     }
 
     [Fact]

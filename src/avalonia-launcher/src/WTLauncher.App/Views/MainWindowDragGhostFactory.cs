@@ -52,6 +52,9 @@ public static class MainWindowDragGhostFactory
             BorderBrush = DragHighlightBrush,
             BorderThickness = new Thickness(2),
             CornerRadius = new CornerRadius(LauncherDesignTokens.CardBorderRadius),
+            // Drag ghost opacity (0.86) is an intentional visual design token
+            // that provides sufficient transparency to see underlying content
+            // while maintaining readability of the dragged entry text.
             Opacity = 0.86,
             IsHitTestVisible = false,
             // Drag ghost shadow uses alpha 22 (0x22 ≈ 13 %) vs CardBoxShadow alpha 12 (0x12 ≈ 7 %).

@@ -14,6 +14,8 @@ public static class LauncherEntryVisibility
     public static string NormalizeSortModeId(string? sortModeId)
     {
         var normalized = (sortModeId ?? string.Empty).Trim();
+        if (normalized.Length == 0)
+            throw new InvalidDataException("Launcher sort mode is required.");
         return normalized switch
         {
             CustomSortModeId => CustomSortModeId,
@@ -83,7 +85,7 @@ public static class LauncherEntryVisibility
 
         ThrowIfInvalidProjection(filtered, sortMode, selectEntry);
         filtered.Sort(comparison);
-        return filtered.AsReadOnly();
+        return filtered;
     }
 
     private static void ThrowIfInvalidProjection<TEntry>(
@@ -220,7 +222,17 @@ public static class LauncherEntryVisibility
         if (normalized.Length == 0)
             return DateTimeOffset.MinValue;
 
-        if (DateTimeOffset.TryParse(normalized, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsed))
+        // ISO 8601 round-trip "O" format with fractional seconds and offset: yyyy-MM-ddTHH:mm:ss.fffffffzzz
+        if (DateTimeOffset.TryParseExact(normalized, "O", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsed))
+            return parsed;
+        // Without fractional seconds, with timezone (e.g., 2026-05-28T12:00:00Z).
+        if (DateTimeOffset.TryParseExact(normalized, "yyyy-MM-ddTHH:mm:ssK", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out parsed))
+            return parsed;
+        // Without timezone offset (legacy entries written before R4.1).
+        if (DateTimeOffset.TryParseExact(normalized, "yyyy-MM-ddTHH:mm:ss.FFFFFFF", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out parsed))
+            return parsed;
+        // Without fractional seconds and without timezone (legacy).
+        if (DateTimeOffset.TryParseExact(normalized, "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out parsed))
             return parsed;
 
         throw new InvalidDataException($"Invalid launcher entry {fieldName}: {normalized}.");

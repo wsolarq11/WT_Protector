@@ -50,7 +50,10 @@ internal static class ErrorLog
         // For a desktop launcher, concurrent error bursts are extremely rare,
         // and queuing would risk unbounded memory growth during failure cascades.
         if (Interlocked.Exchange(ref _isWriting, 1) == 1)
+        {
+            Debug.WriteLine("[ErrorLog] Concurrent write dropped — another write is in progress.");
             return;
+        }
 
         try
         {
@@ -94,11 +97,10 @@ internal static class ErrorLog
                 File.Move(logPath, oldPath, overwrite: true);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Best-effort — if rotation fails we simply append to the
-            // existing (possibly over-limit) file. Logging must never
-            // cause a secondary crash.
+            Debug.WriteLine($"[ErrorLog] Rotation failed: {ex.Message}");
+            Trace.WriteLine($"[ErrorLog] Rotation failed: {ex.Message}");
         }
     }
 }

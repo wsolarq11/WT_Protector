@@ -76,6 +76,7 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
+          "schemaVersion": 1,
           "lastFilterText": null,
           "sortMode": "custom",
           "entryViewMode": "cards",
@@ -99,6 +100,7 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
+          "schemaVersion": 1,
           "lastFilterText": "",
           "sortMode": null,
           "entryViewMode": "cards",
@@ -122,6 +124,7 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
+          "schemaVersion": 1,
           "lastFilterText": "",
           "sortMode": " ",
           "entryViewMode": "cards",
@@ -145,6 +148,7 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
+          "schemaVersion": 1,
           "lastFilterText": "",
           "sortMode": "custom",
           "entryViewMode": null,
@@ -168,6 +172,7 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
+          "schemaVersion": 1,
           "lastFilterText": "",
           "sortMode": "custom",
           "entryViewMode": "cards",
@@ -186,43 +191,65 @@ public sealed partial class LauncherConfigStoreTests
     }
 
     [Fact]
-    public void SettingsStore_RejectsUnusedThemeFieldFromConfig()
+    public void SettingsStore_SilentlySkipsUnknownFieldsFromConfig()
     {
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
+          "schemaVersion": 1,
           "theme": "light",
-          "customEntryOrder": []
+          "lastFilterText": "",
+          "sortMode": "custom",
+          "entryViewMode": "cards",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": [],
+          "window": {
+            "width": 1180,
+            "height": 760
+          }
         }
         """);
 
-        var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherSettingsStore.Load(settings));
+        var loaded = LauncherSettingsStore.Load(settings);
 
-        Assert.Contains("theme", exception.Message);
+        // Unknown field "theme" is silently skipped (forward-compatible).
+        Assert.Equal("custom", loaded.SortMode);
+        Assert.Equal("cards", loaded.EntryViewMode);
     }
 
     [Fact]
-    public void SettingsStore_RejectsWrongCaseSettingFieldsFromConfig()
+    public void SettingsStore_SilentlySkipsWrongCaseSettingFieldsFromConfig()
     {
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
-          "SortMode": "custom",
-          "customEntryOrder": []
+          "schemaVersion": 1,
+          "SortMode": "alphabetical",
+          "lastFilterText": "",
+          "sortMode": "custom",
+          "entryViewMode": "cards",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": [],
+          "window": {
+            "width": 1180,
+            "height": 760
+          }
         }
         """);
 
-        var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherSettingsStore.Load(settings));
+        var loaded = LauncherSettingsStore.Load(settings);
 
-        Assert.Contains("SortMode", exception.Message);
+        // Wrong-case "SortMode" is silently skipped; correct "sortMode" is used.
+        Assert.Equal("custom", loaded.SortMode);
     }
 
     [Fact]
-    public void SettingsStore_RejectsMissingWindowFieldFromConfig()
+    public void SettingsStore_MissingWindowFieldDefaultsToNewWindow()
     {
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
+          "schemaVersion": 1,
           "lastFilterText": "",
           "sortMode": "custom",
           "entryViewMode": "cards",
@@ -231,9 +258,11 @@ public sealed partial class LauncherConfigStoreTests
         }
         """);
 
-        var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherSettingsStore.Load(settings));
+        var loaded = LauncherSettingsStore.Load(settings);
 
-        Assert.Contains("window", exception.Message);
+        Assert.NotNull(loaded.Window);
+        Assert.Equal(LauncherWindowSettings.DefaultWidth, loaded.Window!.Width);
+        Assert.Equal(LauncherWindowSettings.DefaultHeight, loaded.Window!.Height);
     }
 
     [Fact]
@@ -242,6 +271,7 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
+          "schemaVersion": 1,
           "lastFilterText": "",
           "sortMode": "custom",
           "entryViewMode": "cards",
@@ -264,6 +294,7 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
+          "schemaVersion": 1,
           "lastFilterText": "",
           "sortMode": "custom",
           "entryViewMode": "cards",
@@ -286,6 +317,7 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, $$"""
         {
+          "schemaVersion": 1,
           "lastFilterText": "",
           "sortMode": "custom",
           "entryViewMode": "cards",
@@ -311,6 +343,7 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, $$"""
         {
+          "schemaVersion": 1,
           "lastFilterText": "",
           "sortMode": "custom",
           "entryViewMode": "cards",
@@ -363,6 +396,7 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
+          "schemaVersion": 1,
           "lastFilterText": "",
           "sortMode": "custom",
           "entryViewMode": "cards",
@@ -386,6 +420,7 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
+          "schemaVersion": 1,
           "lastFilterText": "",
           "sortMode": "custom",
           "entryViewMode": "cards",
@@ -409,6 +444,7 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
+          "schemaVersion": 1,
           "lastFilterText": "",
           "sortMode": "custom",
           "entryViewMode": "cards",
@@ -432,6 +468,7 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
+          "schemaVersion": 1,
           "lastFilterText": "",
           "sortMode": " missing ",
           "entryViewMode": "cards",
@@ -455,6 +492,7 @@ public sealed partial class LauncherConfigStoreTests
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
         {
+          "schemaVersion": 1,
           "lastFilterText": "",
           "sortMode": "custom",
           "entryViewMode": " missing ",
@@ -744,11 +782,11 @@ public sealed partial class LauncherConfigStoreTests
 
         var exception = Assert.Throws<InvalidDataException>(() => LauncherSettingsStore.Load(settings));
 
-        Assert.Equal("Launcher settings schema version mismatch: expected 1, got 2.", exception.Message);
+        Assert.Equal("Launcher settings schema version 2 is from a newer version of the app. Please upgrade WT Launcher.", exception.Message);
     }
 
     [Fact]
-    public void SettingsStore_MissingSchemaVersionDefaultsTo1AndLoads()
+    public void SettingsStore_MissingSchemaVersionThrowsJsonException()
     {
         using var temp = new TempDirectory();
         var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
@@ -765,10 +803,9 @@ public sealed partial class LauncherConfigStoreTests
         }
         """);
 
-        var loaded = LauncherSettingsStore.Load(settings);
+        var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherSettingsStore.Load(settings));
 
-        Assert.Equal(1, loaded.SchemaVersion);
-        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, loaded.SortMode);
+        Assert.Contains("schemaVersion", exception.Message);
     }
 
     [Fact]
@@ -811,8 +848,8 @@ public sealed partial class LauncherConfigStoreTests
         }
         """);
 
-        // Valid JSON with an unknown field — triggers JsonException via
-        // LauncherJson.Options.UnmappedMemberHandling.Disallow.
+        // Truncated JSON (missing closing brace) — triggers JsonException
+        // regardless of UnmappedMemberHandling mode.
         File.WriteAllText(settingsPath, """
         {
           "schemaVersion": 1,
@@ -823,9 +860,6 @@ public sealed partial class LauncherConfigStoreTests
           "window": {
             "width": 1180,
             "height": 760
-          },
-          "unknownField": 1
-        }
         """);
 
         var loaded = LauncherSettingsStore.Load(settingsPath);

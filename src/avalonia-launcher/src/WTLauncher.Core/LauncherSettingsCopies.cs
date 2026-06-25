@@ -18,8 +18,8 @@ internal static class LauncherSettingsCopies
             CustomEntryOrder = settings.CustomEntryOrder,
             SearchHistory = settings.SearchHistory,
             Window = settings.Window,
-            // SchemaVersion is not serialized ([JsonIgnore]) but we explicitly
-            // pin it to 1 so any non-serialization use of the clone is safe.
+            // SchemaVersion is serialized as "schemaVersion". We pin it to 1
+            // to ensure the clone conforms to the current schema.
             SchemaVersion = 1,
         };
     }

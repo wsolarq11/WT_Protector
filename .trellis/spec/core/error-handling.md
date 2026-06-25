@@ -73,31 +73,29 @@ private static string RequireEntryId(string? id, int index, HashSet<string> seen
 
 ---
 
-## Snapshot-Rollback Pattern
+## Snapshot-Rollback Pattern → Stage-All-Then-Commit (2026-06-25)
 
-**Source:** `LauncherEntryMutationPersistence.cs`, `LauncherEntryMutationSnapshot.cs`
+**Source:** `LauncherEntryMutationPersistence.Save()`
 
-```
-1. Capture snapshot (deep clone of entries + presets + settings)
-2. Perform mutations
-3. Save all files (config → presets → settings)
-4. If any save fails:
-   a. Restore config from snapshot
-   b. Restore presets from snapshot (if they were affected)
-   c. Return composite error message
-```
+The old snapshot-rollback pattern (save config → on failure, rollback config; save presets → on failure, rollback both) has been replaced with **stage-all-then-commit**:
 
 ```csharp
-// Persistence returns null on success, error string on failure
-public static string? Save(...)
-{
-    var configSaveFailure = LauncherConfigMutationPersistence.Save(entries, configPath);
-    if (configSaveFailure is not null)
-        return configSaveFailure;
-    // ... cascade through presets, settings ...
-    return null; // success
-}
+// Stage: write all files to temp paths
+var configTemp = configPath + $".stage-{Guid.NewGuid():N}";
+LauncherJson.Save(configClone, configTemp, backup: false);
+// ... repeat for presets, settings ...
+
+// Commit: atomically rename all staged files
+File.Move(configTemp, configPath, overwrite: true);
+// ... repeat for presets, settings ...
 ```
+
+**Key properties:**
+- If staging fails, originals are untouched (no rollback needed).
+- `File.Move` on the same NTFS volume is atomic.
+- All three files are either fully committed or not — no cross-file inconsistency window.
+
+**When snapshot-rollback is still appropriate:** Single mutations that modify in-memory ViewModel state before the save. The snapshot restores the ViewModel, not the files.
 
 ---
 
@@ -161,3 +159,37 @@ internal static class ExceptionMessageFormatter
 - ❌ **Inline string concatenation for status** — use the static text factory method.
 - ❌ **Raw `exception.Message` in UI** — use `ExceptionMessageFormatter.ForUser()`.
 - ❌ **Catching `Exception` without `ExceptionFilters.IsRecoverable(ex)` in UI callbacks** — OOM/StackOverflow must propagate.
+- ❌ **`File.Delete` in `finally` block without its own try/catch** — a cleanup failure replaces the original exception. Always wrap cleanup in try/catch.
+- ❌ **`Debug.WriteLine` without `Trace.WriteLine` for diagnostics in Core layer** — `Debug.WriteLine` is stripped in Release builds. Core can't reference `ErrorLog` (App layer). Always pair with `Trace.WriteLine` for Release-safe diagnostics.
+
+## Finally-Block Safety (2026-06-25)
+
+Cleanup code in `finally` blocks must never throw, because a `finally` exception **replaces** the original exception from the `try` block:
+
+```csharp
+// CORRECT: wrap cleanup in its own try/catch
+finally
+{
+    try
+    {
+        if (File.Exists(tempPath))
+            File.Delete(tempPath);
+    }
+    catch
+    {
+        // Best-effort cleanup — don't replace the original exception.
+    }
+}
+```
+
+## Release Build Diagnostics (2026-06-25)
+
+Core layer (no App dependency) uses `Trace.WriteLine` as the Release-safe fallback:
+
+```csharp
+var msg = $"[LauncherJson] Backup rotation failed: {ex.Message}";
+Debug.WriteLine(msg);   // Debug builds only
+Trace.WriteLine(msg);   // Release builds with trace listener
+```
+
+App layer uses `ErrorLog.Write(ex, context)` which works in all build configurations.

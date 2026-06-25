@@ -9,6 +9,7 @@ namespace WTLauncher.Core;
 public sealed record LauncherSettings
 {
     [JsonPropertyName("schemaVersion")]
+    [JsonRequired]
     public int SchemaVersion { get; init; } = 1;
 
     [JsonPropertyName("lastFilterText")]
@@ -37,14 +38,7 @@ public sealed record LauncherSettings
     [JsonPropertyName("searchHistory")]
     public ImmutableList<string> SearchHistory { get; init; } = ImmutableList<string>.Empty;
 
-    /// <summary>L33: Tracks the last-used preset ID so the app restores the same
-    /// preset selection on next launch. Empty string means "use default."
-    /// Not serialized — this is a runtime-only UI preference.</summary>
-    [JsonIgnore]
-    public string LastUsedPresetId { get; init; } = "";
-
     [JsonPropertyName("window")]
-    [JsonRequired]
     public LauncherWindowSettings Window { get; init; } = new();
 }
 

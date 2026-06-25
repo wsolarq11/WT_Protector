@@ -61,14 +61,13 @@ public sealed class LauncherSettingsMutationPersistenceTests
         var snapshot = LauncherSettingsSnapshot.Capture(settings);
         settings = settings with { SortMode = "missing" };
 
-        var exception = Assert.Throws<InvalidDataException>(() =>
-        {
-            var s = settings;
-            LauncherSettingsMutationPersistence.Save(ref s, settingsPath, snapshot);
-        });
+        var saveFailure = LauncherSettingsMutationPersistence.Save(
+            ref settings,
+            settingsPath,
+            snapshot);
 
-        Assert.Equal("Unknown launcher sort mode: missing.", exception.Message);
-        Assert.Equal("missing", settings.SortMode);
+        Assert.NotNull(saveFailure);
+        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, settings.SortMode);
         Assert.False(File.Exists(settingsPath));
     }
 

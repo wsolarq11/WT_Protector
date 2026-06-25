@@ -39,6 +39,7 @@ public sealed partial class MainWindow : Window
     private const double CardsRegionHorizontalChromeWidth = 48;
     private const double CardsRegionVerticalChromeHeight = 270;
     private int _keyboardFocusIndex;
+    private int _pendingScrollRestoreVersion;
 
     public MainWindow()
     {
@@ -151,12 +152,23 @@ public sealed partial class MainWindow : Window
     private bool HandleKeyboardNavigation(KeyEventArgs e, MainWindowViewModel viewModel)
     {
         var visibleCount = viewModel.VisibleEntries.Count;
+
+        // R3.19: Revalidate keyboard focus index when visible entries change
+        // (filter, sort, view mode switch). If the focused entry is no longer
+        // visible, reset focus to avoid an index out of bounds.
+        if (_keyboardFocusIndex >= visibleCount)
+        {
+            _keyboardFocusIndex = -1;
+            viewModel.KeyboardFocusedEntryId = null;
+        }
+
         if (visibleCount == 0)
         {
             if (e.Key == Key.Escape)
             {
                 viewModel.FilterText = "";
                 _keyboardFocusIndex = -1;
+                viewModel.KeyboardFocusedEntryId = null;
                 e.Handled = true;
                 return true;
             }
@@ -176,7 +188,7 @@ public sealed partial class MainWindow : Window
                 viewModel.KeyboardFocusedEntryId = viewModel.VisibleEntries[_keyboardFocusIndex].Id;
                 e.Handled = true;
                 return true;
-            case Key.Enter when !searchFocused:
+            case Key.Enter or Key.Space when !searchFocused:
                 if (_keyboardFocusIndex >= 0 && _keyboardFocusIndex < visibleCount)
                 {
                     var entry = viewModel.VisibleEntries[_keyboardFocusIndex];
@@ -227,7 +239,10 @@ public sealed partial class MainWindow : Window
         }
 
         // F13b: Restore scroll position of the new view mode after layout completes.
-        Dispatcher.UIThread.Post(RestoreCurrentScrollOffset, DispatcherPriority.Loaded);
+        // Cancel any pending scroll-restore callback from a previous view-mode switch.
+        // Without this, rapid switches queue multiple callbacks that execute with stale state.
+        var restoreVersion = ++_pendingScrollRestoreVersion;
+        Dispatcher.UIThread.Post(() => RestoreCurrentScrollOffset(restoreVersion), DispatcherPriority.Loaded);
     }
 
     private void SaveScrollOffsetForMode(LauncherEntryViewMode mode, MainWindowViewModel viewModel)
@@ -246,8 +261,13 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void RestoreCurrentScrollOffset()
+    private void RestoreCurrentScrollOffset(int restoreVersion)
     {
+        // If a newer view-mode switch has queued a fresh restore, bail out.
+        // This prevents stale callbacks from executing with outdated state.
+        if (restoreVersion != _pendingScrollRestoreVersion)
+            return;
+
         if (DataContext is not MainWindowViewModel viewModel)
             return;
 

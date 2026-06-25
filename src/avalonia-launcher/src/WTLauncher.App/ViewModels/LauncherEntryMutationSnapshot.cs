@@ -25,7 +25,7 @@ public sealed class LauncherEntryMutationSnapshot
 
     public LauncherPresetFile PresetFile => ClonePresetFile();
 
-    public IReadOnlyList<string> CustomEntryOrder => CloneCustomEntryOrder();
+    public IReadOnlyList<string> CustomEntryOrder => GetCustomEntryOrder();
 
     public string? SelectedPresetId { get; }
 
@@ -52,7 +52,7 @@ public sealed class LauncherEntryMutationSnapshot
         return LauncherPresetFiles.Clone(_presetFile);
     }
 
-    public ImmutableList<string> CloneCustomEntryOrder()
+    public ImmutableList<string> GetCustomEntryOrder()
     {
         return _customEntryOrder;
     }

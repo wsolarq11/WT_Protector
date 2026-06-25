@@ -183,6 +183,66 @@ var presetClone = LauncherPresetFiles.Clone(presetFile);
 - ❌ **Magic strings for identifiers** — use `const` fields from the paired helper class.
 - ❌ **Avalonia or CommunityToolkit types in Core** — zero UI dependencies in Layer 0.
 - ❌ **`Dictionary<string, object>` or `dynamic`** — always define a typed record or class.
+- ❌ **`Substring(0, N)` or `[..N]` without surrogate-pair boundary check** — truncation mid-surrogate produces illegal UTF-16. Always use `char.IsHighSurrogate(span[^1])` guard before truncating.
+- ❌ **`char.IsControl()` without also checking `UnicodeCategory.Format`** — BiDi overrides (U+202A-U+202E), zero-width spaces (U+200B), and LTR/RTL marks pass through `IsControl`. Use `char.GetUnicodeCategory(ch) is UnicodeCategory.Control or UnicodeCategory.Format` for complete unsafe-character stripping.
+- ❌ **Missing Unicode normalization on IDs and cross-reference keys** — NFC "café" and NFD "café" must be treated as the same ID. Apply `Normalize(NormalizationForm.FormC)` to all ID-like fields before comparison/storage.
+
+---
+
+## String Safety — Unicode and Surrogate Pairs (2026-06-25)
+
+### Safe Truncation Rule
+
+Any code that truncates a string to a maximum length MUST check for surrogate pair boundaries. Truncating between a high surrogate (U+D800..U+DBFF) and its paired low surrogate (U+DC00..U+DFFF) produces an illegal UTF-16 string.
+
+```csharp
+// CORRECT: truncate at code-point boundary
+if (value.Length > MaxLength)
+{
+    var span = value.AsSpan(0, MaxLength);
+    if (char.IsHighSurrogate(span[^1]) && value.Length > MaxLength + 1)
+        span = value.AsSpan(0, MaxLength + 1);
+    value = span.ToString();
+}
+```
+
+**Applies to:** `LauncherEntryIds.Normalize()`, `LauncherPresetIds.Normalize()`, and any future truncation.
+
+### Unsafe Character Stripping Rule
+
+Command-line argument strings (name, directory, command) MUST strip BOTH control characters (Cc category) AND format characters (Cf category). Format characters include:
+- BiDi overrides (U+202A–U+202E) — can visually reverse paths in terminal output (CVE-2021-42578 class)
+- Zero-width spaces (U+200B) — invisible but semantically significant
+- LTR/RTL marks (U+200E/U+200F) — alter text direction in terminals
+
+```csharp
+// CORRECT: strip both categories
+var cat = char.GetUnicodeCategory(ch);
+if (cat is UnicodeCategory.Control or UnicodeCategory.Format)
+    continue;
+```
+
+### Unicode Normalization for IDs
+
+All cross-reference keys (entry IDs, preset IDs) MUST be normalized to FormC (canonical composition). Without normalization, NFC `"café"` (1 code point) and NFD `"café"` (2 code points) are treated as different IDs, silently breaking preset→entry references.
+
+```csharp
+var normalized = id.Trim().Normalize(NormalizationForm.FormC);
+```
+
+**Applies to:** `LauncherEntryIds.Normalize()` — `LauncherPresetIds.Normalize()` already applies FormKC, which is a superset of FormC.
+
+### Percent-Sign Injection After FormKC
+
+FormKC normalization converts fullwidth characters to ASCII. Fullwidth percent (U+FF05 `％`) normalizes to ASCII `%` (U+0025). If `Environment.ExpandEnvironmentVariables()` runs AFTER FormKC normalization, an attacker can inject environment-variable expansion through a fullwidth percent.
+
+```csharp
+// CORRECT: detect % appearing only after normalization
+if (normalized.Contains('%') && !original.Contains('%', StringComparison.Ordinal))
+    throw new InvalidOperationException("Directory contains characters that normalize to '%'");
+```
+
+**Applies to:** `LaunchArgumentBuilder.Build()` — directory path processing.
 
 ---
 

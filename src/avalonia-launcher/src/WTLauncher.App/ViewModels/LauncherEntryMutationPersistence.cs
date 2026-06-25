@@ -4,6 +4,8 @@ namespace WTLauncher.App.ViewModels;
 
 public static class LauncherEntryMutationPersistence
 {
+    private const int MaxBackups = 3;
+
     public static string? Save(
         IEnumerable<LaunchEntry> entries,
         string configPath,
@@ -19,77 +21,167 @@ public static class LauncherEntryMutationPersistence
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(rollbackSnapshot);
 
-        var configSaveFailure = LauncherConfigMutationPersistence.Save(entries, configPath);
-        if (configSaveFailure is not null)
+        // Stage phase: write all files to temp paths.
+        // If any write fails, originals are untouched — we discard the temp files
+        // and return the error. No file-level rollback is needed because originals
+        // were never modified.
+        var configTempPath = configPath + $".stage-{Guid.NewGuid():N}";
+        var presetTempPath = presetPath + $".stage-{Guid.NewGuid():N}";
+        var settingsTempPath = settingsPath + $".stage-{Guid.NewGuid():N}";
+
+        // Stage config.
+        try
         {
-            return configSaveFailure;
+            LauncherConfigStore.Save(entries, configTempPath, backup: false);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or System.Security.SecurityException)
+        {
+            TryDelete(configTempPath);
+            return LauncherPersistenceStatus.ConfigSaveFailed(ex);
         }
 
+        // Stage presets (optional).
         if (savePresets)
         {
-            var presetSaveFailure = LauncherPresetMutationPersistence.Save(presetFile, presetPath);
-            if (presetSaveFailure is not null)
+            try
             {
-                return RestoreSnapshotOnPersistenceFailure(
-                    rollbackSnapshot,
-                    configPath,
-                    presetPath,
-                    restorePresets: true,
-                    currentStatus: presetSaveFailure);
+                LauncherPresetStore.Save(presetFile, presetTempPath, backup: false);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or System.Security.SecurityException)
+            {
+                TryDelete(configTempPath);
+                TryDelete(presetTempPath);
+                return LauncherPersistenceStatus.PresetSaveFailed(ex);
             }
         }
 
+        // Stage settings. InvalidDataException intentionally propagates here —
+        // invalid settings data is a programming error that should surface,
+        // not be silently converted to a status message.
         try
         {
-            LauncherSettingsStore.Save(settings, settingsPath);
+            LauncherSettingsStore.Save(settings, settingsTempPath, backup: false);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
-            return RestoreSnapshotOnPersistenceFailure(
-                rollbackSnapshot,
-                configPath,
-                presetPath,
-                restorePresets: savePresets,
-                currentStatus: LauncherPersistenceStatus.SettingsSaveFailed(ex));
+            TryDelete(configTempPath);
+            TryDelete(presetTempPath);
+            TryDelete(settingsTempPath);
+            return LauncherPersistenceStatus.SettingsSaveFailed(ex);
+        }
+
+        // Commit phase: backup rotation on originals (best-effort), then
+        // atomically rename each staged file to its final path.
+        // File.Move is atomic on the same volume (NTFS). Each rename has its
+        // own error handler so we can report which specific file failed.
+        // Once a rename succeeds, that file is committed and cannot be undone.
+        // This is acceptable because commit failures are extremely rare in
+        // production — all paths are validated at app startup.
+
+        // Commit config.
+        try
+        {
+            TryBackupOriginal(configPath);
+            File.Move(configTempPath, configPath, overwrite: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            TryDelete(configTempPath);
+            TryDelete(presetTempPath);
+            TryDelete(settingsTempPath);
+            return LauncherPersistenceStatus.ConfigSaveFailed(ex);
+        }
+
+        // Commit presets (optional).
+        if (savePresets)
+        {
+            try
+            {
+                TryBackupOriginal(presetPath);
+                File.Move(presetTempPath, presetPath, overwrite: true);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+            {
+                TryDelete(presetTempPath);
+                TryDelete(settingsTempPath);
+                return LauncherPersistenceStatus.PresetSaveFailed(ex);
+            }
+        }
+
+        // Commit settings.
+        try
+        {
+            TryBackupOriginal(settingsPath);
+            File.Move(settingsTempPath, settingsPath, overwrite: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            TryDelete(settingsTempPath);
+            return LauncherPersistenceStatus.SettingsSaveFailed(ex);
         }
 
         return null;
     }
 
-    private static string RestoreSnapshotOnPersistenceFailure(
-        LauncherEntryMutationSnapshot snapshot,
-        string configPath,
-        string presetPath,
-        bool restorePresets,
-        string currentStatus)
+    /// <summary>Best-effort file deletion. Intentionally silent — cleanup
+    /// should never mask the original error.</summary>
+    private static void TryDelete(string path)
     {
-        // WARNING: Config and preset rollback are independent — one can succeed while the
-        // other fails. If config rollback succeeds but preset rollback fails, the config
-        // and presets files will be inconsistent (config rolled back, presets not). This
-        // is intentionally best-effort: an inconsistent state after a double failure is
-        // less bad than losing data from the original save attempt.
-        List<string> restoreErrors = [];
         try
         {
-            LauncherConfigStore.Save(snapshot.CloneEntries(), configPath, backup: false);
+            if (File.Exists(path))
+                File.Delete(path);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        catch
         {
-            restoreErrors.Add($"config: {ex.Message}");
+            // Best-effort cleanup.
         }
+    }
 
-        if (restorePresets)
+    /// <summary>Best-effort backup rotation and .bak copy of the original file.
+    /// Failures are silently ignored — backup is a convenience, not a contract.</summary>
+    private static void TryBackupOriginal(string fullPath)
+    {
+        if (!File.Exists(fullPath))
+            return;
+
+        try
         {
+            RotateBackupChain(fullPath);
+            var bakTempPath = fullPath + $".bak-tmp-{Guid.NewGuid():N}";
+            File.Copy(fullPath, bakTempPath, overwrite: true);
+            File.Move(bakTempPath, fullPath + ".bak", overwrite: true);
+        }
+        catch
+        {
+            // Best-effort — backup rotation failures are non-fatal.
+        }
+    }
+
+    /// <summary>Rotate the .bak, .bak.1, .bak.2 chain for the given file.
+    /// Mirrors LauncherJson.RotateBackups for use outside the save pipeline.</summary>
+    private static void RotateBackupChain(string fullPath)
+    {
+        for (var i = MaxBackups - 1; i >= 0; i--)
+        {
+            var oldPath = i == 0 ? fullPath + ".bak" : fullPath + $".bak.{i}";
+            var newPath = fullPath + $".bak.{i + 1}";
+
             try
             {
-                LauncherPresetStore.Save(snapshot.ClonePresetFile(), presetPath, backup: false);
+                if (i == MaxBackups - 1)
+                    File.Delete(oldPath);
+                else
+                    File.Move(oldPath, newPath, overwrite: true);
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+            catch (FileNotFoundException)
             {
-                restoreErrors.Add($"presets: {ex.Message}");
+                // Best-effort: the backup file doesn't exist — nothing to rotate.
+            }
+            catch (DirectoryNotFoundException)
+            {
+                // Best-effort: the backup directory doesn't exist — nothing to rotate.
             }
         }
-
-        return LauncherPersistenceStatus.RollbackFailed(currentStatus, restoreErrors);
     }
 }

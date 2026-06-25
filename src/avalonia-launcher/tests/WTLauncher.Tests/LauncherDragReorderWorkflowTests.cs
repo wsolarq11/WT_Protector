@@ -69,7 +69,8 @@ public sealed class LauncherDragReorderWorkflowTests
         LauncherSettingsStore.Save(settings, settingsPath);
 
         var workflow = new LauncherDragReorderWorkflow(settings, settingsPath, entries);
-        workflow.Begin(isCustomSortMode: true, draggedEntryId: "three");
+        var beginResult = workflow.Begin(isCustomSortMode: true, draggedEntryId: "three");
+        Assert.False(beginResult); // No prior session to restore
 
         var (accepted, refreshEntries) = workflow.Preview(
             isCustomSortMode: true,
@@ -152,6 +153,7 @@ public sealed class LauncherDragReorderWorkflowTests
 
         var (status, refreshEntries) = workflow.Commit(isCustomSortMode: false);
 
+        Assert.True(workflow.HasActiveSession);
         Assert.Null(status);
         Assert.False(refreshEntries);
     }

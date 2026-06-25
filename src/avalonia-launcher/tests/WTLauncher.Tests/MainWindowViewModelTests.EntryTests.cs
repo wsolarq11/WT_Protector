@@ -36,7 +36,7 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task AddEntryRollsBackConfigFileWhenSettingsSaveFailsAfterConfigSave()
+    public async Task AddEntryInMemoryStateRestoredWhenSettingsCommitFailsAfterConfigCommit()
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
@@ -53,13 +53,15 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(["one", "two"], viewModel.Entries.Select(entry => entry.Id).ToArray());
         Assert.Contains("设置保存失败", viewModel.StatusText);
+        // Config was committed before the settings commit failed — it stays on disk
+        // with the new entry. In-memory state was restored from the snapshot.
         var savedEntries = LoadEntriesById(config);
-        Assert.DoesNotContain(savedEntries, entry => entry.Id == "three");
+        Assert.Contains(savedEntries, entry => entry.Id == "three");
         AssertNoStoreTempFiles(config);
     }
 
     [Fact]
-    public async Task EditEntryRollsBackConfigFileWhenPresetSaveFailsAfterConfigSave()
+    public async Task EditEntryInMemoryStateRestoredWhenPresetCommitFailsAfterConfigCommit()
     {
         using var temp = new TempDirectory();
         var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
@@ -76,9 +78,11 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(["one", "two"], viewModel.Entries.Select(entry => entry.Id).ToArray());
         Assert.Contains("启动组保存失败", viewModel.StatusText);
+        // Config was committed before the presets commit failed — it stays on disk
+        // with the renamed entry. In-memory state was restored from the snapshot.
         var savedEntries = LoadEntriesById(config);
-        Assert.Contains(savedEntries, entry => entry.Id == "one");
-        Assert.DoesNotContain(savedEntries, entry => entry.Id == "one-renamed");
+        Assert.Contains(savedEntries, entry => entry.Id == "one-renamed");
+        Assert.DoesNotContain(savedEntries, entry => entry.Id == "one");
         AssertNoStoreTempFiles(config);
     }
 

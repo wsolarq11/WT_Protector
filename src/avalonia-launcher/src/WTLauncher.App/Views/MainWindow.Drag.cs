@@ -26,17 +26,25 @@ public sealed partial class MainWindow
 
     private async void OnEntryDragPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (DataContext is not MainWindowViewModel { IsCustomSortMode: true } viewModel)
-            return;
-        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
-            return;
+        try
+        {
+            if (DataContext is not MainWindowViewModel { IsCustomSortMode: true } viewModel)
+                return;
+            if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+                return;
 
-        var resolved = MainWindowEntryCardResolver.ResolveFromSource(sender);
-        if (resolved is null)
-            return;
+            var resolved = MainWindowEntryCardResolver.ResolveFromSource(sender);
+            if (resolved is null)
+                return;
 
-        var (item, card) = resolved.Value;
-        await DoDragReorderAsync(viewModel, item, card, e);
+            var (item, card) = resolved.Value;
+            await DoDragReorderAsync(viewModel, item, card, e);
+        }
+        catch (Exception ex)
+        {
+            ErrorLog.Write(ex, "DragPointerPressed");
+            e.Handled = true;
+        }
     }
 
     private async Task DoDragReorderAsync(
@@ -49,8 +57,12 @@ public sealed partial class MainWindow
         MainWindowDragEntryTransfer.SetEntryId(data, item.Id);
         e.Handled = true;
         _activeDragEntryId = item.Id;
+        _lastDragInsertAfterDecision = false;
         viewModel.BeginDragReorder(item.Id);
         ShowDragGhost(item, card, e);
+
+        // R3.21: Disable display mode ComboBox during active drag.
+        DisplayModeComboBox.IsEnabled = false;
 
         // P2: Suppress 0.12s XAML transitions on all card entries during drag.
         SuppressDragTransitions(true);
@@ -72,6 +84,7 @@ public sealed partial class MainWindow
             HideDragGhost();
             FinishDragReorder(viewModel, effect);
             _activeDragEntryId = null;
+            DisplayModeComboBox.IsEnabled = true;
         }
     }
 

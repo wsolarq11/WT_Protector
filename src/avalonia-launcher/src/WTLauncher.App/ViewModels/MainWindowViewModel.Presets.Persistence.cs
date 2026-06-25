@@ -5,23 +5,10 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
-    /// <summary>L33: Guards against persisting LastUsedPresetId during bulk-load
-    /// and rollback-restore operations where SelectedPreset is assigned but the
-    /// change should not be treated as a user-initiated selection.</summary>
-    private bool _isLoadingPresets;
-
     private void LoadPresetFile(string? preferredPresetId)
     {
-        _isLoadingPresets = true;
-        try
-        {
-            var presetFile = LauncherPresetStore.Load(_presetPath);
-            ApplyPresetFileState(presetFile, preferredPresetId);
-        }
-        finally
-        {
-            _isLoadingPresets = false;
-        }
+        var presetFile = LauncherPresetStore.Load(_presetPath);
+        ApplyPresetFileState(presetFile, preferredPresetId);
     }
 
     private void ApplyPresetFileState(LauncherPresetFile presetFile, string? preferredPresetId)

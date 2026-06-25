@@ -15,27 +15,48 @@ public static class LauncherSettingsStore
         LauncherSettings LoadAndValidate(string path)
         {
             var settings = LauncherJson.LoadRequired<LauncherSettings>(path, "Launcher settings");
-            if (settings.SchemaVersion != ExpectedSettingsSchemaVersion)
-                throw new InvalidDataException($"Launcher settings schema version mismatch: expected {ExpectedSettingsSchemaVersion}, got {settings.SchemaVersion}.");
+
+            // Schema migration contract:
+            // - SchemaVersion indicates the format version of this file.
+            // - OLDER versions (schema < expected): rejected — the app cannot read them.
+            // - EXACT version: loaded normally.
+            // - NEWER versions (schema > expected): rejected with an upgrade message.
+            //   This prevents data loss from downgrading after a schema change.
+            // - When bumping ExpectedSchemaVersion, add a migration path that reads
+            //   the old version and transforms it to the new format before validation.
+            if (settings.SchemaVersion < ExpectedSettingsSchemaVersion)
+                throw new InvalidDataException($"Launcher settings schema version {settings.SchemaVersion} is too old (expected at least {ExpectedSettingsSchemaVersion}).");
+            if (settings.SchemaVersion > ExpectedSettingsSchemaVersion)
+                throw new InvalidDataException($"Launcher settings schema version {settings.SchemaVersion} is from a newer version of the app. Please upgrade WT Launcher.");
             return Normalize(settings);
         }
 
         if (File.Exists(settingsPath))
         {
+            Exception? loadException = null;
             try
             {
                 return LoadAndValidate(settingsPath);
             }
-            catch (Exception ex) when (ex is JsonException or InvalidDataException)
+            catch (Exception ex) when (ex is JsonException or InvalidDataException or FileNotFoundException)
+            {
+                loadException = ex;
+            }
+
+            if (loadException is not null)
             {
                 // Main file is corrupt — try .bak recovery.
                 var backupPath = settingsPath + ".bak";
                 if (File.Exists(backupPath))
                 {
-                    File.Copy(backupPath, settingsPath, overwrite: true);
+                    var recoveryTempPath = settingsPath + $".recovery-{Guid.NewGuid():N}";
+                    File.Copy(backupPath, recoveryTempPath, overwrite: true);
+                    File.Move(recoveryTempPath, settingsPath, overwrite: true);
+                    // Retry outside try/catch — if backup is also corrupt, the exception
+                    // propagates naturally without looping.
                     return LoadAndValidate(settingsPath);
                 }
-                throw; // No backup available — propagate original exception.
+                throw loadException; // No backup available — propagate original exception.
             }
         }
 
@@ -43,19 +64,21 @@ public static class LauncherSettingsStore
         var backupPathForMissing = settingsPath + ".bak";
         if (File.Exists(backupPathForMissing))
         {
-            File.Copy(backupPathForMissing, settingsPath);
+            var recoveryTempPath = settingsPath + $".recovery-{Guid.NewGuid():N}";
+            File.Copy(backupPathForMissing, recoveryTempPath, overwrite: true);
+            File.Move(recoveryTempPath, settingsPath, overwrite: true);
             return LoadAndValidate(settingsPath);
         }
 
         return new LauncherSettings();
     }
 
-    public static void Save(LauncherSettings settings, string settingsPath)
+    public static void Save(LauncherSettings settings, string settingsPath, bool backup = true)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ThrowIfSettingsPathMissing(settingsPath);
 
-        LauncherJson.Save(CloneNormalized(settings), settingsPath, backup: true);
+        LauncherJson.Save(CloneNormalized(settings), settingsPath, backup);
     }
 
     public static bool TrySaveWindowBounds(ref LauncherSettings settings, string settingsPath,
@@ -77,11 +100,6 @@ public static class LauncherSettingsStore
         // Close-time bounds persistence must not leave unsaved sizes in memory.
         // Write failures can surface as IOException, UnauthorizedAccessException,
         // or other path/storage exceptions depending on the underlying cause.
-        catch (InvalidDataException)
-        {
-            // Data corruption — propagate, don't swallow at close-time.
-            throw;
-        }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
             return false;
@@ -138,6 +156,12 @@ public static class LauncherSettingsStore
         return normalized.ToImmutableList();
     }
 
+    /// <summary>
+    /// Normalizes and deduplicates the search history list.
+    /// Preserves the caller-provided ordering — earlier items are more recent.
+    /// RecordSearchTerm enforces this contract by inserting new terms at index 0
+    /// (most recent first). This method must not reorder; it only filters and truncates.
+    /// </summary>
     private static ImmutableList<string> RequireSearchHistory(ImmutableList<string>? searchHistory)
     {
         if (searchHistory is null)
@@ -154,16 +178,13 @@ public static class LauncherSettingsStore
                 normalized.Add(trimmed);
         }
 
-        // Keep the first MaxSearchHistoryTerms entries. RecordSearchTerm inserts new terms
-        // at index 0 (most recent first), so this preserves the newest 20 entries.
+        // Keep the first MaxSearchHistoryTerms entries. Because RecordSearchTerm
+        // inserts at index 0 (most recent first), the first N entries are the newest.
         if (normalized.Count > MaxSearchHistoryTerms)
             normalized.RemoveRange(MaxSearchHistoryTerms, normalized.Count - MaxSearchHistoryTerms);
 
         return normalized.ToImmutableList();
     }
-
-    private static string RequireNullableText(string? value, string fieldName) =>
-        value ?? throw new InvalidDataException($"Launcher settings {fieldName} is null.");
 
     private static string NormalizeFilterText(string? value)
     {
@@ -200,10 +221,10 @@ public static class LauncherSettingsStore
         ValidateWindowSize(window.Height, "height");
         // Validate optional position fields. NaN is valid (not yet persisted).
         // Negative values are valid on multi-monitor setups.
-        if (double.IsInfinity(window.X))
-            throw new InvalidDataException("Launcher settings window x must not be infinite.");
-        if (double.IsInfinity(window.Y))
-            throw new InvalidDataException("Launcher settings window y must not be infinite.");
+        if (!double.IsFinite(window.X))
+            throw new InvalidDataException("Launcher settings window x must be finite.");
+        if (!double.IsFinite(window.Y))
+            throw new InvalidDataException("Launcher settings window y must be finite.");
         if (window.WindowState is not "Normal" and not "Maximized" and not "Minimized")
             throw new InvalidDataException($"Launcher settings window state must be Normal, Maximized, or Minimized. Got: '{window.WindowState}'.");
         return window;
@@ -230,7 +251,7 @@ public static class LauncherSettingsStore
             if (trimmedKey.Length == 0)
                 throw new InvalidDataException("Launcher settings commandTemplates has an empty key.");
             if (trimmedKey.Length > 256)
-                throw new InvalidDataException($"Launcher settings commandTemplates key exceeds 256 character limit: '{trimmedKey[..50]}...'.");
+                throw new InvalidDataException($"Launcher settings commandTemplates key exceeds 256 character limit: '{trimmedKey[..Math.Min(trimmedKey.Length, 50)]}...'.");
 
             var trimmedValue = LauncherEntryText.Normalize(value);
             if (trimmedValue.Length == 0)

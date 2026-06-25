@@ -11,10 +11,22 @@ public static class LauncherEntryIds
         if (string.IsNullOrEmpty(id))
             return string.Empty;
 
-        var trimmed = id.Trim();
+        // Apply Unicode canonical composition (FormC) so that semantically identical
+        // IDs expressed in different normalization forms (NFC vs NFD) are treated as
+        // the same ID. Without this, "café" (NFC) and "café" (NFD) would
+        // be different IDs, breaking preset cross-references and custom sort order.
+        var trimmed = id.Trim().Normalize(NormalizationForm.FormC);
         // Consistent with LauncherPresetIds.Normalize (both use 256-character limit).
-        if (trimmed.Length > 256)
-            trimmed = trimmed.Substring(0, 256);
+        const int MaxIdLength = 256;
+        if (trimmed.Length > MaxIdLength)
+        {
+            // Truncate at a code-point boundary to avoid splitting a surrogate pair,
+            // which would produce an illegal UTF-16 string.
+            var span = trimmed.AsSpan(0, MaxIdLength);
+            if (char.IsHighSurrogate(span[^1]) && trimmed.Length > MaxIdLength + 1)
+                span = trimmed.AsSpan(0, MaxIdLength + 1);
+            trimmed = span.ToString();
+        }
 
         // Fast path: no control characters.
         var hasControl = false;

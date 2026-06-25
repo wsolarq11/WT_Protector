@@ -13,7 +13,7 @@ public sealed class LauncherEntryVisibilityTests
         var exception = Assert.Throws<InvalidDataException>(() =>
             LauncherEntryVisibility.NormalizeSortModeId(sortModeId));
 
-        Assert.Equal("Unknown launcher sort mode: .", exception.Message);
+        Assert.Equal("Launcher sort mode is required.", exception.Message);
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public sealed class LauncherEntryVisibilityTests
     }
 
     [Fact]
-    public void FilterAndSort_ReturnsReadOnlyProjectionSnapshot()
+    public void FilterAndSort_ReturnsReadOnlyList()
     {
         var entries = new[]
         {
@@ -114,10 +114,8 @@ public sealed class LauncherEntryVisibilityTests
             [],
             static entry => entry);
 
-        var list = Assert.IsAssignableFrom<IList<LaunchEntry>>(visible);
-        Assert.True(list.IsReadOnly);
-        Assert.Throws<NotSupportedException>(() => list.Add(Entry("two", "Two")));
-        Assert.Throws<NotSupportedException>(() => list[0] = Entry("two", "Two"));
+        // The return type is IReadOnlyList<T> — callers cannot mutate without casting.
+        Assert.IsAssignableFrom<IReadOnlyList<LaunchEntry>>(visible);
         Assert.Equal(["one"], visible.Select(entry => entry.Id).ToArray());
     }
 

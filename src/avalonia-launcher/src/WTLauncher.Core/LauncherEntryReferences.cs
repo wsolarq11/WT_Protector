@@ -16,6 +16,9 @@ public static class LauncherEntryReferences
         var normalizedOldEntryId = RequireEntryId(oldEntryId, nameof(oldEntryId));
         var normalizedNewEntryId = RequireEntryId(newEntryId, nameof(newEntryId));
 
+        if (LauncherEntryIds.Same(normalizedOldEntryId, normalizedNewEntryId))
+            return (presetFile, customEntryOrder, false);
+
         // Verify the old entry ID exists before proceeding.
         var existsInCustomOrder = customEntryOrder.Any(id => LauncherEntryIds.SameNormalized(id, normalizedOldEntryId));
         var existsInAnyPreset = presetFile.Presets.Any(p => p.EntryIds.Any(id => LauncherEntryIds.SameNormalized(id, normalizedOldEntryId)));

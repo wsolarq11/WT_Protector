@@ -30,7 +30,7 @@ public sealed class LauncherEntryMutationPersistenceTests
     }
 
     [Fact]
-    public void SaveRestoresConfigOnlyWhenPresetSaveFails()
+    public void SavePresetCommitFailureDoesNotRollBackAlreadyCommittedConfig()
     {
         using var temp = new TempDirectory();
         var configPath = Path.Combine(temp.Path, "config.json");
@@ -49,11 +49,12 @@ public sealed class LauncherEntryMutationPersistenceTests
             rollbackSnapshot: snapshot);
 
         Assert.Contains("启动组保存失败", saveFailure);
-        Assert.Equal("one", Assert.Single(LauncherConfigStore.Load(configPath)).Id);
+        // Config was committed before presets commit failed — it stays as the new data.
+        Assert.Equal("mutated", Assert.Single(LauncherConfigStore.Load(configPath)).Id);
     }
 
     [Fact]
-    public void SaveRestoresConfigAndPresetsWhenSettingsSaveFails()
+    public void SaveSettingsCommitFailureDoesNotRollBackAlreadyCommittedConfigAndPresets()
     {
         using var temp = new TempDirectory();
         var configPath = Path.Combine(temp.Path, "config.json");
@@ -73,10 +74,10 @@ public sealed class LauncherEntryMutationPersistenceTests
             rollbackSnapshot: snapshot);
 
         Assert.Contains("设置保存失败", saveFailure);
-        Assert.Equal("one", Assert.Single(LauncherConfigStore.Load(configPath)).Id);
+        // Config and presets were committed before settings commit failed.
+        Assert.Equal("mutated", Assert.Single(LauncherConfigStore.Load(configPath)).Id);
         var preset = Assert.Single(LauncherPresetStore.Load(presetPath).Presets);
-        Assert.Equal("daily", preset.Id);
-        Assert.Equal(["one"], preset.EntryIds);
+        Assert.Equal("mutated", preset.Id);
     }
 
     [Fact]
@@ -106,36 +107,46 @@ public sealed class LauncherEntryMutationPersistenceTests
                 rollbackSnapshot: snapshot));
 
         Assert.Equal("Unknown launcher sort mode: missing.", exception.Message);
+        // Settings staging failed (validation threw InvalidDataException), so nothing
+        // was committed. The originals remain.
         Assert.False(File.Exists(settingsPath));
     }
 
     [Fact]
-    public void SaveRejectsInvalidRollbackSnapshotInsteadOfReturningRollbackStatus()
+    public void SaveReturnsCommitFailureStatusForBadDestinationPath()
     {
         using var temp = new TempDirectory();
         var configPath = Path.Combine(temp.Path, "config.json");
         var presetPath = Path.Combine(temp.Path, "presets.json");
         LauncherConfigStore.Save([Entry("one")], configPath, backup: true);
         LauncherPresetStore.Save(PresetFile("daily", Preset("daily", "one")), presetPath, backup: true);
+        var snapshot = Snapshot();
+
+        // settingsPath pointing to a directory causes the settings commit rename to fail.
+        // The invalid rollback snapshot (Name=null) is irrelevant — file rollback is gone.
         var invalidEntry = Entry("one") with { Name = null! };
-        var snapshot = LauncherEntryMutationSnapshot.Capture(
+        var invalidSnapshot = LauncherEntryMutationSnapshot.Capture(
             [invalidEntry],
             PresetFile("daily", Preset("daily", "one")),
             customEntryOrder: ["one"],
             selectedPresetId: "daily");
 
-        var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherEntryMutationPersistence.Save(
-                entries: [Entry("mutated")],
-                configPath: configPath,
-                presetFile: PresetFile("mutated", Preset("mutated", "mutated")),
-                presetPath: presetPath,
-                settings: new LauncherSettings(),
-                settingsPath: temp.Path,
-                savePresets: true,
-                rollbackSnapshot: snapshot));
+        var saveFailure = LauncherEntryMutationPersistence.Save(
+            entries: [Entry("mutated")],
+            configPath: configPath,
+            presetFile: PresetFile("mutated", Preset("mutated", "mutated")),
+            presetPath: presetPath,
+            settings: new LauncherSettings(),
+            settingsPath: temp.Path,
+            savePresets: true,
+            rollbackSnapshot: invalidSnapshot);
 
-        Assert.Equal("Launcher config entry 0 name is null.", exception.Message);
+        // Config and presets were committed before the settings commit failed.
+        // The invalid snapshot was never used (no file rollback occurs).
+        Assert.Contains("设置保存失败", saveFailure);
+        Assert.Equal("mutated", Assert.Single(LauncherConfigStore.Load(configPath)).Id);
+        var preset = Assert.Single(LauncherPresetStore.Load(presetPath).Presets);
+        Assert.Equal("mutated", preset.Id);
     }
 
     private static LauncherEntryMutationSnapshot Snapshot()

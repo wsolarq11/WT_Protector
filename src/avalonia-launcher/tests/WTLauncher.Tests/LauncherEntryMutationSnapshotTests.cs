@@ -41,10 +41,10 @@ public sealed class LauncherEntryMutationSnapshotTests
 
         var entries = snapshot.CloneEntries();
         var presets = snapshot.ClonePresetFile();
-        var order = snapshot.CloneCustomEntryOrder();
+        var order = snapshot.GetCustomEntryOrder();
         // CloneEntries returns mutable List<LaunchEntry> copies.
         entries[0] = entries[0] with { Id = "changed" };
-        // ClonePresetFile and CloneCustomEntryOrder return immutable copies;
+        // ClonePresetFile and GetCustomEntryOrder return immutable copies;
         // verify the originals are unchanged.
         Assert.Equal("one", Assert.Single(snapshot.Entries).Id);
         Assert.Equal("one", Assert.Single(snapshot.PresetFile.Presets[0].EntryIds));
@@ -72,7 +72,7 @@ public sealed class LauncherEntryMutationSnapshotTests
         Assert.Throws<NotSupportedException>(() => order.Add("changed"));
         Assert.Equal("one", Assert.Single(snapshot.CloneEntries()).Id);
         Assert.Equal("one", Assert.Single(snapshot.ClonePresetFile().Presets[0].EntryIds));
-        Assert.Equal("one", Assert.Single(snapshot.CloneCustomEntryOrder()));
+        Assert.Equal("one", Assert.Single(snapshot.GetCustomEntryOrder()));
     }
 
     private static LaunchEntry Entry(

@@ -50,6 +50,10 @@ public static class LauncherCommandTemplateResolver
         ArgumentNullException.ThrowIfNull(entries);
 
         List<string> missingKeys = [];
+        // CommandTemplates uses OrdinalIgnoreCase (see LauncherSettings.cs:35),
+        // so the dedup set must also be case-insensitive — otherwise "$Profile"
+        // and "$profile" would be reported as two separate missing keys when
+        // they actually refer to the same template lookup.
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var entry in entries)

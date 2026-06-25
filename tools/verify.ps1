@@ -365,7 +365,8 @@ $settingsPath = Get-LauncherSettingsPath
 if (-not (Test-Path -LiteralPath $settingsPath)) { throw "Missing portable settings: $settingsPath" }
 $settings = Get-Content -Raw -Encoding UTF8 -LiteralPath $settingsPath | ConvertFrom-Json
 if ($null -eq $settings) { throw "Settings parsed to null: $settingsPath" }
-Assert-OnlyJsonKeys $settings @('lastFilterText', 'sortMode', 'entryViewMode', 'requireConfirmationForLaunches', 'commandTemplates', 'searchHistory', 'customEntryOrder', 'window') 'settings.json'
+Assert-OnlyJsonKeys $settings @('schemaVersion', 'lastFilterText', 'sortMode', 'entryViewMode', 'requireConfirmationForLaunches', 'commandTemplates', 'searchHistory', 'customEntryOrder', 'window') 'settings.json'
+if ([int]$settings.schemaVersion -ne 1) { throw "Unsupported settings schemaVersion: $($settings.schemaVersion)" }
 if ($null -eq $settings.lastFilterText) { throw 'settings.json lastFilterText is required' }
 if (-not ($settings.lastFilterText -is [string])) { throw 'settings.json lastFilterText must be string' }
 if ($null -eq $settings.customEntryOrder) { throw 'settings.json customEntryOrder is required' }

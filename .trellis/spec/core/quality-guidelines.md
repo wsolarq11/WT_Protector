@@ -145,3 +145,14 @@ GitHub Actions sets `CI=true`. Use this to skip checks requiring a display (GUI 
 - [ ] Are new test fixtures added to the appropriate shared file?
 - [ ] Do new persistence paths use atomic temp-file writes?
 - [ ] Are Chinese status texts in the appropriate static class?
+- [ ] **Unicode safety**: Does any code truncate strings? → Must check surrogate pair boundaries via `char.IsHighSurrogate`.
+- [ ] **Unicode safety**: Does any code strip "unsafe" characters? → Must strip BOTH `UnicodeCategory.Control` AND `UnicodeCategory.Format`.
+- [ ] **Unicode safety**: Are cross-reference keys (IDs) normalized? → `Normalize(NormalizationForm.FormC)` before comparison.
+- [ ] **Percent injection**: Does `ExpandEnvironmentVariables` run AFTER FormKC normalization? → Check for fullwidth `%` (U+FF05 → U+0025).
+- [ ] **UNC paths**: Does any code accept user-controlled directory paths? → Reject UNC paths (`\\` prefix).
+- [ ] **PATH hijack**: Does any code resolve executables? → Never fall back to bare names resolved via `PATH`.
+- [ ] **Test assertions**: Are any `Assert.Equal(X, X)` self-comparisons? → Replace with concrete expected values.
+- [ ] **Test assertions**: Do JSON property checks verify BOTH missing AND extra fields? → Use bidirectional set comparison.
+- [ ] **Multi-file saves**: Do they touch 2+ config files? → Must use stage-all-then-commit, not sequential-save-with-rollback.
+- [ ] **Backup recovery**: Is the retry OUTSIDE the try/catch? → Inside = infinite loop when backup is also corrupt.
+- [ ] **Schema version**: Are `!=` checks replaced with directional `<` and `>` checks? → Old reject + new upgrade message.

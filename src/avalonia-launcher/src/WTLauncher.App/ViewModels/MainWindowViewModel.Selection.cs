@@ -292,8 +292,11 @@ public sealed partial class MainWindowViewModel
             .Where(entry => entry.IsSelected)
             .ToList();
 
-    private List<string> GetSelectedEntryIds() =>
-        GetSelectedEntries()
-            .Select(entry => entry.Id)
-            .ToList();
+    private List<string> GetSelectedEntryIds()
+    {
+        var ids = new List<string>(_entries.Count);
+        foreach (var entry in _entries)
+            if (entry.IsSelected) ids.Add(entry.Id);
+        return ids;
+    }
 }

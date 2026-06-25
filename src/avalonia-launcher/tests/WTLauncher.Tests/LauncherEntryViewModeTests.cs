@@ -13,7 +13,7 @@ public sealed class LauncherEntryViewModeTests
         var exception = Assert.Throws<InvalidDataException>(() =>
             LauncherEntryViewModes.NormalizeId(entryViewMode));
 
-        Assert.Equal("Unknown launcher entry view mode: .", exception.Message);
+        Assert.Equal("Launcher entry view mode is required.", exception.Message);
     }
 
     [Theory]
