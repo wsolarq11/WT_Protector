@@ -91,7 +91,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settings = _settings with { SortMode = _selectedSortMode.Id };
         _selectedDisplayMode = ResolveDisplayMode(settings.EntryViewMode);
         _settings = _settings with { EntryViewMode = _selectedDisplayMode.Id };
-        // L28: The constructor sets _selectedDisplayMode directly (bypassing the
+        // The constructor sets _selectedDisplayMode directly (bypassing the
         // ObservableProperty setter), so OnSelectedDisplayModeChanged never fires.
         // Raise PropertyChanged for the IsCardsViewMode / IsDetailedListMode /
         // IsNamesViewMode projection properties so Avalonia bindings see the
@@ -128,7 +128,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ReplaceEntries(LauncherConfigStore.Load(_configPath));
         _settings = _settings with { CustomEntryOrder = LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds()) };
 
-        // E10: Cross-validate $key command references against commandTemplates.
+        // Cross-validate $key command references against commandTemplates.
         ValidateCommandTemplateReferences();
 
         LoadPresetFile(preferredPresetId: null);
@@ -152,7 +152,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
-    /// M7: Cross-validate that every preset entry ID references a loaded entry.
+    /// Cross-validate that every preset entry ID references a loaded entry.
     /// Logs dangling references to ErrorLog but does not block loading.
     /// </summary>
     private void ValidatePresetEntryReferences()
@@ -776,10 +776,14 @@ public static class LauncherBatchLaunchReceiptText
 
     private static string StatusFor(int index, LauncherBatchLaunchReport report)
     {
-        if (report.FailureIndex == index)
+        // R9: With continue-on-failure, failures may be interspersed with successes.
+        // Use the full failure-indices set rather than a single FailureIndex.
+        if (report.FailureIndices.Contains(index))
             return "启动失败";
 
-        return index < report.RequestedCount ? "已请求" : "未启动";
+        // All non-failure items up through (RequestedCount + FailedCount - 1) are "已请求".
+        // Items past that range are "未启动" (only happens when items are skipped).
+        return index < report.RequestedCount + report.FailedCount ? "已请求" : "未启动";
     }
 
     private static void AppendFailureLines(List<string> lines, IReadOnlyList<string> failures)

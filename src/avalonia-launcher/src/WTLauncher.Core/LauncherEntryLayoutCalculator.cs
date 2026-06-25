@@ -96,7 +96,7 @@ public static class LauncherEntryLayoutCalculator
 
     private static (double Width, double Height) CalculateNameTileLayout(double availableWidth, double availableHeight, int count)
     {
-        // L35: 2px hysteresis band around the column-count threshold to prevent
+        // 2px hysteresis band around the column-count threshold to prevent
         // rapid toggling when the window is resized near the boundary.
         // Compute columns at current width AND at width-2; bias toward the larger
         // count (i.e. keep more columns when within 2px of the reduction threshold).
@@ -116,7 +116,7 @@ public static class LauncherEntryLayoutCalculator
         var maxColumns = Math.Max(1, (int)Math.Floor((availableWidth + NameTileGap) / (NameTileMinWidth + NameTileGap)));
         var rowsFit = Math.Max(1, (int)Math.Floor((availableHeight + NameTileRowGap) / (NameTileHeight + NameTileRowGap)));
         var columnsNeededToFitHeight = (int)Math.Ceiling(count / (double)rowsFit);
-        // L42: Despite its name, this variable limits maximum tile width, not column count.
+        // Despite its name, this variable limits maximum tile width, not column count.
         // It computes how many columns are needed to keep individual tile width below
         // NameTilePreferredMaxWidth. A larger value produces more (narrower) columns.
         var columnsNeededToAvoidSparseRows = (int)Math.Ceiling(

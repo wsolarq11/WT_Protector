@@ -160,7 +160,7 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
-        // L26: Defer snapshot capture until after user confirmation — avoids
+        // Defer snapshot capture until after user confirmation — avoids
         // wasteful snapshot/restore cycle when the user cancels.
         if (!await ConfirmDeletePresetIfRequiredAsync(target).ConfigureAwait(true))
         {

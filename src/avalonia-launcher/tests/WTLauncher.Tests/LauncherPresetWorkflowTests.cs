@@ -439,6 +439,37 @@ public sealed class LauncherPresetWorkflowTests
             Locked = locked,
         };
 
+    [Fact]
+    public void UpdatePreset_AllowsSameNameUpdateWhenPresetIdIsDifferentlyCased()
+    {
+        var presetFile = PresetFile(
+            Preset("my-preset", "My Preset", "one"),
+            Preset("secondary", "Secondary", "two"));
+
+        // Updating "MY-PRESET" (different casing) to the same normalized name
+        // should succeed — the self-exclusion guard must use preset.Id not raw presetId.
+        var updated = LauncherPresetWorkflow.UpdatePreset(ref presetFile, "MY-PRESET", " My Preset ", ["one"]);
+
+        Assert.NotNull(updated);
+        Assert.Equal("My Preset", updated.Name);
+    }
+
+    [Fact]
+    public void UpdatePreset_DetectsNameConflictWhenPresetIdIsDifferentlyCased()
+    {
+        var presetFile = PresetFile(
+            Preset("my-preset", "My Preset", "one"),
+            Preset("secondary", "Secondary", "two"));
+
+        // Updating "MY-PRESET" to name "Secondary" should detect the real conflict
+        // even though the presetId is differently-cased.
+        var exception = Assert.Throws<ArgumentException>(() =>
+            LauncherPresetWorkflow.UpdatePreset(ref presetFile, "MY-PRESET", " Secondary ", ["one"]));
+
+        Assert.Equal("name", exception.ParamName);
+        Assert.Contains("Secondary", exception.Message);
+    }
+
     private static void AssertPresetNameRequired(Action action)
     {
         var exception = Assert.Throws<ArgumentException>(action);

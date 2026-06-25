@@ -2,19 +2,15 @@ namespace WTLauncher.Core;
 
 public static class LauncherStartupArguments
 {
-    private static readonly List<string> _unknownArgs = [];
-
     /// <summary>
-    /// After calling <see cref="ReadConfigPath"/>, contains any unknown "--" prefixed
-    /// arguments that were collected as warnings rather than fatal errors.
-    /// Callers should report these to the user after startup.
+    /// Parses startup arguments and returns the explicit config path (if any) along
+    /// with any unknown "--" prefixed arguments collected as warnings rather than
+    /// fatal errors. Callers should report these to the user after startup.
     /// </summary>
-    public static IReadOnlyList<string> UnknownArgs => _unknownArgs;
-
-    public static string? ReadConfigPath(IReadOnlyList<string>? args)
+    public static (string? configPath, IReadOnlyList<string> unknownArgs) ReadConfigPath(IReadOnlyList<string>? args)
     {
         ArgumentNullException.ThrowIfNull(args);
-        _unknownArgs.Clear();
+        var unknownArgs = new List<string>();
 
         string? configPath = null;
         for (var i = 0; i < args.Count; i++)
@@ -24,7 +20,7 @@ public static class LauncherStartupArguments
             {
                 if (arg.StartsWith("--", StringComparison.Ordinal))
                 {
-                    _unknownArgs.Add(arg);
+                    unknownArgs.Add(arg);
                     continue;
                 }
 
@@ -44,6 +40,6 @@ public static class LauncherStartupArguments
                 throw new ArgumentException("Config path value is required after --config.", nameof(args));
         }
 
-        return configPath;
+        return (configPath, unknownArgs.AsReadOnly());
     }
 }

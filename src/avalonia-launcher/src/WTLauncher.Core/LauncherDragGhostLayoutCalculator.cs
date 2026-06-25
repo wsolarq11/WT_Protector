@@ -22,7 +22,7 @@ public static class LauncherDragGhostLayoutCalculator
     }
 
     /// <summary>
-    /// L44: Calculates ghost layout with window-bounds clamping so the ghost never
+    /// Calculates ghost layout with window-bounds clamping so the ghost never
     /// renders fully off-screen. At least 50% of the ghost stays visible inside
     /// the window.
     /// </summary>
@@ -58,6 +58,9 @@ public static class LauncherDragGhostLayoutCalculator
         double ghostWidth = MinWidth,
         double ghostHeight = MinHeight)
     {
+        containerWidth = Math.Max(0, containerWidth);
+        containerHeight = Math.Max(0, containerHeight);
+
         var left = pointerX + PointerOffsetX;
         var top = pointerY + PointerOffsetY;
 

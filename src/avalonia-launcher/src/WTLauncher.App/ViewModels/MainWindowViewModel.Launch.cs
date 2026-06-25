@@ -88,9 +88,10 @@ public sealed partial class MainWindowViewModel
 
             _launchWorkflow.Start(plan);
             item.RecordLaunchFromOwner(CurrentTimestampUtc());
-            SaveConfig();
+            var saveOk = SaveConfig();
             DryRunText = LauncherSingleLaunchReceiptText.Requested(entryName, plan);
-            StatusText = LauncherSingleLaunchStatus.Requested(entryName);
+            if (saveOk)
+                StatusText = LauncherSingleLaunchStatus.Requested(entryName);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {

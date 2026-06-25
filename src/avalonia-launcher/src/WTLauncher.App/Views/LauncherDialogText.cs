@@ -24,7 +24,7 @@ internal static class LauncherDialogText
         }
     }
 
-    // L49: All dialog text brushes reference LauncherDesignTokens instead of
+    // All dialog text brushes reference LauncherDesignTokens instead of
     // hardcoded color strings. Fallbacks remain in case a token is malformed.
     private static readonly IBrush TitleBrush = SafeParseBrush(LauncherDesignTokens.TextPrimaryColor, Brushes.Black);
     private static readonly IBrush BodyBrush = SafeParseBrush(LauncherDesignTokens.ControlBoxLabelColor, Brushes.Gray);

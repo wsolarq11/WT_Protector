@@ -168,7 +168,7 @@ public sealed partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// M23: Encapsulates the CaptureSettingsMutationSnapshot → mutate _settings →
+    /// Encapsulates the CaptureSettingsMutationSnapshot → mutate _settings →
     /// SaveSettingsChange → rollback-on-failure boilerplate repeated across settings
     /// mutation callbacks.
     /// On success, sets <see cref="StatusText"/> to <paramref name="successStatus"/>
@@ -255,6 +255,8 @@ public sealed partial class MainWindowViewModel
             return;
 
         // Remove existing match (case-insensitive) to dedup, then insert at front.
+        // Insert at front: most-recent-first ordering. RequireSearchHistory truncates
+        // from the tail, so the newest 20 entries survive.
         var newHistory = _settings.SearchHistory.RemoveAll(
             t => string.Equals(t, normalized, StringComparison.OrdinalIgnoreCase));
         newHistory = newHistory.Insert(0, normalized);

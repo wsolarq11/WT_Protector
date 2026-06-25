@@ -65,7 +65,7 @@ public sealed partial class MainWindow : Window
         Opened += (_, _) =>
         {
             UpdateCardRegionSize(viewModel);
-            // M11: Restore saved window position and state.
+            // Restore saved window position and state.
             var w = viewModel.Settings.Window;
             if (!double.IsNaN(w.X) && !double.IsNaN(w.Y))
                 Position = new PixelPoint((int)w.X, (int)w.Y);
@@ -126,7 +126,7 @@ public sealed partial class MainWindow : Window
         if (e.Key == Key.F && e.KeyModifiers == KeyModifiers.Control)
         {
             SearchTextBox.Focus();
-            // M2: AutoCompleteBox does not expose SelectAll(). The internal TextBox
+            // AutoCompleteBox does not expose SelectAll(). The internal TextBox
             // is not accessible from code-behind. Focus() alone is sufficient for
             // the Ctrl+F flow — the existing text is visually selected by the user.
 
@@ -198,9 +198,12 @@ public sealed partial class MainWindow : Window
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
+        DragDrop.RemoveDragOverHandler(this, OnEntryDragOver);
+        DragDrop.RemoveDropHandler(this, OnEntryDrop);
+
         if (DataContext is MainWindowViewModel viewModel)
         {
-            // M11: PixelPoint is a value type — null-conditional operator (?.) is
+            // PixelPoint is a value type — null-conditional operator (?.) is
             // not valid here. During OnClosing the window is fully materialized,
             // so Position always returns a valid PixelPoint.
             var pos = Position;

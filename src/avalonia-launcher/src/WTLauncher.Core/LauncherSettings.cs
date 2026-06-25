@@ -8,7 +8,7 @@ namespace WTLauncher.Core;
 /// ImmutableList/ImmutableDictionary for true immutability.</summary>
 public sealed record LauncherSettings
 {
-    [JsonIgnore]
+    [JsonPropertyName("schemaVersion")]
     public int SchemaVersion { get; init; } = 1;
 
     [JsonPropertyName("lastFilterText")]

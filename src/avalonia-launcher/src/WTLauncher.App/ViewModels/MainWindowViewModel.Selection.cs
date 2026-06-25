@@ -18,6 +18,7 @@ public sealed partial class MainWindowViewModel
     [RelayCommand]
     private void SelectVisible()
     {
+        DiscardDragReorderPreview();
         var targets = _visibleEntries.Where(entry => !entry.IsSelected).ToList();
         if (targets.Count == 0)
         {
@@ -42,6 +43,7 @@ public sealed partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private void ClearSelection()
     {
+        DiscardDragReorderPreview();
         var targets = GetSelectedEntries();
         if (targets.Count == 0)
         {
@@ -54,12 +56,13 @@ public sealed partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// L32: Clears selection only on VISIBLE entries — the user-facing behavior
+    /// Clears selection only on VISIBLE entries — the user-facing behavior
     /// that matches "what you see is what you act on."
     /// Call this when the user explicitly wants to clear only filtered results.
     /// </summary>
     public void ClearVisibleSelection()
     {
+        DiscardDragReorderPreview();
         var targets = _visibleEntries.Where(entry => entry.IsSelected).ToList();
         if (targets.Count == 0)
         {
@@ -116,7 +119,19 @@ public sealed partial class MainWindowViewModel
             var timestamp = CurrentTimestampUtc();
             var startedCount = report.RequestedCount;
             var preflightItems = preflight.Items;
-            var entryById = _entries.ToDictionary(e => e.Id, LauncherEntryIds.Comparer);
+            var entryById = new Dictionary<string, LauncherEntryViewModel>(LauncherEntryIds.Comparer);
+            foreach (var e in _entries)
+            {
+                if (!entryById.TryAdd(e.Id, e))
+                {
+                    // Duplicate equivalent entry ID in _entries — a data invariant violation.
+                    // Keep the first entry in the dictionary; log the duplicate so it is
+                    // visible in diagnostics without crashing the launch batch.
+                    ErrorLog.Write(
+                        new InvalidDataException($"Duplicate entry ID in batch launch dictionary: {e.Id}"),
+                        "LaunchBatch");
+                }
+            }
             for (var i = 0; i < startedCount && i < preflightItems.Count; i++)
             {
                 var preflightItem = preflightItems[i];
@@ -143,8 +158,8 @@ public sealed partial class MainWindowViewModel
         Func<int, string> canceledStatus,
         Func<Exception, string> failedStatus)
     {
-        // E8: Always confirm when preflight reports failures, regardless of RequireConfirmationForLaunches.
-        // H11: Also confirm when any individual item's plan requires confirmation (per-entry override).
+        // Always confirm when preflight reports failures, regardless of RequireConfirmationForLaunches.
+        // Also confirm when any individual item's plan requires confirmation (per-entry override).
         if (!RequireConfirmationForLaunches && report.FailedCount == 0 && !items.Any(i => i.Plan.RequiresConfirmation))
             return true;
 
@@ -197,7 +212,7 @@ public sealed partial class MainWindowViewModel
         }
         catch
         {
-            // L30: If a PropertyChanged handler throws mid-loop, restore
+            // If a PropertyChanged handler throws mid-loop, restore
             // the pre-mutation state so the ViewModel is not left in an
             // inconsistent half-selected condition.
             snapshot.Restore();
@@ -219,7 +234,7 @@ public sealed partial class MainWindowViewModel
         }
         catch
         {
-            // L30: If a PropertyChanged handler throws mid-loop, restore
+            // If a PropertyChanged handler throws mid-loop, restore
             // the pre-mutation state so the ViewModel is not left in an
             // inconsistent half-selected condition.
             snapshot.Restore();

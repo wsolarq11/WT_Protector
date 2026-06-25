@@ -27,13 +27,19 @@ public static class LauncherPresetIds
         return candidate;
     }
 
+    /// <summary>Maximum ID length shared with <see cref="LauncherEntryIds.Normalize"/>.</summary>
+    public const int MaxIdLength = 256;
+
     public static string Normalize(string? value)
     {
         value ??= string.Empty;
 
-        // H15: Guard against maliciously long preset names that could cause OOM.
-        if (value.Length > 256)
-            throw new InvalidDataException($"Preset name length {value.Length} exceeds maximum of 256.");
+        // Truncate over-length input to prevent OOM from maliciously long names.
+        // Silent truncation is intentional: Normalize transforms arbitrary input into
+        // safe form — validation is the caller's responsibility.
+        // Consistent with LauncherEntryIds.Normalize (both use MaxIdLength = 256).
+        if (value.Length > MaxIdLength)
+            value = value[..MaxIdLength];
 
         var builder = new StringBuilder(value.Length);
         var separatorPending = false;

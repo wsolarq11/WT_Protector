@@ -7,7 +7,7 @@ public sealed class LauncherStartupArgumentsTests
     [Fact]
     public void ReadConfigPath_ReturnsValueAfterConfigFlag()
     {
-        var config = LauncherStartupArguments.ReadConfigPath(["--config", "D:\\portable\\config.json"]);
+        var (config, _) = LauncherStartupArguments.ReadConfigPath(["--config", "D:\\portable\\config.json"]);
 
         Assert.Equal("D:\\portable\\config.json", config);
     }
@@ -15,7 +15,7 @@ public sealed class LauncherStartupArgumentsTests
     [Fact]
     public void ReadConfigPath_TrimsConfigPathValue()
     {
-        var config = LauncherStartupArguments.ReadConfigPath(["--config", " config/custom.json "]);
+        var (config, _) = LauncherStartupArguments.ReadConfigPath(["--config", " config/custom.json "]);
 
         Assert.Equal("config/custom.json", config);
     }
@@ -23,13 +23,16 @@ public sealed class LauncherStartupArgumentsTests
     [Fact]
     public void ReadConfigPath_IsCaseInsensitive()
     {
-        Assert.Equal("config/custom.json", LauncherStartupArguments.ReadConfigPath(["--CONFIG", "config/custom.json"]));
+        var (config, _) = LauncherStartupArguments.ReadConfigPath(["--CONFIG", "config/custom.json"]);
+        Assert.Equal("config/custom.json", config);
     }
 
     [Fact]
     public void ReadConfigPath_ReturnsNullWhenNoArgumentsAreProvided()
     {
-        Assert.Null(LauncherStartupArguments.ReadConfigPath([]));
+        var (config, unknownArgs) = LauncherStartupArguments.ReadConfigPath([]);
+        Assert.Null(config);
+        Assert.Empty(unknownArgs);
     }
 
     [Fact]
@@ -63,10 +66,10 @@ public sealed class LauncherStartupArgumentsTests
     [Fact]
     public void ReadConfigPath_RejectsUnknownStartupArguments()
     {
-        var config = LauncherStartupArguments.ReadConfigPath(["--ignored-option"]);
+        var (config, unknownArgs) = LauncherStartupArguments.ReadConfigPath(["--ignored-option"]);
 
         Assert.Null(config);
-        Assert.Equal(["--ignored-option"], LauncherStartupArguments.UnknownArgs);
+        Assert.Equal(["--ignored-option"], unknownArgs);
     }
 
     private static void AssertMissingConfigValue(string[] args)

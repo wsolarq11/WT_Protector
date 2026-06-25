@@ -63,4 +63,39 @@ public sealed class LauncherEntryIdsTests
 
         Assert.Equal(["one", "Two"], ids);
     }
+
+    [Fact]
+    public void Normalize_TruncatesOver256Chars()
+    {
+        // Build a string longer than 256 characters.
+        var longId = new string('X', 500);
+
+        var result = LauncherEntryIds.Normalize(longId);
+
+        // Must not throw. Must produce at most 256 characters.
+        Assert.Equal(new string('X', 256), result);
+    }
+
+    [Fact]
+    public void Normalize_JustOver256Chars_TruncatesTo256()
+    {
+        // 257 chars — truncation to 256 should kick in.
+        var id = new string('Y', 257);
+
+        var result = LauncherEntryIds.Normalize(id);
+
+        Assert.Equal(256, result.Length);
+        Assert.Equal(new string('Y', 256), result);
+    }
+
+    [Fact]
+    public void Normalize_Exactly256Chars_NotTruncated()
+    {
+        var id = new string('Z', 256);
+
+        var result = LauncherEntryIds.Normalize(id);
+
+        Assert.Equal(256, result.Length);
+        Assert.Equal(new string('Z', 256), result);
+    }
 }

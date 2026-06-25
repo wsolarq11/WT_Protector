@@ -106,6 +106,20 @@ public sealed class LaunchArgumentBuilderTests
         Assert.Equal("Write-Host `$(Get-Process)`", decoded);
     }
 
+    [Fact]
+    public void Build_RejectsCommandLineExceeding32767Characters()
+    {
+        using var temp = new TempDirectory();
+        // Create a very long command value so that the base64-encoded result
+        // exceeds the 32767-character Windows CreateProcessW limit.
+        var longCommand = new string('x', 25000); // ~33336 chars in base64, plus prefix/suffix
+        var entry = Entry(temp.Path, command: longCommand);
+
+        var ex = Assert.Throws<System.IO.InvalidDataException>(() =>
+            LaunchArgumentBuilder.Build(entry, validateDirectory: false, requireConfirmation: false));
+        Assert.Contains("32767", ex.Message);
+    }
+
     private static LaunchEntry Entry(
         string directory,
         string name = "demo",

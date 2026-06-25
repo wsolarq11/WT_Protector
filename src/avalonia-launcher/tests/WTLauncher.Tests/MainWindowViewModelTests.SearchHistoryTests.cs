@@ -43,6 +43,37 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void RecordSearchTerm_KeepsNewestEntriesWhenCapped()
+    {
+        // Add 25 terms sequentially — only the 20 most recent should survive.
+        // RecordSearchTerm inserts at index 0 (most-recent-first), and
+        // RequireSearchHistory truncates from the tail.
+        using var temp = new TempDirectory();
+        var (config, settingsPath, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        var initialState = new LauncherSettings();
+        var viewModel = CreateViewModel(config, settingsPath, initialState);
+
+        for (var i = 1; i <= 25; i++)
+        {
+            viewModel.FilterText = $"term-{i:D2}";
+            viewModel.RecordSearchTerm();
+        }
+
+        Assert.Equal(20, viewModel.SearchHistoryItems.Count);
+        // Terms 1-5 (oldest) should be dropped; terms 6-25 survive.
+        for (var i = 1; i <= 5; i++)
+            Assert.DoesNotContain($"term-{i:D2}", viewModel.SearchHistoryItems);
+        for (var i = 6; i <= 25; i++)
+            Assert.Contains($"term-{i:D2}", viewModel.SearchHistoryItems);
+        // Most recent entry (term-25) must be at front.
+        Assert.Equal("term-25", viewModel.SearchHistoryItems[0]);
+        // Verify round-trip persistence.
+        var loaded = LauncherSettingsStore.Load(settingsPath);
+        Assert.Equal(20, loaded.SearchHistory.Count);
+        Assert.Equal("term-25", loaded.SearchHistory[0]);
+    }
+
+    [Fact]
     public void RecordSearchTermCapsAt20Entries()
     {
         using var temp = new TempDirectory();

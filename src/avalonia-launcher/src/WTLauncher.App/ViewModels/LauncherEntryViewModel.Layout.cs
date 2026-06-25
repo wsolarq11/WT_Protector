@@ -63,7 +63,7 @@ public sealed partial class LauncherEntryViewModel
     }
 
     /// <summary>
-    /// L36: 5px hysteresis band to prevent rapid toggling between density levels
+    /// 5px hysteresis band to prevent rapid toggling between density levels
     /// when card dimensions oscillate near a threshold. Evaluates at both the
     /// current size and at size+5, returning the least-dense result. This means
     /// shrinking must pass 5px beyond the nominal threshold to switch denser,

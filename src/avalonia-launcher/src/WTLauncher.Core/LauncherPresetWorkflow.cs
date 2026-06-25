@@ -42,7 +42,7 @@ public static class LauncherPresetWorkflow
             return null;
 
         var normalizedName = NormalizeRequiredName(name);
-        if (presetFile.Presets.Any(p => !LauncherPresetIds.Same(p.Id, presetId)
+        if (presetFile.Presets.Any(p => !LauncherPresetIds.Same(p.Id, preset.Id)
             && string.Equals(p.Name, normalizedName, StringComparison.OrdinalIgnoreCase)))
             throw new ArgumentException($"A preset with the name \"{normalizedName}\" already exists.", nameof(name));
         var normalizedEntryIds = NormalizeRequiredEntryIds(entryIds);
@@ -131,7 +131,7 @@ public static class LauncherPresetWorkflow
 
     private static string RequireFallbackPresetIdAfterDelete(LauncherPresetFile presetFile, LauncherPreset target)
     {
-        // E11: Don't require HasEntryReferences on the fallback — that deadlocks
+        // Don't require HasEntryReferences on the fallback — that deadlocks
         // when the only other preset references stale or zero entries. Any other
         // non-locked preset (including one with no entries) can serve as the new default.
         var fallback = presetFile.Presets.FirstOrDefault(preset =>
@@ -166,7 +166,7 @@ public static class LauncherPresetWorkflow
         if (target is null || target.Locked)
             return false;
 
-        // E11: Any other non-locked preset can serve as a fallback — don't
+        // Any other non-locked preset can serve as a fallback — don't
         // deadlock when the only other preset references stale or zero entries.
         // Single-preset deletion is also allowed (no fallback needed).
         return presetFile.Presets.Count <= 1

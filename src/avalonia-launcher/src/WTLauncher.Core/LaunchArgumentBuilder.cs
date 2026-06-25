@@ -48,6 +48,11 @@ public static class LaunchArgumentBuilder
         var encodedCommand = Convert.ToBase64String(Encoding.UTF8.GetBytes(command));
 
         var arguments = $"{WorkingDirectoryOption} {QuoteArgument(directory)} --title {QuoteArgument(name)} {ShellCommandPrefix} {encodedCommand}";
+
+        const int MaxCommandLineLength = 32767; // Windows CreateProcessW limit
+        if (arguments.Length > MaxCommandLineLength)
+            throw new System.IO.InvalidDataException($"Launch command line exceeds Windows limit of {MaxCommandLineLength} characters.");
+
         return new LaunchPlan(
             ResolveTerminalExecutable(),
             arguments,

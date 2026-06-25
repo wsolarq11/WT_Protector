@@ -12,32 +12,57 @@ public static class LauncherConfigStore
     public static IReadOnlyList<LaunchEntry> Load(string configPath)
     {
         ThrowIfConfigPathMissing(configPath);
-        if (!File.Exists(configPath))
-        {
-            var backupPath = configPath + ".bak";
-            if (File.Exists(backupPath))
-            {
-                File.Copy(backupPath, configPath);
-            }
-            else
-            {
-                return Array.Empty<LaunchEntry>();
-            }
-        }
 
         // Read the file ONCE. Previously RequireEntrySelectionFields and
         // LauncherJson.LoadRequired each opened/parsed the file independently
         // with slightly different options — a TOCTOU window and wasted IO.
-        var fileInfo = new FileInfo(configPath);
-        if (fileInfo.Length > 10 * 1024 * 1024)
-            throw new InvalidDataException("Launcher config file exceeds 10 MB size limit.");
-        var raw = File.ReadAllBytes(configPath);
-        RequireEntrySelectionFields(raw);
-        using var stream = new MemoryStream(raw);
-        var entries = JsonSerializer.Deserialize<List<LaunchEntry?>>(stream, LauncherJson.Options)
-            ?? throw new InvalidDataException("Launcher config parsed to null.");
+        IReadOnlyList<LaunchEntry> LoadAndValidate(string path)
+        {
+            var fileInfo = new FileInfo(path);
+            if (fileInfo.Length > 10 * 1024 * 1024)
+                throw new InvalidDataException("Launcher config file exceeds 10 MB size limit.");
+            var raw = File.ReadAllBytes(path);
+            // The file is read ONCE into raw bytes, then parsed twice:
+            // 1. JsonDocument.Parse validates the "selected" field presence (schema contract)
+            // 2. JsonSerializer.Deserialize performs full typed deserialization
+            // Both operate on the same in-memory snapshot (no TOCTOU window).
+            // Memory overhead is acceptable: raw bytes + JsonDocument tree + deserialized objects
+            // coexist briefly for a single config load, and config files are capped at 10 MB.
+            RequireEntrySelectionFields(raw);
+            using var stream = new MemoryStream(raw);
+            var entries = JsonSerializer.Deserialize<List<LaunchEntry?>>(stream, LauncherJson.Options)
+                ?? throw new InvalidDataException("Launcher config parsed to null.");
+            return NormalizeEntries(entries).AsReadOnly();
+        }
 
-        return NormalizeEntries(entries).AsReadOnly();
+        if (File.Exists(configPath))
+        {
+            try
+            {
+                return LoadAndValidate(configPath);
+            }
+            catch (Exception ex) when (ex is JsonException or InvalidDataException)
+            {
+                // Main file is corrupt — try .bak recovery.
+                var backupPath = configPath + ".bak";
+                if (File.Exists(backupPath))
+                {
+                    File.Copy(backupPath, configPath, overwrite: true);
+                    return LoadAndValidate(configPath);
+                }
+                throw; // No backup available — propagate original exception.
+            }
+        }
+
+        // File missing — try backup or return empty.
+        var backupPathForMissing = configPath + ".bak";
+        if (File.Exists(backupPathForMissing))
+        {
+            File.Copy(backupPathForMissing, configPath);
+            return LoadAndValidate(configPath);
+        }
+
+        return Array.Empty<LaunchEntry>();
     }
 
     public static void Save(IEnumerable<LaunchEntry> entries, string configPath, bool backup)

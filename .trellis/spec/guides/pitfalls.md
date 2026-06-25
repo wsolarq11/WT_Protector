@@ -376,3 +376,95 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **根因** | 校验离突变点太远。用户在对话框中输入 → 对话框关闭（以为成功）→ Save 校验失败 → 异常逃逸 → 崩溃。用户看不到任何错误反馈。 |
 | **预防** | **校验在突变点执行，不在持久化层执行**。持久化层的校验是最后兜底（防御手动编辑 JSON 绕过 UI 校验），不是主校验路径。突变点之前的不变量检查必须覆盖可预见的重复/无效/越界场景。 |
 | **适用** | 所有 CRUD 操作的校验逻辑。 |
+
+---
+
+## 6. 新增教训 — UltraReview 二次清零 (2026-06-25)
+
+### 6.1 `[JsonIgnore]` + SchemaVersion = 死代码版本检查
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-25 UltraReview R1 |
+| **问题** | `LauncherSettings.SchemaVersion` 标记 `[JsonIgnore]`，反序列化时永远是默认值 `1`。`LauncherSettingsStore.Load` 中的 `if (settings.SchemaVersion != Expected)` 是**死代码**——永远通过。 |
+| **根因** | `[JsonIgnore]` 阻止字段写入 JSON，也阻止从 JSON 读取。版本号无法持久化→无法检测旧格式。 |
+| **预防** | **SchemaVersion 绝不加 `[JsonIgnore]`**。如果需要向后兼容（旧文件无此字段），不加 `[JsonRequired]`，靠默认值兜底。 |
+| **适用** | 所有带 SchemaVersion 的序列化 record。 |
+
+### 6.2 Store.Load 损坏文件不触发备份恢复
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-25 UltraReview R3, 三个 Store.Load 全部存在此问题 |
+| **问题** | 备份恢复仅在 `!File.Exists(path)` 时触发。文件**存在但内容损坏**（`JsonException`/`InvalidDataException`）→ 不尝试 `.bak` → 直接抛异常。用户数据丢失。 |
+| **修复** | 用 `try { LoadAndValidate(path); } catch (JsonException | InvalidDataException) { if (File.Exists(bak)) { File.Copy(bak, path, overwrite: true); retry; } else throw; }` |
+| **预防** | 任何 `Load` 方法的异常处理必须覆盖"文件存在但反序列化失败"的场景。`.bak` 的存在就是为了这个场景。 |
+| **适用** | 所有文件读写 Store 的 Load 方法。 |
+
+### 6.3 跨文件 ID 规范化契约必须一致
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-25 UltraReview R10 |
+| **问题** | `LauncherEntryIds.Normalize` 超长静默截断 256 字符。`LauncherPresetIds.Normalize` 超长抛 `InvalidDataException`。同一概念，不同行为。 |
+| **预防** | **同一概念的规范化函数必须行为一致**。规范化函数不做验证（将任意输入转为安全形式），验证由调用方完成。统一原则：截断、trim、消控字符 → 不抛异常。 |
+| **适用** | 所有 `Normalize` / `Sanitize` 系列函数。 |
+
+### 6.4 `SaveConfig()` 返回值必须检查 — 静默数据丢失
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-25 UltraReview R6 |
+| **问题** | `LaunchAsync` 中 `SaveConfig()` 返回值被丢弃。保存失败（磁盘满/权限）→ `launchedAtUtc` 已写入内存但未写入磁盘 → 用户看到"已请求启动"，下次启动排序错乱。 |
+| **预防** | **任何 `Save*()` 方法返回值必须检查**。失败时不得覆盖已有的错误状态文本。保存失败的成功假象是最隐蔽的数据丢失。 |
+| **适用** | 所有 ViewModel 命令中的 `SaveConfig()` / `SavePresets()` / `SaveSettings()` 调用。 |
+
+### 6.5 静态可变 `List<T>` — 线程不安全的定时炸弹
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-25 UltraReview R14 |
+| **问题** | `LauncherStartupArguments._unknownArgs` 是 `static List<string>`，`ReadConfigPath()` 中 `Clear()` + `Add()` 就地变异。并发读取 `UnknownArgs` → 不一致状态。 |
+| **修复** | 改为返回 `(string? configPath, IReadOnlyList<string> unknownArgs)` 元组。消除静态可变状态，数据由调用方拥有。 |
+| **预防** | **永不使用静态可变集合**。static + mutable = 全局可变状态。如果需要缓存，用 `ImmutableList<T>` 或 `FrozenSet<T>`。如果需要返回值，用元组或 record。 |
+| **适用** | 所有 `static` 字段。 |
+
+### 6.6 批处理失败策略必须一致 — `break` vs `continue`
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-25 UltraReview R9 |
+| **问题** | `StartBatch` 用 `break`（一次失败停止全部），`PreflightBatch` 用 `continue`（继续处理）。同一工作流，两个阶段，两种策略。 |
+| **修复** | 统一为 `continue`。一个条目的启动失败不应阻止后续条目。`FailureIndex` 从 `??=`（首胜）改为 `=`（末胜），记录完整失败链。 |
+| **预防** | **同一 workflow 的多个阶段必须有相同的失败处理策略**。如果设计要求不同，必须在代码注释中明确说明原因。 |
+| **适用** | 所有批量/批处理操作方法。 |
+
+### 6.7 内部标记注释 (`// H4`) — 对维护者无意义
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-25 UltraReview R30, ~30 处 `// H4`/`// L32`/`// M11` 等标记 |
+| **问题** | 标记仅在 issue tracker 中有含义，代码独立时不可读。新维护者无法理解 `// H4` 是什么。 |
+| **修复** | 全部替换为描述性注释。`// H4` → `// Entry IDs are ordinal (case-sensitive) — matches LauncherEntryIds.Comparer`。保留描述内容，丢掉标记。 |
+| **预防** | 代码注释描述**做什么**和**为什么**。不引用外部系统中可能过期的 ID。如果必须引用 issue → 写完整 URL。 |
+| **适用** | 所有注释和文档。 |
+
+### 6.8 Unicode 正规化缺位 → 搜索排序不一致
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-25 UltraReview R26 |
+| **问题** | `LauncherEntryText.Normalize()` 不做 Unicode 正规化。全角字母 "Ｃ" (U+FF23) ≠ 半角 "C" (U+0043)，组合变音 "é" (e + ́) ≠ 预组合 "é" (U+00E9)。搜索时用户输入半角 "cafe" 匹配不到全角 "Ｃａｆé"。 |
+| **修复** | 在 `Normalize()` 末尾添加 `string.Normalize(NormalizationForm.FormKC)`。FormKC 将全角→半角、组合→预组合。 |
+| **预防** | 任何处理用户输入文本的 Normalize/Sanitize 函数必须包含 Unicode 正规化。FormKC 兼容性最好。 |
+| **适用** | 所有文本规范化/搜索匹配/排序比较路径。 |
+
+### 6.9 命令行长度无上限 → Windows CreateProcess 静默失败
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-25 UltraReview R27 |
+| **问题** | `LaunchArgumentBuilder.Build()` 不检查总命令行长度。超过 32767 字符（Windows `CreateProcessW` API 限制）→ 启动失败，用户无清晰错误。 |
+| **修复** | `arguments.Length > 32767` → `throw new InvalidDataException(...)`。preflight 阶段就暴露，不等到实际启动。 |
+| **预防** | 任何构造系统调用参数的方法，必须检查目标 API 的长度/格式限制。Windows 命令行的 32767 是硬限制。 |
+| **适用** | 所有 `Process.Start` / shell 调用路径。 |

@@ -15,5 +15,7 @@ internal static class ExceptionFilters
     /// </summary>
     internal static bool IsRecoverable(Exception ex) =>
         ex is not (OutOfMemoryException or StackOverflowException
+            // In .NET 6+, StackOverflowException terminates the process before catch blocks
+            // execute. Kept here for documentation and for .NET Framework compatibility.
             or AccessViolationException or System.Runtime.InteropServices.SEHException);
 }

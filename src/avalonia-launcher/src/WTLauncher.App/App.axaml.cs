@@ -96,13 +96,14 @@ public sealed partial class App : Application
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktopLifetime = desktop;
+                var (explicitConfigPath, unknownArgs) = LauncherStartupArguments.ReadConfigPath(desktop.Args);
                 var configPath = LauncherConfigStore.ResolveConfigPath(
-                    LauncherStartupArguments.ReadConfigPath(desktop.Args),
+                    explicitConfigPath,
                     Environment.CurrentDirectory,
                     AppContext.BaseDirectory);
                 var settingsPath = LauncherConfigStore.ResolveSettingsPath(configPath);
 
-                // L21: Verify config directory is writable before loading settings.
+                // Verify config directory is writable before loading settings.
                 // A stale file lock or permission denial would otherwise surface as a
                 // cryptic crash later during save. Early detection gives a clear warning.
                 var configDirectory = Path.GetDirectoryName(configPath);
@@ -138,7 +139,7 @@ public sealed partial class App : Application
                 desktop.MainWindow = mainWindow;
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "Startup");
             Console.Error.WriteLine($"[WTLauncher] Fatal startup error: {ex}");
@@ -146,7 +147,7 @@ public sealed partial class App : Application
         }
         finally
         {
-            // M10: If desktop lifetime was resolved but MainWindow is still null after
+            // If desktop lifetime was resolved but MainWindow is still null after
             // a startup exception, show a user-facing error before Avalonia starts the
             // message loop with no window (which would hang the process invisibly).
             if (desktopLifetime is not null && desktopLifetime.MainWindow is null)

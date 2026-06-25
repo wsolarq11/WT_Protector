@@ -20,7 +20,7 @@ public static class LauncherCommandTemplateResolver
         if (command.StartsWith("$$", StringComparison.Ordinal))
             return command[1..];
 
-        if (templates is null || templates.Count == 0)
+        if (templates is null)
             return command;
 
         if (!command.StartsWith(TemplatePrefix, StringComparison.Ordinal))
@@ -38,7 +38,7 @@ public static class LauncherCommandTemplateResolver
     }
 
     /// <summary>
-    /// E10: Validates that every <c>$key</c> reference in entry commands has a
+    /// Validates that every <c>$key</c> reference in entry commands has a
     /// matching template definition. Returns the list of missing keys (empty if
     /// all references are satisfied). An empty templates dictionary is treated as
     /// "no templates configured" — all <c>$key</c> references are missing.

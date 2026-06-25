@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json;
 using WTLauncher.Core;
 
 namespace WTLauncher.Tests;
@@ -37,6 +38,7 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Contains("alphabetical", savedJson);
         Assert.Contains("details", savedJson);
         Assert.Contains("requireConfirmationForLaunches", savedJson);
+        Assert.Contains("schemaVersion", savedJson);
         Assert.DoesNotContain("theme", savedJson);
         AssertUsesRepositoryLineEndings(savedJson);
     }
@@ -695,6 +697,152 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Equal(LauncherWindowSettings.DefaultWidth, settings.Window.Width);
         Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window.Height);
         Assert.False(File.Exists(settingsPath));
+    }
+
+    [Fact]
+    public void SettingsStore_SchemaVersionRoundTripsThroughJson()
+    {
+        using var temp = new TempDirectory();
+        var settings = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
+
+        LauncherSettingsStore.Save(
+            new LauncherSettings
+            {
+                LastFilterText = "",
+                SortMode = LauncherEntryVisibility.CustomSortModeId,
+                EntryViewMode = LauncherEntryViewModes.CardsId,
+                CustomEntryOrder = [],
+                Window = new LauncherWindowSettings(),
+            },
+            settings);
+
+        var savedJson = File.ReadAllText(settings);
+        Assert.Contains("\"schemaVersion\": 1", savedJson);
+
+        var loaded = LauncherSettingsStore.Load(settings);
+        Assert.Equal(1, loaded.SchemaVersion);
+    }
+
+    [Fact]
+    public void SettingsStore_SchemaVersionMismatchThrows()
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
+        {
+          "schemaVersion": 2,
+          "lastFilterText": "",
+          "sortMode": "custom",
+          "entryViewMode": "cards",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": [],
+          "window": {
+            "width": 1180,
+            "height": 760
+          }
+        }
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherSettingsStore.Load(settings));
+
+        Assert.Equal("Launcher settings schema version mismatch: expected 1, got 2.", exception.Message);
+    }
+
+    [Fact]
+    public void SettingsStore_MissingSchemaVersionDefaultsTo1AndLoads()
+    {
+        using var temp = new TempDirectory();
+        var settings = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.SettingsFileName, """
+        {
+          "lastFilterText": "",
+          "sortMode": "custom",
+          "entryViewMode": "cards",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": [],
+          "window": {
+            "width": 1180,
+            "height": 760
+          }
+        }
+        """);
+
+        var loaded = LauncherSettingsStore.Load(settings);
+
+        Assert.Equal(1, loaded.SchemaVersion);
+        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, loaded.SortMode);
+    }
+
+    [Fact]
+    public void SettingsStore_ClonePreservesSchemaVersion()
+    {
+        var settings = new LauncherSettings
+        {
+            LastFilterText = "test",
+            SortMode = LauncherEntryVisibility.CustomSortModeId,
+            EntryViewMode = LauncherEntryViewModes.CardsId,
+            CustomEntryOrder = ["one"],
+            Window = new LauncherWindowSettings(),
+        };
+
+        var snapshot = LauncherSettingsSnapshot.Capture(settings);
+        var restored = snapshot.Restore();
+
+        Assert.Equal(1, restored.SchemaVersion);
+    }
+
+    [Fact]
+    public void SettingsStore_RecoversFromBackupWhenSettingsFileIsCorruptJson()
+    {
+        using var temp = new TempDirectory();
+        var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
+
+        var backupPath = settingsPath + ".bak";
+        File.WriteAllText(backupPath, """
+        {
+          "schemaVersion": 1,
+          "lastFilterText": "test",
+          "sortMode": "custom",
+          "entryViewMode": "cards",
+          "requireConfirmationForLaunches": true,
+          "customEntryOrder": ["one", "two"],
+          "window": {
+            "width": 1180,
+            "height": 760
+          }
+        }
+        """);
+
+        // Valid JSON with an unknown field — triggers JsonException via
+        // LauncherJson.Options.UnmappedMemberHandling.Disallow.
+        File.WriteAllText(settingsPath, """
+        {
+          "schemaVersion": 1,
+          "lastFilterText": "",
+          "sortMode": "custom",
+          "entryViewMode": "cards",
+          "customEntryOrder": [],
+          "window": {
+            "width": 1180,
+            "height": 760
+          },
+          "unknownField": 1
+        }
+        """);
+
+        var loaded = LauncherSettingsStore.Load(settingsPath);
+
+        Assert.Equal("test", loaded.LastFilterText);
+        Assert.Equal(["one", "two"], loaded.CustomEntryOrder!);
+    }
+
+    [Fact]
+    public void SettingsStore_ThrowsWhenSettingsFileIsCorruptAndNoBackupExists()
+    {
+        using var temp = new TempDirectory();
+        var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
+
+        File.WriteAllText(settingsPath, "corrupt garbage {{{");
+
+        Assert.ThrowsAny<JsonException>(() => LauncherSettingsStore.Load(settingsPath));
     }
 
 }

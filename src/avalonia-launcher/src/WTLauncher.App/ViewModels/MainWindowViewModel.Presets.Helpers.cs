@@ -107,7 +107,7 @@ public sealed partial class MainWindowViewModel
     {
         RefreshSelectionState();
 
-        // L33: Persist last-used preset ID so it is restored on next launch.
+        // Persist last-used preset ID so it is restored on next launch.
         // Skip persistence during bulk-load/restore operations (handled by
         // _isLoadingPresets guard in MainWindowViewModel.Presets.Persistence.cs).
         if (_isLoadingPresets || value is null)
@@ -119,7 +119,7 @@ public sealed partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// L34: Always allow apply when a preset with entries is selected, even if the
+    /// Always allow apply when a preset with entries is selected, even if the
     /// current selection exactly matches — re-applying a preset also forces a config
     /// save, which is useful after external modifications.
     /// </summary>
@@ -193,7 +193,7 @@ public sealed partial class MainWindowViewModel
         var result = new List<LauncherEntryViewModel>(uniqueIds.Count);
         foreach (var id in uniqueIds)
         {
-            // M11: Use TryGetValue instead of indexer to give a clear error when
+            // Use TryGetValue instead of indexer to give a clear error when
             // a preset references an entry ID that does not exist in _entries.
             if (!entriesById.TryGetValue(id, out var entry))
                 throw new InvalidDataException($"Preset entry ID '{id}' does not match any loaded entry.");

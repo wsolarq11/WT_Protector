@@ -7,7 +7,11 @@ public static class LauncherPresetFiles
     public static LauncherPresetFile Clone(LauncherPresetFile presetFile)
     {
         ArgumentNullException.ThrowIfNull(presetFile);
-        return Validate(presetFile with { Presets = ClonePresets(presetFile.Presets) });
+        // ClonePresets traversal was redundant: its shallow-clone work is
+        // discarded when Validate() creates new normalized instances.
+        // Validate() already handles all the same null checks, so pass
+        // the preset file directly.
+        return Validate(presetFile);
     }
 
     internal static LauncherPresetFile Validate(LauncherPresetFile presets)
@@ -17,7 +21,7 @@ public static class LauncherPresetFiles
         var presetRows = presets.Presets
             ?? throw new InvalidDataException("Launcher preset list is null.");
 
-        // H15: Guard against maliciously large preset files.
+        // Guard against maliciously large preset files (max 1000 presets).
         if (presetRows.Count > 1000)
             throw new InvalidDataException($"Launcher preset count {presetRows.Count} exceeds maximum of 1000.");
 
@@ -48,23 +52,6 @@ public static class LauncherPresetFiles
         };
     }
 
-    private static ImmutableList<LauncherPreset> ClonePresets(IEnumerable<LauncherPreset>? presets)
-    {
-        if (presets is null)
-            throw new InvalidDataException("Launcher preset list is null.");
-
-        List<LauncherPreset> clone = [];
-        var index = 0;
-        foreach (var presetRow in presets)
-        {
-            var preset = RequirePreset(presetRow, index);
-            clone.Add(preset with { EntryIds = preset.EntryIds });
-            index++;
-        }
-
-        return clone.ToImmutableList();
-    }
-
     private static LauncherPreset RequirePreset(LauncherPreset? preset, int index) =>
         preset ?? throw new InvalidDataException($"Launcher preset {index} is null.");
 
@@ -90,7 +77,9 @@ public static class LauncherPresetFiles
     {
         var source = entryIds ?? throw new InvalidDataException($"Launcher preset {index} entryIds is null.");
 
-        // H15: Guard against maliciously large entryId lists.
+        // Inline uniqueness validation validates duplicates AND materializes the count.
+        // While this iterates the full list, it provides defense-in-depth against
+        // duplicate IDs in presets. This is called once at load time, not in a hot path.
         if (source.Count > 10000)
             throw new InvalidDataException($"Launcher preset {index} entryIds count {source.Count} exceeds maximum of 10000.");
 

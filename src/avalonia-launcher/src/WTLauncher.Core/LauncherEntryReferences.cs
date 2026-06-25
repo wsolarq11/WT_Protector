@@ -4,7 +4,7 @@ namespace WTLauncher.Core;
 
 public static class LauncherEntryReferences
 {
-    public static (LauncherPresetFile PresetFile, ImmutableList<string> CustomEntryOrder) RenameEntryId(
+    public static (LauncherPresetFile PresetFile, ImmutableList<string> CustomEntryOrder, bool Renamed) RenameEntryId(
         LauncherPresetFile presetFile,
         ImmutableList<string> customEntryOrder,
         string oldEntryId,
@@ -16,39 +16,30 @@ public static class LauncherEntryReferences
         var normalizedOldEntryId = RequireEntryId(oldEntryId, nameof(oldEntryId));
         var normalizedNewEntryId = RequireEntryId(newEntryId, nameof(newEntryId));
 
-        // H4: Pre-check all reference lists for target ID conflict before modifying anything.
-        // Using mutable List copies for the rename operation; reconstruct preset file at the end.
-        var mutableOrder = customEntryOrder.ToList();
-        var mutablePresetLists = new List<List<string>>(presetFile.Presets.Count);
-        foreach (var p in presetFile.Presets)
-            mutablePresetLists.Add([.. p.EntryIds]);
+        // Verify the old entry ID exists before proceeding.
+        var existsInCustomOrder = customEntryOrder.Any(id => LauncherEntryIds.SameNormalized(id, normalizedOldEntryId));
+        var existsInAnyPreset = presetFile.Presets.Any(p => p.EntryIds.Any(id => LauncherEntryIds.SameNormalized(id, normalizedOldEntryId)));
+        if (!existsInCustomOrder && !existsInAnyPreset)
+            return (presetFile, customEntryOrder, false);
 
-        foreach (var list in mutablePresetLists)
+        // Pre-check all reference lists for target ID conflict before modifying anything.
+        if (customEntryOrder.Any(id => LauncherEntryIds.Same(id, normalizedNewEntryId) && !LauncherEntryIds.Same(id, normalizedOldEntryId)))
+            throw new ArgumentException(
+                $"Cannot rename to '{normalizedNewEntryId}' because that ID is already present.",
+                nameof(newEntryId));
+        foreach (var p in presetFile.Presets)
         {
-            if (list.Any(id => LauncherEntryIds.Same(id, normalizedNewEntryId) && !LauncherEntryIds.Same(id, normalizedOldEntryId)))
+            if (p.EntryIds.Any(id => LauncherEntryIds.Same(id, normalizedNewEntryId) && !LauncherEntryIds.Same(id, normalizedOldEntryId)))
                 throw new ArgumentException(
                     $"Cannot rename to '{normalizedNewEntryId}' because that ID is already present.",
                     nameof(newEntryId));
         }
-        if (mutableOrder.Any(id => LauncherEntryIds.Same(id, normalizedNewEntryId) && !LauncherEntryIds.Same(id, normalizedOldEntryId)))
-            throw new ArgumentException(
-                $"Cannot rename to '{normalizedNewEntryId}' because that ID is already present.",
-                nameof(newEntryId));
 
-        // Rename in custom order
-        var updatedOrder = RenameReferences(mutableOrder, normalizedOldEntryId, normalizedNewEntryId);
+        var (updatedPresetFile, updatedOrder) = TransformEntryReferences(
+            presetFile, customEntryOrder,
+            list => RenameReferences(list, normalizedOldEntryId, normalizedNewEntryId));
 
-        // Rename in each preset's entry list
-        for (var i = 0; i < mutablePresetLists.Count; i++)
-            mutablePresetLists[i] = RenameReferences(mutablePresetLists[i], normalizedOldEntryId, normalizedNewEntryId);
-
-        // Reconstruct preset file with updated entry IDs
-        var updatedPresets = presetFile.Presets
-            .Zip(mutablePresetLists, (preset, ids) => preset with { EntryIds = ids.ToImmutableList() })
-            .ToImmutableList();
-        var updatedPresetFile = presetFile with { Presets = updatedPresets };
-
-        return (updatedPresetFile, updatedOrder.ToImmutableList());
+        return (updatedPresetFile, updatedOrder, true);
     }
 
     public static (LauncherPresetFile PresetFile, ImmutableList<string> CustomEntryOrder) RemoveEntryId(
@@ -61,17 +52,37 @@ public static class LauncherEntryReferences
 
         var normalizedEntryId = RequireEntryId(entryId, nameof(entryId));
 
+        return TransformEntryReferences(
+            presetFile, customEntryOrder,
+            list => RemoveReferences(list, normalizedEntryId));
+    }
+
+    /// <summary>
+    /// DRY helper: builds mutable copies of custom order and all preset entry lists,
+    /// applies <paramref name="transform"/> to each, and reconstructs the preset file
+    /// via Zip. The Zip call depends on mutablePresetLists being built from
+    /// <paramref name="presetFile"/>.<c>Presets</c> in the same order.
+    /// </summary>
+    private static (LauncherPresetFile PresetFile, ImmutableList<string> CustomEntryOrder) TransformEntryReferences(
+        LauncherPresetFile presetFile,
+        ImmutableList<string> customEntryOrder,
+        Func<List<string>, List<string>> transform)
+    {
         var mutableOrder = customEntryOrder.ToList();
         var mutablePresetLists = new List<List<string>>(presetFile.Presets.Count);
         foreach (var p in presetFile.Presets)
             mutablePresetLists.Add([.. p.EntryIds]);
 
-        // Remove from custom order
-        var updatedOrder = RemoveReferences(mutableOrder, normalizedEntryId);
+        // R22: Zip relies on mutablePresetLists corresponding 1:1 to presetFile.Presets.
+        System.Diagnostics.Debug.Assert(presetFile.Presets.Count == mutablePresetLists.Count,
+            "Zip ordering depends on mutablePresetLists being built from presetFile.Presets in order");
 
-        // Remove from each preset's entry list
+        // Transform custom order
+        var updatedOrder = transform(mutableOrder);
+
+        // Transform each preset's entry list
         for (var i = 0; i < mutablePresetLists.Count; i++)
-            mutablePresetLists[i] = RemoveReferences(mutablePresetLists[i], normalizedEntryId);
+            mutablePresetLists[i] = transform(mutablePresetLists[i]);
 
         // Reconstruct preset file with updated entry IDs
         var updatedPresets = presetFile.Presets

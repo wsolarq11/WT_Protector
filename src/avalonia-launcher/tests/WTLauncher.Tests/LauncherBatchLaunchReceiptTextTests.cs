@@ -28,10 +28,13 @@ public sealed class LauncherBatchLaunchReceiptTextTests
         var receipt = LauncherBatchLaunchReceiptText.Format(preflight, report);
 
         Assert.Contains("启动回执", receipt);
-        Assert.Contains("已请求启动 1 项，失败 1 项，未启动 1 项", receipt);
+        // R9: StartBatch uses continue instead of break — a failed launch does not
+        // prevent subsequent entries from starting. Here entry 1 succeeds, entry 2
+        // fails, entry 3 succeeds → 2 started, 1 failed, 0 not started.
+        Assert.Contains("已请求启动 2 项，失败 1 项，未启动 0 项", receipt);
         Assert.Contains("• 已请求: one", receipt);
         Assert.Contains("• 启动失败: two", receipt);
-        Assert.Contains("• 未启动: three", receipt);
+        Assert.Contains("• 已请求: three", receipt);
         Assert.Contains("two: blocked", receipt);
         Assert.Equal(3, Count(receipt, LaunchArgumentBuilder.TerminalExecutable));
     }

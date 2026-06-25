@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace WTLauncher.Core;
 
 public static class LauncherPresetStore
@@ -8,23 +10,43 @@ public static class LauncherPresetStore
     public static LauncherPresetFile Load(string presetPath)
     {
         ThrowIfPresetPathMissing(presetPath);
-        if (!File.Exists(presetPath))
+
+        LauncherPresetFile LoadAndValidate(string path)
         {
-            var backupPath = presetPath + ".bak";
-            if (File.Exists(backupPath))
+            var presets = LauncherJson.LoadRequired<LauncherPresetFile>(path, "Launcher presets");
+            if (presets.SchemaVersion != ExpectedPresetSchemaVersion)
+                throw new InvalidDataException($"Launcher presets schema version mismatch: expected {ExpectedPresetSchemaVersion}, got {presets.SchemaVersion}.");
+            return LauncherPresetFiles.Validate(presets);
+        }
+
+        if (File.Exists(presetPath))
+        {
+            try
             {
-                File.Copy(backupPath, presetPath);
+                return LoadAndValidate(presetPath);
             }
-            else
+            catch (Exception ex) when (ex is JsonException or InvalidDataException)
             {
-                return new LauncherPresetFile();
+                // Main file is corrupt — try .bak recovery.
+                var backupPath = presetPath + ".bak";
+                if (File.Exists(backupPath))
+                {
+                    File.Copy(backupPath, presetPath, overwrite: true);
+                    return LoadAndValidate(presetPath);
+                }
+                throw; // No backup available — propagate original exception.
             }
         }
 
-        var presets = LauncherJson.LoadRequired<LauncherPresetFile>(presetPath, "Launcher presets");
-        if (presets.SchemaVersion != ExpectedPresetSchemaVersion)
-            throw new InvalidDataException($"Launcher presets schema version mismatch: expected {ExpectedPresetSchemaVersion}, got {presets.SchemaVersion}.");
-        return LauncherPresetFiles.Validate(presets);
+        // File missing — try backup or return default.
+        var backupPathForMissing = presetPath + ".bak";
+        if (File.Exists(backupPathForMissing))
+        {
+            File.Copy(backupPathForMissing, presetPath);
+            return LoadAndValidate(presetPath);
+        }
+
+        return new LauncherPresetFile();
     }
 
     public static void Save(LauncherPresetFile presets, string presetPath, bool backup)

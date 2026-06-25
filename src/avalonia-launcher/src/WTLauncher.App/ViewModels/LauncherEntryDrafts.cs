@@ -57,6 +57,8 @@ public static class LauncherEntryDrafts
         if (requiredFieldError is not null)
             return requiredFieldError;
 
+        // Per-item call (dialog submit, not in a loop), so O(n) scan over
+        // existingEntries is acceptable. Typical entry count < 100.
         if (existingEntries.Any(existing =>
                 !LauncherEntryIds.SameNormalized(existing.Id, originalId)
                 && LauncherEntryIds.SameNormalized(existing.Id, entryId)))

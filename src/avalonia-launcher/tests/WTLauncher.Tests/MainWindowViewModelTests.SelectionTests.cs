@@ -151,4 +151,47 @@ public sealed partial class MainWindowViewModelTests
             typeof(LauncherSelectionMutationSnapshot).GetMethods(),
             method => method.Name == nameof(LauncherSelectionMutationSnapshot.Capture));
     }
+
+    [Fact]
+    public async Task BatchLaunchWithDuplicateEquivalentEntryIdsDoesNotCrash()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex", selected: true));
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = false });
+
+        // Inject a duplicate-entry-ID scenario that bypasses Save/Load validation.
+        // The LauncherConfigStore enforces unique IDs on both paths, so the only way
+        // to reproduce the ToDictionary crash is via direct collection manipulation.
+        var entriesField = typeof(MainWindowViewModel).GetField(
+            "_entries",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.NotNull(entriesField);
+        var entries = (System.Collections.ObjectModel.ObservableCollection<LauncherEntryViewModel>)
+            entriesField!.GetValue(viewModel)!;
+        var duplicate = new LauncherEntryViewModel(
+            Entry("one", directory: temp.Path, command: "opencode", selected: true),
+            viewModel);
+        entries.Add(duplicate);
+        // Refresh the VisibleEntries projection so the duplicate is visible.
+        typeof(MainWindowViewModel).GetMethod(
+            "ApplyFilter",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .Invoke(viewModel, null);
+        Assert.Equal(2, viewModel.VisibleEntries.Count(entry => entry.Id == "one"));
+
+        // Should not throw ArgumentException from ToDictionary — the TryAdd
+        // dictionary build handles duplicates gracefully. SaveConfig will
+        // subsequently catch the duplicate IDs during its own validation,
+        // producing a handled failure status rather than an unhandled crash.
+        await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
+
+        Assert.NotNull(viewModel.DryRunText);
+        Assert.DoesNotContain("ArgumentException", viewModel.DryRunText);
+        Assert.Contains("启动", viewModel.StatusText);
+    }
 }

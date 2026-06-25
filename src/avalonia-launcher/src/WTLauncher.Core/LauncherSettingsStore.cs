@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json;
 
 namespace WTLauncher.Core;
 
@@ -10,23 +11,43 @@ public static class LauncherSettingsStore
     public static LauncherSettings Load(string settingsPath)
     {
         ThrowIfSettingsPathMissing(settingsPath);
-        if (!File.Exists(settingsPath))
+
+        LauncherSettings LoadAndValidate(string path)
         {
-            var backupPath = settingsPath + ".bak";
-            if (File.Exists(backupPath))
+            var settings = LauncherJson.LoadRequired<LauncherSettings>(path, "Launcher settings");
+            if (settings.SchemaVersion != ExpectedSettingsSchemaVersion)
+                throw new InvalidDataException($"Launcher settings schema version mismatch: expected {ExpectedSettingsSchemaVersion}, got {settings.SchemaVersion}.");
+            return Normalize(settings);
+        }
+
+        if (File.Exists(settingsPath))
+        {
+            try
             {
-                File.Copy(backupPath, settingsPath);
+                return LoadAndValidate(settingsPath);
             }
-            else
+            catch (Exception ex) when (ex is JsonException or InvalidDataException)
             {
-                return new LauncherSettings();
+                // Main file is corrupt — try .bak recovery.
+                var backupPath = settingsPath + ".bak";
+                if (File.Exists(backupPath))
+                {
+                    File.Copy(backupPath, settingsPath, overwrite: true);
+                    return LoadAndValidate(settingsPath);
+                }
+                throw; // No backup available — propagate original exception.
             }
         }
 
-        var settings = LauncherJson.LoadRequired<LauncherSettings>(settingsPath, "Launcher settings");
-        if (settings.SchemaVersion != ExpectedSettingsSchemaVersion)
-            throw new InvalidDataException($"Launcher settings schema version mismatch: expected {ExpectedSettingsSchemaVersion}, got {settings.SchemaVersion}.");
-        return Normalize(settings);
+        // File missing — try backup or return default.
+        var backupPathForMissing = settingsPath + ".bak";
+        if (File.Exists(backupPathForMissing))
+        {
+            File.Copy(backupPathForMissing, settingsPath);
+            return LoadAndValidate(settingsPath);
+        }
+
+        return new LauncherSettings();
     }
 
     public static void Save(LauncherSettings settings, string settingsPath)
@@ -133,6 +154,8 @@ public static class LauncherSettingsStore
                 normalized.Add(trimmed);
         }
 
+        // Keep the first MaxSearchHistoryTerms entries. RecordSearchTerm inserts new terms
+        // at index 0 (most recent first), so this preserves the newest 20 entries.
         if (normalized.Count > MaxSearchHistoryTerms)
             normalized.RemoveRange(MaxSearchHistoryTerms, normalized.Count - MaxSearchHistoryTerms);
 
@@ -175,7 +198,7 @@ public static class LauncherSettingsStore
     {
         ValidateWindowSize(window.Width, "width");
         ValidateWindowSize(window.Height, "height");
-        // M11: Validate optional position fields. NaN is valid (not yet persisted).
+        // Validate optional position fields. NaN is valid (not yet persisted).
         // Negative values are valid on multi-monitor setups.
         if (double.IsInfinity(window.X))
             throw new InvalidDataException("Launcher settings window x must not be infinite.");

@@ -156,7 +156,7 @@ public sealed partial class MainWindowViewModel
         {
             try
             {
-                var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, item.Id);
+                var (updatedPresetFile, updatedOrder, _) = LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, item.Id);
                 _presetFile = updatedPresetFile;
                 _settings = _settings with { CustomEntryOrder = updatedOrder };
             }
@@ -287,6 +287,8 @@ public sealed partial class MainWindowViewModel
         }
 
         TotalCount = _entries.Count;
+        _keyboardFocusedEntryId = null;
+        OnPropertyChanged(nameof(KeyboardFocusedEntryId));
     }
 
     private string CurrentTimestampUtc() => _utcNow().ToString("O");

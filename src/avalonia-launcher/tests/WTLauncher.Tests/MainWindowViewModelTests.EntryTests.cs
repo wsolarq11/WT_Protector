@@ -455,6 +455,23 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("myentry-copy", result);
     }
 
+    [Fact]
+    public void ReplaceEntries_ResetsKeyboardFocusedEntryId()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+
+        var viewModel = CreateViewModel(config, settings);
+        viewModel.KeyboardFocusedEntryId = "one";
+        Assert.Equal("one", viewModel.KeyboardFocusedEntryId);
+        Assert.True(viewModel.Entries.Single(entry => entry.Id == "one").IsKeyboardFocused);
+
+        viewModel.RefreshCommand.Execute(null);
+
+        Assert.Null(viewModel.KeyboardFocusedEntryId);
+        Assert.All(viewModel.Entries, entry => Assert.False(entry.IsKeyboardFocused));
+    }
+
     private static EntryDraft NewThreeEntryDraft() =>
         new("three", "Three", "D:\\three", "pwsh", Selected: true);
 

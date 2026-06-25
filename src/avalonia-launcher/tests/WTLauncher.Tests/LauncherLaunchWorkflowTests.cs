@@ -217,7 +217,7 @@ public sealed class LauncherLaunchWorkflowTests
     }
 
     [Fact]
-    public void StartBatchStopsAfterFirstStartFailure()
+    public void StartBatchContinuesAfterFirstStartFailure()
     {
         using var temp = new TempDirectory();
         var attempted = new List<string>();
@@ -236,11 +236,69 @@ public sealed class LauncherLaunchWorkflowTests
             ],
             requireConfirmation: false);
 
-        Assert.Equal(2, attempted.Count);
-        Assert.Equal(1, report.RequestedCount);
+        // With continue: all three items are attempted, only two fails.
+        Assert.Equal(3, attempted.Count);
+        Assert.Equal(2, report.RequestedCount);
         Assert.Equal(1, report.FailedCount);
-        Assert.Equal(1, report.SkippedCount);
+        Assert.Equal(0, report.SkippedCount);
         Assert.Contains("two: blocked", Assert.Single(report.FailureMessages), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void StartBatch_ContinuesAfterSingleFailure()
+    {
+        using var temp = new TempDirectory();
+        var attempted = new List<string>();
+        var workflow = new LauncherLaunchWorkflow(plan =>
+        {
+            attempted.Add(plan.WorkingDirectory);
+            if (attempted.Count == 1)
+                throw new InvalidOperationException("blocked");
+        });
+
+        var report = workflow.StartBatch(
+            [
+                Entry("one", temp.Path),
+                Entry("two", temp.Path),
+                Entry("three", temp.Path),
+            ],
+            requireConfirmation: false);
+
+        // First item fails but remaining items are still attempted.
+        Assert.Equal(3, attempted.Count);
+        Assert.Equal(2, report.RequestedCount);
+        Assert.Equal(1, report.FailedCount);
+        Assert.Equal(0, report.SkippedCount);
+        Assert.Contains("one: blocked", Assert.Single(report.FailureMessages), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void StartBatch_FailureIndexRecordsLastFailure()
+    {
+        using var temp = new TempDirectory();
+        var attempted = new List<string>();
+        var workflow = new LauncherLaunchWorkflow(plan =>
+        {
+            attempted.Add(plan.WorkingDirectory);
+            if (attempted.Count is 1 or 3)
+                throw new InvalidOperationException("blocked");
+        });
+
+        var report = workflow.StartBatch(
+            [
+                Entry("one", temp.Path),
+                Entry("two", temp.Path),
+                Entry("three", temp.Path),
+            ],
+            requireConfirmation: false);
+
+        // Items at index 0 and 2 fail, item at index 1 succeeds.
+        // FailureIndex must point to the last failure (index 2), not the first.
+        Assert.Equal(3, attempted.Count);
+        Assert.Equal(1, report.RequestedCount);
+        Assert.Equal(2, report.FailedCount);
+        Assert.Equal(0, report.SkippedCount);
+        Assert.Equal(2, report.FailureIndex);
     }
 
     [Fact]

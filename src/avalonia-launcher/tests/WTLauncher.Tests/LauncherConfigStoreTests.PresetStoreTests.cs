@@ -1,3 +1,4 @@
+using System.Text.Json;
 using WTLauncher.Core;
 
 namespace WTLauncher.Tests;
@@ -397,5 +398,62 @@ public sealed partial class LauncherConfigStoreTests
     {
         var exception = Assert.Throws<ArgumentException>(action);
         Assert.Equal("presetPath", exception.ParamName);
+    }
+
+    [Fact]
+    public void PresetStore_RecoversFromBackupWhenPresetFileIsCorruptJson()
+    {
+        using var temp = new TempDirectory();
+        var presetPath = ConfigFilePath(temp.Path, LauncherPresetStore.PresetsFileName);
+
+        var backupPath = presetPath + ".bak";
+        File.WriteAllText(backupPath, """
+        {
+          "schemaVersion": 1,
+          "defaultPresetId": "daily",
+          "presets": [
+            {
+              "id": "daily",
+              "name": "Daily",
+              "entryIds": ["one"]
+            }
+          ]
+        }
+        """);
+
+        // Valid JSON with an unknown field — triggers JsonException via
+        // LauncherJson.Options.UnmappedMemberHandling.Disallow.
+        File.WriteAllText(presetPath, """
+        {
+          "schemaVersion": 1,
+          "defaultPresetId": "daily",
+          "presets": [
+            {
+              "id": "daily",
+              "name": "Daily",
+              "entryIds": ["one"],
+              "unknownField": 1
+            }
+          ]
+        }
+        """);
+
+        var loaded = LauncherPresetStore.Load(presetPath);
+
+        Assert.Equal("daily", loaded.DefaultPresetId);
+        var preset = Assert.Single(loaded.Presets);
+        Assert.Equal("Daily", preset.Name);
+        Assert.Equal(["one"], preset.EntryIds);
+    }
+
+    [Fact]
+    public void PresetStore_ThrowsWhenPresetFileIsCorruptAndNoBackupExists()
+    {
+        using var temp = new TempDirectory();
+        var presetPath = ConfigFilePath(temp.Path, LauncherPresetStore.PresetsFileName);
+
+        File.WriteAllText(presetPath, "corrupt garbage {{{");
+
+        Assert.ThrowsAny<JsonException>(() => LauncherPresetStore.Load(presetPath));
     }
 }

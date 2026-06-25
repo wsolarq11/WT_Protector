@@ -11,6 +11,7 @@ public sealed record LauncherBatchLaunchReport
         int skippedCount = 0,
         string? lastCommandLine = null,
         int? failureIndex = null,
+        IReadOnlyList<int>? failureIndices = null,
         IEnumerable<string>? failureMessages = null)
     {
         if (requestedCount < 0)
@@ -28,6 +29,7 @@ public sealed record LauncherBatchLaunchReport
         SkippedCount = skippedCount;
         LastCommandLine = lastCommandLine;
         FailureIndex = failureIndex;
+        FailureIndices = failureIndices ?? Array.Empty<int>();
         _failureMessages = Array.AsReadOnly(CloneFailureMessages(failureMessages));
     }
 
@@ -40,6 +42,12 @@ public sealed record LauncherBatchLaunchReport
     public string? LastCommandLine { get; }
 
     public int? FailureIndex { get; }
+
+    /// <summary>
+    /// All failure indices. Used by receipt formatting to correctly determine item
+    /// status regardless of failure ordering within the batch.
+    /// </summary>
+    public IReadOnlyList<int> FailureIndices { get; }
 
     public IReadOnlyList<string> FailureMessages => _failureMessages;
 
@@ -64,6 +72,7 @@ public sealed record LauncherBatchLaunchReport
 internal sealed class LauncherBatchLaunchReportBuilder
 {
     private readonly List<string> _failures = [];
+    private readonly List<int> _failureIndices = [];
 
     public LauncherBatchLaunchReportBuilder()
     {
@@ -76,6 +85,8 @@ internal sealed class LauncherBatchLaunchReportBuilder
         RequestedCount = report.RequestedCount;
         SkippedCount = report.SkippedCount;
         LastCommandLine = report.LastCommandLine;
+        FailureIndex = report.FailureIndex;
+        _failureIndices.AddRange(report.FailureIndices);
         _failures.AddRange(report.FailureMessages);
     }
 
@@ -90,7 +101,7 @@ internal sealed class LauncherBatchLaunchReportBuilder
     public int? FailureIndex { get; private set; }
 
     public LauncherBatchLaunchReport ToReport() =>
-        new(RequestedCount, SkippedCount, LastCommandLine, FailureIndex, _failures);
+        new(RequestedCount, SkippedCount, LastCommandLine, FailureIndex, _failureIndices, _failures);
 
     public void RecordPlan(LaunchPlan plan)
     {
@@ -126,7 +137,9 @@ internal sealed class LauncherBatchLaunchReportBuilder
         ArgumentNullException.ThrowIfNull(entryName);
         ArgumentNullException.ThrowIfNull(exception);
         _failures.Add($"{RequireEntryName(entryName)}: {exception.Message}");
-        FailureIndex ??= failureIndex;
+        FailureIndex = failureIndex;
+        if (failureIndex is not null)
+            _failureIndices.Add(failureIndex.Value);
     }
 
     public void RecordFailure(Exception exception)

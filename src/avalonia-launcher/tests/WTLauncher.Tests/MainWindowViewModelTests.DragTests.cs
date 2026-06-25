@@ -310,6 +310,23 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(ReorderedDragOrder(), viewModel.Settings.CustomEntryOrder);
     }
 
+    [Fact]
+    public void SelectVisible_DiscardsDragPreview()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreateDragFixture(temp);
+        var launcherSettings = CreateDragSettings();
+        var viewModel = CreateViewModel(config, settings, launcherSettings);
+
+        StartDefaultDragPreview(viewModel, launcherSettings);
+
+        viewModel.SelectVisibleCommand.Execute(null);
+
+        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        AssertNoDragCues(viewModel);
+    }
+
     private static void AssertNoDragCues(MainWindowViewModel viewModel) =>
         Assert.DoesNotContain(viewModel.Entries, HasDragCue);
 

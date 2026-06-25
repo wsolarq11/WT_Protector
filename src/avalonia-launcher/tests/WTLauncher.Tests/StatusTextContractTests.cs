@@ -25,6 +25,17 @@ public sealed class StatusTextContractTests
         Assert.Equal(expected, LauncherEntryText.Normalize(value));
     }
 
+    [Fact]
+    public void Normalize_AppliesFormKCUnicodeNormalization()
+    {
+        // Fullwidth latin letters normalize to halfwidth ASCII under FormKC.
+        // U+FF23=Ｃ, U+FF41=ａ, U+FF46=ｆ, U+FF45=ｅ
+        Assert.Equal("Cafe", LauncherEntryText.Normalize("Ｃａｆｅ"));
+
+        // Combining acute accent (U+0301) composes to precomposed é (U+00E9).
+        Assert.Equal("Café", LauncherEntryText.Normalize("Café"));
+    }
+
     // ── LauncherPersistenceStatus (conditional rollback append) ──
 
     [Fact]

@@ -84,8 +84,7 @@ public sealed class LauncherLaunchWorkflow
             {
                 ErrorLog.Write(ex, "StartBatch");
                 RecordFailure(report, item.EntryName, index, ex);
-                report.RecordSkipped(items.Count - index - 1);
-                break;
+                continue;
             }
         }
 

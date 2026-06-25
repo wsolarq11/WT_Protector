@@ -12,6 +12,7 @@ public static class LauncherEntryIds
             return string.Empty;
 
         var trimmed = id.Trim();
+        // Consistent with LauncherPresetIds.Normalize (both use 256-character limit).
         if (trimmed.Length > 256)
             trimmed = trimmed.Substring(0, 256);
 

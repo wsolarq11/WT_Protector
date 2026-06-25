@@ -418,4 +418,55 @@ public sealed partial class LauncherConfigStoreTests
         Assert.False(File.Exists(config + ".bak"));
         Assert.Empty(Directory.EnumerateFiles(configDir, $"{LauncherConfigStore.ConfigFileName}.tmp-*"));
     }
+
+    [Fact]
+    public void Load_RecoversFromBackupWhenConfigFileIsCorruptJson()
+    {
+        using var temp = new TempDirectory();
+        var config = ConfigFilePath(temp.Path, LauncherConfigStore.ConfigFileName);
+
+        var backupPath = config + ".bak";
+        File.WriteAllText(backupPath, """
+        [
+          {
+            "id": "demo",
+            "name": "demo",
+            "directory": "D:\\demo",
+            "command": "codex",
+            "selected": true
+          }
+        ]
+        """);
+
+        // Valid JSON with an unknown field — triggers JsonException via
+        // LauncherJson.Options.UnmappedMemberHandling.Disallow.
+        File.WriteAllText(config, """
+        [
+          {
+            "id": "x",
+            "name": "x",
+            "directory": "D:\\x",
+            "command": "x",
+            "selected": true,
+            "unknownField": 1
+          }
+        ]
+        """);
+
+        var entries = LauncherConfigStore.Load(config);
+
+        var entry = Assert.Single(entries);
+        Assert.Equal("demo", entry.Id);
+    }
+
+    [Fact]
+    public void Load_ThrowsWhenConfigFileIsCorruptAndNoBackupExists()
+    {
+        using var temp = new TempDirectory();
+        var config = ConfigFilePath(temp.Path, LauncherConfigStore.ConfigFileName);
+
+        File.WriteAllText(config, "this is not JSON {{{{");
+
+        Assert.ThrowsAny<JsonException>(() => LauncherConfigStore.Load(config));
+    }
 }

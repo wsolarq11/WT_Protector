@@ -13,12 +13,13 @@ public sealed class LauncherEntryReferencesTests
             Preset("manual", "three"));
         var customEntryOrder = ImmutableList.Create("one", "two", "three");
 
-        var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RenameEntryId(
+        var (updatedPresetFile, updatedOrder, renamed) = LauncherEntryReferences.RenameEntryId(
             presetFile,
             customEntryOrder,
             oldEntryId: "one",
             newEntryId: "one-renamed");
 
+        Assert.True(renamed);
         Assert.Equal(["one-renamed", "two"], updatedPresetFile.Presets[0].EntryIds);
         Assert.Equal(["three"], updatedPresetFile.Presets[1].EntryIds);
         Assert.Equal(["one-renamed", "two", "three"], updatedOrder);
@@ -30,12 +31,13 @@ public sealed class LauncherEntryReferencesTests
         var presetFile = PresetFile(Preset("daily", " one ", "two"));
         var customEntryOrder = ImmutableList.Create(" one ", "two");
 
-        var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RenameEntryId(
+        var (updatedPresetFile, updatedOrder, renamed) = LauncherEntryReferences.RenameEntryId(
             presetFile,
             customEntryOrder,
             oldEntryId: "one",
             newEntryId: "one-renamed");
 
+        Assert.True(renamed);
         Assert.Equal(["one-renamed", "two"], updatedPresetFile.Presets[0].EntryIds);
         Assert.Equal(["one-renamed", "two"], updatedOrder);
     }
@@ -46,12 +48,50 @@ public sealed class LauncherEntryReferencesTests
         var presetFile = PresetFile(Preset("daily", "one"));
         var customEntryOrder = ImmutableList.Create("one");
 
-        var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RenameEntryId(
+        var (updatedPresetFile, updatedOrder, renamed) = LauncherEntryReferences.RenameEntryId(
             presetFile,
             customEntryOrder,
             oldEntryId: "one",
             newEntryId: " one-renamed ");
 
+        Assert.True(renamed);
+        Assert.Equal(["one-renamed"], updatedPresetFile.Presets[0].EntryIds);
+        Assert.Equal(["one-renamed"], updatedOrder);
+    }
+
+    [Fact]
+    public void RenameEntryId_ReturnsFalseWhenOldIdNotFound()
+    {
+        var presetFile = PresetFile(
+            Preset("daily", "one", "two"),
+            Preset("manual", "three"));
+        var customEntryOrder = ImmutableList.Create("one", "two", "three");
+
+        var (updatedPresetFile, updatedOrder, renamed) = LauncherEntryReferences.RenameEntryId(
+            presetFile,
+            customEntryOrder,
+            oldEntryId: "nonexistent",
+            newEntryId: "nonexistent-renamed");
+
+        Assert.False(renamed);
+        // Original data is returned unchanged.
+        Assert.Same(presetFile, updatedPresetFile);
+        Assert.Same(customEntryOrder, updatedOrder);
+    }
+
+    [Fact]
+    public void RenameEntryId_ReturnsTrueWhenSuccessful()
+    {
+        var presetFile = PresetFile(Preset("daily", "one"));
+        var customEntryOrder = ImmutableList.Create("one");
+
+        var (updatedPresetFile, updatedOrder, renamed) = LauncherEntryReferences.RenameEntryId(
+            presetFile,
+            customEntryOrder,
+            oldEntryId: "one",
+            newEntryId: "one-renamed");
+
+        Assert.True(renamed);
         Assert.Equal(["one-renamed"], updatedPresetFile.Presets[0].EntryIds);
         Assert.Equal(["one-renamed"], updatedOrder);
     }

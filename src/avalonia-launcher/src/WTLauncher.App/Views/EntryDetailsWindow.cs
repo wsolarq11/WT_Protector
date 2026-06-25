@@ -32,6 +32,13 @@ public sealed class EntryDetailsWindow : Window
         _nameBox = LauncherDialogText.Input(RequireInitialEntryText(entry, static item => item.Name, "name"));
         _directoryBox = LauncherDialogText.Input(RequireInitialEntryText(entry, static item => item.Directory, "directory"));
         _commandBox = LauncherDialogText.Input(RequireInitialEntryText(entry, static item => item.Command, "command"));
+        // MaxLength must match store-level limits to prevent overwrites that the
+        // store will later reject. LauncherEntryIds.Normalize truncates at 256;
+        // LauncherConfigStore.RequireEntryText rejects >4096.
+        _idBox.MaxLength = 256;
+        _nameBox.MaxLength = 4096;
+        _directoryBox.MaxLength = 4096;
+        _commandBox.MaxLength = 4096;
         _selectedBox = new CheckBox
         {
             Content = "保存为已勾选",
@@ -126,7 +133,7 @@ public sealed class EntryDetailsWindow : Window
 
         Opened += (_, _) =>
         {
-            // L46: Defer SelectAll to Loaded priority so the TextBox has fully
+            // Defer SelectAll to Loaded priority so the TextBox has fully
             // acquired keyboard focus before the selection is applied. Calling
             // SelectAll immediately after Focus() can lose the selection because
             // the focus handler hasn't completed yet.

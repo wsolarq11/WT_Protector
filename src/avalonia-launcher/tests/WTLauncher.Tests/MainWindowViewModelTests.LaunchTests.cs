@@ -518,6 +518,41 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task SingleLaunchSaveConfigFailurePreservesSaveErrorStatus()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("one", directory: temp.Path, command: "codex"));
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = false });
+
+        // Replace the config directory with a file so Directory.CreateDirectory
+        // fails when SaveConfig() tries to write — the only reliable way to
+        // trigger a config-save failure in a temp-directory test.
+        var configDir = Path.GetDirectoryName(config)!;
+        Directory.Delete(configDir, recursive: true);
+        File.WriteAllText(configDir, "blocked");
+
+        await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
+
+        // SaveConfig failed — StatusText MUST preserve the save-error message
+        // set by ApplyStatusText, NOT be overwritten by "已请求启动".
+        Assert.Contains("配置保存失败", viewModel.StatusText);
+        Assert.DoesNotContain("已请求启动", viewModel.StatusText);
+
+        // DryRunText still shows the launch receipt — the process was started.
+        Assert.Contains("启动回执", viewModel.DryRunText);
+        Assert.Contains("已请求启动: one", viewModel.DryRunText);
+
+        // LaunchedAtUtc is recorded in memory despite the save failure.
+        var snapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
+        Assert.NotEqual("", snapshot.LaunchedAtUtc);
+    }
+
+    [Fact]
     public void LaunchActionsUseOneTypedWorkflowField()
     {
         Assert.Null(typeof(MainWindowViewModel).GetField("_launcherProcess", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
