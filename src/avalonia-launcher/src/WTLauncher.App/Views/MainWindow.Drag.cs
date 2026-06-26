@@ -206,7 +206,14 @@ public sealed partial class MainWindow
         PointerPressedEventArgs e)
     {
         _overlayLayer ??= OverlayLayer.GetOverlayLayer(this);
-        if (_overlayLayer is null || _dragGhost is not null)
+        if (_overlayLayer is null)
+        {
+            ErrorLog.Write(
+                new InvalidOperationException("OverlayLayer is null — cannot create drag ghost."),
+                "DragGhost");
+            return;
+        }
+        if (_dragGhost is not null)
             return;
 
         var pointerPosition = e.GetPosition(this);

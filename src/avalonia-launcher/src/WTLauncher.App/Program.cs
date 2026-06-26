@@ -35,6 +35,8 @@ internal static class Program
             e.SetObserved();
         };
 
+        LauncherJson.OnRecoveryFromBackup = (ex, ctx) => ErrorLog.Write(ex, ctx);
+
         DeleteStaleTempFiles();
 
         BuildAvaloniaApp()

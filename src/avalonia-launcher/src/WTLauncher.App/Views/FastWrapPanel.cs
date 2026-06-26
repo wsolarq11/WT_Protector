@@ -37,7 +37,7 @@ public sealed class FastWrapPanel : Panel
         // window chrome. Used only when availableSize.Width is infinite (no size
         // constraint from parent), which should not occur in the current single-window
         // layout.
-        var width = double.IsInfinity(availableSize.Width) ? 900 : availableSize.Width;
+        var width = double.IsInfinity(availableSize.Width) || double.IsNaN(availableSize.Width) ? 900 : availableSize.Width;
         var totalWidth = 0.0;
         var totalHeight = 0.0;
         var rowWidth = 0.0;

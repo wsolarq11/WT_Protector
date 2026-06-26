@@ -7,6 +7,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using System.Diagnostics;
 using WTLauncher.Core;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
 
 namespace WTLauncher.App.Views;
@@ -40,6 +41,7 @@ public sealed partial class MainWindow : Window
     private const double CardsRegionVerticalChromeHeight = 270;
     private int _keyboardFocusIndex;
     private int _pendingScrollRestoreVersion;
+    private EventHandler<SizeChangedEventArgs>? _onSizeChangedHandler;
 
     public MainWindow()
     {
@@ -62,7 +64,8 @@ public sealed partial class MainWindow : Window
         viewModel.ConfirmDeleteEntryAsync = target => new ConfirmEntryDeleteWindow(target).ShowDialog<bool>(this);
         DragDrop.AddDragOverHandler(this, OnEntryDragOver);
         DragDrop.AddDropHandler(this, OnEntryDrop);
-        SizeChanged += (_, _) => UpdateCardRegionSize(viewModel);
+        _onSizeChangedHandler = (_, _) => UpdateCardRegionSize(viewModel);
+        SizeChanged += _onSizeChangedHandler;
         Opened += (_, _) =>
         {
             UpdateCardRegionSize(viewModel);
@@ -153,6 +156,23 @@ public sealed partial class MainWindow : Window
     {
         var visibleCount = viewModel.VisibleEntries.Count;
 
+        // When there are no visible entries, reset keyboard focus state and
+        // only allow Escape (clear filter). All other navigation keys must
+        // return false immediately — there is nothing to navigate.
+        if (visibleCount == 0)
+        {
+            _keyboardFocusIndex = -1;
+            viewModel.KeyboardFocusedEntryId = null;
+
+            if (e.Key == Key.Escape)
+            {
+                viewModel.FilterText = "";
+                e.Handled = true;
+                return true;
+            }
+            return false;
+        }
+
         // R3.19: Revalidate keyboard focus index when visible entries change
         // (filter, sort, view mode switch). If the focused entry is no longer
         // visible, reset focus to avoid an index out of bounds.
@@ -160,19 +180,6 @@ public sealed partial class MainWindow : Window
         {
             _keyboardFocusIndex = -1;
             viewModel.KeyboardFocusedEntryId = null;
-        }
-
-        if (visibleCount == 0)
-        {
-            if (e.Key == Key.Escape)
-            {
-                viewModel.FilterText = "";
-                _keyboardFocusIndex = -1;
-                viewModel.KeyboardFocusedEntryId = null;
-                e.Handled = true;
-                return true;
-            }
-            return false;
         }
 
         var searchFocused = SearchTextBox.IsFocused;
@@ -212,6 +219,11 @@ public sealed partial class MainWindow : Window
     {
         DragDrop.RemoveDragOverHandler(this, OnEntryDragOver);
         DragDrop.RemoveDropHandler(this, OnEntryDrop);
+
+        if (_onSizeChangedHandler is not null)
+            SizeChanged -= _onSizeChangedHandler;
+        KeyDown -= OnWindowKeyDown;
+        DisplayModeComboBox.SelectionChanged -= OnDisplayModeSelectionChanged;
 
         if (DataContext is MainWindowViewModel viewModel)
         {
@@ -284,7 +296,9 @@ public sealed partial class MainWindow : Window
         var scrollViewer = DetailsEntriesItemsControl.FindDescendantOfType<ScrollViewer>();
         if (scrollViewer is null)
         {
-            Debug.WriteLine("MainWindow: FindDescendantOfType<ScrollViewer>() returned null for DetailsEntriesItemsControl. Skipping scroll save.");
+            ErrorLog.Write(
+                new InvalidOperationException("FindDescendantOfType<ScrollViewer>() returned null for DetailsEntriesItemsControl."),
+                "DetailsScrollOffset");
             return 0;
         }
         return scrollViewer.Offset.Y;
