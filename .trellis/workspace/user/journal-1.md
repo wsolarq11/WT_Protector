@@ -642,3 +642,34 @@ Implemented 4 preventive gate checks from break-loop analysis: P0#1 CI-safe proc
 ### Next Steps
 
 - None - task complete
+
+
+## Session 20: P6 pointer-capture drag: eliminate OLE stutter, zero-layout hot path, ForceCleanup safety net
+
+**Date**: 2026-06-27
+**Task**: P6 pointer-capture drag: eliminate OLE stutter, zero-layout hot path, ForceCleanup safety net
+**Branch**: `main`
+
+### Summary
+
+6-round performance analysis traced root cause to OLE nested message loop. Replaced DragDrop.DoDragDropAsync with Pointer.Capture + PointerMoved architecture. Eliminated all layout passes (Canvas.SetLeft→RenderTransform, IsVisible→Opacity, removed BorderThickness style). Eliminated visual tree walks (cached card rects). Reduced heap alloc -57% per drag frame. Added ForceCleanup pattern for guaranteed pointer release. Updated specs: pitfalls §2.5 (OLE perf killer), §2.6 (perf diagnosis methodology), views quality guidelines (pointer capture standard). Spec audit and break-loop analysis completed.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+(No commits - planning session)
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

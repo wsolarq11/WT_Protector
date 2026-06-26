@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 19
-- **Last Active**: 2026-06-26
+- **Total Sessions**: 20
+- **Last Active**: 2026-06-27
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~644 | Active |
+| `journal-1.md` | ~675 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 20 | 2026-06-27 | P6 pointer-capture drag: eliminate OLE stutter, zero-layout hot path, ForceCleanup safety net | - | `main` |
 | 19 | 2026-06-26 | Prevention mechanisms — 4 gate checks + meta-analysis spec | `a7dc2f3`, `0383d8d` | `main` |
 | 18 | 2026-06-26 | UltraReview 2026-06-26 full clearance — 21 fixes + Commit Journal + CancellationToken + honest DryRun | `8c17764` | `main` |
 | 17 | 2026-06-25 | UltraReview 78+ 发现 Genius 级别清零 — 14 维度审查 → 3 阶段实施 → 4 份 Spec 更新 | `e35f460` | `main` |
