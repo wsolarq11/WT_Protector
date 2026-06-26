@@ -21,9 +21,6 @@ internal static class LauncherDialogButtons
             minWidth: minWidth);
     }
 
-    public static Button SafeDefaultCancel(double? minWidth = null) =>
-        Cancel(minWidth, isDefault: true);
-
     public static Button Primary(string content, double? minWidth = null)
     {
         return Create(
@@ -35,10 +32,11 @@ internal static class LauncherDialogButtons
             fontWeight: FontWeight.SemiBold);
     }
 
-    public static Button Destructive(string content, double? minWidth = null)
+    public static Button Destructive(string content, double? minWidth = null, bool isDefault = false)
     {
         return Create(
             content,
+            isDefault: isDefault,
             minWidth: minWidth,
             background: DestructiveBrush,
             foreground: Brush.Parse(LauncherDesignTokens.SurfaceColor),

@@ -8,7 +8,7 @@ public sealed record LauncherBatchLaunchItem
     {
         ArgumentNullException.ThrowIfNull(entry);
 
-        EntryId = RequireEntryId(entry.Id);
+        EntryId = LauncherEntryIds.RequireEntryId(entry.Id, nameof(entry.Id));
         EntryName = RequireEntryName(entry.Name);
         Plan = plan ?? throw new ArgumentNullException(nameof(plan));
     }
@@ -18,9 +18,6 @@ public sealed record LauncherBatchLaunchItem
     public LaunchPlan Plan { get; }
 
     public string EntryName { get; }
-
-    private static string RequireEntryId(string? entryId) =>
-        LauncherEntryIds.RequireEntryId(entryId, nameof(entryId));
 
     private static string RequireEntryName(string? entryName)
     {

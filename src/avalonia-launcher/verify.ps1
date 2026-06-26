@@ -44,7 +44,7 @@ if ($isWindowsPlatform -and -not $isCi) {
     $smokePresets = Join-Path $smokeRoot 'config\presets.json'
     New-Item -ItemType Directory -Path (Split-Path -Parent $smokeConfig) -Force | Out-Null
     Set-Content -Encoding UTF8 -LiteralPath $smokeConfig -Value '[{"id":"smoke","name":"smoke","directory":".","command":"echo smoke","selected":false}]'
-    Set-Content -Encoding UTF8 -LiteralPath $smokeSettings -Value '{"lastFilterText":"","sortMode":"custom","entryViewMode":"cards","requireConfirmationForLaunches":true,"customEntryOrder":["smoke"],"window":{"width":1180,"height":760}}'
+    Set-Content -Encoding UTF8 -LiteralPath $smokeSettings -Value '{"schemaVersion":1,"lastFilterText":"","sortMode":"custom","entryViewMode":"cards","requireConfirmationForLaunches":true,"customEntryOrder":["smoke"],"window":{"width":1180,"height":760}}'
     Set-Content -Encoding UTF8 -LiteralPath $smokePresets -Value '{"schemaVersion":1,"defaultPresetId":"smoke-group","presets":[{"id":"smoke-group","name":"Smoke","entryIds":["smoke"]}]}'
     $smokeProcess = Start-Process -FilePath $exe -ArgumentList @('--config', $smokeConfig) -WorkingDirectory $smokeRoot -WindowStyle Hidden -PassThru
     $smokeExitedGracefully = $true

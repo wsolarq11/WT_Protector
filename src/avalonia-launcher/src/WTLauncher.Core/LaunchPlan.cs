@@ -21,11 +21,18 @@ public sealed record LaunchPlan(
     public string Command { get => _command; init => _command = RequireText(value, nameof(Command)); }
 
     /// <summary>
-    /// Human-readable command-line preview for UI display (DryRun, receipts).
-    /// The actual execution transmits the command via Base64-encoded
-    /// -EncodedCommand (see <see cref="Arguments"/>).
+    /// Human-readable command-line preview for DryRun and receipts.
+    /// NOT the exact command that gets executed — the actual execution uses
+    /// <see cref="ExecutionCommandLine"/> with Base64-encoded -EncodedCommand
+    /// to prevent PowerShell metacharacter injection.
     /// </summary>
     public string CommandLine => $"{Executable} -d \"{WorkingDirectory}\" pwsh -NoExit -Command \"{Command}\"";
+
+    /// <summary>
+    /// The actual command line passed to Process.Start. Uses -EncodedCommand
+    /// with Base64 encoding to eliminate PowerShell injection vectors.
+    /// </summary>
+    public string ExecutionCommandLine => $"{Executable} {Arguments}";
 
     private static string RequireText(string? value, string paramName)
     {

@@ -38,9 +38,14 @@ public static class LauncherEntryLayoutCalculator
             double availableHeight,
             int itemCount)
     {
+        // Guard against NaN/Infinity propagated from upstream layout calculations.
+        // Use safe fallback dimensions (900×600) that produce readable cards until
+        // the next valid layout pass supplies real measurements.
+        var safeWidth = double.IsFinite(availableWidth) && availableWidth > 0 ? availableWidth : 900;
+        var safeHeight = double.IsFinite(availableHeight) && availableHeight > 0 ? availableHeight : 600;
         var count = Math.Max(1, itemCount);
-        var cardLayout = CalculateCardLayout(availableWidth, availableHeight, count);
-        var nameTileLayout = CalculateNameTileLayout(availableWidth, availableHeight, count);
+        var cardLayout = CalculateCardLayout(safeWidth, safeHeight, count);
+        var nameTileLayout = CalculateNameTileLayout(safeWidth, safeHeight, count);
         return (cardLayout.Width, cardLayout.Height, nameTileLayout.Width, nameTileLayout.Height);
     }
 

@@ -1,5 +1,5 @@
+
 using System.Collections.Immutable;
-using System.Text.Json;
 
 namespace WTLauncher.Core;
 
@@ -7,6 +7,8 @@ public static class LauncherSettingsStore
 {
     public const int ExpectedSettingsSchemaVersion = 1;
     public const int MaxSearchHistoryTerms = 20;
+
+    private static readonly LauncherSettings ValidatedDefaultSettings = Normalize(new LauncherSettings());
 
     public static LauncherSettings Load(string settingsPath)
     {
@@ -31,47 +33,7 @@ public static class LauncherSettingsStore
             return Normalize(settings);
         }
 
-        if (File.Exists(settingsPath))
-        {
-            Exception? loadException = null;
-            try
-            {
-                return LoadAndValidate(settingsPath);
-            }
-            catch (Exception ex) when (ex is JsonException or InvalidDataException or FileNotFoundException)
-            {
-                loadException = ex;
-            }
-
-            if (loadException is not null)
-            {
-                // Main file is corrupt — try .bak recovery.
-                var backupPath = settingsPath + ".bak";
-                if (File.Exists(backupPath))
-                {
-                    var recoveryTempPath = settingsPath + $".recovery-{Guid.NewGuid():N}";
-                    File.Copy(backupPath, recoveryTempPath, overwrite: true);
-                    File.Move(recoveryTempPath, settingsPath, overwrite: true);
-                    LauncherJson.OnRecoveryFromBackup?.Invoke(loadException, "SettingsLoad.RecoveredFromBackup");
-                    // Retry outside try/catch — if backup is also corrupt, the exception
-                    // propagates naturally without looping.
-                    return LoadAndValidate(settingsPath);
-                }
-                throw loadException; // No backup available — propagate original exception.
-            }
-        }
-
-        // File missing — try backup or return default.
-        var backupPathForMissing = settingsPath + ".bak";
-        if (File.Exists(backupPathForMissing))
-        {
-            var recoveryTempPath = settingsPath + $".recovery-{Guid.NewGuid():N}";
-            File.Copy(backupPathForMissing, recoveryTempPath, overwrite: true);
-            File.Move(recoveryTempPath, settingsPath, overwrite: true);
-            return LoadAndValidate(settingsPath);
-        }
-
-        return new LauncherSettings();
+        return LauncherJson.LoadWithRecovery(settingsPath, LoadAndValidate, "SettingsLoad.RecoveredFromBackup", ValidatedDefaultSettings);
     }
 
     public static void Save(LauncherSettings settings, string settingsPath, bool backup = true)
@@ -100,8 +62,8 @@ public static class LauncherSettingsStore
         }
         // Close-time bounds persistence must not leave unsaved sizes in memory.
         // Write failures can surface as IOException, UnauthorizedAccessException,
-        // or other path/storage exceptions depending on the underlying cause.
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        // PathTooLongException, or other storage exceptions depending on the underlying cause.
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or PathTooLongException or System.Security.SecurityException)
         {
             return false;
         }

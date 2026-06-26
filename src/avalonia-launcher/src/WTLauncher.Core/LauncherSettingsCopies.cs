@@ -1,5 +1,3 @@
-using System.Collections.Immutable;
-
 namespace WTLauncher.Core;
 
 internal static class LauncherSettingsCopies
@@ -23,8 +21,4 @@ internal static class LauncherSettingsCopies
             SchemaVersion = 1,
         };
     }
-
-    [Obsolete("ImmutableDictionary has value semantics; CloneCommandTemplates is a no-op. Use the dictionary directly.")]
-    public static ImmutableDictionary<string, string> CloneCommandTemplates(ImmutableDictionary<string, string> templates) =>
-        templates;
 }

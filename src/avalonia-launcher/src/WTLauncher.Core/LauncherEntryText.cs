@@ -22,7 +22,6 @@ public static class LauncherEntryText
     /// </summary>
     public static string RequireNonEmpty(string? value, string paramName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(paramName);
         var normalized = Normalize(value);
         if (normalized.Length == 0)
             throw new ArgumentException("Value must not be empty.", paramName);

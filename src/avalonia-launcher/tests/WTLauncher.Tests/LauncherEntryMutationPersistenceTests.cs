@@ -32,6 +32,8 @@ public sealed class LauncherEntryMutationPersistenceTests
     [Fact]
     public void SavePresetCommitFailureDoesNotRollBackAlreadyCommittedConfig()
     {
+        // Commit journal provides crash recovery; live rename failures still allow
+        // partial commit (File.Move is irreversible per-file on NTFS).
         using var temp = new TempDirectory();
         var configPath = Path.Combine(temp.Path, "config.json");
         var settingsPath = Path.Combine(temp.Path, "settings.json");
@@ -48,14 +50,16 @@ public sealed class LauncherEntryMutationPersistenceTests
             savePresets: true,
             rollbackSnapshot: snapshot);
 
-        Assert.Contains("启动组保存失败", saveFailure);
-        // Config was committed before presets commit failed — it stays as the new data.
+        Assert.Contains("配置保存失败", saveFailure);
+        // Config was committed before presets commit failed.
         Assert.Equal("mutated", Assert.Single(LauncherConfigStore.Load(configPath)).Id);
     }
 
     [Fact]
     public void SaveSettingsCommitFailureDoesNotRollBackAlreadyCommittedConfigAndPresets()
     {
+        // Commit journal provides crash recovery; live rename failures still allow
+        // partial commit.
         using var temp = new TempDirectory();
         var configPath = Path.Combine(temp.Path, "config.json");
         var presetPath = Path.Combine(temp.Path, "presets.json");
@@ -73,7 +77,7 @@ public sealed class LauncherEntryMutationPersistenceTests
             savePresets: true,
             rollbackSnapshot: snapshot);
 
-        Assert.Contains("设置保存失败", saveFailure);
+        Assert.Contains("配置保存失败", saveFailure);
         // Config and presets were committed before settings commit failed.
         Assert.Equal("mutated", Assert.Single(LauncherConfigStore.Load(configPath)).Id);
         var preset = Assert.Single(LauncherPresetStore.Load(presetPath).Presets);
@@ -143,7 +147,7 @@ public sealed class LauncherEntryMutationPersistenceTests
 
         // Config and presets were committed before the settings commit failed.
         // The invalid snapshot was never used (no file rollback occurs).
-        Assert.Contains("设置保存失败", saveFailure);
+        Assert.Contains("配置保存失败", saveFailure);
         Assert.Equal("mutated", Assert.Single(LauncherConfigStore.Load(configPath)).Id);
         var preset = Assert.Single(LauncherPresetStore.Load(presetPath).Presets);
         Assert.Equal("mutated", preset.Id);

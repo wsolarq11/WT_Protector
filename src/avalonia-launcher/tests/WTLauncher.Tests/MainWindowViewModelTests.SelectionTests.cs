@@ -182,6 +182,8 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.NotNull(viewModel.DryRunText);
         Assert.DoesNotContain("ArgumentException", viewModel.DryRunText);
-        Assert.Contains("启动", viewModel.StatusText);
+        // SaveConfig is expected to fail on duplicate IDs — StatusText reflects
+        // the save failure, not a successful batch completion.
+        Assert.Contains("保存失败", viewModel.StatusText);
     }
 }

@@ -1,0 +1,141 @@
+namespace WTLauncher.Core;
+
+/// <summary>
+/// Lightweight commit journal for multi-file atomic writes.
+///
+/// Pattern (inspired by SQLite WAL):
+///   1. Stage all temp files.
+///   2. Write commit journal (single atomic rename).
+///   3. Replay journal — rename each temp file to its target.
+///   4. On complete success → delete journal.
+///   5. On crash → journal survives; next startup replays it.
+///
+/// This eliminates the partial-commit window where config.json is
+/// committed but presets.json is not — the journal serves as the
+/// single source of truth during the commit phase. If any rename
+/// fails, the journal remains on disk for crash recovery.
+/// </summary>
+public static class CommitJournal
+{
+    private const string JournalFileName = ".commit-journal";
+
+    /// <summary>Resolve the journal path for a config directory.</summary>
+    public static string ResolvePath(string configDir) =>
+        System.IO.Path.Combine(configDir, JournalFileName);
+
+    /// <summary>
+    /// Write a commit journal listing temp→target mappings for a pending
+    /// multi-file commit. The caller MUST have already written all temp
+    /// files successfully before calling this.
+    /// </summary>
+    public static string? Write(
+        string journalPath,
+        IReadOnlyList<(string TempPath, string TargetPath)> entries)
+    {
+        ArgumentNullException.ThrowIfNull(entries);
+        if (entries.Count == 0)
+            throw new ArgumentException("Commit journal must contain at least one entry.", nameof(entries));
+
+        // Serialize entries as a simple JSON array of [temp, target] pairs.
+        var journalEntries = entries.Select(e => new JournalEntry(e.TempPath, e.TargetPath)).ToArray();
+        var journalTempPath = journalPath + $".tmp-{System.Guid.NewGuid():N}";
+
+        try
+        {
+            LauncherJson.Save(journalEntries, journalTempPath, backup: false);
+            System.IO.File.Move(journalTempPath, journalPath, overwrite: true);
+            return null; // success
+        }
+        catch (System.Exception ex) when (ex is System.IO.IOException
+            or UnauthorizedAccessException
+            or System.Security.SecurityException)
+        {
+            TryDelete(journalTempPath);
+            return $"无法写入提交日志: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Replay a commit journal — rename each temp file to its target.
+    /// Called at startup for crash recovery, and during normal Save
+    /// to commit staged files.
+    /// </summary>
+    /// <returns>null on success, error message on failure.</returns>
+    public static string? Replay(string journalPath)
+    {
+        if (!System.IO.File.Exists(journalPath))
+            return null;
+
+        JournalEntry[]? entries;
+        try
+        {
+            entries = LauncherJson.Load<JournalEntry[]>(journalPath);
+        }
+        catch
+        {
+            // Corrupt journal — discard and move on.
+            TryDelete(journalPath);
+            return null;
+        }
+
+        if (entries is null || entries.Length == 0)
+        {
+            TryDelete(journalPath);
+            return null;
+        }
+
+        foreach (var entry in entries)
+        {
+            // Temp file may already have been consumed by a prior partial replay.
+            if (!System.IO.File.Exists(entry.Temp))
+                continue;
+
+            try
+            {
+                // Rotate existing .bak chain before overwriting the target.
+                LauncherJson.RotateBackups(entry.Target);
+                var bakTemp = entry.Target + $".bak-tmp-{System.Guid.NewGuid():N}";
+                if (System.IO.File.Exists(entry.Target))
+                {
+                    System.IO.File.Copy(entry.Target, bakTemp, overwrite: true);
+                    System.IO.File.Move(bakTemp, entry.Target + ".bak", overwrite: true);
+                }
+
+                System.IO.File.Move(entry.Temp, entry.Target, overwrite: true);
+            }
+            catch (System.Exception ex) when (ex is System.IO.IOException
+                or UnauthorizedAccessException
+                or System.Security.SecurityException)
+            {
+                // Journal stays on disk for next startup recovery attempt.
+                return $"提交日志重放失败 ({entry.Target}): {ex.Message}";
+            }
+        }
+
+        // All entries committed — journal is no longer needed.
+        TryDelete(journalPath);
+        return null;
+    }
+
+    /// <summary>Discard a journal without replaying (all-or-nothing rollback).</summary>
+    public static void Discard(string journalPath)
+    {
+        TryDelete(journalPath);
+    }
+
+    private static void TryDelete(string path)
+    {
+        try
+        {
+            if (System.IO.File.Exists(path))
+                System.IO.File.Delete(path);
+        }
+        catch
+        {
+            // Best-effort.
+        }
+    }
+
+    /// <summary>JSON-serializable journal entry.</summary>
+    internal sealed record JournalEntry(string Temp, string Target);
+}

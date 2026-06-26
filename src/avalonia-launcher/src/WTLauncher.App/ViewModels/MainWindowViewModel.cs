@@ -322,11 +322,16 @@ public static class ExceptionMessageFormatter
         ArgumentNullException.ThrowIfNull(exception);
         return exception switch
         {
+            // File-system exceptions leak paths in their Message — replace with safe text.
             FileNotFoundException => "找不到文件",
             DirectoryNotFoundException => "找不到目录",
             UnauthorizedAccessException => "没有访问权限",
             IOException => "文件操作失败",
-            _ => exception.Message,
+            // Application-layer exceptions carry intentionally user-safe messages crafted
+            // by the throwing code — pass them through.
+            InvalidDataException or ArgumentException or InvalidOperationException => exception.Message,
+            // Unknown exception types: use generic text to avoid leaking internal details.
+            _ => "操作失败，请查看错误日志了解详情",
         };
     }
 }
@@ -570,7 +575,8 @@ public static class LauncherSingleLaunchReceiptText
             Environment.NewLine,
             "启动回执",
             $"已请求启动: {RequireName(entryName)}",
-            plan.CommandLine);
+            plan.CommandLine,
+            $"（实际执行: {plan.ExecutionCommandLine}）");
     }
 
     public static string Canceled(string entryName, LaunchPlan plan)
@@ -581,7 +587,8 @@ public static class LauncherSingleLaunchReceiptText
             Environment.NewLine,
             "启动回执",
             $"已取消: {RequireName(entryName)}",
-            plan.CommandLine);
+            plan.CommandLine,
+            $"（实际执行: {plan.ExecutionCommandLine}）");
     }
 
     public static string PreviewFailed(string entryName, Exception exception)
@@ -706,7 +713,7 @@ public static class LauncherBatchLaunchPlanText
         string prefix)
     {
         foreach (var item in items)
-            lines.Add($"{prefix}{item.EntryName}{Environment.NewLine}{item.Plan.CommandLine}");
+            lines.Add($"{prefix}{item.EntryName}{Environment.NewLine}{item.Plan.CommandLine}{Environment.NewLine}（实际: {item.Plan.ExecutionCommandLine}）");
     }
 
     private static void AppendFailureLines(List<string> lines, IReadOnlyList<string> failures)

@@ -105,14 +105,19 @@ public static class LauncherEntryVisibility
         }
 
         if (sortMode is not RecentSortModeId and not UpdatedSortModeId)
-            ThrowIfInvalidProjection(filtered, sortMode, selectEntry);
+            ThrowIfInvalidProjection(filtered, selectEntry);
         filtered.Sort(comparison);
         return filtered;
     }
 
+    /// <summary>
+    /// Validates that every entry has non-empty Id and Name.
+    /// Called only for sort modes that do not require timestamp parsing
+    /// (Custom and Alphabetical) — timestamp validation is handled in
+    /// <see cref="FilterAndSort"/> before calling this method.
+    /// </summary>
     private static void ThrowIfInvalidProjection<TEntry>(
         IEnumerable<TEntry> entries,
-        string sortMode,
         Func<TEntry, LaunchEntry> selectEntry)
         where TEntry : notnull
     {
@@ -121,12 +126,6 @@ public static class LauncherEntryVisibility
             var entry = selectEntry(item);
             RequireEntryId(entry);
             RequireText(entry.Name, "name");
-
-            if (sortMode == RecentSortModeId)
-                ParseLaunchedAt(entry.LaunchedAtUtc);
-
-            if (sortMode == UpdatedSortModeId)
-                ParseUpdatedAt(entry.UpdatedAtUtc);
         }
     }
 

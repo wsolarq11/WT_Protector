@@ -20,10 +20,10 @@ public sealed class ConfirmPresetDeleteWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = Brush.Parse(LauncherDesignTokens.SurfaceColor);
 
-        var cancel = LauncherDialogButtons.SafeDefaultCancel();
+        var cancel = LauncherDialogButtons.Cancel();
         cancel.Click += (_, _) => Close(false);
 
-        var delete = LauncherDialogButtons.Destructive("删除启动组");
+        var delete = LauncherDialogButtons.Destructive("删除启动组", isDefault: true);
         delete.Click += (_, _) => Close(true);
 
         Content = new Border

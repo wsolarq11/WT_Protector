@@ -6,6 +6,10 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
+    private CancellationTokenSource? _batchCts;
+
+    public bool IsBatchLaunching => _batchCts is not null;
+
     private Func<LauncherBatchLaunchConfirmation, Task<bool>> _confirmBatchLaunchAsync =
         static _ => throw new InvalidOperationException("ConfirmBatchLaunchAsync is not bound by the View.");
 
@@ -14,6 +18,14 @@ public sealed partial class MainWindowViewModel
         get => _confirmBatchLaunchAsync;
         set => _confirmBatchLaunchAsync = value ?? throw new ArgumentNullException(nameof(value));
     }
+
+    [RelayCommand(CanExecute = nameof(CanCancelBatch))]
+    private void CancelBatch()
+    {
+        _batchCts?.Cancel();
+    }
+
+    private bool CanCancelBatch() => IsBatchLaunching;
 
     [RelayCommand(CanExecute = nameof(CanSelectVisible))]
     private void SelectVisible()
@@ -101,8 +113,10 @@ public sealed partial class MainWindowViewModel
         }
 
         DiscardDragReorderPreview();
+        _batchCts = new CancellationTokenSource();
         try
         {
+            OnPropertyChanged(nameof(IsBatchLaunching));
             var selectedEntries = entries.Select(ToLaunchEntry).ToList();
             var preflight = _launchWorkflow.PreflightBatch(
                 selectedEntries,
@@ -115,7 +129,7 @@ public sealed partial class MainWindowViewModel
                     failedStatus).ConfigureAwait(true))
                 return;
 
-            var report = _launchWorkflow.StartBatch(preflight);
+            var report = _launchWorkflow.StartBatch(preflight, _batchCts.Token);
             var timestamp = CurrentTimestampUtc();
             var startedCount = report.RequestedCount;
             var preflightItems = preflight.Items;
@@ -124,9 +138,6 @@ public sealed partial class MainWindowViewModel
             {
                 if (!entryById.TryAdd(e.Id, e))
                 {
-                    // Duplicate equivalent entry ID in _entries — a data invariant violation.
-                    // Keep the first entry in the dictionary; log the duplicate so it is
-                    // visible in diagnostics without crashing the launch batch.
                     ErrorLog.Write(
                         new InvalidDataException($"Duplicate entry ID in batch launch dictionary: {e.Id}"),
                         "LaunchBatch");
@@ -138,16 +149,26 @@ public sealed partial class MainWindowViewModel
                 entryById.TryGetValue(preflightItem.EntryId, out var entryVm);
                 entryVm?.RecordLaunchFromOwner(timestamp);
             }
-            if (startedCount > 0)
-                SaveConfig();
+            if (startedCount > 0 && !SaveConfig())
+                return;
             DryRunText = LauncherBatchLaunchReceiptText.Format(preflight, report);
             StatusText = completedStatus(report);
+        }
+        catch (OperationCanceledException)
+        {
+            StatusText = "已取消批量启动";
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "BatchLaunch");
             DryRunText = LauncherBatchLaunchReceiptText.Failed(ex);
             StatusText = failedStatus(ex);
+        }
+        finally
+        {
+            _batchCts?.Dispose();
+            _batchCts = null;
+            OnPropertyChanged(nameof(IsBatchLaunching));
         }
     }
 

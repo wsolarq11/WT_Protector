@@ -468,3 +468,63 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **修复** | `arguments.Length > 32767` → `throw new InvalidDataException(...)`。preflight 阶段就暴露，不等到实际启动。 |
 | **预防** | 任何构造系统调用参数的方法，必须检查目标 API 的长度/格式限制。Windows 命令行的 32767 是硬限制。 |
 | **适用** | 所有 `Process.Start` / shell 调用路径。 |
+
+### 6.10 XAML TimeSpan 解析隐式假设 → 已发布 exe 冒烟崩溃
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-26 UltraReview `verify.ps1` smoke 冒烟 |
+| **问题** | `MainWindow.axaml` 中 `MinimumPopulateDelay="150"` — Avalonia XAML 将裸数字 `150` 解析为 `TimeSpan.Parse("150")` = 150 **天**，而非 150 毫秒。在开发环境（`dotnet run`）因 Avalonia 内部容错可能不报错，但 `dotnet publish` 后的 self-contained exe 在执行 `TimeSpan.FromMilliseconds(150天对应的毫秒数)` 时溢出 → `ArgumentOutOfRangeException: TimeSpan period must be less than or equal to Int32.MaxValue`。 |
+| **修复** | 改为 `MinimumPopulateDelay="0:0:0.150"`（显式 h:m:s.ms 格式）。 |
+| **预防** | XAML 中任何 TimeSpan 属性值必须使用 `h:m:s.ms` 显式格式，禁止裸整数。`dotnet run` 通过≠已发布 exe 通过 — 始终跑 `verify.ps1` GUI 冒烟。 |
+| **适用** | 所有 Avalonia XAML 文件中的 TimeSpan 属性。 |
+
+### 6.11 `SaveConfig()` 返回值被丢弃 → 数据静默丢失
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-26 UltraReview H4, `MainWindowViewModel.Selection.cs:142` |
+| **问题** | 批量启动 `LaunchBatchAsync` 中 `if (startedCount > 0) SaveConfig();` — `SaveConfig()` 返回 `bool` 指示保存是否成功，但返回值被丢弃。若保存失败，`launchedAtUtc` 时间戳已在内存中写入但未持久化。下次重载配置时时间戳丢失。单条启动（`LaunchAsync`）正确处理了返回值。 |
+| **修复** | `if (startedCount > 0 && !SaveConfig()) return;` — 保存失败时提前返回，不覆盖成功状态文本。 |
+| **预防** | 所有返回 `bool` 的 `Save*()` / `Try*()` 方法，调用者必须检查返回值。Linter/analyzer 无法捕获：靠 code review 和测试覆盖（每个 Save 路径都有失败测试）。 |
+| **适用** | 所有调用 `SaveConfig()` / `SaveSettingsChange()` / `TrySaveWindowBounds()` 的路径。 |
+
+### 6.12 `LoadWithRecovery` catch filter 遗漏异常 → 备份恢复被跳过
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-26 UltraReview H1, `LauncherJson.cs:63` |
+| **问题** | `LoadWithRecovery` 的 catch filter 仅捕获 `JsonException | InvalidDataException | FileNotFoundException`，但 `File.OpenRead()` 在目录被删除时抛出 `DirectoryNotFoundException`（继承自 `IOException`）。此异常绕过 filter → 备份恢复被跳过 → 用户看到启动失败而非自动恢复。 |
+| **修复** | 添加 `DirectoryNotFoundException` 到 catch filter。同时为备份恢复路径（`File.Copy` / `File.Move`）添加 try/catch 保护。 |
+| **预防** | 任何 catch filter 枚举异常类型时，必须覆盖被调用 API 的所有可能异常，包括继承链。`File.OpenRead` 可能抛 `DirectoryNotFoundException`、`PathTooLongException` 等。用 `catch (IOException)` 更安全但需评估粒度。 |
+| **适用** | 所有文件 I/O try/catch 块。 |
+
+### 6.13 默认实例绕过验证管道 → 半初始化状态对象逃逸
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-26 UltraReview H3, `LauncherPresetStore.cs:32`, `LauncherSettingsStore.cs:34` |
+| **问题** | 当配置文件不存在且无 `.bak` 备份时，Store.Load 返回 `new LauncherPresetFile()` / `new LauncherSettings()`。这些默认实例跳过了 `Validate()` / `Normalize()` 管道。虽然当前默认值恰好合法（`ImmutableList.Empty`），但若未来有人修改默认值（如改 `DefaultPresetId` 为非空），将导致半初始化状态对象逃逸到下游消费代码。 |
+| **修复** | 将默认值传递通过同一个 Validate/Normalize 方法：`LauncherPresetFiles.Validate(new LauncherPresetFile())` / `Normalize(new LauncherSettings())`。 |
+| **预防** | 任何返回 fallback/default 值的路径，fallback 必须经过与正常路径相同的验证管道。在 Store.Load 的 LoadWithRecovery 调用处添加注释标注此约束。 |
+| **适用** | 所有 `LoadWithRecovery` 调用的 `defaultValue` 参数。 |
+
+### 6.14 `ForUser()` 异常消息 fallback 泄漏敏感信息
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-26 UltraReview H8, `MainWindowViewModel.cs:329` |
+| **问题** | `ExceptionMessageFormatter.ForUser()` 对未知异常类型使用 `exception.Message` 作为 fallback。`FileNotFoundException` 等已知类型被安全替换，但未映射的类型（如来自第三方库的异常）的消息可能包含文件路径、连接字符串等敏感信息，直接展示在 UI 状态栏。 |
+| **修复** | 明确列出所有"消息安全"的异常类型（`InvalidDataException`、`ArgumentException`、`InvalidOperationException` — 这些由应用代码构造，消息是精心编写的）；对所有其他类型返回固定的通用消息。 |
+| **预防** | 异常→用户消息映射必须使用白名单模式（已知安全 → 透传，其他 → 通用消息），而非黑名单模式（已知危险 → 替换，其他 → 透传）。 |
+| **适用** | 所有面向用户展示异常消息的方法。 |
+
+### 6.15 Smoke test 配置缺少必需字段 → 门禁虚假绿色
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-26 UltraReview, `verify.ps1:47` smoke settings.json |
+| **问题** | `verify.ps1` 的 GUI 冒烟测试创建的 `settings.json` 缺少 `schemaVersion` 字段。`LauncherSettings.SchemaVersion` 标记了 `[JsonRequired]`，STJ 在缺少时抛出 `JsonException`。此前门禁可能因 `$isCi=true` 跳过 GUI 冒烟而未被发现。 |
+| **修复** | 为 smoke test 的 settings.json 添加 `"schemaVersion":1`。同时修复 `MinimumPopulateDelay` TimeSpan 解析问题（见 6.10）。 |
+| **预防** | 任何 JSON schema 变更（添加 `[JsonRequired]` 字段）后，必须搜索并更新所有生成该 JSON 的测试 fixture 和脚本（`verify.ps1`、测试工厂方法、README 示例）。 |
+| **适用** | 所有 JSON schema 变更 + 所有 JSON fixture/smoke 配置。 |

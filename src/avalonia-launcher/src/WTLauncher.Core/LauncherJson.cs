@@ -42,6 +42,71 @@ public static class LauncherJson
             ?? throw new InvalidDataException($"{documentName} parsed to null.");
     }
 
+    /// <summary>
+    /// Shared file-load-with-backup-recovery used by all Store.Load methods.
+    /// Tries <paramref name="loadAndValidate"/>, falls back to <c>.bak</c> on
+    /// corruption, and returns <paramref name="defaultValue"/> when no file exists.
+    /// </summary>
+    internal static T LoadWithRecovery<T>(
+        string path,
+        Func<string, T> loadAndValidate,
+        string recoveryContext,
+        T defaultValue)
+    {
+        if (File.Exists(path))
+        {
+            Exception? loadException = null;
+            try
+            {
+                return loadAndValidate(path);
+            }
+            catch (Exception ex) when (ex is JsonException or InvalidDataException or FileNotFoundException or DirectoryNotFoundException)
+            {
+                loadException = ex;
+            }
+
+            if (loadException is not null)
+            {
+                var backupPath = path + ".bak";
+                if (File.Exists(backupPath))
+                {
+                    try
+                    {
+                        var recoveryTempPath = path + $".recovery-{Guid.NewGuid():N}";
+                        File.Copy(backupPath, recoveryTempPath, overwrite: true);
+                        File.Move(recoveryTempPath, path, overwrite: true);
+                        OnRecoveryFromBackup?.Invoke(loadException, recoveryContext);
+                        return loadAndValidate(path);
+                    }
+                    catch (Exception recoveryEx) when (recoveryEx is IOException or UnauthorizedAccessException)
+                    {
+                        // Recovery failed — surface the original load exception, not the recovery failure.
+                    }
+                }
+                throw loadException;
+            }
+        }
+
+        // File missing — try backup or return default.
+        var backupPathForMissing = path + ".bak";
+        if (File.Exists(backupPathForMissing))
+        {
+            try
+            {
+                var recoveryTempPath = path + $".recovery-{Guid.NewGuid():N}";
+                File.Copy(backupPathForMissing, recoveryTempPath, overwrite: true);
+                File.Move(recoveryTempPath, path, overwrite: true);
+                return loadAndValidate(path);
+            }
+            catch (Exception recoveryEx) when (recoveryEx is IOException or UnauthorizedAccessException)
+            {
+                // Recovery failed — fall through to return default.
+            }
+        }
+
+        return defaultValue;
+    }
+
     public static void Save<T>(T value, string path, bool backup)
     {
         var fullPath = Path.GetFullPath(path);
@@ -101,7 +166,8 @@ public static class LauncherJson
     private static string NormalizeLineEndings(string text)
     {
         return text
-            .Replace("\r\n", RepositoryLineEnding);
+            .Replace("\r\n", RepositoryLineEnding)
+            .Replace("\r", RepositoryLineEnding);
     }
 
     /// <summary>Delete all <c>*.tmp-*</c>, <c>*.stage-*</c>, <c>*.bak-tmp-*</c>, and
@@ -140,16 +206,16 @@ public static class LauncherJson
     // File.Move and File.Delete in this method follow NTFS symlinks by design.
     // The backup directory is always a real directory on the same volume, so
     // symlink traversal is the correct behavior — reparse points are followed.
-    private static void RotateBackups(string fullPath)
+    public static void RotateBackups(string fullPath, int maxBackups = DefaultMaxBackups)
     {
-        for (var i = DefaultMaxBackups - 1; i >= 0; i--)
+        for (var i = maxBackups - 1; i >= 0; i--)
         {
             var oldPath = i == 0 ? fullPath + ".bak" : fullPath + $".bak.{i}";
             var newPath = fullPath + $".bak.{i + 1}";
 
             try
             {
-                if (i == DefaultMaxBackups - 1)
+                if (i == maxBackups - 1)
                     File.Delete(oldPath);
                 else
                     File.Move(oldPath, newPath, overwrite: true);

@@ -1,4 +1,3 @@
-using System.Text.Json;
 
 namespace WTLauncher.Core;
 
@@ -30,47 +29,7 @@ public static class LauncherPresetStore
             return LauncherPresetFiles.Validate(presets);
         }
 
-        if (File.Exists(presetPath))
-        {
-            Exception? loadException = null;
-            try
-            {
-                return LoadAndValidate(presetPath);
-            }
-            catch (Exception ex) when (ex is JsonException or InvalidDataException or FileNotFoundException)
-            {
-                loadException = ex;
-            }
-
-            if (loadException is not null)
-            {
-                // Main file is corrupt — try .bak recovery.
-                var backupPath = presetPath + ".bak";
-                if (File.Exists(backupPath))
-                {
-                    var recoveryTempPath = presetPath + $".recovery-{Guid.NewGuid():N}";
-                    File.Copy(backupPath, recoveryTempPath, overwrite: true);
-                    File.Move(recoveryTempPath, presetPath, overwrite: true);
-                    LauncherJson.OnRecoveryFromBackup?.Invoke(loadException, "PresetLoad.RecoveredFromBackup");
-                    // Retry outside try/catch — if backup is also corrupt, the exception
-                    // propagates naturally without looping.
-                    return LoadAndValidate(presetPath);
-                }
-                throw loadException; // No backup available — propagate original exception.
-            }
-        }
-
-        // File missing — try backup or return default.
-        var backupPathForMissing = presetPath + ".bak";
-        if (File.Exists(backupPathForMissing))
-        {
-            var recoveryTempPath = presetPath + $".recovery-{Guid.NewGuid():N}";
-            File.Copy(backupPathForMissing, recoveryTempPath, overwrite: true);
-            File.Move(recoveryTempPath, presetPath, overwrite: true);
-            return LoadAndValidate(presetPath);
-        }
-
-        return new LauncherPresetFile();
+        return LauncherJson.LoadWithRecovery(presetPath, LoadAndValidate, "PresetLoad.RecoveredFromBackup", LauncherPresetFiles.Validate(new LauncherPresetFile()));
     }
 
     public static void Save(LauncherPresetFile presets, string presetPath, bool backup)

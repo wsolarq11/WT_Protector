@@ -38,9 +38,45 @@ internal static class Program
         LauncherJson.OnRecoveryFromBackup = (ex, ctx) => ErrorLog.Write(ex, ctx);
 
         DeleteStaleTempFiles();
+        RecoverStaleCommitJournals();
 
         BuildAvaloniaApp()
             .StartWithClassicDesktopLifetime(args, ShutdownMode.OnMainWindowClose);
+    }
+
+    /// <summary>
+    /// Replay any stale commit journal left by a crash during a multi-file save.
+    /// Best-effort — failures are logged but never block startup.
+    /// </summary>
+    private static void RecoverStaleCommitJournals()
+    {
+        try
+        {
+            var configPath = LauncherConfigStore.ResolveConfigPath(null, Environment.CurrentDirectory, AppContext.BaseDirectory);
+            var configDir = Path.GetDirectoryName(Path.GetFullPath(configPath));
+            if (string.IsNullOrWhiteSpace(configDir))
+            {
+                // No clear resolution path for journal either.
+                // The journal is tied to the config directory.
+                // If we can't resolve it, the next successful save will clean up.
+                return;
+            }
+
+            if (!Directory.Exists(configDir))
+                return;
+
+            var journalPath = CommitJournal.ResolvePath(configDir);
+            if (!File.Exists(journalPath))
+                return;
+
+            var replayError = CommitJournal.Replay(journalPath);
+            if (replayError is not null)
+                ErrorLog.Write(new InvalidOperationException(replayError), "CommitJournal.Recover");
+        }
+        catch
+        {
+            // Best-effort at startup — never block app launch.
+        }
     }
 
     /// <summary>Best-effort cleanup of leftover temp files from prior crashes.

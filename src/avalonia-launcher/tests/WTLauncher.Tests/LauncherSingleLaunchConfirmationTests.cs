@@ -31,7 +31,7 @@ public sealed class LauncherSingleLaunchConfirmationTests
         var exception = Assert.Throws<ArgumentException>(() =>
             new LauncherSingleLaunchConfirmation(entry, Plan("codex --version")));
 
-        Assert.Equal("Entry id is required. (Parameter 'entryId')", exception.Message);
+        Assert.Equal("Entry id is required. (Parameter 'Id')", exception.Message);
     }
 
     [Fact]

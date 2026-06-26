@@ -1,7 +1,5 @@
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.CompilerServices;
-using System.Threading;
 
 [assembly: InternalsVisibleTo("WTLauncher.Tests")]
 
@@ -27,6 +25,7 @@ internal static class ErrorLog
     private static readonly string LogPath = Path.Combine(LogDirectory, "errors.log");
 
     private static int _isWriting;
+    private static bool _directoryEnsured;
 
     /// <summary>
     /// Write an exception with a human-readable context tag.
@@ -57,7 +56,7 @@ internal static class ErrorLog
 
         try
         {
-            Directory.CreateDirectory(logDirectory);
+            EnsureLogDirectory(logDirectory);
             RotateIfNeeded(logPath);
             var entry = $"{DateTimeOffset.UtcNow:O} [{context}] {exception}{Environment.NewLine}";
             File.AppendAllText(logPath, entry);
@@ -79,6 +78,19 @@ internal static class ErrorLog
         {
             Interlocked.Exchange(ref _isWriting, 0);
         }
+    }
+
+    /// <summary>
+    /// Ensures the log directory exists. Cached after first creation to avoid
+    /// repeated <see cref="Directory.CreateDirectory"/> calls on every write.
+    /// </summary>
+    private static void EnsureLogDirectory(string logDirectory)
+    {
+        if (_directoryEnsured)
+            return;
+
+        Directory.CreateDirectory(logDirectory);
+        _directoryEnsured = true;
     }
 
     /// <summary>

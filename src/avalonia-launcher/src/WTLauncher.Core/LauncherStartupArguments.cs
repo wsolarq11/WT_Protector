@@ -16,6 +16,19 @@ public static class LauncherStartupArguments
         for (var i = 0; i < args.Count; i++)
         {
             var arg = args[i];
+
+            // Support --config=path in addition to --config path.
+            if (arg.StartsWith("--config=", StringComparison.OrdinalIgnoreCase))
+            {
+                if (configPath is not null)
+                    throw new ArgumentException("Config path flag must appear at most once.", nameof(args));
+
+                configPath = arg["--config=".Length..].Trim();
+                if (configPath.Length == 0)
+                    throw new ArgumentException("Config path value is required after --config.", nameof(args));
+                continue;
+            }
+
             if (!string.Equals(arg, "--config", StringComparison.OrdinalIgnoreCase))
             {
                 if (arg.StartsWith("--", StringComparison.Ordinal))

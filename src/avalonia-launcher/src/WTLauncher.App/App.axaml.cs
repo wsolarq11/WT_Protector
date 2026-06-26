@@ -133,8 +133,8 @@ public sealed partial class App : Application
                 var windowSettings = settings.Window;
                 var mainWindow = new MainWindow(viewModel)
                 {
-                    Width = windowSettings.Width,
-                    Height = windowSettings.Height,
+                    Width = Math.Max(windowSettings.Width, LauncherDesignTokens.WindowMinWidth),
+                    Height = Math.Max(windowSettings.Height, LauncherDesignTokens.WindowMinHeight),
                 };
                 desktop.MainWindow = mainWindow;
             }

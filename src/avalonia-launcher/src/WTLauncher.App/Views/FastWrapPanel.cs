@@ -72,6 +72,8 @@ public sealed class FastWrapPanel : Panel
 
     protected override Size ArrangeOverride(Size finalSize)
     {
+        // Guard against NaN/Infinity propagated from parent layout pass.
+        var containerWidth = double.IsFinite(finalSize.Width) ? finalSize.Width : 900;
         var spacing = ItemSpacing;
         var lineSpacing = LineSpacing;
         var x = 0.0;
@@ -82,10 +84,10 @@ public sealed class FastWrapPanel : Panel
         {
             // Clamp child width to panel width to prevent overflow at row start,
             // even if the child's DesiredSize exceeds the panel bounds.
-            var childWidth = Math.Min(child.DesiredSize.Width, finalSize.Width);
+            var childWidth = Math.Min(child.DesiredSize.Width, containerWidth);
             var childHeight = child.DesiredSize.Height;
 
-            if (x + childWidth > finalSize.Width && x > 0)
+            if (x + childWidth > containerWidth && x > 0)
             {
                 x = 0;
                 y += rowHeight + lineSpacing;

@@ -86,6 +86,7 @@ Portable UI settings live beside the launch config:
 
 ```json
 {
+  "schemaVersion": 1,
   "lastFilterText": "",
   "sortMode": "custom",
   "entryViewMode": "cards",
@@ -125,7 +126,7 @@ Optional explicit config path:
 .\src\avalonia-launcher\artifacts\publish\win-x64\WTLauncher.App.exe --config .\config\config.json
 ```
 
-Startup arguments are intentionally strict: the app accepts only one optional `--config <path>` pair and rejects unknown or duplicate arguments instead of silently choosing the wrong config.
+Startup arguments are intentionally strict: the app accepts only one optional `--config <path>` pair. Unknown `--`-prefixed arguments are silently ignored for forward compatibility. Duplicate `--config` flags, missing config values, and non-`--`-prefixed positional arguments are rejected instead of silently choosing the wrong config.
 
 The app reads root `config/config.json`, applies/edits/previews named launch groups from `config/presets.json`, persists selected checkboxes back to `config/config.json`, and stores portable UI preferences in `config/settings.json`. It does not use AppData or the registry for launcher state.
 
@@ -193,7 +194,7 @@ Important risks:
 
 - Launch confirmation is a global UI setting: when enabled, every item asks before launch; when disabled, every item launches directly.
 - `directory` must exist before the launcher starts an item.
-- Selected-item and current-group batch launch preflight every target before confirmation or process start; the confirmation dialog shows generated `wt.exe` command lines. If any local launch plan is invalid, no process starts. If an external start fails after earlier starts, remaining items are skipped and reported.
+- Selected-item and current-group batch launch preflight every target before confirmation or process start; the confirmation dialog shows generated `wt.exe` command lines. If any local launch plan is invalid, no process starts. If an external start fails after earlier starts, remaining items are still attempted (continue-on-failure); failures are collected and reported.
 - Single and batch launch write transient `启动回执` text for canceled, requested, or failed launch attempts; batch receipts show requested, failed, and skipped plans; `已请求启动` means `wt.exe` process start was requested, not that the terminal session finished healthy.
 - "预演当前组" runs the same current-group preflight and shows generated `wt.exe` command lines without starting processes or rewriting checkbox selection; if any plan is invalid, the preview still shows every valid generated command line as not started plus the failure list.
 - Command text is quoted before being passed to `wt.exe`, but it is still a shell command; review entries before launching.

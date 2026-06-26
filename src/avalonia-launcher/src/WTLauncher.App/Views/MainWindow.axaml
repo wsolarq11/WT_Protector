@@ -74,6 +74,10 @@
     <Style Selector="Border.card.detail-row.selected:pointerover">
       <Setter Property="Background" Value="{StaticResource SelectionHoverBackgroundBrush}"/>
     </Style>
+    <Style Selector="Border.card.selected">
+      <Setter Property="BorderBrush" Value="{StaticResource SelectionBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="2"/>
+    </Style>
     <Style Selector="Border.card.keyboard-focused">
       <Setter Property="BorderBrush" Value="{StaticResource SelectionBorderBrush}"/>
       <Setter Property="BorderThickness" Value="2"/>
@@ -342,7 +346,7 @@
                              Text="{Binding FilterText, Mode=TwoWay}"
                              ItemsSource="{Binding SearchHistoryItems}"
                              MinimumPrefixLength="1"
-                             MinimumPopulateDelay="150"
+                             MinimumPopulateDelay="0:0:0.150"
                              IsTextCompletionEnabled="False"
                              FontSize="16"
                              Padding="12,8"/>
@@ -458,6 +462,7 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate>
               <Border Classes="card"
+                      Classes.selected="{Binding IsSelected}"
                       Classes.drag-target="{Binding IsDragPreviewTarget}"
                       Classes.drag-source="{Binding IsDragPreviewSource}"
                       Classes.compact="{Binding IsCompactLayout}"

@@ -12,7 +12,7 @@ internal static class LauncherDialogText
     /// Parses a color string into an <see cref="IBrush"/>. If the design token is malformed,
     /// falls back to a safe default instead of crashing the static initializer.
     /// </summary>
-    private static IBrush SafeParseBrush(string color, IBrush fallback)
+    internal static IBrush SafeParseBrush(string color, IBrush fallback)
     {
         try
         {

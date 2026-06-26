@@ -114,8 +114,8 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     internal string RecordLaunchFromOwner(string launchedAtUtc)
     {
-        if (launchedAtUtc.Length > 0 && !DateTimeOffset.TryParse(launchedAtUtc, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out _))
-            throw new ArgumentException("Invalid ISO 8601 timestamp format.", nameof(launchedAtUtc));
+        if (launchedAtUtc.Length > 0 && !DateTimeOffset.TryParseExact(launchedAtUtc, "O", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out _))
+            throw new ArgumentException("Invalid ISO 8601 timestamp format (expected 'O' round-trip format).", nameof(launchedAtUtc));
         var previous = _entry.LaunchedAtUtc;
         _entry = _entry with { LaunchedAtUtc = launchedAtUtc };
         return previous;

@@ -13,8 +13,8 @@ public static class LauncherEntryReferences
         ArgumentNullException.ThrowIfNull(presetFile);
         ArgumentNullException.ThrowIfNull(customEntryOrder);
 
-        var normalizedOldEntryId = RequireEntryId(oldEntryId, nameof(oldEntryId));
-        var normalizedNewEntryId = RequireEntryId(newEntryId, nameof(newEntryId));
+        var normalizedOldEntryId = LauncherEntryIds.RequireEntryId(oldEntryId, nameof(oldEntryId));
+        var normalizedNewEntryId = LauncherEntryIds.RequireEntryId(newEntryId, nameof(newEntryId));
 
         if (LauncherEntryIds.Same(normalizedOldEntryId, normalizedNewEntryId))
             return (presetFile, customEntryOrder, false);
@@ -53,7 +53,7 @@ public static class LauncherEntryReferences
         ArgumentNullException.ThrowIfNull(presetFile);
         ArgumentNullException.ThrowIfNull(customEntryOrder);
 
-        var normalizedEntryId = RequireEntryId(entryId, nameof(entryId));
+        var normalizedEntryId = LauncherEntryIds.RequireEntryId(entryId, nameof(entryId));
 
         return TransformEntryReferences(
             presetFile, customEntryOrder,
@@ -77,8 +77,10 @@ public static class LauncherEntryReferences
             mutablePresetLists.Add([.. p.EntryIds]);
 
         // R22: Zip relies on mutablePresetLists corresponding 1:1 to presetFile.Presets.
-        System.Diagnostics.Debug.Assert(presetFile.Presets.Count == mutablePresetLists.Count,
-            "Zip ordering depends on mutablePresetLists being built from presetFile.Presets in order");
+        // Throw in Release as well — a mismatch here means silent data corruption.
+        if (presetFile.Presets.Count != mutablePresetLists.Count)
+            throw new InvalidOperationException(
+                $"Preset count mismatch during transform: {presetFile.Presets.Count} vs {mutablePresetLists.Count}.");
 
         // Transform custom order
         var updatedOrder = transform(mutableOrder);
@@ -118,6 +120,4 @@ public static class LauncherEntryReferences
             .ToList();
     }
 
-    private static string RequireEntryId(string? entryId, string paramName) =>
-        LauncherEntryIds.RequireEntryId(entryId, paramName);
 }

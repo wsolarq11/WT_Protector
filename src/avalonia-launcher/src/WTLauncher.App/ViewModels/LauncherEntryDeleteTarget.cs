@@ -8,16 +8,13 @@ public sealed record LauncherEntryDeleteTarget
     {
         ArgumentNullException.ThrowIfNull(entry);
 
-        EntryId = RequireEntryId(entry.Id);
+        EntryId = LauncherEntryIds.RequireEntryId(entry.Id, nameof(entry.Id));
         EntryName = RequireEntryName(entry.Name);
     }
 
     public string EntryId { get; }
 
     public string EntryName { get; }
-
-    private static string RequireEntryId(string? entryId) =>
-        LauncherEntryIds.RequireEntryId(entryId, nameof(entryId));
 
     private static string RequireEntryName(string? entryName)
     {

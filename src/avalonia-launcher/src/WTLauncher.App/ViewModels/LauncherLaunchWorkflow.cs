@@ -64,7 +64,7 @@ public sealed class LauncherLaunchWorkflow
         return new LauncherBatchLaunchPreflight(items, report.ToReport());
     }
 
-    public LauncherBatchLaunchReport StartBatch(LauncherBatchLaunchPreflight preflight)
+    public LauncherBatchLaunchReport StartBatch(LauncherBatchLaunchPreflight preflight, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(preflight);
 
@@ -73,12 +73,18 @@ public sealed class LauncherLaunchWorkflow
 
         for (var index = 0; index < items.Count; index++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var item = items[index];
             try
             {
                 report.RecordPlan(item.Plan);
                 Start(item.Plan);
                 report.RecordRequested();
+            }
+            catch (OperationCanceledException)
+            {
+                report.RecordSkipped(items.Count - index);
+                break;
             }
             catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
             {

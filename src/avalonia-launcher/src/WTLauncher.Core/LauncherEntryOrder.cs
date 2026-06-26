@@ -52,8 +52,8 @@ public static class LauncherEntryOrder
         string targetEntryId,
         bool insertAfter)
     {
-        var draggedId = RequireEntryId(draggedEntryId, nameof(draggedEntryId));
-        var targetId = RequireEntryId(targetEntryId, nameof(targetEntryId));
+        var draggedId = LauncherEntryIds.RequireEntryId(draggedEntryId, nameof(draggedEntryId));
+        var targetId = LauncherEntryIds.RequireEntryId(targetEntryId, nameof(targetEntryId));
         if (LauncherEntryIds.Same(draggedId, targetId))
             return (false, customOrder);
 
@@ -78,9 +78,6 @@ public static class LauncherEntryOrder
         normalizedOrder.Insert(targetIndex, draggedId);
         return (true, normalizedOrder.ToImmutableList());
     }
-
-    private static string RequireEntryId(string entryId, string paramName) =>
-        LauncherEntryIds.RequireEntryId(entryId, paramName);
 
     private static List<string> NormalizeRequiredOrder(IEnumerable<string> customOrder, string paramName)
     {

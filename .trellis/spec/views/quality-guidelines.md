@@ -141,3 +141,4 @@ if (!RequireConfirmationForLaunches && preflight.Report.FailedCount == 0)
 - [ ] DragOver handler does not trigger full list refresh.
 - [ ] Keyboard alternatives exist for drag-only operations.
 - [ ] Dialog layout reuses `LauncherDialogButtons`/`LauncherDialogText` where applicable.
+- [ ] **XAML TimeSpan**: All `Duration`/`MinimumPopulateDelay` values use explicit `h:m:s.ms` format, never bare integers. `"150"` = 150 days in `TimeSpan.Parse`, not 150ms. Use `"0:0:0.150"`.

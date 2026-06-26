@@ -9,7 +9,7 @@ public sealed record LauncherSingleLaunchConfirmation
         ArgumentNullException.ThrowIfNull(entry);
         ArgumentNullException.ThrowIfNull(plan);
 
-        EntryId = RequireEntryId(entry.Id);
+        EntryId = LauncherEntryIds.RequireEntryId(entry.Id, nameof(entry.Id));
         EntryName = RequireEntryName(entry.Name);
         Plan = plan;
     }
@@ -19,9 +19,6 @@ public sealed record LauncherSingleLaunchConfirmation
     public string EntryName { get; }
 
     public LaunchPlan Plan { get; }
-
-    private static string RequireEntryId(string? entryId) =>
-        LauncherEntryIds.RequireEntryId(entryId, nameof(entryId));
 
     private static string RequireEntryName(string? entryName)
     {

@@ -52,9 +52,10 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.AddEntryCommand.ExecuteAsync(null);
 
         Assert.Equal(["one", "two"], viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Contains("设置保存失败", viewModel.StatusText);
+        Assert.Contains("配置保存失败", viewModel.StatusText);
         // Config was committed before the settings commit failed — it stays on disk
         // with the new entry. In-memory state was restored from the snapshot.
+        // Commit journal survives for crash recovery of uncommitted files.
         var savedEntries = LoadEntriesById(config);
         Assert.Contains(savedEntries, entry => entry.Id == "three");
         AssertNoStoreTempFiles(config);
@@ -77,9 +78,10 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.Entries.Single(entry => entry.Id == "one").EditCommand.ExecuteAsync(null);
 
         Assert.Equal(["one", "two"], viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Contains("启动组保存失败", viewModel.StatusText);
+        Assert.Contains("配置保存失败", viewModel.StatusText);
         // Config was committed before the presets commit failed — it stays on disk
         // with the renamed entry. In-memory state was restored from the snapshot.
+        // Commit journal survives for crash recovery of uncommitted files.
         var savedEntries = LoadEntriesById(config);
         Assert.Contains(savedEntries, entry => entry.Id == "one-renamed");
         Assert.DoesNotContain(savedEntries, entry => entry.Id == "one");

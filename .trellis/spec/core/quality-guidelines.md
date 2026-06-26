@@ -83,6 +83,9 @@ Per `DESIGN.md` token ownership rules:
 - ❌ **Opaque internal marker comments** (`// H4`, `// L32`, `// M11`) — these reference external issue trackers and are meaningless in standalone code. Replace with descriptive comments explaining what and why. (Added 2026-06-25 UltraReview R30)
 - ❌ **No Unicode normalization in text-processing functions** — `Normalize()`/`Sanitize()` methods must include `string.Normalize(NormalizationForm.FormKC)` to handle fullwidth/halfwidth and composed/decomposed character equivalence. Without it, search and sort produce inconsistent results. (Added 2026-06-25 UltraReview R26)
 - ❌ **No command-line length check before Process.Start** — `CreateProcessW` has a 32767-character hard limit. Argument builders must validate final string length and throw a clear error before reaching Process.Start. (Added 2026-06-25 UltraReview R27)
+- ❌ **`defaultValue` bypassing validation in Store.Load** — `LoadWithRecovery`'s `defaultValue` parameter must pass through the same `Validate()`/`Normalize()` pipeline as the loaded data. Returning an unvalidated `new()` instance means downstream code may encounter unvalidated state. (Added 2026-06-26 UltraReview H3)
+- ❌ **Exception→user message using blacklist (deny-list) pattern** — `ForUser()` must use whitelist (allow-list): known-safe types pass through; everything else gets a generic message. A blacklist (`FileNotFoundException → safe, _ → raw`) leaks internal details for unmapped types. (Added 2026-06-26 UltraReview H8)
+- ❌ **JSON smoke/fixture configs missing `[JsonRequired]` fields** — when a `[JsonRequired]` attribute is added to any JSON model, all test fixtures (test factories, `verify.ps1` smoke, README examples) must be updated to include the new field. Missing fields cause `JsonException` at startup only in published builds. (Added 2026-06-26 UltraReview smoke fix)
 
 ## Architecture Invariants (Compile-Time Enforcement)
 

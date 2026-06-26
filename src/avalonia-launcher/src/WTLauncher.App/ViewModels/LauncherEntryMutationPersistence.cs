@@ -4,8 +4,6 @@ namespace WTLauncher.App.ViewModels;
 
 public static class LauncherEntryMutationPersistence
 {
-    private const int MaxBackups = 3;
-
     public static string? Save(
         IEnumerable<LaunchEntry> entries,
         string configPath,
@@ -70,57 +68,90 @@ public static class LauncherEntryMutationPersistence
             return LauncherPersistenceStatus.SettingsSaveFailed(ex);
         }
 
-        // Commit phase: backup rotation on originals (best-effort), then
-        // atomically rename each staged file to its final path.
-        // File.Move is atomic on the same volume (NTFS). Each rename has its
-        // own error handler so we can report which specific file failed.
-        // Once a rename succeeds, that file is committed and cannot be undone.
-        // This is acceptable because commit failures are extremely rare in
-        // production — all paths are validated at app startup.
-
-        // Commit config.
-        try
+        // Journal phase: write a commit journal BEFORE the first rename so crash
+        // recovery can complete the commit if the process terminates mid-commit.
+        var configDir = Path.GetDirectoryName(Path.GetFullPath(configPath))
+            ?? throw new InvalidOperationException("Config path must have a parent directory.");
+        var journalPath = CommitJournal.ResolvePath(configDir);
+        var journalEntries = new List<(string Temp, string Target)>
         {
-            TryBackupOriginal(configPath);
-            File.Move(configTempPath, configPath, overwrite: true);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or PathTooLongException or System.Security.SecurityException)
+            (configTempPath, configPath),
+            (settingsTempPath, settingsPath),
+        };
+        if (savePresets)
+            journalEntries.Insert(1, (presetTempPath, presetPath));
+
+        var journalError = CommitJournal.Write(journalPath, journalEntries);
+        if (journalError is not null)
         {
             TryDelete(configTempPath);
             TryDelete(presetTempPath);
             TryDelete(settingsTempPath);
-            return LauncherPersistenceStatus.ConfigSaveFailed(ex);
+            return LauncherPersistenceStatus.ConfigSaveFailed(
+                new InvalidOperationException(journalError));
+        }
+
+        // Commit phase: rename each staged file to its target. Each rename is
+        // irreversible (File.Move is atomic per-file on NTFS). The journal
+        // provides crash recovery — if the process dies mid-commit, the next
+        // startup replays incomplete journal entries.
+        // Live rename failures leave the journal on disk with remaining entries;
+        // the next Save() or startup will finish them.
+
+        // Commit config.
+        var commitError = CommitIfNeeded(journalEntries[0]);
+        if (commitError is not null)
+        {
+            TryDelete(configTempPath);
+            TryDelete(presetTempPath);
+            TryDelete(settingsTempPath);
+            return commitError;
         }
 
         // Commit presets (optional).
         if (savePresets)
         {
-            try
-            {
-                TryBackupOriginal(presetPath);
-                File.Move(presetTempPath, presetPath, overwrite: true);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or PathTooLongException or System.Security.SecurityException)
+            commitError = CommitIfNeeded(journalEntries[1]);
+            if (commitError is not null)
             {
                 TryDelete(presetTempPath);
                 TryDelete(settingsTempPath);
-                return LauncherPersistenceStatus.PresetSaveFailed(ex);
+                return commitError;
             }
         }
 
         // Commit settings.
-        try
-        {
-            TryBackupOriginal(settingsPath);
-            File.Move(settingsTempPath, settingsPath, overwrite: true);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or PathTooLongException or System.Security.SecurityException)
+        var settingsIndex = savePresets ? 2 : 1;
+        commitError = CommitIfNeeded(journalEntries[settingsIndex]);
+        if (commitError is not null)
         {
             TryDelete(settingsTempPath);
-            return LauncherPersistenceStatus.SettingsSaveFailed(ex);
+            return commitError;
         }
 
+        // All committed — journal no longer needed.
+        CommitJournal.Discard(journalPath);
         return null;
+    }
+
+    /// <summary>Commit a single journal entry: rename temp → target.
+    /// On success the temp file is consumed and the journal entry is effectively done.
+    /// On failure the journal entry stays for crash/retry recovery.</summary>
+    private static string? CommitIfNeeded((string Temp, string Target) entry)
+    {
+        if (!File.Exists(entry.Temp))
+            return null; // Already committed by a prior replay.
+
+        try
+        {
+            File.Move(entry.Temp, entry.Target, overwrite: true);
+            return null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+            or PathTooLongException or System.Security.SecurityException)
+        {
+            return LauncherPersistenceStatus.ConfigSaveFailed(ex);
+        }
     }
 
     /// <summary>Best-effort file deletion. Intentionally silent — cleanup
@@ -138,50 +169,4 @@ public static class LauncherEntryMutationPersistence
         }
     }
 
-    /// <summary>Best-effort backup rotation and .bak copy of the original file.
-    /// Failures are silently ignored — backup is a convenience, not a contract.</summary>
-    private static void TryBackupOriginal(string fullPath)
-    {
-        if (!File.Exists(fullPath))
-            return;
-
-        try
-        {
-            RotateBackupChain(fullPath);
-            var bakTempPath = fullPath + $".bak-tmp-{Guid.NewGuid():N}";
-            File.Copy(fullPath, bakTempPath, overwrite: true);
-            File.Move(bakTempPath, fullPath + ".bak", overwrite: true);
-        }
-        catch
-        {
-            // Best-effort — backup rotation failures are non-fatal.
-        }
-    }
-
-    /// <summary>Rotate the .bak, .bak.1, .bak.2 chain for the given file.
-    /// Mirrors LauncherJson.RotateBackups for use outside the save pipeline.</summary>
-    private static void RotateBackupChain(string fullPath)
-    {
-        for (var i = MaxBackups - 1; i >= 0; i--)
-        {
-            var oldPath = i == 0 ? fullPath + ".bak" : fullPath + $".bak.{i}";
-            var newPath = fullPath + $".bak.{i + 1}";
-
-            try
-            {
-                if (i == MaxBackups - 1)
-                    File.Delete(oldPath);
-                else
-                    File.Move(oldPath, newPath, overwrite: true);
-            }
-            catch (FileNotFoundException)
-            {
-                // Best-effort: the backup file doesn't exist — nothing to rotate.
-            }
-            catch (DirectoryNotFoundException)
-            {
-                // Best-effort: the backup directory doesn't exist — nothing to rotate.
-            }
-        }
-    }
 }

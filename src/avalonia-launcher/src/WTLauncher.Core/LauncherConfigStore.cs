@@ -28,55 +28,10 @@ public static class LauncherConfigStore
             var entries = JsonSerializer.Deserialize<List<LaunchEntry?>>(stream, LauncherJson.Options)
                 ?? throw new InvalidDataException("Launcher config parsed to null.");
 
-            var result = NormalizeEntries(entries).AsReadOnly();
-            ValidateEntrySelectionFields(result);
-            return result;
+            return NormalizeEntries(entries).AsReadOnly();
         }
 
-        if (File.Exists(configPath))
-        {
-            Exception? loadException = null;
-            try
-            {
-                return LoadAndValidate(configPath);
-            }
-            catch (Exception ex) when (ex is JsonException or InvalidDataException or FileNotFoundException)
-            {
-                loadException = ex;
-            }
-
-            if (loadException is not null)
-            {
-                // Main file is corrupt — try .bak recovery.
-                var backupPath = configPath + ".bak";
-                if (File.Exists(backupPath))
-                {
-                    // Write backup to a temp file first, then atomically rename.
-                    // This prevents a partially-written recovery file if the process
-                    // crashes during File.Copy.
-                    var recoveryTempPath = configPath + $".recovery-{Guid.NewGuid():N}";
-                    File.Copy(backupPath, recoveryTempPath, overwrite: true);
-                    File.Move(recoveryTempPath, configPath, overwrite: true);
-                    LauncherJson.OnRecoveryFromBackup?.Invoke(loadException, "ConfigLoad.RecoveredFromBackup");
-                    // Retry outside try/catch — if backup is also corrupt, the exception
-                    // propagates naturally without looping.
-                    return LoadAndValidate(configPath);
-                }
-                throw loadException; // No backup available — propagate original exception.
-            }
-        }
-
-        // File missing — try backup or return empty.
-        var backupPathForMissing = configPath + ".bak";
-        if (File.Exists(backupPathForMissing))
-        {
-            var recoveryTempPath = configPath + $".recovery-{Guid.NewGuid():N}";
-            File.Copy(backupPathForMissing, recoveryTempPath, overwrite: true);
-            File.Move(recoveryTempPath, configPath, overwrite: true);
-            return LoadAndValidate(configPath);
-        }
-
-        return Array.Empty<LaunchEntry>();
+        return LauncherJson.LoadWithRecovery(configPath, LoadAndValidate, "ConfigLoad.RecoveredFromBackup", Array.Empty<LaunchEntry>());
     }
 
     public static void Save(IEnumerable<LaunchEntry> entries, string configPath, bool backup)
@@ -191,19 +146,6 @@ public static class LauncherConfigStore
     private static string BuildRepositoryMarkerPath(string root) =>
         Path.Combine(Path.GetFullPath(root), RepositoryMarkerFileName);
 
-    // Validation is performed on deserialized objects instead of a separate
-    // JsonDocument pass. Since LaunchEntry.Selected is bool (value type, default
-    // false), it is always present after deserialization — the type system
-    // guarantees this. Null entries are caught earlier by NormalizeEntries via
-    // RequireEntry. This method exists to preserve the documented validation
-    // contract as a no-op sanity checkpoint.
-    private static void ValidateEntrySelectionFields(IReadOnlyList<LaunchEntry> entries)
-    {
-        // Sanity check: all entries after NormalizeEntries are non-null.
-        // The null check is already handled in NormalizeEntries via RequireEntry.
-        // No further validation is needed — the type system enforces Selected
-        // as a non-nullable bool.
-    }
 
     private static List<LaunchEntry> NormalizeEntries(IEnumerable<LaunchEntry?> entries)
     {
