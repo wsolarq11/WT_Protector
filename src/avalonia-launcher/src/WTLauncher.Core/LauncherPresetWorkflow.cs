@@ -7,6 +7,8 @@ public static class LauncherPresetWorkflow
     public static LauncherPreset AddPreset(ref LauncherPresetFile presetFile, string name, IReadOnlyList<string> entryIds)
     {
         ArgumentNullException.ThrowIfNull(presetFile);
+        if (presetFile.Presets.Count >= 1000)
+            throw new InvalidOperationException("Maximum of 1000 presets reached.");
         var normalizedName = NormalizeRequiredName(name);
         if (presetFile.Presets.Any(p => string.Equals(p.Name, normalizedName, StringComparison.OrdinalIgnoreCase)))
             throw new ArgumentException($"A preset with the name \"{normalizedName}\" already exists.", nameof(name));
@@ -131,11 +133,11 @@ public static class LauncherPresetWorkflow
 
     private static string RequireFallbackPresetIdAfterDelete(LauncherPresetFile presetFile, LauncherPreset target)
     {
-        // Don't require HasEntryReferences on the fallback — that deadlocks
-        // when the only other preset references stale or zero entries. Any other
-        // non-locked preset (including one with no entries) can serve as the new default.
+        // Prefer a non-locked fallback, but accept a locked one as last resort.
         var fallback = presetFile.Presets.FirstOrDefault(preset =>
-            !LauncherPresetIds.Same(preset.Id, target.Id) && !preset.Locked);
+            !LauncherPresetIds.Same(preset.Id, target.Id) && !preset.Locked)
+            ?? presetFile.Presets.FirstOrDefault(preset =>
+            !LauncherPresetIds.Same(preset.Id, target.Id));
         if (fallback is null)
             return string.Empty;
 
@@ -166,10 +168,12 @@ public static class LauncherPresetWorkflow
         if (target is null || target.Locked)
             return false;
 
-        // Any other non-locked preset can serve as a fallback — don't
-        // deadlock when the only other preset references stale or zero entries.
+        // Any other preset (including locked) can serve as a fallback — don't
+        // deadlock when the only other preset is locked. Locked presets can be
+        // applied as the default; they just can't be edited or deleted.
         // Single-preset deletion is also allowed (no fallback needed).
         return presetFile.Presets.Count <= 1
-            || presetFile.Presets.Any(preset => !LauncherPresetIds.Same(preset.Id, target.Id) && !preset.Locked);
+            || presetFile.Presets.Any(preset => !LauncherPresetIds.Same(preset.Id, target.Id) && !preset.Locked)
+            || presetFile.Presets.Any(preset => !LauncherPresetIds.Same(preset.Id, target.Id));
     }
 }

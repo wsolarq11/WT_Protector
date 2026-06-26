@@ -39,15 +39,16 @@ public static class LauncherEntryVisibility
         ArgumentNullException.ThrowIfNull(customEntryOrder);
         ArgumentNullException.ThrowIfNull(selectEntry);
 
-        var source = entries.ToList();
         var normalizedFilter = filterText.Trim();
+        List<TEntry>? source = null;
         List<TEntry> filtered;
         if (normalizedFilter.Length == 0)
         {
-            filtered = source;
+            filtered = entries as List<TEntry> ?? entries.ToList();
         }
         else
         {
+            source = entries.ToList();
             var tokens = normalizedFilter.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             filtered = new List<TEntry>(source.Count);
             foreach (var entry in source)
@@ -65,11 +66,31 @@ public static class LauncherEntryVisibility
         switch (sortMode)
         {
             case RecentSortModeId:
-                comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Recent);
+            {
+                var cache = new Dictionary<TEntry, DateTimeOffset>(filtered.Count);
+                foreach (var entry in filtered)
+                {
+                    var launchEntry = selectEntry(entry);
+                    RequireEntryId(launchEntry);
+                    RequireText(launchEntry.Name, "name");
+                    cache[entry] = ParseLaunchedAt(launchEntry.LaunchedAtUtc);
+                }
+                comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Recent, timeCache: cache);
                 break;
+            }
             case UpdatedSortModeId:
-                comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Updated);
+            {
+                var cache = new Dictionary<TEntry, DateTimeOffset>(filtered.Count);
+                foreach (var entry in filtered)
+                {
+                    var launchEntry = selectEntry(entry);
+                    RequireEntryId(launchEntry);
+                    RequireText(launchEntry.Name, "name");
+                    cache[entry] = ParseUpdatedAt(launchEntry.UpdatedAtUtc);
+                }
+                comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Updated, timeCache: cache);
                 break;
+            }
             case AlphabeticalSortModeId:
                 nameCache = new Dictionary<TEntry, string>(filtered.Count);
                 foreach (var entry in filtered)
@@ -78,12 +99,13 @@ public static class LauncherEntryVisibility
                 break;
             default:
                 customOrder = LauncherEntryOrder.BuildIndex(customEntryOrder);
-                ValidateCustomOrder(source, customOrder, selectEntry);
+                ValidateCustomOrder(source ?? filtered, customOrder, selectEntry);
                 comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Custom, customOrder);
                 break;
         }
 
-        ThrowIfInvalidProjection(filtered, sortMode, selectEntry);
+        if (sortMode is not RecentSortModeId and not UpdatedSortModeId)
+            ThrowIfInvalidProjection(filtered, sortMode, selectEntry);
         filtered.Sort(comparison);
         return filtered;
     }
@@ -113,7 +135,8 @@ public static class LauncherEntryVisibility
         Func<TEntry, LaunchEntry> selectEntry,
         LauncherSortMode sortKind,
         IReadOnlyDictionary<string, int>? customOrder = null,
-        IReadOnlyDictionary<TEntry, string>? nameCache = null)
+        IReadOnlyDictionary<TEntry, string>? nameCache = null,
+        IReadOnlyDictionary<TEntry, DateTimeOffset>? timeCache = null)
         where TEntry : notnull
     {
         var entryA = selectEntry(a);
@@ -121,8 +144,8 @@ public static class LauncherEntryVisibility
 
         int cmp = sortKind switch
         {
-            LauncherSortMode.Recent => ParseLaunchedAt(entryB.LaunchedAtUtc).CompareTo(ParseLaunchedAt(entryA.LaunchedAtUtc)),
-            LauncherSortMode.Updated => ParseUpdatedAt(entryB.UpdatedAtUtc).CompareTo(ParseUpdatedAt(entryA.UpdatedAtUtc)),
+            LauncherSortMode.Recent => timeCache![b].CompareTo(timeCache![a]),
+            LauncherSortMode.Updated => timeCache![b].CompareTo(timeCache![a]),
             LauncherSortMode.Alphabetical => StringComparer.OrdinalIgnoreCase.Compare(
                 ResolveName(entryA, a, nameCache), ResolveName(entryB, b, nameCache)),
             LauncherSortMode.Custom => customOrder![RequireEntryId(entryA)].CompareTo(customOrder[RequireEntryId(entryB)]),

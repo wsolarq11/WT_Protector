@@ -42,7 +42,7 @@ public static class LauncherPresetIds
         {
             // Truncate at a code-point boundary to avoid splitting a surrogate pair.
             var span = value.AsSpan(0, MaxIdLength);
-            if (char.IsHighSurrogate(span[^1]) && value.Length > MaxIdLength + 1)
+            if (char.IsHighSurrogate(span[^1]) && value.Length >= MaxIdLength + 1)
                 span = value.AsSpan(0, MaxIdLength + 1);
             value = span.ToString();
         }
