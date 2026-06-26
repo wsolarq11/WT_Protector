@@ -159,3 +159,5 @@ GitHub Actions sets `CI=true`. Use this to skip checks requiring a display (GUI 
 - [ ] **Multi-file saves**: Do they touch 2+ config files? → Must use stage-all-then-commit, not sequential-save-with-rollback.
 - [ ] **Backup recovery**: Is the retry OUTSIDE the try/catch? → Inside = infinite loop when backup is also corrupt.
 - [ ] **Schema version**: Are `!=` checks replaced with directional `<` and `>` checks? → Old reject + new upgrade message.
+- [ ] **`[JsonRequired]` propagation**: When adding `[JsonRequired]` to any model property, did you search and update ALL JSON fixtures? → `verify.ps1` smoke config, test factories, README examples, `config-lib.ps1` defaults. (Added 2026-06-26 UltraReview smoke fix)
+- [ ] **Stacked bugs**: When fixing a bug that unblocks a verify gate, did the SAME gate surface a SECOND bug? → The diagnostic onion pattern: the first bug masked the second. After fixing one gate failure, re-run the FULL gate — don't assume a clean pass. (Added 2026-06-26 UltraReview TimeSpan + schemaVersion double-bug)<｜end▁of▁thinking｜>

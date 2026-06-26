@@ -528,3 +528,23 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **修复** | 为 smoke test 的 settings.json 添加 `"schemaVersion":1`。同时修复 `MinimumPopulateDelay` TimeSpan 解析问题（见 6.10）。 |
 | **预防** | 任何 JSON schema 变更（添加 `[JsonRequired]` 字段）后，必须搜索并更新所有生成该 JSON 的测试 fixture 和脚本（`verify.ps1`、测试工厂方法、README 示例）。 |
 | **适用** | 所有 JSON schema 变更 + 所有 JSON fixture/smoke 配置。 |
+
+### 6.16 诊断洋葱 — 第一个 Bug 掩盖第二个 Bug
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-26 UltraReview smoke test 双重修复 |
+| **问题** | `verify.ps1` GUI 冒烟失败。第一次修复：smoke settings.json 加 `schemaVersion` → 冒烟仍然失败，但报的是另一个错（`TimeSpan period must be ≤ Int32.MaxValue`）。两个 Bug 叠在一起：`schemaVersion` 缺失被第一个 catch，修复后 `MinimumPopulateDelay="150"` 解析为 150 天的问题才暴露。 |
+| **根因** | 第一个 Bug 在启动早期就抛异常阻止了后续代码执行，掩盖了第二个 Bug。修复第一个 Bug 使得代码执行到更深处，才触发第二个 Bug。 |
+| **预防** | 修复一个 gate-blocking bug 后，必须完整重跑 gate（不是只验证修复的那一项）。"修复后第一次是 green"的假设是危险的——堆叠的 Bug 需要多次迭代。每次 gate failure 都可能是解锁下一个隐藏 Bug 的钥匙。 |
+| **适用** | 所有 gate/CI/smoke 调试场景。尤其是启动路径、初始化管线中的堆叠 Bug。 |
+
+### 6.17 不对称操作路径 — 成对代码未同步
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-26 UltraReview H4, batch vs single launch `SaveConfig()` |
+| **问题** | 单条启动（`LaunchAsync`）检查了 `SaveConfig()` 返回值，批量启动（`LaunchBatchAsync`）没有。两条路径是自然成对的——它们做同一件事的不同规模版本——但防御措施不对称。 |
+| **根因** | 批量路径是后来添加的（功能扩展），但没有从单条路径复制所有的守卫逻辑。这是"成对代码漂移"：两个语义上等价的实现因不同时间编写而逐渐分歧。 |
+| **预防** | 当添加"X 的批量版本"时，必须逐行对比原版的错误处理和返回值检查。理想情况下，批量版本应复用原版的核心逻辑（而非重写），避免歧义。代码审查时，成对路径必须做 diff 对比。 |
+| **适用** | 所有 single-vs-batch、sync-vs-async、local-vs-remote 成对实现。 |
