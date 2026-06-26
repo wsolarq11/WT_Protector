@@ -10,6 +10,12 @@ public static class LauncherJson
     private const string RepositoryLineEnding = "\n";
     private const int DefaultMaxBackups = 3;
 
+    /// <summary>
+    /// Optional hook for logging recovery-from-backup events. Set by the App layer
+    /// at startup to avoid coupling Core to app-layer infrastructure.
+    /// </summary>
+    public static Action<Exception, string>? OnRecoveryFromBackup;
+
     internal static readonly JsonSerializerOptions Options = new()
     {
         ReadCommentHandling = JsonCommentHandling.Skip,
@@ -50,10 +56,6 @@ public static class LauncherJson
         try
         {
             File.WriteAllText(tempPath, json + RepositoryLineEnding);
-            using (var fs = new FileStream(tempPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                fs.Flush(true); // FlushFileBuffers on Windows
-            }
 
             // Backup rotation is best-effort — if it fails, the new data
             // still gets committed. The old backup-on-failure blocking bug
@@ -102,7 +104,8 @@ public static class LauncherJson
             .Replace("\r\n", RepositoryLineEnding);
     }
 
-    /// <summary>Delete all <c>*.tmp-*</c> files left behind by crashed Save()
+    /// <summary>Delete all <c>*.tmp-*</c>, <c>*.stage-*</c>, <c>*.bak-tmp-*</c>, and
+    /// <c>*.recovery-*</c> files left behind by crashed Save() or recovery
     /// operations. Safe to call at startup — failures are silently ignored.</summary>
     public static void CleanupStaleTempFiles(string configDir)
     {
@@ -111,22 +114,25 @@ public static class LauncherJson
         if (!Directory.Exists(configDir))
             return;
 
-        foreach (var tmp in Directory.EnumerateFiles(configDir, "*.tmp-*", SearchOption.TopDirectoryOnly))
+        foreach (var pattern in new[] { "*.tmp-*", "*.stage-*", "*.bak-tmp-*", "*.recovery-*" })
         {
-            var fileName = Path.GetFileName(tmp);
-            // Only clean up temp files matching the app's naming convention:
-            // *.tmp-{Guid:N} (32+ lowercase hex characters). This avoids
-            // matching unrelated *.tmp-* files from other applications.
-            if (!System.Text.RegularExpressions.Regex.IsMatch(fileName, @"\.tmp-[0-9a-f]{32,}$"))
-                continue;
-            try
+            foreach (var tmp in Directory.EnumerateFiles(configDir, pattern, SearchOption.TopDirectoryOnly))
             {
-                File.Delete(tmp);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[LauncherJson] Stale temp cleanup failed: {ex.Message}");
-                Trace.WriteLine($"[LauncherJson] Stale temp cleanup failed: {ex.Message}");
+                var fileName = Path.GetFileName(tmp);
+                // Only clean up temp files matching the app's naming convention:
+                // *.{tmp|stage|bak-tmp|recovery}-{Guid:N} (32+ lowercase hex characters).
+                // This avoids matching unrelated files from other applications.
+                if (!System.Text.RegularExpressions.Regex.IsMatch(fileName, @"\.(tmp|stage|bak-tmp|recovery)-[0-9a-f]{32,}$"))
+                    continue;
+                try
+                {
+                    File.Delete(tmp);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[LauncherJson] Stale temp cleanup failed: {ex.Message}");
+                    Trace.WriteLine($"[LauncherJson] Stale temp cleanup failed: {ex.Message}");
+                }
             }
         }
     }

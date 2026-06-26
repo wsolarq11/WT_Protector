@@ -52,6 +52,7 @@ public static class LauncherSettingsStore
                     var recoveryTempPath = settingsPath + $".recovery-{Guid.NewGuid():N}";
                     File.Copy(backupPath, recoveryTempPath, overwrite: true);
                     File.Move(recoveryTempPath, settingsPath, overwrite: true);
+                    LauncherJson.OnRecoveryFromBackup?.Invoke(loadException, "SettingsLoad.RecoveredFromBackup");
                     // Retry outside try/catch — if backup is also corrupt, the exception
                     // propagates naturally without looping.
                     return LoadAndValidate(settingsPath);

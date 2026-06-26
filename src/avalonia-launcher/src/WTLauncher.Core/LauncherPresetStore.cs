@@ -51,6 +51,7 @@ public static class LauncherPresetStore
                     var recoveryTempPath = presetPath + $".recovery-{Guid.NewGuid():N}";
                     File.Copy(backupPath, recoveryTempPath, overwrite: true);
                     File.Move(recoveryTempPath, presetPath, overwrite: true);
+                    LauncherJson.OnRecoveryFromBackup?.Invoke(loadException, "PresetLoad.RecoveredFromBackup");
                     // Retry outside try/catch — if backup is also corrupt, the exception
                     // propagates naturally without looping.
                     return LoadAndValidate(presetPath);
