@@ -575,3 +575,36 @@ TextBox→AutoCompleteBox, RecordSearchTerm() with dedup/cap/snapshot-rollback, 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 18: UltraReview 2026-06-26 full clearance — 21 fixes + Commit Journal + CancellationToken + honest DryRun
+
+**Date**: 2026-06-26
+**Task**: UltraReview 2026-06-26 full clearance — 21 fixes + Commit Journal + CancellationToken + honest DryRun
+**Branch**: `main`
+
+### Summary
+
+Three-wave independent ultrareview (71+ findings). 21 fixes across Core/App/Views layers: CommitJournal crash recovery, CancellationToken batch cancel, ExecutionCommandLine honest preview, LoadWithRecovery catch filter fix, SaveConfig return value check, ForUser whitelist, NaN guards, TimeSpan XAML fix, Enter key dialog fix, dead code removal, Debug.Assert→throw. 6 new pitfalls (6.10–6.15). 4 new forbidden patterns. README 3 contradictions fixed. Smoke test 2 blocking bugs fixed. 595/595 tests. 0e 0w.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8c17764` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
