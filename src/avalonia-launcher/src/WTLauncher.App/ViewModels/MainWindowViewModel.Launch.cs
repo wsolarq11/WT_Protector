@@ -75,38 +75,47 @@ public sealed partial class MainWindowViewModel
 
     internal async Task LaunchAsync(LauncherEntryViewModel item)
     {
-        DiscardDragReorderPreview();
-        var entry = item.SnapshotEntry();
-        var entryName = LauncherEntryText.Normalize(entry.Name);
-        LaunchPlan? plan = null;
+        if (_isLaunching) return;
+        _isLaunching = true;
         try
         {
-            plan = _launchWorkflow.BuildPlan(entry, RequireConfirmationForLaunches);
-            var confirmation = new LauncherSingleLaunchConfirmation(entry, plan);
-            if (!await ConfirmSingleLaunchIfRequiredAsync(confirmation).ConfigureAwait(true))
-                return;
-
-            _launchWorkflow.Start(plan);
-            item.RecordLaunchFromOwner(CurrentTimestampUtc());
-            var saveOk = SaveConfig();
-            DryRunText = LauncherSingleLaunchReceiptText.Requested(entryName, plan);
-            if (saveOk)
-                StatusText = LauncherSingleLaunchStatus.Requested(entryName);
-        }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-        {
-            ErrorLog.Write(ex, "Launch");
-            if (entryName.Length == 0)
+            DiscardDragReorderPreview();
+            var entry = item.SnapshotEntry();
+            var entryName = LauncherEntryText.Normalize(entry.Name);
+            LaunchPlan? plan = null;
+            try
             {
-                DryRunText = LauncherSingleLaunchReceiptText.Failed(ex);
-                StatusText = LauncherSingleLaunchStatus.Failed(ex);
-                return;
-            }
+                plan = _launchWorkflow.BuildPlan(entry, RequireConfirmationForLaunches);
+                var confirmation = new LauncherSingleLaunchConfirmation(entry, plan);
+                if (!await ConfirmSingleLaunchIfRequiredAsync(confirmation).ConfigureAwait(true))
+                    return;
 
-            DryRunText = plan is null
-                ? LauncherSingleLaunchReceiptText.Failed(entryName, ex)
-                : LauncherSingleLaunchReceiptText.Failed(entryName, plan, ex);
-            StatusText = LauncherSingleLaunchStatus.Failed(entryName, ex);
+                _launchWorkflow.Start(plan);
+                DryRunText = LauncherSingleLaunchReceiptText.Requested(entryName, plan);
+                if (!SaveConfig())
+                    return;
+                item.RecordLaunchFromOwner(CurrentTimestampUtc());
+                StatusText = LauncherSingleLaunchStatus.Requested(entryName);
+            }
+            catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+            {
+                ErrorLog.Write(ex, "Launch");
+                if (entryName.Length == 0)
+                {
+                    DryRunText = LauncherSingleLaunchReceiptText.Failed(ex);
+                    StatusText = LauncherSingleLaunchStatus.Failed(ex);
+                    return;
+                }
+
+                DryRunText = plan is null
+                    ? LauncherSingleLaunchReceiptText.Failed(entryName, ex)
+                    : LauncherSingleLaunchReceiptText.Failed(entryName, plan, ex);
+                StatusText = LauncherSingleLaunchStatus.Failed(entryName, ex);
+            }
+        }
+        finally
+        {
+            _isLaunching = false;
         }
     }
 

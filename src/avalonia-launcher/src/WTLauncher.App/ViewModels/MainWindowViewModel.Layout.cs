@@ -15,6 +15,9 @@ public sealed partial class MainWindowViewModel
     // a property rollback that re-enters the OnXxxChanged callback.
     private bool _isHandlingSettingsChange;
 
+    // Prevents double-click double-launch. Set to true at entry, false in finally.
+    private bool _isLaunching;
+
     // P1: Reusable collections for SyncVisibleEntries — Clear() preserves internal
     // bucket array capacity in .NET, eliminating per-call GC allocations (~2-3KB
     // per keystroke for ~200 entries).
@@ -240,6 +243,7 @@ public sealed partial class MainWindowViewModel
         }
 
         VisibleCount = _visibleEntries.Count;
+        SelectVisibleCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>

@@ -21,7 +21,9 @@ public sealed class LauncherEntryMutationSnapshot
         SelectedPresetId = selectedPresetId;
     }
 
-    public IReadOnlyList<LaunchEntry> Entries => CloneEntries().AsReadOnly();
+    private IReadOnlyList<LaunchEntry>? _cachedEntries;
+
+    public IReadOnlyList<LaunchEntry> Entries => _cachedEntries ??= CloneEntries().AsReadOnly();
 
     public LauncherPresetFile PresetFile => ClonePresetFile();
 

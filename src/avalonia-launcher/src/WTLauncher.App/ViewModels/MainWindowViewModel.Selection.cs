@@ -15,7 +15,7 @@ public sealed partial class MainWindowViewModel
         set => _confirmBatchLaunchAsync = value ?? throw new ArgumentNullException(nameof(value));
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanSelectVisible))]
     private void SelectVisible()
     {
         DiscardDragReorderPreview();
@@ -198,6 +198,8 @@ public sealed partial class MainWindowViewModel
 
     private bool CanOperateOnSelection() => SelectedCount > 0;
 
+    private bool CanSelectVisible() => _visibleEntries.Any(entry => !entry.IsSelected);
+
     private bool SetSelection(IReadOnlyList<LauncherEntryViewModel> entries, bool selected)
     {
         var snapshot = CaptureSelectionMutationSnapshot(entries);
@@ -283,6 +285,7 @@ public sealed partial class MainWindowViewModel
     {
         LaunchSelectedCommand.NotifyCanExecuteChanged();
         ClearSelectionCommand.NotifyCanExecuteChanged();
+        SelectVisibleCommand.NotifyCanExecuteChanged();
         ApplyPresetCommand.NotifyCanExecuteChanged();
         NotifyPresetManagementCommands();
     }

@@ -48,6 +48,20 @@ public static class LauncherEntryLayoutPresentation
             if (entry.NameTileHeight != layout.NameTileHeight)
                 entry.NameTileHeight = layout.NameTileHeight;
         }
+
+        // Update hidden entries too — prevents stale card sizes when they become visible later.
+        foreach (var entry in entries)
+        {
+            if (visibleEntries.Contains(entry)) continue;
+            if (entry.CardWidth != layout.CardWidth)
+                entry.CardWidth = layout.CardWidth;
+            if (entry.CardHeight != layout.CardHeight)
+                entry.CardHeight = layout.CardHeight;
+            if (entry.NameTileWidth != layout.NameTileWidth)
+                entry.NameTileWidth = layout.NameTileWidth;
+            if (entry.NameTileHeight != layout.NameTileHeight)
+                entry.NameTileHeight = layout.NameTileHeight;
+        }
     }
 
     public static void Refresh(IEnumerable<LauncherEntryViewModel> entries)

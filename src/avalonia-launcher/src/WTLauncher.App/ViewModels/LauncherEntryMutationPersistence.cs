@@ -34,7 +34,7 @@ public static class LauncherEntryMutationPersistence
         {
             LauncherConfigStore.Save(entries, configTempPath, backup: false);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or System.Security.SecurityException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or PathTooLongException or System.Security.SecurityException)
         {
             TryDelete(configTempPath);
             return LauncherPersistenceStatus.ConfigSaveFailed(ex);
@@ -47,7 +47,7 @@ public static class LauncherEntryMutationPersistence
             {
                 LauncherPresetStore.Save(presetFile, presetTempPath, backup: false);
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or System.Security.SecurityException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or PathTooLongException or System.Security.SecurityException)
             {
                 TryDelete(configTempPath);
                 TryDelete(presetTempPath);
@@ -62,7 +62,7 @@ public static class LauncherEntryMutationPersistence
         {
             LauncherSettingsStore.Save(settings, settingsTempPath, backup: false);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or PathTooLongException or System.Security.SecurityException)
         {
             TryDelete(configTempPath);
             TryDelete(presetTempPath);
@@ -84,7 +84,7 @@ public static class LauncherEntryMutationPersistence
             TryBackupOriginal(configPath);
             File.Move(configTempPath, configPath, overwrite: true);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or PathTooLongException or System.Security.SecurityException)
         {
             TryDelete(configTempPath);
             TryDelete(presetTempPath);
@@ -100,7 +100,7 @@ public static class LauncherEntryMutationPersistence
                 TryBackupOriginal(presetPath);
                 File.Move(presetTempPath, presetPath, overwrite: true);
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or PathTooLongException or System.Security.SecurityException)
             {
                 TryDelete(presetTempPath);
                 TryDelete(settingsTempPath);
@@ -114,7 +114,7 @@ public static class LauncherEntryMutationPersistence
             TryBackupOriginal(settingsPath);
             File.Move(settingsTempPath, settingsPath, overwrite: true);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or PathTooLongException or System.Security.SecurityException)
         {
             TryDelete(settingsTempPath);
             return LauncherPersistenceStatus.SettingsSaveFailed(ex);

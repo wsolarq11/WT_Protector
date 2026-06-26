@@ -13,13 +13,13 @@ public sealed partial class LauncherEntryViewModel
 
     private LauncherEntryLayoutDensity _layoutDensity = LauncherEntryLayoutDensity.Normal;
 
-    public bool IsCompactLayout => _layoutDensity is LauncherEntryLayoutDensity.Compact or LauncherEntryLayoutDensity.Micro;
+    public bool IsCompactLayout => _layoutDensity == LauncherEntryLayoutDensity.Compact;
 
     public bool IsMicroLayout => _layoutDensity is LauncherEntryLayoutDensity.Micro;
 
     public bool ShowDirectory => ShouldShowDetailText(hideWhenCardsShrink: IsMicroLayout);
 
-    public bool ShowCommand => ShouldShowDetailText(hideWhenCardsShrink: IsCompactLayout);
+    public bool ShowCommand => ShouldShowDetailText(hideWhenCardsShrink: IsCompactLayout || IsMicroLayout);
 
     public double TitleFontSize => MeasureTitleFontSize();
 
