@@ -53,7 +53,7 @@ Fields:
 
 Active config entries must not contain the obsolete per-entry `confirm` key. Launch confirmation has one authority: `settings.json` → `requireConfirmationForLaunches`.
 
-All active JSON files must exist, require the documented camelCase keys, and reject missing, null, blank mode, or unknown keys instead of silently carrying defaults, dead settings, or typo fields. The UI load path uses the same contract; it does not replace a failed or missing `presets.json` with an empty launch-group model.
+All active JSON files must exist, require the documented camelCase keys, and reject missing, null, or blank mode keys. Unknown keys are silently skipped for forward compatibility. The UI load path uses the same contract; it does not replace a failed or missing `presets.json` with an empty launch-group model.
 
 `settings.json` window `width` and `height` must be positive numbers; invalid geometry is rejected instead of being carried into the next UI startup.
 

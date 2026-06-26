@@ -137,7 +137,7 @@ if (!RequireConfirmationForLaunches && preflight.Report.FailedCount == 0)
 - [ ] No business logic in code-behind.
 - [ ] No hardcoded colors/sizes in XAML — all from `{StaticResource}`.
 - [ ] New dialog follows the `typed param → ShowDialog<T>` pattern.
-- [ ] New drag visual uses `Border.drag-insert` class, not duplicated tokens.
+- [ ] New drag visual uses `drag-target` class, not duplicated tokens.
 - [ ] DragOver handler does not trigger full list refresh.
 - [ ] Keyboard alternatives exist for drag-only operations.
 - [ ] Dialog layout reuses `LauncherDialogButtons`/`LauncherDialogText` where applicable.

@@ -23,7 +23,7 @@ Purpose: convert 12 external first-class design benchmarks into WT Launcher acce
 
 - Native-first: keep the implementation in Avalonia/MVVM/XAML and Windows release gates; external systems are reference standards, not new dependencies.
 - One source per state: view modes, sort mode, drag session, drag cue, card density, available card area, and selection mutation paths must each have a single writable owner.
-- One source per visual token: drag insertion cue color/radius/opacity/hit-test behavior belongs to `Border.drag-insert`; future visual tokens need a similarly named owner or should reuse existing styles.
+- One source per visual token: drag insertion cue color/radius/opacity/hit-test behavior belongs to `drag-target` class; future visual tokens need a similarly named owner or should reuse existing styles.
 - Feedback is proportional: status bar feedback handles routine saves/launches; modal confirmation is reserved for explicit launch/delete decisions.
 - Gesture alternatives: drag reorder is an accelerator, while custom sort state, context menus, buttons, double-click row launch, and visible handles preserve non-drag paths.
 - Adaptive density: cards may shrink only until readability/recognition limits; after that the scroll fallback is intentional and must stay covered by tests.

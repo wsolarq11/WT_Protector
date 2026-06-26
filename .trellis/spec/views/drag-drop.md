@@ -45,7 +45,7 @@ The insert indicator is a visual line/border that appears between cards during D
 
 ### Token Ownership (from DESIGN.md)
 
-- Visual token: `Border.drag-insert` class — single source for color, radius, opacity, hit-test.
+- Visual token: `drag-target` class — single source for color, radius, opacity, hit-test.
 - Three views (Cards/Details/Names) only differ in **direction, size, positioning** — never redefine colors.
 - `IsDragInsertBefore` / `IsDragInsertAfter` are **read-only projections** of `DragCueState`.
 
@@ -89,7 +89,7 @@ Pure Core-layer calculation of ghost dimensions and pointer offset. Lives in Cor
 ## Forbidden Patterns
 
 - ❌ **Drag state scattered across multiple ViewModel fields** — use `DragReorderSession`.
-- ❌ **Insert indicator colors duplicated per view mode** — use `Border.drag-insert` class.
+- ❌ **Insert indicator colors duplicated per view mode** — use `drag-target` class.
 - ❌ **Ghost opacity/size hardcoded in code-behind** — use `LauncherDragGhostLayoutCalculator`.
 - ❌ **Ghost colors hardcoded** — use `LauncherDesignTokens` (fixed 2026-06-23 ultrareview Q7).
 - ❌ **Drag as the ONLY way to reorder** — always keep MoveUp/MoveDown as keyboard fallback.

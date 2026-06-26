@@ -72,7 +72,7 @@
   - 路径和命令使用等宽字体，减少视觉抖动
   - 详细列表视图只允许单行文字，所有文字同一水平线；行高固定为约两行字母无间隙的高度，避免因按钮/徽标撑高行
 - Spacing/layout rhythm:
-  - 采用 8 / 13 / 21 的收敛节奏，靠近黄金分割的视觉节拍
+  - 采用 8 / 13 / 21 的收敛节奏，靠近黄金分割的视觉节拍（21 是黄金比例常量 21:13，用于布局计算，不是独立的间距 token）
   - 卡片 padding / 角半径 / 间距尽量统一收敛，避免碎散
 - Shape/radius/elevation:
   - 卡片圆角更克制，强调稳重与可扫视
@@ -112,7 +112,7 @@
   - ViewModel 负责三视图状态、名称墙列数/项目尺寸、全局启动确认设置；三视图只能有一个可变来源，`IsCardsViewMode` / `IsDetailedListMode` / `IsNamesViewMode` 仅作为只读投影
   - 卡片密度只能有一个可变来源：`LauncherEntryLayoutDensity`；`IsCompactLayout` / `IsMicroLayout` 仅作为 XAML class 的只读投影
   - 拖拽提示只能有一个 entry-local 可变来源：`DragCueState`；`IsDragPreviewTarget` / `IsDragPreviewSource` / `IsDragInsertBefore` / `IsDragInsertAfter` 仅作为 XAML class 的只读投影
-  - 拖拽插入指示的视觉 token 只能由 `Border.drag-insert` 持有；三视图只保留方向、尺寸、定位差异，不重复颜色/圆角/透明度/命中测试
+  - 拖拽插入指示的视觉 token 只能由 `drag-target` 持有；三视图只保留方向、尺寸、定位差异，不重复颜色/圆角/透明度/命中测试
   - 选择状态只有两个写入入口：用户勾选经 `IsSelected` 立即保存；批量/预设/编辑经 `SetSelectionFromOwner` 同步后只批量保存一次，不用全局 bulk flag 抑制副作用
   - 拖拽排序状态只能由单个 `DragReorderSession?` 持有；snapshot、source、target、last preview 不允许散落为多个 loose fields
   - View 负责拖拽 ghost、插入指示、轻动画
