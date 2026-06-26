@@ -131,4 +131,37 @@ public sealed class LauncherCommandTemplateResolverTests
 
         Assert.Empty(missingKeys);
     }
+
+    [Fact]
+    public void Resolve_DoesNotFollowCircularTemplateReferences()
+    {
+        // Template A resolves to "$B", template B resolves to "$A".
+        // Resolve is single-level — it returns the literal value without
+        // following the chain. This prevents any infinite-loop risk.
+        var templates = new Dictionary<string, string>
+        {
+            ["a"] = "$b",
+            ["b"] = "$a",
+        };
+
+        var resolved = LauncherCommandTemplateResolver.Resolve("$a", templates);
+
+        // Returns literal "$b", not following the chain to "$a" again.
+        Assert.Equal("$b", resolved);
+    }
+
+    [Fact]
+    public void Resolve_DoesNotFollowTemplateValueChain()
+    {
+        // Even a non-circular chain is not followed — single-level resolution only.
+        var templates = new Dictionary<string, string>
+        {
+            ["a"] = "$b",
+            ["b"] = "C:\\actual.exe",
+        };
+
+        var resolved = LauncherCommandTemplateResolver.Resolve("$a", templates);
+
+        Assert.Equal("$b", resolved);
+    }
 }

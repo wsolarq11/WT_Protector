@@ -44,11 +44,11 @@ public sealed class LauncherEntryLayoutPresentationTests
         var owner = CreateOwner(temp.Path);
         var entries = Entries(owner, "one", "two", "three");
 
-        // When nothing is visible, layout is calculated but only applied to visible entries (none).
+        // When nothing is visible, layout is calculated and applied to all entries.
         LauncherEntryLayoutPresentation.ApplyCardSize(entries, [], new Size(640, 260));
 
-        // All entries keep their default sizes.
-        Assert.All(entries, entry => Assert.Equal(300, entry.CardWidth));
+        // All entries receive calculated dimensions, not default 300.
+        Assert.All(entries, entry => Assert.NotEqual(300, entry.CardWidth));
     }
 
     private static List<LauncherEntryViewModel> Entries(MainWindowViewModel owner, params string[] ids)

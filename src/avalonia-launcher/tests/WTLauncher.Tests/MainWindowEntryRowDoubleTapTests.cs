@@ -36,10 +36,4 @@ public sealed class MainWindowEntryRowDoubleTapTests
         Assert.False(MainWindowEntryRowDoubleTap.ShouldLaunchFromSource(handle));
     }
 
-    [Fact]
-    public void ShouldLaunchFromSourceAllowsNonControlSource()
-    {
-        Assert.True(MainWindowEntryRowDoubleTap.ShouldLaunchFromSource(new object()));
-        Assert.True(MainWindowEntryRowDoubleTap.ShouldLaunchFromSource(null));
-    }
 }

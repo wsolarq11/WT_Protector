@@ -98,4 +98,21 @@ public sealed class LauncherEntryIdsTests
         Assert.Equal(256, result.Length);
         Assert.Equal(new string('Z', 256), result);
     }
+
+    [Fact]
+    public void Normalize_257CharsWithTrailingHighSurrogate_PreservesSurrogatePair()
+    {
+        // 255 Z chars + high surrogate (U+D800) + low surrogate (U+DC00) = 257 chars.
+        // The high surrogate at index 255 falls at the 256-char boundary.
+        // Normalize should extend past the boundary to prevent splitting the pair.
+        var regular = new string('Z', 255);
+        var highSurrogate = '\uD800';
+        var lowSurrogate = '\uDC00';
+        var id = regular + highSurrogate + lowSurrogate;
+
+        var result = LauncherEntryIds.Normalize(id);
+
+        Assert.Equal(257, result.Length);
+        Assert.EndsWith("\uD800\uDC00", result);
+    }
 }

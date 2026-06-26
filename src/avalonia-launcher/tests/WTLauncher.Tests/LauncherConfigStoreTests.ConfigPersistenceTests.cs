@@ -479,4 +479,33 @@ public sealed partial class LauncherConfigStoreTests
 
         Assert.ThrowsAny<JsonException>(() => LauncherConfigStore.Load(config));
     }
+
+    [Fact]
+    public void Load_ThrowsWhenBothMainAndBackupAreCorrupt()
+    {
+        using var temp = new TempDirectory();
+        var config = ConfigFilePath(temp.Path, LauncherConfigStore.ConfigFileName);
+
+        // Both main and .bak are invalid JSON — the recovery should fail.
+        File.WriteAllText(config, "truncated [{");
+        File.WriteAllText(config + ".bak", "also corrupt [{");
+
+        // The .bak recovery attempt overwrites main, then LoadAndValidate
+        // throws again. The exception must propagate (no infinite loop).
+        Assert.ThrowsAny<JsonException>(() => LauncherConfigStore.Load(config));
+    }
+
+    [Fact]
+    public void Load_ThrowsWhenMainMissingAndBackupIsCorrupt()
+    {
+        using var temp = new TempDirectory();
+        var config = ConfigFilePath(temp.Path, LauncherConfigStore.ConfigFileName);
+
+        // Main file does not exist, but .bak is corrupt.
+        File.WriteAllText(config + ".bak", "garbage");
+
+        // The recovery from .bak copies garbage over, then LoadAndValidate
+        // throws. The exception must propagate.
+        Assert.ThrowsAny<JsonException>(() => LauncherConfigStore.Load(config));
+    }
 }

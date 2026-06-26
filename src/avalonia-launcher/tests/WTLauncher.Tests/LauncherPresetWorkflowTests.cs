@@ -470,6 +470,50 @@ public sealed class LauncherPresetWorkflowTests
         Assert.Contains("Secondary", exception.Message);
     }
 
+    [Fact]
+    public void DeletePreset_FallsBackToLockedPresetWhenDeletingLastUnlocked()
+    {
+        // When only one un-locked preset exists (besides blank-manual),
+        // deleting it should fall back to the locked preset.
+        var presetFile = PresetFile(
+            "daily",
+            Preset("daily", "Daily", "one"),
+            Preset("blank-manual", "Manual", locked: true));
+
+        var deleted = LauncherPresetWorkflow.DeletePreset(ref presetFile, "daily", out var fallbackPresetId);
+
+        Assert.Equal("daily", deleted?.Id);
+        Assert.Equal("blank-manual", fallbackPresetId);
+        Assert.Equal("blank-manual", presetFile.DefaultPresetId);
+        Assert.Equal(["blank-manual"], presetFile.Presets.Select(preset => preset.Id).ToArray());
+    }
+
+    [Fact]
+    public void AddPreset_AcceptsZeroEntryIds()
+    {
+        var presetFile = PresetFile(Preset("daily", "Daily", "one"));
+
+        var preset = LauncherPresetWorkflow.AddPreset(ref presetFile, "Empty Set", []);
+
+        Assert.Equal("empty-set", preset.Id);
+        Assert.Equal("Empty Set", preset.Name);
+        Assert.Empty(preset.EntryIds);
+        Assert.Contains(presetFile.Presets, item => item.Id == "empty-set");
+    }
+
+    [Fact]
+    public void UpdatePreset_AllowsSettingZeroEntryIds()
+    {
+        var presetFile = PresetFile(Preset("daily", "Daily", "one"));
+
+        var updated = LauncherPresetWorkflow.UpdatePreset(ref presetFile, "daily", "Daily", []);
+
+        Assert.NotNull(updated);
+        Assert.Equal("Daily", updated.Name);
+        Assert.Empty(updated.EntryIds);
+        Assert.Empty(presetFile.Presets.Single(item => item.Id == "daily").EntryIds);
+    }
+
     private static void AssertPresetNameRequired(Action action)
     {
         var exception = Assert.Throws<ArgumentException>(action);

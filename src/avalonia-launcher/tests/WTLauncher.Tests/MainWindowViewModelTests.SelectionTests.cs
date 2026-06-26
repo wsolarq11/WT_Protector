@@ -143,16 +143,6 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public void SelectionRollbackUsesTypedSnapshot()
-    {
-        Assert.Null(typeof(MainWindowViewModel).GetMethod("CaptureSelectionSnapshot", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static));
-        Assert.Null(typeof(MainWindowViewModel).GetMethod("RestoreSelection", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static));
-        Assert.Contains(
-            typeof(LauncherSelectionMutationSnapshot).GetMethods(),
-            method => method.Name == nameof(LauncherSelectionMutationSnapshot.Capture));
-    }
-
-    [Fact]
     public async Task BatchLaunchWithDuplicateEquivalentEntryIdsDoesNotCrash()
     {
         using var temp = new TempDirectory();

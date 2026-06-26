@@ -547,9 +547,9 @@ public sealed partial class MainWindowViewModelTests
         Assert.Contains("启动回执", viewModel.DryRunText);
         Assert.Contains("已请求启动: one", viewModel.DryRunText);
 
-        // LaunchedAtUtc is recorded in memory despite the save failure.
+        // LaunchedAtUtc is NOT recorded when save fails — the timestamp would be lost on next refresh.
         var snapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
-        Assert.NotEqual("", snapshot.LaunchedAtUtc);
+        Assert.Equal("", snapshot.LaunchedAtUtc);
     }
 
     [Fact]

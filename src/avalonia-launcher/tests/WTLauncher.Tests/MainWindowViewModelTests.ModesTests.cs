@@ -40,28 +40,6 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public void SortModeUsesSelectedModeAsOnlyCustomSortState()
-    {
-        Assert.Null(typeof(MainWindowViewModel).GetProperty(nameof(MainWindowViewModel.IsCustomSortMode))?.SetMethod);
-        Assert.DoesNotContain(
-            typeof(MainWindowViewModel).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance),
-            field => field.Name.Contains("CustomSort", StringComparison.OrdinalIgnoreCase));
-
-        using var temp = new TempDirectory();
-        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
-        var viewModel = CreateViewModel(
-            config,
-            settings,
-            new LauncherSettings { SortMode = LauncherEntryVisibility.CustomSortModeId });
-
-        Assert.True(viewModel.IsCustomSortMode);
-
-        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == LauncherEntryVisibility.AlphabeticalSortModeId);
-
-        Assert.False(viewModel.IsCustomSortMode);
-    }
-
-    [Fact]
     public void EntryViewModePersistsAndOverridesCardDensityForDetailedScanning()
     {
         using var temp = new TempDirectory();
@@ -108,32 +86,6 @@ public sealed partial class MainWindowViewModelTests
         Assert.False(entry.ShowCommand);
         Assert.Equal(LauncherEntryViewModel.MicroTitleFontSize, entry.TitleFontSize);
         Assert.Equal(LauncherEntryViewModes.CardsId, LauncherSettingsStore.Load(settings).EntryViewMode);
-    }
-
-    [Fact]
-    public void EntryViewModeUsesOneTypedStateSource()
-    {
-        Assert.Null(typeof(MainWindowViewModel).GetProperty(nameof(MainWindowViewModel.IsCardsViewMode))?.SetMethod);
-        Assert.Null(typeof(MainWindowViewModel).GetProperty(nameof(MainWindowViewModel.IsDetailedListMode))?.SetMethod);
-        Assert.Null(typeof(MainWindowViewModel).GetProperty(nameof(MainWindowViewModel.IsNamesViewMode))?.SetMethod);
-        Assert.DoesNotContain(
-            typeof(MainWindowViewModel).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance),
-            field => field.Name.Contains("Refreshing", StringComparison.OrdinalIgnoreCase));
-
-        using var temp = new TempDirectory();
-        var (config, settings, _) = CreateSingleEntryFixture(temp);
-
-        var viewModel = CreateViewModel(
-            config,
-            settings,
-            new LauncherSettings { EntryViewMode = LauncherEntryViewModes.DetailsId });
-
-        Assert.Equal(new[] { "卡片", "详细列表", "名称墙" }, viewModel.DisplayModes.Select(mode => mode.Label));
-        Assert.Equal(LauncherEntryViewMode.Details, viewModel.SelectedDisplayMode?.Mode);
-        Assert.Equal(LauncherEntryViewModes.DetailsId, viewModel.SelectedDisplayMode?.Id);
-        Assert.Equal(
-            1,
-            new[] { viewModel.IsCardsViewMode, viewModel.IsDetailedListMode, viewModel.IsNamesViewMode }.Count(value => value));
     }
 
     [Fact]

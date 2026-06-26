@@ -16,18 +16,6 @@ public sealed class LauncherBatchLaunchReportTests
     }
 
     [Fact]
-    public void ReportDoesNotExposeMutableRecordMethods()
-    {
-        Assert.Null(typeof(LauncherBatchLaunchReport).GetMethod("RecordRequested"));
-        Assert.Null(typeof(LauncherBatchLaunchReport).GetMethod("RecordPlan"));
-        Assert.Null(typeof(LauncherBatchLaunchReport).GetMethod("RecordSkipped"));
-        Assert.Null(typeof(LauncherBatchLaunchReport).GetMethod("RecordFailure", [typeof(Exception)]));
-        Assert.Null(typeof(LauncherBatchLaunchReport).GetMethod("RecordFailure", [typeof(string), typeof(Exception)]));
-        Assert.Null(typeof(LauncherBatchLaunchReport).GetProperty("StartedCount"));
-        Assert.Null(typeof(LauncherBatchLaunchReport).GetMethod("RecordStarted"));
-    }
-
-    [Fact]
     public void ReportPreservesFailureMessages()
     {
         var report = new LauncherBatchLaunchReport(

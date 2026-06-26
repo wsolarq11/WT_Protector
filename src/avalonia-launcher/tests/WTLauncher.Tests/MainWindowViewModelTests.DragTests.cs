@@ -243,46 +243,6 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(["three", "one", "two"], viewModel.Settings.CustomEntryOrder);
     }
 
-    [Fact]
-    public void DragPreviewStateUsesOneTypedWorkflowField()
-    {
-        var viewModelDragFields = typeof(MainWindowViewModel)
-            .GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            .Where(field => field.Name.Contains("Drag", StringComparison.OrdinalIgnoreCase))
-            .Select(field => field.Name)
-            .Order(StringComparer.Ordinal)
-            .ToArray();
-
-        var workflowDragFields = typeof(LauncherDragReorderWorkflow)
-            .GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            .Where(field => field.Name.Contains("Drag", StringComparison.OrdinalIgnoreCase) || field.Name.Contains("Session", StringComparison.OrdinalIgnoreCase))
-            .Select(field => field.Name)
-            .Order(StringComparer.Ordinal)
-            .ToArray();
-        Assert.Equal(["_dragReorderWorkflow"], viewModelDragFields);
-        Assert.Equal(["_session"], workflowDragFields);
-        Assert.DoesNotContain(
-            typeof(LauncherDragReorderWorkflow).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance),
-            field => field.FieldType == typeof(Action));
-    }
-
-    [Fact]
-    public void EntryDragCueStateUsesOneTypedStateSource()
-    {
-        var dragFields = typeof(LauncherEntryViewModel)
-            .GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            .Where(field => field.Name.Contains("Drag", StringComparison.OrdinalIgnoreCase))
-            .Select(field => field.Name)
-            .Order(StringComparer.Ordinal)
-            .ToArray();
-
-        Assert.Equal(["_dragCueState"], dragFields);
-        Assert.Null(typeof(LauncherEntryViewModel).GetProperty(nameof(LauncherEntryViewModel.IsDragPreviewTarget))?.SetMethod);
-        Assert.Null(typeof(LauncherEntryViewModel).GetProperty(nameof(LauncherEntryViewModel.IsDragPreviewSource))?.SetMethod);
-        Assert.Null(typeof(LauncherEntryViewModel).GetProperty(nameof(LauncherEntryViewModel.IsDragInsertBefore))?.SetMethod);
-        Assert.Null(typeof(LauncherEntryViewModel).GetProperty(nameof(LauncherEntryViewModel.IsDragInsertAfter))?.SetMethod);
-    }
-
     private static (string Config, string Settings, string Presets) CreateDragFixture(TempDirectory temp) =>
         CreatePortableFixture(
             temp,

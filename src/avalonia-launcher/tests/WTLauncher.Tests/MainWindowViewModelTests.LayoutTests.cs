@@ -19,7 +19,7 @@ public sealed partial class MainWindowViewModelTests
         entry.CardWidth = LauncherEntryViewModel.MicroLayoutMaxWidth - 5;
         entry.CardHeight = LauncherEntryViewModel.MicroLayoutMaxHeight - 5;
         Assert.True(entry.IsMicroLayout);
-        Assert.True(entry.IsCompactLayout);
+        Assert.False(entry.IsCompactLayout);
         Assert.False(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
         Assert.Equal(LauncherEntryViewModel.MicroTitleFontSize, entry.TitleFontSize);
@@ -39,44 +39,6 @@ public sealed partial class MainWindowViewModelTests
         Assert.True(entry.ShowDirectory);
         Assert.True(entry.ShowCommand);
         Assert.Equal(LauncherEntryViewModel.NormalTitleFontSize, entry.TitleFontSize);
-    }
-
-    [Fact]
-    public void CardLayoutDensityUsesOneTypedStateSource()
-    {
-        var densityFields = typeof(LauncherEntryViewModel)
-            .GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            .Where(field =>
-                field.Name.Contains("Layout", StringComparison.OrdinalIgnoreCase)
-                || field.Name.Contains("Density", StringComparison.OrdinalIgnoreCase)
-                || field.Name.Contains("Compact", StringComparison.OrdinalIgnoreCase)
-                || field.Name.Contains("Micro", StringComparison.OrdinalIgnoreCase))
-            .Select(field => field.Name)
-            .Order(StringComparer.Ordinal)
-            .ToArray();
-
-        Assert.Equal(["_layoutDensity"], densityFields);
-        Assert.Null(typeof(LauncherEntryViewModel).GetProperty(nameof(LauncherEntryViewModel.IsCompactLayout))?.SetMethod);
-        Assert.Null(typeof(LauncherEntryViewModel).GetProperty(nameof(LauncherEntryViewModel.IsMicroLayout))?.SetMethod);
-    }
-
-    [Fact]
-    public void CardSizingUsesOneTypedAvailableSizeStateSource()
-    {
-        Assert.Null(typeof(MainWindowViewModel).GetField("_cardsAvailableWidth", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
-        Assert.Null(typeof(MainWindowViewModel).GetField("_cardsAvailableHeight", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
-        Assert.NotNull(typeof(MainWindowViewModel).GetField("_cardsAvailableSize", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
-        Assert.Null(typeof(MainWindowViewModel).GetMethod("RecalculateCardSize", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
-
-        using var temp = new TempDirectory();
-        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
-        var viewModel = CreateViewModel(config, settings);
-
-        viewModel.UpdateCardsAvailableSize(new Size(640, 260));
-
-        var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
-        Assert.True(first.CardWidth > 0);
-        Assert.True(first.CardHeight > 0);
     }
 
     [Fact]

@@ -120,6 +120,47 @@ public sealed class LaunchArgumentBuilderTests
         Assert.Contains("32767", ex.Message);
     }
 
+    [Fact]
+    public void Build_RejectsUncNetworkPath()
+    {
+        var entry = Entry(@"\\server\share\folder", name: "network");
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            LaunchArgumentBuilder.Build(entry, validateDirectory: false, requireConfirmation: false));
+        Assert.Contains("network path", ex.Message);
+        Assert.Contains("network", ex.Message);
+    }
+
+    [Fact]
+    public void Build_DetectsPercentInjectionViaFullwidthNormalization()
+    {
+        // U+FF05 (fullwidth percent sign) normalizes to U+0025 (%) via FormKC in
+        // LauncherEntryText.Normalize. The build must detect this and reject it
+        // before ExpandEnvironmentVariables sees a literal %.
+        var fullwidthPercent = '\uFF05';
+        var entry = Entry($"C:\\tmp\\user{fullwidthPercent}data", name: "inject");
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            LaunchArgumentBuilder.Build(entry, validateDirectory: false, requireConfirmation: false));
+        Assert.Contains("normalize to '%'", ex.Message);
+        Assert.Contains("inject", ex.Message);
+    }
+
+    [Fact]
+    public void Build_DoesNotRejectLiteralPercentWhenPresentInOriginalDirectory()
+    {
+        // Literal % in the original directory is allowed — it's only injected
+        // fullwidth % that is blocked. A user who intentionally types % is
+        // responsible for its behavior.
+        using var temp = new TempDirectory();
+        Directory.CreateDirectory(Path.Combine(temp.Path, "user%data"));
+        var entry = Entry(Path.Combine(temp.Path, "user%data"), name: "literal");
+
+        var plan = LaunchArgumentBuilder.Build(entry, validateDirectory: true, requireConfirmation: false);
+
+        Assert.NotNull(plan);
+    }
+
     private static LaunchEntry Entry(
         string directory,
         string name = "demo",
