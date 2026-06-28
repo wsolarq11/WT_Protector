@@ -123,5 +123,8 @@ function Backup-File([string]$Path) {
 }
 
 function Save-ConfigItems([object[]]$Items, [string]$Path) {
-    $Items | ConvertTo-Json -Depth 6 | Set-Content -Encoding UTF8 -LiteralPath $Path
+    $json = $Items | ConvertTo-Json -Depth 6
+    # Use UTF8Encoding($false) for BOM-free UTF-8 — Set-Content -Encoding UTF8 writes
+    # BOM on WinPS 5.1 but no BOM on PS7+, causing cross-edition inconsistency.
+    [System.IO.File]::WriteAllText($Path, $json, [System.Text.UTF8Encoding]::new($false))
 }

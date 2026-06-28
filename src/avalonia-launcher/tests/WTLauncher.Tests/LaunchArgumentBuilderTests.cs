@@ -14,7 +14,7 @@ public sealed class LaunchArgumentBuilderTests
         var plan = LaunchArgumentBuilder.Build(entry, validateDirectory: true, requireConfirmation: false);
 
         Assert.Equal(LaunchArgumentBuilder.TerminalExecutable, plan.Executable);
-        var encodedCommand = Convert.ToBase64String(Encoding.UTF8.GetBytes("codex --version"));
+        var encodedCommand = Convert.ToBase64String(Encoding.Unicode.GetBytes("codex --version"));
         Assert.Equal(
             $"{LaunchArgumentBuilder.WorkingDirectoryOption} {LaunchArgumentBuilder.QuoteArgument(temp.Path)} --title \"demo\" {LaunchArgumentBuilder.ShellCommandPrefix} {encodedCommand}",
             plan.Arguments);
@@ -89,7 +89,7 @@ public sealed class LaunchArgumentBuilderTests
         var afterPrefix = plan.Arguments[(prefixIndex + "-EncodedCommand".Length)..].Trim();
         Assert.NotEmpty(afterPrefix);
         // The decoded Base64 should contain the original command
-        var decoded = Encoding.UTF8.GetString(Convert.FromBase64String(afterPrefix));
+        var decoded = Encoding.Unicode.GetString(Convert.FromBase64String(afterPrefix));
         Assert.Equal("$(calc)", decoded);
     }
 
@@ -102,7 +102,7 @@ public sealed class LaunchArgumentBuilderTests
         Assert.Contains("-EncodedCommand", plan.Arguments, StringComparison.Ordinal);
         var prefixIndex = plan.Arguments.IndexOf("-EncodedCommand", StringComparison.Ordinal);
         var afterPrefix = plan.Arguments[(prefixIndex + "-EncodedCommand".Length)..].Trim();
-        var decoded = Encoding.UTF8.GetString(Convert.FromBase64String(afterPrefix));
+        var decoded = Encoding.Unicode.GetString(Convert.FromBase64String(afterPrefix));
         Assert.Equal("Write-Host `$(Get-Process)`", decoded);
     }
 

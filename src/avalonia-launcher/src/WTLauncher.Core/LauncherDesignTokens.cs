@@ -9,12 +9,13 @@ public static class LauncherDesignTokens
     // ── Colors ──────────────────────────────────────────────
     public const string PrimaryColor = "#2563EB";          // primary buttons, accent
     public const string DestructiveColor = "#DC2626";      // delete/danger actions
+    public const string ErrorColor = "#B22222";           // error text (Firebrick, contrast 5.24:1 AA)
     public const string BackgroundColor = "#F8FAFC";       // window background
     public const string TextPrimaryColor = "#0F172A";      // headings, primary text
-    public const string TextMutedColor = "#64748B";        // secondary/muted text
+    public const string TextMutedColor = "#4B5563";        // secondary/muted text (contrast 5.8:1 AA)
     public const string BorderColor = "#E2E8F0";           // card/item borders
     public const string SurfaceColor = "White";            // card/item backgrounds
-    public const string BoxShadowColor = "#120F172A";      // card shadow (0 8 24 0)
+    public const string BoxShadowColor = "#120F172A";      // card shadow, #AARRGGBB 是 Avalonia Color.Parse 标准格式
 
     // ── Semantic state colors ──────────────────────────────
     public const string HoverBackgroundColor = "#F1F5F9";       // generic hover background

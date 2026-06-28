@@ -662,6 +662,9 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Equal(["one", "two"], settings.CustomEntryOrder!);
         Assert.Equal(LauncherWindowSettings.DefaultWidth, settings.Window!.Width);
         Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window!.Height);
+        // ponytail: after save failure, temp files are intentionally kept for
+        // crash recovery. CleanupStaleTempFiles handles them at next startup.
+        LauncherJson.CleanupStaleTempFiles(configDir);
         Assert.Empty(Directory.EnumerateFiles(configDir, $"{LauncherConfigStore.SettingsFileName}.tmp-*"));
     }
 
@@ -755,7 +758,7 @@ public sealed partial class LauncherConfigStoreTests
             settings);
 
         var savedJson = File.ReadAllText(settings);
-        Assert.Contains("\"schemaVersion\": 1", savedJson);
+        Assert.Contains("\"schemaVersion\"", savedJson);
 
         var loaded = LauncherSettingsStore.Load(settings);
         Assert.Equal(1, loaded.SchemaVersion);

@@ -22,6 +22,7 @@ public sealed partial class MainWindowViewModel
     private void MoveEntryRelative(LauncherEntryViewModel entry, int targetOffset, bool insertAfter)
     {
         var snapshot = CaptureSettingsMutationSnapshot();
+
         if (!TryResolveVisibleMoveTarget(entry, targetOffset, out var target))
         {
             StatusText = LauncherDragReorderStatus.MoveUnavailable;
@@ -33,7 +34,10 @@ public sealed partial class MainWindowViewModel
         var (changed, updatedOrder) = LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, entry.Id, target.Id, insertAfter);
         if (!changed)
         {
-            _settings = snapshot.RestoreCustomEntryOrder(_settings);
+            // Re-sync rather than restoring the snapshot: EnsureCustomOrderContainsEntries
+            // may have added new entry IDs after the snapshot was captured, and restoring
+            // the snapshot would lose them.
+            EnsureCustomOrderContainsEntries();
             ApplyFilter();
             StatusText = LauncherDragReorderStatus.MoveUnavailable;
             return;

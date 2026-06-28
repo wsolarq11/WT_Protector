@@ -32,6 +32,7 @@ public sealed record LauncherSettings
     [JsonRequired]
     public ImmutableList<string> CustomEntryOrder { get; init; } = ImmutableList<string>.Empty;
 
+    /// <summary>Key-value command templates. Lookup uses <see cref="StringComparer.OrdinalIgnoreCase"/>.</summary>
     [JsonPropertyName("commandTemplates")]
     public ImmutableDictionary<string, string> CommandTemplates { get; init; } = ImmutableDictionary<string, string>.Empty.WithComparers(StringComparer.OrdinalIgnoreCase);
 

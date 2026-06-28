@@ -50,15 +50,15 @@ if ($jsonRequiredFields.Count -eq 0) { throw 'Contract validation: could not ext
 Write-Host "Contract validation: found $($jsonRequiredFields.Count) [JsonRequired] fields across models"
 
 # P1#1: No SaveConfig() / Save*() call discards its return value.
-$saveDiscards = Select-String -Path (Join-Path $sourceRoot 'src\WTLauncher.App\ViewModels\*.cs') -Pattern '^\s+Save\w+\(\)' -SimpleMatch
-$saveDiscards += Select-String -Path (Join-Path $sourceRoot 'src\WTLauncher.App\ViewModels\*.cs') -Pattern '^\s+if\s*\([^)]*\w+\)\s+Save\w+\(\)' -NotMatch | Select-String -Pattern '\.Save\w+\(\)' -SimpleMatch
+$saveDiscards = Select-String -Path (Join-Path $sourceRoot 'src\WTLauncher.App\ViewModels\*.cs') -Pattern '^\s+Save\w+\(\)'
+$saveDiscards += Select-String -Path (Join-Path $sourceRoot 'src\WTLauncher.App\ViewModels\*.cs') -Pattern '^\s+if\s*\([^)]*\w+\)\s+Save\w+\(\)' -NotMatch | Select-String -Pattern '\.Save\w+\(\)'
 if ($saveDiscards) {
     $lines = ($saveDiscards | ForEach-Object { "$($_.Filename):$($_.LineNumber)" }) -join ', '
     throw "Contract violation: Save*() return value discarded at: $lines"
 }
 
 # P1#2: No bare integers in XAML TimeSpan properties.
-$timeSpanBare = Select-String -Path (Join-Path $sourceRoot 'src\WTLauncher.App\Views\*.axaml') -Pattern '(MinimumPopulateDelay|Duration)="\d+"' -SimpleMatch
+$timeSpanBare = Select-String -Path (Join-Path $sourceRoot 'src\WTLauncher.App\Views\*.axaml') -Pattern '(MinimumPopulateDelay|Duration)="\d+"'
 if ($timeSpanBare) {
     $lines = ($timeSpanBare | ForEach-Object { "$($_.Filename):$($_.LineNumber)" }) -join ', '
     throw "Contract violation: bare integer in XAML TimeSpan at: $lines. Use explicit h:m:s.ms format."

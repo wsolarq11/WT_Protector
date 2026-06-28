@@ -25,7 +25,7 @@ internal static class ErrorLog
     private static readonly string LogPath = Path.Combine(LogDirectory, "errors.log");
 
     private static int _isWriting;
-    private static bool _directoryEnsured;
+    private static string? _ensuredDirectory;
 
     /// <summary>
     /// Write an exception with a human-readable context tag.
@@ -81,16 +81,19 @@ internal static class ErrorLog
     }
 
     /// <summary>
-    /// Ensures the log directory exists. Cached after first creation to avoid
+    /// Ensures the log directory exists. Cached by directory path to avoid
     /// repeated <see cref="Directory.CreateDirectory"/> calls on every write.
+    /// The directory string is used instead of a bool so that the test seam
+    /// (which can inject a different directory) does not share state with the
+    /// production path.
     /// </summary>
     private static void EnsureLogDirectory(string logDirectory)
     {
-        if (_directoryEnsured)
+        if (_ensuredDirectory == logDirectory)
             return;
 
         Directory.CreateDirectory(logDirectory);
-        _directoryEnsured = true;
+        _ensuredDirectory = logDirectory;
     }
 
     /// <summary>

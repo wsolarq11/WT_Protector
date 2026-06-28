@@ -38,6 +38,8 @@ public sealed class ConfirmLaunchWindow : Window
         var launch = LauncherDialogButtons.Primary("确认启动");
         launch.Click += (_, _) => Close(true);
 
+        Opened += (_, _) => launch.Focus();
+
         Content = new Grid
         {
             Margin = new Thickness(24),

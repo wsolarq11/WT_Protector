@@ -371,7 +371,7 @@ if ($null -eq $settings.lastFilterText) { throw 'settings.json lastFilterText is
 if (-not ($settings.lastFilterText -is [string])) { throw 'settings.json lastFilterText must be string' }
 if ($null -eq $settings.customEntryOrder) { throw 'settings.json customEntryOrder is required' }
 if ($null -eq $settings.window) { throw 'settings.json window is required' }
-Assert-OnlyJsonKeys $settings.window @('width', 'height') 'settings.json window'
+Assert-OnlyJsonKeys $settings.window @('width', 'height', 'x', 'y', 'windowState') 'settings.json window'
 Assert-PositiveJsonNumber $settings.window.width 'settings.json window width'
 Assert-PositiveJsonNumber $settings.window.height 'settings.json window height'
 $settingsOrder = @($settings.customEntryOrder)
@@ -392,6 +392,29 @@ Add-Check 'settings-json' @{
     requireConfirmationForLaunches = $settings.requireConfirmationForLaunches
     customEntryOrder = $settingsOrder.Count
     hasWindow = $null -ne $settings.window
+}
+
+# Validate commandTemplates structure.
+$commandTemplates = $settings.commandTemplates
+if ($null -eq $commandTemplates) { throw 'settings.json commandTemplates is required' }
+if ($commandTemplates -is [array]) { throw 'settings.json commandTemplates must be an object, not an array' }
+foreach ($templateKey in @($commandTemplates.PSObject.Properties.Name)) {
+    $templateValue = $commandTemplates.$templateKey
+    if ([string]::IsNullOrWhiteSpace([string]$templateValue)) {
+        throw "settings.json commandTemplates key '$templateKey' must be a non-empty string"
+    }
+}
+# Cross-validate: every $key command reference in config.json must exist in commandTemplates.
+$templateKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+foreach ($templateKey in @($commandTemplates.PSObject.Properties.Name)) { [void]$templateKeys.Add($templateKey) }
+foreach ($item in $configItems) {
+    $cmd = [string]$item.command
+    if ($cmd.Length -gt 1 -and $cmd[0] -eq '$' -and $cmd[1] -ne '$') {
+        $refKey = $cmd.Substring(1)
+        if (-not $templateKeys.Contains($refKey)) {
+            throw "Config item '$($item.id)' command references undefined template key: $refKey"
+        }
+    }
 }
 
 $manifestPath = Get-ShortcutBackupManifestPath

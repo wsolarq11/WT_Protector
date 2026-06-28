@@ -173,7 +173,8 @@ public sealed class LauncherLaunchWorkflowTests
 
         Assert.Empty(preflight.Items);
         Assert.Equal(1, preflight.Report.FailedCount);
-        Assert.Equal(["one: Entry id is required. (Parameter 'Id')"], preflight.Report.FailureMessages);
+        var message = Assert.Single(preflight.Report.FailureMessages);
+        Assert.Contains("one: Entry id is required", message);
     }
 
     [Fact]

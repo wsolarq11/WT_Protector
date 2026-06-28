@@ -26,6 +26,7 @@ public sealed record LaunchPlan(
     /// <see cref="ExecutionCommandLine"/> with Base64-encoded -EncodedCommand
     /// to prevent PowerShell metacharacter injection.
     /// </summary>
+    [Obsolete("Use ExecutionCommandLine for logging. CommandLine exposes plaintext commands.")]
     public string CommandLine => $"{Executable} -d \"{WorkingDirectory}\" pwsh -NoExit -Command \"{Command}\"";
 
     /// <summary>
@@ -36,6 +37,8 @@ public sealed record LaunchPlan(
 
     private static string RequireText(string? value, string paramName)
     {
+        if (value is null)
+            throw new ArgumentNullException(paramName);
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException($"{paramName} is required.", paramName);
 

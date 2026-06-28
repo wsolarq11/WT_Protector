@@ -7,21 +7,21 @@ public sealed class LaunchPlanTests
     [Fact]
     public void ConstructorRejectsMissingRequiredFields()
     {
-        var exception = Assert.Throws<ArgumentException>(() =>
+        var ex = Assert.Throws<ArgumentNullException>(() =>
             new LaunchPlan(null!, "args", "C:\\work", "cmd", false));
-        Assert.Equal("Executable", exception.ParamName);
+        Assert.Equal("Executable", ex.ParamName);
 
-        exception = Assert.Throws<ArgumentException>(() =>
+        var ex2 = Assert.Throws<ArgumentException>(() =>
             new LaunchPlan("cmd.exe", " ", "C:\\work", "cmd", false));
-        Assert.Equal("Arguments", exception.ParamName);
+        Assert.Equal("Arguments", ex2.ParamName);
 
-        exception = Assert.Throws<ArgumentException>(() =>
+        var ex3 = Assert.Throws<ArgumentException>(() =>
             new LaunchPlan("cmd.exe", "args", " ", "cmd", false));
-        Assert.Equal("WorkingDirectory", exception.ParamName);
+        Assert.Equal("WorkingDirectory", ex3.ParamName);
 
-        exception = Assert.Throws<ArgumentException>(() =>
+        var ex4 = Assert.Throws<ArgumentException>(() =>
             new LaunchPlan("cmd.exe", "args", "C:\\work", " ", false));
-        Assert.Equal("Command", exception.ParamName);
+        Assert.Equal("Command", ex4.ParamName);
     }
 
     [Fact]

@@ -79,23 +79,15 @@ public sealed class LauncherDragReorderSessionTests
     }
 
     /// <summary>
-    /// <para>
     /// Creates a drag-reorder session for testing. The <see cref="TempDirectory"/>
-    /// is disposed immediately after this method returns; the returned session and
-    /// its <see cref="LauncherEntryViewModel"/> owner still hold references to
-    /// paths inside the temp directory (via <c>MainWindowViewModel._configPath</c>
-    /// and <c>_settingsPath</c>). This is intentional and harmless: the tests only
-    /// exercise session logic (preview recording, hover clearing, id normalization)
-    /// and never touch those file paths after construction.
-    /// </para>
-    /// <para>
-    /// L61: Do not add tests that save config or persist settings using sessions
-    /// created by this helper — the underlying temp directory no longer exists.
-    /// </para>
+    /// outlives the returned session so that path references inside the ViewModel
+    /// remain valid. The temp directory is not explicitly disposed; the OS will
+    /// reclaim it on process exit or temp cleanup.
     /// </summary>
     private static LauncherDragReorderSession StartSession(string draggedEntryId = "three")
     {
-        using var temp = new TempDirectory();
+        // ponytail: no using — temp outlives session; test runner cleans up.
+        var temp = new TempDirectory();
         return LauncherDragReorderSession.Start(
             MainWindowEntryCardTestFactory.CreateEntryViewModel(temp.Path, draggedEntryId),
             LauncherSettingsSnapshot.Capture(new LauncherSettings()));

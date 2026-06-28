@@ -7,7 +7,7 @@ public sealed class LauncherLaunchWorkflow
 {
     private readonly Action<LaunchPlan> _start;
 
-    public IReadOnlyDictionary<string, string>? CommandTemplates { get; set; }
+    public IReadOnlyDictionary<string, string>? CommandTemplates { get; internal set; }
 
     public LauncherLaunchWorkflow(LauncherProcess launcherProcess)
     {

@@ -114,6 +114,24 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **根因** | XAML 中写死 `#2563EB`，当 `LauncherDesignTokens.PrimaryColor` 变更时不会同步 |
 | **预防** | XAML 只用 `{StaticResource PrimaryBrush}`。`grep -r` 搜索硬编码颜色/数值后再新增常量。 |
 
+### 2.5 OLE DragDrop 嵌套消息循环是性能杀手
+
+| 属性 | 值 |
+|---|---|
+| **证据** | session `5d6ef926-604a` (2026-06-26), 6 轮优化追踪 |
+| **根因** | `DragDrop.DoDragDropAsync` 启动 Win32 OLE 嵌套消息循环，优先处理输入消息（`WM_MOUSEMOVE`），渲染回调（`WM_TIMER`/`WM_PAINT`）被降级，累积为可见拖拽卡顿。隐藏全部 450+ 个可视元素后性能零改善——**证明了瓶颈不在应用层渲染，在消息循环**。 |
+| **修复** | 用 `Pointer.Capture` + `PointerMoved/Released/CaptureLost` 替代 OLE drag-drop。Pointer 事件在 Avalonia 正常渲染循环中触发，无嵌套消息循环。 |
+| **预防** | 应用内 reorder/拖拽 → 永远用 Pointer capture，不用 OLE。OLE 仅用于跨应用数据传输。Pointer capture 必须配 `ForceCleanup()` 模式——`PointerReleased` 和 `PointerCaptureLost` 双重路径释放 capture，所有 handler 加 try-catch 兜底。 |
+
+### 2.6 性能排查方法论：先消除，后优化
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 同上 session，4 轮"优化"（eliminate layout/alloc/walk）无效后才做"消除测试"（隐藏 CardsArea） |
+| **根因** | 认知偏差——默认瓶颈在"可见的代码开销"（layout、分配、树遍历），而非"不可见的系统行为"（消息循环） |
+| **预防** | 遇到性能问题，**第 1 轮就做消除测试**：（1）隐藏/移除目标组件 → 测性能变化 → 确定组件是否是瓶颈 → 再深入优化。不做"看起来很慢所以优化它"。 |
+| **诊断顺序** | 消除测试 → 定位瓶颈层 → 分析该层特有开销 → 针对性修复。跳过消除测试直接优化 = 在错误的维度上做正确的事。 |
+
 ---
 
 ## 3. 关联项目可迁移教训
@@ -548,3 +566,13 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **根因** | 批量路径是后来添加的（功能扩展），但没有从单条路径复制所有的守卫逻辑。这是"成对代码漂移"：两个语义上等价的实现因不同时间编写而逐渐分歧。 |
 | **预防** | 当添加"X 的批量版本"时，必须逐行对比原版的错误处理和返回值检查。理想情况下，批量版本应复用原版的核心逻辑（而非重写），避免歧义。代码审查时，成对路径必须做 diff 对比。 |
 | **适用** | 所有 single-vs-batch、sync-vs-async、local-vs-remote 成对实现。 |
+
+### 6.18 跨层验证不一致 — 对话框层和持久化层独立实现同一检查
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-28 UltraReview #2 H6, C14 修复引入的回归 |
+| **问题** | `LauncherEntryDrafts.GetRequiredFieldError` 和 `LauncherEntryIds.RequireEntryId` 都检查 Windows 保留名（CON/PRN/NUL/COM1-9/LPT1-9），但前者的 pattern match 是 case-sensitive，后者的 HashSet 是 case-insensitive (OrdinalIgnoreCase)。用户输入 `"con"` 通过对话框验证，但在 `RequireEntryId` 处被拒绝——导致静默回滚或崩溃。另外 `LauncherPresetFiles.Validate` 的 preset count 用 `> 1000`，而 `LauncherPresetWorkflow.AddPreset` 用 `>= 1000`——同样的"两层独立实现"不一致。 |
+| **根因** | 当验证逻辑跨越两个层（对话框 UI 层 → 持久化 Store 层）时，每一层独立实现自己的检查，没有共享权威来源。开发者在修复一层时复制了检查代码但遗漏了细微差异（如比较器、边界条件）。 |
+| **预防** | (1) 跨层验证必须有单一权威来源——要么 Store 层暴露 `IsValid*` 方法供对话框调用，要么共享常量/集合（如 `WindowsReservedNames` 必须至少是 `internal`）。(2) 添加跨层一致性测试——用非规范输入（小写保留名、边界 count）同时测试对话框和 Store 层。(3) 任何 `> N` vs `>= N` 的不一致都应视为 bug，代码审查时必须逐字对比成对条件。 |
+| **适用** | 所有在多个层重复验证相同约束的场景：ID 验证、名称长度、count 限制、路径格式。 |

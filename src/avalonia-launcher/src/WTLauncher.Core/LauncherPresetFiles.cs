@@ -4,7 +4,7 @@ namespace WTLauncher.Core;
 
 public static class LauncherPresetFiles
 {
-    public static LauncherPresetFile Clone(LauncherPresetFile presetFile)
+    public static LauncherPresetFile CloneNormalized(LauncherPresetFile presetFile)
     {
         ArgumentNullException.ThrowIfNull(presetFile);
         // ClonePresets traversal was redundant: its shallow-clone work is
@@ -68,6 +68,8 @@ public static class LauncherPresetFiles
     private static string NormalizePresetName(string? name, int index)
     {
         var normalized = LauncherEntryText.Normalize(name);
+        if (normalized.Length > 256)
+            throw new InvalidDataException($"Launcher preset {index} name exceeds 256 character limit.");
         if (normalized.Length == 0)
             throw new InvalidDataException($"Launcher preset {index} name is empty.");
 

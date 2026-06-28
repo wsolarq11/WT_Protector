@@ -27,6 +27,8 @@ public sealed record LauncherBatchLaunchItem
 
         return normalized;
     }
+    // ponytail: RequireEntryName deliberately kept as a local wrapper — each call site
+    // has a distinct error message and the pattern is short enough (Normalize + length check).
 }
 
 public sealed record LauncherBatchLaunchPreflight

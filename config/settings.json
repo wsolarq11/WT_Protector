@@ -6,21 +6,21 @@
   "requireConfirmationForLaunches": false,
   "customEntryOrder": [
     "启动脚本",
-    "opencode_WT_Protector",
     "codex_temp",
-    "Soft_Install",
-    "poollink",
-    "phoenix-crawler",
-    "codex-control-plane-private",
     "wsl_codex_launcher",
+    "opencode_WT_Protector",
+    "Soft_Install",
+    "phoenix-crawler",
     "gh_mirror_gui",
+    "poollink",
+    "claude_data_acquisition_and_analysis",
+    "codex-control-plane-private",
     "在线安装Bat_20260320",
     "clashverge_proxyrules_analysis",
     "WT_Protector",
     "usage-observatory",
     "Data_Acquisition_and_Analysis",
     "FolderSizeMonitor",
-    "claude_data_acquisition_and_analysis",
     "claude_phoenix_crawler",
     "SystemPerformanceLab_20260504",
     "claude_temp"
@@ -36,6 +36,7 @@
   ],
   "window": {
     "width": 1180,
-    "height": 760
+    "height": 760,
+    "windowState": "Normal"
   }
 }

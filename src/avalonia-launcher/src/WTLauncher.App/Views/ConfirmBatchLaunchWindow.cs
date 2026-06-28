@@ -8,7 +8,7 @@ namespace WTLauncher.App.Views;
 
 public sealed class ConfirmBatchLaunchWindow : Window
 {
-    private const string MonospaceFontFamily = "Cascadia Code, Consolas";
+    private const string MonospaceFontFamily = "Cascadia Code, Consolas, Courier New, monospace";
 
     public ConfirmBatchLaunchWindow(LauncherBatchLaunchConfirmation confirmation)
     {
@@ -46,7 +46,9 @@ public sealed class ConfirmBatchLaunchWindow : Window
 
         var mainGrid = new Grid
         {
-            RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto"),
+            RowDefinitions = hasFailures
+                ? new RowDefinitions("Auto,Auto,*,Auto,Auto")
+                : new RowDefinitions("Auto,Auto,*,Auto"),
             Children =
             {
                 title,
@@ -102,7 +104,6 @@ public sealed class ConfirmBatchLaunchWindow : Window
                     },
                 },
             };
-            mainGrid.RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto,Auto");
             mainGrid.Children.Add(failureSection.WithGridRow(3));
             footerRow = 4;
         }
@@ -118,6 +119,8 @@ public sealed class ConfirmBatchLaunchWindow : Window
             hasFailures ? "仍然启动有效项" : "确认启动",
             minWidth: hasFailures ? 140 : 116);
         launch.Click += (_, _) => Close(true);
+
+        Opened += (_, _) => launch.Focus();
 
         mainGrid.Children.Add(LauncherDialogButtons.Footer(18, cancel, launch).WithGridRow(footerRow));
 

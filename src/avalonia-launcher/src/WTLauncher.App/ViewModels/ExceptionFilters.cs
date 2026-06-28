@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace WTLauncher.App.ViewModels;
 
 internal static class ExceptionFilters
@@ -13,9 +15,20 @@ internal static class ExceptionFilters
     /// indicate an unrecoverable static constructor failure that will break
     /// subsequent use of the type.
     /// </summary>
-    internal static bool IsRecoverable(Exception ex) =>
-        ex is not (OutOfMemoryException or StackOverflowException
-            // In .NET 6+, StackOverflowException terminates the process before catch blocks
-            // execute. Kept here for documentation and for .NET Framework compatibility.
+    internal static bool IsRecoverable(Exception ex)
+    {
+        // Unwrap TypeInitializationException and AggregateException to inspect
+        // the real cause before making the recoverability decision.
+        // Max 16 iterations prevents infinite loops from self-referencing or
+        // null-InnerException wrappers.
+        for (var i = 0; i < 16 && ex is TypeInitializationException or AggregateException; i++)
+        {
+            ex = ex.InnerException ?? ex;
+            if (ex is AggregateException agg)
+                ex = agg.Flatten().InnerExceptions.FirstOrDefault() ?? ex;
+        }
+
+        return ex is not (OutOfMemoryException or StackOverflowException
             or AccessViolationException or System.Runtime.InteropServices.SEHException);
+    }
 }

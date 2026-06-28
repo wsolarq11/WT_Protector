@@ -1,3 +1,4 @@
+using System.Text.Json;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -91,6 +92,36 @@ public static class LauncherEntryMutationPersistence
                 new InvalidOperationException(journalError));
         }
 
+        // Pre-commit validation: verify ALL staged temp files exist and contain
+        // valid JSON BEFORE modifying any target file. This prevents partial
+        // commits — if any staged file is corrupt or missing, no target is
+        // touched, staged files are cleaned up, and the journal is discarded.
+        foreach (var (temp, _) in journalEntries)
+        {
+            if (!File.Exists(temp))
+            {
+                TryDelete(configTempPath);
+                TryDelete(presetTempPath);
+                TryDelete(settingsTempPath);
+                CommitJournal.Discard(journalPath);
+                return LauncherPersistenceStatus.ConfigSaveFailed(
+                    new InvalidDataException($"Staged file missing before commit: {temp}"));
+            }
+            try
+            {
+                using var _ = JsonDocument.Parse(File.ReadAllText(temp));
+            }
+            catch (JsonException ex)
+            {
+                TryDelete(configTempPath);
+                TryDelete(presetTempPath);
+                TryDelete(settingsTempPath);
+                CommitJournal.Discard(journalPath);
+                return LauncherPersistenceStatus.ConfigSaveFailed(
+                    new InvalidDataException($"Staged file is not valid JSON: {temp}", ex));
+            }
+        }
+
         // Commit phase: rename each staged file to its target. Each rename is
         // irreversible (File.Move is atomic per-file on NTFS). The journal
         // provides crash recovery — if the process dies mid-commit, the next
@@ -144,6 +175,12 @@ public static class LauncherEntryMutationPersistence
 
         try
         {
+            if (File.Exists(entry.Target))
+            {
+                var bakPath = entry.Target + ".bak";
+                try { File.Copy(entry.Target, bakPath, overwrite: true); }
+                catch { /* best-effort */ }
+            }
             File.Move(entry.Temp, entry.Target, overwrite: true);
             return null;
         }

@@ -31,8 +31,9 @@ public sealed class FastWrapPanel : Panel
 
     protected override Size MeasureOverride(Size availableSize)
     {
-        var spacing = ItemSpacing;
-        var lineSpacing = LineSpacing;
+        // Guard against NaN from unresolved resource bindings.
+        var spacing = double.IsNaN(ItemSpacing) ? 0 : ItemSpacing;
+        var lineSpacing = double.IsNaN(LineSpacing) ? 0 : LineSpacing;
         // 900px is a conservative default for the primary monitor width minus typical
         // window chrome. Used only when availableSize.Width is infinite (no size
         // constraint from parent), which should not occur in the current single-window
@@ -48,24 +49,27 @@ public sealed class FastWrapPanel : Panel
             // Constrain child measure to the panel width so children don't
             // report DesiredSize wider than the available space, preventing overflow
             // at row start.
-            child.Measure(new Size(width, availableSize.Height));
+            var measureHeight = double.IsFinite(availableSize.Height) ? availableSize.Height : double.PositiveInfinity;
+            child.Measure(new Size(width, measureHeight));
             var childWidth = child.DesiredSize.Width;
             var childHeight = child.DesiredSize.Height;
 
+            // ponytail: rowWidth now tracks cursor position (including trailing spacing),
+            // matching ArrangeOverride's x. This makes the wrap condition identical in both passes.
             if (rowWidth + childWidth > width && rowWidth > 0)
             {
                 totalHeight += rowHeight + lineSpacing;
-                totalWidth = Math.Max(totalWidth, rowWidth);
+                totalWidth = Math.Max(totalWidth, rowWidth - spacing);
                 rowWidth = 0;
                 rowHeight = 0;
             }
 
-            rowWidth += childWidth + (rowWidth > 0 ? spacing : 0);
+            rowWidth += childWidth + spacing;
             rowHeight = Math.Max(rowHeight, childHeight);
         }
 
         totalHeight += rowHeight;
-        totalWidth = Math.Max(totalWidth, rowWidth);
+        totalWidth = Math.Max(totalWidth, rowWidth > 0 ? rowWidth - spacing : 0);
 
         return new Size(Math.Min(totalWidth, width), totalHeight);
     }
@@ -74,8 +78,9 @@ public sealed class FastWrapPanel : Panel
     {
         // Guard against NaN/Infinity propagated from parent layout pass.
         var containerWidth = double.IsFinite(finalSize.Width) ? finalSize.Width : 900;
-        var spacing = ItemSpacing;
-        var lineSpacing = LineSpacing;
+        // Guard against NaN from unresolved resource bindings.
+        var spacing = double.IsNaN(ItemSpacing) ? 0 : ItemSpacing;
+        var lineSpacing = double.IsNaN(LineSpacing) ? 0 : LineSpacing;
         var x = 0.0;
         var y = 0.0;
         var rowHeight = 0.0;

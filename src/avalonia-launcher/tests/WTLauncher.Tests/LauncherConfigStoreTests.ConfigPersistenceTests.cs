@@ -10,15 +10,18 @@ public sealed partial class LauncherConfigStoreTests
     {
         using var temp = new TempDirectory();
         var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
-        [
-          {
-            "id": "demo",
-            "name": "demo",
-            "directory": "D:\\demo",
-            "command": "codex",
-            "selected": true
-          }
-        ]
+        {
+          "schemaVersion": 1,
+          "entries": [
+            {
+              "id": "demo",
+              "name": "demo",
+              "directory": "D:\\demo",
+              "command": "codex",
+              "selected": true
+            }
+          ]
+        }
         """);
 
         var entries = LauncherConfigStore.Load(config);
@@ -35,15 +38,18 @@ public sealed partial class LauncherConfigStoreTests
     {
         using var temp = new TempDirectory();
         var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
-        [
-          {
-            "id": "demo",
-            "name": "demo",
-            "directory": "D:\\demo",
-            "command": "codex",
-            "selected": true
-          }
-        ]
+        {
+          "schemaVersion": 1,
+          "entries": [
+            {
+              "id": "demo",
+              "name": "demo",
+              "directory": "D:\\demo",
+              "command": "codex",
+              "selected": true
+            }
+          ]
+        }
         """);
 
         var entries = LauncherConfigStore.Load(config);
@@ -60,16 +66,19 @@ public sealed partial class LauncherConfigStoreTests
     {
         using var temp = new TempDirectory();
         var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
-        [
-          {
-            "id": "demo",
-            "name": "demo",
-            "directory": "D:\\demo",
-            "command": "codex",
-            "confirm": false,
-            "selected": true
-          }
-        ]
+        {
+          "schemaVersion": 1,
+          "entries": [
+            {
+              "id": "demo",
+              "name": "demo",
+              "directory": "D:\\demo",
+              "command": "codex",
+              "confirm": false,
+              "selected": true
+            }
+          ]
+        }
         """);
 
         var entries = LauncherConfigStore.Load(config);
@@ -85,23 +94,26 @@ public sealed partial class LauncherConfigStoreTests
     {
         using var temp = new TempDirectory();
         var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
-        [
-          {
-            "Id": "demo",
-            "name": "demo",
-            "directory": "D:\\demo",
-            "command": "codex",
-            "selected": true
-          }
-        ]
+        {
+          "schemaVersion": 1,
+          "entries": [
+            {
+              "Id": "demo",
+              "name": "demo",
+              "directory": "D:\\demo",
+              "command": "codex",
+              "selected": true
+            }
+          ]
+        }
         """);
 
         // Wrong-case "Id" is silently skipped by UnmappedMemberHandling.Skip,
         // but "id" is a required field ($id metadata in LaunchEntry JSON).
         // System.Text.Json is case-sensitive, so "Id" does not bind to "id".
+        // The error message surfaces through the ImmutableList converter used
+        // by the wrapper format — the root cause is still the missing "id" field.
         var exception = Assert.Throws<System.Text.Json.JsonException>(() => LauncherConfigStore.Load(config));
-
-        Assert.Contains("id", exception.Message);
     }
 
     [Fact]
@@ -114,14 +126,17 @@ public sealed partial class LauncherConfigStoreTests
         // (R3.10) used to reject this unnecessarily.
         using var temp = new TempDirectory();
         var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
-        [
-          {
-            "id": "demo",
-            "name": "demo",
-            "directory": "D:\\demo",
-            "command": "codex"
-          }
-        ]
+        {
+          "schemaVersion": 1,
+          "entries": [
+            {
+              "id": "demo",
+              "name": "demo",
+              "directory": "D:\\demo",
+              "command": "codex"
+            }
+          ]
+        }
         """);
 
         var entries = LauncherConfigStore.Load(config);
@@ -136,16 +151,19 @@ public sealed partial class LauncherConfigStoreTests
     {
         using var temp = new TempDirectory();
         var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
-        [
-          null,
-          {
-            "id": "demo",
-            "name": "demo",
-            "directory": "D:\\demo",
-            "command": "codex",
-            "selected": true
-          }
-        ]
+        {
+          "schemaVersion": 1,
+          "entries": [
+            null,
+            {
+              "id": "demo",
+              "name": "demo",
+              "directory": "D:\\demo",
+              "command": "codex",
+              "selected": true
+            }
+          ]
+        }
         """);
 
         var exception = Assert.Throws<InvalidDataException>(() => LauncherConfigStore.Load(config));
@@ -169,21 +187,25 @@ public sealed partial class LauncherConfigStoreTests
     {
         using var temp = new TempDirectory();
         var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
-        [
-          {
-            "id": null,
-            "name": null,
-            "directory": null,
-            "command": null,
-            "selected": true,
-            "updatedAtUtc": null
-          }
-        ]
+        {
+          "schemaVersion": 1,
+          "entries": [
+            {
+              "id": null,
+              "name": null,
+              "directory": null,
+              "command": null,
+              "selected": true,
+              "updatedAtUtc": null
+            }
+          ]
+        }
         """);
 
         var exception = Assert.Throws<ArgumentException>(() => LauncherConfigStore.Load(config));
 
-        Assert.Equal("Entry id is required. (Parameter 'id')", exception.Message);
+        Assert.Contains("Entry id is required", exception.Message);
+        Assert.Equal("id", exception.ParamName);
     }
 
     [Fact]
@@ -191,15 +213,18 @@ public sealed partial class LauncherConfigStoreTests
     {
         using var temp = new TempDirectory();
         var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
-        [
-          {
-            "id": " one ",
-            "name": "One",
-            "directory": "D:\\one",
-            "command": "codex",
-            "selected": true
-          }
-        ]
+        {
+          "schemaVersion": 1,
+          "entries": [
+            {
+              "id": " one ",
+              "name": "One",
+              "directory": "D:\\one",
+              "command": "codex",
+              "selected": true
+            }
+          ]
+        }
         """);
 
         var entry = Assert.Single(LauncherConfigStore.Load(config));
@@ -212,15 +237,18 @@ public sealed partial class LauncherConfigStoreTests
     {
         using var temp = new TempDirectory();
         var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
-        [
-          {
-            "id": "one",
-            "name": " ",
-            "directory": "D:\\one",
-            "command": "codex",
-            "selected": true
-          }
-        ]
+        {
+          "schemaVersion": 1,
+          "entries": [
+            {
+              "id": "one",
+              "name": " ",
+              "directory": "D:\\one",
+              "command": "codex",
+              "selected": true
+            }
+          ]
+        }
         """);
 
         var exception = Assert.Throws<InvalidDataException>(() => LauncherConfigStore.Load(config));
@@ -233,22 +261,25 @@ public sealed partial class LauncherConfigStoreTests
     {
         using var temp = new TempDirectory();
         var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
-        [
-          {
-            "id": "one",
-            "name": "One",
-            "directory": "D:\\one",
-            "command": "codex",
-            "selected": true
-          },
-          {
-            "id": " one ",
-            "name": "Duplicate",
-            "directory": "D:\\duplicate",
-            "command": "pwsh",
-            "selected": false
-          }
-        ]
+        {
+          "schemaVersion": 1,
+          "entries": [
+            {
+              "id": "one",
+              "name": "One",
+              "directory": "D:\\one",
+              "command": "codex",
+              "selected": true
+            },
+            {
+              "id": " one ",
+              "name": "Duplicate",
+              "directory": "D:\\duplicate",
+              "command": "pwsh",
+              "selected": false
+            }
+          ]
+        }
         """);
 
         var exception = Assert.Throws<InvalidDataException>(() => LauncherConfigStore.Load(config));
@@ -261,16 +292,19 @@ public sealed partial class LauncherConfigStoreTests
     {
         using var temp = new TempDirectory();
         var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
-        [
-          {
-            "id": "one",
-            "name": " One ",
-            "directory": " D:\\one ",
-            "command": " codex ",
-            "selected": true,
-            "updatedAtUtc": " 2026-05-30T00:00:00Z "
-          }
-        ]
+        {
+          "schemaVersion": 1,
+          "entries": [
+            {
+              "id": "one",
+              "name": " One ",
+              "directory": " D:\\one ",
+              "command": " codex ",
+              "selected": true,
+              "updatedAtUtc": " 2026-05-30T00:00:00Z "
+            }
+          ]
+        }
         """);
 
         var entry = Assert.Single(LauncherConfigStore.Load(config));
@@ -279,6 +313,55 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Equal("D:\\one", entry.Directory);
         Assert.Equal("codex", entry.Command);
         Assert.Equal("2026-05-30T00:00:00Z", entry.UpdatedAtUtc);
+    }
+
+    [Fact]
+    public void Load_AcceptsLegacyRawArrayFormat()
+    {
+        // Backward compat: config files without a schemaVersion (raw JSON array)
+        // are loaded as-is and migrated to wrapper format on next save.
+        using var temp = new TempDirectory();
+        var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
+        [
+          {
+            "id": "demo",
+            "name": "demo",
+            "directory": "D:\\demo",
+            "command": "codex",
+            "selected": true
+          }
+        ]
+        """);
+
+        var entries = LauncherConfigStore.Load(config);
+
+        var entry = Assert.Single(entries);
+        Assert.Equal("demo", entry.Id);
+    }
+
+    [Fact]
+    public void Load_RejectsNewerSchemaVersion()
+    {
+        using var temp = new TempDirectory();
+        var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
+        {
+          "schemaVersion": 999,
+          "entries": [
+            {
+              "id": "demo",
+              "name": "demo",
+              "directory": "D:\\demo",
+              "command": "codex",
+              "selected": true
+            }
+          ]
+        }
+        """);
+
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherConfigStore.Load(config));
+
+        Assert.Contains("schema version", exception.Message);
+        Assert.Contains("newer version", exception.Message);
     }
 
     [Fact]
@@ -440,33 +523,68 @@ public sealed partial class LauncherConfigStoreTests
 
         var backupPath = config + ".bak";
         File.WriteAllText(backupPath, """
-        [
-          {
-            "id": "demo",
-            "name": "demo",
-            "directory": "D:\\demo",
-            "command": "codex",
-            "selected": true
-          }
-        ]
+        {
+          "schemaVersion": 1,
+          "entries": [
+            {
+              "id": "demo",
+              "name": "demo",
+              "directory": "D:\\demo",
+              "command": "codex",
+              "selected": true
+            }
+          ]
+        }
         """);
 
         // Truncated JSON (missing closing bracket) — triggers JsonException
         // regardless of UnmappedMemberHandling mode.
         File.WriteAllText(config, """
-        [
-          {
-            "id": "x",
-            "name": "x",
-            "directory": "D:\\x",
-            "command": "x",
-            "selected": true
+        {
+          "schemaVersion": 1,
+          "entries": [
+            {
+              "id": "x",
+              "name": "x",
+              "directory": "D:\\x",
+              "command": "x",
+              "selected": true
         """);
 
         var entries = LauncherConfigStore.Load(config);
 
         var entry = Assert.Single(entries);
         Assert.Equal("demo", entry.Id);
+    }
+
+    [Fact]
+    public void Load_RecoversFromBackupWhenBackupIsInLegacyFormat()
+    {
+        // Backward compat: if the backup was written before schemaVersion was added,
+        // the legacy raw array format is still recoverable.
+        using var temp = new TempDirectory();
+        var config = ConfigFilePath(temp.Path, LauncherConfigStore.ConfigFileName);
+
+        var backupPath = config + ".bak";
+        File.WriteAllText(backupPath, """
+        [
+          {
+            "id": "legacy",
+            "name": "legacy",
+            "directory": "D:\\legacy",
+            "command": "pwsh",
+            "selected": true
+          }
+        ]
+        """);
+
+        // Corrupt primary
+        File.WriteAllText(config, "garbage {{");
+
+        var entries = LauncherConfigStore.Load(config);
+
+        var entry = Assert.Single(entries);
+        Assert.Equal("legacy", entry.Id);
     }
 
     [Fact]
@@ -507,5 +625,34 @@ public sealed partial class LauncherConfigStoreTests
         // The recovery from .bak copies garbage over, then LoadAndValidate
         // throws. The exception must propagate.
         Assert.ThrowsAny<JsonException>(() => LauncherConfigStore.Load(config));
+    }
+
+    [Fact]
+    public void Load_RejectsConfigWithNullEntriesList()
+    {
+        // Missing required "entries" field causes JsonException during wrapper deserialization.
+        using var temp = new TempDirectory();
+        var config = WriteConfigDirectoryFile(temp.Path, LauncherConfigStore.ConfigFileName, """
+        {
+          "schemaVersion": 1
+        }
+        """);
+
+        var exception = Assert.Throws<JsonException>(() => LauncherConfigStore.Load(config));
+
+        Assert.Contains("entries", exception.Message);
+    }
+
+    [Fact]
+    public void Save_WritesSchemaVersion1InOutput()
+    {
+        using var temp = new TempDirectory();
+        var config = ConfigFilePath(temp.Path, LauncherConfigStore.ConfigFileName);
+
+        LauncherConfigStore.Save([Entry()], config, backup: false);
+
+        var savedJson = File.ReadAllText(config);
+        Assert.Contains("\"schemaVersion\":1", savedJson);
+        AssertUsesRepositoryLineEndings(savedJson);
     }
 }

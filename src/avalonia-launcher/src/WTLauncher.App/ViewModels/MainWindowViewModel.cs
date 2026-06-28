@@ -135,7 +135,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             DiscardDragReorderPreview();
             ReplaceEntries(LauncherConfigStore.Load(_configPath));
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "Refresh.LoadConfig");
             StatusText = $"配置加载失败: {ExceptionMessageFormatter.ForUser(ex)}";
@@ -153,10 +153,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
             ValidatePresetEntryReferences();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "Refresh.Validate");
             StatusText = $"配置验证失败: {ExceptionMessageFormatter.ForUser(ex)}";
+            // Reload preset file to ensure _presetFile and UI state are consistent
+            // after a partial failure during Phase 2 validation.
+            LoadPresetFile(preferredPresetId: null);
+            RefreshSelectionState();
+            ApplyFilter();
             return;
         }
 
@@ -279,7 +284,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
 
         OnPropertyChanged(nameof(KeyboardFocusedEntryId));
-    }
+    }    public static string EmptyStateText => "没有匹配的启动项";
 
 }
 

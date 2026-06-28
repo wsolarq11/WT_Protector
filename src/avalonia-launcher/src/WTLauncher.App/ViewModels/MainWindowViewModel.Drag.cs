@@ -6,8 +6,14 @@ public sealed partial class MainWindowViewModel
 {
     private readonly LauncherDragReorderWorkflow _dragReorderWorkflow;
 
+    // These fields track drag-preview debounce state and are only accessed from the UI thread
+    // (via PointerMoved → PreviewMoveEntry). No lock or volatile is needed.
     private (string DraggedId, string TargetId, bool InsertAfter)? _lastPreviewParams;
     private long _lastPreviewTick;
+
+    // ponytail: View checks this in OnDragPointerMoved to detect ViewModel-side
+    // cancellation (Escape, search, sort, preset, etc.) and flush View drag state.
+    internal bool HasActiveDragReorder => _dragReorderWorkflow.HasActiveSession;
 
     public bool WouldChangePreview(string draggedEntryId, string targetEntryId, bool insertAfter) =>
         _dragReorderWorkflow.WouldChangePreview(IsCustomSortMode, draggedEntryId, targetEntryId, insertAfter);
@@ -70,8 +76,8 @@ public sealed partial class MainWindowViewModel
         for (int i = 0; i < _visibleEntries.Count; i++)
         {
             var id = _visibleEntries[i].Id;
-            if (LauncherEntryIds.SameNormalized(id, draggedId)) dragIdx = i;
-            if (LauncherEntryIds.SameNormalized(id, targetId)) targetIdx = i;
+            if (LauncherEntryIds.Same(id, draggedId)) dragIdx = i;
+            if (LauncherEntryIds.Same(id, targetId)) targetIdx = i;
             if (dragIdx >= 0 && targetIdx >= 0) break;
         }
         if (dragIdx < 0 || targetIdx < 0 || dragIdx == targetIdx) return;
@@ -106,6 +112,7 @@ public sealed partial class MainWindowViewModel
         if (result.RefreshEntries)
             ApplyFilter();
         ApplyStatusText(result.Status);
+        _lastPreviewParams = null;
     }
 
     /// <remarks>
@@ -120,6 +127,7 @@ public sealed partial class MainWindowViewModel
         if (result.RefreshEntries)
             ApplyFilter();
         ApplyStatusText(result.Status);
+        _lastPreviewParams = null;
     }
 }
 

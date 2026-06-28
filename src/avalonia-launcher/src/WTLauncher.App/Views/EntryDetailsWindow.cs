@@ -202,5 +202,5 @@ public sealed class EntryDetailsWindow : Window
     /// The null-coalescing guard was dead code and has been removed.
     /// </summary>
     private static string RequireSubmittedText(TextBox textBox, string fieldName) =>
-        textBox.Text!; // Avalonia TextBox.Text never returns null — coalesces to ""
+        textBox.Text ?? "";
 }

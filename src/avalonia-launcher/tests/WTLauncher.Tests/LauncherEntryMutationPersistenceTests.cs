@@ -132,7 +132,7 @@ public sealed class LauncherEntryMutationPersistenceTests
         var invalidSnapshot = LauncherEntryMutationSnapshot.Capture(
             [invalidEntry],
             PresetFile("daily", Preset("daily", "one")),
-            customEntryOrder: ["one"],
+            new LauncherSettings { CustomEntryOrder = ["one"] },
             selectedPresetId: "daily");
 
         var saveFailure = LauncherEntryMutationPersistence.Save(
@@ -158,7 +158,7 @@ public sealed class LauncherEntryMutationPersistenceTests
         return LauncherEntryMutationSnapshot.Capture(
             [Entry("one")],
             PresetFile("daily", Preset("daily", "one")),
-            customEntryOrder: ["one"],
+            new LauncherSettings { CustomEntryOrder = ["one"] },
             selectedPresetId: "daily");
     }
 }

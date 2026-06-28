@@ -9,6 +9,16 @@ public sealed record EntryDraft(
     bool Selected);
 public static class LauncherEntryDrafts
 {
+    // Must match LauncherEntryIds.WindowsReservedNames (case-insensitive per OrdinalIgnoreCase).
+    private static readonly HashSet<string> s_reservedNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "CON", "PRN", "AUX", "NUL",
+        "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+    };
+
+    // Normalizes each field at the ViewModel boundary rather than relying on callers —
+    // dialog inputs may contain unicode variants and whitespace before the caller validates.
     public static EntryDraft NormalizeDraft(EntryDraft draft)
     {
         return new EntryDraft(
@@ -84,6 +94,18 @@ public static class LauncherEntryDrafts
     {
         if (!LauncherEntryIds.IsUsable(id))
             return LauncherEntryDraftStatus.IdRequired;
+        // Reject Windows reserved names and path separators / parent-directory tokens
+        // at dialog-validation time rather than at save time. Without this guard, the
+        // save-time RequireEntryId rejects the ID and silently rolls back the entry
+        // via the snapshot mechanism, leaving no user-facing explanation.
+        // Use OrdinalIgnoreCase to match LauncherEntryIds.RequireEntryId behavior
+        // (which uses WindowsReservedNames with StringComparer.OrdinalIgnoreCase).
+        // ponytail: local HashSet instead of pattern matching — 22 entries, negligible.
+        var normalizedId = LauncherEntryIds.Normalize(id);
+        if (s_reservedNames.Contains(normalizedId))
+            return LauncherEntryDraftStatus.IdInvalid;
+        if (normalizedId.Contains('\\') || normalizedId.Contains('/') || normalizedId.Contains(".."))
+            return LauncherEntryDraftStatus.IdInvalid;
         if (string.IsNullOrWhiteSpace(name))
             return LauncherEntryDraftStatus.NameRequired;
         if (string.IsNullOrWhiteSpace(directory))
@@ -98,6 +120,8 @@ public static class LauncherEntryDrafts
 public static class LauncherEntryDraftStatus
 {
     public static string IdRequired => "按钮 ID 不能为空";
+
+    public static string IdInvalid => "按钮 ID 不能使用 Windows 保留名、路径分隔符或 ..";
 
     public static string NameRequired => "按钮名称不能为空";
 

@@ -1,10 +1,53 @@
 using Avalonia;
+using Avalonia.Controls;
 using WTLauncher.App.Views;
 
 namespace WTLauncher.Tests;
 
 public sealed class FastWrapPanelTests
 {
+    // ponytail: adversarial wrap-consistency check. Three children per row
+    // (child=60, spacing=8, width=200), 10 children produce 4 rows: 3+3+3+1.
+    [Fact]
+    public void MeasureArrange_ChildrenWithinDesiredSize_AfterWrap()
+    {
+        var panel = new FastWrapPanel { ItemSpacing = 8, LineSpacing = 8 };
+        for (int i = 0; i < 10; i++)
+            panel.Children.Add(new Border { Width = 60, Height = 40 });
+
+        panel.Measure(new Size(200, double.PositiveInfinity));
+        panel.Arrange(new Rect(0, 0, 200, panel.DesiredSize.Height));
+
+        foreach (var child in panel.Children)
+        {
+            var b = child.Bounds;
+            Assert.True(b.Right <= panel.DesiredSize.Width + 0.001,
+                $"bounds.Right={b.Right} > panel.DesiredSize.Width={panel.DesiredSize.Width}");
+            Assert.True(b.Bottom <= panel.DesiredSize.Height + 0.001,
+                $"bounds.Bottom={b.Bottom} > panel.DesiredSize.Height={panel.DesiredSize.Height}");
+        }
+
+        // 3 per row: 3*60+2*8=196 width, 4*40+3*8=184 height
+        Assert.Equal(196.0, panel.DesiredSize.Width, 3);
+        Assert.Equal(184.0, panel.DesiredSize.Height, 3);
+    }
+
+    // ponytail: boundary case where last child on a row exactly fills available width.
+    // child=96, spacing=8, width=200: 96+8+96=200 (exact fit, should NOT wrap between them).
+    [Fact]
+    public void Measure_ExactFit_DoesNotWrap()
+    {
+        var panel = new FastWrapPanel { ItemSpacing = 8, LineSpacing = 8 };
+        panel.Children.Add(new Border { Width = 96, Height = 40 });
+        panel.Children.Add(new Border { Width = 96, Height = 40 });
+
+        panel.Measure(new Size(200, double.PositiveInfinity));
+
+        // one row: 2*96+1*8=200, height=40
+        Assert.Equal(200.0, panel.DesiredSize.Width, 2);
+        Assert.Equal(40.0, panel.DesiredSize.Height, 2);
+    }
+
     [Fact]
     public void Measure_HandlesPositiveInfinityWidthWithoutCrash()
     {

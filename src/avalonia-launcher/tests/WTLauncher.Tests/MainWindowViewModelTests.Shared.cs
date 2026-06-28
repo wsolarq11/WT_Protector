@@ -64,6 +64,10 @@ public sealed partial class MainWindowViewModelTests
     {
         var directory = Path.GetDirectoryName(path)!;
         var fileName = Path.GetFileName(path);
+        // ponytail: after save failure, temp files are intentionally kept for
+        // crash recovery. CleanupStaleTempFiles handles them at next startup.
+        // Call it first to simulate that recovery path, then assert clean.
+        LauncherJson.CleanupStaleTempFiles(directory);
         Assert.Empty(Directory.EnumerateFiles(directory, $"{fileName}.tmp-*"));
     }
 

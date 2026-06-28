@@ -2,14 +2,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:WTLauncher.App.Views"
         xmlns:core="clr-namespace:WTLauncher.Core;assembly=WTLauncher.Core"
+        xmlns:automation="clr-namespace:Avalonia.Automation;assembly=Avalonia.Controls"
+        xmlns:vm="clr-namespace:WTLauncher.App.ViewModels"
         x:Class="WTLauncher.App.Views.MainWindow"
         Title="WT Launcher"
         Width="{StaticResource WindowDefaultWidth}"
         Height="{StaticResource WindowDefaultHeight}"
         MinWidth="{StaticResource WindowMinWidth}"
         MinHeight="{StaticResource WindowMinHeight}"
-        Background="{StaticResource BackgroundBrush}"
-        DragDrop.AllowDrop="True">
+        Background="{StaticResource BackgroundBrush}">
   <Window.Styles>
     <Style Selector="TextBlock.h1">
       <Setter Property="FontSize" Value="28"/>
@@ -173,7 +174,7 @@
       <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
     <Style Selector="TextBlock.mono">
-      <Setter Property="FontFamily" Value="Cascadia Code, Consolas"/>
+      <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Courier New, monospace"/>
       <Setter Property="FontSize" Value="12"/>
       <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
       <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
@@ -342,6 +343,7 @@
             <TextBlock Classes="control-box-label"
                        Text="搜索"/>
             <AutoCompleteBox x:Name="SearchTextBox"
+                             automation:AutomationProperties.Name="搜索"
                              PlaceholderText="搜索名称、目录或命令"
                              Text="{Binding FilterText, Mode=TwoWay}"
                              ItemsSource="{Binding SearchHistoryItems}"
@@ -470,8 +472,7 @@
                       Classes.keyboard-focused="{Binding IsKeyboardFocused}"
                       Width="{Binding CardWidth}"
                       Height="{Binding CardHeight}"
-                      ClipToBounds="True"
-                      DragDrop.AllowDrop="True">
+                      ClipToBounds="True">
                 <!-- L51: Keyboard accelerators for context menu discoverability -->
                 <Border.ContextMenu>
                   <ContextMenu>
@@ -582,7 +583,7 @@
                    VerticalAlignment="Center"
                    FontSize="16"
                    Foreground="{StaticResource TextMutedBrush}"
-                   Text="没有匹配的启动项"
+                   Text="{x:Static vm:MainWindowViewModel.EmptyStateText}"
                    IsVisible="{Binding IsVisibleEmpty}"/>
       </Grid>
       </ScrollViewer>
@@ -595,7 +596,8 @@
                 ClipToBounds="True">
           <Grid RowDefinitions="Auto,*">
             <Border Classes="detail-header"
-                    CornerRadius="{StaticResource CardBorderRadius}">
+                    CornerRadius="{StaticResource CardBorderRadius}"
+                    IsVisible="{Binding !IsVisibleEmpty}">
               <Grid ColumnSpacing="12"
                     VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
@@ -637,8 +639,7 @@
                           Classes.keyboard-focused="{Binding IsKeyboardFocused}"
                           ClipToBounds="True"
                           HorizontalAlignment="Stretch"
-                          DoubleTapped="OnEntryRowDoubleTapped"
-                          DragDrop.AllowDrop="True">
+                          DoubleTapped="OnEntryRowDoubleTapped">
                     <!-- L51: Keyboard accelerators for context menu discoverability -->
                     <Border.ContextMenu>
                       <ContextMenu>
@@ -755,7 +756,7 @@
                  VerticalAlignment="Center"
                  FontSize="16"
                  Foreground="{StaticResource TextMutedBrush}"
-                 Text="没有匹配的启动项"
+                 Text="{x:Static vm:MainWindowViewModel.EmptyStateText}"
                  IsVisible="{Binding IsVisibleEmpty}"/>
       </Grid>
 
@@ -781,8 +782,7 @@
                       Width="{Binding NameTileWidth}"
                       Height="{Binding NameTileHeight}"
                       ClipToBounds="True"
-                      DoubleTapped="OnEntryRowDoubleTapped"
-                      DragDrop.AllowDrop="True">
+                      DoubleTapped="OnEntryRowDoubleTapped">
                 <!-- L51: Keyboard accelerators for context menu discoverability -->
                 <Border.ContextMenu>
                   <ContextMenu>
@@ -860,7 +860,7 @@
                    VerticalAlignment="Center"
                    FontSize="16"
                    Foreground="{StaticResource TextMutedBrush}"
-                   Text="没有匹配的启动项"
+                   Text="{x:Static vm:MainWindowViewModel.EmptyStateText}"
                    IsVisible="{Binding IsVisibleEmpty}"/>
         </Grid>
       </ScrollViewer>
@@ -874,6 +874,7 @@
             Padding="16">
       <Grid RowDefinitions="Auto,Auto">
         <TextBlock Text="{Binding StatusText}"
+                   automation:AutomationProperties.Name="状态信息"
                    FontSize="14"
                    FontWeight="SemiBold"
                    Foreground="{StaticResource TextPrimaryBrush}"/>

@@ -6,7 +6,7 @@ namespace WTLauncher.Core;
 public static class LaunchArgumentBuilder
 {
     public const string WorkingDirectoryOption = "-d";
-    public const string ShellCommandPrefix = "pwsh -NoExit -EncodedCommand";
+    public const string ShellCommandPrefix = "-- pwsh -NoExit -EncodedCommand";
 
     /// <summary>Resolved full path to Windows Terminal executable.</summary>
     public static string TerminalExecutable => ResolveTerminalExecutable();
@@ -40,6 +40,8 @@ public static class LaunchArgumentBuilder
             "Install Windows Terminal from the Microsoft Store or via winget.");
     }
 
+    /// <param name="validateDirectory">When true, verifies the entry's directory exists on disk before building the plan.</param>
+    /// <param name="requireConfirmation">When true, the resulting LaunchPlan will require user confirmation before execution.</param>
     public static LaunchPlan Build(LaunchEntry entry, bool validateDirectory, bool requireConfirmation, IReadOnlyDictionary<string, string>? commandTemplates = null)
     {
         ArgumentNullException.ThrowIfNull(entry);
@@ -55,6 +57,9 @@ public static class LaunchArgumentBuilder
                 $"Launch entry '{name}' directory contains characters that normalize to '%' — " +
                 "this is not allowed because it would trigger unintended environment-variable expansion.");
         var directory = StripUnsafeCharacters(Environment.ExpandEnvironmentVariables(normalizedDirectory));
+        // Path.GetFullPath resolves relative segments (..) and normalizes separators,
+        // preventing directory traversal bypass of the UNC and existence checks below.
+        directory = Path.GetFullPath(directory);
         var command = StripUnsafeCharacters(LauncherCommandTemplateResolver.Resolve(LauncherEntryText.Normalize(entry.Command), commandTemplates));
 
         if (name.Length == 0)
@@ -62,17 +67,24 @@ public static class LaunchArgumentBuilder
         if (directory.Length == 0)
             throw new InvalidOperationException($"Launch entry '{name}' has an empty directory.");
         // Reject UNC paths to prevent NTLM credential relay to attacker-controlled SMB servers.
-        if (directory.StartsWith(@"\\", StringComparison.Ordinal))
+        // Check both backslash and forward-slash variants — Windows treats both as UNC.
+        if (directory.StartsWith(@"\\", StringComparison.Ordinal) || directory.StartsWith("//", StringComparison.Ordinal))
             throw new InvalidOperationException($"Launch entry '{name}' directory is a network path, which is not allowed.");
+        // Reject DOS device paths (\\.\COM1, \\.\PhysicalDrive0, etc.) to prevent raw device access.
+        if (directory.StartsWith(@"\\.\", StringComparison.Ordinal))
+            throw new InvalidOperationException($"Launch entry '{name}' directory is a device path, which is not allowed.");
         if (validateDirectory && !System.IO.Directory.Exists(directory))
             throw new InvalidOperationException($"Launch entry '{name}' directory does not exist: {directory}");
         if (command.Length == 0)
             throw new InvalidOperationException($"Launch entry '{name}' has an empty command.");
+        // Command length is validated against the Windows CreateProcessW 32767-char limit 
+        // during argument construction below — no need for an earlier soft limit.
 
         // Encode command as Base64 to eliminate PowerShell metacharacter interpretation.
         // -EncodedCommand treats the payload as opaque bytes — $(), backtick, and other
         // PS expansion syntax are never evaluated.
-        var encodedCommand = Convert.ToBase64String(Encoding.UTF8.GetBytes(command));
+        // PowerShell -EncodedCommand requires UTF-16LE (Encoding.Unicode), not UTF-8.
+        var encodedCommand = Convert.ToBase64String(Encoding.Unicode.GetBytes(command));
 
         var arguments = $"{WorkingDirectoryOption} {QuoteArgument(directory)} --title {QuoteArgument(name)} {ShellCommandPrefix} {encodedCommand}";
 
@@ -90,9 +102,26 @@ public static class LaunchArgumentBuilder
 
     /// <summary>Strips control characters (\0, \r, \n, etc.) and Unicode format characters
     /// (BiDi overrides, zero-width spaces, etc.) to prevent CreateProcessW boundary issues
-    /// and visual-spoofing attacks via directional formatting codes.</summary>
+    /// and visual-spoofing attacks via directional formatting codes.
+    /// Confirmed: UnicodeCategory.Format covers BiDi override characters (U+202A-U+202E, U+2066-U+2069).</summary>
     private static string StripUnsafeCharacters(string value)
     {
+        // Fast path: scan for Control/Format characters first.
+        // Most inputs (normalized entry names, resolved directories) are clean.
+        var hasUnsafe = false;
+        for (int i = 0; i < value.Length; i++)
+        {
+            var cat = char.GetUnicodeCategory(value[i]);
+            if (cat is UnicodeCategory.Control or UnicodeCategory.Format)
+            {
+                hasUnsafe = true;
+                break;
+            }
+        }
+
+        if (!hasUnsafe)
+            return value;
+
         var sb = new StringBuilder(value.Length);
         foreach (var ch in value)
         {

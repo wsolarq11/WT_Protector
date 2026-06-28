@@ -120,7 +120,11 @@ public sealed partial class MainWindowViewModel
         var index = 2;
         var idSet = existingIds.ToHashSet(LauncherEntryIds.Comparer);
         while (idSet.Contains(candidate))
+        {
+            if (index > 10000)
+                throw new InvalidOperationException("Cannot generate a unique clone ID — too many copies exist.");
             candidate = $"{baseId}-{index++}";
+        }
         return candidate;
     }
 
@@ -181,6 +185,11 @@ public sealed partial class MainWindowViewModel
         var target = new LauncherEntryDeleteTarget(item.SnapshotEntry());
         if (!await ConfirmDeleteEntryIfRequiredAsync(target).ConfigureAwait(true))
             return;
+
+        // Clear keyboard focus before removal so _keyboardFocusedEntryId does not
+        // retain a stale reference to the deleted entry.
+        if (LauncherEntryIds.Same(_keyboardFocusedEntryId, target.EntryId))
+            KeyboardFocusedEntryId = null;
 
         var snapshot = CaptureEntryMutationSnapshot();
         var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RemoveEntryId(_presetFile, _settings.CustomEntryOrder, target.EntryId);
@@ -264,14 +273,14 @@ public sealed partial class MainWindowViewModel
         return LauncherEntryMutationSnapshot.Capture(
             _entries.Select(ToLaunchEntry),
             _presetFile,
-            _settings.CustomEntryOrder,
+            _settings,
             SelectedPreset?.Id);
     }
 
     private void RestoreEntryMutationSnapshot(LauncherEntryMutationSnapshot snapshot)
     {
         ReplaceEntries(snapshot.CloneEntries());
-        _settings = _settings with { CustomEntryOrder = snapshot.GetCustomEntryOrder() };
+        _settings = snapshot.CloneSettings();
         ApplyPresetFileState(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
         RefreshSelectionState();
         ApplyFilter();
@@ -289,6 +298,10 @@ public sealed partial class MainWindowViewModel
         TotalCount = _entries.Count;
         _keyboardFocusedEntryId = null;
         OnPropertyChanged(nameof(KeyboardFocusedEntryId));
+
+        // Force card-size recalculation on next ApplyFilter — new entry VMs
+        // start with default dimensions and must be measured against current available size.
+        _lastAppliedCardsAvailableSize = new Avalonia.Size(0, 0);
     }
 
     private string CurrentTimestampUtc() => _utcNow().ToString("O");

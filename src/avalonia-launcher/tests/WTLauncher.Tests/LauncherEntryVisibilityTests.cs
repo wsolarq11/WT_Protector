@@ -66,10 +66,13 @@ public sealed class LauncherEntryVisibilityTests
         };
         var customOrder = new List<string> { "one", "two" };
 
+        // ponytail: use empty filter so the null-field entry passes filtering and
+        // is validated in the sort-phase ThrowIfInvalidProjection instead of
+        // depending on RequireText inside MatchesFilter (which no longer normalizes).
         var exception = Assert.Throws<InvalidDataException>(() =>
             LauncherEntryVisibility.FilterAndSort(
                 entries,
-                "codex",
+                string.Empty,
                 LauncherEntryVisibility.AlphabeticalSortModeId,
                 customOrder,
                 static entry => entry));
@@ -225,7 +228,8 @@ public sealed class LauncherEntryVisibilityTests
                 [],
                 static entry => entry));
 
-        Assert.Equal("Entry id is required. (Parameter 'Id')", exception.Message);
+        Assert.Contains("Entry id is required", exception.Message);
+        Assert.Equal("Id", exception.ParamName);
     }
 
     [Fact]

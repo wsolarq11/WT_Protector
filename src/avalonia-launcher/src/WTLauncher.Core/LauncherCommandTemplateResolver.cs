@@ -18,7 +18,7 @@ public static class LauncherCommandTemplateResolver
     {
         // $$ escape sequence: treat as literal $ prefix — strip one $ and return the rest.
         if (command.StartsWith("$$", StringComparison.Ordinal))
-            return command[1..];
+            return command[1..].Trim();
 
         if (templates is null)
             return command;
@@ -59,6 +59,8 @@ public static class LauncherCommandTemplateResolver
         foreach (var entry in entries)
         {
             var command = LauncherEntryText.Normalize(entry.Command);
+            if (command.StartsWith("$$", StringComparison.Ordinal))
+                continue;
             if (command.Length == 0 || !command.StartsWith(TemplatePrefix, StringComparison.Ordinal))
                 continue;
 

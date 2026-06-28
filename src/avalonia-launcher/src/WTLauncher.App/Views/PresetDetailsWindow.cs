@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Threading;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -62,8 +63,8 @@ public sealed class PresetDetailsWindow : Window
 
         Opened += (_, _) =>
         {
-            _nameBox.SelectAll();
             _nameBox.Focus();
+            Dispatcher.UIThread.Post(() => _nameBox.SelectAll(), DispatcherPriority.Loaded);
         };
     }
 

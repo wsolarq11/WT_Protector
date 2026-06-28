@@ -16,14 +16,15 @@ public static class LauncherEntryLayoutPresentation
     public static Size NormalizeAvailableSize(Size availableSize)
     {
         return new Size(
-            Math.Max(MinimumCardsWidth, availableSize.Width),
-            Math.Max(MinimumCardsHeight, availableSize.Height));
+            double.IsFinite(availableSize.Width) ? Math.Max(MinimumCardsWidth, availableSize.Width) : MinimumCardsWidth,
+            double.IsFinite(availableSize.Height) ? Math.Max(MinimumCardsHeight, availableSize.Height) : MinimumCardsHeight);
     }
 
     public static void ApplyCardSize(
         ICollection<LauncherEntryViewModel> entries,
         ICollection<LauncherEntryViewModel> visibleEntries,
-        Size availableSize)
+        Size availableSize,
+        HashSet<LauncherEntryViewModel>? reusableVisibleSet = null)
     {
         ArgumentNullException.ThrowIfNull(entries);
         ArgumentNullException.ThrowIfNull(visibleEntries);
@@ -50,9 +51,11 @@ public static class LauncherEntryLayoutPresentation
         }
 
         // Update hidden entries too — prevents stale card sizes when they become visible later.
+        // P1: Reuse caller's _syncSortedSet when available to avoid per-call HashSet allocation.
+        var visibleSet = reusableVisibleSet ?? new HashSet<LauncherEntryViewModel>(visibleEntries);
         foreach (var entry in entries)
         {
-            if (visibleEntries.Contains(entry)) continue;
+            if (visibleSet.Contains(entry)) continue;
             if (entry.CardWidth != layout.CardWidth)
                 entry.CardWidth = layout.CardWidth;
             if (entry.CardHeight != layout.CardHeight)

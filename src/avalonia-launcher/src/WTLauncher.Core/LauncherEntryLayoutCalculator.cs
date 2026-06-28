@@ -29,6 +29,13 @@ public static class LauncherEntryLayoutCalculator
     // for typical entry names, so the solver adds columns once this ceiling is reached.
     public const double NameTilePreferredMaxWidth = 220;
 
+    // Fallback dimensions used when upstream layout provides NaN/Infinity.
+    private const double FallbackAvailableWidth = 900;
+    private const double FallbackAvailableHeight = 600;
+
+    // 2px hysteresis band around the column-count threshold in name-tile layout.
+    private const double NameTileColumnHysteresisPx = 2;
+
     public static (
         double CardWidth,
         double CardHeight,
@@ -39,10 +46,10 @@ public static class LauncherEntryLayoutCalculator
             int itemCount)
     {
         // Guard against NaN/Infinity propagated from upstream layout calculations.
-        // Use safe fallback dimensions (900×600) that produce readable cards until
+        // Use safe fallback dimensions that produce readable cards until
         // the next valid layout pass supplies real measurements.
-        var safeWidth = double.IsFinite(availableWidth) && availableWidth > 0 ? availableWidth : 900;
-        var safeHeight = double.IsFinite(availableHeight) && availableHeight > 0 ? availableHeight : 600;
+        var safeWidth = double.IsFinite(availableWidth) && availableWidth > 0 ? availableWidth : FallbackAvailableWidth;
+        var safeHeight = double.IsFinite(availableHeight) && availableHeight > 0 ? availableHeight : FallbackAvailableHeight;
         var count = Math.Max(1, itemCount);
         var cardLayout = CalculateCardLayout(safeWidth, safeHeight, count);
         var nameTileLayout = CalculateNameTileLayout(safeWidth, safeHeight, count);
@@ -101,12 +108,15 @@ public static class LauncherEntryLayoutCalculator
 
     private static (double Width, double Height) CalculateNameTileLayout(double availableWidth, double availableHeight, int count)
     {
-        // 2px hysteresis band around the column-count threshold to prevent
+        if (!double.IsFinite(availableWidth) || !double.IsFinite(availableHeight))
+            return (NameTileMinWidth, NameTileHeight);
+
+        // Hysteresis band around the column-count threshold to prevent
         // rapid toggling when the window is resized near the boundary.
-        // Compute columns at current width AND at width-2; bias toward the larger
-        // count (i.e. keep more columns when within 2px of the reduction threshold).
+        // Compute columns at current width AND at width minus hysteresis; bias toward the larger
+        // count (i.e. keep more columns when within the hysteresis band of the reduction threshold).
         var columns = ComputeNameTileColumns(availableWidth, availableHeight, count);
-        var hysteresisColumns = ComputeNameTileColumns(availableWidth - 2, availableHeight, count);
+        var hysteresisColumns = ComputeNameTileColumns(availableWidth - NameTileColumnHysteresisPx, availableHeight, count);
         columns = Math.Max(columns, hysteresisColumns);
 
         if (availableWidth >= (NameTileMinWidth * 2) + NameTileGap)
@@ -121,13 +131,12 @@ public static class LauncherEntryLayoutCalculator
         var maxColumns = Math.Max(1, (int)Math.Floor((availableWidth + NameTileGap) / (NameTileMinWidth + NameTileGap)));
         var rowsFit = Math.Max(1, (int)Math.Floor((availableHeight + NameTileRowGap) / (NameTileHeight + NameTileRowGap)));
         var columnsNeededToFitHeight = (int)Math.Ceiling(count / (double)rowsFit);
-        // Despite its name, this variable limits maximum tile width, not column count.
-        // It computes how many columns are needed to keep individual tile width below
+        // Computes how many columns are needed to keep individual tile width below
         // NameTilePreferredMaxWidth. A larger value produces more (narrower) columns.
-        var columnsNeededToAvoidSparseRows = (int)Math.Ceiling(
+        var columnsNeededToLimitTileWidth = (int)Math.Ceiling(
             (availableWidth + NameTileGap) / (NameTilePreferredMaxWidth + NameTileGap));
         return Math.Clamp(
-            Math.Max(columnsNeededToFitHeight, columnsNeededToAvoidSparseRows),
+            Math.Max(columnsNeededToFitHeight, columnsNeededToLimitTileWidth),
             1,
             maxColumns);
     }

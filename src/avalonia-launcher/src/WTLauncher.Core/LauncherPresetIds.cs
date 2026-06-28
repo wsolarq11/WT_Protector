@@ -4,7 +4,7 @@ namespace WTLauncher.Core;
 
 public static class LauncherPresetIds
 {
-    public static StringComparer Comparer => StringComparer.Ordinal;
+    public static readonly StringComparer Comparer = StringComparer.Ordinal;
 
     public static bool Same(string? left, string? right) =>
         string.Equals(left, right, StringComparison.Ordinal);
@@ -49,11 +49,10 @@ public static class LauncherPresetIds
 
         var builder = new StringBuilder(value.Length);
         var separatorPending = false;
-        // FormKC (compatibility decomposition + canonical composition) may change
-        // the visual appearance of some Unicode characters (e.g. fullwidth → ASCII,
-        // ligature → individual letters, superscript → regular). This is intentional:
+        // FormC (canonical composition) may change the visual appearance of some
+        // Unicode characters (e.g. combining sequences). This is intentional:
         // we produce stable, ASCII-adjacent IDs suitable for preset cross-references.
-        foreach (var ch in value.Normalize(NormalizationForm.FormKC))
+        foreach (var ch in value.Normalize(NormalizationForm.FormC))
         {
             if (char.IsLetterOrDigit(ch))
             {

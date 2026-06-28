@@ -56,6 +56,8 @@
 - [ ] About to do a batch rename/refactor → read pitfalls.md §3.4, §3.5
 - [ ] Debugging any network/service issue → read pitfalls.md §M4 (诊断顺序)
 - [ ] Third time hitting the same blocker → read pitfalls.md §3.3 (标 blocked)
+- [ ] Any drag / pointer-based UX → read pitfalls.md §2.5 (OLE 消息循环)
+- [ ] Performance issue: "X feels slow" → read pitfalls.md §2.6 (消除测试优先于优化)
 
 → Read [Pitfalls — 跨会话踩坑实录](./pitfalls.md)
 

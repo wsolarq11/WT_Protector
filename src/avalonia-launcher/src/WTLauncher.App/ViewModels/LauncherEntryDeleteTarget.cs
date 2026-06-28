@@ -16,6 +16,7 @@ public sealed record LauncherEntryDeleteTarget
 
     public string EntryName { get; }
 
+    // ponytail: kept inline rather than shared via LauncherEntryText to avoid coupling these small types to Core layer utilities.
     private static string RequireEntryName(string? entryName)
     {
         var normalized = LauncherEntryText.Normalize(entryName);

@@ -20,8 +20,11 @@ public static class CommitJournal
     private const string JournalFileName = ".commit-journal";
 
     /// <summary>Resolve the journal path for a config directory.</summary>
-    public static string ResolvePath(string configDir) =>
-        System.IO.Path.Combine(configDir, JournalFileName);
+    public static string ResolvePath(string configDir)
+    {
+        ArgumentNullException.ThrowIfNull(configDir);
+        return System.IO.Path.Combine(configDir, JournalFileName);
+    }
 
     /// <summary>
     /// Write a commit journal listing temp→target mappings for a pending
@@ -32,11 +35,17 @@ public static class CommitJournal
         string journalPath,
         IReadOnlyList<(string TempPath, string TargetPath)> entries)
     {
+        ArgumentNullException.ThrowIfNull(journalPath);
         ArgumentNullException.ThrowIfNull(entries);
         if (entries.Count == 0)
             throw new ArgumentException("Commit journal must contain at least one entry.", nameof(entries));
 
         // Serialize entries as a simple JSON array of [temp, target] pairs.
+        foreach (var (tempPath, targetPath) in entries)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(tempPath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(targetPath);
+        }
         var journalEntries = entries.Select(e => new JournalEntry(e.TempPath, e.TargetPath)).ToArray();
         var journalTempPath = journalPath + $".tmp-{System.Guid.NewGuid():N}";
 
@@ -48,10 +57,11 @@ public static class CommitJournal
         }
         catch (System.Exception ex) when (ex is System.IO.IOException
             or UnauthorizedAccessException
-            or System.Security.SecurityException)
+            or System.Security.SecurityException
+            or System.Text.Json.JsonException)
         {
             TryDelete(journalTempPath);
-            return $"无法写入提交日志: {ex.Message}";
+            return $"Failed to write commit journal: {ex.Message}";
         }
     }
 
@@ -71,7 +81,7 @@ public static class CommitJournal
         {
             entries = LauncherJson.Load<JournalEntry[]>(journalPath);
         }
-        catch
+        catch (Exception ex) when (ex is System.Text.Json.JsonException or System.IO.IOException or UnauthorizedAccessException)
         {
             // Corrupt journal — discard and move on.
             TryDelete(journalPath);
@@ -84,11 +94,26 @@ public static class CommitJournal
             return null;
         }
 
+        // Resolve config directory for path traversal validation.
+        var configDir = Path.GetDirectoryName(Path.GetFullPath(journalPath))!;
+
         foreach (var entry in entries)
         {
             // Temp file may already have been consumed by a prior partial replay.
             if (!System.IO.File.Exists(entry.Temp))
                 continue;
+
+            // Path traversal guard: both temp and target must be within config directory.
+            var resolvedTemp = Path.GetFullPath(entry.Temp);
+            var resolvedTarget = Path.GetFullPath(entry.Target);
+            // Append separator so C:\config does not match C:\config-backup.
+            var configDirWithSep = configDir.EndsWith(Path.DirectorySeparatorChar) ? configDir : configDir + Path.DirectorySeparatorChar;
+            if (!resolvedTemp.StartsWith(configDirWithSep, StringComparison.OrdinalIgnoreCase)
+                || !resolvedTarget.StartsWith(configDirWithSep, StringComparison.OrdinalIgnoreCase))
+            {
+                TryDelete(journalPath);
+                return "Commit journal entry references a path outside the config directory.";
+            }
 
             try
             {
@@ -108,7 +133,7 @@ public static class CommitJournal
                 or System.Security.SecurityException)
             {
                 // Journal stays on disk for next startup recovery attempt.
-                return $"提交日志重放失败 ({entry.Target}): {ex.Message}";
+                return $"Commit journal replay failed ({entry.Target}): {ex.Message}";
             }
         }
 
@@ -130,10 +155,8 @@ public static class CommitJournal
             if (System.IO.File.Exists(path))
                 System.IO.File.Delete(path);
         }
-        catch
-        {
-            // Best-effort.
-        }
+        catch (System.IO.IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
 
     /// <summary>JSON-serializable journal entry.</summary>

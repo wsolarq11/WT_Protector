@@ -1,173 +1,176 @@
-[
-  {
-    "id": "启动脚本",
-    "name": "启动脚本",
-    "directory": "D:\\<USER>\\Desktop\\启动脚本",
-    "command": "$codex",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "opencode_WT_Protector",
-    "name": "opencode_WT_Protector",
-    "directory": "D:\\<PROJECT_ROOT>\\WT_Protector",
-    "command": "$opencode",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "codex_temp",
-    "name": "codex_temp",
-    "directory": "D:\\<USER>\\Desktop\\temp_codex",
-    "command": "$codex",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "poollink",
-    "name": "poollink",
-    "directory": "D:\\<USER>\\Desktop\\poollink",
-    "command": "$codex",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "gh_mirror_gui",
-    "name": "gh_mirror_gui",
-    "directory": "D:\\<PROJECT_ROOT>\\gh_mirror_gui",
-    "command": "$codex",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "Soft_Install",
-    "name": "Soft_Install",
-    "directory": "D:\\<PROJECT_ROOT>\\Soft_Install",
-    "command": "$codex",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "FolderSizeMonitor",
-    "name": "FolderSizeMonitor",
-    "directory": "D:\\<PROJECT_ROOT>\\FolderSizeMonitor",
-    "command": "$codex",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "在线安装Bat_20260320",
-    "name": "在线安装Bat_20260320",
-    "directory": "D:\\<PROJECT_ROOT>\\在线安装Bat_20260320",
-    "command": "$codex",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "Data_Acquisition_and_Analysis",
-    "name": "Data_Acquisition_and_Analysis",
-    "directory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\Data_Acquisition_and_Analysis",
-    "command": "$codex",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "phoenix-crawler",
-    "name": "phoenix-crawler",
-    "directory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
-    "command": "$codex",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "codex-control-plane-private",
-    "name": "codex-control-plane-private",
-    "directory": "C:\\<USER>\\codex-control-plane-private",
-    "command": "$codex",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "wsl_codex_launcher",
-    "name": "wsl_codex_launcher",
-    "directory": "D:\\<PROJECT_ROOT>\\wsl_codex_launcher",
-    "command": "$codex",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "usage-observatory",
-    "name": "usage-observatory",
-    "directory": "D:\\<PROJECT_ROOT>\\usage-observatory",
-    "command": "$codex",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "clashverge_proxyrules_analysis",
-    "name": "clashverge_proxyrules_analysis",
-    "directory": "D:\\<PROJECT_ROOT>\\clashverge_proxyrules_analysis",
-    "command": "$codex",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "WT_Protector",
-    "name": "WT_Protector",
-    "directory": "D:\\<PROJECT_ROOT>\\WT_Protector",
-    "command": "$codex",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "claude_data_acquisition_and_analysis",
-    "name": "CLAUDE_Data_Acquisition_and_Analysis",
-    "directory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\Data_Acquisition_and_Analysis",
-    "command": "$claude",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "claude_phoenix_crawler",
-    "name": "CLAUDE_phoenix-crawler",
-    "directory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
-    "command": "$claude",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "SystemPerformanceLab_20260504",
-    "name": "SystemPerformanceLab_20260504",
-    "directory": "D:\\<USER>\\Desktop\\SystemPerformanceLab_20260504",
-    "command": "$codex",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  },
-  {
-    "id": "claude_temp",
-    "name": "CLAUDE_temp",
-    "directory": "D:\\<USER>\\Desktop\\temp_claude",
-    "command": "$claude",
-    "selected": false,
-    "updatedAtUtc": "",
-    "launchedAtUtc": ""
-  }
-]
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "id": "启动脚本",
+      "name": "启动脚本",
+      "directory": "D:\\<USER>\\Desktop\\启动脚本",
+      "command": "$codex",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": ""
+    },
+    {
+      "id": "opencode_WT_Protector",
+      "name": "opencode_WT_Protector",
+      "directory": "D:\\<PROJECT_ROOT>\\WT_Protector",
+      "command": "$opencode",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": ""
+    },
+    {
+      "id": "codex_temp",
+      "name": "codex_temp",
+      "directory": "D:\\<USER>\\Desktop\\temp_codex",
+      "command": "$codex",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": "2026-06-27T12:01:43.0900200+00:00"
+    },
+    {
+      "id": "poollink",
+      "name": "poollink",
+      "directory": "D:\\<USER>\\Desktop\\poollink",
+      "command": "$codex",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": "2026-06-27T11:46:06.1901942+00:00"
+    },
+    {
+      "id": "gh_mirror_gui",
+      "name": "gh_mirror_gui",
+      "directory": "D:\\<PROJECT_ROOT>\\gh_mirror_gui",
+      "command": "$codex",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": ""
+    },
+    {
+      "id": "Soft_Install",
+      "name": "Soft_Install",
+      "directory": "D:\\<PROJECT_ROOT>\\Soft_Install",
+      "command": "$codex",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": ""
+    },
+    {
+      "id": "FolderSizeMonitor",
+      "name": "FolderSizeMonitor",
+      "directory": "D:\\<PROJECT_ROOT>\\FolderSizeMonitor",
+      "command": "$codex",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": ""
+    },
+    {
+      "id": "在线安装Bat_20260320",
+      "name": "在线安装Bat_20260320",
+      "directory": "D:\\<PROJECT_ROOT>\\在线安装Bat_20260320",
+      "command": "$codex",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": ""
+    },
+    {
+      "id": "Data_Acquisition_and_Analysis",
+      "name": "Data_Acquisition_and_Analysis",
+      "directory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\Data_Acquisition_and_Analysis",
+      "command": "$codex",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": "2026-06-27T11:42:14.6480716+00:00"
+    },
+    {
+      "id": "phoenix-crawler",
+      "name": "phoenix-crawler",
+      "directory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
+      "command": "$codex",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": ""
+    },
+    {
+      "id": "codex-control-plane-private",
+      "name": "codex-control-plane-private",
+      "directory": "C:\\<USER>\\codex-control-plane-private",
+      "command": "$codex",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": ""
+    },
+    {
+      "id": "wsl_codex_launcher",
+      "name": "wsl_codex_launcher",
+      "directory": "D:\\<PROJECT_ROOT>\\wsl_codex_launcher",
+      "command": "$codex",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": "2026-06-27T12:01:39.6479382+00:00"
+    },
+    {
+      "id": "usage-observatory",
+      "name": "usage-observatory",
+      "directory": "D:\\<PROJECT_ROOT>\\usage-observatory",
+      "command": "$codex",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": ""
+    },
+    {
+      "id": "clashverge_proxyrules_analysis",
+      "name": "clashverge_proxyrules_analysis",
+      "directory": "D:\\<PROJECT_ROOT>\\clashverge_proxyrules_analysis",
+      "command": "$codex",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": ""
+    },
+    {
+      "id": "WT_Protector",
+      "name": "WT_Protector",
+      "directory": "D:\\<PROJECT_ROOT>\\WT_Protector",
+      "command": "$codex",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": ""
+    },
+    {
+      "id": "claude_data_acquisition_and_analysis",
+      "name": "CLAUDE_Data_Acquisition_and_Analysis",
+      "directory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\Data_Acquisition_and_Analysis",
+      "command": "$claude",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": "2026-06-27T11:42:01.7019936+00:00"
+    },
+    {
+      "id": "claude_phoenix_crawler",
+      "name": "CLAUDE_phoenix-crawler",
+      "directory": "D:\\<PROJECT_ROOT>\\ER\\crawler\\phoenix-crawler",
+      "command": "$claude",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": ""
+    },
+    {
+      "id": "SystemPerformanceLab_20260504",
+      "name": "SystemPerformanceLab_20260504",
+      "directory": "D:\\<USER>\\Desktop\\SystemPerformanceLab_20260504",
+      "command": "$codex",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": ""
+    },
+    {
+      "id": "claude_temp",
+      "name": "CLAUDE_temp",
+      "directory": "D:\\<USER>\\Desktop\\temp_claude",
+      "command": "$claude",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": ""
+    }
+  ]
+}

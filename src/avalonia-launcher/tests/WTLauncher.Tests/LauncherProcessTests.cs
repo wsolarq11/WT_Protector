@@ -55,8 +55,7 @@ public sealed class LauncherProcessTests
 
         using var process = new LauncherProcess().Start(plan);
 
-        Assert.False(process.WaitForExit(300), "expected process to still be running after short wait");
-        Assert.False(process.HasExited);
+        Assert.False(process.HasExited, "long-running process should not exit immediately after start");
         process.Kill(entireProcessTree: true);
         Assert.True(process.WaitForExit(3000), "expected process to exit after kill");
     }

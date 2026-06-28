@@ -59,17 +59,54 @@ Control Select(bool isDetailedList, bool isNamesView, Control details, Control n
 
 ## Performance Rules
 
-### DragOver
+### In-App Reorder: Use Pointer Capture, Not OLE DragDrop
+
+OLE `DragDrop.DoDragDropAsync` starts a nested Win32 message loop that prioritises
+input messages over render callbacks, causing drag stutter regardless of how
+lightweight the visual tree is. For in-app card/item reorder:
 
 ```csharp
-// NEVER do this in DragOver:
-viewModel.Refresh();  // O(n) rebuild of entire list
+// ❌ OLE drag-drop — nested message loop kills render scheduling
+await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move);
 
-// DO this:
-viewModel.UpdateDragCue(hitIndex, direction);  // O(1) property update
+// ✅ Pointer capture — fires on Avalonia's normal render loop
+pointer.Capture(this);
+// PointerMoved → update ghost + insert line
+// PointerReleased / PointerCaptureLost → commit
 ```
 
-**Source:** `MainWindow.Drag.cs` — DragOver updates only cue state, never rebuilds.
+**Source:** `MainWindow.Drag.cs` P6 — full pointer-capture architecture with
+`ForceCleanup()` pattern for guaranteed pointer release on any exit path.
+
+### Drag Hot Path: Zero Layout, Zero Visual-Tree Walk
+
+Every element moved during drag must use `RenderTransform`, never
+`Canvas.SetLeft/SetTop` or property bindings that trigger `InvalidateMeasure`:
+
+```csharp
+// ❌ Triggers InvalidateArrange on parent → layout cascade
+Canvas.SetLeft(ghost, x);
+
+// ✅ Purely visual — compositor-only operation
+ghost.RenderTransform = new TranslateTransform(x, y);
+```
+
+```xml
+<!-- ❌ AffectsMeasure → InvalidateMeasure propagates to panel -->
+<Border IsVisible="{Binding IsDragInsertBefore}" />
+
+<!-- ✅ Render property — zero layout impact -->
+<Border Opacity="{Binding IsDragInsertOpacityBefore}" />
+```
+
+### Performance Diagnosis: Eliminate Before Optimising
+
+When a component is slow, **first hide it entirely** (`IsVisible=false`) and
+measure the performance delta. If hiding 450+ visual elements makes zero
+difference, the bottleneck is not in rendering — look at message loops, I/O,
+or GC. Do not optimise code you haven't proven is the bottleneck.
+
+**Source:** `pitfalls.md` §2.6 — full methodology with session evidence.
 
 ### Card Layout Calculation
 
@@ -142,3 +179,6 @@ if (!RequireConfirmationForLaunches && preflight.Report.FailedCount == 0)
 - [ ] Keyboard alternatives exist for drag-only operations.
 - [ ] Dialog layout reuses `LauncherDialogButtons`/`LauncherDialogText` where applicable.
 - [ ] **XAML TimeSpan**: All `Duration`/`MinimumPopulateDelay` values use explicit `h:m:s.ms` format, never bare integers. `"150"` = 150 days in `TimeSpan.Parse`, not 150ms. Use `"0:0:0.150"`.
+- [ ] **NaN/Infinity guard**: All `MeasureOverride`/`ArrangeOverride` must guard `availableSize.Width`/`.Height` with `double.IsFinite` and `double.IsNaN` before using in calculations or passing to child `.Measure()`.
+- [ ] **Dialog default button**: Destructive confirmation dialogs (delete) must make Cancel the `isDefault: true` button. Only safe/affirmative dialogs (launch, save) may make the primary action the default.
+- [ ] **Exception filter unwrap**: Any `while` loop that unwraps exception wrappers (TypeInitializationException, AggregateException) must have a max-iteration guard (e.g., `for (var i = 0; i < 16 && ...)` ) to prevent infinite loops from null-InnerException cycles.

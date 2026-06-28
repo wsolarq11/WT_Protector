@@ -160,4 +160,9 @@ GitHub Actions sets `CI=true`. Use this to skip checks requiring a display (GUI 
 - [ ] **Backup recovery**: Is the retry OUTSIDE the try/catch? → Inside = infinite loop when backup is also corrupt.
 - [ ] **Schema version**: Are `!=` checks replaced with directional `<` and `>` checks? → Old reject + new upgrade message.
 - [ ] **`[JsonRequired]` propagation**: When adding `[JsonRequired]` to any model property, did you search and update ALL JSON fixtures? → `verify.ps1` smoke config, test factories, README examples, `config-lib.ps1` defaults. (Added 2026-06-26 UltraReview smoke fix)
-- [ ] **Stacked bugs**: When fixing a bug that unblocks a verify gate, did the SAME gate surface a SECOND bug? → The diagnostic onion pattern: the first bug masked the second. After fixing one gate failure, re-run the FULL gate — don't assume a clean pass. (Added 2026-06-26 UltraReview TimeSpan + schemaVersion double-bug)<｜end▁of▁thinking｜>
+- [ ] **Stacked bugs**: When fixing a bug that unblocks a verify gate, did the SAME gate surface a SECOND bug? → The diagnostic onion pattern: the first bug masked the second. After fixing one gate failure, re-run the FULL gate — don't assume a clean pass. (Added 2026-06-26 UltraReview TimeSpan + schemaVersion double-bug)
+- [ ] **Atomic save**: File.Replace (atomic) when target exists; File.Move only for first-save. File.Move(overwrite:true) is NOT atomic. (Added 2026-06-28)
+- [ ] **Backup rotation order**: Copy-then-rotate, not rotate-then-copy. If rotation runs first and crashes, .bak is missing. (Added 2026-06-28)
+- [ ] **Cross-layer validation**: Same check in two layers MUST use same semantics (case-sensitivity, boundary: `> N` vs `>= N`). Share constants or methods. (Added 2026-06-28)
+- [ ] **Exception unwrap loop**: Must have max-iteration guard (`for i<16`) — null InnerException causes infinite loop. (Added 2026-06-28)
+- [ ] **NaN/Infinity guard**: All layout arithmetic must guard with `double.IsFinite`/`double.IsNaN` — NaN propagates through all ops. (Added 2026-06-28)<｜end▁of▁thinking｜>

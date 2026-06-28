@@ -1,3 +1,4 @@
+using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -107,8 +108,13 @@ public sealed class LauncherDragReorderWorkflow
         return (true, true);
     }
 
-    private LauncherEntryViewModel? FindEntry(string entryId) =>
-        _entries.FirstOrDefault(entry => LauncherEntryIds.SameNormalized(entry.Id, entryId));
+    private LauncherEntryViewModel? FindEntry(string entryId)
+    {
+        for (int i = 0; i < _entries.Count; i++)
+            if (LauncherEntryIds.Same(_entries[i].Id, entryId))
+                return _entries[i];
+        return null;
+    }
 
     private void EnsureCustomOrderContainsEntries()
     {
@@ -138,6 +144,12 @@ public sealed class LauncherDragReorderWorkflow
                 return (saveFailure, true);
 
             return (LauncherDragReorderStatus.Saved, false);
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            // Rollback settings on any unexpected commit failure.
+            _settings = session.Snapshot.RestoreCustomEntryOrder(_settings);
+            return ($"保存失败: {ex.Message}", true);
         }
         finally
         {

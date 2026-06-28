@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -89,6 +90,8 @@ internal static class LauncherDialogButtons
             button.Foreground = foreground;
         if (fontWeight is not null)
             button.FontWeight = fontWeight.Value;
+
+        AutomationProperties.SetName(button, content);
 
         return button;
     }

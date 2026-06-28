@@ -21,7 +21,7 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `docs/reference/github-similar-projects-snapshot.json` — current GitHub similar-project evidence used by the feature north-star audit.
 - `tools/update-github-similar-projects-snapshot.ps1` — refreshes that market snapshot through `gh repo view`; the root gate rejects stale snapshots.
 - `docs/giants-shoulders/` — "巨人肩膀库": curated external project lessons and source links for future stack/reflection decisions.
-The old root `WT Launcher.exe`, old `src/winforms-launcher/`, and old `spikes/` directory are intentionally retired. The former Avalonia spike is now the source mainline under `src/avalonia-launcher/`.
+  The old root `WT Launcher.exe`, old `src/winforms-launcher/`, and old `spikes/` directory are intentionally retired. The former Avalonia spike is now the source mainline under `src/avalonia-launcher/`.
 
 ## Configuration schema
 
@@ -46,7 +46,7 @@ Fields:
 - `id` — stable human-readable identity for future grouping/sorting/migration.
 - `name` — display name in the launcher UI.
 - `directory` — working directory passed to `wt.exe -d`.
-- `command` — command passed to `pwsh -NoExit -Command`. Supports `$key` template references resolved from `settings.json` `commandTemplates` (see below).
+- `command` — command passed to `pwsh -NoExit -EncodedCommand`（通过 base64 编码防注入）。Supports `$key` template references resolved from `settings.json` `commandTemplates` (see below).
 - `selected` — persistent checkbox state used by the one-click/batch launch flow.
 - `updatedAtUtc` — optional ISO-8601 UTC timestamp refreshed when the app adds or edits a button, and used by the "更新时间" sort mode.
 - `launchedAtUtc` — optional ISO-8601 UTC timestamp written after each successful launch, and used by the "最近启动" sort mode.

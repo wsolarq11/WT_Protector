@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Threading;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
@@ -8,6 +10,12 @@ namespace WTLauncher.App;
 
 internal static class Program
 {
+    // ponytail: global mutex held for app lifetime. Per-operation locking
+    // inside LauncherJson would be finer-grained but the existing temp+atomic
+    // replace pattern already protects single-writer correctness. This
+    // prevents cross-instance interleaving of the multi-step save routine.
+    private static Mutex? _instanceMutex;
+
     [STAThread]
     public static void Main(string[] args)
     {
@@ -37,11 +45,94 @@ internal static class Program
 
         LauncherJson.OnRecoveryFromBackup = (ex, ctx) => ErrorLog.Write(ex, ctx);
 
-        DeleteStaleTempFiles();
-        RecoverStaleCommitJournals();
+        if (!TryAcquireInstanceMutex())
+            return;
 
-        BuildAvaloniaApp()
-            .StartWithClassicDesktopLifetime(args, ShutdownMode.OnMainWindowClose);
+        try
+        {
+            DeleteStaleTempFiles();
+            RecoverStaleCommitJournals();
+
+            BuildAvaloniaApp()
+                .StartWithClassicDesktopLifetime(args, ShutdownMode.OnMainWindowClose);
+        }
+        finally
+        {
+            ReleaseInstanceMutex();
+        }
+    }
+
+    /// <summary>
+    /// Best-effort named mutex to prevent multiple launcher instances from
+    /// interleaving config save operations. If another instance holds it,
+    /// a message box is shown and the process exits. If acquisition fails
+    /// for any other reason (permissions, Global\ namespace unavailable),
+    /// the app continues without protection.
+    /// </summary>
+    private static bool TryAcquireInstanceMutex()
+    {
+        try
+        {
+            _instanceMutex = new Mutex(false, @"Global\WTLauncher_ConfigMutex", out bool createdNew);
+            try
+            {
+                if (!_instanceMutex.WaitOne(0))
+                {
+                    _instanceMutex.Dispose();
+                    _instanceMutex = null;
+                    ShowAlreadyRunningMessage();
+                    return false;
+                }
+            }
+            catch (AbandonedMutexException)
+            {
+                // Previous instance crashed without releasing — we now own it.
+            }
+
+            return true;
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or WaitHandleCannotBeOpenedException)
+        {
+            // ponytail: best-effort — permissions or namespace restrictions
+            // prevent the mutex. Continue without cross-instance protection.
+            var msg = $"[WTLauncher] Instance mutex unavailable: {ex.Message}";
+            Debug.WriteLine(msg);
+            Trace.WriteLine(msg);
+            ErrorLog.Write(ex, "InstanceMutex");
+            _instanceMutex?.Dispose();
+            _instanceMutex = null;
+            return true;
+        }
+    }
+
+    private static void ReleaseInstanceMutex()
+    {
+        try
+        {
+            _instanceMutex?.ReleaseMutex();
+        }
+        catch (Exception ex) when (ex is ApplicationException or ObjectDisposedException)
+        {
+            // Best-effort — the OS reclaims the mutex on process exit regardless.
+        }
+        finally
+        {
+            _instanceMutex?.Dispose();
+            _instanceMutex = null;
+        }
+    }
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = false)]
+    private static extern int MessageBoxW(IntPtr hWnd, string text, string caption, uint type);
+
+    private static void ShowAlreadyRunningMessage()
+    {
+        const uint mbIconStop = 0x00000010;
+        const uint mbOk = 0x00000000;
+        _ = MessageBoxW(IntPtr.Zero,
+            "WT Launcher is already running. Only one instance can be open at a time.",
+            "WT Launcher",
+            mbIconStop | mbOk);
     }
 
     /// <summary>
@@ -73,6 +164,8 @@ internal static class Program
             if (replayError is not null)
                 ErrorLog.Write(new InvalidOperationException(replayError), "CommitJournal.Recover");
         }
+        // ponytail: bare catch is intentional best-effort design — startup must never be
+        // blocked by journal replay failures. Failures are logged inside Replay().
         catch
         {
             // Best-effort at startup — never block app launch.

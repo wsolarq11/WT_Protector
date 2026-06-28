@@ -42,6 +42,8 @@ public static class LauncherDragGhostLayoutCalculator
 
     public static (double Left, double Top) CalculatePosition(double pointerX, double pointerY)
     {
+        if (!double.IsFinite(pointerX) || !double.IsFinite(pointerY))
+            return (0, 0);
         return (pointerX + PointerOffsetX, pointerY + PointerOffsetY);
     }
 
@@ -58,6 +60,12 @@ public static class LauncherDragGhostLayoutCalculator
         double ghostWidth = MinWidth,
         double ghostHeight = MinHeight)
     {
+        if (!double.IsFinite(pointerX) || !double.IsFinite(pointerY)
+            || !double.IsFinite(containerWidth) || !double.IsFinite(containerHeight))
+            return (0, 0);
+
+        ghostWidth = Math.Max(0, ghostWidth);
+        ghostHeight = Math.Max(0, ghostHeight);
         containerWidth = Math.Max(0, containerWidth);
         containerHeight = Math.Max(0, containerHeight);
 

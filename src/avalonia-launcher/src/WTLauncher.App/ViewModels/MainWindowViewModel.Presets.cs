@@ -27,8 +27,14 @@ public sealed partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanApplyPreset))]
     private void ApplyPreset()
     {
+        DiscardDragReorderPreview();
+
         if (!TryGetApplicablePresetSelection(out var selectedPreset, out var selection))
+        {
+            // Update button text to reflect the failure reason (e.g. "检查启动组" for missing entries).
+            RefreshSelectionState();
             return;
+        }
 
         if (ReplaceSelection(selection.PresetIds))
             ApplyStatusText(LauncherPresetStatus.Applied(selectedPreset.Name, selection.PresetIds.Count));

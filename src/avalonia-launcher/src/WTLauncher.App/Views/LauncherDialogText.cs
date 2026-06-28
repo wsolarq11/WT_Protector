@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Media;
 using WTLauncher.App.ViewModels;
@@ -27,19 +28,21 @@ internal static class LauncherDialogText
     // All dialog text brushes reference LauncherDesignTokens instead of
     // hardcoded color strings. Fallbacks remain in case a token is malformed.
     private static readonly IBrush TitleBrush = SafeParseBrush(LauncherDesignTokens.TextPrimaryColor, Brushes.Black);
-    private static readonly IBrush BodyBrush = SafeParseBrush(LauncherDesignTokens.ControlBoxLabelColor, Brushes.Gray);
+    private static readonly IBrush BodyBrush = SafeParseBrush(LauncherDesignTokens.TextMutedColor, Brushes.Gray);
     private static readonly IBrush LabelBrush = SafeParseBrush(LauncherDesignTokens.DragHandleTextColor, Brushes.DimGray);
     private static readonly IBrush SubtleBrush = SafeParseBrush(LauncherDesignTokens.TextMutedColor, Brushes.Gray);
 
     public static TextBlock Title(string text)
     {
-        return new TextBlock
+        var textBlock = new TextBlock
         {
             Text = text,
             FontSize = 22,
             FontWeight = FontWeight.SemiBold,
             Foreground = TitleBrush,
         };
+        AutomationProperties.SetName(textBlock, text);
+        return textBlock;
     }
 
     public static TextBlock Body(string text)
@@ -76,7 +79,7 @@ internal static class LauncherDialogText
     {
         return new TextBlock
         {
-            Foreground = Brushes.IndianRed,
+            Foreground = Brush.Parse(LauncherDesignTokens.ErrorColor),
             IsVisible = false,
             TextWrapping = TextWrapping.Wrap,
         };

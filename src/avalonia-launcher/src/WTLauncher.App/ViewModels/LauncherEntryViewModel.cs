@@ -19,6 +19,7 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         _isSelected = entry.Selected;
     }
 
+    /// <remarks>Callers must ensure _isSelected and _entry.Selected are in sync before calling this method during selection mutations.</remarks>
     public LaunchEntry SnapshotEntry() => _entry with { };
 
     public string Id => _entry.Id;

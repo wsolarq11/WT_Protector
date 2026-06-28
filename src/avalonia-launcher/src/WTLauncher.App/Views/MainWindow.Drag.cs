@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.VisualTree;
-using System.Diagnostics;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
@@ -14,23 +13,27 @@ public sealed partial class MainWindow
 {
     private OverlayLayer? _overlayLayer;
     private Border? _dragGhost;
-    // LIFECYCLE: Set in DoDragReorderAsync (drag begin) and optionally
-    // overwritten in OnEntryDrop (drop finalize). Always cleared in the
-    // finally block of DoDragReorderAsync. Cross-window drag not supported.
+    private IPointer? _dragPointer;
+    private bool _isDragging;
     private string? _activeDragEntryId;
-    /// <summary>Last ShouldInsertAfter decision — used to provide hysteresis
-    /// so the decision doesn't flip-flop near card boundaries.</summary>
     private bool _lastDragInsertAfterDecision;
     // P2: Suppress XAML transitions during active drag to avoid layout thrashing.
     private const string SuppressTransitionsClass = "suppress-drag-transitions";
 
-    private async void OnEntryDragPointerPressed(object? sender, PointerPressedEventArgs e)
+    // ── Drag start (PointerPressed on drag handle) ───────────────────
+
+    private void OnEntryDragPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         try
         {
+            if (_isDragging)
+                ForceCleanup();
+
             if (DataContext is not MainWindowViewModel { IsCustomSortMode: true } viewModel)
                 return;
-            if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+
+            var point = e.GetCurrentPoint(this);
+            if (!point.Properties.IsLeftButtonPressed)
                 return;
 
             var resolved = MainWindowEntryCardResolver.ResolveFromSource(sender);
@@ -38,167 +41,164 @@ public sealed partial class MainWindow
                 return;
 
             var (item, card) = resolved.Value;
-            await DoDragReorderAsync(viewModel, item, card, e);
+            BeginDrag(viewModel, item, card, e);
         }
         catch (Exception ex)
         {
             ErrorLog.Write(ex, "DragPointerPressed");
-            e.Handled = true;
+            ForceCleanup();
         }
     }
 
-    private async Task DoDragReorderAsync(
+    private void BeginDrag(
         MainWindowViewModel viewModel,
         LauncherEntryViewModel item,
         Control card,
         PointerPressedEventArgs e)
     {
-        var data = new DataTransfer();
-        MainWindowDragEntryTransfer.SetEntryId(data, item.Id);
-        e.Handled = true;
+        var pointer = e.Pointer;
+        if (pointer is null) return;
+
         _activeDragEntryId = item.Id;
         _lastDragInsertAfterDecision = false;
+        _dragPointer = pointer;
+        _isDragging = true;
+
         viewModel.BeginDragReorder(item.Id);
         ShowDragGhost(item, card, e);
 
-        // R3.21: Disable display mode ComboBox during active drag.
         DisplayModeComboBox.IsEnabled = false;
-
-        // P2: Suppress 0.12s XAML transitions on all card entries during drag.
         SuppressDragTransitions(true);
 
-        var effect = DragDropEffects.None;
+        pointer.Capture(this);
+    }
+
+    // ── PointerMoved and PointerReleased on Window ───────────────────
+
+    private void OnDragPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (!_isDragging || _dragGhost is null)
+            return;
+
+        // ponytail: guard against ViewModel cancelling drag externally (Escape,
+        // search, sort, preset, selection, entry edit, etc. all call
+        // DiscardDragReorderPreview). Without this check the drag silently
+        // resumes on next PointerMoved against a dead session.
+        if (DataContext is MainWindowViewModel vm && !vm.HasActiveDragReorder)
+        {
+            ForceCleanup();
+            return;
+        }
+
         try
         {
-            effect = await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move).ConfigureAwait(true);
+            MoveDragGhost(e);
+            ApplyDragPreview(e);
         }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        catch (Exception ex)
         {
-            Debug.WriteLine($"[MainWindow] Drag reorder failed: {ex}");
-            ErrorLog.Write(ex, "DragReorder");
-            effect = DragDropEffects.None;
+            ErrorLog.Write(ex, "DragPointerMoved");
+        }
+    }
+
+    private void OnDragPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (!_isDragging) return;
+        _isDragging = false;
+
+        try
+        {
+            if (DataContext is MainWindowViewModel viewModel)
+                viewModel.CommitDragReorder();
+        }
+        catch (Exception ex)
+        {
+            ErrorLog.Write(ex, "DragPointerReleased");
         }
         finally
         {
-            SuppressDragTransitions(false);
-            HideDragGhost();
-            FinishDragReorder(viewModel, effect);
-            _activeDragEntryId = null;
-            DisplayModeComboBox.IsEnabled = true;
+            ForceCleanup();
         }
     }
 
-    private void FinishDragReorder(MainWindowViewModel viewModel, DragDropEffects effect)
+    private void OnDragPointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
     {
+        if (!_isDragging) return;
+        _isDragging = false;
+
+        try
+        {
+            if (DataContext is MainWindowViewModel viewModel)
+                viewModel.CancelDragReorder();
+        }
+        catch (Exception ex)
+        {
+            ErrorLog.Write(ex, "DragCaptureLost");
+        }
+        finally
+        {
+            ForceCleanup();
+        }
+    }
+
+    private void ApplyDragPreview(PointerEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+            return;
         if (_activeDragEntryId is null)
             return;
 
-        if (effect == DragDropEffects.Move)
-            viewModel.CommitDragReorder();
-        else
-            viewModel.CancelDragReorder();
-    }
-
-    /// <summary>
-    /// P2: Add/remove CSS class on all ItemsControl hosts to disable
-    /// the 0.12s transitions on Border.card elements during drag.
-    /// </summary>
-    private void SuppressDragTransitions(bool suppress)
-    {
-        var itemsControls = new[] { CardsEntriesItemsControl, DetailsEntriesItemsControl, NamesEntriesItemsControl };
-        foreach (var ic in itemsControls)
-        {
-            if (ic is null) continue;
-            if (suppress)
-                ic.Classes.Add(SuppressTransitionsClass);
-            else
-                ic.Classes.Remove(SuppressTransitionsClass);
-        }
-    }
-
-    private void OnEntryDragOver(object? sender, DragEventArgs e)
-    {
-        if (DataContext is not MainWindowViewModel viewModel)
-        {
-            e.DragEffects = DragDropEffects.None;
-            e.Handled = false;
-            return;
-        }
-
-        if (_activeDragEntryId is not null)
-            MoveDragGhost(e);
-
-        var resolved = ResolveEntryCardFromDragEvent(e);
-        var decision = MainWindowDragDropDecision.EvaluateDragOver(
-            viewModel.IsCustomSortMode,
-            resolved is not null,
-            e.DataTransfer,
-            _activeDragEntryId);
-        e.DragEffects = decision.Effects;
-        e.Handled = decision.Handled;
-
-        if (decision.ShouldClearHover)
+        var resolved = ResolveCardAtPointer(e.GetPosition(this));
+        if (resolved is null)
         {
             viewModel.ClearDragHover();
             return;
         }
 
-        if (decision.PreviewDraggedEntryId is null || resolved is null)
-            return;
-
-        ApplyDragReorderPreview(e, viewModel, decision.PreviewDraggedEntryId, resolved.Value);
-    }
-
-    private void OnEntryDrop(object? sender, DragEventArgs e)
-    {
-        if (DataContext is not MainWindowViewModel viewModel)
-            return;
-
-        var resolved = ResolveEntryCardFromDragEvent(e);
-        var decision = MainWindowDragDropDecision.EvaluateDrop(resolved is not null, e.DataTransfer);
-        if (!decision.Handled)
-            return;
-
-        _activeDragEntryId = decision.DraggedEntryId;
-        if (decision.DraggedEntryId is null || resolved is null)
-            return;
-
-        ApplyDragReorderPreview(e, viewModel, decision.DraggedEntryId, resolved.Value);
-        e.DragEffects = decision.Effects;
-        e.Handled = decision.Handled;
-    }
-
-    private void ApplyDragReorderPreview(
-        DragEventArgs e,
-        MainWindowViewModel viewModel,
-        string draggedId,
-        (LauncherEntryViewModel Entry, Control Card) target)
-    {
+        var (entry, card) = resolved.Value;
         var insertAfter = MainWindowDragInsertDecision.ShouldInsertAfter(
-            e.GetPosition(target.Card),
-            target.Card.Bounds.Size,
+            e.GetPosition(card),
+            card.Bounds.Size,
             viewModel.IsDetailedListMode,
             _lastDragInsertAfterDecision);
         _lastDragInsertAfterDecision = insertAfter;
 
-        // Lazy capture: only walk the visual tree when the reorder target actually changed.
-        // WouldChangePreview does a cheap O(1) string comparison — no visual tree traversal.
-        if (!viewModel.WouldChangePreview(draggedId, target.Entry.Id, insertAfter))
+        if (!viewModel.WouldChangePreview(_activeDragEntryId, entry.Id, insertAfter))
             return;
 
-        // P0: Skip bounds capture during active drag. Ghost overlay provides visual feedback;
-        // real layout update happens through ApplyFilter on commit.
-        viewModel.PreviewMoveEntry(draggedId, target.Entry.Id, insertAfter);
+        viewModel.PreviewMoveEntry(_activeDragEntryId, entry.Id, insertAfter);
     }
 
-    private (LauncherEntryViewModel Entry, Control Card)? ResolveEntryCardFromDragEvent(DragEventArgs e)
+    private (LauncherEntryViewModel Entry, Control Card)? ResolveCardAtPointer(Point position)
     {
-        var direct = MainWindowEntryCardResolver.ResolveFromSource(e.Source);
-        if (direct is not null)
-            return direct;
+        var visual = this.GetVisualAt(position);
+        if (visual is null) return null;
 
-        return MainWindowEntryCardResolver.ResolveFromSource(this.GetVisualAt(e.GetPosition(this)));
+        foreach (var control in MainWindowVisualTree.ControlsFromSource(visual))
+        {
+            var entry = MainWindowEntryCardResolver.ResolveCard(control);
+            if (entry is not null && !LauncherEntryIds.SameNormalized(entry.Id, _activeDragEntryId ?? ""))
+                return (entry, control);
+        }
+        return null;
     }
+
+    private void ForceCleanup()
+    {
+        _dragPointer?.Capture(null);
+        _dragPointer = null;
+        _isDragging = false;
+        _activeDragEntryId = null;
+
+        SuppressDragTransitions(false);
+        HideDragGhost();
+        DisplayModeComboBox.IsEnabled = true;
+
+        if (DataContext is MainWindowViewModel vm)
+            vm.CancelDragReorder();
+    }
+
+    // ── Ghost overlay ─────────────────────────────────────────────────
 
     private void ShowDragGhost(
         LauncherEntryViewModel item,
@@ -216,28 +216,31 @@ public sealed partial class MainWindow
         if (_dragGhost is not null)
             return;
 
-        var pointerPosition = e.GetPosition(this);
+        var pointerX = e.GetPosition(this).X;
+        var pointerY = e.GetPosition(this).Y;
         var ghost = MainWindowDragGhostFactory.Create(
             item.Name,
             item.Directory,
             item.TitleFontSize,
             card.Bounds.Width,
             card.Bounds.Height,
-            pointerPosition.X,
-            pointerPosition.Y);
+            pointerX,
+            pointerY);
 
         _dragGhost = ghost.Control;
         _overlayLayer.Children.Add(_dragGhost);
         SetDragGhostPosition(_dragGhost, ghost.Left, ghost.Top);
     }
 
-    private void MoveDragGhost(DragEventArgs e)
+    private void MoveDragGhost(PointerEventArgs e)
     {
-        if (_dragGhost is null)
-            return;
+        if (_dragGhost is null) return;
 
-        var pointerPosition = e.GetPosition(this);
-        var ghostPosition = LauncherDragGhostLayoutCalculator.CalculatePosition(pointerPosition.X, pointerPosition.Y);
+        var pointerX = e.GetPosition(this).X;
+        var pointerY = e.GetPosition(this).Y;
+        var ghostPosition = LauncherDragGhostLayoutCalculator.CalculatePosition(
+            pointerX, pointerY, Bounds.Width, Bounds.Height,
+            _dragGhost.Bounds.Width, _dragGhost.Bounds.Height);
         SetDragGhostPosition(_dragGhost, ghostPosition.Left, ghostPosition.Top);
     }
 
@@ -256,20 +259,35 @@ public sealed partial class MainWindow
         _dragGhost = null;
     }
 
+    // ── Transitions suppression ──────────────────────────────────────
+
+    private void SuppressDragTransitions(bool suppress)
+    {
+        var itemsControls = new[] { CardsEntriesItemsControl, DetailsEntriesItemsControl, NamesEntriesItemsControl };
+        foreach (var ic in itemsControls)
+        {
+            if (ic is null) continue;
+            if (suppress)
+                ic.Classes.Add(SuppressTransitionsClass);
+            else
+                ic.Classes.Remove(SuppressTransitionsClass);
+        }
+    }
 }
 
 public static class MainWindowDragInsertDecision
 {
+    private const double InsertThresholdDefault = 0.5;
+    private const double InsertThresholdHysteresisLow = 0.45;
+    private const double InsertThresholdHysteresisHigh = 0.55;
+
     public static bool ShouldInsertAfter(Point positionInCard, Size cardSize, bool isDetailedListMode, bool? currentInsertAfter = null)
     {
-        // ±5% hysteresis to prevent jitter when the pointer is near the card midpoint.
-        // If currently inserted after (true), the pointer must cross below 45% to flip.
-        // If currently inserted before (false), the pointer must cross above 55% to flip.
         double threshold = currentInsertAfter switch
         {
-            true => 0.45,
-            false => 0.55,
-            null => 0.5,
+            true => InsertThresholdHysteresisLow,
+            false => InsertThresholdHysteresisHigh,
+            null => InsertThresholdDefault,
         };
 
         return isDetailedListMode
@@ -283,14 +301,12 @@ public static class MainWindowDragEntryTransfer
     public static void SetEntryId(DataTransfer dataTransfer, string entryId)
     {
         ArgumentNullException.ThrowIfNull(dataTransfer);
-
         dataTransfer.Add(DataTransferItem.CreateText(entryId));
     }
 
     public static string? TryGetEntryId(IDataTransfer dataTransfer)
     {
         ArgumentNullException.ThrowIfNull(dataTransfer);
-
         var entryId = LauncherEntryIds.Normalize(dataTransfer.TryGetText());
         return LauncherEntryIds.IsUsable(entryId) ? entryId : null;
     }

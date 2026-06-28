@@ -39,12 +39,14 @@ public static class LauncherEntryVisibility
         ArgumentNullException.ThrowIfNull(customEntryOrder);
         ArgumentNullException.ThrowIfNull(selectEntry);
 
-        var normalizedFilter = filterText.Trim();
+        // FormKC-normalize so search tokens match the normalized entry fields
+        // (FormKC converts fullwidth chars like U+FF05 ％ → U+0025 %).
+        var normalizedFilter = LauncherEntryText.Normalize(filterText).Trim();
         List<TEntry>? source = null;
         List<TEntry> filtered;
         if (normalizedFilter.Length == 0)
         {
-            filtered = entries as List<TEntry> ?? entries.ToList();
+            filtered = entries.ToList();
         }
         else
         {
@@ -67,28 +69,30 @@ public static class LauncherEntryVisibility
         {
             case RecentSortModeId:
             {
-                var cache = new Dictionary<TEntry, DateTimeOffset>(filtered.Count);
+                var timeCache = new Dictionary<TEntry, DateTimeOffset>(filtered.Count);
+                nameCache = new Dictionary<TEntry, string>(filtered.Count);
                 foreach (var entry in filtered)
                 {
                     var launchEntry = selectEntry(entry);
                     RequireEntryId(launchEntry);
-                    RequireText(launchEntry.Name, "name");
-                    cache[entry] = ParseLaunchedAt(launchEntry.LaunchedAtUtc);
+                    timeCache[entry] = ParseLaunchedAt(launchEntry.LaunchedAtUtc);
+                    nameCache[entry] = RequireText(launchEntry.Name, "name");
                 }
-                comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Recent, timeCache: cache);
+                comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Recent, timeCache: timeCache, nameCache: nameCache);
                 break;
             }
             case UpdatedSortModeId:
             {
-                var cache = new Dictionary<TEntry, DateTimeOffset>(filtered.Count);
+                var timeCache = new Dictionary<TEntry, DateTimeOffset>(filtered.Count);
+                nameCache = new Dictionary<TEntry, string>(filtered.Count);
                 foreach (var entry in filtered)
                 {
                     var launchEntry = selectEntry(entry);
                     RequireEntryId(launchEntry);
-                    RequireText(launchEntry.Name, "name");
-                    cache[entry] = ParseUpdatedAt(launchEntry.UpdatedAtUtc);
+                    timeCache[entry] = ParseUpdatedAt(launchEntry.UpdatedAtUtc);
+                    nameCache[entry] = RequireText(launchEntry.Name, "name");
                 }
-                comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Updated, timeCache: cache);
+                comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Updated, timeCache: timeCache, nameCache: nameCache);
                 break;
             }
             case AlphabeticalSortModeId:
@@ -174,9 +178,11 @@ public static class LauncherEntryVisibility
         if (tokens.Length == 0)
             return true;
 
-        var name = RequireText(entry.Name, "name");
-        var directory = RequireText(entry.Directory, "directory");
-        var command = RequireText(entry.Command, "command");
+        // ponytail: fields already FormKC-normalized at load time (LauncherConfigStore.RequireEntryText).
+        // Null coalesce is defense-in-depth; the record properties are non-nullable string.
+        var name = entry.Name ?? string.Empty;
+        var directory = entry.Directory ?? string.Empty;
+        var command = entry.Command ?? string.Empty;
 
         if (tokens.Length == 1)
         {

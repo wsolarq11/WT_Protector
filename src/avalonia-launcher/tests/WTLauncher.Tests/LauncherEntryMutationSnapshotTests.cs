@@ -13,7 +13,7 @@ public sealed class LauncherEntryMutationSnapshotTests
         var presetFile = PresetFile();
         var order = ImmutableList.Create("one");
 
-        var snapshot = LauncherEntryMutationSnapshot.Capture([entry], presetFile, order, selectedPresetId: "daily");
+        var snapshot = LauncherEntryMutationSnapshot.Capture([entry], presetFile, new LauncherSettings { CustomEntryOrder = order }, selectedPresetId: "daily");
         // Mutate originals after capture — snapshot must remain unchanged.
         entry = entry with { Id = "changed" };
 
@@ -36,7 +36,7 @@ public sealed class LauncherEntryMutationSnapshotTests
         var snapshot = LauncherEntryMutationSnapshot.Capture(
             [Entry()],
             PresetFile(),
-            ["one"],
+            new LauncherSettings { CustomEntryOrder = ["one"] },
             selectedPresetId: "daily");
 
         var entries = snapshot.CloneEntries();
@@ -60,7 +60,7 @@ public sealed class LauncherEntryMutationSnapshotTests
         var snapshot = LauncherEntryMutationSnapshot.Capture(
             [Entry()],
             PresetFile(),
-            ["one"],
+            new LauncherSettings { CustomEntryOrder = ["one"] },
             selectedPresetId: "daily");
 
         var entry = Assert.Single(snapshot.Entries);

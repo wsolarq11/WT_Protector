@@ -24,7 +24,7 @@ public static class LauncherStartupArguments
                     throw new ArgumentException("Config path flag must appear at most once.", nameof(args));
 
                 configPath = arg["--config=".Length..].Trim();
-                if (configPath.Length == 0)
+                if (configPath.Length == 0 || configPath.StartsWith("-", StringComparison.Ordinal))
                     throw new ArgumentException("Config path value is required after --config.", nameof(args));
                 continue;
             }

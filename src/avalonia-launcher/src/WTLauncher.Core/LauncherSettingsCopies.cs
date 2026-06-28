@@ -11,11 +11,6 @@ internal static class LauncherSettingsCopies
         ArgumentNullException.ThrowIfNull(settings);
         return settings with
         {
-            // Immutable collections have value semantics; no copy required.
-            CommandTemplates = settings.CommandTemplates,
-            CustomEntryOrder = settings.CustomEntryOrder,
-            SearchHistory = settings.SearchHistory,
-            Window = settings.Window,
             // SchemaVersion is serialized as "schemaVersion". We pin it to 1
             // to ensure the clone conforms to the current schema.
             SchemaVersion = 1,

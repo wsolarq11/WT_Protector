@@ -112,7 +112,10 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
+        if (IsBatchLaunching) return;
+
         DiscardDragReorderPreview();
+        _batchCts?.Dispose();
         _batchCts = new CancellationTokenSource();
         try
         {
@@ -143,8 +146,11 @@ public sealed partial class MainWindowViewModel
                         "LaunchBatch");
                 }
             }
-            for (var i = 0; i < startedCount && i < preflightItems.Count; i++)
+            var failureIndexSet = new HashSet<int>(report.FailureIndices);
+            for (var i = 0; i < preflightItems.Count; i++)
             {
+                if (failureIndexSet.Contains(i))
+                    continue;
                 var preflightItem = preflightItems[i];
                 entryById.TryGetValue(preflightItem.EntryId, out var entryVm);
                 entryVm?.RecordLaunchFromOwner(timestamp);
@@ -308,6 +314,7 @@ public sealed partial class MainWindowViewModel
         ClearSelectionCommand.NotifyCanExecuteChanged();
         SelectVisibleCommand.NotifyCanExecuteChanged();
         ApplyPresetCommand.NotifyCanExecuteChanged();
+        CancelBatchCommand.NotifyCanExecuteChanged();
         NotifyPresetManagementCommands();
     }
 

@@ -39,7 +39,8 @@ public sealed partial class MainWindow : Window
     //   changes significantly, recalculate with the actual measured heights.
     private const double CardsRegionHorizontalChromeWidth = 48;
     private const double CardsRegionVerticalChromeHeight = 270;
-    private int _keyboardFocusIndex;
+    // -1 so the first Down press moves to index 0 rather than skipping it.
+    private int _keyboardFocusIndex = -1;
     private int _pendingScrollRestoreVersion;
     private EventHandler<SizeChangedEventArgs>? _onSizeChangedHandler;
 
@@ -62,8 +63,13 @@ public sealed partial class MainWindow : Window
         viewModel.ConfirmDeletePresetAsync = target => new ConfirmPresetDeleteWindow(target).ShowDialog<bool>(this);
         viewModel.RequestEntryDraftAsync = entry => new EntryDetailsWindow(entry, viewModel.GetPresetReferenceCount(entry?.Id ?? ""), viewModel.CommandTemplates).ShowDialog<EntryDraft?>(this);
         viewModel.ConfirmDeleteEntryAsync = target => new ConfirmEntryDeleteWindow(target).ShowDialog<bool>(this);
-        DragDrop.AddDragOverHandler(this, OnEntryDragOver);
-        DragDrop.AddDropHandler(this, OnEntryDrop);
+        // P6: Pointer-capture drag replaces OLE DragDrop.
+        // OLE DragDrop runs a nested Win32 message loop that blocks Avalonia's render
+        // scheduling. Pointer capture fires on the normal render loop, synced to display
+        // refresh with no message-loop interference.
+        PointerMoved += OnDragPointerMoved;
+        PointerReleased += OnDragPointerReleased;
+        PointerCaptureLost += OnDragPointerCaptureLost;
         _onSizeChangedHandler = (_, _) => UpdateCardRegionSize(viewModel);
         SizeChanged += _onSizeChangedHandler;
         Opened += (_, _) =>
@@ -72,7 +78,33 @@ public sealed partial class MainWindow : Window
             // Restore saved window position and state.
             var w = viewModel.Settings.Window;
             if (!double.IsNaN(w.X) && !double.IsNaN(w.Y))
+            {
                 Position = new PixelPoint((int)w.X, (int)w.Y);
+                // Validate that the restored position is within any available screen.
+                // If the saved position is off-screen (e.g. monitor disconnected),
+                // move the window to the primary screen center.
+                var screens = Screens.All;
+                if (screens.Count > 0)
+                {
+                    var bounds = new PixelRect(Position, PixelSize.FromSize(new Size(Width, Height), 1));
+                    var onScreen = false;
+                    foreach (var screen in screens)
+                    {
+                        if (screen.Bounds.Intersects(bounds))
+                        {
+                            onScreen = true;
+                            break;
+                        }
+                    }
+                    if (!onScreen)
+                    {
+                        var primary = screens.First();
+                        Position = new PixelPoint(
+                            primary.Bounds.X + (primary.Bounds.Width - (int)Width) / 2,
+                            primary.Bounds.Y + (primary.Bounds.Height - (int)Height) / 2);
+                    }
+                }
+            }
             if (w.WindowState == "Maximized")
                 WindowState = WindowState.Maximized;
         };
@@ -195,6 +227,16 @@ public sealed partial class MainWindow : Window
                 viewModel.KeyboardFocusedEntryId = viewModel.VisibleEntries[_keyboardFocusIndex].Id;
                 e.Handled = true;
                 return true;
+            case Key.Up when e.KeyModifiers == KeyModifiers.Control && viewModel.IsCustomSortMode:
+                if (_keyboardFocusIndex >= 0 && _keyboardFocusIndex < visibleCount)
+                    viewModel.VisibleEntries[_keyboardFocusIndex].MoveUpCommand.Execute(null);
+                e.Handled = true;
+                return true;
+            case Key.Down when e.KeyModifiers == KeyModifiers.Control && viewModel.IsCustomSortMode:
+                if (_keyboardFocusIndex >= 0 && _keyboardFocusIndex < visibleCount)
+                    viewModel.VisibleEntries[_keyboardFocusIndex].MoveDownCommand.Execute(null);
+                e.Handled = true;
+                return true;
             case Key.Enter or Key.Space when !searchFocused:
                 if (_keyboardFocusIndex >= 0 && _keyboardFocusIndex < visibleCount)
                 {
@@ -217,8 +259,9 @@ public sealed partial class MainWindow : Window
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
-        DragDrop.RemoveDragOverHandler(this, OnEntryDragOver);
-        DragDrop.RemoveDropHandler(this, OnEntryDrop);
+        PointerMoved -= OnDragPointerMoved;
+        PointerReleased -= OnDragPointerReleased;
+        PointerCaptureLost -= OnDragPointerCaptureLost;
 
         if (_onSizeChangedHandler is not null)
             SizeChanged -= _onSizeChangedHandler;
@@ -327,26 +370,6 @@ internal static class GridExtensions
     {
         Grid.SetRow(control, row);
         return control;
-    }
-}
-
-public static class MainWindowEntriesRootSelection
-{
-    public static Control Select(
-        bool isDetailedListMode,
-        bool isNamesViewMode,
-        Control detailsRoot,
-        Control namesRoot,
-        Control cardsRoot)
-    {
-        ArgumentNullException.ThrowIfNull(detailsRoot);
-        ArgumentNullException.ThrowIfNull(namesRoot);
-        ArgumentNullException.ThrowIfNull(cardsRoot);
-
-        if (isDetailedListMode)
-            return detailsRoot;
-
-        return isNamesViewMode ? namesRoot : cardsRoot;
     }
 }
 

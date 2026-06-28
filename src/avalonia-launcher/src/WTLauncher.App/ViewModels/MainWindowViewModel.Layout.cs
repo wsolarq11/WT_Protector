@@ -13,6 +13,10 @@ public sealed partial class MainWindowViewModel
 
     // Prevents infinite recursion when a settings save failure triggers
     // a property rollback that re-enters the OnXxxChanged callback.
+    // NOTE: This guard pattern is intentionally duplicated in OnFilterTextChanged,
+    // OnSelectedSortModeChanged, and OnSelectedDisplayModeChanged rather than
+    // extracted into a shared helper — each callback has distinct validation
+    // and persistence logic that would make a common abstraction brittle.
     private bool _isHandlingSettingsChange;
 
     // Prevents double-click double-launch. Set to true at entry, false in finally.
@@ -64,7 +68,9 @@ public sealed partial class MainWindowViewModel
 
     private LauncherEntryViewMode CurrentEntryViewMode => RequireDisplayModeSelection(SelectedDisplayMode).Mode;
 
-    public bool IsCustomSortMode => RequireSortModeSelection(SelectedSortMode).Id == LauncherEntryVisibility.CustomSortModeId;
+    // ponytail: null-conditional avoids throwing when SelectedSortMode is null
+    // (corrupted settings / deserialization failure). Returns false safely.
+    public bool IsCustomSortMode => SelectedSortMode?.Id == LauncherEntryVisibility.CustomSortModeId;
 
     public bool IsCardsViewMode => CurrentEntryViewMode == LauncherEntryViewMode.Cards;
 
@@ -112,21 +118,22 @@ public sealed partial class MainWindowViewModel
         try
         {
             value = RequireSortModeSelection(value);
-            OnPropertyChanged(nameof(IsCustomSortMode));
             EnsureCustomOrderContainsEntries();
 
             if (TryPersistSettingsChange(
                 s => s with { SortMode = value.Id },
                 LauncherSettingsStatus.SortModeSaved(value.Label)))
             {
+                OnPropertyChanged(nameof(IsCustomSortMode));
                 ApplyFilter();
+                RefreshReorderCommandState();
             }
             else
             {
                 _selectedSortMode = ResolveSortMode(_settings.SortMode);
                 OnPropertyChanged(nameof(SelectedSortMode));
-                OnPropertyChanged(nameof(IsCustomSortMode));
                 ApplyFilter();
+                RefreshReorderCommandState();
             }
         }
         finally
@@ -231,7 +238,7 @@ public sealed partial class MainWindowViewModel
             // P1: Only recalculate card sizes when available size actually changed.
             if (_cardsAvailableSize != _lastAppliedCardsAvailableSize)
             {
-                LauncherEntryLayoutPresentation.ApplyCardSize(_entries, _visibleEntries, _cardsAvailableSize);
+                LauncherEntryLayoutPresentation.ApplyCardSize(_entries, _visibleEntries, _cardsAvailableSize, _syncSortedSet);
                 _lastAppliedCardsAvailableSize = _cardsAvailableSize;
             }
         }
@@ -370,8 +377,13 @@ public sealed partial class MainWindowViewModel
         return false;
     }
 
-    private void EnsureCustomOrderContainsEntries() =>
-        _settings = _settings with { CustomEntryOrder = LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds()) };
+    private void EnsureCustomOrderContainsEntries()
+    {
+        var currentIds = GetEntryIds();
+        var synced = LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, currentIds);
+        if (!_settings.CustomEntryOrder.SequenceEqual(synced))
+            _settings = _settings with { CustomEntryOrder = synced };
+    }
 
     private static LauncherSortModeViewModel RequireSortModeSelection(LauncherSortModeViewModel? value) =>
         value ?? throw new InvalidOperationException("Launcher sort mode selection is required.");

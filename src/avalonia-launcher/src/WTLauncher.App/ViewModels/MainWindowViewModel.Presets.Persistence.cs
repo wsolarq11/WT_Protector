@@ -26,7 +26,6 @@ public sealed partial class MainWindowViewModel
 
         SelectedPreset = selectedPreset;
         PresetCount = _presets.Count;
-        NotifyPresetManagementCommands();
     }
 
     private static LauncherPresetViewModel? ResolveSelectedPreset(

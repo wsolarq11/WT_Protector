@@ -37,7 +37,7 @@ public static class LauncherPresetStore
         ArgumentNullException.ThrowIfNull(presets);
         ThrowIfPresetPathMissing(presetPath);
 
-        LauncherJson.Save(LauncherPresetFiles.Clone(presets), presetPath, backup);
+        LauncherJson.Save(LauncherPresetFiles.CloneNormalized(presets), presetPath, backup);
     }
 
     public static string ResolvePresetPath(string configPath)
