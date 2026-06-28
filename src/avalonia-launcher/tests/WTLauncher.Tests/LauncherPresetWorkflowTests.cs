@@ -46,7 +46,7 @@ public sealed class LauncherPresetWorkflowTests
     {
         var original = PresetFile("daily", Preset("daily", "Daily", true, "one")) with { SchemaVersion = 1 };
 
-        var clone = LauncherPresetFiles.CloneNormalized(original);
+        var clone = LauncherPresetFiles.Validate(original);
 
         original = original with
         {
@@ -88,7 +88,7 @@ public sealed class LauncherPresetWorkflowTests
             ],
         };
 
-        var exception = Assert.Throws<InvalidDataException>(() => LauncherPresetFiles.CloneNormalized(original));
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherPresetFiles.Validate(original));
 
         Assert.Equal("Launcher preset 0 name is empty.", exception.Message);
         Assert.Equal(" Daily ", original.DefaultPresetId);
@@ -105,7 +105,7 @@ public sealed class LauncherPresetWorkflowTests
             Presets = [null!],
         };
 
-        var exception = Assert.Throws<InvalidDataException>(() => LauncherPresetFiles.CloneNormalized(original));
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherPresetFiles.Validate(original));
         Assert.Equal("Launcher preset 0 is null.", exception.Message);
     }
 

@@ -39,7 +39,7 @@ public sealed class LauncherPresetDeleteTargetTests
 
     [Theory]
     [InlineData(" ", "Daily", "Launcher preset delete target id is required.")]
-    [InlineData("daily", " ", "Launcher preset delete target name is required.")]
+    [InlineData("daily", " ", "Entry name is required.")]
     public void TargetRejectsBlankPresetFacts(string id, string name, string expected)
     {
         var preset = new LauncherPreset

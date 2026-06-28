@@ -17,7 +17,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Single(viewModel.SearchHistoryItems);
         Assert.Equal("codex", viewModel.SearchHistoryItems[0]);
-        Assert.Equal("codex", LauncherSettingsStore.Load(settingsPath).SearchHistory[0]);
+        Assert.Equal("codex", LauncherStore.Load(settingsPath).Settings.SearchHistory[0]);
     }
 
     [Fact]
@@ -39,7 +39,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("opencode", viewModel.SearchHistoryItems[2]);
         Assert.Equal(3, viewModel.SearchHistoryItems.Count);
         // Verify round-trip persistence.
-        Assert.Equal(["codex", "pwsh", "opencode"], LauncherSettingsStore.Load(settingsPath).SearchHistory);
+        Assert.Equal(["codex", "pwsh", "opencode"], LauncherStore.Load(settingsPath).Settings.SearchHistory);
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public sealed partial class MainWindowViewModelTests
         // Most recent entry (term-25) must be at front.
         Assert.Equal("term-25", viewModel.SearchHistoryItems[0]);
         // Verify round-trip persistence.
-        var loaded = LauncherSettingsStore.Load(settingsPath);
+        var loaded = LauncherStore.Load(settingsPath).Settings;
         Assert.Equal(20, loaded.SearchHistory.Count);
         Assert.Equal("term-25", loaded.SearchHistory[0]);
     }
@@ -92,8 +92,8 @@ public sealed partial class MainWindowViewModelTests
         Assert.DoesNotContain("term-20", viewModel.SearchHistoryItems);
         Assert.Contains("term-1", viewModel.SearchHistoryItems);
         // Verify round-trip persistence.
-        Assert.Equal(20, LauncherSettingsStore.Load(settingsPath).SearchHistory.Count);
-        Assert.Equal("new-term", LauncherSettingsStore.Load(settingsPath).SearchHistory[0]);
+        Assert.Equal(20, LauncherStore.Load(settingsPath).Settings.SearchHistory.Count);
+        Assert.Equal("new-term", LauncherStore.Load(settingsPath).Settings.SearchHistory[0]);
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(initialCount, viewModel.SearchHistoryItems.Count);
         Assert.Equal("codex", viewModel.SearchHistoryItems[0]);
         // When term is already at front, no new persistence is triggered.
-        Assert.Equal(["codex", "pwsh"], LauncherSettingsStore.Load(settingsPath).SearchHistory);
+        Assert.Equal(["codex", "pwsh"], LauncherStore.Load(settingsPath).Settings.SearchHistory);
     }
 
     [Fact]
@@ -169,6 +169,6 @@ public sealed partial class MainWindowViewModelTests
         viewModel.RecordSearchTerm();
 
         Assert.Equal(["pwsh"], viewModel.SearchHistoryItems);
-        Assert.StartsWith("设置保存失败", viewModel.StatusText);
+        Assert.StartsWith("存储保存失败", viewModel.StatusText);
     }
 }

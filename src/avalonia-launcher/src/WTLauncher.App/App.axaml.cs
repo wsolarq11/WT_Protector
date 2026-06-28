@@ -96,17 +96,16 @@ public sealed partial class App : Application
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktopLifetime = desktop;
-                var (explicitConfigPath, unknownArgs) = LauncherStartupArguments.ReadConfigPath(desktop.Args);
-                var configPath = LauncherConfigStore.ResolveConfigPath(
-                    explicitConfigPath,
+                var (explicitStorePath, unknownArgs) = LauncherStartupArguments.ReadConfigPath(desktop.Args);
+                var storePath = LauncherStore.ResolveStorePath(
+                    explicitStorePath,
                     Environment.CurrentDirectory,
                     AppContext.BaseDirectory);
-                var settingsPath = LauncherConfigStore.ResolveSettingsPath(configPath);
 
-                // Verify config directory is writable before loading settings.
+                // Verify config directory is writable before loading the store.
                 // A stale file lock or permission denial would otherwise surface as a
                 // cryptic crash later during save. Early detection gives a clear warning.
-                var configDirectory = Path.GetDirectoryName(configPath);
+                var configDirectory = Path.GetDirectoryName(storePath);
                 if (!string.IsNullOrEmpty(configDirectory) && Directory.Exists(configDirectory))
                 {
                     try
@@ -122,15 +121,14 @@ public sealed partial class App : Application
                     }
                 }
 
-                var settings = LauncherSettingsStore.Load(settingsPath);
+                var storeFile = LauncherStore.Load(storePath);
                 var launchWorkflow = new LauncherLaunchWorkflow(new LauncherProcess());
                 var viewModel = new MainWindowViewModel(
-                    configPath,
-                    settingsPath,
-                    settings,
+                    storePath,
+                    storeFile,
                     launchWorkflow,
                     static () => DateTimeOffset.UtcNow);
-                var windowSettings = settings.Window;
+                var windowSettings = storeFile.Settings.Window;
                 var mainWindow = new MainWindow(viewModel)
                 {
                     Width = Math.Max(windowSettings.Width, LauncherDesignTokens.WindowMinWidth),

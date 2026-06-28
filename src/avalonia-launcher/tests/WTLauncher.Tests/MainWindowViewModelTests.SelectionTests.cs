@@ -18,14 +18,14 @@ public sealed partial class MainWindowViewModelTests
         viewModel.SelectVisibleCommand.Execute(null);
 
         Assert.Equal(2, viewModel.SelectedCount);
-        Assert.All(LauncherConfigStore.Load(config), entry => Assert.True(entry.Selected));
-        Assert.All(LauncherConfigStore.Load(config + ".bak"), entry => Assert.False(entry.Selected));
+        Assert.All(LauncherStore.Load(config).Entries, entry => Assert.True(entry.Selected));
+        Assert.All(LauncherStore.Load(config + ".bak").Entries, entry => Assert.False(entry.Selected));
 
         viewModel.ClearSelectionCommand.Execute(null);
 
         Assert.Equal(0, viewModel.SelectedCount);
-        Assert.All(LauncherConfigStore.Load(config), entry => Assert.False(entry.Selected));
-        Assert.All(LauncherConfigStore.Load(config + ".bak"), entry => Assert.True(entry.Selected));
+        Assert.All(LauncherStore.Load(config).Entries, entry => Assert.False(entry.Selected));
+        Assert.All(LauncherStore.Load(config + ".bak").Entries, entry => Assert.True(entry.Selected));
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(0, viewModel.SelectedCount);
         Assert.All(viewModel.Entries, entry => Assert.False(entry.IsSelected));
-        Assert.Contains("配置保存失败", viewModel.StatusText);
+        Assert.Contains("存储保存失败", viewModel.StatusText);
         AssertNoStoreTempFiles(config);
     }
 
@@ -77,7 +77,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(0, viewModel.SelectedCount);
         Assert.All(viewModel.Entries, entry => Assert.False(entry.IsSelected));
-        Assert.Contains("配置保存失败", viewModel.StatusText);
+        Assert.Contains("存储保存失败", viewModel.StatusText);
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(2, viewModel.SelectedCount);
         Assert.All(viewModel.Entries, entry => Assert.True(entry.IsSelected));
-        Assert.Contains("配置保存失败", viewModel.StatusText);
+        Assert.Contains("存储保存失败", viewModel.StatusText);
         AssertNoStoreTempFiles(config);
     }
 

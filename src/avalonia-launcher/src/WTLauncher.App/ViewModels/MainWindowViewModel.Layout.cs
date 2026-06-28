@@ -370,8 +370,12 @@ public sealed partial class MainWindowViewModel
     public bool TrySaveWindowBounds(double width, double height, double x = 0, double y = 0, string windowState = "Normal")
     {
         DiscardDragReorderPreview();
-        if (LauncherSettingsStore.TrySaveWindowBounds(ref _settings, _settingsPath, width, height, x, y, windowState))
+        var storeFile = BuildStoreFile();
+        if (LauncherSettingsStore.TrySaveWindowBounds(storeFile, _storePath, width, height, out var updatedSettings, x, y, windowState))
+        {
+            _settings = updatedSettings;
             return true;
+        }
 
         StatusText = LauncherSettingsStatus.WindowBoundsSaveFailed;
         return false;

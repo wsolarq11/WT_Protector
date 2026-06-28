@@ -143,20 +143,15 @@ internal static class Program
     {
         try
         {
-            var configPath = LauncherConfigStore.ResolveConfigPath(null, Environment.CurrentDirectory, AppContext.BaseDirectory);
-            var configDir = Path.GetDirectoryName(Path.GetFullPath(configPath));
-            if (string.IsNullOrWhiteSpace(configDir))
-            {
-                // No clear resolution path for journal either.
-                // The journal is tied to the config directory.
-                // If we can't resolve it, the next successful save will clean up.
-                return;
-            }
-
-            if (!Directory.Exists(configDir))
+            var storePath = LauncherStore.ResolveStorePath(null, Environment.CurrentDirectory, AppContext.BaseDirectory);
+            var storeDir = Path.GetDirectoryName(Path.GetFullPath(storePath));
+            if (string.IsNullOrWhiteSpace(storeDir))
                 return;
 
-            var journalPath = CommitJournal.ResolvePath(configDir);
+            if (!Directory.Exists(storeDir))
+                return;
+
+            var journalPath = CommitJournal.ResolvePath(storeDir);
             if (!File.Exists(journalPath))
                 return;
 
@@ -178,10 +173,10 @@ internal static class Program
     {
         try
         {
-            var configPath = LauncherConfigStore.ResolveConfigPath(null, Environment.CurrentDirectory, AppContext.BaseDirectory);
-            var configDir = Path.GetDirectoryName(Path.GetFullPath(configPath));
-            if (!string.IsNullOrWhiteSpace(configDir) && Directory.Exists(configDir))
-                LauncherJson.CleanupStaleTempFiles(configDir);
+            var storePath = LauncherStore.ResolveStorePath(null, Environment.CurrentDirectory, AppContext.BaseDirectory);
+            var storeDir = Path.GetDirectoryName(Path.GetFullPath(storePath));
+            if (!string.IsNullOrWhiteSpace(storeDir) && Directory.Exists(storeDir))
+                LauncherJson.CleanupStaleTempFiles(storeDir);
         }
         catch
         {

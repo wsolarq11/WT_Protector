@@ -50,7 +50,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(1, viewModel.SelectedCount);
         Assert.False(viewModel.Entries.Single(entry => entry.Id == "one").IsSelected);
         Assert.True(viewModel.Entries.Single(entry => entry.Id == "two").IsSelected);
-        Assert.Contains("配置保存失败", viewModel.StatusText);
+        Assert.Contains("存储保存失败", viewModel.StatusText);
         Assert.DoesNotContain("已应用", viewModel.StatusText);
     }
 

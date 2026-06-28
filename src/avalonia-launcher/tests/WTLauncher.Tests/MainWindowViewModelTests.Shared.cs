@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -45,19 +46,26 @@ public sealed partial class MainWindowViewModelTests
         TempDirectory temp,
         params LaunchEntry[] entries)
     {
-        var configDir = Path.Combine(temp.Path, LauncherConfigStore.ConfigDirectoryName);
+        var configDir = Path.Combine(temp.Path, LauncherStore.ConfigDirectoryName);
         Directory.CreateDirectory(configDir);
-        var config = Path.Combine(configDir, LauncherConfigStore.ConfigFileName);
-        var presets = Path.Combine(configDir, LauncherPresetStore.PresetsFileName);
-        LauncherConfigStore.Save(entries, config, backup: true);
-        SavePresetFile(
-            presets,
-            "default",
-            Preset("default", "Default", entries.Select(entry => entry.Id).ToArray()));
-        return (
-            config,
-            Path.Combine(configDir, LauncherConfigStore.SettingsFileName),
-            presets);
+        var storePath = Path.Combine(configDir, LauncherStore.StoreFileName);
+        var storeFile = new LauncherStoreFile
+        {
+            Entries = entries.ToImmutableList(),
+            Settings = new LauncherSettings(),
+            Presets =
+            [
+                new LauncherPreset
+                {
+                    Id = "default",
+                    Name = "Default",
+                    EntryIds = entries.Select(e => e.Id).ToImmutableList(),
+                },
+            ],
+            DefaultPresetId = "default",
+        };
+        LauncherStore.Save(storeFile, storePath, backup: false);
+        return (storePath, storePath, storePath);
     }
 
     private static void AssertNoStoreTempFiles(string path)
@@ -71,15 +79,16 @@ public sealed partial class MainWindowViewModelTests
         Assert.Empty(Directory.EnumerateFiles(directory, $"{fileName}.tmp-*"));
     }
 
-    private static void SavePresetFile(string path, string defaultPresetId, params LauncherPreset[] presets) =>
-        LauncherPresetStore.Save(
-            new LauncherPresetFile
-            {
-                DefaultPresetId = defaultPresetId,
-                Presets = [.. presets],
-            },
-            path,
-            backup: false);
+    private static void SavePresetFile(string path, string defaultPresetId, params LauncherPreset[] presets)
+    {
+        var storeFile = LauncherStore.Load(path);
+        storeFile = storeFile with
+        {
+            Presets = presets.ToImmutableList(),
+            DefaultPresetId = defaultPresetId,
+        };
+        LauncherStore.Save(storeFile, path, backup: false);
+    }
 
     private static LauncherPreset Preset(string id, string name, params string[] entryIds) =>
         Preset(id, name, locked: false, entryIds);
@@ -101,10 +110,11 @@ public sealed partial class MainWindowViewModelTests
         Func<DateTimeOffset>? utcNow = null,
         LauncherLaunchWorkflow? launchWorkflow = null)
     {
+        // Both config and settings point to the same unified store file now.
+        var storeFile = LauncherStore.Load(config);
         var viewModel = new MainWindowViewModel(
             config,
-            settings,
-            launcherSettings ?? new LauncherSettings(),
+            launcherSettings is not null ? storeFile with { Settings = launcherSettings } : storeFile,
             launchWorkflow ?? CreateLaunchWorkflow(),
             utcNow ?? SystemUtcNow);
         configure?.Invoke(viewModel);
@@ -112,7 +122,7 @@ public sealed partial class MainWindowViewModelTests
     }
 
     private static List<LaunchEntry> LoadEntriesById(string config) =>
-        LauncherConfigStore.Load(config).OrderBy(entry => entry.Id).ToList();
+        LauncherStore.Load(config).Entries.OrderBy(entry => entry.Id).ToList();
 
     private static LauncherLaunchWorkflow CreateLaunchWorkflow() => new(_ => { });
 

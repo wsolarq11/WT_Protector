@@ -44,27 +44,40 @@ public static class LauncherSettingsStore
         LauncherJson.Save(CloneNormalized(settings), settingsPath, backup);
     }
 
-    public static bool TrySaveWindowBounds(ref LauncherSettings settings, string settingsPath,
+    /// <summary>
+    /// Saves window bounds via the unified LauncherStore. Modifies only the
+    /// Settings.Window portion of the store file.
+    /// </summary>
+    public static bool TrySaveWindowBounds(
+        LauncherStoreFile store,
+        string storePath,
         double width, double height,
+        out LauncherSettings updatedSettings,
         double x = 0, double y = 0, string windowState = "Normal")
     {
-        ArgumentNullException.ThrowIfNull(settings);
-        ThrowIfSettingsPathMissing(settingsPath);
+        ArgumentNullException.ThrowIfNull(store);
+        if (string.IsNullOrWhiteSpace(storePath))
+            throw new ArgumentException("Store path is required.", nameof(storePath));
 
-        var next = settings with { Window = RequireWindow(settings.Window) with { Width = width, Height = height, X = x, Y = y, WindowState = windowState } };
-        var normalized = CloneNormalized(next);
+        var nextSettings = store.Settings with
+        {
+            Window = RequireWindow(store.Settings.Window) with
+            {
+                Width = width, Height = height, X = x, Y = y, WindowState = windowState
+            }
+        };
+        var nextStore = store with { Settings = CloneNormalized(nextSettings) };
 
         try
         {
-            LauncherJson.Save(normalized, settingsPath, backup: true);
-            settings = normalized;
+            LauncherStore.Save(nextStore, storePath, backup: true);
+            updatedSettings = nextSettings;
             return true;
         }
-        // Close-time bounds persistence must not leave unsaved sizes in memory.
-        // Write failures can surface as IOException, UnauthorizedAccessException,
-        // PathTooLongException, or other storage exceptions depending on the underlying cause.
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or PathTooLongException or DirectoryNotFoundException or System.Security.SecurityException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+            or PathTooLongException or DirectoryNotFoundException or System.Security.SecurityException)
         {
+            updatedSettings = store.Settings;
             return false;
         }
     }
@@ -91,7 +104,7 @@ public static class LauncherSettingsStore
 
     private static LauncherSettings CloneNormalized(LauncherSettings settings)
     {
-        return Normalize(LauncherSettingsCopies.Clone(settings));
+        return Normalize(settings with { SchemaVersion = 1 });
     }
 
     private static ImmutableList<string> RequireCustomEntryOrder(IReadOnlyList<string>? customEntryOrder)

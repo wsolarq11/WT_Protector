@@ -39,6 +39,6 @@ public sealed class LauncherEntryDeleteTargetTests
 
         var exception = Assert.Throws<InvalidOperationException>(() => new LauncherEntryDeleteTarget(entry));
 
-        Assert.Equal("Launcher entry delete target name is required.", exception.Message);
+        Assert.Equal("Entry name is required.", exception.Message);
     }
 }

@@ -77,7 +77,7 @@ public sealed class FastWrapPanel : Panel
     protected override Size ArrangeOverride(Size finalSize)
     {
         // Guard against NaN/Infinity propagated from parent layout pass.
-        var containerWidth = double.IsFinite(finalSize.Width) ? finalSize.Width : 900;
+        var containerWidth = Math.Max(1, double.IsFinite(finalSize.Width) ? finalSize.Width : 900);
         // Guard against NaN from unresolved resource bindings.
         var spacing = double.IsNaN(ItemSpacing) ? 0 : ItemSpacing;
         var lineSpacing = double.IsNaN(LineSpacing) ? 0 : LineSpacing;

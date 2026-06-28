@@ -6,7 +6,7 @@ namespace WTLauncher.App.ViewModels;
 public sealed class LauncherDragReorderWorkflow
 {
     private LauncherSettings _settings;
-    private readonly string _settingsPath;
+    private readonly Func<LauncherSettings, string?> _saveSettings;
     private readonly IReadOnlyList<LauncherEntryViewModel> _entries;
     private LauncherDragReorderSession? _session;
 
@@ -16,19 +16,20 @@ public sealed class LauncherDragReorderWorkflow
     /// callers should sync their reference after Cancel/Discard.</summary>
     public LauncherSettings Settings => _settings;
 
+    /// <param name="saveSettings">Callback that persists the given settings and
+    /// returns null on success or an error message on failure.</param>
     public LauncherDragReorderWorkflow(
         LauncherSettings settings,
-        string settingsPath,
-        IReadOnlyList<LauncherEntryViewModel> entries)
+        IReadOnlyList<LauncherEntryViewModel> entries,
+        Func<LauncherSettings, string?> saveSettings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        if (string.IsNullOrWhiteSpace(settingsPath))
-            throw new ArgumentException("Settings path is required.", nameof(settingsPath));
         ArgumentNullException.ThrowIfNull(entries);
+        ArgumentNullException.ThrowIfNull(saveSettings);
 
         _settings = settings;
-        _settingsPath = settingsPath;
         _entries = entries;
+        _saveSettings = saveSettings;
     }
 
     /// <summary>
@@ -136,12 +137,13 @@ public sealed class LauncherDragReorderWorkflow
         var session = _session;
         try
         {
-            var saveFailure = LauncherSettingsMutationPersistence.Save(
-                ref _settings,
-                _settingsPath,
-                session.Snapshot);
+            var saveFailure = _saveSettings(_settings);
             if (saveFailure is not null)
+            {
+                // Rollback settings on save failure so the caller sees the pre-commit order.
+                _settings = session.Snapshot.RestoreCustomEntryOrder(_settings);
                 return (saveFailure, true);
+            }
 
             return (LauncherDragReorderStatus.Saved, false);
         }

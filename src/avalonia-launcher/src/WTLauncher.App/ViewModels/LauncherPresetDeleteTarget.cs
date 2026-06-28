@@ -7,7 +7,7 @@ public sealed record LauncherPresetDeleteTarget
     public LauncherPresetDeleteTarget(string presetId, string presetName, IReadOnlyList<string> entryIds)
     {
         PresetId = RequirePresetId(presetId);
-        PresetName = RequirePresetName(presetName);
+        PresetName = LauncherEntryText.RequireNonEmpty(presetName);
         var validatedEntryIds = LauncherEntryIds.ToRequiredUniqueList(entryIds, nameof(entryIds));
         EntryCount = validatedEntryIds.Count;
     }
@@ -27,12 +27,4 @@ public sealed record LauncherPresetDeleteTarget
         return normalized;
     }
 
-    private static string RequirePresetName(string? presetName)
-    {
-        var normalized = LauncherEntryText.Normalize(presetName);
-        if (normalized.Length == 0)
-            throw new InvalidOperationException("Launcher preset delete target name is required.");
-
-        return normalized;
-    }
 }

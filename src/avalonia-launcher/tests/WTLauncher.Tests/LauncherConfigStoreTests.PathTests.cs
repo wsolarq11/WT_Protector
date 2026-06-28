@@ -136,25 +136,8 @@ public sealed partial class LauncherConfigStoreTests
         Assert.EndsWith(Path.Combine("portable-root", LauncherConfigStore.ConfigDirectoryName, LauncherConfigStore.SettingsFileName), settings);
     }
 
-    [Fact]
-    public void ResolvePresetPath_StaysBesideResolvedConfig()
-    {
-        var config = Path.Combine("portable-root", LauncherConfigStore.ConfigDirectoryName, LauncherConfigStore.ConfigFileName);
-
-        var presets = LauncherPresetStore.ResolvePresetPath(config);
-
-        Assert.EndsWith(Path.Combine("portable-root", LauncherConfigStore.ConfigDirectoryName, LauncherPresetStore.PresetsFileName), presets);
-    }
-
-    [Fact]
-    public void ResolvePresetPath_TrimsConfigPath()
-    {
-        var config = $" {Path.Combine("portable-root", LauncherConfigStore.ConfigDirectoryName, LauncherConfigStore.ConfigFileName)} ";
-
-        var presets = LauncherPresetStore.ResolvePresetPath(config);
-
-        Assert.EndsWith(Path.Combine("portable-root", LauncherConfigStore.ConfigDirectoryName, LauncherPresetStore.PresetsFileName), presets);
-    }
+    // ponytail: ResolvePresetPath tests removed — presets now live in the unified
+    // LauncherStoreFile. ResolveStorePath is tested separately in LauncherStorePathTests.
 
     private static void AssertConfigPathRequired(Action action)
     {

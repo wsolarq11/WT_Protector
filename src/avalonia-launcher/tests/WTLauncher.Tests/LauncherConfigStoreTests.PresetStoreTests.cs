@@ -363,40 +363,8 @@ public sealed partial class LauncherConfigStoreTests
         Assert.Empty(Directory.EnumerateFiles(configDir, $"{LauncherPresetStore.PresetsFileName}.tmp-*"));
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData(" ")]
-    public void ResolvePresetPath_RejectsBlankConfigPath(string? configPath)
-    {
-        var exception = Assert.Throws<ArgumentException>(() =>
-            LauncherPresetStore.ResolvePresetPath(configPath!));
-
-        Assert.Equal("configPath", exception.ParamName);
-        Assert.StartsWith("Config path is required.", exception.Message);
-    }
-
-    [Fact]
-    public void ResolvePresetPath_ProducesCorrectFileName()
-    {
-        var config = Path.Combine("root", LauncherConfigStore.ConfigDirectoryName, LauncherConfigStore.ConfigFileName);
-
-        var presetPath = LauncherPresetStore.ResolvePresetPath(config);
-
-        Assert.EndsWith(LauncherPresetStore.PresetsFileName, presetPath);
-        Assert.EndsWith(Path.Combine(LauncherConfigStore.ConfigDirectoryName, LauncherPresetStore.PresetsFileName), presetPath);
-    }
-
-    [Fact]
-    public void ResolvePresetPath_HandlesDeeplyNestedConfigPath()
-    {
-        var config = Path.Combine("deep", "nested", "root", LauncherConfigStore.ConfigDirectoryName, LauncherConfigStore.ConfigFileName);
-
-        var presetPath = LauncherPresetStore.ResolvePresetPath(config);
-
-        Assert.EndsWith(Path.Combine(LauncherConfigStore.ConfigDirectoryName, LauncherPresetStore.PresetsFileName), presetPath);
-        Assert.StartsWith(Path.GetFullPath("deep"), presetPath);
-    }
+    // ponytail: ResolvePresetPath tests removed — presets now live in the unified
+    // LauncherStoreFile alongside entries and settings.
 
     private static void AssertPresetPathRequired(Action action)
     {

@@ -11,23 +11,21 @@ public sealed class LauncherDragReorderWorkflowTests
         using var temp = new TempDirectory();
         var owner = MainWindowEntryCardTestFactory.CreateOwner(temp.Path);
         var entry = owner.Entries.Single();
-        var settingsPath = Path.Combine(temp.Path, "settings.json");
 
         Assert.Throws<ArgumentNullException>(() =>
-            new LauncherDragReorderWorkflow(null!, settingsPath, [entry]));
-        var settingsPathException = Assert.Throws<ArgumentException>(() =>
-            new LauncherDragReorderWorkflow(new LauncherSettings(), " ", [entry]));
-        Assert.Equal("settingsPath", settingsPathException.ParamName);
+            new LauncherDragReorderWorkflow(null!, [entry], static _ => null));
         Assert.Throws<ArgumentNullException>(() =>
-            new LauncherDragReorderWorkflow(new LauncherSettings(), settingsPath, null!));
+            new LauncherDragReorderWorkflow(new LauncherSettings(), [entry], null!));
+        Assert.Throws<ArgumentNullException>(() =>
+            new LauncherDragReorderWorkflow(new LauncherSettings(), null!, static _ => null));
     }
 
     [Fact]
     public void BeginCreatesSessionWhenCustomSortModeAndEntryExists()
     {
         using var temp = new TempDirectory();
-        var (settings, settingsPath, entries) = CreateWorkflowFixture(temp);
-        var workflow = new LauncherDragReorderWorkflow(settings, settingsPath, entries);
+        var (settings, entries) = CreateWorkflowFixture(temp);
+        var workflow = new LauncherDragReorderWorkflow(settings, entries, SaveNoop);
 
         var result = workflow.Begin(isCustomSortMode: true, draggedEntryId: "three");
 
@@ -39,8 +37,8 @@ public sealed class LauncherDragReorderWorkflowTests
     public void BeginDoesNotCreateSessionWhenNotCustomSortMode()
     {
         using var temp = new TempDirectory();
-        var (settings, settingsPath, entries) = CreateWorkflowFixture(temp);
-        var workflow = new LauncherDragReorderWorkflow(settings, settingsPath, entries);
+        var (settings, entries) = CreateWorkflowFixture(temp);
+        var workflow = new LauncherDragReorderWorkflow(settings, entries, SaveNoop);
 
         var result = workflow.Begin(isCustomSortMode: false, draggedEntryId: "three");
 
@@ -52,8 +50,8 @@ public sealed class LauncherDragReorderWorkflowTests
     public void BeginReturnsFalseWhenEntryNotFound()
     {
         using var temp = new TempDirectory();
-        var (settings, settingsPath, entries) = CreateWorkflowFixture(temp);
-        var workflow = new LauncherDragReorderWorkflow(settings, settingsPath, entries);
+        var (settings, entries) = CreateWorkflowFixture(temp);
+        var workflow = new LauncherDragReorderWorkflow(settings, entries, SaveNoop);
 
         var result = workflow.Begin(isCustomSortMode: true, draggedEntryId: "missing");
 
@@ -65,12 +63,17 @@ public sealed class LauncherDragReorderWorkflowTests
     public void PreviewAndCommitPersistsCustomOrder()
     {
         using var temp = new TempDirectory();
-        var (settings, settingsPath, entries) = CreateWorkflowFixture(temp);
-        LauncherSettingsStore.Save(settings, settingsPath);
+        var (settings, entries) = CreateWorkflowFixture(temp);
+        var storePath = Path.Combine(temp.Path, "store.json");
+        var capturedSettings = settings;
 
-        var workflow = new LauncherDragReorderWorkflow(settings, settingsPath, entries);
+        var workflow = new LauncherDragReorderWorkflow(settings, entries, s =>
+        {
+            capturedSettings = s;
+            return null; // simulate successful save
+        });
         var beginResult = workflow.Begin(isCustomSortMode: true, draggedEntryId: "three");
-        Assert.False(beginResult); // No prior session to restore
+        Assert.False(beginResult);
 
         var (accepted, refreshEntries) = workflow.Preview(
             isCustomSortMode: true,
@@ -86,17 +89,16 @@ public sealed class LauncherDragReorderWorkflowTests
         Assert.False(commitRefresh);
         Assert.False(workflow.HasActiveSession);
 
-        var savedSettings = LauncherSettingsStore.Load(settingsPath);
-        Assert.Equal(["three", "one", "two"], savedSettings.CustomEntryOrder);
+        Assert.Equal(["three", "one", "two"], capturedSettings.CustomEntryOrder);
     }
 
     [Fact]
     public void PreviewAndCancelRestoresOriginalCustomOrder()
     {
         using var temp = new TempDirectory();
-        var (settings, settingsPath, entries) = CreateWorkflowFixture(temp);
+        var (settings, entries) = CreateWorkflowFixture(temp);
 
-        var workflow = new LauncherDragReorderWorkflow(settings, settingsPath, entries);
+        var workflow = new LauncherDragReorderWorkflow(settings, entries, SaveNoop);
         workflow.Begin(isCustomSortMode: true, draggedEntryId: "three");
 
         var (accepted, refreshEntries) = workflow.Preview(
@@ -119,9 +121,9 @@ public sealed class LauncherDragReorderWorkflowTests
     public void CancelWithoutSessionReturnsNullStatus()
     {
         using var temp = new TempDirectory();
-        var (settings, settingsPath, entries) = CreateWorkflowFixture(temp);
+        var (settings, entries) = CreateWorkflowFixture(temp);
 
-        var workflow = new LauncherDragReorderWorkflow(settings, settingsPath, entries);
+        var workflow = new LauncherDragReorderWorkflow(settings, entries, SaveNoop);
 
         var (status, refreshEntries) = workflow.Cancel();
 
@@ -133,9 +135,9 @@ public sealed class LauncherDragReorderWorkflowTests
     public void CommitWithoutSessionReturnsNullStatus()
     {
         using var temp = new TempDirectory();
-        var (settings, settingsPath, entries) = CreateWorkflowFixture(temp);
+        var (settings, entries) = CreateWorkflowFixture(temp);
 
-        var workflow = new LauncherDragReorderWorkflow(settings, settingsPath, entries);
+        var workflow = new LauncherDragReorderWorkflow(settings, entries, SaveNoop);
 
         var (status, refreshEntries) = workflow.Commit(isCustomSortMode: true);
 
@@ -147,8 +149,8 @@ public sealed class LauncherDragReorderWorkflowTests
     public void CommitInNonCustomSortModeReturnsNullStatus()
     {
         using var temp = new TempDirectory();
-        var (settings, settingsPath, entries) = CreateWorkflowFixture(temp);
-        var workflow = new LauncherDragReorderWorkflow(settings, settingsPath, entries);
+        var (settings, entries) = CreateWorkflowFixture(temp);
+        var workflow = new LauncherDragReorderWorkflow(settings, entries, SaveNoop);
         workflow.Begin(isCustomSortMode: true, draggedEntryId: "three");
 
         var (status, refreshEntries) = workflow.Commit(isCustomSortMode: false);
@@ -158,7 +160,9 @@ public sealed class LauncherDragReorderWorkflowTests
         Assert.False(refreshEntries);
     }
 
-    private static (LauncherSettings Settings, string SettingsPath, IReadOnlyList<LauncherEntryViewModel> Entries) CreateWorkflowFixture(TempDirectory temp)
+    private static string? SaveNoop(LauncherSettings settings) => null;
+
+    private static (LauncherSettings Settings, IReadOnlyList<LauncherEntryViewModel> Entries) CreateWorkflowFixture(TempDirectory temp)
     {
         var one = MainWindowEntryCardTestFactory.CreateEntryViewModel(temp.Path, "one");
         var two = MainWindowEntryCardTestFactory.CreateEntryViewModel(temp.Path, "two");
@@ -168,7 +172,6 @@ public sealed class LauncherDragReorderWorkflowTests
             SortMode = LauncherEntryVisibility.CustomSortModeId,
             CustomEntryOrder = ["one", "two", "three"],
         };
-        var settingsPath = Path.Combine(temp.Path, "settings.json");
-        return (settings, settingsPath, [one, two, three]);
+        return (settings, [one, two, three]);
     }
 }

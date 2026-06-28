@@ -10,7 +10,7 @@ public sealed record LauncherSingleLaunchConfirmation
         ArgumentNullException.ThrowIfNull(plan);
 
         EntryId = LauncherEntryIds.RequireEntryId(entry.Id, nameof(entry.Id));
-        EntryName = RequireEntryName(entry.Name);
+        EntryName = LauncherEntryText.RequireNonEmpty(entry.Name);
         Plan = plan;
     }
 
@@ -19,14 +19,4 @@ public sealed record LauncherSingleLaunchConfirmation
     public string EntryName { get; }
 
     public LaunchPlan Plan { get; }
-
-    // ponytail: kept inline rather than shared via LauncherEntryText to avoid coupling these small types to Core layer utilities.
-    private static string RequireEntryName(string? entryName)
-    {
-        var normalized = LauncherEntryText.Normalize(entryName);
-        if (normalized.Length == 0)
-            throw new InvalidOperationException("Launcher single launch confirmation entry name is required.");
-
-        return normalized;
-    }
 }

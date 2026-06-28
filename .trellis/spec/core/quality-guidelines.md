@@ -165,4 +165,5 @@ GitHub Actions sets `CI=true`. Use this to skip checks requiring a display (GUI 
 - [ ] **Backup rotation order**: Copy-then-rotate, not rotate-then-copy. If rotation runs first and crashes, .bak is missing. (Added 2026-06-28)
 - [ ] **Cross-layer validation**: Same check in two layers MUST use same semantics (case-sensitivity, boundary: `> N` vs `>= N`). Share constants or methods. (Added 2026-06-28)
 - [ ] **Exception unwrap loop**: Must have max-iteration guard (`for i<16`) — null InnerException causes infinite loop. (Added 2026-06-28)
-- [ ] **NaN/Infinity guard**: All layout arithmetic must guard with `double.IsFinite`/`double.IsNaN` — NaN propagates through all ops. (Added 2026-06-28)<｜end▁of▁thinking｜>
+- [ ] **NaN/Infinity guard**: All layout arithmetic must guard with `double.IsFinite`/`double.IsNaN` — NaN propagates through all ops. (Added 2026-06-28)
+- [ ] **Single-file over multi-file**: When config needs cross-section consistency, merge sections into one file + `File.Replace`. Do NOT implement journal/pre-commit/multi-file-commit protocols unless sections genuinely cannot live in one file. (Added 2026-06-28 single-file architecture refactoring)<｜end▁of▁thinking｜>

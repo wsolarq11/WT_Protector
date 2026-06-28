@@ -9,13 +9,6 @@ public sealed record EntryDraft(
     bool Selected);
 public static class LauncherEntryDrafts
 {
-    // Must match LauncherEntryIds.WindowsReservedNames (case-insensitive per OrdinalIgnoreCase).
-    private static readonly HashSet<string> s_reservedNames = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "CON", "PRN", "AUX", "NUL",
-        "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
-    };
 
     // Normalizes each field at the ViewModel boundary rather than relying on callers —
     // dialog inputs may contain unicode variants and whitespace before the caller validates.
@@ -100,9 +93,9 @@ public static class LauncherEntryDrafts
         // via the snapshot mechanism, leaving no user-facing explanation.
         // Use OrdinalIgnoreCase to match LauncherEntryIds.RequireEntryId behavior
         // (which uses WindowsReservedNames with StringComparer.OrdinalIgnoreCase).
-        // ponytail: local HashSet instead of pattern matching — 22 entries, negligible.
+        // ponytail: reuse LauncherEntryIds.WindowsReservedNames — single source of truth.
         var normalizedId = LauncherEntryIds.Normalize(id);
-        if (s_reservedNames.Contains(normalizedId))
+        if (LauncherEntryIds.WindowsReservedNames.Contains(normalizedId))
             return LauncherEntryDraftStatus.IdInvalid;
         if (normalizedId.Contains('\\') || normalizedId.Contains('/') || normalizedId.Contains(".."))
             return LauncherEntryDraftStatus.IdInvalid;

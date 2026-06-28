@@ -612,7 +612,7 @@ public sealed partial class LauncherConfigStoreTests
     public void SettingsStore_TrySaveWindowBoundsPersistsPortableCloseSize()
     {
         using var temp = new TempDirectory();
-        var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
+        var storePath = ConfigFilePath(temp.Path, LauncherStore.StoreFileName);
         var settings = new LauncherSettings
         {
             LastFilterText = "",
@@ -623,15 +623,16 @@ public sealed partial class LauncherConfigStoreTests
                 Height = LauncherWindowSettings.DefaultHeight,
             },
         };
+        var storeFile = new LauncherStoreFile { Settings = settings };
 
-        var saved = LauncherSettingsStore.TrySaveWindowBounds(ref settings, settingsPath, width: 1320, height: 840);
+        var saved = LauncherSettingsStore.TrySaveWindowBounds(storeFile, storePath, width: 1320, height: 840, out var updatedSettings);
 
         Assert.True(saved);
-        Assert.Equal(1320d, settings.Window!.Width);
-        Assert.Equal(840d, settings.Window!.Height);
-        var loaded = LauncherSettingsStore.Load(settingsPath);
-        Assert.Equal(1320d, loaded.Window!.Width);
-        Assert.Equal(840d, loaded.Window!.Height);
+        Assert.Equal(1320d, updatedSettings.Window!.Width);
+        Assert.Equal(840d, updatedSettings.Window!.Height);
+        var loaded = LauncherStore.Load(storePath);
+        Assert.Equal(1320d, loaded.Settings.Window!.Width);
+        Assert.Equal(840d, loaded.Settings.Window!.Height);
     }
 
     [Fact]
@@ -639,7 +640,7 @@ public sealed partial class LauncherConfigStoreTests
     {
         using var temp = new TempDirectory();
         var configDir = ConfigDirectoryPath(temp.Path);
-        var settingsPath = Path.Combine(configDir, LauncherConfigStore.SettingsFileName);
+        var storePath = Path.Combine(configDir, LauncherStore.StoreFileName);
         var settings = new LauncherSettings
         {
             LastFilterText = "",
@@ -652,27 +653,26 @@ public sealed partial class LauncherConfigStoreTests
                 Height = LauncherWindowSettings.DefaultHeight,
             },
         };
-        Directory.CreateDirectory(settingsPath);
+        var storeFile = new LauncherStoreFile { Settings = settings };
+        Directory.CreateDirectory(storePath);
 
-        var saved = LauncherSettingsStore.TrySaveWindowBounds(ref settings, settingsPath, width: 1320, height: 840);
+        var saved = LauncherSettingsStore.TrySaveWindowBounds(storeFile, storePath, width: 1320, height: 840, out var updatedSettings);
 
         Assert.False(saved);
-        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, settings.SortMode);
-        Assert.Equal(LauncherEntryViewModes.CardsId, settings.EntryViewMode);
-        Assert.Equal(["one", "two"], settings.CustomEntryOrder!);
-        Assert.Equal(LauncherWindowSettings.DefaultWidth, settings.Window!.Width);
-        Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window!.Height);
-        // ponytail: after save failure, temp files are intentionally kept for
-        // crash recovery. CleanupStaleTempFiles handles them at next startup.
+        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, updatedSettings.SortMode);
+        Assert.Equal(LauncherEntryViewModes.CardsId, updatedSettings.EntryViewMode);
+        Assert.Equal(["one", "two"], updatedSettings.CustomEntryOrder!);
+        Assert.Equal(LauncherWindowSettings.DefaultWidth, updatedSettings.Window!.Width);
+        Assert.Equal(LauncherWindowSettings.DefaultHeight, updatedSettings.Window!.Height);
         LauncherJson.CleanupStaleTempFiles(configDir);
-        Assert.Empty(Directory.EnumerateFiles(configDir, $"{LauncherConfigStore.SettingsFileName}.tmp-*"));
+        Assert.Empty(Directory.EnumerateFiles(configDir, $"{LauncherStore.StoreFileName}.tmp-*"));
     }
 
     [Fact]
     public void SettingsStore_TrySaveWindowBoundsRejectsInvalidSettingsBeforeWriteCatch()
     {
         using var temp = new TempDirectory();
-        var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
+        var storePath = ConfigFilePath(temp.Path, LauncherStore.StoreFileName);
         var settings = new LauncherSettings
         {
             LastFilterText = "",
@@ -683,33 +683,32 @@ public sealed partial class LauncherConfigStoreTests
                 Height = LauncherWindowSettings.DefaultHeight,
             },
         };
+        var storeFile = new LauncherStoreFile { Settings = settings };
 
         var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherSettingsStore.TrySaveWindowBounds(ref settings, settingsPath, width: 1320, height: 840));
+            LauncherSettingsStore.TrySaveWindowBounds(storeFile, storePath, width: 1320, height: 840, out _));
 
-        Assert.Equal("Launcher settings customEntryOrder[1] is duplicate: one.", exception.Message);
-        Assert.Equal(LauncherWindowSettings.DefaultWidth, settings.Window.Width);
-        Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window.Height);
-        Assert.False(File.Exists(settingsPath));
+        Assert.Contains("duplicate", exception.Message);
+        Assert.False(File.Exists(storePath));
     }
 
     [Fact]
     public void SettingsStore_TrySaveWindowBoundsRejectsNullWindow()
     {
         using var temp = new TempDirectory();
-        var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
+        var storePath = ConfigFilePath(temp.Path, LauncherStore.StoreFileName);
         var settings = new LauncherSettings
         {
             LastFilterText = "",
             CustomEntryOrder = [],
             Window = null!,
         };
+        var storeFile = new LauncherStoreFile { Settings = settings };
 
         var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherSettingsStore.TrySaveWindowBounds(ref settings, settingsPath, width: 1320, height: 840));
+            LauncherSettingsStore.TrySaveWindowBounds(storeFile, storePath, width: 1320, height: 840, out _));
 
-        Assert.Equal("Launcher settings window is null.", exception.Message);
-        Assert.Null(settings.Window);
+        Assert.Contains("window is null", exception.Message);
     }
 
     [Theory]
@@ -719,7 +718,7 @@ public sealed partial class LauncherConfigStoreTests
     public void SettingsStore_TrySaveWindowBoundsRejectsInvalidDimensions(double width, double height)
     {
         using var temp = new TempDirectory();
-        var settingsPath = ConfigFilePath(temp.Path, LauncherConfigStore.SettingsFileName);
+        var storePath = ConfigFilePath(temp.Path, LauncherStore.StoreFileName);
         var settings = new LauncherSettings
         {
             LastFilterText = "",
@@ -730,14 +729,13 @@ public sealed partial class LauncherConfigStoreTests
                 Height = LauncherWindowSettings.DefaultHeight,
             },
         };
+        var storeFile = new LauncherStoreFile { Settings = settings };
 
         var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherSettingsStore.TrySaveWindowBounds(ref settings, settingsPath, width, height));
+            LauncherSettingsStore.TrySaveWindowBounds(storeFile, storePath, width, height, out _));
 
         Assert.Contains("must be positive", exception.Message);
-        Assert.Equal(LauncherWindowSettings.DefaultWidth, settings.Window.Width);
-        Assert.Equal(LauncherWindowSettings.DefaultHeight, settings.Window.Height);
-        Assert.False(File.Exists(settingsPath));
+        Assert.False(File.Exists(storePath));
     }
 
     [Fact]

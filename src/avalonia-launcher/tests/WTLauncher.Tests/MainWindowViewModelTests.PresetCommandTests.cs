@@ -26,7 +26,7 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.SaveSelectionAsPresetCommand.ExecuteAsync(null);
 
         Assert.Equal("project-pair", viewModel.SelectedPreset?.Id);
-        var presetFile = LauncherPresetStore.Load(presets);
+        var presetFile = LauncherStore.Load(presets);
         var created = presetFile.Presets.Single(preset => preset.Id == "project-pair");
         Assert.Equal("Project Pair", created.Name);
         Assert.Equal(["one"], created.EntryIds);
@@ -39,7 +39,7 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.UpdateSelectedPresetCommand.Execute(null);
 
-        presetFile = LauncherPresetStore.Load(presets);
+        presetFile = LauncherStore.Load(presets);
         created = presetFile.Presets.Single(preset => preset.Id == "project-pair");
         Assert.Equal(["one", "two"], created.EntryIds);
         Assert.False(viewModel.UpdateSelectedPresetCommand.CanExecute(null));
@@ -50,7 +50,7 @@ public sealed partial class MainWindowViewModelTests
 
         await viewModel.DeleteSelectedPresetCommand.ExecuteAsync(null);
 
-        presetFile = LauncherPresetStore.Load(presets);
+        presetFile = LauncherStore.Load(presets);
         Assert.DoesNotContain(presetFile.Presets, preset => preset.Id == "project-pair");
         Assert.Contains(presetFile.Presets, preset => preset.Id == "daily");
         Assert.Equal("daily", presetFile.DefaultPresetId);
@@ -470,7 +470,7 @@ public sealed partial class MainWindowViewModelTests
 
         await viewModel.DeleteSelectedPresetCommand.ExecuteAsync(null);
 
-        var presetFile = LauncherPresetStore.Load(presets);
+        var presetFile = LauncherStore.Load(presets);
         Assert.Equal(["daily", "secondary"], presetFile.Presets.Select(preset => preset.Id).ToArray());
         Assert.Equal("daily", viewModel.SelectedPreset?.Id);
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
@@ -500,7 +500,7 @@ public sealed partial class MainWindowViewModelTests
 
         await viewModel.DeleteSelectedPresetCommand.ExecuteAsync(null);
 
-        var presetFile = LauncherPresetStore.Load(presets);
+        var presetFile = LauncherStore.Load(presets);
         Assert.Equal(["daily", "secondary"], presetFile.Presets.Select(preset => preset.Id).ToArray());
         Assert.Equal("daily", viewModel.SelectedPreset?.Id);
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
@@ -533,7 +533,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("daily", target!.PresetId);
         Assert.Equal("Daily", target.PresetName);
         Assert.Equal(1, target.EntryCount);
-        var presetFile = LauncherPresetStore.Load(presets);
+        var presetFile = LauncherStore.Load(presets);
         Assert.Equal(["daily", "secondary"], presetFile.Presets.Select(preset => preset.Id).ToArray());
         Assert.Equal("daily", viewModel.SelectedPreset?.Id);
         Assert.Equal("Daily", viewModel.SelectedPreset?.Name);
@@ -567,7 +567,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("daily", target!.PresetId);
         Assert.Equal("Daily", target.PresetName);
         Assert.Equal(1, target.EntryCount);
-        var presetFile = LauncherPresetStore.Load(presets);
+        var presetFile = LauncherStore.Load(presets);
         Assert.DoesNotContain(presetFile.Presets, preset => preset.Id == "daily");
         Assert.Equal("secondary", presetFile.DefaultPresetId);
         Assert.Equal("secondary", viewModel.SelectedPreset?.Id);
@@ -598,7 +598,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         AssertNoDragCues(viewModel);
-        var presetFile = LauncherPresetStore.Load(presets);
+        var presetFile = LauncherStore.Load(presets);
         Assert.DoesNotContain(presetFile.Presets, preset => preset.Id == "daily");
         Assert.Equal("secondary", viewModel.SelectedPreset?.Id);
     }

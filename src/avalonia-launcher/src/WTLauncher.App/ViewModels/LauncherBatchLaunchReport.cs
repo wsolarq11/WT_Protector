@@ -136,7 +136,7 @@ internal sealed class LauncherBatchLaunchReportBuilder
     {
         ArgumentNullException.ThrowIfNull(entryName);
         ArgumentNullException.ThrowIfNull(exception);
-        _failures.Add($"{RequireEntryName(entryName)}: {exception.Message}");
+        _failures.Add($"{LauncherEntryText.RequireNonEmpty(entryName)}: {exception.Message}");
         FailureIndex ??= failureIndex;
         if (failureIndex is not null)
             _failureIndices.Add(failureIndex.Value);
@@ -146,15 +146,5 @@ internal sealed class LauncherBatchLaunchReportBuilder
     {
         ArgumentNullException.ThrowIfNull(exception);
         _failures.Add(exception.Message);
-    }
-
-    // ponytail: kept inline rather than shared via LauncherEntryText to avoid coupling these small types to Core layer utilities.
-    private static string RequireEntryName(string entryName)
-    {
-        var normalized = LauncherEntryText.Normalize(entryName);
-        if (normalized.Length == 0)
-            throw new InvalidDataException("Entry name is required for batch launch report.");
-
-        return normalized;
     }
 }

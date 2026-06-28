@@ -245,15 +245,7 @@ public sealed partial class MainWindowViewModel
         TotalCount = _entries.Count;
         EnsureCustomOrderContainsEntries();
 
-        var saveFailure = LauncherEntryMutationPersistence.Save(
-            _entries.Select(ToLaunchEntry),
-            _configPath,
-            _presetFile,
-            _presetPath,
-            _settings,
-            _settingsPath,
-            savePresets,
-            rollbackSnapshot);
+        var saveFailure = SaveStoreFile(BuildStoreFile());
 
         if (saveFailure is not null)
         {

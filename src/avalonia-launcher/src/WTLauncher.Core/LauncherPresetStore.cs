@@ -37,13 +37,12 @@ public static class LauncherPresetStore
         ArgumentNullException.ThrowIfNull(presets);
         ThrowIfPresetPathMissing(presetPath);
 
-        LauncherJson.Save(LauncherPresetFiles.CloneNormalized(presets), presetPath, backup);
+        LauncherJson.Save(LauncherPresetFiles.Validate(presets), presetPath, backup);
     }
 
-    public static string ResolvePresetPath(string configPath)
-    {
-        return LauncherConfigStore.ResolveSiblingPath(configPath, PresetsFileName);
-    }
+    // ponytail: ResolvePresetPath removed — presets now live in the unified
+    // LauncherStoreFile alongside entries and settings. Use LauncherStore
+    // for all path resolution and load/save operations.
 
     private static void ThrowIfPresetPathMissing(string? presetPath)
     {

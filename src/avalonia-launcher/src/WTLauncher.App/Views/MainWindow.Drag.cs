@@ -229,7 +229,12 @@ public sealed partial class MainWindow
 
         _dragGhost = ghost.Control;
         _overlayLayer.Children.Add(_dragGhost);
-        SetDragGhostPosition(_dragGhost, ghost.Left, ghost.Top);
+        // Clamp initial position to window bounds — MoveDragGhost reclamps on each
+        // pointer move but the first frame needs it too, especially near window edges.
+        var initPos = LauncherDragGhostLayoutCalculator.CalculatePosition(
+            pointerX, pointerY, Bounds.Width, Bounds.Height,
+            _dragGhost.Width, _dragGhost.Height);
+        SetDragGhostPosition(_dragGhost, initPos.Left, initPos.Top);
     }
 
     private void MoveDragGhost(PointerEventArgs e)
@@ -293,21 +298,5 @@ public static class MainWindowDragInsertDecision
         return isDetailedListMode
             ? positionInCard.Y >= cardSize.Height * threshold
             : positionInCard.X >= cardSize.Width * threshold;
-    }
-}
-
-public static class MainWindowDragEntryTransfer
-{
-    public static void SetEntryId(DataTransfer dataTransfer, string entryId)
-    {
-        ArgumentNullException.ThrowIfNull(dataTransfer);
-        dataTransfer.Add(DataTransferItem.CreateText(entryId));
-    }
-
-    public static string? TryGetEntryId(IDataTransfer dataTransfer)
-    {
-        ArgumentNullException.ThrowIfNull(dataTransfer);
-        var entryId = LauncherEntryIds.Normalize(dataTransfer.TryGetText());
-        return LauncherEntryIds.IsUsable(entryId) ? entryId : null;
     }
 }

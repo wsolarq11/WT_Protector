@@ -44,21 +44,21 @@ public sealed partial class MainWindowViewModelTests
         viewModel.CommitDragReorder();
 
         Assert.Equal(["two", "three", "one"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        var savedSettings = LauncherSettingsStore.Load(settings);
+        var savedSettings = LauncherStore.Load(settings).Settings;
         Assert.Equal(LauncherEntryVisibility.CustomSortModeId, savedSettings.SortMode);
         Assert.Equal(["two", "three", "one"], savedSettings.CustomEntryOrder);
 
         viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == LauncherEntryVisibility.AlphabeticalSortModeId);
 
         Assert.Equal(["two", "three", "one"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        savedSettings = LauncherSettingsStore.Load(settings);
+        savedSettings = LauncherStore.Load(settings).Settings;
         Assert.Equal(LauncherEntryVisibility.AlphabeticalSortModeId, savedSettings.SortMode);
         Assert.Equal(["two", "three", "one"], savedSettings.CustomEntryOrder);
 
         viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == LauncherEntryVisibility.UpdatedSortModeId);
 
         Assert.Equal(["two", "one", "three"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        savedSettings = LauncherSettingsStore.Load(settings);
+        savedSettings = LauncherStore.Load(settings).Settings;
         Assert.Equal(LauncherEntryVisibility.UpdatedSortModeId, savedSettings.SortMode);
     }
 
@@ -80,29 +80,30 @@ public sealed partial class MainWindowViewModelTests
             CustomEntryOrder = ["one", "two"],
         };
         var viewModel = CreateViewModel(config, settings, launcherSettings);
+        File.Delete(settings);
         Directory.CreateDirectory(settings);
 
         viewModel.FilterText = "two";
         Assert.Equal("", viewModel.FilterText);
         Assert.Equal("", launcherSettings.LastFilterText);
         Assert.Equal(2, viewModel.VisibleCount);
-        Assert.Contains("设置保存失败", viewModel.StatusText);
+        Assert.Contains("存储保存失败", viewModel.StatusText);
 
         viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == LauncherEntryVisibility.AlphabeticalSortModeId);
         Assert.Equal(LauncherEntryVisibility.CustomSortModeId, viewModel.SelectedSortMode?.Id);
         Assert.Equal(LauncherEntryVisibility.CustomSortModeId, viewModel.Settings.SortMode);
         Assert.Equal(["one", "two"], viewModel.Settings.CustomEntryOrder);
-        Assert.Contains("设置保存失败", viewModel.StatusText);
+        Assert.Contains("存储保存失败", viewModel.StatusText);
 
         viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == LauncherEntryViewModes.DetailsId);
         Assert.Equal(LauncherEntryViewModes.CardsId, viewModel.SelectedDisplayMode?.Id);
         Assert.Equal(LauncherEntryViewModes.CardsId, viewModel.Settings.EntryViewMode);
-        Assert.Contains("设置保存失败", viewModel.StatusText);
+        Assert.Contains("存储保存失败", viewModel.StatusText);
 
         viewModel.RequireConfirmationForLaunches = false;
         Assert.True(viewModel.RequireConfirmationForLaunches);
         Assert.True(viewModel.Settings.RequireConfirmationForLaunches);
-        Assert.Contains("设置保存失败", viewModel.StatusText);
+        Assert.Contains("存储保存失败", viewModel.StatusText);
     }
 
     [Fact]
@@ -117,7 +118,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.True(viewModel.TrySaveWindowBounds(width: 1320, height: 840));
 
-        var savedSettings = LauncherSettingsStore.Load(settings);
+        var savedSettings = LauncherStore.Load(settings).Settings;
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(DefaultDragOrder(), savedSettings.CustomEntryOrder);
         Assert.Equal(1320d, savedSettings.Window!.Width);
@@ -132,6 +133,7 @@ public sealed partial class MainWindowViewModelTests
         var (config, settings, _) = CreateDragFixture(temp);
         var launcherSettings = CreateDragSettings();
         var viewModel = CreateViewModel(config, settings, launcherSettings);
+        File.Delete(settings);
         Directory.CreateDirectory(settings);
 
         StartDefaultDragPreview(viewModel, launcherSettings);

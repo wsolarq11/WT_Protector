@@ -18,10 +18,29 @@ internal static class MainWindowEntryCardTestFactory
 
     public static MainWindowViewModel CreateOwner(string rootPath)
     {
-        return CreateOwner(
-            Path.Combine(rootPath, "config.json"),
-            Path.Combine(rootPath, "settings.json"),
-            CreateEntry("owner"));
+        var storePath = Path.Combine(rootPath, LauncherStore.StoreFileName);
+        var entry = CreateEntry("owner");
+        var storeFile = new LauncherStoreFile
+        {
+            Entries = [entry],
+            Settings = new LauncherSettings(),
+            Presets =
+            [
+                new LauncherPreset
+                {
+                    Id = "default",
+                    Name = "Default",
+                    EntryIds = [entry.Id],
+                },
+            ],
+            DefaultPresetId = "default",
+        };
+        LauncherStore.Save(storeFile, storePath, backup: true);
+        return new MainWindowViewModel(
+            storePath,
+            storeFile,
+            CreateLaunchWorkflow(),
+            static () => DateTimeOffset.UtcNow);
     }
 
     public static LauncherEntryViewModel CreateEntryViewModel(MainWindowViewModel owner, string id)
@@ -31,38 +50,29 @@ internal static class MainWindowEntryCardTestFactory
 
     public static LauncherEntryViewModel CreateEntryViewModel(string rootPath, string id)
     {
-        var configPath = Path.Combine(rootPath, $"{id}-config.json");
-        var settingsPath = Path.Combine(rootPath, $"{id}-settings.json");
+        var storePath = Path.Combine(rootPath, $"{id}-store.json");
         var entry = CreateEntry(id);
-
-        return new LauncherEntryViewModel(entry, CreateOwner(configPath, settingsPath, entry));
-    }
-
-    private static MainWindowViewModel CreateOwner(string configPath, string settingsPath, LaunchEntry entry)
-    {
-        LauncherConfigStore.Save([entry], configPath, backup: true);
-        LauncherPresetStore.Save(
-            new LauncherPresetFile
-            {
-                DefaultPresetId = "default",
-                Presets =
-                [
-                    new LauncherPreset
-                    {
-                        Id = "default",
-                        Name = "Default",
-                        EntryIds = [entry.Id],
-                    },
-                ],
-            },
-            LauncherPresetStore.ResolvePresetPath(configPath),
-            backup: false);
-        return new MainWindowViewModel(
-            configPath,
-            settingsPath,
-            new LauncherSettings(),
+        var storeFile = new LauncherStoreFile
+        {
+            Entries = [entry],
+            Settings = new LauncherSettings(),
+            Presets =
+            [
+                new LauncherPreset
+                {
+                    Id = "default",
+                    Name = "Default",
+                    EntryIds = [entry.Id],
+                },
+            ],
+            DefaultPresetId = "default",
+        };
+        LauncherStore.Save(storeFile, storePath, backup: true);
+        return new LauncherEntryViewModel(entry, new MainWindowViewModel(
+            storePath,
+            storeFile,
             CreateLaunchWorkflow(),
-            static () => DateTimeOffset.UtcNow);
+            static () => DateTimeOffset.UtcNow));
     }
 
     private static LaunchEntry CreateEntry(string id)

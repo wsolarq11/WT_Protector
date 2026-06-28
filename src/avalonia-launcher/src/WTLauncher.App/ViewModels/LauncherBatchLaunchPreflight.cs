@@ -9,7 +9,7 @@ public sealed record LauncherBatchLaunchItem
         ArgumentNullException.ThrowIfNull(entry);
 
         EntryId = LauncherEntryIds.RequireEntryId(entry.Id, nameof(entry.Id));
-        EntryName = RequireEntryName(entry.Name);
+        EntryName = LauncherEntryText.RequireNonEmpty(entry.Name);
         Plan = plan ?? throw new ArgumentNullException(nameof(plan));
     }
 
@@ -18,17 +18,6 @@ public sealed record LauncherBatchLaunchItem
     public LaunchPlan Plan { get; }
 
     public string EntryName { get; }
-
-    private static string RequireEntryName(string? entryName)
-    {
-        var normalized = LauncherEntryText.Normalize(entryName);
-        if (normalized.Length == 0)
-            throw new InvalidOperationException("Launch entry name is empty.");
-
-        return normalized;
-    }
-    // ponytail: RequireEntryName deliberately kept as a local wrapper — each call site
-    // has a distinct error message and the pattern is short enough (Normalize + length check).
 }
 
 public sealed record LauncherBatchLaunchPreflight

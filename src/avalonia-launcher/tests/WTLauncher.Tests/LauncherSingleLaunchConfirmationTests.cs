@@ -43,7 +43,7 @@ public sealed class LauncherSingleLaunchConfirmationTests
         var exception = Assert.Throws<InvalidOperationException>(() =>
             new LauncherSingleLaunchConfirmation(entry, Plan("codex --version")));
 
-        Assert.Equal("Launcher single launch confirmation entry name is required.", exception.Message);
+        Assert.Equal("Entry name is required.", exception.Message);
     }
 
     private static LaunchPlan Plan(string command) =>

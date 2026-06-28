@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -8,9 +9,7 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel : ObservableObject
 {
-    private readonly string _configPath;
-    private readonly string _presetPath;
-    private readonly string _settingsPath;
+    private readonly string _storePath;
     private LauncherSettings _settings;
     private readonly LauncherLaunchWorkflow _launchWorkflow;
     private readonly Func<DateTimeOffset> _utcNow;
@@ -65,51 +64,54 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     public MainWindowViewModel(
-        string configPath,
-        string settingsPath,
-        LauncherSettings settings,
+        string storePath,
+        LauncherStoreFile storeFile,
         LauncherLaunchWorkflow launchWorkflow,
         Func<DateTimeOffset> utcNow)
     {
-        ArgumentNullException.ThrowIfNull(settings);
-        _configPath = configPath;
-        _presetPath = LauncherPresetStore.ResolvePresetPath(configPath);
-        _settingsPath = settingsPath;
-        _settings = settings;
+        ArgumentNullException.ThrowIfNull(storeFile);
+        _storePath = storePath;
+        _settings = storeFile.Settings;
         _launchWorkflow = launchWorkflow ?? throw new ArgumentNullException(nameof(launchWorkflow));
-        _launchWorkflow.CommandTemplates = settings.CommandTemplates;
+        _launchWorkflow.CommandTemplates = _settings.CommandTemplates;
         _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
         Entries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_entries);
         VisibleEntries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_visibleEntries);
         Presets = new ReadOnlyObservableCollection<LauncherPresetViewModel>(_presets);
         SortModes = new ReadOnlyObservableCollection<LauncherSortModeViewModel>(_sortModes);
         DisplayModes = new ReadOnlyObservableCollection<LauncherDisplayModeViewModel>(_displayModes);
-        ConfigPathDisplay = LauncherMainWindowText.ConfigPathDisplay(configPath, _presetPath);
-        _filterText = RequireSettingsText(settings.LastFilterText, "lastFilterText");
-        _requireConfirmationForLaunches = settings.RequireConfirmationForLaunches;
-        // The constructor sets _requireConfirmationForLaunches directly (bypassing
-        // the ObservableProperty setter), so OnRequireConfirmationForLaunchesChanged
-        // never fires. Raise PropertyChanged for the presentation properties that
-        // depend on it so Avalonia bindings see the initial values.
+        ConfigPathDisplay = LauncherMainWindowText.StorePathDisplay(storePath);
+        _filterText = RequireSettingsText(_settings.LastFilterText, "lastFilterText");
+        _requireConfirmationForLaunches = _settings.RequireConfirmationForLaunches;
         OnPropertyChanged(nameof(LaunchConfirmationToggleText));
         OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
-        _selectedSortMode = ResolveSortMode(settings.SortMode);
+        _selectedSortMode = ResolveSortMode(_settings.SortMode);
         _settings = _settings with { SortMode = _selectedSortMode.Id };
-        _selectedDisplayMode = ResolveDisplayMode(settings.EntryViewMode);
+        _selectedDisplayMode = ResolveDisplayMode(_settings.EntryViewMode);
         _settings = _settings with { EntryViewMode = _selectedDisplayMode.Id };
-        // The constructor sets _selectedDisplayMode directly (bypassing the
-        // ObservableProperty setter), so OnSelectedDisplayModeChanged never fires.
-        // Raise PropertyChanged for the IsCardsViewMode / IsDetailedListMode /
-        // IsNamesViewMode projection properties so Avalonia bindings see the
-        // initial values before the window is shown.
         NotifyDisplayModeProjectionChanged();
         // Construct workflow AFTER settings normalization so it captures
         // the normalized values — DiscardDragReorderPreview syncs from it.
         _dragReorderWorkflow = new LauncherDragReorderWorkflow(
             _settings,
-            _settingsPath,
-            _entries);
-        Refresh();
+            _entries,
+            SaveSettingsToStore);
+        // Load entries and presets from the unified store.
+        ReplaceEntries(storeFile.Entries);
+        _presetFile = new LauncherPresetFile
+        {
+            SchemaVersion = 1,
+            Presets = storeFile.Presets,
+            DefaultPresetId = storeFile.DefaultPresetId,
+        };
+        ApplyPresetFileState(_presetFile, preferredPresetId: null);
+        // Sync custom entry order with loaded entries so ValidateCustomOrder
+        // passes even when the stored CustomEntryOrder is empty or stale.
+        _settings = _settings with { CustomEntryOrder = LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds()) };
+        RefreshSelectionState();
+        ApplyFilter();
+        LauncherEntryLayoutPresentation.Refresh(_entries);
+        StatusText = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
     }
 
     public ReadOnlyObservableCollection<LauncherEntryViewModel> Entries { get; }
@@ -133,11 +135,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         try
         {
             DiscardDragReorderPreview();
-            ReplaceEntries(LauncherConfigStore.Load(_configPath));
+            var storeFile = LauncherStore.Load(_storePath);
+            ReplaceEntries(storeFile.Entries);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
-            ErrorLog.Write(ex, "Refresh.LoadConfig");
+            ErrorLog.Write(ex, "Refresh.LoadStore");
             StatusText = $"配置加载失败: {ExceptionMessageFormatter.ForUser(ex)}";
             return;
         }
@@ -159,7 +162,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             StatusText = $"配置验证失败: {ExceptionMessageFormatter.ForUser(ex)}";
             // Reload preset file to ensure _presetFile and UI state are consistent
             // after a partial failure during Phase 2 validation.
-            LoadPresetFile(preferredPresetId: null);
+            try { LoadPresetFile(preferredPresetId: null); } catch { /* best-effort */ }
             RefreshSelectionState();
             ApplyFilter();
             return;
@@ -211,7 +214,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool SaveConfig()
     {
-        var saveFailure = LauncherConfigMutationPersistence.Save(_entries.Select(ToLaunchEntry), _configPath);
+        var saveFailure = SaveStoreFile(BuildStoreFile());
         if (saveFailure is not null)
         {
             ApplyStatusText(saveFailure);
@@ -221,12 +224,49 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return true;
     }
 
+    /// <summary>Builds a LauncherStoreFile snapshot from current in-memory state.</summary>
+    private LauncherStoreFile BuildStoreFile() =>
+        new()
+        {
+            Entries = _entries.Select(ToLaunchEntry).ToImmutableList(),
+            Settings = _settings,
+            Presets = _presetFile.Presets,
+            DefaultPresetId = _presetFile.DefaultPresetId,
+        };
+
+    /// <summary>Saves the given store file to disk. Returns null on success,
+    /// or an error message on failure.</summary>
+    private string? SaveStoreFile(LauncherStoreFile storeFile)
+    {
+        try
+        {
+            LauncherStore.Save(storeFile, _storePath, backup: true);
+            return null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+            or InvalidDataException or System.Security.SecurityException)
+        {
+            return LauncherPersistenceStatus.StoreSaveFailed(ex);
+        }
+    }
+
+    /// <summary>Saves settings to the unified store. Used as callback by
+    /// LauncherDragReorderWorkflow during drag commit.</summary>
+    private string? SaveSettingsToStore(LauncherSettings settings)
+    {
+        var storeFile = new LauncherStoreFile
+        {
+            Entries = _entries.Select(ToLaunchEntry).ToImmutableList(),
+            Settings = settings,
+            Presets = _presetFile.Presets,
+            DefaultPresetId = _presetFile.DefaultPresetId,
+        };
+        return SaveStoreFile(storeFile);
+    }
+
     private void DiscardDragReorderPreview()
     {
         var result = _dragReorderWorkflow.Cancel();
-        // Only overwrite _settings when an active session was cancelled —
-        // the workflow holds a frozen snapshot that replaced _settings during
-        // Begin/Preview. Otherwise keep our current (post-Refresh) copy.
         if (result.RefreshEntries)
         {
             _settings = _dragReorderWorkflow.Settings;
@@ -247,10 +287,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private string? SaveSettingsChange(LauncherSettingsSnapshot snapshot)
     {
-        var saveFailure = LauncherSettingsMutationPersistence.Save(
-            ref _settings,
-            _settingsPath,
-            snapshot);
+        var saveFailure = SaveStoreFile(BuildStoreFile());
+        if (saveFailure is not null)
+            _settings = snapshot.Restore();
         return saveFailure;
     }
 
@@ -308,11 +347,11 @@ public static class LauncherMainWindowText
 
     public static string PresetSelectionPlaceholder => "选择启动组后可查看与当前勾选的差异。";
 
-    public static string ConfigPathDisplay(string configPath, string presetPath) =>
-        $"配置: {configPath} · 启动组: {presetPath}";
+    public static string StorePathDisplay(string storePath) =>
+        $"存储: {storePath}";
 
     public static string Loaded(int entryCount, int presetCount) =>
-        $"已加载 {entryCount} 个启动项、{presetCount} 个启动组；勾选自动保存到 config\\config.json";
+        $"已加载 {entryCount} 个启动项、{presetCount} 个启动组；勾选自动保存到 config\\store.json";
 }
 
 public static class ExceptionMessageFormatter
@@ -343,6 +382,9 @@ public static class ExceptionMessageFormatter
 
 public static class LauncherPersistenceStatus
 {
+    public static string StoreSaveFailed(Exception exception) =>
+        Failed("存储保存失败", exception);
+
     public static string ConfigSaveFailed(Exception exception) =>
         Failed("配置保存失败", exception);
 

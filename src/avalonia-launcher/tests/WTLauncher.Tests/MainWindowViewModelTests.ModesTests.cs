@@ -65,7 +65,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.True(entry.ShowDirectory);
         Assert.True(entry.ShowCommand);
         Assert.Equal(LauncherEntryViewModel.ScanningTitleFontSize, entry.TitleFontSize);
-        Assert.Equal(LauncherEntryViewModes.DetailsId, LauncherSettingsStore.Load(settings).EntryViewMode);
+        Assert.Equal(LauncherEntryViewModes.DetailsId, LauncherStore.Load(settings).Settings.EntryViewMode);
 
         viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == LauncherEntryViewModes.NamesId);
 
@@ -75,7 +75,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.False(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
         Assert.Equal(LauncherEntryViewModel.ScanningTitleFontSize, entry.TitleFontSize);
-        Assert.Equal(LauncherEntryViewModes.NamesId, LauncherSettingsStore.Load(settings).EntryViewMode);
+        Assert.Equal(LauncherEntryViewModes.NamesId, LauncherStore.Load(settings).Settings.EntryViewMode);
 
         viewModel.SelectedDisplayMode = viewModel.DisplayModes.Single(mode => mode.Id == LauncherEntryViewModes.CardsId);
 
@@ -85,7 +85,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.False(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
         Assert.Equal(LauncherEntryViewModel.MicroTitleFontSize, entry.TitleFontSize);
-        Assert.Equal(LauncherEntryViewModes.CardsId, LauncherSettingsStore.Load(settings).EntryViewMode);
+        Assert.Equal(LauncherEntryViewModes.CardsId, LauncherStore.Load(settings).Settings.EntryViewMode);
     }
 
     [Fact]

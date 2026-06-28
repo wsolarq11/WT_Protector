@@ -42,7 +42,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("daily", viewModel.SelectedPreset?.Id);
         Assert.Single(viewModel.Presets, preset => preset.Id == "daily");
         Assert.DoesNotContain(viewModel.Presets, preset => preset.Id == "project-pair");
-        Assert.Contains("启动组保存失败", viewModel.StatusText);
+        Assert.Contains("存储保存失败", viewModel.StatusText);
         Assert.DoesNotContain("已保存启动组", viewModel.StatusText);
     }
 
@@ -94,7 +94,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("daily", viewModel.SelectedPreset?.Id);
         var preset = Assert.Single(viewModel.Presets, preset => preset.Id == "daily");
         Assert.Equal(["one"], preset.EntryIds);
-        Assert.Contains("启动组保存失败", viewModel.StatusText);
+        Assert.Contains("存储保存失败", viewModel.StatusText);
         Assert.DoesNotContain("已更新启动组", viewModel.StatusText);
     }
 
@@ -123,7 +123,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal("daily", viewModel.SelectedPreset?.Id);
         Assert.Equal(["daily", "secondary"], viewModel.Presets.Select(preset => preset.Id).ToArray());
-        Assert.Contains("启动组保存失败", viewModel.StatusText);
+        Assert.Contains("存储保存失败", viewModel.StatusText);
         Assert.DoesNotContain("已删除启动组", viewModel.StatusText);
         AssertNoStoreTempFiles(presets);
     }
@@ -182,7 +182,7 @@ public sealed partial class MainWindowViewModelTests
 
         await viewModel.SaveSelectionAsPresetCommand.ExecuteAsync(null);
 
-        var savedPreset = LauncherPresetStore.Load(presets).Presets.Single(preset => preset.Id == "snapshot");
+        var savedPreset = LauncherStore.Load(presets).Presets.Single(preset => preset.Id == "snapshot");
         Assert.Equal(["one"], savedPreset.EntryIds);
         Assert.Equal("已保存启动组: Snapshot（1 项）", viewModel.StatusText);
     }
@@ -201,7 +201,7 @@ public sealed partial class MainWindowViewModelTests
 
         await viewModel.SaveSelectionAsPresetCommand.ExecuteAsync(null);
 
-        var presetFile = LauncherPresetStore.Load(presets);
+        var presetFile = LauncherStore.Load(presets);
         Assert.Equal(["daily"], presetFile.Presets.Select(preset => preset.Id).ToArray());
         Assert.Equal("daily", viewModel.SelectedPreset?.Id);
         Assert.Equal("保存启动组对话框失败: dialog unavailable", viewModel.StatusText);
@@ -221,7 +221,7 @@ public sealed partial class MainWindowViewModelTests
 
         await viewModel.SaveSelectionAsPresetCommand.ExecuteAsync(null);
 
-        var presetFile = LauncherPresetStore.Load(presets);
+        var presetFile = LauncherStore.Load(presets);
         Assert.Equal(["daily"], presetFile.Presets.Select(preset => preset.Id).ToArray());
         Assert.Equal("启动组名称不能为空", viewModel.StatusText);
     }

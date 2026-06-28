@@ -15,7 +15,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             CreateDragSettings());
-        LauncherSettingsStore.Save(CreateDragSettings(), settings);
+        var dragStore = LauncherStore.Load(settings); LauncherStore.Save(dragStore with { Settings = CreateDragSettings() }, settings, backup: false);
 
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
 
@@ -29,7 +29,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.True(target.IsDragPreviewTarget);
         Assert.True(target.IsDragInsertBefore);
         Assert.False(target.IsDragInsertAfter);
-        Assert.Equal(DefaultDragOrder(), LauncherSettingsStore.Load(settings).CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(settings).Settings.CustomEntryOrder);
 
         viewModel.CancelDragReorder();
 
@@ -41,7 +41,7 @@ public sealed partial class MainWindowViewModelTests
         viewModel.CommitDragReorder();
 
         Assert.Equal(ReorderedDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(ReorderedDragOrder(), LauncherSettingsStore.Load(settings).CustomEntryOrder);
+        Assert.Equal(ReorderedDragOrder(), LauncherStore.Load(settings).Settings.CustomEntryOrder);
     }
 
     [Fact]
@@ -55,13 +55,14 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.BeginDragReorder("three");
         Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
+        File.Delete(settings);
         Directory.CreateDirectory(settings);
 
         viewModel.CommitDragReorder();
 
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
-        Assert.Contains("设置保存失败", viewModel.StatusText);
+        Assert.Contains("存储保存失败", viewModel.StatusText);
         AssertNoStoreTempFiles(settings);
     }
 
@@ -73,7 +74,7 @@ public sealed partial class MainWindowViewModelTests
 
         var launcherSettings = CreateDragSettings();
         var viewModel = CreateViewModel(config, settings, launcherSettings);
-        LauncherSettingsStore.Save(CreateDragSettings(), settings);
+        var dragStore = LauncherStore.Load(settings); LauncherStore.Save(dragStore with { Settings = CreateDragSettings() }, settings, backup: false);
 
         var three = viewModel.VisibleEntries.Single(entry => entry.Id == "three");
         Assert.True(three.MoveUpCommand.CanExecute(null));
@@ -82,7 +83,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(["one", "three", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         Assert.Equal(["one", "three", "two"], viewModel.Settings.CustomEntryOrder);
-        Assert.Equal(["one", "three", "two"], LauncherSettingsStore.Load(settings).CustomEntryOrder);
+        Assert.Equal(["one", "three", "two"], LauncherStore.Load(settings).Settings.CustomEntryOrder);
         Assert.Contains("已保存自定义排序", viewModel.StatusText);
         AssertNoDragCues(viewModel);
         Assert.False(viewModel.VisibleEntries.First().MoveUpCommand.CanExecute(null));
@@ -114,13 +115,14 @@ public sealed partial class MainWindowViewModelTests
 
         var launcherSettings = CreateDragSettings();
         var viewModel = CreateViewModel(config, settings, launcherSettings);
+        File.Delete(settings);
         Directory.CreateDirectory(settings);
 
         viewModel.VisibleEntries.Single(entry => entry.Id == "three").MoveUpCommand.Execute(null);
 
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
-        Assert.Contains("设置保存失败", viewModel.StatusText);
+        Assert.Contains("存储保存失败", viewModel.StatusText);
         AssertNoStoreTempFiles(settings);
     }
 
@@ -195,7 +197,7 @@ public sealed partial class MainWindowViewModelTests
         viewModel.FilterText = "one";
 
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
-        Assert.Equal(DefaultDragOrder(), LauncherSettingsStore.Load(settings).CustomEntryOrder);
+        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(settings).Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
     }
 

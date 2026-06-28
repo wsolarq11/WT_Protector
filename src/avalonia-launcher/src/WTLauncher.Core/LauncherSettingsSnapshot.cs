@@ -20,12 +20,12 @@ public sealed class LauncherSettingsSnapshot
     public static LauncherSettingsSnapshot Capture(LauncherSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        return new LauncherSettingsSnapshot(LauncherSettingsCopies.Clone(settings));
+        return new LauncherSettingsSnapshot(settings with { SchemaVersion = 1 });
     }
 
     public LauncherSettings Restore()
     {
-        return LauncherSettingsCopies.Clone(_settings);
+        return _settings with { SchemaVersion = 1 };
     }
 
     public LauncherSettings RestoreCustomEntryOrder(LauncherSettings settings)

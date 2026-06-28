@@ -4,17 +4,7 @@ namespace WTLauncher.Core;
 
 public static class LauncherPresetFiles
 {
-    public static LauncherPresetFile CloneNormalized(LauncherPresetFile presetFile)
-    {
-        ArgumentNullException.ThrowIfNull(presetFile);
-        // ClonePresets traversal was redundant: its shallow-clone work is
-        // discarded when Validate() creates new normalized instances.
-        // Validate() already handles all the same null checks, so pass
-        // the preset file directly.
-        return Validate(presetFile);
-    }
-
-    internal static LauncherPresetFile Validate(LauncherPresetFile presets)
+    public static LauncherPresetFile Validate(LauncherPresetFile presets)
     {
         ArgumentNullException.ThrowIfNull(presets);
 

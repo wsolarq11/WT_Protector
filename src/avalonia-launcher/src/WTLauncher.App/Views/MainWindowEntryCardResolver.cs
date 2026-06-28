@@ -19,17 +19,6 @@ public static class MainWindowEntryCardResolver
             : null;
     }
 
-    public static IEnumerable<(LauncherEntryViewModel Entry, Border Card)> ResolveCards(IEnumerable<Border> cards)
-    {
-        ArgumentNullException.ThrowIfNull(cards);
-        foreach (var card in cards)
-        {
-            var entry = ResolveCard(card);
-            if (entry is not null)
-                yield return (entry, card);
-        }
-    }
-
     public static (LauncherEntryViewModel Entry, Control Card)? ResolveFromSource(object? source)
     {
         foreach (var control in MainWindowVisualTree.ControlsFromSource(source))

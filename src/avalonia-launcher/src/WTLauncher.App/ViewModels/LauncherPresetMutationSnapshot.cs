@@ -21,12 +21,12 @@ public sealed class LauncherPresetMutationSnapshot
         string? selectedPresetId)
     {
         return new LauncherPresetMutationSnapshot(
-            LauncherPresetFiles.CloneNormalized(presetFile),
+            LauncherPresetFiles.Validate(presetFile),
             selectedPresetId);
     }
 
     public LauncherPresetFile ClonePresetFile()
     {
-        return LauncherPresetFiles.CloneNormalized(_presetFile);
+        return LauncherPresetFiles.Validate(_presetFile);
     }
 }

@@ -39,8 +39,8 @@ public sealed class LauncherEntryMutationSnapshot
     {
         return new LauncherEntryMutationSnapshot(
             [.. entries.Select(entry => entry with { })],
-            LauncherPresetFiles.CloneNormalized(presetFile),
-            LauncherSettingsCopies.Clone(settings),
+            LauncherPresetFiles.Validate(presetFile),
+            settings with { SchemaVersion = 1 },
             selectedPresetId);
     }
 
@@ -51,12 +51,12 @@ public sealed class LauncherEntryMutationSnapshot
 
     public LauncherPresetFile ClonePresetFile()
     {
-        return LauncherPresetFiles.CloneNormalized(_presetFile);
+        return LauncherPresetFiles.Validate(_presetFile);
     }
 
     public LauncherSettings CloneSettings()
     {
-        return LauncherSettingsCopies.Clone(_settings);
+        return _settings with { SchemaVersion = 1 };
     }
 
     public ImmutableList<string> GetCustomEntryOrder()

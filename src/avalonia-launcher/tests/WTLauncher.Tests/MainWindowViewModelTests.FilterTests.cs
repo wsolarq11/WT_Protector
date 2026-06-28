@@ -18,7 +18,8 @@ public sealed partial class MainWindowViewModelTests
         var visible = Assert.Single(viewModel.VisibleEntries);
         Assert.Equal("one", visible.Id);
         Assert.Equal("CODEX", viewModel.FilterText);
-        Assert.False(File.Exists(settings));
+        // Store file exists from fixture but original settings are preserved (not overwritten).
+        Assert.Equal("", LauncherStore.Load(settings).Settings.LastFilterText);
     }
 
     [Fact]
@@ -34,7 +35,8 @@ public sealed partial class MainWindowViewModelTests
                 new LauncherSettings { LastFilterText = null! }));
 
         Assert.Equal("Launcher settings lastFilterText is null.", exception.Message);
-        Assert.False(File.Exists(settings));
+        // Store file exists from fixture but original settings are preserved (not overwritten).
+        Assert.Equal("", LauncherStore.Load(settings).Settings.LastFilterText);
     }
 
     [Fact]
@@ -50,30 +52,30 @@ public sealed partial class MainWindowViewModelTests
 
         var visible = Assert.Single(viewModel.VisibleEntries);
         Assert.Equal("one", visible.Id);
-        Assert.Equal("CODEX", LauncherSettingsStore.Load(settings).LastFilterText);
+        Assert.Equal("CODEX", LauncherStore.Load(settings).Settings.LastFilterText);
 
         viewModel.FilterText = "D:\\TWO";
 
         visible = Assert.Single(viewModel.VisibleEntries);
         Assert.Equal("two", visible.Id);
-        Assert.Equal("D:\\TWO", LauncherSettingsStore.Load(settings).LastFilterText);
+        Assert.Equal("D:\\TWO", LauncherStore.Load(settings).Settings.LastFilterText);
 
         viewModel.FilterText = "ONE";
 
         visible = Assert.Single(viewModel.VisibleEntries);
         Assert.Equal("one", visible.Id);
-        Assert.Equal("ONE", LauncherSettingsStore.Load(settings).LastFilterText);
+        Assert.Equal("ONE", LauncherStore.Load(settings).Settings.LastFilterText);
 
         viewModel.FilterText = "   ";
 
         Assert.Equal(["one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.Equal("", LauncherSettingsStore.Load(settings).LastFilterText);
+        Assert.Equal("", LauncherStore.Load(settings).Settings.LastFilterText);
 
         viewModel.FilterText = "missing";
 
         Assert.Empty(viewModel.VisibleEntries);
         Assert.Equal(0, viewModel.VisibleCount);
-        Assert.Equal("missing", LauncherSettingsStore.Load(settings).LastFilterText);
+        Assert.Equal("missing", LauncherStore.Load(settings).Settings.LastFilterText);
     }
 
     [Fact]
@@ -89,7 +91,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal("value", exception.ParamName);
         Assert.Equal("CODEX", viewModel.FilterText);
-        Assert.Equal("CODEX", LauncherSettingsStore.Load(settings).LastFilterText);
+        Assert.Equal("CODEX", LauncherStore.Load(settings).Settings.LastFilterText);
         var visible = Assert.Single(viewModel.VisibleEntries);
         Assert.Equal("one", visible.Id);
     }

@@ -7,8 +7,14 @@ public sealed partial class MainWindowViewModel
 {
     private void LoadPresetFile(string? preferredPresetId)
     {
-        var presetFile = LauncherPresetStore.Load(_presetPath);
-        ApplyPresetFileState(presetFile, preferredPresetId);
+        var storeFile = LauncherStore.Load(_storePath);
+        _presetFile = new LauncherPresetFile
+        {
+            SchemaVersion = 1,
+            Presets = storeFile.Presets,
+            DefaultPresetId = storeFile.DefaultPresetId,
+        };
+        ApplyPresetFileState(_presetFile, preferredPresetId);
     }
 
     private void ApplyPresetFileState(LauncherPresetFile presetFile, string? preferredPresetId)
@@ -58,7 +64,7 @@ public sealed partial class MainWindowViewModel
             throw new InvalidOperationException("Launcher preset mutation selected id is required.");
 
         selectedPreset = null;
-        var saveFailure = LauncherPresetMutationPersistence.Save(_presetFile, _presetPath);
+        var saveFailure = SaveStoreFile(BuildStoreFile());
         if (saveFailure is not null)
         {
             ApplyStatusText(saveFailure);

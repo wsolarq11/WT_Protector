@@ -30,7 +30,7 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.RequireConfirmationForLaunches = true;
 
-        Assert.True(LauncherSettingsStore.Load(settings).RequireConfirmationForLaunches);
+        Assert.True(LauncherStore.Load(settings).Settings.RequireConfirmationForLaunches);
         viewModel.Entries.Single(entry => entry.Id == "one").DryRunCommand.Execute(null);
         Assert.Equal("预演: one（需要确认）", viewModel.StatusText);
         viewModel.Entries.Single(entry => entry.Id == "two").DryRunCommand.Execute(null);
@@ -540,7 +540,7 @@ public sealed partial class MainWindowViewModelTests
 
         // SaveConfig failed — StatusText MUST preserve the save-error message
         // set by ApplyStatusText, NOT be overwritten by "已请求启动".
-        Assert.Contains("配置保存失败", viewModel.StatusText);
+        Assert.Contains("存储保存失败", viewModel.StatusText);
         Assert.DoesNotContain("已请求启动", viewModel.StatusText);
 
         // DryRunText still shows the launch receipt — the process was started.

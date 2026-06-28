@@ -31,7 +31,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(["one", "two"], viewModel.Settings.CustomEntryOrder);
         Assert.Equal(2, viewModel.TotalCount);
         Assert.Equal(0, viewModel.SelectedCount);
-        Assert.Contains("配置保存失败", viewModel.StatusText);
+        Assert.Contains("存储保存失败", viewModel.StatusText);
         AssertNoStoreTempFiles(config);
     }
 
@@ -52,12 +52,10 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.AddEntryCommand.ExecuteAsync(null);
 
         Assert.Equal(["one", "two"], viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Contains("配置保存失败", viewModel.StatusText);
-        // Config was committed before the settings commit failed — it stays on disk
-        // with the new entry. In-memory state was restored from the snapshot.
-        // Commit journal survives for crash recovery of uncommitted files.
+        Assert.Contains("存储保存失败", viewModel.StatusText);
+        // ponytail: unified store saves atomically — when save fails, nothing is persisted.
         var savedEntries = LoadEntriesById(config);
-        Assert.Contains(savedEntries, entry => entry.Id == "three");
+        Assert.DoesNotContain(savedEntries, entry => entry.Id == "three");
         AssertNoStoreTempFiles(config);
     }
 
@@ -78,13 +76,11 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.Entries.Single(entry => entry.Id == "one").EditCommand.ExecuteAsync(null);
 
         Assert.Equal(["one", "two"], viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Contains("配置保存失败", viewModel.StatusText);
-        // Config was committed before the presets commit failed — it stays on disk
-        // with the renamed entry. In-memory state was restored from the snapshot.
-        // Commit journal survives for crash recovery of uncommitted files.
-        var savedEntries = LoadEntriesById(config);
-        Assert.Contains(savedEntries, entry => entry.Id == "one-renamed");
-        Assert.DoesNotContain(savedEntries, entry => entry.Id == "one");
+        Assert.Contains("存储保存失败", viewModel.StatusText);
+        // ponytail: unified store saves atomically — when save fails, nothing is persisted.
+        // Store file was deleted for the failure test, so in-memory state is the truth.
+        Assert.All(viewModel.Entries, entry => Assert.NotEqual("one-renamed", entry.Id));
+        Assert.Contains(viewModel.Entries, entry => entry.Id == "one");
         AssertNoStoreTempFiles(config);
     }
 
@@ -105,7 +101,7 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.AddEntryCommand.ExecuteAsync(null);
 
         Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(DefaultDragOrder(), LauncherConfigStore.Load(config).Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id).ToArray());
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
         Assert.Equal(LauncherEntryStatus.AddCanceled, viewModel.StatusText);
@@ -166,7 +162,7 @@ public sealed partial class MainWindowViewModelTests
 
         var expectedOrder = DefaultDragOrder().Concat(["four"]).ToArray();
         Assert.Equal(expectedOrder, viewModel.Settings.CustomEntryOrder);
-        Assert.Equal(expectedOrder, LauncherSettingsStore.Load(settings).CustomEntryOrder);
+        Assert.Equal(expectedOrder, LauncherStore.Load(settings).Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
     }
 
@@ -188,8 +184,8 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.Entries.Single(entry => entry.Id == "one").EditCommand.ExecuteAsync(null);
 
         Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(DefaultDragOrder(), LauncherConfigStore.Load(config).Select(entry => entry.Id).ToArray());
-        Assert.Equal(["one"], LauncherPresetStore.Load(presets).Presets.Single().EntryIds);
+        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one"], LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
         Assert.Equal(LauncherEntryStatus.EditCanceled("One"), viewModel.StatusText);
@@ -223,8 +219,8 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("one", viewModel.Entries.Single(entry => entry.Id == "one").Id);
         Assert.Equal("One", viewModel.Entries.Single(entry => entry.Id == "one").Name);
         Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(DefaultDragOrder(), LauncherConfigStore.Load(config).Select(entry => entry.Id).ToArray());
-        Assert.Equal(["one"], LauncherPresetStore.Load(presets).Presets.Single().EntryIds);
+        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one"], LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(LauncherEntryStatus.EditCanceled("One"), viewModel.StatusText);
     }
@@ -249,7 +245,7 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.Entries.Single(entry => entry.Id == "one").EditCommand.ExecuteAsync(null);
 
         Assert.Equal(["one-renamed", "two", "three"], viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(["one-renamed"], LauncherPresetStore.Load(presets).Presets.Single().EntryIds);
+        Assert.Equal(["one-renamed"], LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(["one-renamed", "two", "three"], viewModel.Settings.CustomEntryOrder);
         Assert.Equal(LauncherEntryStatus.Updated("One Renamed"), viewModel.StatusText);
     }
@@ -291,7 +287,7 @@ public sealed partial class MainWindowViewModelTests
         var added = savedEntries.Single(entry => entry.Id == "three");
         Assert.True(added.Selected);
         Assert.Equal("2026-05-30T01:02:03.0000000+00:00", added.UpdatedAtUtc);
-        var savedSettings = LauncherSettingsStore.Load(settings);
+        var savedSettings = LauncherStore.Load(settings).Settings;
         Assert.Equal(["one", "two", "three"], savedSettings.CustomEntryOrder);
 
         await viewModel.Entries.Single(entry => entry.Id == "one").EditCommand.ExecuteAsync(null);
@@ -305,18 +301,18 @@ public sealed partial class MainWindowViewModelTests
         Assert.False(edited.Selected);
         Assert.Equal("2026-05-30T04:05:06.0000000+00:00", edited.UpdatedAtUtc);
 
-        var savedPresetFile = LauncherPresetStore.Load(presets);
+        var savedPresetFile = LauncherStore.Load(presets);
         Assert.Equal(["one-renamed"], savedPresetFile.Presets.Single(preset => preset.Id == "daily").EntryIds);
-        savedSettings = LauncherSettingsStore.Load(settings);
+        savedSettings = LauncherStore.Load(settings).Settings;
         Assert.Equal(["one-renamed", "two", "three"], savedSettings.CustomEntryOrder);
 
         await viewModel.Entries.Single(entry => entry.Id == "one-renamed").DeleteCommand.ExecuteAsync(null);
 
         savedEntries = LoadEntriesById(config);
         Assert.DoesNotContain(savedEntries, entry => entry.Id == "one-renamed");
-        savedPresetFile = LauncherPresetStore.Load(presets);
+        savedPresetFile = LauncherStore.Load(presets);
         Assert.Empty(savedPresetFile.Presets.Single(preset => preset.Id == "daily").EntryIds);
-        savedSettings = LauncherSettingsStore.Load(settings);
+        savedSettings = LauncherStore.Load(settings).Settings;
         Assert.Equal(["two", "three"], savedSettings.CustomEntryOrder);
     }
 
@@ -338,8 +334,8 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.Entries.Single(entry => entry.Id == "one").DeleteCommand.ExecuteAsync(null);
 
         Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(DefaultDragOrder(), LauncherConfigStore.Load(config).Select(entry => entry.Id).ToArray());
-        Assert.Equal(["one"], LauncherPresetStore.Load(presets).Presets.Single().EntryIds);
+        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one"], LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
         Assert.Equal(LauncherEntryStatus.DeleteCanceled("One"), viewModel.StatusText);
@@ -371,8 +367,8 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("broken", externalSnapshot!.Id);
         Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
         Assert.Equal("One", viewModel.Entries.Single(entry => entry.Id == "one").Name);
-        Assert.Equal(DefaultDragOrder(), LauncherConfigStore.Load(config).Select(entry => entry.Id).ToArray());
-        Assert.Equal(["one"], LauncherPresetStore.Load(presets).Presets.Single().EntryIds);
+        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one"], LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(LauncherEntryStatus.DeleteCanceled("One"), viewModel.StatusText);
     }
@@ -402,8 +398,8 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("One", target.EntryName);
         Assert.Equal("broken", externalSnapshot!.Id);
         Assert.Equal(["two", "three"], viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(["two", "three"], LauncherConfigStore.Load(config).Select(entry => entry.Id).ToArray());
-        Assert.Empty(LauncherPresetStore.Load(presets).Presets.Single().EntryIds);
+        Assert.Equal(["two", "three"], LauncherStore.Load(config).Entries.Select(entry => entry.Id).ToArray());
+        Assert.Empty(LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(["two", "three"], viewModel.Settings.CustomEntryOrder);
         Assert.Equal(LauncherEntryStatus.Deleted("One"), viewModel.StatusText);
     }
@@ -415,8 +411,8 @@ public sealed partial class MainWindowViewModelTests
         MainWindowViewModel viewModel)
     {
         Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(DefaultDragOrder(), LauncherConfigStore.Load(config).Select(entry => entry.Id).ToArray());
-        Assert.Equal(["one"], LauncherPresetStore.Load(presets).Presets.Single().EntryIds);
+        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one"], LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
     }
