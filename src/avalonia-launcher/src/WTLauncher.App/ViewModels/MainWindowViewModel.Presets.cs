@@ -112,6 +112,7 @@ public sealed partial class MainWindowViewModel
         if (!SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset))
             return;
 
+        if (savedPreset is null) return;
         ApplyStatusText(LauncherPresetStatus.Saved(savedPreset.Name, savedPreset.EntryIds.Count));
     }
 
@@ -148,7 +149,18 @@ public sealed partial class MainWindowViewModel
         }
 
         var snapshot = CapturePresetMutationSnapshot();
-        var preset = LauncherPresetWorkflow.UpdatePreset(ref _presetFile, selectedPreset.Id, selectedPreset.Name, entryIds);
+        LauncherPreset? preset;
+        try
+        {
+            preset = LauncherPresetWorkflow.UpdatePreset(ref _presetFile, selectedPreset.Id, selectedPreset.Name, entryIds);
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "UpdatePreset");
+            RestorePresetSnapshotAndReportMissing(snapshot);
+            StatusText = LauncherPresetStatus.LaunchFailed(selectedPreset.Name, ex);
+            return;
+        }
         if (preset is null)
         {
             RestorePresetSnapshotAndReportMissing(snapshot);
@@ -157,6 +169,7 @@ public sealed partial class MainWindowViewModel
         if (!SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset))
             return;
 
+        if (savedPreset is null) return;
         ApplyStatusText(LauncherPresetStatus.Updated(savedPreset.Name, savedPreset.EntryIds.Count));
     }
 
@@ -196,8 +209,8 @@ public sealed partial class MainWindowViewModel
         if (!SavePresetMutationAndApply(snapshot, fallbackPresetId, out var fallbackPreset))
             return;
 
-        ApplyStatusText(LauncherPresetStatus.Deleted(
-            target.PresetName,
-            fallbackPreset.Name));
+        ApplyStatusText(fallbackPreset is not null
+            ? LauncherPresetStatus.Deleted(target.PresetName, fallbackPreset.Name)
+            : LauncherPresetStatus.Deleted(target.PresetName, string.Empty));
     }
 }

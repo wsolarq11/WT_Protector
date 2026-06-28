@@ -17,9 +17,18 @@ public sealed class EntryDetailsWindow : Window
     private readonly CheckBox _selectedBox;
     private readonly TextBlock _errorText;
 
-    public EntryDetailsWindow(LaunchEntry? entry, int presetReferenceCount = 0, IReadOnlyDictionary<string, string>? commandTemplates = null)
+    /// <summary>Pre-fill data for the entry editor dialog. Lives in the Views namespace
+    /// to avoid leaking Core types into the View layer.</summary>
+    public sealed record EntryPrefill(
+        string? Id,
+        string? Name,
+        string? Directory,
+        string? Command,
+        bool Selected);
+
+    public EntryDetailsWindow(EntryPrefill? prefill, int presetReferenceCount = 0, IReadOnlyDictionary<string, string>? commandTemplates = null)
     {
-        var isEdit = entry is not null;
+        var isEdit = prefill is not null;
         Title = isEdit ? "编辑按钮" : "新增按钮";
         Width = 720;
         Height = 560;
@@ -28,10 +37,10 @@ public sealed class EntryDetailsWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = Brush.Parse(LauncherDesignTokens.SurfaceColor);
 
-        _idBox = LauncherDialogText.Input(RequireInitialEntryId(entry));
-        _nameBox = LauncherDialogText.Input(RequireInitialEntryText(entry, static item => item.Name, "name"));
-        _directoryBox = LauncherDialogText.Input(RequireInitialEntryText(entry, static item => item.Directory, "directory"));
-        _commandBox = LauncherDialogText.Input(RequireInitialEntryText(entry, static item => item.Command, "command"));
+        _idBox = LauncherDialogText.Input(RequireInitialEntryId(prefill));
+        _nameBox = LauncherDialogText.Input(RequireInitialEntryText(prefill, static item => item.Name, "name"));
+        _directoryBox = LauncherDialogText.Input(RequireInitialEntryText(prefill, static item => item.Directory, "directory"));
+        _commandBox = LauncherDialogText.Input(RequireInitialEntryText(prefill, static item => item.Command, "command"));
         // MaxLength must match store-level limits to prevent overwrites that the
         // store will later reject. LauncherEntryIds.Normalize truncates at 256;
         // LauncherConfigStore.RequireEntryText rejects >4096.
@@ -42,7 +51,7 @@ public sealed class EntryDetailsWindow : Window
         _selectedBox = new CheckBox
         {
             Content = "保存为已勾选",
-            IsChecked = entry?.Selected ?? false,
+            IsChecked = prefill?.Selected ?? false,
             Margin = new Thickness(0, 8, 0, 0),
         };
         _errorText = LauncherDialogText.Error();
@@ -165,17 +174,17 @@ public sealed class EntryDetailsWindow : Window
         }
         catch (InvalidDataException ex)
         {
-            _errorText.Text = ex.Message;
+            _errorText.Text = ExceptionMessageFormatter.ForUser(ex);
             _errorText.IsVisible = true;
         }
     }
 
-    private static string RequireInitialEntryId(LaunchEntry? entry)
+    private static string RequireInitialEntryId(EntryPrefill? prefill)
     {
-        if (entry is null)
+        if (prefill is null)
             return string.Empty;
 
-        var id = LauncherEntryIds.Normalize(entry.Id);
+        var id = LauncherEntryIds.Normalize(prefill.Id);
         if (!LauncherEntryIds.IsUsable(id))
             throw new InvalidDataException("Launcher entry dialog initial id is required.");
 
@@ -183,14 +192,14 @@ public sealed class EntryDetailsWindow : Window
     }
 
     private static string RequireInitialEntryText(
-        LaunchEntry? entry,
-        Func<LaunchEntry, string?> selectText,
+        EntryPrefill? prefill,
+        Func<EntryPrefill, string?> selectText,
         string fieldName)
     {
-        if (entry is null)
+        if (prefill is null)
             return string.Empty;
 
-        var text = LauncherEntryText.Normalize(selectText(entry));
+        var text = LauncherEntryText.Normalize(selectText(prefill));
         if (text.Length == 0)
             throw new InvalidDataException($"Launcher entry dialog initial {fieldName} is required.");
 

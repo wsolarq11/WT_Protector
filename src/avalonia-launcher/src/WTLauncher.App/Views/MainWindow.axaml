@@ -579,7 +579,9 @@
         <!-- L47: Intentional z-order overlay — empty-state TextBlock and ItemsControl
              are siblings in a single-cell Grid. IsVisible binding ensures only one is
              visible at any time, so there is no visual overlap during normal use. -->
-        <TextBlock HorizontalAlignment="Center"
+        <TextBlock x:Name="EmptyStateCardsText"
+                   AutomationProperties.Name="无可见按钮"
+                   HorizontalAlignment="Center"
                    VerticalAlignment="Center"
                    FontSize="16"
                    Foreground="{StaticResource TextMutedBrush}"
@@ -752,7 +754,9 @@
             </ListBox>
           </Grid>
         </Border>
-      <TextBlock HorizontalAlignment="Center"
+      <TextBlock x:Name="EmptyStateDetailsText"
+                 AutomationProperties.Name="无可见按钮"
+                 HorizontalAlignment="Center"
                  VerticalAlignment="Center"
                  FontSize="16"
                  Foreground="{StaticResource TextMutedBrush}"
@@ -856,7 +860,9 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <TextBlock HorizontalAlignment="Center"
+        <TextBlock x:Name="EmptyStateNamesText"
+                   AutomationProperties.Name="无可见按钮"
+                   HorizontalAlignment="Center"
                    VerticalAlignment="Center"
                    FontSize="16"
                    Foreground="{StaticResource TextMutedBrush}"

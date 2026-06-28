@@ -75,7 +75,8 @@ public static class LauncherSettingsStore
             return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
-            or PathTooLongException or DirectoryNotFoundException or System.Security.SecurityException)
+            or PathTooLongException or DirectoryNotFoundException or System.Security.SecurityException
+            or InvalidDataException or InvalidOperationException)
         {
             updatedSettings = store.Settings;
             return false;

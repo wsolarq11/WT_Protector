@@ -21,6 +21,8 @@ public sealed partial class MainWindowViewModel
 
     private void MoveEntryRelative(LauncherEntryViewModel entry, int targetOffset, bool insertAfter)
     {
+        // Sync entries first so the snapshot includes any newly-added IDs.
+        EnsureCustomOrderContainsEntries();
         var snapshot = CaptureSettingsMutationSnapshot();
 
         if (!TryResolveVisibleMoveTarget(entry, targetOffset, out var target))
@@ -29,8 +31,6 @@ public sealed partial class MainWindowViewModel
             RefreshReorderCommandState();
             return;
         }
-
-        EnsureCustomOrderContainsEntries();
         var (changed, updatedOrder) = LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, entry.Id, target.Id, insertAfter);
         if (!changed)
         {

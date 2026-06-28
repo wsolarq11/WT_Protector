@@ -17,6 +17,12 @@ public sealed class FastWrapPanel : Panel
     public static readonly StyledProperty<double> LineSpacingProperty =
         AvaloniaProperty.Register<FastWrapPanel, double>(nameof(LineSpacing), 8);
 
+    static FastWrapPanel()
+    {
+        ItemSpacingProperty.Changed.AddClassHandler<FastWrapPanel>((p, _) => p.InvalidateMeasure());
+        LineSpacingProperty.Changed.AddClassHandler<FastWrapPanel>((p, _) => p.InvalidateMeasure());
+    }
+
     public double ItemSpacing
     {
         get => GetValue(ItemSpacingProperty);
@@ -51,8 +57,8 @@ public sealed class FastWrapPanel : Panel
             // at row start.
             var measureHeight = double.IsFinite(availableSize.Height) ? availableSize.Height : double.PositiveInfinity;
             child.Measure(new Size(width, measureHeight));
-            var childWidth = child.DesiredSize.Width;
-            var childHeight = child.DesiredSize.Height;
+            var childWidth = double.IsFinite(child.DesiredSize.Width) ? child.DesiredSize.Width : 0;
+            var childHeight = double.IsFinite(child.DesiredSize.Height) ? child.DesiredSize.Height : 0;
 
             // ponytail: rowWidth now tracks cursor position (including trailing spacing),
             // matching ArrangeOverride's x. This makes the wrap condition identical in both passes.
@@ -89,8 +95,11 @@ public sealed class FastWrapPanel : Panel
         {
             // Clamp child width to panel width to prevent overflow at row start,
             // even if the child's DesiredSize exceeds the panel bounds.
-            var childWidth = Math.Min(child.DesiredSize.Width, containerWidth);
-            var childHeight = child.DesiredSize.Height;
+            // Guard against NaN/Infinity from unresolved bindings or layout bugs.
+            var childW = child.DesiredSize.Width;
+            var childH = child.DesiredSize.Height;
+            var childWidth = double.IsFinite(childW) ? Math.Min(childW, containerWidth) : 0;
+            var childHeight = double.IsFinite(childH) ? childH : 0;
 
             if (x + childWidth > containerWidth && x > 0)
             {

@@ -39,7 +39,7 @@ public static class LauncherPresetFiles
         {
             Presets = normalizedPresets.ToImmutableList(),
             DefaultPresetId = NormalizeDefaultPresetId(presets.DefaultPresetId, normalizedPresets),
-            SchemaVersion = LauncherPresetStore.ExpectedPresetSchemaVersion,
+            SchemaVersion = LauncherStore.ExpectedStoreSchemaVersion,
         };
     }
 
@@ -86,6 +86,10 @@ public static class LauncherPresetFiles
 
             if (!seen.Add(entryId))
                 throw new InvalidDataException($"Launcher preset {index} entryIds[{i}] is duplicate: {entryId}.");
+            if (LauncherEntryIds.WindowsReservedNames.Contains(entryId))
+                throw new InvalidDataException($"Launcher preset {index} entryIds[{i}] is a Windows reserved name: {entryId}.");
+            if (entryId.Contains('\\') || entryId.Contains('/') || entryId.Contains(".."))
+                throw new InvalidDataException($"Launcher preset {index} entryIds[{i}] contains path separators or '..': {entryId}.");
 
             normalized.Add(entryId);
         }

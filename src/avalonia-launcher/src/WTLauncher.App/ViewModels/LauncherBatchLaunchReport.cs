@@ -136,7 +136,7 @@ internal sealed class LauncherBatchLaunchReportBuilder
     {
         ArgumentNullException.ThrowIfNull(entryName);
         ArgumentNullException.ThrowIfNull(exception);
-        _failures.Add($"{LauncherEntryText.RequireNonEmpty(entryName)}: {exception.Message}");
+        _failures.Add($"{LauncherEntryText.RequireNonEmpty(entryName)}: {ExceptionMessageFormatter.ForUser(exception)}");
         FailureIndex ??= failureIndex;
         if (failureIndex is not null)
             _failureIndices.Add(failureIndex.Value);
@@ -145,6 +145,6 @@ internal sealed class LauncherBatchLaunchReportBuilder
     public void RecordFailure(Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        _failures.Add(exception.Message);
+        _failures.Add(ExceptionMessageFormatter.ForUser(exception));
     }
 }

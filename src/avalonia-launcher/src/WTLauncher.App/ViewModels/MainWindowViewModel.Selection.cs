@@ -155,6 +155,7 @@ public sealed partial class MainWindowViewModel
                 entryById.TryGetValue(preflightItem.EntryId, out var entryVm);
                 entryVm?.RecordLaunchFromOwner(timestamp);
             }
+            // Save AFTER timestamps are recorded so launch history is persisted.
             if (startedCount > 0 && !SaveConfig())
                 return;
             DryRunText = LauncherBatchLaunchReceiptText.Format(preflight, report);

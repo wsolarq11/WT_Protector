@@ -587,3 +587,23 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **预防** | 当发现自己在实现"跨文件事务"时，先问：能不能把这些文件合并成一个？如果能，事务由文件系统提供，不需要自己实现。如果不能（文件太大、不同进程写入不同文件、安全隔离要求），再考虑应用层协议。 |
 | **适用** | 所有"多个配置文件需要一致性"的场景。单文件 + 原子 rename 几乎总是优于多文件 + 应用层事务。 |
 
+### 6.20 不可变记录拷贝必须传播所有字段
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-28 UltraReview C1: `LauncherEntryDrafts.CreateEntry` 从 `previousEntry` 只传播了 `UpdatedAtUtc`，遗漏了 `LaunchedAtUtc` |
+| **问题** | `CreateEntry` 构造新的 `LaunchEntry` 时显式设置了 `UpdatedAtUtc = previousEntry?.UpdatedAtUtc ?? string.Empty`，但遗漏了 `LaunchedAtUtc`。编辑条目后 `launchedAtUtc` 静默变为空字符串——最近启动排序丢失该条目的历史。 |
+| **根因** | 不可变记录的 `with { }` 克隆只显式声明要复制的字段。新增字段后，所有手动构造 `new()` 而非 `with { }` 的拷贝点必须同步更新。没有编译器强制执行——这是"变异点审计"问题。 |
+| **预防** | (1) 记录定义旁边的注释列出所有手动构造点。新增字段后，grep 所有 `= new RecordType` 和 `= new()` 确保新字段被传播。(2) 工厂方法 (`CreateEntry`) 应接受 `previousEntry` 并在注释中声明传播行为。(3) 对带时间的记录考虑在测试中断言 `LaunchedAtUtc` 在编辑后不为空。 |
+| **适用** | 所有使用不可变记录 + 手动构造函数拷贝的场景。 |
+
+### 6.21 Schema 版本迁移：不接受旧版本 = 测试崩溃
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-06-28 Ponytail-audit 执行后: `LauncherPresetStore.ExpectedPresetSchemaVersion` 保持为 1，但 `LauncherPresetFiles.Validate()` 强制写入 `SchemaVersion = 2`。Load 时 `if (2 > 1)` 抛出异常，89 个测试失败。 |
+| **问题** | schema 版本号在两个位置定义（Store 和 Validate），但版本升级时只更新了一处。`Validate()` 写入 v2，`Load()` 只能读 v1——测试中写 v1 数据再读回时被拒绝。 |
+| **根因** | Schema 版本号不是单一来源。两个常量 (`ExpectedPresetSchemaVersion` vs `ExpectedStoreSchemaVersion`) 没有编译时关联。当一个更新时，另一个保持旧值，形成"生产者写新版、消费者只读旧版"的不一致。 |
+| **预防** | (1) Schema 版本必须是单一常量。(2) 升级 schema 时，必须接受旧版本（至少 1 个主版本回退）或提供显式迁移路径。(3) `schemaVersion < expected` 应该触发迁移（不是拒绝），除非数据格式不兼容。(4) 升级验证清单：grep 所有 `ExpectedSchemaVersion` 常量 → 确认全部同步 → 运行全部测试 → 预期 0 失败。 |
+| **适用** | 所有 JSON schema 版本管理的场景。 |
+

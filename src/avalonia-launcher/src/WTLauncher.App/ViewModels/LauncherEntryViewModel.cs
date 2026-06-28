@@ -1,6 +1,7 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -154,12 +155,20 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     private Task CloneAsync() => _owner.CloneEntryAsync(this);
 
     [RelayCommand(CanExecute = nameof(CanMoveUp))]
-    private void MoveUp() => _owner.MoveEntryUp(this);
+    private void MoveUp()
+    {
+        try { _owner.MoveEntryUp(this); }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex)) { ErrorLog.Write(ex, "MoveUp"); }
+    }
 
     private bool CanMoveUp() => _owner.CanMoveEntryUp(this);
 
     [RelayCommand(CanExecute = nameof(CanMoveDown))]
-    private void MoveDown() => _owner.MoveEntryDown(this);
+    private void MoveDown()
+    {
+        try { _owner.MoveEntryDown(this); }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex)) { ErrorLog.Write(ex, "MoveDown"); }
+    }
 
     private bool CanMoveDown() => _owner.CanMoveEntryDown(this);
 

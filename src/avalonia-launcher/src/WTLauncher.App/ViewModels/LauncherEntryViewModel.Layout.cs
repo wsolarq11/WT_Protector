@@ -63,12 +63,9 @@ public sealed partial class LauncherEntryViewModel
     }
 
     /// <summary>
-    /// 5px hysteresis band to prevent rapid toggling between density levels
-    /// when card dimensions oscillate near a threshold. Evaluates at both the
-    /// current size and at size+5, returning the least-dense result. This means
-    /// shrinking must pass 5px beyond the nominal threshold to switch denser,
-    /// while expanding switches back at the nominal threshold — a clean 5px dead
-    /// band that eliminates flicker.
+    /// Anti-flicker: evaluates density at both current and offset (+5px) dimensions,
+    /// returning the least-dense result via LeastDense. The offset pushes toward the
+    /// less-dense threshold, creating a narrow (~1px effective) hysteresis band.
     /// </summary>
     private static LauncherEntryLayoutDensity MeasureLayoutDensity(double width, double height)
     {

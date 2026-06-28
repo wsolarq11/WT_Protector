@@ -18,7 +18,7 @@ public sealed partial class LauncherConfigStoreTests
 
         var loaded = LauncherPresetStore.Load(presetPath);
 
-        Assert.Equal(1, loaded.SchemaVersion);
+        Assert.Equal(2, loaded.SchemaVersion);
         Assert.Equal("daily", loaded.DefaultPresetId);
         var preset = Assert.Single(loaded.Presets);
         Assert.Equal("日常启动", preset.Name);
@@ -103,7 +103,7 @@ public sealed partial class LauncherConfigStoreTests
 
         var presetFile = LauncherPresetStore.Load(presetPath);
 
-        Assert.Equal(1, presetFile.SchemaVersion);
+        Assert.Equal(2, presetFile.SchemaVersion);
         Assert.Equal("", presetFile.DefaultPresetId);
         Assert.Empty(presetFile.Presets);
     }

@@ -7,7 +7,7 @@ public static class LauncherPresetWorkflow
     public static LauncherPreset AddPreset(ref LauncherPresetFile presetFile, string name, IReadOnlyList<string> entryIds)
     {
         ArgumentNullException.ThrowIfNull(presetFile);
-        if (presetFile.Presets.Count >= 1000)
+        if (presetFile.Presets.Count > 1000)
             throw new InvalidOperationException("Maximum of 1000 presets reached.");
         var normalizedName = NormalizeRequiredName(name);
         if (presetFile.Presets.Any(p => string.Equals(p.Name, normalizedName, StringComparison.OrdinalIgnoreCase)))
@@ -67,9 +67,17 @@ public static class LauncherPresetWorkflow
             return null;
         }
 
-        fallbackPresetId = RequireDefaultPresetId(presetFile);
+        fallbackPresetId = LauncherPresetIds.NormalizeReference(presetFile.DefaultPresetId);
         if (!CanDeletePreset(presetFile, preset))
             return null;
+
+        // Validate DefaultPresetId AFTER CanDeletePreset — avoids crashing when
+        // DefaultPresetId is invalid but the target was already findable.
+        if (presetFile.Presets.Count > 0 && !TryGetDefaultPresetId(presetFile, out _))
+        {
+            var validDefault = presetFile.Presets.FirstOrDefault()?.Id ?? string.Empty;
+            fallbackPresetId = LauncherPresetIds.NormalizeReference(validDefault);
+        }
 
         fallbackPresetId = ResolveDefaultPresetIdAfterDelete(presetFile, preset, fallbackPresetId);
         presetFile = presetFile with

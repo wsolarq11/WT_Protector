@@ -185,9 +185,11 @@ public sealed partial class MainWindow
 
     private void ForceCleanup()
     {
+        // Set _isDragging BEFORE releasing capture — Capture(null) can
+        // synchronously fire OnDragPointerCaptureLost which checks this guard.
+        _isDragging = false;
         _dragPointer?.Capture(null);
         _dragPointer = null;
-        _isDragging = false;
         _activeDragEntryId = null;
 
         SuppressDragTransitions(false);
@@ -195,6 +197,7 @@ public sealed partial class MainWindow
         DisplayModeComboBox.IsEnabled = true;
 
         if (DataContext is MainWindowViewModel vm)
+            // Cancel is a no-op when the session was already cleared by Commit.
             vm.CancelDragReorder();
     }
 

@@ -2,11 +2,11 @@ using WTLauncher.Core;
 namespace WTLauncher.App.ViewModels;
 
 public sealed record EntryDraft(
-    string Id,
-    string Name,
-    string Directory,
-    string Command,
-    bool Selected);
+    string Id = "",
+    string Name = "",
+    string Directory = "",
+    string Command = "",
+    bool Selected = false);
 public static class LauncherEntryDrafts
 {
 
@@ -43,6 +43,7 @@ public static class LauncherEntryDrafts
             Command = normalized.Command,
             Selected = normalized.Selected,
             UpdatedAtUtc = previousEntry?.UpdatedAtUtc ?? string.Empty,
+            LaunchedAtUtc = previousEntry?.LaunchedAtUtc ?? string.Empty,
         };
     }
 

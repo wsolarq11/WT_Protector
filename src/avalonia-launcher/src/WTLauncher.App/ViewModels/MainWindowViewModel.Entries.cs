@@ -58,7 +58,7 @@ public sealed partial class MainWindowViewModel
         _entries.Add(new LauncherEntryViewModel(entry, this));
         _settings = _settings with { CustomEntryOrder = _settings.CustomEntryOrder.Add(entry.Id) };
 
-        if (!SaveEntryCollectionChanges(savePresets: false, snapshot))
+        if (!SaveEntryCollectionChanges(snapshot))
             return;
 
         ApplyStatusText(LauncherEntryStatus.Added(entry.Name));
@@ -107,7 +107,7 @@ public sealed partial class MainWindowViewModel
         _entries.Add(new LauncherEntryViewModel(entry, this));
         _settings = _settings with { CustomEntryOrder = _settings.CustomEntryOrder.Add(entry.Id) };
 
-        if (!SaveEntryCollectionChanges(savePresets: false, snapshot))
+        if (!SaveEntryCollectionChanges(snapshot))
             return;
 
         ApplyStatusText($"已复制按钮: {source.Name} → {entry.Name}（已保存）");
@@ -173,7 +173,7 @@ public sealed partial class MainWindowViewModel
             }
         }
 
-        if (!SaveEntryCollectionChanges(savePresets: true, snapshot))
+        if (!SaveEntryCollectionChanges(snapshot))
             return;
 
         ApplyStatusText(LauncherEntryStatus.Updated(item.Name));
@@ -196,7 +196,7 @@ public sealed partial class MainWindowViewModel
         _presetFile = updatedPresetFile;
         _settings = _settings with { CustomEntryOrder = updatedOrder };
         _entries.Remove(item);
-        if (!SaveEntryCollectionChanges(savePresets: true, snapshot))
+        if (!SaveEntryCollectionChanges(snapshot))
             return;
 
         ApplyStatusText(LauncherEntryStatus.Deleted(target.EntryName));
@@ -240,7 +240,7 @@ public sealed partial class MainWindowViewModel
         return null;
     }
 
-    private bool SaveEntryCollectionChanges(bool savePresets, LauncherEntryMutationSnapshot rollbackSnapshot)
+    private bool SaveEntryCollectionChanges(LauncherEntryMutationSnapshot rollbackSnapshot)
     {
         TotalCount = _entries.Count;
         EnsureCustomOrderContainsEntries();

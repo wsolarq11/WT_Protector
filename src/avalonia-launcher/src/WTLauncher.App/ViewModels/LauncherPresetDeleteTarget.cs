@@ -7,7 +7,7 @@ public sealed record LauncherPresetDeleteTarget
     public LauncherPresetDeleteTarget(string presetId, string presetName, IReadOnlyList<string> entryIds)
     {
         PresetId = RequirePresetId(presetId);
-        PresetName = LauncherEntryText.RequireNonEmpty(presetName);
+        PresetName = LauncherEntryText.RequireNonEmpty(presetName, "Preset name");
         var validatedEntryIds = LauncherEntryIds.ToRequiredUniqueList(entryIds, nameof(entryIds));
         EntryCount = validatedEntryIds.Count;
     }

@@ -26,13 +26,13 @@ public static class LauncherEntryReferences
             return (presetFile, customEntryOrder, false);
 
         // Pre-check all reference lists for target ID conflict before modifying anything.
-        if (customEntryOrder.Any(id => LauncherEntryIds.Same(id, normalizedNewEntryId) && !LauncherEntryIds.Same(id, normalizedOldEntryId)))
+        if (customEntryOrder.Any(id => LauncherEntryIds.SameNormalized(id, normalizedNewEntryId) && !LauncherEntryIds.SameNormalized(id, normalizedOldEntryId)))
             throw new ArgumentException(
                 $"Cannot rename to '{normalizedNewEntryId}' because that ID is already present.",
                 nameof(newEntryId));
         foreach (var p in presetFile.Presets)
         {
-            if (p.EntryIds.Any(id => LauncherEntryIds.Same(id, normalizedNewEntryId) && !LauncherEntryIds.Same(id, normalizedOldEntryId)))
+            if (p.EntryIds.Any(id => LauncherEntryIds.SameNormalized(id, normalizedNewEntryId) && !LauncherEntryIds.SameNormalized(id, normalizedOldEntryId)))
                 throw new ArgumentException(
                     $"Cannot rename to '{normalizedNewEntryId}' because that ID is already present.",
                     nameof(newEntryId));
@@ -116,7 +116,7 @@ public static class LauncherEntryReferences
     private static List<string> RemoveReferences(IEnumerable<string> entryIds, string entryId)
     {
         return LauncherEntryIds.ToRequiredUniqueList(entryIds, nameof(entryIds))
-            .Where(id => !LauncherEntryIds.Same(id, entryId))
+            .Where(id => !LauncherEntryIds.SameNormalized(id, entryId))
             .ToList();
     }
 

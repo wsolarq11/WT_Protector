@@ -50,7 +50,7 @@ public static class LauncherEntryLayoutCalculator
         // the next valid layout pass supplies real measurements.
         var safeWidth = double.IsFinite(availableWidth) && availableWidth > 0 ? availableWidth : FallbackAvailableWidth;
         var safeHeight = double.IsFinite(availableHeight) && availableHeight > 0 ? availableHeight : FallbackAvailableHeight;
-        var count = Math.Max(1, itemCount);
+        var count = Math.Min(Math.Max(1, itemCount), 10000); // ponytail: cap to prevent unbounded loop
         var cardLayout = CalculateCardLayout(safeWidth, safeHeight, count);
         var nameTileLayout = CalculateNameTileLayout(safeWidth, safeHeight, count);
         return (cardLayout.Width, cardLayout.Height, nameTileLayout.Width, nameTileLayout.Height);

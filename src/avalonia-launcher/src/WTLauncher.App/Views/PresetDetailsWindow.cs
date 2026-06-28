@@ -68,6 +68,9 @@ public sealed class PresetDetailsWindow : Window
         };
     }
 
+    // ponytail: intentional duplicate of ViewModel validation.
+    // This UI-layer check gives instant visual feedback (red error text + focus)
+    // before the save-path delegates to ViewModel validation. Keep both.
     private void Submit()
     {
         var name = LauncherEntryText.Normalize(_nameBox.Text);

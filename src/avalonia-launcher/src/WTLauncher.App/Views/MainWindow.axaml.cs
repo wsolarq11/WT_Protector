@@ -43,6 +43,7 @@ public sealed partial class MainWindow : Window
     private int _keyboardFocusIndex = -1;
     private int _pendingScrollRestoreVersion;
     private EventHandler<SizeChangedEventArgs>? _onSizeChangedHandler;
+    private EventHandler? _onOpenedHandler;
 
     public MainWindow()
     {
@@ -61,7 +62,9 @@ public sealed partial class MainWindow : Window
                 viewModel.Presets.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase))
                 .ShowDialog<string?>(this);
         viewModel.ConfirmDeletePresetAsync = target => new ConfirmPresetDeleteWindow(target).ShowDialog<bool>(this);
-        viewModel.RequestEntryDraftAsync = entry => new EntryDetailsWindow(entry, viewModel.GetPresetReferenceCount(entry?.Id ?? ""), viewModel.CommandTemplates).ShowDialog<EntryDraft?>(this);
+        viewModel.RequestEntryDraftAsync = entry => new EntryDetailsWindow(
+            entry is not null ? new EntryDetailsWindow.EntryPrefill(entry.Id, entry.Name, entry.Directory, entry.Command, entry.Selected) : null,
+            viewModel.GetPresetReferenceCount(entry?.Id ?? ""), viewModel.CommandTemplates).ShowDialog<EntryDraft?>(this);
         viewModel.ConfirmDeleteEntryAsync = target => new ConfirmEntryDeleteWindow(target).ShowDialog<bool>(this);
         // P6: Pointer-capture drag replaces OLE DragDrop.
         // OLE DragDrop runs a nested Win32 message loop that blocks Avalonia's render
@@ -72,7 +75,7 @@ public sealed partial class MainWindow : Window
         PointerCaptureLost += OnDragPointerCaptureLost;
         _onSizeChangedHandler = (_, _) => UpdateCardRegionSize(viewModel);
         SizeChanged += _onSizeChangedHandler;
-        Opened += (_, _) =>
+        _onOpenedHandler = (_, _) =>
         {
             UpdateCardRegionSize(viewModel);
             // Restore saved window position and state.
@@ -108,6 +111,7 @@ public sealed partial class MainWindow : Window
             if (w.WindowState == "Maximized")
                 WindowState = WindowState.Maximized;
         };
+        Opened += _onOpenedHandler;
         Closing += OnClosing;
         KeyDown += OnWindowKeyDown;
         DisplayModeComboBox.SelectionChanged += OnDisplayModeSelectionChanged;
@@ -265,6 +269,8 @@ public sealed partial class MainWindow : Window
 
         if (_onSizeChangedHandler is not null)
             SizeChanged -= _onSizeChangedHandler;
+        if (_onOpenedHandler is not null)
+            Opened -= _onOpenedHandler;
         KeyDown -= OnWindowKeyDown;
         DisplayModeComboBox.SelectionChanged -= OnDisplayModeSelectionChanged;
 

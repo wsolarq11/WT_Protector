@@ -16,11 +16,14 @@ public static class LauncherPresetIds
         var baseId = Normalize(name);
         var candidate = baseId;
         var index = 2;
+        const int maxAttempts = 10000;
         var existing = existingIds
             .Select(Normalize)
             .ToHashSet(Comparer);
         while (existing.Contains(candidate))
         {
+            if (index > maxAttempts)
+                throw new InvalidOperationException("Cannot generate a unique preset ID.");
             candidate = $"{baseId}-{index++}";
         }
 

@@ -67,7 +67,7 @@ public static class LauncherJson
             {
                 return loadAndValidate(path);
             }
-            catch (Exception ex) when (ex is JsonException or InvalidDataException or FileNotFoundException or DirectoryNotFoundException)
+            catch (Exception ex) when (ex is JsonException or InvalidDataException or FileNotFoundException or DirectoryNotFoundException or IOException)
             {
                 loadException = ex;
             }

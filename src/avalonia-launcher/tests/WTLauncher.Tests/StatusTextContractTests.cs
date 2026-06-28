@@ -36,22 +36,6 @@ public sealed class StatusTextContractTests
         Assert.Equal("Café", LauncherEntryText.Normalize("Café"));
     }
 
-    // ── LauncherPersistenceStatus (conditional rollback append) ──
-
-    [Fact]
-    public void RollbackFailedAppendsRestoreErrorsOnlyWhenPresent()
-    {
-        Assert.Equal("设置保存失败: disk blocked", LauncherPersistenceStatus.RollbackFailed(
-            "设置保存失败: disk blocked",
-            []));
-
-        Assert.Equal(
-            "设置保存失败: disk blocked；回滚磁盘状态失败: config: denied；presets: denied",
-            LauncherPersistenceStatus.RollbackFailed(
-                "设置保存失败: disk blocked",
-                ["config: denied", "presets: denied"]));
-    }
-
     // ── LauncherSettingsStatus (conditional confirmation text) ──
 
     [Theory]

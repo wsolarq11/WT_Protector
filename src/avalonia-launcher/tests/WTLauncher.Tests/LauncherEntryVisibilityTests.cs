@@ -68,8 +68,8 @@ public sealed class LauncherEntryVisibilityTests
 
         // ponytail: use empty filter so the null-field entry passes filtering and
         // is validated in the sort-phase ThrowIfInvalidProjection instead of
-        // depending on RequireText inside MatchesFilter (which no longer normalizes).
-        var exception = Assert.Throws<InvalidDataException>(() =>
+        // depending on RequireNonEmpty inside MatchesFilter (which no longer normalizes).
+        var exception = Assert.Throws<InvalidOperationException>(() =>
             LauncherEntryVisibility.FilterAndSort(
                 entries,
                 string.Empty,
@@ -77,7 +77,7 @@ public sealed class LauncherEntryVisibilityTests
                 customOrder,
                 static entry => entry));
 
-        Assert.Equal("Launcher entry name is required for projection.", exception.Message);
+        Assert.Equal("Entry name is required.", exception.Message);
     }
 
     [Fact]

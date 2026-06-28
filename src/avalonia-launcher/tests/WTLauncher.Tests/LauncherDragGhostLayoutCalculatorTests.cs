@@ -35,24 +35,17 @@ public sealed class LauncherDragGhostLayoutCalculatorTests
     }
 
     [Fact]
-    public void Calculate_ClampsNegativeContainerSize()
+    public void CalculatePosition_ClampsNegativeContainerSize()
     {
-        // Negative container sizes should be clamped to 0, not produce
-        // unexpected ghost positions.
-        var layout = LauncherDragGhostLayoutCalculator.Calculate(
-            sourceWidth: 284,
-            sourceHeight: 128,
+        var (left, top) = LauncherDragGhostLayoutCalculator.CalculatePosition(
             pointerX: 50,
             pointerY: 50,
-            windowWidth: -100,
-            windowHeight: -200);
+            containerWidth: -100,
+            containerHeight: -200,
+            ghostWidth: 284,
+            ghostHeight: 128);
 
-        // Ghost dimensions should be preserved.
-        Assert.Equal(284, layout.Width);
-        Assert.Equal(128, layout.Height);
-        // With container clamped to 0 and ghost > container, the clamp logic
-        // will produce predictable positions (no NaN or wildly negative values).
-        Assert.True(double.IsFinite(layout.Left));
-        Assert.True(double.IsFinite(layout.Top));
+        Assert.True(double.IsFinite(left));
+        Assert.True(double.IsFinite(top));
     }
 }

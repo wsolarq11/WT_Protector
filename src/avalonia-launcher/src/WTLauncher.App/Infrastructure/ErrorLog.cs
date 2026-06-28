@@ -25,7 +25,6 @@ internal static class ErrorLog
     private static readonly string LogPath = Path.Combine(LogDirectory, "errors.log");
 
     private static int _isWriting;
-    private static string? _ensuredDirectory;
 
     /// <summary>
     /// Write an exception with a human-readable context tag.
@@ -89,11 +88,8 @@ internal static class ErrorLog
     /// </summary>
     private static void EnsureLogDirectory(string logDirectory)
     {
-        if (_ensuredDirectory == logDirectory)
-            return;
-
+        // ponytail: drop cache — Directory.CreateDirectory is idempotent.
         Directory.CreateDirectory(logDirectory);
-        _ensuredDirectory = logDirectory;
     }
 
     /// <summary>

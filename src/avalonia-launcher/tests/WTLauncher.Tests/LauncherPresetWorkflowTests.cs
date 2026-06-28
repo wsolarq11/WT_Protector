@@ -334,19 +334,22 @@ public sealed class LauncherPresetWorkflowTests
     }
 
     [Fact]
-    public void DeletePreset_RejectsMissingDefaultBeforeMutatingPresetFile()
+    public void DeletePreset_HealsInvalidDefaultPresetIdBeforeDeletion()
     {
+        // When DefaultPresetId is invalid (references a non-existent preset),
+        // DeletePreset falls back to the first existing preset instead of crashing.
         var presetFile = PresetFile(
             "missing",
             Preset("daily", "Daily", "one"),
             Preset("secondary", "Secondary", "two"));
 
-        var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherPresetWorkflow.DeletePreset(ref presetFile, "secondary", out _));
+        var deleted = LauncherPresetWorkflow.DeletePreset(ref presetFile, "secondary", out _);
 
-        Assert.Equal("Launcher preset default id does not match any preset: missing.", exception.Message);
-        Assert.Equal("missing", presetFile.DefaultPresetId);
-        Assert.Equal(["daily", "secondary"], presetFile.Presets.Select(preset => preset.Id).ToArray());
+        Assert.NotNull(deleted);
+        // When DefaultPresetId is invalid (references a non-existent preset),
+        // DeletePreset falls back to the first existing preset instead of crashing.
+        Assert.Equal("daily", presetFile.DefaultPresetId);
+        Assert.Equal(["daily"], presetFile.Presets.Select(preset => preset.Id).ToArray());
     }
 
     [Fact]

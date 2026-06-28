@@ -41,7 +41,7 @@ public static class LauncherEntryVisibility
 
         // FormKC-normalize so search tokens match the normalized entry fields
         // (FormKC converts fullwidth chars like U+FF05 ％ → U+0025 %).
-        var normalizedFilter = LauncherEntryText.Normalize(filterText).Trim();
+        var normalizedFilter = LauncherEntryText.Normalize(filterText);
         List<TEntry>? source = null;
         List<TEntry> filtered;
         if (normalizedFilter.Length == 0)
@@ -76,7 +76,7 @@ public static class LauncherEntryVisibility
                     var launchEntry = selectEntry(entry);
                     RequireEntryId(launchEntry);
                     timeCache[entry] = ParseLaunchedAt(launchEntry.LaunchedAtUtc);
-                    nameCache[entry] = RequireText(launchEntry.Name, "name");
+                    nameCache[entry] = LauncherEntryText.RequireNonEmpty(launchEntry.Name);
                 }
                 comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Recent, timeCache: timeCache, nameCache: nameCache);
                 break;
@@ -90,7 +90,7 @@ public static class LauncherEntryVisibility
                     var launchEntry = selectEntry(entry);
                     RequireEntryId(launchEntry);
                     timeCache[entry] = ParseUpdatedAt(launchEntry.UpdatedAtUtc);
-                    nameCache[entry] = RequireText(launchEntry.Name, "name");
+                    nameCache[entry] = LauncherEntryText.RequireNonEmpty(launchEntry.Name);
                 }
                 comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Updated, timeCache: timeCache, nameCache: nameCache);
                 break;
@@ -98,7 +98,7 @@ public static class LauncherEntryVisibility
             case AlphabeticalSortModeId:
                 nameCache = new Dictionary<TEntry, string>(filtered.Count);
                 foreach (var entry in filtered)
-                    nameCache[entry] = RequireText(selectEntry(entry).Name, "name");
+                    nameCache[entry] = LauncherEntryText.RequireNonEmpty(selectEntry(entry).Name);
                 comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Alphabetical, nameCache: nameCache);
                 break;
             default:
@@ -129,7 +129,7 @@ public static class LauncherEntryVisibility
         {
             var entry = selectEntry(item);
             RequireEntryId(entry);
-            RequireText(entry.Name, "name");
+            LauncherEntryText.RequireNonEmpty(entry.Name);
         }
     }
 
@@ -170,7 +170,7 @@ public static class LauncherEntryVisibility
         if (nameCache is not null && nameCache.TryGetValue(key, out var cached))
             return cached;
 
-        return RequireText(entry.Name, "name");
+        return LauncherEntryText.RequireNonEmpty(entry.Name);
     }
 
     private static bool MatchesFilter(LaunchEntry entry, string[] tokens)
@@ -225,15 +225,6 @@ public static class LauncherEntryVisibility
 
     private static string RequireEntryId(LaunchEntry entry) =>
         LauncherEntryIds.RequireEntryId(entry.Id, nameof(LaunchEntry.Id));
-
-    private static string RequireText(string? value, string fieldName)
-    {
-        var normalized = LauncherEntryText.Normalize(value);
-        if (normalized.Length == 0)
-            throw new InvalidDataException($"Launcher entry {fieldName} is required for projection.");
-
-        return normalized;
-    }
 
     private static DateTimeOffset ParseLaunchedAt(string? value) =>
         ParseTimestamp(value, "launchedAtUtc");

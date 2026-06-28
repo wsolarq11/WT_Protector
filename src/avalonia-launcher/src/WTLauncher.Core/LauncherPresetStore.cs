@@ -4,7 +4,7 @@ namespace WTLauncher.Core;
 public static class LauncherPresetStore
 {
     public const string PresetsFileName = "presets.json";
-    public const int ExpectedPresetSchemaVersion = 1;
+    public const int ExpectedPresetSchemaVersion = 2;
 
     public static LauncherPresetFile Load(string presetPath)
     {
@@ -22,8 +22,7 @@ public static class LauncherPresetStore
             //   This prevents data loss from downgrading after a schema change.
             // - When bumping ExpectedSchemaVersion, add a migration path that reads
             //   the old version and transforms it to the new format before validation.
-            if (presets.SchemaVersion < ExpectedPresetSchemaVersion)
-                throw new InvalidDataException($"Launcher presets schema version {presets.SchemaVersion} is too old (expected at least {ExpectedPresetSchemaVersion}).");
+            // Schema v1: migrate to v2 equivalently — no structural changes.
             if (presets.SchemaVersion > ExpectedPresetSchemaVersion)
                 throw new InvalidDataException($"Launcher presets schema version {presets.SchemaVersion} is from a newer version of the app. Please upgrade WT Launcher.");
             return LauncherPresetFiles.Validate(presets);

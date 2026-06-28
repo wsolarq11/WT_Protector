@@ -1,0 +1,1 @@
+{"schemaVersion":1,"run":{"runId":"wlwwj2kml","workflowName":"Fix medium and low findings batch","status":"completed","phases":[],"declaredPhases":[],"currentPhase":null,"agents":[{"id":0,"status":"running"},{"id":1,"status":"running"},{"id":2,"status":"running"}],"agentCount":3,"startedAt":1782656653528,"updatedAt":1782656653533,"returnValue":{"r1":{},"r2":{},"r3":{}}}}

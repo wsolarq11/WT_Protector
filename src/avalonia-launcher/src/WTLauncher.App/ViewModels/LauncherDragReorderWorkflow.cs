@@ -151,7 +151,7 @@ public sealed class LauncherDragReorderWorkflow
         {
             // Rollback settings on any unexpected commit failure.
             _settings = session.Snapshot.RestoreCustomEntryOrder(_settings);
-            return ($"保存失败: {ex.Message}", true);
+            return ($"保存失败: {ExceptionMessageFormatter.ForUser(ex)}", true);
         }
         finally
         {

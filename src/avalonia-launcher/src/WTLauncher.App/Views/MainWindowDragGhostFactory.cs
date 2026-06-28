@@ -22,7 +22,9 @@ public static class MainWindowDragGhostFactory
         double pointerX,
         double pointerY)
     {
-        var layout = LauncherDragGhostLayoutCalculator.Calculate(sourceWidth, sourceHeight, pointerX, pointerY);
+        var sw = double.IsFinite(sourceWidth) ? sourceWidth : 0;
+        var sh = double.IsFinite(sourceHeight) ? sourceHeight : 0;
+        var layout = LauncherDragGhostLayoutCalculator.Calculate(sw, sh, pointerX, pointerY);
         var control = new Border
         {
             Width = layout.Width,

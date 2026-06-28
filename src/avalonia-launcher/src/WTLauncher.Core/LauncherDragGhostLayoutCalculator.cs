@@ -13,38 +13,12 @@ public static class LauncherDragGhostLayoutCalculator
         double pointerX,
         double pointerY)
     {
-        var (left, top) = CalculatePosition(pointerX, pointerY);
-        return (
-            Math.Max(MinWidth, sourceWidth),
-            Math.Max(MinHeight, sourceHeight),
-            left,
-            top);
-    }
-
-    /// <summary>
-    /// Calculates ghost layout with window-bounds clamping so the ghost never
-    /// renders fully off-screen. At least 50% of the ghost stays visible inside
-    /// the window.
-    /// </summary>
-    public static (double Width, double Height, double Left, double Top) Calculate(
-        double sourceWidth,
-        double sourceHeight,
-        double pointerX,
-        double pointerY,
-        double windowWidth,
-        double windowHeight)
-    {
-        var width = Math.Max(MinWidth, sourceWidth);
-        var height = Math.Max(MinHeight, sourceHeight);
-        var (left, top) = CalculatePosition(pointerX, pointerY, windowWidth, windowHeight, width, height);
-        return (width, height, left, top);
-    }
-
-    public static (double Left, double Top) CalculatePosition(double pointerX, double pointerY)
-    {
-        if (!double.IsFinite(pointerX) || !double.IsFinite(pointerY))
-            return (0, 0);
-        return (pointerX + PointerOffsetX, pointerY + PointerOffsetY);
+        // Guard NaN — Math.Max(NaN, 0) behavior differs across .NET versions.
+        var w = double.IsFinite(sourceWidth) ? Math.Max(MinWidth, sourceWidth) : MinWidth;
+        var h = double.IsFinite(sourceHeight) ? Math.Max(MinHeight, sourceHeight) : MinHeight;
+        var px = double.IsFinite(pointerX) ? pointerX : 0;
+        var py = double.IsFinite(pointerY) ? pointerY : 0;
+        return (w, h, px + PointerOffsetX, py + PointerOffsetY);
     }
 
     /// <summary>

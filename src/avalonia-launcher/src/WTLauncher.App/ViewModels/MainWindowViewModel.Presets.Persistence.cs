@@ -58,11 +58,10 @@ public sealed partial class MainWindowViewModel
     private bool SavePresetMutationAndApply(
         LauncherPresetMutationSnapshot snapshot,
         string selectedPresetId,
-        [NotNullWhen(true)] out LauncherPresetViewModel? selectedPreset)
+        out LauncherPresetViewModel? selectedPreset)
     {
-        if (LauncherPresetIds.NormalizeReference(selectedPresetId).Length == 0)
-            throw new InvalidOperationException("Launcher preset mutation selected id is required.");
-
+        // When no preset remains (e.g., deleting the last preset), selectedPresetId
+        // is empty and SelectedPreset resolves to null — the dropdown shows nothing.
         selectedPreset = null;
         var saveFailure = SaveStoreFile(BuildStoreFile());
         if (saveFailure is not null)
@@ -72,10 +71,15 @@ public sealed partial class MainWindowViewModel
             return false;
         }
 
-        ApplyPresetFileState(_presetFile, selectedPresetId);
-        selectedPreset = SelectedPreset
-            ?? throw new InvalidOperationException(
-                $"Launcher preset mutation selected id did not resolve: {selectedPresetId}.");
+        if (LauncherPresetIds.NormalizeReference(selectedPresetId).Length > 0)
+        {
+            ApplyPresetFileState(_presetFile, selectedPresetId);
+            selectedPreset = SelectedPreset;
+        }
+        else
+        {
+            ApplyPresetFileState(_presetFile, null);
+        }
         return true;
     }
 }

@@ -31,7 +31,7 @@ public static class LauncherStore
         }
 
         return LauncherJson.LoadWithRecovery(storePath, LoadAndValidate, "StoreLoad.RecoveredFromBackup",
-            new LauncherStoreFile());
+            Normalize(new LauncherStoreFile()));
     }
 
     public static void Save(LauncherStoreFile store, string storePath, bool backup = true)
@@ -408,6 +408,12 @@ public static class LauncherStore
             if (!seen.Add(entryId))
                 throw new InvalidDataException(
                     $"Launcher store preset {index} entryIds[{i}] is duplicate: {entryId}.");
+            if (LauncherEntryIds.WindowsReservedNames.Contains(entryId))
+                throw new InvalidDataException(
+                    $"Launcher store preset {index} entryIds[{i}] is a Windows reserved name: {entryId}.");
+            if (entryId.Contains('\\') || entryId.Contains('/') || entryId.Contains(".."))
+                throw new InvalidDataException(
+                    $"Launcher store preset {index} entryIds[{i}] contains path separators or '..': {entryId}.");
 
             normalized.Add(entryId);
         }

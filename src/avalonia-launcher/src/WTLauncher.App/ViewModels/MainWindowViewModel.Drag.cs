@@ -92,6 +92,11 @@ public sealed partial class MainWindowViewModel
         if (dragIdx == newIdx) return;
 
         _visibleEntries.Move(dragIdx, newIdx);
+        // Update position map so SyncVisibleEntries reads correct indices.
+        var from = Math.Min(dragIdx, newIdx);
+        var to = Math.Max(dragIdx, newIdx);
+        for (var j = from; j <= to; j++)
+            _syncPositionByEntry[_visibleEntries[j]] = j;
     }
 
     public void ClearDragHover()
