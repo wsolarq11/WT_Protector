@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 20
-- **Last Active**: 2026-06-27
+- **Total Sessions**: 21
+- **Last Active**: 2026-06-30
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~675 | Active |
+| `journal-1.md` | ~708 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 21 | 2026-06-30 | 类型驱动架构重构 — Phase 1-3 全阶段实现 | `7cea682` | `main` |
 | 20 | 2026-06-27 | P6 pointer-capture drag: eliminate OLE stutter, zero-layout hot path, ForceCleanup safety net | - | `main` |
 | 19 | 2026-06-26 | Prevention mechanisms — 4 gate checks + meta-analysis spec | `a7dc2f3`, `0383d8d` | `main` |
 | 18 | 2026-06-26 | UltraReview 2026-06-26 full clearance — 21 fixes + Commit Journal + CancellationToken + honest DryRun | `8c17764` | `main` |

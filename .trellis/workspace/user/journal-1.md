@@ -673,3 +673,36 @@ Implemented 4 preventive gate checks from break-loop analysis: P0#1 CI-safe proc
 ### Next Steps
 
 - None - task complete
+
+
+## Session 21: 类型驱动架构重构 — Phase 1-3 全阶段实现
+
+**Date**: 2026-06-30
+**Task**: 类型驱动架构重构 — Phase 1-3 全阶段实现
+**Branch**: `main`
+
+### Summary
+
+UltraReview 2026-06-29 发现的 ~80 个问题根因分析 → 架构调研(Parse-Don't-Validate/LiteDB/Result类型/强类型Value Object) → 全阶段实现。14个新文件(6 value objects + Result + IStore + LiteDbStore + MigrationTool)，8个删除(CommitJournal/LauncherConfigStore/PresetStore/SettingsStore/Process/MainWindowDragGhostFactory + 测试)，7个修改([Obsolete]委托、LauncherStore.TryLoad/TrySave、Program.cs集成迁移)。修复 C1/C2/C3/H6。449/449 测试通过。spec 更新: pitfalls.md 新增6条教训，data-types.md 新增Value Object模式，persistence.md 新增IStore+LiteDB迁移条款。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `7cea682` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
