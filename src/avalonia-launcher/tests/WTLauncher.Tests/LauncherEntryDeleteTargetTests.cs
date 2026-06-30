@@ -28,7 +28,7 @@ public sealed class LauncherEntryDeleteTargetTests
 
         var exception = Assert.Throws<ArgumentException>(() => new LauncherEntryDeleteTarget(entry));
 
-        Assert.Contains("Entry id is required", exception.Message);
+        Assert.Contains("不能为空", exception.Message);
         Assert.Equal("Id", exception.ParamName);
     }
 

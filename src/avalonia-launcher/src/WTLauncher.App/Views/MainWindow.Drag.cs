@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
@@ -221,7 +222,7 @@ public sealed partial class MainWindow
 
         var pointerX = e.GetPosition(this).X;
         var pointerY = e.GetPosition(this).Y;
-        var ghost = MainWindowDragGhostFactory.Create(
+        var ghost = CreateGhostBorder(
             item.Name,
             item.Directory,
             item.TitleFontSize,
@@ -265,6 +266,69 @@ public sealed partial class MainWindow
 
         _overlayLayer.Children.Remove(_dragGhost);
         _dragGhost = null;
+    }
+
+    private static (Border Control, double Left, double Top) CreateGhostBorder(
+        string name,
+        string directory,
+        double titleFontSize,
+        double sourceWidth,
+        double sourceHeight,
+        double pointerX,
+        double pointerY)
+    {
+        var sw = double.IsFinite(sourceWidth) ? sourceWidth : 0;
+        var sh = double.IsFinite(sourceHeight) ? sourceHeight : 0;
+        var layout = LauncherDragGhostLayoutCalculator.Calculate(sw, sh, pointerX, pointerY);
+        var control = new Border
+        {
+            Width = layout.Width,
+            Height = layout.Height,
+            Classes = { MainWindowEntryClasses.Card },
+            Background = LauncherDialogText.SafeParseBrush(LauncherDesignTokens.SurfaceColor, Brushes.White),
+            BorderBrush = LauncherDialogText.SafeParseBrush(LauncherDesignTokens.DragHighlightColor, Brushes.CornflowerBlue),
+            BorderThickness = new Thickness(2),
+            CornerRadius = new CornerRadius(LauncherDesignTokens.CardBorderRadius),
+            Opacity = 0.86,
+            IsHitTestVisible = false,
+            BoxShadow = new BoxShadows(new BoxShadow
+            {
+                OffsetX = 0,
+                OffsetY = 10,
+                Blur = 28,
+                Spread = 0,
+                Color = Color.Parse("#220F172A"),
+            }),
+            Child = new StackPanel
+            {
+                Margin = new Thickness(LauncherDesignTokens.CardPadding),
+                Spacing = 8,
+                IsHitTestVisible = false,
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = name,
+                        FontSize = titleFontSize,
+                        FontWeight = FontWeight.SemiBold,
+                        Foreground = LauncherDialogText.SafeParseBrush(LauncherDesignTokens.TextPrimaryColor, Brushes.Black),
+                        TextTrimming = TextTrimming.CharacterEllipsis,
+                        IsHitTestVisible = false,
+                    },
+                    new TextBlock
+                    {
+                        Text = directory,
+                        FontFamily = FontFamily.Parse("Cascadia Code, Consolas"),
+                        FontSize = 12,
+                        Foreground = LauncherDialogText.SafeParseBrush(LauncherDesignTokens.TextMutedColor, Brushes.Gray),
+                        TextTrimming = TextTrimming.CharacterEllipsis,
+                        IsHitTestVisible = false,
+                    },
+                },
+            },
+        };
+
+        return (control, layout.Left, layout.Top);
     }
 
     // ── Transitions suppression ──────────────────────────────────────

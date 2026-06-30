@@ -176,12 +176,9 @@ public static class LauncherJson
         }
     }
 
-    private static string NormalizeLineEndings(string text)
-    {
-        return text
-            .Replace("\r\n", RepositoryLineEnding)
-            .Replace("\r", RepositoryLineEnding);
-    }
+    // ponytail: ReplaceLineEndings replaces the hand-rolled \r\n → \n normalizer.
+    private static string NormalizeLineEndings(string text) =>
+        text.ReplaceLineEndings(RepositoryLineEnding);
 
     /// <summary>Delete all <c>*.tmp-*</c>, <c>*.stage-*</c>, <c>*.bak-tmp-*</c>, and
     /// <c>*.recovery-*</c> files left behind by crashed Save() or recovery

@@ -9,7 +9,7 @@ public sealed class LauncherLaunchWorkflowTests
     public void BuildPlanUsesGlobalConfirmationSetting()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(new LauncherProcess());
+        var workflow = new LauncherLaunchWorkflow(_ => { });
         var entry = Entry("one", temp.Path);
 
         var directPlan = workflow.BuildPlan(entry, requireConfirmation: false);
@@ -22,7 +22,7 @@ public sealed class LauncherLaunchWorkflowTests
     [Fact]
     public void StartBatchReportsPlanFailuresWithoutStartingProcesses()
     {
-        var workflow = new LauncherLaunchWorkflow(new LauncherProcess());
+        var workflow = new LauncherLaunchWorkflow(_ => { });
 
         var report = workflow.StartBatch(
             [
@@ -134,7 +134,7 @@ public sealed class LauncherLaunchWorkflowTests
     [Fact]
     public void StartBatchRejectsNullEntryRows()
     {
-        var workflow = new LauncherLaunchWorkflow(new LauncherProcess());
+        var workflow = new LauncherLaunchWorkflow(_ => { });
 
         var exception = Assert.Throws<ArgumentNullException>(() =>
             workflow.StartBatch([null!], requireConfirmation: false));
@@ -174,7 +174,7 @@ public sealed class LauncherLaunchWorkflowTests
         Assert.Empty(preflight.Items);
         Assert.Equal(1, preflight.Report.FailedCount);
         var message = Assert.Single(preflight.Report.FailureMessages);
-        Assert.Contains("one: Entry id is required", message);
+        Assert.Contains("不能为空", message);
     }
 
     [Fact]

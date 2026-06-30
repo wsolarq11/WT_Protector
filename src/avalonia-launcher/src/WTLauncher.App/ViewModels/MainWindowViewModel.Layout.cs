@@ -279,8 +279,8 @@ public sealed partial class MainWindowViewModel
         newHistory = newHistory.Insert(0, normalized);
 
         // Cap at MaxSearchHistoryTerms.
-        if (newHistory.Count > LauncherSettingsStore.MaxSearchHistoryTerms)
-            newHistory = newHistory.RemoveRange(LauncherSettingsStore.MaxSearchHistoryTerms, newHistory.Count - LauncherSettingsStore.MaxSearchHistoryTerms);
+        if (newHistory.Count > 20)
+            newHistory = newHistory.RemoveRange(20, newHistory.Count - 20);
 
         TryPersistSettingsChange(s => s with { SearchHistory = newHistory });
         OnPropertyChanged(nameof(SearchHistoryItems));
@@ -371,14 +371,28 @@ public sealed partial class MainWindowViewModel
     {
         DiscardDragReorderPreview();
         var storeFile = BuildStoreFile();
-        if (LauncherSettingsStore.TrySaveWindowBounds(storeFile, _storePath, width, height, out var updatedSettings, x, y, windowState))
+        var nextSettings = storeFile.Settings with
         {
-            _settings = updatedSettings;
+            Window = storeFile.Settings.Window with
+            {
+                Width = width, Height = height, X = x, Y = y, WindowState = windowState
+            }
+        };
+        var nextStore = storeFile with { Settings = nextSettings };
+
+        try
+        {
+            LauncherStore.Save(nextStore, _storePath, backup: true);
+            _settings = nextSettings;
             return true;
         }
-
-        StatusText = LauncherSettingsStatus.WindowBoundsSaveFailed;
-        return false;
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+            or PathTooLongException or DirectoryNotFoundException or System.Security.SecurityException
+            or InvalidDataException or InvalidOperationException)
+        {
+            StatusText = LauncherSettingsStatus.WindowBoundsSaveFailed;
+            return false;
+        }
     }
 
     private void EnsureCustomOrderContainsEntries()

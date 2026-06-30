@@ -121,13 +121,29 @@ public sealed partial class App : Application
                     }
                 }
 
-                var storeFile = LauncherStore.Load(storePath);
-                var launchWorkflow = new LauncherLaunchWorkflow(new LauncherProcess());
+                // Phase 3: Use LiteDB as primary store with JSON fallback.
+                var storeDir = Path.GetDirectoryName(storePath);
+                IStore store = string.IsNullOrEmpty(storeDir)
+                    ? new JsonStore()
+                    : LiteDbStore.Open(storeDir);
+                var loadResult = store.Load(storePath);
+                if (loadResult.IsErr)
+                {
+                    var errorMsg = loadResult.Match(ok: _ => "", err: e => e.Message);
+                    ErrorLog.Write(new InvalidOperationException(errorMsg), "Startup.Load");
+                    Console.Error.WriteLine($"[WTLauncher] LiteDB load failed: {errorMsg}");
+                    // Fall back to JSON
+                    store = new JsonStore();
+                    loadResult = store.Load(storePath);
+                }
+                var storeFile = loadResult.Match(ok: f => f, err: _ => new LauncherStoreFile());
+                var launchWorkflow = LauncherLaunchWorkflow.Create();
                 var viewModel = new MainWindowViewModel(
                     storePath,
                     storeFile,
                     launchWorkflow,
-                    static () => DateTimeOffset.UtcNow);
+                    static () => DateTimeOffset.UtcNow,
+                    store);
                 var windowSettings = storeFile.Settings.Window;
                 var mainWindow = new MainWindow(viewModel)
                 {

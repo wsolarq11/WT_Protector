@@ -67,6 +67,6 @@ public sealed class LauncherPresetDeleteTargetTests
         var exception = Assert.Throws<ArgumentException>(() => new LauncherPresetDeleteTarget(preset.Id, preset.Name, preset.EntryIds));
 
         Assert.Equal("entryIds", exception.ParamName);
-        Assert.Contains("Entry id 1 is required.", exception.Message);
+        Assert.Contains("Entry id 1 is invalid", exception.Message);
     }
 }

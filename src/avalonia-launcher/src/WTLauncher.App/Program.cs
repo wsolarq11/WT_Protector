@@ -51,7 +51,7 @@ internal static class Program
         try
         {
             DeleteStaleTempFiles();
-            RecoverStaleCommitJournals();
+            MigrateJsonToLiteDb();
 
             BuildAvaloniaApp()
                 .StartWithClassicDesktopLifetime(args, ShutdownMode.OnMainWindowClose);
@@ -136,34 +136,29 @@ internal static class Program
     }
 
     /// <summary>
-    /// Replay any stale commit journal left by a crash during a multi-file save.
-    /// Best-effort — failures are logged but never block startup.
+    /// Phase 3: One-time JSON→LiteDB migration. Best-effort — if it fails,
+    /// the app continues using JSON. The migration will be retried on next startup.
     /// </summary>
-    private static void RecoverStaleCommitJournals()
+    private static void MigrateJsonToLiteDb()
     {
         try
         {
             var storePath = LauncherStore.ResolveStorePath(null, Environment.CurrentDirectory, AppContext.BaseDirectory);
             var storeDir = Path.GetDirectoryName(Path.GetFullPath(storePath));
-            if (string.IsNullOrWhiteSpace(storeDir))
+            if (string.IsNullOrWhiteSpace(storeDir) || !Directory.Exists(storeDir))
                 return;
 
-            if (!Directory.Exists(storeDir))
-                return;
-
-            var journalPath = CommitJournal.ResolvePath(storeDir);
-            if (!File.Exists(journalPath))
-                return;
-
-            var replayError = CommitJournal.Replay(journalPath);
-            if (replayError is not null)
-                ErrorLog.Write(new InvalidOperationException(replayError), "CommitJournal.Recover");
+            var result = MigrationTool.MigrateIfNeeded(storeDir);
+            if (result.IsErr)
+            {
+                var err = result.Match(ok: _ => "", err: e => e.Message);
+                Debug.WriteLine($"[WTLauncher] JSON→LiteDB migration skipped: {err}");
+                Trace.WriteLine($"[WTLauncher] JSON→LiteDB migration skipped: {err}");
+            }
         }
-        // ponytail: bare catch is intentional best-effort design — startup must never be
-        // blocked by journal replay failures. Failures are logged inside Replay().
         catch
         {
-            // Best-effort at startup — never block app launch.
+            // Best-effort — migration failure must never block startup.
         }
     }
 

@@ -3,5 +3,12 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
+    <!-- CS0618: LauncherEntryIds/LauncherPresetIds/LauncherEntryText marked [Obsolete],
+         delegating to EntryId/PresetId/EntryName. Old methods are correctly delegating;
+         call-site migration to new types is a gradual process. -->
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="LiteDB" />
+  </ItemGroup>
 </Project>

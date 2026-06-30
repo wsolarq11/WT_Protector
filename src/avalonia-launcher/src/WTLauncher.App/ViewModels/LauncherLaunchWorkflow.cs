@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
@@ -9,17 +10,23 @@ public sealed class LauncherLaunchWorkflow
 
     public IReadOnlyDictionary<string, string>? CommandTemplates { get; internal set; }
 
-    public LauncherLaunchWorkflow(LauncherProcess launcherProcess)
-    {
-        ArgumentNullException.ThrowIfNull(launcherProcess);
-
-        _start = plan => { using var process = launcherProcess.Start(plan); };
-    }
-
     public LauncherLaunchWorkflow(Action<LaunchPlan> start)
     {
         _start = start ?? throw new ArgumentNullException(nameof(start));
     }
+
+    // ponytail: Process.Start factory replaces deleted LauncherProcess thin wrapper.
+    public static LauncherLaunchWorkflow Create() =>
+        new(plan =>
+        {
+            using var process = Process.Start(new ProcessStartInfo(plan.Executable)
+            {
+                Arguments = plan.Arguments,
+                WorkingDirectory = plan.WorkingDirectory,
+                UseShellExecute = false,
+                CreateNoWindow = false,
+            }) ?? throw new InvalidOperationException($"Failed to start process: {plan.Executable}");
+        });
 
     public LaunchPlan BuildPlan(LaunchEntry entry, bool requireConfirmation) =>
         LaunchArgumentBuilder.Build(

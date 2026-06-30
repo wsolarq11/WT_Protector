@@ -43,7 +43,7 @@ public sealed class EntryDetailsWindow : Window
         _commandBox = LauncherDialogText.Input(RequireInitialEntryText(prefill, static item => item.Command, "command"));
         // MaxLength must match store-level limits to prevent overwrites that the
         // store will later reject. LauncherEntryIds.Normalize truncates at 256;
-        // LauncherConfigStore.RequireEntryText rejects >4096.
+        // LauncherStore rejects entry text >4096 chars.
         _idBox.MaxLength = 256;
         _nameBox.MaxLength = 4096;
         _directoryBox.MaxLength = 4096;

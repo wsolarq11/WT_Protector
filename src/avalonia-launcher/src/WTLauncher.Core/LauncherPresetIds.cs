@@ -1,86 +1,25 @@
-using System.Text;
-
 namespace WTLauncher.Core;
 
+/// <summary>Preset ID helpers. Prefer <see cref="PresetId"/> for new code —
+/// the static methods here delegate to PresetId internally.</summary>
 public static class LauncherPresetIds
 {
-    public static readonly StringComparer Comparer = StringComparer.Ordinal;
+    /// <summary>Prefer <see cref="PresetId.Comparer"/>.</summary>
+    public static readonly StringComparer Comparer = PresetId.Comparer;
 
-    public static bool Same(string? left, string? right) =>
-        string.Equals(left, right, StringComparison.Ordinal);
-
-    public static string GenerateUnique(string name, IEnumerable<string> existingIds)
-    {
-        ArgumentNullException.ThrowIfNull(existingIds);
-
-        var baseId = Normalize(name);
-        var candidate = baseId;
-        var index = 2;
-        const int maxAttempts = 10000;
-        var existing = existingIds
-            .Select(Normalize)
-            .ToHashSet(Comparer);
-        while (existing.Contains(candidate))
-        {
-            if (index > maxAttempts)
-                throw new InvalidOperationException("Cannot generate a unique preset ID.");
-            candidate = $"{baseId}-{index++}";
-        }
-
-        return candidate;
-    }
-
-    /// <summary>Maximum ID length shared with <see cref="LauncherEntryIds.Normalize"/>.</summary>
+    /// <summary>Maximum ID length.</summary>
     public const int MaxIdLength = 256;
 
-    public static string Normalize(string? value)
-    {
-        value ??= string.Empty;
+    [Obsolete("Use PresetId.Same() instead.")]
+    public static bool Same(string? left, string? right) => PresetId.Same(left, right);
 
-        // Truncate over-length input to prevent OOM from maliciously long names.
-        // Silent truncation is intentional: Normalize transforms arbitrary input into
-        // safe form — validation is the caller's responsibility.
-        // Consistent with LauncherEntryIds.Normalize (both use MaxIdLength = 256).
-        if (value.Length > MaxIdLength)
-        {
-            // Truncate at a code-point boundary to avoid splitting a surrogate pair.
-            var span = value.AsSpan(0, MaxIdLength);
-            if (char.IsHighSurrogate(span[^1]) && value.Length >= MaxIdLength + 1)
-                span = value.AsSpan(0, MaxIdLength + 1);
-            value = span.ToString();
-        }
+    [Obsolete("Use PresetId.GenerateUnique() instead.")]
+    public static string GenerateUnique(string name, IEnumerable<string> existingIds)
+        => PresetId.GenerateUnique(name, existingIds);
 
-        var builder = new StringBuilder(value.Length);
-        var separatorPending = false;
-        // FormC (canonical composition) may change the visual appearance of some
-        // Unicode characters (e.g. combining sequences). This is intentional:
-        // we produce stable, ASCII-adjacent IDs suitable for preset cross-references.
-        foreach (var ch in value.Normalize(NormalizationForm.FormC))
-        {
-            if (char.IsLetterOrDigit(ch))
-            {
-                builder.Append(char.ToLowerInvariant(ch));
-                separatorPending = false;
-            }
-            else if (ch is '-' or '_')
-            {
-                builder.Append(ch);
-                separatorPending = false;
-            }
-            else if (char.IsWhiteSpace(ch) || ch is '/' or '\\' or '.' or ':')
-            {
-                if (!separatorPending && builder.Length > 0)
-                {
-                    builder.Append('-');
-                    separatorPending = true;
-                }
-            }
-        }
+    [Obsolete("Use PresetId.Normalize() instead.")]
+    public static string Normalize(string? value) => PresetId.Normalize(value);
 
-        var normalized = builder.ToString().Trim('-');
-        return string.IsNullOrWhiteSpace(normalized) ? "preset" : normalized;
-    }
-
-    public static string NormalizeReference(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? string.Empty : Normalize(value);
+    [Obsolete("Use PresetId.NormalizeReference() instead.")]
+    public static string NormalizeReference(string? value) => PresetId.NormalizeReference(value);
 }

@@ -178,7 +178,7 @@ public static class LauncherEntryVisibility
         if (tokens.Length == 0)
             return true;
 
-        // ponytail: fields already FormKC-normalized at load time (LauncherConfigStore.RequireEntryText).
+        // ponytail: fields already FormKC-normalized at load time (LauncherStore.RequireStoreEntryTextField).
         // Null coalesce is defense-in-depth; the record properties are non-nullable string.
         var name = entry.Name ?? string.Empty;
         var directory = entry.Directory ?? string.Empty;

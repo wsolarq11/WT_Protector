@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json;
 
 namespace WTLauncher.Core;
 
@@ -40,6 +41,67 @@ public static class LauncherStore
         ThrowIfStorePathMissing(storePath);
 
         LauncherJson.Save(Normalize(store), storePath, backup);
+    }
+
+    // ---- Result-based Load / Save (Phase 2) ----
+
+    /// <summary>Loads the store file, returning a Result instead of throwing.</summary>
+    public static Result<LauncherStoreFile, StoreLoadError> TryLoad(string storePath)
+    {
+        try
+        {
+            return Load(storePath);
+        }
+        catch (InvalidDataException ex) when (ex.Message.Contains("50 MB"))
+        {
+            return new StoreLoadError.FileTooLarge(new FileInfo(storePath).Length);
+        }
+        catch (InvalidDataException ex) when (ex.Message.Contains("schema version"))
+        {
+            return new StoreLoadError.SchemaTooNew(ExpectedStoreSchemaVersion + 1);
+        }
+        catch (InvalidDataException ex)
+        {
+            return new StoreLoadError.ValidationError(ex.Message);
+        }
+        catch (JsonException ex)
+        {
+            return new StoreLoadError.JsonError(ex.Message);
+        }
+        catch (FileNotFoundException)
+        {
+            return new StoreLoadError.FileNotFound(storePath);
+        }
+        catch (IOException ex)
+        {
+            return new StoreLoadError.IoError(ex.Message);
+        }
+    }
+
+    /// <summary>Saves the store file, returning a Result instead of throwing.</summary>
+    public static Result<Unit, StoreSaveError> TrySave(LauncherStoreFile store, string storePath, bool backup = true)
+    {
+        try
+        {
+            Save(store, storePath, backup);
+            return Unit.Value;
+        }
+        catch (InvalidDataException ex)
+        {
+            return new StoreSaveError.SerializationError(ex.Message);
+        }
+        catch (JsonException ex)
+        {
+            return new StoreSaveError.SerializationError(ex.Message);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return new StoreSaveError.AccessDenied(storePath);
+        }
+        catch (IOException ex)
+        {
+            return new StoreSaveError.IoError(ex.Message);
+        }
     }
 
     // ---- Path resolution ----
@@ -107,7 +169,7 @@ public static class LauncherStore
         };
     }
 
-    // -- Entry normalization (ported from LauncherConfigStore) --
+    // -- Entry normalization --
 
     private static ImmutableList<LaunchEntry> NormalizeEntries(ImmutableList<LaunchEntry>? entries)
     {
@@ -175,7 +237,7 @@ public static class LauncherStore
         return LauncherEntryText.Normalize(value);
     }
 
-    // -- Settings normalization (ported from LauncherSettingsStore) --
+    // -- Settings normalization --
 
     private static LauncherSettings NormalizeSettings(LauncherSettings settings)
     {
@@ -445,7 +507,7 @@ public static class LauncherStore
         return normalized;
     }
 
-    // ---- Path resolution helpers (adapted from LauncherConfigStore) ----
+    // ---- Path resolution helpers ----
 
     private static void ThrowIfStorePathMissing(string? storePath)
     {

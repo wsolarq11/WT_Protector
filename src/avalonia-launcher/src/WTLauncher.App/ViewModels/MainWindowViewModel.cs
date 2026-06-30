@@ -10,6 +10,7 @@ namespace WTLauncher.App.ViewModels;
 public sealed partial class MainWindowViewModel : ObservableObject
 {
     private readonly string _storePath;
+    private readonly IStore _store;
     private LauncherSettings _settings;
     private readonly LauncherLaunchWorkflow _launchWorkflow;
     private readonly Func<DateTimeOffset> _utcNow;
@@ -67,10 +68,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         string storePath,
         LauncherStoreFile storeFile,
         LauncherLaunchWorkflow launchWorkflow,
-        Func<DateTimeOffset> utcNow)
+        Func<DateTimeOffset> utcNow,
+        IStore? store = null)
     {
         ArgumentNullException.ThrowIfNull(storeFile);
         _storePath = storePath;
+        _store = store ?? new JsonStore();
         _settings = storeFile.Settings;
         _launchWorkflow = launchWorkflow ?? throw new ArgumentNullException(nameof(launchWorkflow));
         _launchWorkflow.CommandTemplates = _settings.CommandTemplates;
@@ -135,7 +138,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         try
         {
             DiscardDragReorderPreview();
-            var storeFile = LauncherStore.Load(_storePath);
+            var loadResult = _store.Load(_storePath);
+            if (loadResult.IsErr)
+            {
+                var err = loadResult.Match(ok: _ => "", err: e => e.Message);
+                StatusText = $"加载失败: {err}";
+                return;
+            }
+            var storeFile = loadResult.Match(ok: f => f, err: _ => default!);
             ReplaceEntries(storeFile.Entries);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
@@ -238,16 +248,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// or an error message on failure.</summary>
     private string? SaveStoreFile(LauncherStoreFile storeFile)
     {
-        try
-        {
-            LauncherStore.Save(storeFile, _storePath, backup: true);
-            return null;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
-            or InvalidDataException or System.Security.SecurityException)
-        {
-            return LauncherPersistenceStatus.StoreSaveFailed(ex);
-        }
+        var result = _store.Save(storeFile, _storePath);
+        return result.Match(
+            ok: _ => (string?)null,
+            err: e => LauncherPersistenceStatus.StoreSaveFailed(new InvalidOperationException(e.Message)));
     }
 
     /// <summary>Saves settings to the unified store. Used as callback by

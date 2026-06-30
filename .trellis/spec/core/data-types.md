@@ -289,3 +289,55 @@ Record properties holding collections use `ImmutableList<T>` and `ImmutableDicti
 When Component A holds a reference to Component B's `sealed record` instance, and Component B replaces that instance via `with { }`, Component A's copy becomes stale. This is NOT a bug in the record pattern — it's the expected behavior of immutable types. The fix: either (a) always access through a getter that reads the latest instance, or (b) synchronize the reference after every mutation.
 
 See `LauncherDragReorderWorkflow._settings` for the canonical pitfall — the workflow held a frozen copy from construction time, and `DiscardDragReorderPreview` overwrote the ViewModel's updated copy with the stale one.
+
+---
+
+## Value Object Pattern — Parse, Don't Validate
+
+### Pattern
+
+```csharp
+// Value object: construction IS validation. Private constructor + TryParse.
+[JsonConverter(typeof(EntryIdJsonConverter))]
+public readonly record struct EntryId
+{
+    public string Value { get; }
+    private EntryId(string value) => Value = value;
+
+    public static Result<EntryId, IdError> TryParse(string? raw) { /* ... */ }
+
+    public static implicit operator string(EntryId id) => id.Value;
+}
+```
+
+### Rules
+
+1. **`readonly record struct`** — zero heap allocation, value semantics.
+2. **Private constructor** — only `TryParse` can create instances.
+3. **Result return** — success vs failure enforced at compile time.
+4. **JsonConverter per type** — transparent string serialization in JSON.
+5. **Implicit conversion to string** — drops into existing string APIs without ceremony.
+6. **All normalization in constructor** — no normalization happens after construction.
+7. **Security checks on raw input** — compare raw vs normalized before accepting (%-injection, etc.).
+
+### Existing Value Objects
+
+| Type | Validation | Eliminates |
+|------|-----------|------------|
+| `EntryId` | FormC, control strip, 256 truncation, reserved names, path separators | `LauncherEntryIds` |
+| `EntryName` | FormKC, unpaired surrogate strip | `LauncherEntryText` |
+| `EntryDirectory` | FormKC, raw %-injection detection, UNC/DOS rejection | `LaunchArgumentBuilder` directory logic |
+| `PresetId` | FormC, lowercase, alphanumeric filter | `LauncherPresetIds` |
+| `PresetName` | FormKC, 256-char limit | `LauncherPresetFiles` name validation |
+| `ShellCommand` | Shell path resolution, fallback to `pwsh` | Hardcoded `pwsh` prefix |
+
+### Migration Pattern
+
+When introducing a value object for existing `string` properties:
+
+1. Create value object with `TryParse`
+2. Mark old static class methods `[Obsolete]`, delegate to value object
+3. Add `JsonConverter` for transparent serialization
+4. Suppress CS0618 in `.csproj` with documented reason
+5. Migrate call sites gradually (compiler warnings guide)
+6. Delete old methods in cleanup phase

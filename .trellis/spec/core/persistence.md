@@ -281,3 +281,113 @@ if (newHistory.Count > 20)
 **测试必须覆盖**: 两层都验证——VM 状态 + 文件持久化（round-trip via `LauncherSettingsStore.Load()`）。
 
 **Source:** `LauncherSettingsStore.cs` line 116, `MainWindowViewModel.Layout.cs` lines 234-242.
+
+---
+
+## IStore — Persistence Abstraction (2026-06-30)
+
+### 1. Scope / Trigger
+- Trigger: Phase 3 persistence replacement — LiteDB replaces hand-written JSON+journal
+- Cross-layer infra change: Core → ViewModels → Program startup
+
+### 2. Signatures
+
+```csharp
+namespace WTLauncher.Core;
+
+public interface IStore
+{
+    Result<LauncherStoreFile, StoreLoadError> Load(string storePath);
+    Result<Unit, StoreSaveError> Save(LauncherStoreFile data, string storePath);
+}
+
+// JSON implementation (Phase 1-2, tests)
+public sealed class JsonStore : IStore { /* delegates to LauncherStore.TryLoad/TrySave */ }
+
+// LiteDB implementation (Phase 3, production)
+public sealed class LiteDbStore : IStore, IDisposable
+{
+    public static LiteDbStore Open(string storeDirectory);
+    public Result<LauncherStoreFile, StoreLoadError> Load(string storePath);
+    public Result<Unit, StoreSaveError> Save(LauncherStoreFile data, string storePath);
+    public void Dispose();
+}
+```
+
+### 3. Contracts
+
+| Field | Type | Constraint |
+|-------|------|------------|
+| `IStore.Load(storePath)` | `Result<LauncherStoreFile, StoreLoadError>` | FileNotFound→default empty store; CorruptJSON→JsonError; SchemaTooNew→reject |
+| `IStore.Save(data, storePath)` | `Result<Unit, StoreSaveError>` | Atomic by implementation; SerializationError on invalid data; IoError on disk failure |
+| `LiteDbStore.Open(dir)` | `LiteDbStore` | Creates directory if missing; DB file: `store.db` in dir |
+| `JsonStore` (ctor) | `JsonStore` | No args; delegates to static `LauncherStore.TryLoad/TrySave` |
+
+### 4. Validation & Error Matrix
+
+| Condition | Error |
+|-----------|-------|
+| store.json missing, no store.db | `StoreLoadError.FileNotFound` → returns `new LauncherStoreFile()` |
+| store.json >50MB | `StoreLoadError.FileTooLarge` |
+| SchemaVersion > Expected | `StoreLoadError.SchemaTooNew` |
+| Invalid JSON structure | `StoreLoadError.JsonError` / `StoreLoadError.ValidationError` |
+| Disk full / permission denied on save | `StoreSaveError.IoError` / `StoreSaveError.AccessDenied` |
+| Duplicate IDs in data | `StoreSaveError.SerializationError` |
+| LiteDB file corrupt | `StoreLoadError.JsonError` (LiteException) |
+
+### 5. Good/Base/Bad Cases
+
+- **Good**: LiteDB store.db present → direct load, no JSON involved
+- **Base**: First run, only store.json → MigrationTool migrates JSON→LiteDB, renames JSON to .bak
+- **Bad**: Both corrupt → LiteDB load fails, falls back to JsonStore which returns defaults
+
+### 6. Tests Required
+
+- [x] `LauncherStore.TryLoad` returns `StoreLoadError.FileNotFound` for missing file
+- [x] `LauncherStore.TrySave` returns `StoreSaveError.IoError` for permission-denied
+- [x] `JsonStore` delegates correctly (449 existing tests pass)
+- [ ] LiteDB round-trip: save→load→verify all fields
+- [ ] MigrationTool: JSON→LiteDB→verify data integrity
+- [ ] LiteDB fallback: corrupt DB → JSON fallback → data recovered
+
+### 7. Wrong vs Correct
+
+#### Wrong (pre-Phase-3)
+```csharp
+// Static calls, exceptions for control flow, manual backup rotation
+var storeFile = LauncherStore.Load(path);    // throws on corruption
+LauncherStore.Save(storeFile, path, true);   // throws on IO error, manual .bak rotation
+CommitJournal.Replay(journalPath);           // crash-recovery dead code
+```
+
+#### Correct (Phase 3)
+```csharp
+// Interface-injected, Result types, database-managed ACID
+var result = _store.Load(path);
+result.Match(
+    ok: f => { /* use f */ },
+    err: e => { StatusText = e.Message; });
+_store.Save(data, path).Match(
+    ok: _ => StatusText = "已保存",
+    err: e => StatusText = $"保存失败: {e.Message}");
+```
+
+## JSON→LiteDB Migration Contract (2026-06-30)
+
+```csharp
+// Program.cs startup flow
+DeleteStaleTempFiles();     // Clean up any leftover temp files from old JSON saves
+MigrateJsonToLiteDb();      // One-time: store.json → store.db, rename JSON to .bak
+
+// MigrationTool.MigrateIfNeeded(storeDir)
+// 1. If store.db exists → no-op (already migrated)
+// 2. If store.json missing → no-op (fresh install)
+// 3. Load JSON → Save to LiteDB → File.Move(json→json.bak)
+// 4. If migration fails → app continues with JSON (fallback path)
+```
+
+**Key invariants:**
+- Migration never deletes the original JSON — renames to `.bak`
+- Migration failure is non-fatal — app continues with JSON
+- Migration is idempotent — safe to call every startup
+- Migration runs before any store load in production

@@ -607,3 +607,60 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **预防** | (1) Schema 版本必须是单一常量。(2) 升级 schema 时，必须接受旧版本（至少 1 个主版本回退）或提供显式迁移路径。(3) `schemaVersion < expected` 应该触发迁移（不是拒绝），除非数据格式不兼容。(4) 升级验证清单：grep 所有 `ExpectedSchemaVersion` 常量 → 确认全部同步 → 运行全部测试 → 预期 0 失败。 |
 | **适用** | 所有 JSON schema 版本管理的场景。 |
 
+## 7. 类型驱动架构重构教训 (2026-06-29/30)
+
+> 来源：UltraReview 完整扫描（28 子代理 + 直接审查 130 文件）→ 架构调研 → 全阶段实现
+
+### 7.1 多层验证不一致 → 保存-崩溃循环
+
+| 属性 | 值 |
+|---|---|
+| **证据** | `LauncherPresetWorkflow.NormalizeRequiredName` 不检查 256 字符（仅 `LauncherPresetFiles.Validate` 检查）。超长名称通过工作流创建→保存成功→下次加载时 `NormalizeStorePresetName` 抛出→应用无法启动。 |
+| **根因** | 验证逻辑分散在"工作流层"和"持久层"两个独立路径中，各自独立实现同一检查。不一致时运行正常，重启崩溃。 |
+| **预防** | (1) 使用 `Parse-Don't-Validate` 模式——类型构造即验证，非法状态无法创建。(2) 验证只在单一入口完成，下游客代码信任类型。(3) 新增 `PresetName.TryParse()` 在构造时强制 256 字符限制，`NormalizeRequiredName` 委托给它。 |
+| **适用** | 所有存在多层验证的场景。见 `PresetName.cs`、`EntryId.cs` 实现。 |
+
+### 7.2 规范化在错误的地方做 → 注入检测失效
+
+| 属性 | 值 |
+|---|---|
+| **证据** | `LaunchArgumentBuilder.Build()` 在 FormKC 规范化**之后**检测 `%` 注入，但 `LauncherEntryDrafts.NormalizeDraft` 在**创建 `LaunchEntry` 之前**已经做了 FormKC。全角 `％` (U+FF05) 在 `Build` 拿到数据时已被转为 `%`，两个比较值都已规范化→检测失效。 |
+| **根因** | 规范化不在类型边界执行。数据被提前规范化后，注入检测比较的是两个"已规范化"的值——始终相等。 |
+| **预防** | (1) 注入检测必须在**原始输入**上执行。(2) 类型构造时检测：`EntryDirectory.TryParse` 比较原始输入 `raw` 和规范化后 `normalized` 的 `%` 差异。(3) 类型内部为"已验证"状态，不再执行二次安全检测。 |
+| **适用** | 所有需要防注入的字段。见 `EntryDirectory.cs:TryParse()` 实现。 |
+
+### 7.3 手写崩溃恢复不可靠 → 数据库 ACID 替代
+
+| 属性 | 值 |
+|---|---|
+| **证据** | `CommitJournal.Replay` 在目标文件缺失时 `File.Replace` 抛异常，journal 文件不删除→下次启动重放→永久循环。`File.Replace` 失败不删除 journal→无限重试。null/空 `Target` 字段崩溃未处理。非原子部分回放留下不一致状态。 |
+| **根因** | 手写 journal 协议实现 5 个 CRITICAL 级缺陷。temp-file + backup-rotation + journal-replay 三个机制各不完整。 |
+| **预防** | (1) 用 LiteDB 嵌入式数据库替代手写文件 I/O。(2) LiteDB 提供 ACID 事务 + WAL + 自动崩溃恢复——零应用层恢复代码。(3) 迁移工具在首次启动自动导入 `store.json`→`store.db`，保留 JSON 为 `.bak`。(4) 彻底删除 `CommitJournal` 及相关恢复代码。 |
+| **适用** | 所有需要事务性持久化的场景。见 `LiteDbStore.cs`、`MigrationTool.cs`。 |
+
+### 7.4 硬编码环境假设 → 静默故障
+
+| 属性 | 值 |
+|---|---|
+| **证据** | `LaunchArgumentBuilder.ShellCommandPrefix` 硬编码 `pwsh`。未安装 PowerShell Core 的系统上终端标签页静默失败。`wt.exe` 报"找不到 pwsh"无提示。 |
+| **根因** | 环境依赖硬编码为常量，无配置化路径。 |
+| **预防** | (1) 创建 `ShellCommand.Resolve(shellName)` 配置驱动。(2) 默认 `pwsh`，允许用户配置 `powershell` 或其他。(3) 解析时验证 shell 存在于已知位置，失败时提供明确错误消息。(4) JSON 序列化透明保存 shell 名称。 |
+| **适用** | 所有依赖外部可执行文件的场景。见 `ShellCommand.cs`。 |
+
+### 7.5 异常用于控制流 → 编译器无法保证完整性
+
+| 属性 | 值 |
+|---|---|
+| **证据** | `ExceptionFilters.IsRecoverable(ex)` 黑名单式过滤：仅排除 4 种异常（OOM/StackOverflow/AV/SEH），所有其他异常被视为"可恢复"。`MainWindow.Drag.cs` 裸 `catch (Exception)` 4 处捕获致命异常后继续运行。保存失败后 `StatusText` 不更新——用户看到成功提示但数据未持久化。 |
+| **根因** | 异常语义模糊——"可恢复"无编译期定义，靠运行时测试覆盖。 |
+| **预防** | (1) 创建 `Result<T, E>` 类型——成功/失败的定义由类型系统保证。(2) `LauncherStore.TryLoad/TrySave` 返回 `Result`，消除 5 种异常 catch。(3) `IStore` 接口统一 `Result` 返回。(4) 真实异常仅用于不可恢复场景（OOM 等），不再用于业务逻辑控制流。 |
+| **适用** | 所有 try-catch 处理"可恢复"错误的场景。见 `Result.cs`、`StoreErrors.cs`。
+
+### 7.6 [Obsolete] + 委托模式 = 渐近迁移安全网
+
+| 属性 | 值 |
+|---|---|
+| **证据** | Phase 1 引入 6 个 value object，142 个调用方引用旧静态类。直接删除→巨大 diff 高风险；保留不标记→新旧代码混用。 |
+| **根因** | 类型系统升级需要所有调用方同步变更，无法原子操作。 |
+| **预防** | (1) 旧方法标记 `[Obsolete]` 属性——编译器警告所有未迁移调用方。(2) 旧方法内部委托给新类型——行为保证一致。(3) 抑制 CS0618 直到迁移完成。(4) Phase 3 删除旧方法。 |
+| **适用** | 所有 API 升级场景。见 `LauncherEntryIds.cs`、`LauncherPresetIds.cs`、`LauncherEntryText.cs` 实现。 |
