@@ -132,9 +132,61 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **预防** | 遇到性能问题，**第 1 轮就做消除测试**：（1）隐藏/移除目标组件 → 测性能变化 → 确定组件是否是瓶颈 → 再深入优化。不做"看起来很慢所以优化它"。 |
 | **诊断顺序** | 消除测试 → 定位瓶颈层 → 分析该层特有开销 → 针对性修复。跳过消除测试直接优化 = 在错误的维度上做正确的事。 |
 
----
+### 2.7 LiteDbStore 非原子写入=Crash 即丢数据
 
-## 3. 关联项目可迁移教训
+| 属性 | 值 |
+|---|---|
+| **证据** | UltraReview 2026-07-05，LiteDbStore.cs:62-63 |
+| **根因** | `DeleteAll()` + `Insert()` 是两个独立操作，中间无事务保护。进程在两者间崩溃 = 数据永久丢失。 |
+| **修复** | 用 `collection.Upsert(new StoreDocument { Id = 1, ... })` 替代 DeleteAll+Insert。LiteDB 支持事务（`BeginTrans`/`Commit`）。 |
+| **预防** | 所有数据库/文件写入必须原子化：LiteDB 用 Upsert 或事务，JSON 用 `File.Replace`（NTFS 原子）。绝不假设两步操作不会中断。 |
+
+### 2.8 AutoCompleteBox Enter 键检测—e.Source 指向内部 TextBox
+
+| 属性 | 值 |
+|---|---|
+| **证据** | UltraReview 2026-07-05，MainWindow.axaml.cs:178 |
+| **根因** | `ReferenceEquals(e.Source, SearchTextBox)` — AutoCompleteBox 获得焦点时，实际接收键盘事件的元素是其内部的 TextBox，`e.Source` 是 TextBox 不是 AutoCompleteBox，`ReferenceEquals` 永远 false。 |
+| **修复** | 移除 `ReferenceEquals` 检查，仅保留 `!IsDropDownOpen` 防护。 |
+| **预防** | Avalonia 复合控件（AutoCompleteBox、ComboBox 等）的键盘事件 `e.Source` 指向内部焦点元素，不是控件本身。不要用 `ReferenceEquals` 匹配复合组件。 |
+
+### 2.9 架构变更必须包含迁移计划
+
+| 属性 | 值 |
+|---|---|
+| **证据** | UltraReview 2026-07-05，F06 — 三文件→统一 store.json 无迁移 |
+| **根因** | 从三文件分离架构（config.json+presets.json+schema.json）切换到统一 LauncherStoreFile 时，没有任何代码处理现有用户的旧配置。启动后丢弃旧数据。 |
+| **修复** | 在 `LauncherStore.Load` 中添加 `MigrateFromLegacyFiles`：检测旧文件 → 合并 → 写 store.json → 旧文件 .bak。 |
+| **预防** | 任何存储格式变更的 PRD 必须包含迁移步骤。迁移是功能的一部分，不是可选项。`implement.md` 中迁移必须排在第一批。 |
+
+### 2.10 文档同步是代码变更的必要组成部分
+
+| 属性 | 值 |
+|---|---|
+| **证据** | UltraReview 2026-07-05，D01-D10 — 10 项文档与代码脱节 |
+| **根因** | 代码从三文件→统一 store、从旧 OLE→Pointer capture、从无 searchHistory→有 AutoCompleteBox，文档（README、spec、审计文件）全部停留在旧状态。 |
+| **修复** | Batch 0 同步了 README、3 份 spec、2 份审计、design-benchmark。 |
+| **预防** | **文档修改是代码变更的 AC 的一部分**。implement.md 的每个 batch 必须包含"是否需要更新文档"检查。gate 脚本应检测 README/spec 的关键条目。 |
+
+### 2.11 IStore 接口实现必须验证参数
+
+| 属性 | 值 |
+|---|---|
+| **证据** | UltraReview 2026-07-05，F01 — LiteDbStore 忽略 storePath |
+| **根因** | `IStore` 接口要求 `Load(string storePath)` 使用传入路径，但 `LiteDbStore` 在构造时固定了数据库连接，Load/Save 方法丢弃 storePath 参数静默读写固定数据库。 |
+| **修复** | 添加 `_dbPath` 字段，`Load`/`Save` 中验证 `Path.GetFullPath(storePath) == _dbPath`。 |
+| **预防** | 实现接口时，必须调用/验证所有参数。接口契约不是建议，是实现者的义务。特别留意"构造函数固定了实现参数而接口参数被丢弃"的模式。 |
+
+### 2.12 单元测试必须覆盖加载失败路径
+
+| 属性 | 值 |
+|---|---|
+| **证据** | UltraReview 2026-07-05，F13 — 60+ 测试文件无加载失败测试 |
+| **根因** | 整个测试套件假设 JSON 文件始终有效。损坏 JSON、空文件、文件锁定、50MB 限制等加载失败场景无任何测试覆盖。 |
+| **修复** | 新增 `LauncherStoreLoadFailureTests.cs`（6 个测试：corrupt JSON、empty file、backup recovery、file locked、50MB limit）。 |
+| **预防** | 持久化组件的测试必须覆盖**成功+失败**两个路径。只测 happy path = 没有测试防御能力。 |
+
+---
 
 ### 3.1 不要在文档里硬编码"N 条/N 类"
 
