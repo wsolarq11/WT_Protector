@@ -1,6 +1,6 @@
 # Design benchmark digest
 
-Last refreshed: 2026-05-20
+Last refreshed: 2026-07-05
 
 Purpose: convert 12 external first-class design benchmarks into WT Launcher acceptance rules. This document is not a dependency list and does not authorize importing a foreign design system. It is a source-tracked yardstick for the repo-local `DESIGN.md`, Avalonia XAML, ViewModels, and release gates.
 

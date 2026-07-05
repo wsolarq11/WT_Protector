@@ -57,7 +57,7 @@ Current evidence used in this pass:
 |---|------|------|----------|----------|----------|
 | 1 | Launch entry object | ⭐⭐⭐⭐⭐ | 19 entries 证明真实使用；消灭重复 cd/敲命令 | `LaunchEntry.cs:5-30` 7 字段、`[JsonRequired]`、`UnmappedMemberHandling.Disallow` | 无——数据结构最小、硬、正确 |
 | 2 | Existing-directory contract | ⭐⭐⭐⭐⭐ | 陈旧目录瞬间破坏用户信任 | `LaunchArgumentBuilder.cs:25-26` runtime check；`verify.ps1` gate 双重防御 | 无——fail-fast 边界位置正确 |
-| 3 | Search/filter | ⭐⭐⭐ | 19 entries 需要快速定位 | `LauncherEntryVisibility.cs:124-141` 多词匹配正确；但 `searchHistory` 收集后无 UI 表面——死数据 | 给 searchHistory 加 autocomplete 下拉；加 150ms 去抖 |
+| 3 | Search/filter | ⭐⭐⭐⭐ | 19 entries 需要快速定位 | `LauncherEntryVisibility.cs:124-141` 多词匹配正确；`searchHistory` 已通过 AutoCompleteBox 绑定到搜索输入——不再是无 UI 死数据 | 加 150ms 去抖（当前无去抖）；或保持当前实现——完整搜索 history 已经可用 |
 | 4 | Direct single launch | ⭐⭐⭐⭐⭐ | 核心动作——找到并启动 | `LaunchArgumentBuilder.cs` 构造 `wt.exe` plan；snapshot + confirmation + receipt 三层契约 | 无——不用加"危险命令分类剧场" |
 | 5 | Checkbox selection & batch launch | ⭐⭐⭐⭐⭐ | 每天一键启动一组工作区 | preflight/confirmation/receipt 分离；snapshot 防 mutation 漂移；`LauncherBatchLaunchReport` 不可变 | 可选：`continueOnError` 参数支持"全启"模式 |
 | 6 | Named launch groups / presets | ⭐⭐⭐⭐⭐ | 子集需要命名、审查、可移植 | `presets.json` 引用 stable entry ids；`LauncherPresetFiles.Validate` 三阶段校验；Normalize id 消除大小写特殊情况 | 无——这是项目最好的数据结构 |

@@ -115,7 +115,8 @@ public sealed partial class MainWindowViewModel
 
     public static string GenerateUniqueCloneId(string sourceId, IEnumerable<string> existingIds)
     {
-        var baseId = sourceId + "-copy";
+        var normalizedSourceId = LauncherEntryIds.Normalize(sourceId);
+        var baseId = normalizedSourceId + "-copy";
         var candidate = baseId;
         var index = 2;
         var idSet = existingIds.ToHashSet(LauncherEntryIds.Comparer);
@@ -154,13 +155,13 @@ public sealed partial class MainWindowViewModel
         if (updated is null)
             return;
 
+        // F11: Step 1 — Handle ID rename FIRST (before mutating the item)
         var snapshot = CaptureEntryMutationSnapshot();
-        item.ReplaceEntryFromOwner(updated, CurrentTimestampUtc());
-        if (!LauncherEntryIds.Same(oldId, item.Id))
+        if (!LauncherEntryIds.Same(oldId, updated.Id))
         {
             try
             {
-                var (updatedPresetFile, updatedOrder, _) = LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, item.Id);
+                var (updatedPresetFile, updatedOrder, _) = LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, updated.Id);
                 _presetFile = updatedPresetFile;
                 _settings = _settings with { CustomEntryOrder = updatedOrder };
             }
@@ -172,6 +173,8 @@ public sealed partial class MainWindowViewModel
                 return;
             }
         }
+        // F11: Step 2 — Now mutate the item (safe — rename already persisted)
+        item.ReplaceEntryFromOwner(updated, CurrentTimestampUtc());
 
         if (!SaveEntryCollectionChanges(snapshot))
             return;

@@ -23,7 +23,8 @@ internal static class ExceptionFilters
         // null-InnerException wrappers.
         for (var i = 0; i < 16 && ex is TypeInitializationException or AggregateException; i++)
         {
-            ex = ex.InnerException ?? ex;
+            if (ex.InnerException is null) break;
+            ex = ex.InnerException;
             if (ex is AggregateException agg)
                 ex = agg.Flatten().InnerExceptions.FirstOrDefault() ?? ex;
         }

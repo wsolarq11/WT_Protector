@@ -16,6 +16,15 @@ public static class LauncherStore
     {
         ThrowIfStorePathMissing(storePath);
 
+        // F06: One-time migration from legacy three-file config
+        var configDir = Path.GetDirectoryName(Path.GetFullPath(storePath));
+        if (configDir is not null)
+        {
+            var migrated = MigrateFromLegacyFiles(configDir);
+            if (migrated is not null)
+                return Normalize(migrated);
+        }
+
         LauncherStoreFile LoadAndValidate(string path)
         {
             var fileInfo = new FileInfo(path);
@@ -161,7 +170,7 @@ public static class LauncherStore
     {
         return store with
         {
-            SchemaVersion = ExpectedStoreSchemaVersion,
+            SchemaVersion = ExpectedStoreSchemaVersion,  // No backward-incompatible schema changes exist yet
             Settings = NormalizeSettings(store.Settings),
             Entries = NormalizeEntries(store.Entries),
             Presets = NormalizePresets(store.Presets),
@@ -505,6 +514,84 @@ public static class LauncherStore
                 $"Launcher store default preset id does not match any preset: {normalized}.");
 
         return normalized;
+    }
+
+    // F06: Temporary type for legacy preset file deserialization (presets.json format)
+    private sealed record LegacyPresetDocument
+    {
+        public int SchemaVersion { get; init; }
+        public string? DefaultPresetId { get; init; }
+        public ImmutableList<LauncherPreset>? Presets { get; init; }
+    }
+
+    // F06: One-time migration from legacy three-file format to unified store.json
+
+    /// <summary>Detects old config.json/presets.json/settings.json and migrates to store.json.</summary>
+    public static LauncherStoreFile? MigrateFromLegacyFiles(string configDirectory)
+    {
+        var configPath = Path.Combine(configDirectory, "config.json");
+        var presetsPath = Path.Combine(configDirectory, "presets.json");
+        var settingsPath = Path.Combine(configDirectory, "settings.json");
+        var storePath = Path.Combine(configDirectory, "store.json");
+
+        // Only migrate if unified store doesn't exist but legacy files do
+        if (File.Exists(storePath))
+            return null;
+        if (!File.Exists(configPath))
+            return null;
+
+        // Read legacy config (flat array of LaunchEntry)
+        var configItems = LauncherJson.Load<List<LaunchEntry>>(configPath)
+            ?? throw new InvalidDataException("Failed to load legacy config.json");
+
+        // Read legacy settings (optional — may not exist)
+        var settings = new LauncherSettings();
+        if (File.Exists(settingsPath))
+        {
+            try { settings = LauncherJson.LoadRequired<LauncherSettings>(settingsPath, "legacy settings"); }
+            catch { /* use defaults */ }
+        }
+
+        // Read legacy presets (optional — may not exist)
+        ImmutableList<LauncherPreset>? presets = null;
+        var defaultPresetId = "";
+        if (File.Exists(presetsPath))
+        {
+            try
+            {
+                var legacy = LauncherJson.Load<LegacyPresetDocument>(presetsPath);
+                if (legacy is not null)
+                {
+                    presets = legacy.Presets;
+                    defaultPresetId = legacy.DefaultPresetId ?? "";
+                }
+            }
+            catch { /* use empty presets */ }
+        }
+
+        var storeFile = new LauncherStoreFile
+        {
+            Entries = (configItems ?? []).ToImmutableList(),
+            Settings = settings,
+            Presets = presets ?? ImmutableList<LauncherPreset>.Empty,
+            DefaultPresetId = defaultPresetId,
+        };
+
+        // Write unified store
+        LauncherJson.Save(storeFile, storePath, backup: true);
+
+        // Rename legacy files to .bak
+        TryMoveToBak(configPath);
+        TryMoveToBak(presetsPath);
+        TryMoveToBak(settingsPath);
+
+        return storeFile;
+    }
+
+    private static void TryMoveToBak(string path)
+    {
+        try { File.Move(path, path + ".bak", overwrite: true); }
+        catch { /* best-effort */ }
     }
 
     // ---- Path resolution helpers ----

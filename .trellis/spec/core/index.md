@@ -35,4 +35,4 @@ The Core layer exists so that business rules are testable without spinning up a 
 
 ---
 
-**Language**: All documentation in **Chinese** (简体中文).
+**Language**: All documentation in **English**.

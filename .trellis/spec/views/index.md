@@ -33,4 +33,4 @@ The Views layer (Layer 4) is the outermost shell. It depends on ViewModels for s
 
 ---
 
-**Language**: All documentation in **Chinese** (简体中文).
+**Language**: All documentation in **English**.

@@ -35,8 +35,8 @@ Per `DESIGN.md` token ownership rules:
 
 ## Testing Requirements
 
-**Test framework:** xUnit  
-**Test project:** `tests/WTLauncher.Tests/` — 73 test files  
+**Test framework:** xUnit
+**Test project:** `tests/WTLauncher.Tests/` — 71 test files (approximately 410 `[Fact]`/`[Theory]` attributes)
 **Run gate:** `dotnet test -c Release` (556 tests, updated 2026-06-23)
 
 ### Test Categories
@@ -66,6 +66,7 @@ Per `DESIGN.md` token ownership rules:
 - ❌ **Static mutable state** — all static classes are stateless helpers.
 - ❌ **Direct `File.WriteAllText` outside `LauncherJson`** — always use the persistence wrapper.
 - ❌ **Adding a NuGet reference to Core** — Core must stay dependency-free (beyond BCL).
+  // ponytail: LiteDB reference (`LiteDB` NuGet) is an intentional exception for the IStore persistence abstraction. If adding another dependency, challenge it against the same bar: is this the minimum viable dependency for a cross-layer concern that cannot be implemented via BCL alone?
 - ❌ **Silent null-to-empty coercion without validation** — bad data should throw, not silently normalize.
 - ❌ **`catch (Exception)` without narrowing** — only catch specific types you can actually handle. In ViewModel command handlers, use `catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))` — the shared filter in `ExceptionFilters.cs` centralizes the fatal-exception exclusion. For UI delegate calls (dialog confirmations), bare `catch (Exception)` is acceptable because the delegate boundary is unknown. See [pitfalls §2.3](../guides/pitfalls.md#23-kiss-合并后-catch-过宽).
 - ❌ **Snapshot captured before `await` in mutation methods** — snapshot must be captured AFTER async dialog confirmation, not before. Capturing before creates a window where concurrent operations can be lost on rollback. (Added 2026-06-23 ultrareview B6)
@@ -162,7 +163,7 @@ GitHub Actions sets `CI=true`. Use this to skip checks requiring a display (GUI 
 - [ ] **Schema version**: Are `!=` checks replaced with directional `<` and `>` checks? → Old reject + new upgrade message.
 - [ ] **`[JsonRequired]` propagation**: When adding `[JsonRequired]` to any model property, did you search and update ALL JSON fixtures? → `verify.ps1` smoke config, test factories, README examples, `config-lib.ps1` defaults. (Added 2026-06-26 UltraReview smoke fix)
 - [ ] **Stacked bugs**: When fixing a bug that unblocks a verify gate, did the SAME gate surface a SECOND bug? → The diagnostic onion pattern: the first bug masked the second. After fixing one gate failure, re-run the FULL gate — don't assume a clean pass. (Added 2026-06-26 UltraReview TimeSpan + schemaVersion double-bug)
-- [ ] **Atomic save**: File.Replace (atomic) when target exists; File.Move only for first-save. File.Move(overwrite:true) is NOT atomic. (Added 2026-06-28)
+- [ ] **Atomic save**: `File.Replace` (backed by `MoveFileEx` with `MOVEFILE_REPLACE_EXISTING`, atomic on the same NTFS volume) when target exists; `File.Move` only for first-save. `File.Move(overwrite:true)` is NOT atomic. (Added 2026-06-28)
 - [ ] **Backup rotation order**: Copy-then-rotate, not rotate-then-copy. If rotation runs first and crashes, .bak is missing. (Added 2026-06-28)
 - [ ] **Cross-layer validation**: Same check in two layers MUST use same semantics (case-sensitivity, boundary: `> N` vs `>= N`). Share constants or methods. (Added 2026-06-28)
 - [ ] **Exception unwrap loop**: Must have max-iteration guard (`for i<16`) — null InnerException causes infinite loop. (Added 2026-06-28)

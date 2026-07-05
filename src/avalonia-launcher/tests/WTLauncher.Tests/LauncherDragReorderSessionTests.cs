@@ -8,7 +8,8 @@ public sealed class LauncherDragReorderSessionTests
     [Fact]
     public void TryRecordPreviewIgnoresConsecutiveDuplicateTargetAndSide()
     {
-        var session = StartSession();
+        using var temp = new TempDirectory();
+        var session = StartSession(temp);
 
         Assert.True(session.TryRecordPreview("one", insertAfter: false));
         Assert.False(session.TryRecordPreview(" one ", insertAfter: false));
@@ -19,7 +20,8 @@ public sealed class LauncherDragReorderSessionTests
     [Fact]
     public void ClearHoverAllowsSamePreviewAgain()
     {
-        var session = StartSession();
+        using var temp = new TempDirectory();
+        var session = StartSession(temp);
 
         Assert.True(session.TryRecordPreview("one", insertAfter: false));
 
@@ -31,7 +33,8 @@ public sealed class LauncherDragReorderSessionTests
     [Fact]
     public void IsForNormalizesEntryIdBeforeOrdinalMatch()
     {
-        var session = StartSession(" three ");
+        using var temp = new TempDirectory();
+        var session = StartSession(temp, " three ");
 
         Assert.Equal("three", session.DraggedEntryId);
         Assert.True(session.IsFor("three"));
@@ -84,10 +87,8 @@ public sealed class LauncherDragReorderSessionTests
     /// remain valid. The temp directory is not explicitly disposed; the OS will
     /// reclaim it on process exit or temp cleanup.
     /// </summary>
-    private static LauncherDragReorderSession StartSession(string draggedEntryId = "three")
+    private static LauncherDragReorderSession StartSession(TempDirectory temp, string draggedEntryId = "three")
     {
-        // ponytail: no using — temp outlives session; test runner cleans up.
-        var temp = new TempDirectory();
         return LauncherDragReorderSession.Start(
             MainWindowEntryCardTestFactory.CreateEntryViewModel(temp.Path, draggedEntryId),
             LauncherSettingsSnapshot.Capture(new LauncherSettings()));

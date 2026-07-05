@@ -15,7 +15,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             CreateDragSettings());
-        var dragStore = LauncherStore.Load(settings); LauncherStore.Save(dragStore with { Settings = CreateDragSettings() }, settings, backup: false);
+        LauncherStore.Save(LauncherStore.Load(settings) with { Settings = CreateDragSettings() }, settings, backup: false);
 
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
 
@@ -74,7 +74,7 @@ public sealed partial class MainWindowViewModelTests
 
         var launcherSettings = CreateDragSettings();
         var viewModel = CreateViewModel(config, settings, launcherSettings);
-        var dragStore = LauncherStore.Load(settings); LauncherStore.Save(dragStore with { Settings = CreateDragSettings() }, settings, backup: false);
+        LauncherStore.Save(LauncherStore.Load(settings) with { Settings = CreateDragSettings() }, settings, backup: false);
 
         var three = viewModel.VisibleEntries.Single(entry => entry.Id == "three");
         Assert.True(three.MoveUpCommand.CanExecute(null));

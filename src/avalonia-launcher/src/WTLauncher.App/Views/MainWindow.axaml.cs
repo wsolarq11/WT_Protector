@@ -269,6 +269,7 @@ public sealed partial class MainWindow : Window
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
+        Closing -= OnClosing;
         PointerMoved -= OnDragPointerMoved;
         PointerReleased -= OnDragPointerReleased;
         PointerCaptureLost -= OnDragPointerCaptureLost;
@@ -282,6 +283,14 @@ public sealed partial class MainWindow : Window
 
         if (DataContext is MainWindowViewModel viewModel)
         {
+            // Clear delegate references to avoid GC roots
+            viewModel.ConfirmLaunchAsync = null!;
+            viewModel.ConfirmBatchLaunchAsync = null!;
+            viewModel.RequestNewPresetAsync = null!;
+            viewModel.ConfirmDeletePresetAsync = null!;
+            viewModel.RequestEntryDraftAsync = null!;
+            viewModel.ConfirmDeleteEntryAsync = null!;
+
             // PixelPoint is a value type — null-conditional operator (?.) is
             // not valid here. During OnClosing the window is fully materialized,
             // so Position always returns a valid PixelPoint.

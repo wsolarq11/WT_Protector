@@ -35,6 +35,10 @@ public sealed class LiteDbStore : IStore, IDisposable
             if (doc is null)
                 return new LauncherStoreFile();
 
+            // F12: Reject schema versions newer than what this app supports
+            if (doc.SchemaVersion > LauncherStore.ExpectedStoreSchemaVersion)
+                return new StoreLoadError.SchemaTooNew(doc.SchemaVersion);
+
             return new LauncherStoreFile
             {
                 SchemaVersion = doc.SchemaVersion,

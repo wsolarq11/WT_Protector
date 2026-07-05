@@ -1,5 +1,6 @@
 
 param()
+Set-StrictMode -Version Latest
 
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -38,9 +39,9 @@ if ($failedTests -ne 0) { throw "TRX reported failed tests: $failedTests" }
 $modelSources = Get-ChildItem -Path (Join-Path $sourceRoot 'src\WTLauncher.Core') -Filter '*.cs' -Recurse -Exclude '*AssemblyInfo*'
 $jsonRequiredFields = @{}
 foreach ($src in $modelSources) {
-    $content = Get-Content -Raw -LiteralPath $src.FullName
+    $content = Get-Content -Raw -Encoding UTF8 -LiteralPath $src.FullName
     # Extract type name + [JsonPropertyName] + [JsonRequired] patterns.
-    if ($content -match 'public sealed record (\w+)') {
+    if ($content -match 'public \w*record (\w+)') {
         $typeName = $Matches[1]
         $fields = [regex]::Matches($content, '\[JsonPropertyName\("(\w+)"\)\]\s*\[JsonRequired\]\s*public \S+ (\w+)')
         foreach ($f in $fields) { $jsonRequiredFields[$f.Groups[1].Value] = $typeName }
@@ -93,6 +94,7 @@ if ($isWindowsPlatform) {
                 if ($sp.ExitCode -ne 0) {
                     throw "Published app exited with code $($sp.ExitCode) during process smoke"
                 }
+                $processSmoke = 'started-exited-cleanly'
                 break
             }
             # Window handle appears → app booted successfully.

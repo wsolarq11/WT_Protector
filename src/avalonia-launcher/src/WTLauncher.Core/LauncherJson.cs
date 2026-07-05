@@ -29,6 +29,7 @@ public static class LauncherJson
         AllowTrailingCommas = true,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Skip,
         WriteIndented = false,
+        MaxDepth = 64,
         // UnsafeRelaxedJsonEscaping does not escape HTML-sensitive characters
         // (< > &). This is acceptable because config/settings JSON is never
         // rendered in a browser — it is consumed exclusively by System.Text.Json.

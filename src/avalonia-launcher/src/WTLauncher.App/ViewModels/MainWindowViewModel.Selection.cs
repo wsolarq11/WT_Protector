@@ -117,11 +117,12 @@ public sealed partial class MainWindowViewModel
         DiscardDragReorderPreview();
         _batchCts?.Dispose();
         _batchCts = new CancellationTokenSource();
+        LauncherBatchLaunchPreflight preflight = null!;
         try
         {
             OnPropertyChanged(nameof(IsBatchLaunching));
             var selectedEntries = entries.Select(ToLaunchEntry).ToList();
-            var preflight = _launchWorkflow.PreflightBatch(
+            preflight = _launchWorkflow.PreflightBatch(
                 selectedEntries,
                 RequireConfirmationForLaunches);
             if (!await ConfirmBatchLaunchIfRequiredAsync(
@@ -163,6 +164,7 @@ public sealed partial class MainWindowViewModel
         }
         catch (OperationCanceledException)
         {
+            DryRunText = LauncherBatchLaunchReceiptText.Canceled(preflight?.Items ?? []);
             StatusText = "已取消批量启动";
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))

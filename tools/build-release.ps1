@@ -1,4 +1,5 @@
 param()
+Set-StrictMode -Version Latest
 
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -23,6 +24,7 @@ $version = & {
         $desc = git -C (Split-Path $solution -Parent) describe --tags --always --dirty 2>$null
         if ($LASTEXITCODE -eq 0 -and $desc) {
             $v = $desc.Trim()
+            $v = $v -replace '^v', ''
             if ($v -match '^[0-9]+\.[0-9]+\.[0-9]+') {
                 $v = $v -replace '-dirty$', '.dev'
             } else {

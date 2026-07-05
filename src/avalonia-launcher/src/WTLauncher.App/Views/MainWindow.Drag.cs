@@ -12,6 +12,7 @@ namespace WTLauncher.App.Views;
 
 public sealed partial class MainWindow
 {
+    private static readonly FontFamily GhostFontFamily = FontFamily.Parse("Cascadia Code, Consolas");
     private OverlayLayer? _overlayLayer;
     private Border? _dragGhost;
     private IPointer? _dragPointer;
@@ -20,6 +21,8 @@ public sealed partial class MainWindow
     private bool _lastDragInsertAfterDecision;
     // P2: Suppress XAML transitions during active drag to avoid layout thrashing.
     private const string SuppressTransitionsClass = "suppress-drag-transitions";
+    private Point? _lastValidHoverPosition;
+    private bool _cleaningUp;
 
     // ── Drag start (PointerPressed on drag handle) ───────────────────
 
@@ -62,6 +65,7 @@ public sealed partial class MainWindow
 
         _activeDragEntryId = item.Id;
         _lastDragInsertAfterDecision = false;
+        _lastValidHoverPosition = null;
         _dragPointer = pointer;
         _isDragging = true;
 
@@ -149,12 +153,22 @@ public sealed partial class MainWindow
         if (_activeDragEntryId is null)
             return;
 
-        var resolved = ResolveCardAtPointer(e.GetPosition(this));
+        var currentPos = e.GetPosition(this);
+        var resolved = ResolveCardAtPointer(currentPos);
         if (resolved is null)
         {
+            // M07: Only clear hover when pointer moves significantly away from last card
+            if (_lastValidHoverPosition is not null)
+            {
+                var dx = currentPos.X - _lastValidHoverPosition.Value.X;
+                var dy = currentPos.Y - _lastValidHoverPosition.Value.Y;
+                if (Math.Abs(dx) < 20 && Math.Abs(dy) < 20)
+                    return;
+            }
             viewModel.ClearDragHover();
             return;
         }
+        _lastValidHoverPosition = currentPos;
 
         var (entry, card) = resolved.Value;
         var insertAfter = MainWindowDragInsertDecision.ShouldInsertAfter(
@@ -186,6 +200,10 @@ public sealed partial class MainWindow
 
     private void ForceCleanup()
     {
+        if (_cleaningUp) return;
+        _cleaningUp = true;
+        try
+        {
         // Set _isDragging BEFORE releasing capture — Capture(null) can
         // synchronously fire OnDragPointerCaptureLost which checks this guard.
         _isDragging = false;
@@ -200,6 +218,11 @@ public sealed partial class MainWindow
         if (DataContext is MainWindowViewModel vm)
             // Cancel is a no-op when the session was already cleared by Commit.
             vm.CancelDragReorder();
+        }
+        finally
+        {
+            _cleaningUp = false;
+        }
     }
 
     // ── Ghost overlay ─────────────────────────────────────────────────
@@ -318,7 +341,7 @@ public sealed partial class MainWindow
                     new TextBlock
                     {
                         Text = directory,
-                        FontFamily = FontFamily.Parse("Cascadia Code, Consolas"),
+                        FontFamily = GhostFontFamily,
                         FontSize = 12,
                         Foreground = LauncherDialogText.SafeParseBrush(LauncherDesignTokens.TextMutedColor, Brushes.Gray),
                         TextTrimming = TextTrimming.CharacterEllipsis,

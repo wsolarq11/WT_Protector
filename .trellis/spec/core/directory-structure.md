@@ -48,18 +48,17 @@ Layer 4 ─ Views/                     XAML + code-behind + drag-drop
 
 ---
 
-## Layer 2 — Persistence + Rollback (ViewModels)
+## Layer 2 — Persistence + Rollback via IStore (ViewModels)
 
-`src/WTLauncher.App/ViewModels/` — `LauncherEntryMutationPersistence.cs`, `LauncherEntryMutationSnapshot.cs`
+`src/WTLauncher.App/ViewModels/` — delegates to `IStore` via `LauncherStoreFile`
 
-- **Snapshot-before → mutate → save-all → restore-on-failure**.
-- Coordinates `config.json` + `presets.json` + `settings.json` as an atomic unit.
+- **Snapshot-before → mutate → save-all → restore-on-failure** via `IStore.Save(LauncherStoreFile)`.
+- Coordinates entries + presets + settings as a single atomic unit in `launcher.json`.
 - Rollback restores from deep-cloned snapshots (`entry with { }` pattern).
 
 Key files:
 - `LauncherEntryMutationSnapshot.cs` — captures entries + presets + custom order + selection
-- `LauncherEntryMutationPersistence.cs` — save config → save presets → save settings → rollback on failure
-- `LauncherConfigMutationPersistence.cs`, `LauncherPresetMutationPersistence.cs`, `LauncherSettingsMutationPersistence.cs`
+- `LauncherEntryMutationPersistence.cs` — snapshot → IStore save → rollback on failure
 
 ---
 
@@ -112,7 +111,7 @@ src/avalonia-launcher/
 │       ├── App.axaml / App.axaml.cs    # Design token injection
 │       ├── ViewModels/                 # Layer 1-3: 34 files
 │       └── Views/                      # Layer 4: 15 files
-├── tests/WTLauncher.Tests/             # 77 xUnit test files
+├── tests/WTLauncher.Tests/             # 71 xUnit test files
 └── artifacts/                          # Build outputs (gitignored)
 ```
 

@@ -1,4 +1,6 @@
 
+Set-StrictMode -Version Latest
+
 function Get-RepoRoot {
     return (Split-Path -Parent $PSScriptRoot)
 }
@@ -91,7 +93,7 @@ function Read-ConfigItems([string]$Path) {
     $json = Get-Content -Raw -Encoding UTF8 -LiteralPath $Path | ConvertFrom-Json
     if ($null -eq $json) { throw "Config parsed to null: $Path" }
     # Support both wrapper format {"schemaVersion":1,"entries":[...]} and legacy array format.
-    $items = if ($json.entries) { $json.entries } else { $json }
+    $items = if ($null -ne $json.entries) { $json.entries } else { $json }
     $idx = 0
     foreach ($item in @($items)) {
         foreach ($field in @('id', 'name', 'directory', 'command')) {

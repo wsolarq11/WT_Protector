@@ -108,7 +108,18 @@ public sealed partial class MainWindowViewModel
             return;
 
         var snapshot = CapturePresetMutationSnapshot();
-        var preset = LauncherPresetWorkflow.AddPreset(ref _presetFile, presetName, target.EntryIds);
+        LauncherPreset? preset;
+        try
+        {
+            preset = LauncherPresetWorkflow.AddPreset(ref _presetFile, presetName, target.EntryIds);
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "AddPreset");
+            RestorePresetSnapshotAndReportMissing(snapshot);
+            StatusText = $"新增启动组失败: {ExceptionMessageFormatter.ForUser(ex)}";
+            return;
+        }
         if (!SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset))
             return;
 
@@ -200,7 +211,19 @@ public sealed partial class MainWindowViewModel
 
         var snapshot = CapturePresetMutationSnapshot();
 
-        var preset = LauncherPresetWorkflow.DeletePreset(ref _presetFile, target.PresetId, out var fallbackPresetId);
+        LauncherPreset? preset;
+        string fallbackPresetId;
+        try
+        {
+            preset = LauncherPresetWorkflow.DeletePreset(ref _presetFile, target.PresetId, out fallbackPresetId);
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "DeletePreset");
+            RestorePresetSnapshotAndReportMissing(snapshot);
+            StatusText = $"删除启动组失败: {ExceptionMessageFormatter.ForUser(ex)}";
+            return;
+        }
         if (preset is null)
         {
             RestorePresetSnapshotAndReportMissing(snapshot);

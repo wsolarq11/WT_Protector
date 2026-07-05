@@ -22,12 +22,19 @@ public sealed partial class MainWindowViewModel
 
     private void ApplyPresetFileState(LauncherPresetFile presetFile, string? preferredPresetId)
     {
-        _presetFile = presetFile;
-        var targetPresetId = LauncherPresetIds.NormalizeReference(preferredPresetId ?? presetFile.DefaultPresetId);
+        var rawTargetId = preferredPresetId ?? presetFile.DefaultPresetId;
+        var targetPresetId = LauncherPresetIds.NormalizeReference(rawTargetId);
         var presetViewModels = presetFile.Presets
             .Select(preset => new LauncherPresetViewModel(preset))
             .ToList();
+
+        // F07: If no valid default preset ID but presets exist, fall back to first preset
+        if (targetPresetId.Length == 0 && presetViewModels.Count > 0)
+            targetPresetId = presetViewModels[0].Id;
+
         var selectedPreset = ResolveSelectedPreset(presetViewModels, targetPresetId);
+
+        _presetFile = presetFile;  // F08: write after validation
 
         _presets.Clear();
         foreach (var preset in presetViewModels)

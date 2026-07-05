@@ -29,7 +29,7 @@ public readonly record struct EntryId
 
     public static Result<EntryId, IdError> TryParse(string? raw)
     {
-        if (string.IsNullOrEmpty(raw))
+        if (string.IsNullOrWhiteSpace(raw))
             return new IdError.Empty();
 
         var trimmed = raw.Trim().Normalize(NormalizationForm.FormC);

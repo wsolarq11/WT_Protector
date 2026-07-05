@@ -19,7 +19,7 @@ public readonly record struct PresetId
 
     public static Result<PresetId, IdError> TryParse(string? raw)
     {
-        var value = raw ?? string.Empty;
+        var value = (raw ?? string.Empty).Trim();
 
         // Truncate at code-point boundary
         const int maxLength = 256;
