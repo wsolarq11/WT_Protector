@@ -7,7 +7,10 @@ public sealed partial class MainWindowViewModel
 {
     private void LoadPresetFile(string? preferredPresetId)
     {
-        var storeFile = LauncherStore.Load(_storePath);
+        var loadResult = _store.Load(_storePath);
+        var storeFile = loadResult.Match(
+            ok: f => f,
+            err: _ => new LauncherStoreFile());
         _presetFile = new LauncherPresetFile
         {
             SchemaVersion = 1,

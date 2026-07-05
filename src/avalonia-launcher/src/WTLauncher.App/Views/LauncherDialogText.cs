@@ -79,7 +79,7 @@ internal static class LauncherDialogText
     {
         return new TextBlock
         {
-            Foreground = Brush.Parse(LauncherDesignTokens.ErrorColor),
+            Foreground = SafeParseBrush(LauncherDesignTokens.ErrorColor, Brushes.Red),
             IsVisible = false,
             TextWrapping = TextWrapping.Wrap,
         };

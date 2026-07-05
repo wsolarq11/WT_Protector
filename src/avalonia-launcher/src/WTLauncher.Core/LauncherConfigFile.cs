@@ -5,6 +5,7 @@ namespace WTLauncher.Core;
 
 /// <summary>Immutable config container. All properties are init-only — mutations
 /// produce a new instance via <c>with { }</c>.</summary>
+[Obsolete("Superseded by LauncherStoreFile. Kept for reference only.")]
 public sealed record LauncherConfigFile
 {
     [JsonPropertyName("schemaVersion")]

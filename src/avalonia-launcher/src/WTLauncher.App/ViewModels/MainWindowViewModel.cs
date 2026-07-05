@@ -486,6 +486,9 @@ public static class LauncherPresetStatus
     public static string Saved(string presetName, int entryCount) =>
         $"已保存启动组: {presetName}（{entryCount} 项）";
 
+    public static string UpdateFailed(string presetName, Exception exception) =>
+        $"更新启动组失败: {presetName} — {ExceptionMessageFormatter.ForUser(exception)}";
+
     public static string UpdateBlocked(string presetName) =>
         $"系统启动组不能更新: {presetName}";
 

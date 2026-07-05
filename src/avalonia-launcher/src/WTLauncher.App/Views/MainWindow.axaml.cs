@@ -251,6 +251,12 @@ public sealed partial class MainWindow : Window
                 e.Handled = true;
                 return true;
             case Key.Escape:
+                // Cancel any active drag — Escape is the explicit cancel gesture.
+                // On platforms where Escape does NOT trigger PointerCaptureLost,
+                // this is the only cancel path. ForceCleanup handles the case
+                // where no drag is active (no-op).
+                if (_isDragging)
+                    ForceCleanup();
                 viewModel.FilterText = "";
                 _keyboardFocusIndex = -1;
                 viewModel.KeyboardFocusedEntryId = null;

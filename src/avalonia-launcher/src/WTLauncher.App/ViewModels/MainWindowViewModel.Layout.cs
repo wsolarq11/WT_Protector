@@ -382,13 +382,17 @@ public sealed partial class MainWindowViewModel
 
         try
         {
-            LauncherStore.Save(nextStore, _storePath, backup: true);
+            var result = _store.Save(nextStore, _storePath);
+            if (result.IsErr)
+            {
+                StatusText = LauncherSettingsStatus.WindowBoundsSaveFailed;
+                return false;
+            }
             _settings = nextSettings;
             return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
-            or PathTooLongException or DirectoryNotFoundException or System.Security.SecurityException
-            or InvalidDataException or InvalidOperationException)
+            or PathTooLongException or DirectoryNotFoundException or System.Security.SecurityException)
         {
             StatusText = LauncherSettingsStatus.WindowBoundsSaveFailed;
             return false;

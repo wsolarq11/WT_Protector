@@ -74,14 +74,17 @@ $isWindowsPlatform = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPl
 $processSmoke = 'skipped-non-windows'
 if ($isWindowsPlatform) {
     Remove-Item -LiteralPath $smokeRoot -Recurse -Force -ErrorAction SilentlyContinue
-    $smokeConfig = Join-Path $smokeRoot 'config\config.json'
-    $smokeSettings = Join-Path $smokeRoot 'config\settings.json'
-    $smokePresets = Join-Path $smokeRoot 'config\presets.json'
-    New-Item -ItemType Directory -Path (Split-Path -Parent $smokeConfig) -Force | Out-Null
-    Set-Content -Encoding UTF8 -LiteralPath $smokeConfig -Value '[{"id":"smoke","name":"smoke","directory":".","command":"echo smoke","selected":false}]'
-    Set-Content -Encoding UTF8 -LiteralPath $smokeSettings -Value '{"schemaVersion":1,"lastFilterText":"","sortMode":"custom","entryViewMode":"cards","requireConfirmationForLaunches":true,"customEntryOrder":["smoke"],"window":{"width":1180,"height":760}}'
-    Set-Content -Encoding UTF8 -LiteralPath $smokePresets -Value '{"schemaVersion":1,"defaultPresetId":"smoke-group","presets":[{"id":"smoke-group","name":"Smoke","entryIds":["smoke"]}]}'
-    $sp = Start-Process -FilePath $exe -ArgumentList @('--config', $smokeConfig) -WorkingDirectory $smokeRoot -WindowStyle Hidden -PassThru
+    $smokeStore = Join-Path $smokeRoot 'config\store.json'
+    New-Item -ItemType Directory -Path (Split-Path -Parent $smokeStore) -Force | Out-Null
+    $smokeStoreJson = @{
+        schemaVersion = 2
+        entries = @(@{id="smoke";name="smoke";directory=".";command="echo smoke";selected=$false;updatedAtUtc="";launchedAtUtc=""})
+        settings = @{schemaVersion=1;lastFilterText="";sortMode="custom";entryViewMode="cards";requireConfirmationForLaunches=$true;customEntryOrder=@("smoke");searchHistory=@();commandTemplates=@{};window=@{width=1180;height=760;windowState="Normal"}}
+        presets = @(@{id="smoke-group";name="Smoke";entryIds=@("smoke")})
+        defaultPresetId = "smoke-group"
+    } | ConvertTo-Json -Depth 6
+    Set-Content -Encoding UTF8 -LiteralPath $smokeStore -Value $smokeStoreJson
+    $sp = Start-Process -FilePath $exe -ArgumentList @('--config', $smokeStore) -WorkingDirectory $smokeRoot -WindowStyle Hidden -PassThru
     $processExitedClean = $true
     try {
         for ($i = 0; $i -lt 40; $i++) {

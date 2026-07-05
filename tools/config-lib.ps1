@@ -62,6 +62,10 @@ function Get-AvaloniaPublishDir {
     return (Join-Path (Get-AvaloniaRoot) 'artifacts\publish\win-x64')
 }
 
+function Get-LauncherStorePath {
+    return (Get-RepoPath 'config\store.json')
+}
+
 function Get-LauncherConfigPath {
     return (Get-RepoPath 'config\config.json')
 }

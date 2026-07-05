@@ -110,7 +110,7 @@ public sealed partial class App : Application
                 {
                     try
                     {
-                        var testPath = Path.Combine(configDirectory, ".write-test");
+                        var testPath = Path.Combine(configDirectory, Path.GetRandomFileName());
                         File.WriteAllText(testPath, "test");
                         File.Delete(testPath);
                     }

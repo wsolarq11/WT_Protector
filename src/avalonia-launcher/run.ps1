@@ -8,9 +8,9 @@ $sourceRoot = $PSScriptRoot
 $dir = Get-Item -LiteralPath $sourceRoot
 $repoRoot = $null
 while ($null -ne $dir) {
-    $candidateConfig = Join-Path $dir.FullName 'config\config.json'
+    $candidateStore = Join-Path $dir.FullName 'config\store.json'
     $candidateReadme = Join-Path $dir.FullName 'README.md'
-    if ((Test-Path -LiteralPath $candidateConfig) -and (Test-Path -LiteralPath $candidateReadme)) {
+    if ((Test-Path -LiteralPath $candidateStore) -and (Test-Path -LiteralPath $candidateReadme)) {
         $repoRoot = $dir.FullName
         break
     }
@@ -18,9 +18,9 @@ while ($null -ne $dir) {
 }
 if ([string]::IsNullOrWhiteSpace($repoRoot)) { throw "Could not locate repository root from $sourceRoot" }
 
-$config = Join-Path $repoRoot 'config\config.json'
+$store = Join-Path $repoRoot 'config\store.json'
 $project = Join-Path $sourceRoot 'src\WTLauncher.App\WTLauncher.App.csproj'
-if (-not (Test-Path -LiteralPath $config)) { throw "Missing portable config: $config" }
+if (-not (Test-Path -LiteralPath $store)) { throw "Missing store: $store" }
 if (-not (Test-Path -LiteralPath $project)) { throw "Missing app project: $project" }
 
-dotnet run --project $project --configuration Release -- --config $config
+dotnet run --project $project --configuration Release -- --config $store

@@ -158,7 +158,7 @@ public sealed partial class MainWindowViewModel
         {
             ErrorLog.Write(ex, "UpdatePreset");
             RestorePresetSnapshotAndReportMissing(snapshot);
-            StatusText = LauncherPresetStatus.LaunchFailed(selectedPreset.Name, ex);
+            StatusText = LauncherPresetStatus.UpdateFailed(selectedPreset.Name, ex);
             return;
         }
         if (preset is null)
