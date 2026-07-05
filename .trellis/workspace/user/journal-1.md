@@ -706,3 +706,36 @@ UltraReview 2026-06-29 发现的 ~80 个问题根因分析 → 架构调研(Pars
 ### Next Steps
 
 - None - task complete
+
+
+## Session 22: UltraReview 2026-06-30 Round 2 fixes
+
+**Date**: 2026-07-05
+**Task**: UltraReview 2026-06-30 Round 2 fixes
+**Branch**: `main`
+
+### Summary
+
+17 fixes across all layers: IStore bypass ×2, ExceptionFilters AggregateException, SchemaVersion snapshot, EntryName/EntryId control-char/surrogate sanitization, drag Escape cancel + ghost failure abort, UpdateFailed status, LauncherEntryDrafts reserved-name fix, Brush.Parse consistency, tooling scripts updated to store.json path, dead LauncherConfigFile marked Obsolete, spec quality-guidelines IStore-bypass pattern added.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6498d78` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
