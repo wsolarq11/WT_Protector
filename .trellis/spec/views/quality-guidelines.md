@@ -16,7 +16,7 @@ Code-behind is allowed to handle:
 Code-behind must NOT:
 - **Make business decisions** (e.g., "should this entry show confirmation?")
 - **Directly mutate ViewModel collections** (no `viewModel.Entries.Add()`)
-- **Call persistence methods** (no `LauncherConfigStore.Save()`)
+- **Call persistence methods** (no `LauncherStore.Save()`)
 - **Contain conditional logic about data validity**
 
 ---
@@ -125,11 +125,11 @@ View-logic tests live in `WTLauncher.Tests/` and test **extracted pure functions
 
 | Test file | What it tests |
 |-----------|--------------|
-| `MainWindowDragGhostFactoryTests.cs` | Ghost element creation |
-| `MainWindowDragDropDecisionTests.cs` | Drop target resolution |
+| `MainWindow.Drag.cs (inline)Tests.cs` | Ghost element creation |
+| `MainWindowDragInsertDecisionTests.cs` | Drop target resolution |
 | `MainWindowDragInsertDecisionTests.cs` | Insert position logic |
 | `MainWindowEntryCardResolverTests.cs` | Visual tree card detection |
-| `MainWindowXamlContractTests.cs` | XAML class/name contracts |
+| `MainWindowEntryCardContextMenuTests.cs` | XAML class/name contracts |
 | `MainWindowEntriesRootSelectionTests.cs` | View mode root selection |
 | `MainWindowEntryRowDoubleTapTests.cs` | Double-tap launch decision |
 

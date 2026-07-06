@@ -21,3 +21,7 @@ src/avalonia-launcher/artifacts/
 
 # Auto-captured wiki session logs; promote durable findings manually.
 omx_wiki/session-log-*.md
+*.db
+.claude/
+config/*.legacybak
+config/*.legacybak2

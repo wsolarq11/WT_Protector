@@ -38,7 +38,7 @@
 
 ### When to Think About Code Reuse
 
-- [ ] You're writing similar validation to something in `LauncherConfigStore`
+- [ ] You're writing similar validation to something in `LauncherStore`
 - [ ] You see the same status text pattern in 3+ places
 - [ ] You're creating a new `const` — does `LauncherDesignTokens` already have it?
 - [ ] Two ViewModel commands follow the same snapshot→mutate→save→rollback pattern
@@ -69,7 +69,7 @@
 
 ### 1. Triple-File Atomicity
 
-`config.json` + `presets.json` + `settings.json` must stay consistent. A save that succeeds on config but fails on presets MUST roll back config. Never save files independently — always through the persistence pipeline (`LauncherEntryMutationPersistence.Save()`).
+`config.json` + `presets.json` + `settings.json` must stay consistent. A save that succeeds on config but fails on presets MUST roll back config. Never save files independently — always through the persistence pipeline (`LauncherEntryMutationSnapshot.Save()`).
 
 ### 2. Design Token Drift
 

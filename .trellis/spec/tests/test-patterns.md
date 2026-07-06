@@ -13,8 +13,8 @@
 
 **Examples:**
 - `LaunchArgumentBuilderTests.cs` — single class, one file
-- `LauncherConfigStoreTests.ConfigPersistenceTests.cs` — `ConfigPersistence` area
-- `LauncherConfigStoreTests.PathTests.cs` — `Path` area
+- `LauncherStoreTests.ConfigPersistenceTests.cs` — `ConfigPersistence` area
+- `LauncherStoreTests.PathTests.cs` — `Path` area
 - `MainWindowViewModelTests.DragTests.cs` — partial ViewModel, drag area
 
 ---
@@ -26,7 +26,7 @@
 Each test shared file provides factory methods for creating test data:
 
 ```csharp
-// LauncherConfigStoreTests.Shared.cs
+// LauncherStoreTests.Shared.cs
 private static LauncherPresetFile PresetFile(string name, params string[] entryIds) => ...;
 private static LaunchEntry Entry(bool selected = false) => ...;
 ```
@@ -119,8 +119,8 @@ viewModel.RequestEntryDraftAsync = entry => Task.FromResult<EntryDraft?>(draft);
 Test extracted pure functions, not Avalonia controls.
 
 **Examples:**
-- `MainWindowDragDropDecisionTests.cs` — pure drop target logic
-- `MainWindowDragGhostFactoryTests.cs` — ghost creation
+- `MainWindowDragInsertDecisionTests.cs` — pure drop target logic
+- `MainWindow.Drag.cs (inline)Tests.cs` — ghost creation
 - `MainWindowEntryCardResolverTests.cs` — visual tree resolution
 - `MainWindowReorderFlipAnimationTests.cs` — FLIP math (removed 2026-06-23; FLIP animation retired)
 
@@ -158,7 +158,7 @@ var viewModel = new MainWindowViewModel(
 | `TestRepositoryPaths.cs` | Temp directory creation and path helpers |
 | `TempDirectory.cs` | IDisposable temp directory wrapper |
 | `MainWindowEntryCardTestFactory.cs` | Entry card factory for View tests |
-| `LauncherConfigStoreTests.Shared.cs` | Config test factories and assertions |
+| `LauncherStoreTests.Shared.cs` | Config test factories and assertions |
 
 **Rule:** If you write the same factory method in 3+ test files, move it to a Shared fixture.
 

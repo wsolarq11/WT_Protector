@@ -38,6 +38,9 @@ jobs:
       - name: Test
         run: dotnet test src/avalonia-launcher/WTLauncher.Avalonia.sln --no-build --verbosity normal --logger "trx;LogFileName=wtlauncher-ci.trx"
 
+      - name: Publish (smoke check)
+        run: dotnet publish src/avalonia-launcher/WTLauncher.Avalonia.sln -c Release -r win-x64 --self-contained --no-restore
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4

@@ -63,7 +63,7 @@ private static readonly JsonSerializerOptions Options = new()
 
 ## Config File Resolution
 
-**Source:** `src/avalonia-launcher/src/WTLauncher.Core/LauncherConfigStore.cs`
+**Source:** `src/avalonia-launcher/src/WTLauncher.Core/LauncherStore.cs`
 
 ### Path Resolution Strategy
 
@@ -80,9 +80,9 @@ Repository marker (`README.md`) is the **git root signal**. Without it, upward s
 
 | File | Path | Source |
 |------|------|--------|
-| `config.json` | `{root}/config/config.json` | `LauncherConfigStore` |
-| `presets.json` | `{root}/config/presets.json` | `LauncherPresetStore` |
-| `settings.json` | `{root}/config/settings.json` | `LauncherSettingsStore` |
+| `config.json` | `{root}/config/config.json` | `LauncherStore` |
+| `presets.json` | `{root}/config/presets.json` | `LauncherStore` |
+| `settings.json` | `{root}/config/settings.json` | `LauncherStore` |
 
 All three live in the same `config/` directory — resolved from `config.json` path as sibling files.
 
@@ -90,7 +90,7 @@ All three live in the same `config/` directory — resolved from `config.json` p
 
 ## Validation Pipeline
 
-`LauncherConfigStore.Load()` runs a strict pipeline:
+`LauncherStore.Load()` runs a strict pipeline:
 
 ```
 // Single-pass: deserialize directly from stream, then validate typed objects
@@ -99,13 +99,13 @@ Deserialize List<LaunchEntry?> → NormalizeEntries (null-check, dedup, field va
 → Return ReadOnlyList
 ```
 
-**Source:** `LauncherConfigStore.NormalizeEntries()`, `ValidateEntrySelectionFields()`
+**Source:** `LauncherStore.NormalizeEntries()`, `ValidateEntrySelectionFields()`
 
 ---
 
 ## First-Run Bootstrap (2026-06-24)
 
-**Source:** `LauncherConfigStore.Load()`, `LauncherSettingsStore.Load()`, `LauncherPresetStore.Load()`
+**Source:** `LauncherStore.Load()`, `LauncherStore.Load()`, `LauncherStore.Load()`
 
 When a config file is missing, the app MUST return sensible defaults, NOT throw:
 
@@ -151,7 +151,7 @@ if (!File.Exists(configPath))
 
 ## Schema Version Validation (2026-06-24)
 
-**Source:** `LauncherSettingsStore.Load()`, `LauncherPresetStore.Load()`
+**Source:** `LauncherStore.Load()`, `LauncherStore.Load()`
 
 Every persisted type MUST validate its schema version on load:
 
@@ -204,7 +204,7 @@ if (loadException is not null)
 
 ## Multi-File Atomic Save — Stage-All-Then-Commit (2026-06-25)
 
-**Source:** `LauncherEntryMutationPersistence.Save()`
+**Source:** `LauncherEntryMutationSnapshot.Save()`
 
 When a single logical mutation touches config.json + presets.json + settings.json, all three MUST be committed atomically:
 
@@ -228,7 +228,7 @@ File.Move(settingsTemp, settingsPath, overwrite: true);
 
 ## Schema Migration Contract (2026-06-25)
 
-**Source:** `LauncherPresetStore.Load()`, `LauncherSettingsStore.Load()`
+**Source:** `LauncherStore.Load()`, `LauncherStore.Load()`
 
 ```csharp
 // Directional version check with distinct error messages
@@ -263,7 +263,7 @@ if (loaded.SchemaVersion > ExpectedSchemaVersion)
 
 ### 示例：SearchHistory（上限 20 条）
 
-**加载时** — `LauncherSettingsStore.RequireSearchHistory()`:
+**加载时** — `LauncherStore.RequireSearchHistory()`:
 ```csharp
 // 去重 → 去空 → 去空白 → 上限 20
 if (normalized.Count > 20)
@@ -278,9 +278,9 @@ if (newHistory.Count > 20)
     newHistory = newHistory.RemoveRange(20, newHistory.Count - 20);
 ```
 
-**测试必须覆盖**: 两层都验证——VM 状态 + 文件持久化（round-trip via `LauncherSettingsStore.Load()`）。
+**测试必须覆盖**: 两层都验证——VM 状态 + 文件持久化（round-trip via `LauncherStore.Load()`）。
 
-**Source:** `LauncherSettingsStore.cs` line 116, `MainWindowViewModel.Layout.cs` lines 234-242.
+**Source:** `LauncherStore.cs` line 116, `MainWindowViewModel.Layout.cs` lines 234-242.
 
 ---
 
@@ -304,7 +304,7 @@ public interface IStore
 // JSON implementation (Phase 1-2, tests)
 public sealed class JsonStore : IStore { /* delegates to LauncherStore.TryLoad/TrySave */ }
 
-// LiteDB implementation (Phase 3, production)
+// LiteDB implementation (Phase 3 (deferred — BSON mapper incompatible with ImmutableDictionary/ImmutableList in init-only records))
 public sealed class LiteDbStore : IStore, IDisposable
 {
     public static LiteDbStore Open(string storeDirectory);
@@ -341,7 +341,11 @@ public sealed class LiteDbStore : IStore, IDisposable
 - **Base**: First run, only store.json → MigrationTool migrates JSON→LiteDB, renames JSON to .bak
 - **Bad**: Both corrupt → LiteDB load fails, falls back to JsonStore which returns defaults
 
-### 6. Tests Required
+### 6. Status: Deferred
+
+**2026-07-06 decision**: LiteDB is deferred indefinitely. The BSON mapper cannot handle  and  in  record properties. JsonStore is the production store.
+
+### 7. Tests Required
 
 - [x] `LauncherStore.TryLoad` returns `StoreLoadError.FileNotFound` for missing file
 - [x] `LauncherStore.TrySave` returns `StoreSaveError.IoError` for permission-denied

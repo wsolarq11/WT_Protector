@@ -6,7 +6,7 @@ namespace WTLauncher.Core;
 public static class LauncherStore
 {
     public const string ConfigDirectoryName = "config";
-    public const string StoreFileName = "store.json";
+    public const string StoreFileName = "launcher.json";
     public const string RepositoryMarkerFileName = "README.md";
     public const int ExpectedStoreSchemaVersion = 2;
 
@@ -129,18 +129,19 @@ public static class LauncherStore
                 throw new ArgumentException("Explicit store path is required.", nameof(explicitPath));
 
             var fullPath = Path.GetFullPath(trimmedExplicitPath);
-            if (!File.Exists(fullPath))
-                throw new FileNotFoundException($"Store file not found: {fullPath}", fullPath);
-
-            var fileName = Path.GetFileName(fullPath);
-            var dirName = Path.GetFileName(Path.GetDirectoryName(fullPath));
-            if (!string.Equals(fileName, StoreFileName, StringComparison.OrdinalIgnoreCase)
-                || !string.Equals(dirName, ConfigDirectoryName, StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException(
-                    $"Explicit store path must end with {ConfigDirectoryName}/{StoreFileName}, got: {fullPath}",
-                    nameof(explicitPath));
-
-            return fullPath;
+            if (File.Exists(fullPath))
+            {
+                var fileName = Path.GetFileName(fullPath);
+                var dirName = Path.GetFileName(Path.GetDirectoryName(fullPath));
+                if (string.Equals(fileName, StoreFileName, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(dirName, ConfigDirectoryName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return fullPath;
+                }
+            }
+            // ponytail: explicit path missing or invalid → fall through to auto-discovery.
+            // This handles cases where --config is a relative path and the working directory
+            // is not the repo root (e.g. launching from src/avalonia-launcher/).
         }
 
         string?[] candidateRoots = [currentDirectory, appBaseDirectory];
@@ -166,7 +167,7 @@ public static class LauncherStore
 
     // ---- Internal normalization ----
 
-    private static LauncherStoreFile Normalize(LauncherStoreFile store)
+    internal static LauncherStoreFile Normalize(LauncherStoreFile store)
     {
         return store with
         {

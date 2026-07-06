@@ -12,8 +12,8 @@ App.axaml.cs (composition root)
     ├─ InjectDesignTokens() ─── LauncherDesignTokens → XAML Resources
     │
     └─ OnFrameworkInitializationCompleted()
-        ├─ LauncherConfigStore.ResolveConfigPath()
-        ├─ LauncherSettingsStore.Load()
+        ├─ LauncherStore.ResolveConfigPath()
+        ├─ LauncherStore.Load()
         ├─ new LauncherLaunchWorkflow()
         ├─ new MainWindowViewModel(config, settings, workflow, utcNow)
         └─ new MainWindow(viewModel)

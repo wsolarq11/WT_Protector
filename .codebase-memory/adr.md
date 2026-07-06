@@ -12,7 +12,7 @@ WT_Protector is a C# Avalonia-based launcher for managing and launching game/app
 ## ARCHITECTURE
 - **WTLauncher.Core**: Domain logic — LaunchEntry, LaunchPlan, LauncherPreset, LauncherSettings, JSON stores
 - **WTLauncher.App**: Avalonia UI — MainWindow, ViewModels, Views, XAML bindings
-- **WTLauncher.Tests**: Comprehensive test suite (556 tests, xUnit)
+- **WTLauncher.Tests**: Comprehensive test suite (455 tests, xUnit)
 - MainWindowViewModel split across ~15 partial class files by concern (Drag, Entries, Layout, Presets, Selection, etc.)
 - Snapshot-based mutation rollback: LauncherEntryMutationSnapshot / LauncherSettingsSnapshot capture state before mutations; on failure, in-memory state and files are rolled back
 - Drag-reorder: BeginDragReorder → PreviewMoveEntry → CommitDragReorder workflow

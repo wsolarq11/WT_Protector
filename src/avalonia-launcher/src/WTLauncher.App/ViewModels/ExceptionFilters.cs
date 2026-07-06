@@ -29,6 +29,11 @@ internal static class ExceptionFilters
                 ex = agg.Flatten().InnerExceptions.FirstOrDefault() ?? ex;
         }
 
+#if DEBUG
+        // In DEBUG builds, rethrow logic errors so they crash the process during development.
+        if (ex is NullReferenceException or IndexOutOfRangeException or ArgumentNullException)
+            throw new InvalidOperationException("Logic crash (DEBUG): " + ex.Message, ex);
+#endif
         return ex is not (OutOfMemoryException or StackOverflowException
             or AccessViolationException or System.Runtime.InteropServices.SEHException);
     }

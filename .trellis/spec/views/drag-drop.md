@@ -14,10 +14,10 @@ MainWindow.Drag.cs (event handlers)
     │  DragOver → update insert indicator
     │  Drop → commit reorder
     ▼
-MainWindowDragGhostFactory.cs
+MainWindow.Drag.cs (inline).cs
     │  Creates semi-transparent ghost card overlay
     ▼
-MainWindowDragDropDecision.cs
+MainWindow.Drag.cs
     │  Pure logic: where does the drop go?
 ```
 
@@ -25,7 +25,7 @@ MainWindowDragDropDecision.cs
 
 ## Ghost Factory
 
-**Source:** `src/avalonia-launcher/src/WTLauncher.App/Views/MainWindowDragGhostFactory.cs`
+**Source:** `src/avalonia-launcher/src/WTLauncher.App/Views/MainWindow.Drag.cs (inline).cs`
 
 Creates a visual clone of the dragged card as an overlay with:
 - Reduced opacity (60-80%)
@@ -33,7 +33,7 @@ Creates a visual clone of the dragged card as an overlay with:
 - Offset from pointer by a fixed delta
 - **All colors from `LauncherDesignTokens`** (not hardcoded brushes)
 
-**Test coverage:** `MainWindowDragGhostFactoryTests.cs`
+**Test coverage:** `MainWindow.Drag.cs (inline)Tests.cs`
 
 ---
 

@@ -355,7 +355,7 @@ public static class LauncherMainWindowText
         $"存储: {storePath}";
 
     public static string Loaded(int entryCount, int presetCount) =>
-        $"已加载 {entryCount} 个启动项、{presetCount} 个启动组；勾选自动保存到 config\\store.json";
+        $"已加载 {entryCount} 个启动项、{presetCount} 个启动组；勾选自动保存到 config\\launcher.json";
 }
 
 public static class ExceptionMessageFormatter

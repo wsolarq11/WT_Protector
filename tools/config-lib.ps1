@@ -65,7 +65,7 @@ function Get-AvaloniaPublishDir {
 }
 
 function Get-LauncherStorePath {
-    return (Get-RepoPath 'config\store.json')
+    return (Get-RepoPath 'config\launcher.json')
 }
 
 function Get-LauncherConfigPath {

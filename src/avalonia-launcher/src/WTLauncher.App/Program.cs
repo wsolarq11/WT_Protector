@@ -51,7 +51,7 @@ internal static class Program
         try
         {
             DeleteStaleTempFiles();
-            MigrateJsonToLiteDb();
+            // MigrateJsonToLiteDb();  // LiteDB Phase 3 deferred
 
             BuildAvaloniaApp()
                 .StartWithClassicDesktopLifetime(args, ShutdownMode.OnMainWindowClose);
@@ -73,7 +73,7 @@ internal static class Program
     {
         try
         {
-            _instanceMutex = new Mutex(false, @"Global\WTLauncher_ConfigMutex", out bool createdNew);
+            _instanceMutex = new Mutex(false, @"Local\WTLauncher_ConfigMutex", out bool createdNew);
             try
             {
                 if (!_instanceMutex.WaitOne(0))

@@ -2,14 +2,14 @@ namespace WTLauncher.Core;
 
 /// <summary>
 /// One-time JSON → LiteDB migration. Called at startup before loading the store.
-/// If store.json exists and store.db does not, imports data and renames JSON to .bak.
+/// If the JSON store file exists and store.db does not, imports data and renames JSON to .bak.
 /// Phase 3 migration — safe to leave in production permanently (no-op after first run).
 /// </summary>
 public static class MigrationTool
 {
     public static Result<Unit, StoreLoadError> MigrateIfNeeded(string storeDirectory)
     {
-        var jsonPath = Path.Combine(storeDirectory, "store.json");
+        var jsonPath = Path.Combine(storeDirectory, LauncherStore.StoreFileName);
         var dbPath = Path.Combine(storeDirectory, "store.db");
         var bakPath = jsonPath + ".bak";
 

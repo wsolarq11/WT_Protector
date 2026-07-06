@@ -9,7 +9,7 @@
 The test project uses **xUnit** with 71 test files (approximately 410 `[Fact]`/`[Theory]` attributes) covering all 5 layers. Tests are the mainline gate — `dotnet test -c Release` must pass before any commit.
 
 **Reference files:**
-- `src/avalonia-launcher/tests/WTLauncher.Tests/LauncherConfigStoreTests.Shared.cs` — canonical shared fixtures
+- `src/avalonia-launcher/tests/WTLauncher.Tests/LauncherStoreTests.Shared.cs` — canonical shared fixtures
 - `src/avalonia-launcher/tests/WTLauncher.Tests/TestRepositoryPaths.cs` — temp directory management
 - `src/avalonia-launcher/verify.ps1` — mainline gate script
 

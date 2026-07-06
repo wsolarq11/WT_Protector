@@ -9,7 +9,7 @@
 1. **Core never references Avalonia** — verified by `dotnet test`.
 2. **Core never references CommunityToolkit.Mvvm** — verified by `dotnet test`.
 3. **All persisted JSON uses LF (`\n`) line endings** — verified by `verify.ps1`.
-4. **`config.json` entries always have `id`, `name`, `directory`, `command` non-empty** — enforced by `LauncherConfigStore`.
+4. **`config.json` entries always have `id`, `name`, `directory`, `command` non-empty** — enforced by `LauncherStore`.
 5. **One source per state** — view mode, sort mode, drag session, card density each have exactly ONE writable owner.
 
 **Source:** `src/avalonia-launcher/README.md` — "Key invariants" section.
@@ -36,18 +36,18 @@ Per `DESIGN.md` token ownership rules:
 ## Testing Requirements
 
 **Test framework:** xUnit
-**Test project:** `tests/WTLauncher.Tests/` — 71 test files (approximately 410 `[Fact]`/`[Theory]` attributes)
-**Run gate:** `dotnet test -c Release` (556 tests, updated 2026-06-23)
+**Test project:** `tests/WTLauncher.Tests/` — 49 test files (approximately 410 `[Fact]`/`[Theory]` attributes)
+**Run gate:** `dotnet test -c Release` (455 tests, updated 2026-06-23)
 
 ### Test Categories
 
 | Category | Example files | Count |
 |----------|--------------|-------|
-| Core unit tests | `LaunchArgumentBuilderTests.cs`, `LauncherConfigStoreTests.*.cs`, `LauncherEntryLayoutCalculatorTests.cs` | ~25 |
+| Core unit tests | `LaunchArgumentBuilderTests.cs`, `LauncherStoreTests.*.cs`, `LauncherEntryLayoutCalculatorTests.cs` | ~25 |
 | ViewModel tests | `MainWindowViewModelTests.*.cs` (12 partial files) | ~12 |
-| View logic tests | `MainWindowDragGhostFactoryTests.cs`, `MainWindowXamlContractTests.cs` | ~15 |
+| View logic tests | `MainWindow.Drag.cs (inline)Tests.cs`, `MainWindowEntryCardContextMenuTests.cs` | ~15 |
 | Contract/integration tests | `RepositoryConfigContractTests.*.cs`, `StatusTextContractTests.cs`, `DialogLayoutContractTests.cs` | ~8 |
-| Persistence tests | `LauncherConfigMutationPersistenceTests.cs`, `LauncherEntryMutationPersistenceTests.cs` | ~10 |
+| Persistence tests | ``, `LauncherEntryMutationSnapshotTests.cs` | ~10 |
 
 ### Test Patterns
 

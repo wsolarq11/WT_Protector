@@ -53,7 +53,7 @@ public static class LauncherEntryStatus
 
 ### Input Validation
 
-**Source:** `LauncherConfigStore.cs`, `LauncherEntryDrafts.cs`
+**Source:** `LauncherStore.cs`, `LauncherEntryDrafts.cs`
 
 ```csharp
 private static string RequireEntryId(string? id, int index, HashSet<string> seenIds)
@@ -66,7 +66,7 @@ private static string RequireEntryId(string? id, int index, HashSet<string> seen
 ```
 
 **Rules:**
-1. **Validate at the entry point** — `LauncherConfigStore.Load()` validates everything before ViewModel touch.
+1. **Validate at the entry point** — `LauncherStore.Load()` validates everything before ViewModel touch.
 2. **Throw `InvalidDataException`** for malformed config/user input.
 3. **Throw `ArgumentException` / `ArgumentNullException`** for programming errors.
 4. **Include index and field name** in error messages for pinpoint debugging.
@@ -75,7 +75,7 @@ private static string RequireEntryId(string? id, int index, HashSet<string> seen
 
 ## Snapshot-Rollback Pattern → Stage-All-Then-Commit (2026-06-25)
 
-**Source:** `LauncherEntryMutationPersistence.Save()`
+**Source:** `LauncherEntryMutationSnapshot.Save()`
 
 The old snapshot-rollback pattern (save config → on failure, rollback config; save presets → on failure, rollback both) has been replaced with **stage-all-then-commit**:
 
@@ -101,7 +101,7 @@ File.Move(configTemp, configPath, overwrite: true);
 
 ## Exception Catching Discipline
 
-**Source:** `LauncherEntryMutationPersistence.RestoreSnapshotOnPersistenceFailure()`
+**Source:** `LauncherEntryMutationSnapshot.RestoreSnapshotOnPersistenceFailure()`
 
 ```csharp
 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

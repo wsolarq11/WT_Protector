@@ -38,7 +38,7 @@ Every new persistence path must test:
 3. **Save failure (presets):** config saved, presets rolled back.
 4. **Save failure (settings):** config + presets saved, settings rolled back.
 
-**Reference:** `LauncherEntryMutationPersistenceTests.cs`, `LauncherConfigMutationPersistenceTests.cs`
+**Reference:** `LauncherEntryMutationSnapshotTests.cs`, ``
 
 ### ViewModel Command Tests
 
@@ -54,7 +54,7 @@ Every command (Add/Edit/Delete/Launch/Reorder) must test:
 
 ## Line Ending Contract
 
-**Source:** `LauncherConfigStoreTests.Shared.cs`
+**Source:** `LauncherStoreTests.Shared.cs`
 
 ```csharp
 private static void AssertUsesRepositoryLineEndings(string text)

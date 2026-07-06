@@ -325,3 +325,14 @@ state correctly, but several commands still re-parsed event payload fields with
 local casts. The fix was to make the core event layer own `ThreadChannelEvent`
 and `isThreadEvent`, make `reduceChannelMetadata` the only channel metadata
 projection, and make `reduceThreads` the only thread replay reducer.
+
+## FindUpward 路径解析的幽灵配置陷阱
+
+`FindUpward` 依赖 `README.md` 作为仓库根标记。当项目子目录也有 `README.md` 时，如果该子目录下恰好有 `config/StoreFileName` 文件（例如误操作导致），`FindUpward` 会提前停止搜索。
+
+**排查**：视图为空时，按以下顺序排查：
+1. 检查 `config/StoreFileName` 文件是否存在且条目数正确
+2. 检查进程是否有旧 WTLauncher.App 未被杀死（锁定构建输出）
+3. 检查上层目录是否有同名配置文件被 `FindUpward` 优先发现
+
+**修复**：删除上层幽灵文件 + 重启应用。

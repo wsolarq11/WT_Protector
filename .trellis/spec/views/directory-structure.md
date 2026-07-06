@@ -11,8 +11,8 @@ Views/
 ├── MainWindow.axaml                 # Main window XAML (three view modes)
 ├── MainWindow.axaml.cs              # Code-behind: dialog injection, keyboard, drag wiring
 ├── MainWindow.Drag.cs               # Drag-over / drop event handlers
-├── MainWindowDragDropDecision.cs     # Pure drag-drop decision logic
-├── MainWindowDragGhostFactory.cs     # Ghost card creation during drag
+├── MainWindow.Drag.cs     # Pure drag-drop decision logic
+├── MainWindow.Drag.cs (inline).cs     # Ghost card creation during drag
 ├── MainWindowEntryCardResolver.cs    # Card visual tree resolution
 ├── FastWrapPanel.cs                  # Custom panel for name-wall layout
 ├── ConfirmLaunchWindow.cs            # Single launch confirmation dialog

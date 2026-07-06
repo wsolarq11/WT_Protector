@@ -107,7 +107,7 @@ public const double DialogFooterSpacing = 10;
 
 ## Forbidden Patterns
 
-- ❌ **Dialog calls `LauncherConfigStore.Save()` directly** — return data, let ViewModel persist.
+- ❌ **Dialog calls `LauncherStore.Save()` directly** — return data, let ViewModel persist.
 - ❌ **Dialog modifies `MainWindowViewModel` state** — return result, let ViewModel handle.
 - ❌ **`ShowDialog<object>` with casting** — always use the correct typed return value.
 - ❌ **Dialog with no null-return for cancel** — canceled editing must return `null`, not a default object.

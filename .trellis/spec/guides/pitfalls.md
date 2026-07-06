@@ -85,7 +85,7 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | 属性 | 值 |
 |---|---|
 | **证据** | Codex session `019e79ae-773` (2026-05-30) |
-| **根因** | ViewModel / Workflow 中散落了绕过 `LauncherConfigStore` / `LauncherPresetStore` / `LauncherSettingsStore` 的写入路径 |
+| **根因** | ViewModel / Workflow 中散落了绕过 `LauncherStore` / `LauncherStore` / `LauncherStore` 的写入路径 |
 | **后果** | 绕过 Store 的写入不经过验证/原子化/Normalize，数据一致性被破坏 |
 | **预防** | 所有 JSON 写入必须走 Store 层。不可以 ViewModel 里直接 `File.WriteAllText`。 |
 
@@ -456,7 +456,7 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | 属性 | 值 |
 |---|---|
 | **证据** | 2026-06-25 UltraReview R1 |
-| **问题** | `LauncherSettings.SchemaVersion` 标记 `[JsonIgnore]`，反序列化时永远是默认值 `1`。`LauncherSettingsStore.Load` 中的 `if (settings.SchemaVersion != Expected)` 是**死代码**——永远通过。 |
+| **问题** | `LauncherSettings.SchemaVersion` 标记 `[JsonIgnore]`，反序列化时永远是默认值 `1`。`LauncherStore.Load` 中的 `if (settings.SchemaVersion != Expected)` 是**死代码**——永远通过。 |
 | **根因** | `[JsonIgnore]` 阻止字段写入 JSON，也阻止从 JSON 读取。版本号无法持久化→无法检测旧格式。 |
 | **预防** | **SchemaVersion 绝不加 `[JsonIgnore]`**。如果需要向后兼容（旧文件无此字段），不加 `[JsonRequired]`，靠默认值兜底。 |
 | **适用** | 所有带 SchemaVersion 的序列化 record。 |
@@ -573,7 +573,7 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 
 | 属性 | 值 |
 |---|---|
-| **证据** | 2026-06-26 UltraReview H3, `LauncherPresetStore.cs:32`, `LauncherSettingsStore.cs:34` |
+| **证据** | 2026-06-26 UltraReview H3, `LauncherStore.cs:32`, `LauncherStore.cs:34` |
 | **问题** | 当配置文件不存在且无 `.bak` 备份时，Store.Load 返回 `new LauncherPresetFile()` / `new LauncherSettings()`。这些默认实例跳过了 `Validate()` / `Normalize()` 管道。虽然当前默认值恰好合法（`ImmutableList.Empty`），但若未来有人修改默认值（如改 `DefaultPresetId` 为非空），将导致半初始化状态对象逃逸到下游消费代码。 |
 | **修复** | 将默认值传递通过同一个 Validate/Normalize 方法：`LauncherPresetFiles.Validate(new LauncherPresetFile())` / `Normalize(new LauncherSettings())`。 |
 | **预防** | 任何返回 fallback/default 值的路径，fallback 必须经过与正常路径相同的验证管道。在 Store.Load 的 LoadWithRecovery 调用处添加注释标注此约束。 |
@@ -653,7 +653,7 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 
 | 属性 | 值 |
 |---|---|
-| **证据** | 2026-06-28 Ponytail-audit 执行后: `LauncherPresetStore.ExpectedPresetSchemaVersion` 保持为 1，但 `LauncherPresetFiles.Validate()` 强制写入 `SchemaVersion = 2`。Load 时 `if (2 > 1)` 抛出异常，89 个测试失败。 |
+| **证据** | 2026-06-28 Ponytail-audit 执行后: `LauncherStore.ExpectedPresetSchemaVersion` 保持为 1，但 `LauncherPresetFiles.Validate()` 强制写入 `SchemaVersion = 2`。Load 时 `if (2 > 1)` 抛出异常，89 个测试失败。 |
 | **问题** | schema 版本号在两个位置定义（Store 和 Validate），但版本升级时只更新了一处。`Validate()` 写入 v2，`Load()` 只能读 v1——测试中写 v1 数据再读回时被拒绝。 |
 | **根因** | Schema 版本号不是单一来源。两个常量 (`ExpectedPresetSchemaVersion` vs `ExpectedStoreSchemaVersion`) 没有编译时关联。当一个更新时，另一个保持旧值，形成"生产者写新版、消费者只读旧版"的不一致。 |
 | **预防** | (1) Schema 版本必须是单一常量。(2) 升级 schema 时，必须接受旧版本（至少 1 个主版本回退）或提供显式迁移路径。(3) `schemaVersion < expected` 应该触发迁移（不是拒绝），除非数据格式不兼容。(4) 升级验证清单：grep 所有 `ExpectedSchemaVersion` 常量 → 确认全部同步 → 运行全部测试 → 预期 0 失败。 |
@@ -716,3 +716,25 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **根因** | 类型系统升级需要所有调用方同步变更，无法原子操作。 |
 | **预防** | (1) 旧方法标记 `[Obsolete]` 属性——编译器警告所有未迁移调用方。(2) 旧方法内部委托给新类型——行为保证一致。(3) 抑制 CS0618 直到迁移完成。(4) Phase 3 删除旧方法。 |
 | **适用** | 所有 API 升级场景。见 `LauncherEntryIds.cs`、`LauncherPresetIds.cs`、`LauncherEntryText.cs` 实现。 |
+
+---
+
+## 2. WT_Protector 项目坑
+
+### 2.6 FindUpward 幽灵配置文件陷阱
+
+| 属性 | 值 |
+|---|---|
+| **频次** | 10+ 次（本次会话反复出现） |
+| **根因** | 项目子目录（如 `src/avalonia-launcher/`）有自己的 `README.md`。当 `FindUpward` 在该目录找到 `README.md` + `config/launcher.json`（来自之前误操作保存的幽灵文件）时，误判为仓库根目录停止向上搜索，导致真正的 `config/launcher.json`（19 条）从未被加载 |
+| **修复** | 删除幽灵文件 `src/avalonia-launcher/config/launcher.json`。未来如果再有子目录配置干扰 `FindUpward`，考虑添加 `.git` 目录检查作为更可靠的仓库根标记 |
+| **预防** | 运行 `.exe` 时不加 `--config` 参数，依赖 auto-discovery 从当前目录向上搜索。运行 `dotnet run` 始终从仓库根目录执行。发现视图为空时首先检查 `FindUpward` 搜索路径 |
+
+### 2.7 `resolved store path` 被旧 LiteDB 进程锁定的死循环
+
+| 属性 | 值 |
+|---|---|
+| **频次** | 8+ 次 |
+| **根因** | 旧 WTLauncher App 进程（通过 Explorer 双击启动的）持有 Debug 构建输出的文件锁，`dotnet build` 无法覆盖。`dotnet run` 被迫运行旧 exe，而旧 exe 使用 LiteDB 路径加载 0 条目后覆盖 `config/launcher.json`，形成"旧 exe 加载空数据→覆盖配置文件→新 exe 启动读空数据→旧 exe 仍在运行→锁死"的循环 |
+| **修复** | `wmic process where "name='WTLauncher.App.exe'" delete` + `Stop-Process -Force` + 删除旧构建输出 |
+| **预防** | 开发时始终在关闭所有旧实例后再构建。添加 `*.db` 到 `.gitignore` |

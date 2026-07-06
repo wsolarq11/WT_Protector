@@ -121,20 +121,13 @@ public sealed partial class App : Application
                     }
                 }
 
-                // Phase 3: Use LiteDB as primary store with JSON fallback.
-                var storeDir = Path.GetDirectoryName(storePath);
-                IStore store = string.IsNullOrEmpty(storeDir)
-                    ? new JsonStore()
-                    : LiteDbStore.Open(storeDir);
+                // Use JSON store directly. LiteDB Phase 3 deferred.
+                IStore store = new JsonStore();
                 var loadResult = store.Load(storePath);
                 if (loadResult.IsErr)
                 {
                     var errorMsg = loadResult.Match(ok: _ => "", err: e => e.Message);
                     ErrorLog.Write(new InvalidOperationException(errorMsg), "Startup.Load");
-                    Console.Error.WriteLine($"[WTLauncher] LiteDB load failed: {errorMsg}");
-                    // Fall back to JSON
-                    store = new JsonStore();
-                    loadResult = store.Load(storePath);
                 }
                 var storeFile = loadResult.Match(ok: f => f, err: _ => new LauncherStoreFile());
                 var launchWorkflow = LauncherLaunchWorkflow.Create();

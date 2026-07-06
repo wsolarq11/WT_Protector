@@ -30,7 +30,7 @@ Layer 4 ─ Views/                     XAML + code-behind + drag-drop
 | Argument building | `LaunchArgumentBuilder.cs` — `wt.exe` quoting with Windows rules |
 | JSON persistence | `LauncherJson.cs` — atomic temp-file + `.bak` rotation |
 | Design tokens | `LauncherDesignTokens.cs` — colors, spacing, sizing (single source) |
-| Config store | `LauncherConfigStore.cs` — load/validate/normalize pipeline |
+| Config store | `LauncherStore.cs` — load/validate/normalize pipeline |
 | Pure rules | `LauncherEntryOrder.cs`, `LauncherEntryLayoutCalculator.cs`, `LauncherDragGhostLayoutCalculator.cs` |
 | View mode enum | `LauncherEntryViewMode.cs` — Cards / Details / Names |
 
@@ -58,7 +58,7 @@ Layer 4 ─ Views/                     XAML + code-behind + drag-drop
 
 Key files:
 - `LauncherEntryMutationSnapshot.cs` — captures entries + presets + custom order + selection
-- `LauncherEntryMutationPersistence.cs` — snapshot → IStore save → rollback on failure
+- `LauncherEntryMutationSnapshot.cs` — snapshot → IStore save → rollback on failure
 
 ---
 
