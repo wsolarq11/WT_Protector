@@ -840,3 +840,38 @@ Executed all findings from ponytail-audit across 2 rounds: removed Result<T,E> t
 ### Next Steps
 
 - None - task complete
+
+
+## Session 26: Follow-up execution: partial merge cleanup, spec update, snapshot inline
+
+**Date**: 2026-07-07
+**Task**: Follow-up execution: partial merge cleanup, spec update, snapshot inline
+**Branch**: `main`
+
+### Summary
+
+Executed follow-up items: merged 10 partial files into 1 (MainWindowViewModel.cs), removed LauncherStore Normalize pipeline (~280 lines), added FilterText auto-trim, inlined LauncherPresetMutationSnapshot, updated test assertions, updated spec docs for validation boundary philosophy. All 454 tests pass.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `87c2626` | (see git log) |
+| `c740057` | (see git log) |
+| `1c28e19` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
