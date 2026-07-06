@@ -1396,16 +1396,16 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return normalizedName;
     }
 
-    private LauncherPresetMutationSnapshot CapturePresetMutationSnapshot()
+    private (LauncherPresetFile PresetFile, string? SelectedPresetId) CapturePresetMutationSnapshot()
     {
         DiscardDragReorderPreview();
-        return LauncherPresetMutationSnapshot.Capture(_presetFile, SelectedPreset?.Id);
+        return (_presetFile, SelectedPreset?.Id);
     }
 
-    private void RestorePresetMutationSnapshot(LauncherPresetMutationSnapshot snapshot) =>
-        ApplyPresetFileState(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
+    private void RestorePresetMutationSnapshot((LauncherPresetFile PresetFile, string? SelectedPresetId) snapshot) =>
+        ApplyPresetFileState(snapshot.PresetFile, snapshot.SelectedPresetId);
 
-    private void RestorePresetSnapshotAndReportMissing(LauncherPresetMutationSnapshot snapshot)
+    private void RestorePresetSnapshotAndReportMissing((LauncherPresetFile PresetFile, string? SelectedPresetId) snapshot)
     {
         RestorePresetMutationSnapshot(snapshot);
         ApplyStatusText(LauncherPresetStatus.CurrentPresetMissing);
@@ -1570,7 +1570,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     private bool SavePresetMutationAndApply(
-        LauncherPresetMutationSnapshot snapshot,
+        (LauncherPresetFile PresetFile, string? SelectedPresetId) snapshot,
         string selectedPresetId,
         out LauncherPresetViewModel? selectedPreset)
     {
@@ -1581,7 +1581,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (saveFailure is not null)
         {
             ApplyStatusText(saveFailure);
-            ApplyPresetFileState(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
+            ApplyPresetFileState(snapshot.PresetFile, snapshot.SelectedPresetId);
             return false;
         }
 
