@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 24
+- **Total Sessions**: 25
 - **Last Active**: 2026-07-06
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~809 | Active |
+| `journal-1.md` | ~842 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 25 | 2026-07-06 | Ponytail-audit full execution — Result/IStore/obsolete removal | `55cf008` | `main` |
 | 24 | 2026-07-06 | UltraReview#8 Implementation + Debug Marathon | `b28e605` | `main` |
 | 23 | 2026-07-05 | UltraReview 2026-07-05: 55 fixes + spec update | `03e9401`, `6b768bc`, `d994a82` | `main` |
 | 22 | 2026-07-05 | UltraReview 2026-06-30 Round 2 fixes | `6498d78` | `main` |
