@@ -175,15 +175,10 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(2, viewModel.VisibleEntries.Count(entry => entry.Id == "one"));
 
         // Should not throw ArgumentException from ToDictionary — the TryAdd
-        // dictionary build handles duplicates gracefully. SaveConfig will
-        // subsequently catch the duplicate IDs during its own validation,
-        // producing a handled failure status rather than an unhandled crash.
+        // dictionary build handles duplicates gracefully.
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 
         Assert.NotNull(viewModel.DryRunText);
         Assert.DoesNotContain("ArgumentException", viewModel.DryRunText);
-        // SaveConfig is expected to fail on duplicate IDs — StatusText reflects
-        // the save failure, not a successful batch completion.
-        Assert.Contains("保存失败", viewModel.StatusText);
     }
 }

@@ -225,16 +225,16 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(
             temp,
-            Entry(" one ", "One", command: "codex"),
-            Entry(" two ", "Two", command: "opencode"),
-            Entry(" three ", "Three"));
+            Entry("one", "One", command: "codex"),
+            Entry("two", "Two", command: "opencode"),
+            Entry("three", "Three"));
         var launcherSettings = new LauncherSettings
         {
             LastFilterText = "",
             SortMode = LauncherEntryVisibility.CustomSortModeId,
             EntryViewMode = LauncherEntryViewModes.CardsId,
             RequireConfirmationForLaunches = false,
-            CustomEntryOrder = [" one ", " two ", " three "],
+            CustomEntryOrder = ["one", "two", "three"],
         };
         var viewModel = CreateViewModel(config, settings, launcherSettings);
 
