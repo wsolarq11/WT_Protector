@@ -774,3 +774,36 @@ UltraReview: 8 parallel review agents → 55 findings → 6 batch fix implementa
 ### Next Steps
 
 - None - task complete
+
+
+## Session 24: UltraReview#8 Implementation + Debug Marathon
+
+**Date**: 2026-07-06
+**Task**: UltraReview#8 Implementation + Debug Marathon
+**Branch**: `main`
+
+### Summary
+
+Implemented 21 fixes from UltraReview#8 across all layers. Major efforts: breaking the FindUpward ghost-file/immortal-process lock cycle (15+ attempts), switching production store from LiteDB to JsonStore, fixing OnClosing crash, cleaning legacy config files. 462 tests passing.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b28e605` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
