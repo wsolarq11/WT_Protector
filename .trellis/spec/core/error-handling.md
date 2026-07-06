@@ -66,7 +66,7 @@ private static string RequireEntryId(string? id, int index, HashSet<string> seen
 ```
 
 **Rules:**
-1. **Validate at the entry point** — `LauncherStore.Load()` validates everything before ViewModel touch.
+1. **Validate at the boundary** — `EntryId.Parse()`, `EntryName.Parse()` etc. validate at the point of creation. JSON deserialization handles structural validity; value objects handle semantic validity. Do NOT re-validate in the store layer. (Normalize pipeline removed 2026-07-06.)
 2. **Throw `InvalidDataException`** for malformed config/user input.
 3. **Throw `ArgumentException` / `ArgumentNullException`** for programming errors.
 4. **Include index and field name** in error messages for pinpoint debugging.
