@@ -148,12 +148,11 @@ internal static class Program
             if (string.IsNullOrWhiteSpace(storeDir) || !Directory.Exists(storeDir))
                 return;
 
-            var result = MigrationTool.MigrateIfNeeded(storeDir);
-            if (result.IsErr)
+            try { MigrationTool.MigrateIfNeeded(storeDir); }
+            catch (Exception ex)
             {
-                var err = result.Match(ok: _ => "", err: e => e.Message);
-                Debug.WriteLine($"[WTLauncher] JSON→LiteDB migration skipped: {err}");
-                Trace.WriteLine($"[WTLauncher] JSON→LiteDB migration skipped: {err}");
+                Debug.WriteLine($"[WTLauncher] JSON→LiteDB migration skipped: {ex.Message}");
+                Trace.WriteLine($"[WTLauncher] JSON→LiteDB migration skipped: {ex.Message}");
             }
         }
         catch

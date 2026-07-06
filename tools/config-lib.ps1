@@ -76,16 +76,8 @@ function Get-LauncherSettingsPath {
     return (Get-RepoPath 'config\settings.json')
 }
 
-function Get-RetiredConfigPath {
-    return (Get-RepoPath 'retired\config\config.json')
-}
-
 function Get-ShortcutBackupManifestPath {
     return (Get-RepoPath 'docs\reference\shortcut-backup-manifest.json')
-}
-
-function Get-WinFormsRetiredDesignPath {
-    return (Get-RepoPath 'retired\design\winforms-launcher.md')
 }
 
 function Read-ConfigItems([string]$Path) {

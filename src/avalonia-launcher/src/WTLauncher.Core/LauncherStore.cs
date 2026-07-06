@@ -52,67 +52,6 @@ public static class LauncherStore
         LauncherJson.Save(Normalize(store), storePath, backup);
     }
 
-    // ---- Result-based Load / Save (Phase 2) ----
-
-    /// <summary>Loads the store file, returning a Result instead of throwing.</summary>
-    public static Result<LauncherStoreFile, StoreLoadError> TryLoad(string storePath)
-    {
-        try
-        {
-            return Load(storePath);
-        }
-        catch (InvalidDataException ex) when (ex.Message.Contains("50 MB"))
-        {
-            return new StoreLoadError.FileTooLarge(new FileInfo(storePath).Length);
-        }
-        catch (InvalidDataException ex) when (ex.Message.Contains("schema version"))
-        {
-            return new StoreLoadError.SchemaTooNew(ExpectedStoreSchemaVersion + 1);
-        }
-        catch (InvalidDataException ex)
-        {
-            return new StoreLoadError.ValidationError(ex.Message);
-        }
-        catch (JsonException ex)
-        {
-            return new StoreLoadError.JsonError(ex.Message);
-        }
-        catch (FileNotFoundException)
-        {
-            return new StoreLoadError.FileNotFound(storePath);
-        }
-        catch (IOException ex)
-        {
-            return new StoreLoadError.IoError(ex.Message);
-        }
-    }
-
-    /// <summary>Saves the store file, returning a Result instead of throwing.</summary>
-    public static Result<Unit, StoreSaveError> TrySave(LauncherStoreFile store, string storePath, bool backup = true)
-    {
-        try
-        {
-            Save(store, storePath, backup);
-            return Unit.Value;
-        }
-        catch (InvalidDataException ex)
-        {
-            return new StoreSaveError.SerializationError(ex.Message);
-        }
-        catch (JsonException ex)
-        {
-            return new StoreSaveError.SerializationError(ex.Message);
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return new StoreSaveError.AccessDenied(storePath);
-        }
-        catch (IOException ex)
-        {
-            return new StoreSaveError.IoError(ex.Message);
-        }
-    }
-
     // ---- Path resolution ----
 
     /// <summary>
@@ -190,7 +129,7 @@ public static class LauncherStore
             throw new InvalidDataException("Launcher store exceeds 10000 entry limit.");
 
         List<LaunchEntry> normalized = [];
-        var seenIds = new HashSet<string>(LauncherEntryIds.Comparer);
+        var seenIds = new HashSet<string>(EntryId.Comparer);
         for (var i = 0; i < entries.Count; i++)
         {
             var entry = entries[i] ?? throw new InvalidDataException($"Launcher store entry {i} is null.");
@@ -216,7 +155,7 @@ public static class LauncherStore
 
     private static string RequireStoreEntryId(string? id, int index, HashSet<string> seenIds)
     {
-        var normalized = LauncherEntryIds.RequireEntryId(id, nameof(LaunchEntry.Id));
+        var normalized = EntryId.RequireEntryId(id, nameof(LaunchEntry.Id));
 
         if (!seenIds.Add(normalized))
             throw new InvalidDataException($"Launcher store entry {index} id is duplicate: {normalized}.");
@@ -229,7 +168,7 @@ public static class LauncherStore
         if (value is null)
             throw new InvalidDataException($"Launcher store entry {index} {fieldName} is null.");
 
-        var normalized = LauncherEntryText.Normalize(value);
+        var normalized = EntryName.Normalize(value);
         if (normalized.Length > 4096)
             throw new InvalidDataException(
                 $"Launcher store entry {index} {fieldName} exceeds 4096 character length limit.");
@@ -244,7 +183,7 @@ public static class LauncherStore
         if (value is null)
             throw new InvalidDataException($"Launcher store entry {index} {fieldName} is null.");
 
-        return LauncherEntryText.Normalize(value);
+        return EntryName.Normalize(value);
     }
 
     // -- Settings normalization --
@@ -273,7 +212,7 @@ public static class LauncherStore
         if (value is null)
             throw new InvalidDataException("Launcher store settings lastFilterText is null.");
 
-        var normalized = LauncherEntryText.Normalize(value);
+        var normalized = EntryName.Normalize(value);
         if (normalized.Length > 500)
             throw new InvalidDataException(
                 "Launcher store settings lastFilterText exceeds 500 character limit.");
@@ -303,10 +242,10 @@ public static class LauncherStore
                 "Launcher store settings customEntryOrder exceeds 10000 entry limit.");
 
         List<string> normalized = [];
-        var seen = new HashSet<string>(LauncherEntryIds.Comparer);
+        var seen = new HashSet<string>(EntryId.Comparer);
         for (var i = 0; i < customEntryOrder.Count; i++)
         {
-            var entryId = LauncherEntryIds.Normalize(customEntryOrder[i]);
+            var entryId = EntryId.Normalize(customEntryOrder[i]);
             if (entryId.Length == 0)
                 throw new InvalidDataException(
                     $"Launcher store settings customEntryOrder[{i}] is empty.");
@@ -329,7 +268,7 @@ public static class LauncherStore
         List<string> normalized = [];
         foreach (var term in searchHistory)
         {
-            var trimmed = LauncherEntryText.Normalize(term);
+            var trimmed = EntryName.Normalize(term);
             if (trimmed.Length == 0 || trimmed.Length > 200)
                 continue;
 
@@ -356,7 +295,7 @@ public static class LauncherStore
         var builder = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var (key, value) in templates)
         {
-            var trimmedKey = LauncherEntryText.Normalize(key);
+            var trimmedKey = EntryName.Normalize(key);
             if (trimmedKey.Length == 0)
                 throw new InvalidDataException(
                     "Launcher store settings commandTemplates has an empty key.");
@@ -364,7 +303,7 @@ public static class LauncherStore
                 throw new InvalidDataException(
                     $"Launcher store settings commandTemplates key exceeds 256 character limit: '{trimmedKey[..Math.Min(trimmedKey.Length, 50)]}...'.");
 
-            var trimmedValue = LauncherEntryText.Normalize(value);
+            var trimmedValue = EntryName.Normalize(value);
             if (trimmedValue.Length == 0)
                 throw new InvalidDataException(
                     $"Launcher store settings commandTemplates key '{trimmedKey}' has an empty value.");
@@ -417,7 +356,7 @@ public static class LauncherStore
                 $"Launcher store preset count {presets.Count} exceeds maximum of 1000.");
 
         List<LauncherPreset> normalizedPresets = [];
-        var usedPresetIds = new HashSet<string>(LauncherPresetIds.Comparer);
+        var usedPresetIds = new HashSet<string>(PresetId.Comparer);
         var usedPresetNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         for (var i = 0; i < presets.Count; i++)
@@ -441,7 +380,7 @@ public static class LauncherStore
 
     private static string NormalizeStorePresetId(string? id, int index)
     {
-        var normalized = LauncherPresetIds.NormalizeReference(id);
+        var normalized = PresetId.NormalizeReference(id);
         if (normalized.Length == 0)
             throw new InvalidDataException($"Launcher store preset {index} id is empty.");
 
@@ -450,7 +389,7 @@ public static class LauncherStore
 
     private static string NormalizeStorePresetName(string? name, int index)
     {
-        var normalized = LauncherEntryText.Normalize(name);
+        var normalized = EntryName.Normalize(name);
         if (normalized.Length > 256)
             throw new InvalidDataException(
                 $"Launcher store preset {index} name exceeds 256 character limit.");
@@ -470,17 +409,17 @@ public static class LauncherStore
                 $"Launcher store preset {index} entryIds count {entryIds.Count} exceeds maximum of 10000.");
 
         List<string> normalized = [];
-        var seen = new HashSet<string>(LauncherEntryIds.Comparer);
+        var seen = new HashSet<string>(EntryId.Comparer);
         for (var i = 0; i < entryIds.Count; i++)
         {
-            var entryId = LauncherEntryIds.Normalize(entryIds[i]);
+            var entryId = EntryId.Normalize(entryIds[i]);
             if (entryId.Length == 0)
                 throw new InvalidDataException($"Launcher store preset {index} entryIds[{i}] is empty.");
 
             if (!seen.Add(entryId))
                 throw new InvalidDataException(
                     $"Launcher store preset {index} entryIds[{i}] is duplicate: {entryId}.");
-            if (LauncherEntryIds.WindowsReservedNames.Contains(entryId))
+            if (EntryId.WindowsReservedNames.Contains(entryId))
                 throw new InvalidDataException(
                     $"Launcher store preset {index} entryIds[{i}] is a Windows reserved name: {entryId}.");
             if (entryId.Contains('\\') || entryId.Contains('/') || entryId.Contains(".."))
@@ -496,7 +435,7 @@ public static class LauncherStore
     private static string NormalizeDefaultPresetId(string? defaultPresetId,
         ImmutableList<LauncherPreset> presets)
     {
-        var normalized = LauncherPresetIds.NormalizeReference(defaultPresetId);
+        var normalized = PresetId.NormalizeReference(defaultPresetId);
         if (presets.Count == 0)
         {
             if (normalized.Length != 0)
@@ -510,7 +449,7 @@ public static class LauncherStore
             throw new InvalidDataException(
                 "Launcher store default preset id is required when presets exist.");
 
-        if (!presets.Any(preset => LauncherPresetIds.Same(preset.Id, normalized)))
+        if (!presets.Any(preset => PresetId.Same(preset.Id, normalized)))
             throw new InvalidDataException(
                 $"Launcher store default preset id does not match any preset: {normalized}.");
 

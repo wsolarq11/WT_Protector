@@ -18,8 +18,8 @@ public sealed class LauncherPresetSelectionPreview
         string applyButtonText,
         string statusText)
     {
-        SelectedIds = selectedIds.ToFrozenSet(LauncherEntryIds.Comparer);
-        PresetIds = presetIds.ToFrozenSet(LauncherEntryIds.Comparer);
+        SelectedIds = selectedIds.ToFrozenSet(EntryId.Comparer);
+        PresetIds = presetIds.ToFrozenSet(EntryId.Comparer);
         MissingConfigIds = new ReadOnlyCollection<string>([.. missingConfigIds]);
         MatchedCount = matchedCount;
         MissingCount = missingCount;
@@ -67,9 +67,9 @@ public sealed class LauncherPresetSelectionPreview
         IEnumerable<string> knownIds,
         IEnumerable<string> presetIds)
     {
-        var selectedSet = LauncherEntryIds.ToRequiredSet(selectedIds, nameof(selectedIds));
-        var knownSet = LauncherEntryIds.ToRequiredSet(knownIds, nameof(knownIds));
-        var presetSet = LauncherEntryIds.ToRequiredSet(presetIds, nameof(presetIds));
+        var selectedSet = EntryId.ToRequiredSet(selectedIds, nameof(selectedIds));
+        var knownSet = EntryId.ToRequiredSet(knownIds, nameof(knownIds));
+        var presetSet = EntryId.ToRequiredSet(presetIds, nameof(presetIds));
         var missingConfigIds = presetSet.Where(id => !knownSet.Contains(id)).ToList();
         var matched = selectedSet.Count(presetSet.Contains);
         var missing = presetSet.Count - matched;

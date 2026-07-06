@@ -6,33 +6,33 @@ namespace WTLauncher.Tests;
 public class EntryDirectoryTests
 {
     [Fact]
-    public void TryParse_NullOrEmpty_ReturnsEmptyError()
+    public void Parse_NullOrEmpty_Throws()
     {
-        Assert.True(EntryDirectory.TryParse(null).IsErr);
-        Assert.True(EntryDirectory.TryParse("").IsErr);
-        Assert.True(EntryDirectory.TryParse("   ").IsErr);
+        Assert.Throws<FormatException>(() => EntryDirectory.Parse(null));
+        Assert.Throws<FormatException>(() => EntryDirectory.Parse(""));
+        Assert.Throws<FormatException>(() => EntryDirectory.Parse("   "));
     }
 
     [Fact]
-    public void TryParse_ValidLocalPath_ReturnsOk()
+    public void Parse_ValidLocalPath_ReturnsOk()
     {
         var temp = System.IO.Path.GetTempPath();
-        var result = EntryDirectory.TryParse(temp);
-        Assert.True(result.IsOk);
+        var dir = EntryDirectory.Parse(temp);
+        Assert.Equal(temp.TrimEnd('\\'), dir.Value.TrimEnd('\\'));
     }
 
     [Fact]
-    public void TryParseAndValidateExists_NonExistentDir_ReturnsNotFound()
+    public void ParseAndValidateExists_NonExistentDir_Throws()
     {
-        var result = EntryDirectory.TryParseAndValidateExists(@"C:\does-not-exist-12345");
-        Assert.True(result.IsErr);
+        Assert.Throws<DirectoryNotFoundException>(() =>
+            EntryDirectory.ParseAndValidateExists(@"C:\does-not-exist-12345"));
     }
 
     [Fact]
     public void JsonConverter_RoundTrip_Works()
     {
         var temp = System.IO.Path.GetTempPath();
-        var dir = EntryDirectory.TryParse(temp).Match(ok: d => d, err: _ => default(EntryDirectory));
+        var dir = EntryDirectory.Parse(temp);
         var options = new JsonSerializerOptions
         {
             Converters = { new EntryDirectoryJsonConverter() }

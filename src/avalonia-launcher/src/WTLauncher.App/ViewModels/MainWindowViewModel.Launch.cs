@@ -51,7 +51,7 @@ public sealed partial class MainWindowViewModel
     {
         DiscardDragReorderPreview();
         var entry = item.SnapshotEntry();
-        var entryName = LauncherEntryText.Normalize(entry.Name);
+        var entryName = EntryName.Normalize(entry.Name);
         try
         {
             var plan = _launchWorkflow.BuildPlan(entry, RequireConfirmationForLaunches);
@@ -81,7 +81,7 @@ public sealed partial class MainWindowViewModel
         {
             DiscardDragReorderPreview();
             var entry = item.SnapshotEntry();
-            var entryName = LauncherEntryText.Normalize(entry.Name);
+            var entryName = EntryName.Normalize(entry.Name);
             LaunchPlan? plan = null;
             try
             {

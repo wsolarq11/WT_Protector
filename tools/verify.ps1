@@ -435,7 +435,7 @@ Add-Check 'shortcut-backup-retirement' @{
     sourceDirectoryRemoved = -not (Test-Path -LiteralPath (Join-Path $root 'WT_Shortcuts_Backup'))
 }
 
-$retiredDesign = Get-WinFormsRetiredDesignPath
+$retiredDesign = Get-RepoPath 'retired\design\winforms-launcher.md'
 if (-not (Test-Path -LiteralPath $retiredDesign)) { throw "Missing WinForms retirement design: $retiredDesign" }
 $retiredDesignText = Get-Content -Raw -Encoding UTF8 -LiteralPath $retiredDesign
 foreach ($required in @('Retired WinForms launcher design', 'Portable config discovery', 'Launch safety boundary', 'Successor directive')) {
@@ -443,18 +443,8 @@ foreach ($required in @('Retired WinForms launcher design', 'Portable config dis
 }
 Add-Check 'winforms-retired-design' @{ path = 'retired\design\winforms-launcher.md' }
 
-$hta = Join-Path $root 'retired\WT Launcher.hta'
-if (-not (Test-Path -LiteralPath $hta)) { throw "Missing retired HTA archive: $hta" }
-$htaSource = Get-Content -Raw -Encoding UTF8 -LiteralPath $hta
-foreach ($required in @('function quoteArg', 'function buildWtCommand')) {
-    if (-not $htaSource.Contains($required)) { throw "Retired HTA required helper missing: $required" }
-}
-$buildCalls = [regex]::Matches($htaSource, 'buildWtCommand\(b\)').Count
-if ($buildCalls -lt 2) { throw "Retired HTA launch paths do not both use buildWtCommand; count=$buildCalls" }
-Add-Check 'hta-retired-archive' @{ path = 'retired\WT Launcher.hta'; buildWtCommandCalls = $buildCalls }
-
-$retiredConfigPath = Get-RetiredConfigPath
-if (-not (Test-Path -LiteralPath $retiredConfigPath)) { throw "Missing retired HTA-local config: $retiredConfigPath" }
+$retiredConfigPath = Get-RepoPath 'retired\config\config.json'
+if (-not (Test-Path -LiteralPath $retiredConfigPath)) { throw "Missing retired config: $retiredConfigPath" }
 $retiredItems = @(Read-ConfigItems $retiredConfigPath)
 Add-Check 'hta-retired-config' @{
     path = 'retired\config\config.json'

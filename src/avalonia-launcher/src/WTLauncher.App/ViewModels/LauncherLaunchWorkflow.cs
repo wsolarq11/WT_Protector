@@ -118,7 +118,7 @@ public sealed class LauncherLaunchWorkflow
         int? failureIndex,
         Exception exception)
     {
-        var normalizedName = LauncherEntryText.Normalize(entryName);
+        var normalizedName = EntryName.Normalize(entryName);
         if (normalizedName.Length == 0)
         {
             report.RecordFailure(exception);

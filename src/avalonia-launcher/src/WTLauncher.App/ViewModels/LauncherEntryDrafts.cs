@@ -15,10 +15,10 @@ public static class LauncherEntryDrafts
     public static EntryDraft NormalizeDraft(EntryDraft draft)
     {
         return new EntryDraft(
-            LauncherEntryIds.Normalize(draft.Id),
-            LauncherEntryText.Normalize(draft.Name),
-            LauncherEntryText.Normalize(draft.Directory),
-            LauncherEntryText.Normalize(draft.Command),
+            EntryId.Normalize(draft.Id),
+            EntryName.Normalize(draft.Name),
+            EntryName.Normalize(draft.Directory),
+            EntryName.Normalize(draft.Command),
             draft.Selected);
     }
 
@@ -52,7 +52,7 @@ public static class LauncherEntryDrafts
         string? originalId,
         IEnumerable<LaunchEntry> existingEntries)
     {
-        var entryId = LauncherEntryIds.Normalize(entry.Id);
+        var entryId = EntryId.Normalize(entry.Id);
         var requiredFieldError = GetRequiredFieldError(
             entryId,
             entry.Name,
@@ -64,8 +64,8 @@ public static class LauncherEntryDrafts
         // Per-item call (dialog submit, not in a loop), so O(n) scan over
         // existingEntries is acceptable. Typical entry count < 100.
         if (existingEntries.Any(existing =>
-                !LauncherEntryIds.SameNormalized(existing.Id, originalId)
-                && LauncherEntryIds.SameNormalized(existing.Id, entryId)))
+                !EntryId.SameNormalized(existing.Id, originalId)
+                && EntryId.SameNormalized(existing.Id, entryId)))
             return LauncherEntryDraftStatus.DuplicateId(entryId);
 
         return null;
@@ -86,17 +86,17 @@ public static class LauncherEntryDrafts
         string? directory,
         string? command)
     {
-        if (!LauncherEntryIds.IsUsable(id))
+        if (!EntryId.IsUsable(id))
             return LauncherEntryDraftStatus.IdRequired;
         // Reject Windows reserved names and path separators / parent-directory tokens
         // at dialog-validation time rather than at save time. Without this guard, the
         // save-time RequireEntryId rejects the ID and silently rolls back the entry
         // via the snapshot mechanism, leaving no user-facing explanation.
-        // Use OrdinalIgnoreCase to match LauncherEntryIds.RequireEntryId behavior
+        // Use OrdinalIgnoreCase to match EntryId.RequireEntryId behavior
         // (which uses WindowsReservedNames with StringComparer.OrdinalIgnoreCase).
-        // ponytail: reuse LauncherEntryIds.WindowsReservedNames — single source of truth.
-        var normalizedId = LauncherEntryIds.Normalize(id);
-        if (LauncherEntryIds.WindowsReservedNames.Contains(normalizedId))
+        // ponytail: reuse EntryId.WindowsReservedNames — single source of truth.
+        var normalizedId = EntryId.Normalize(id);
+        if (EntryId.WindowsReservedNames.Contains(normalizedId))
             return LauncherEntryDraftStatus.IdInvalid;
         if (normalizedId.Contains('\\') || normalizedId.Contains('/') || normalizedId.Contains(".."))
             return LauncherEntryDraftStatus.IdInvalid;

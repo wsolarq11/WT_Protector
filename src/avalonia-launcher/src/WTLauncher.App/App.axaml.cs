@@ -121,22 +121,19 @@ public sealed partial class App : Application
                     }
                 }
 
-                // Use JSON store directly. LiteDB Phase 3 deferred.
-                IStore store = new JsonStore();
-                var loadResult = store.Load(storePath);
-                if (loadResult.IsErr)
+                LauncherStoreFile storeFile;
+                try { storeFile = LauncherStore.Load(storePath); }
+                catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
                 {
-                    var errorMsg = loadResult.Match(ok: _ => "", err: e => e.Message);
-                    ErrorLog.Write(new InvalidOperationException(errorMsg), "Startup.Load");
+                    ErrorLog.Write(ex, "Startup.Load");
+                    storeFile = new LauncherStoreFile();
                 }
-                var storeFile = loadResult.Match(ok: f => f, err: _ => new LauncherStoreFile());
                 var launchWorkflow = LauncherLaunchWorkflow.Create();
                 var viewModel = new MainWindowViewModel(
                     storePath,
                     storeFile,
                     launchWorkflow,
-                    static () => DateTimeOffset.UtcNow,
-                    store);
+                    static () => DateTimeOffset.UtcNow);
                 var windowSettings = storeFile.Settings.Window;
                 var mainWindow = new MainWindow(viewModel)
                 {

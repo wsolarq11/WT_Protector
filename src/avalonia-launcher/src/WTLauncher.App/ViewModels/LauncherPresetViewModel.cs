@@ -12,7 +12,7 @@ public sealed class LauncherPresetViewModel
         Id = preset.Id;
         Name = preset.Name;
         EntryIds = new ReadOnlyCollection<string>(SnapshotEntryIds(preset.EntryIds));
-        EntryCount = LauncherEntryIds.ToRequiredUniqueList(EntryIds, nameof(EntryIds)).Count;
+        EntryCount = EntryId.ToRequiredUniqueList(EntryIds, nameof(EntryIds)).Count;
         IsLocked = preset.Locked;
     }
 

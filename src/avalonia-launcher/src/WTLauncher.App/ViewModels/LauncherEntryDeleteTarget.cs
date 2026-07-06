@@ -1,4 +1,6 @@
 using WTLauncher.Core;
+using _EntryId = WTLauncher.Core.EntryId;
+using _EntryName = WTLauncher.Core.EntryName;
 
 namespace WTLauncher.App.ViewModels;
 
@@ -8,8 +10,8 @@ public sealed record LauncherEntryDeleteTarget
     {
         ArgumentNullException.ThrowIfNull(entry);
 
-        EntryId = LauncherEntryIds.RequireEntryId(entry.Id, nameof(entry.Id));
-        EntryName = LauncherEntryText.RequireNonEmpty(entry.Name);
+        EntryId = _EntryId.RequireEntryId(entry.Id, nameof(entry.Id));
+        EntryName = _EntryName.RequireNonEmpty(entry.Name);
     }
 
     public string EntryId { get; }

@@ -7,10 +7,9 @@ public sealed partial class MainWindowViewModel
 {
     private void LoadPresetFile(string? preferredPresetId)
     {
-        var loadResult = _store.Load(_storePath);
-        var storeFile = loadResult.Match(
-            ok: f => f,
-            err: _ => new LauncherStoreFile());
+        LauncherStoreFile storeFile;
+        try { storeFile = LauncherStore.Load(_storePath); }
+        catch { storeFile = new LauncherStoreFile(); }
         _presetFile = new LauncherPresetFile
         {
             SchemaVersion = 1,
@@ -23,7 +22,7 @@ public sealed partial class MainWindowViewModel
     private void ApplyPresetFileState(LauncherPresetFile presetFile, string? preferredPresetId)
     {
         var rawTargetId = preferredPresetId ?? presetFile.DefaultPresetId;
-        var targetPresetId = LauncherPresetIds.NormalizeReference(rawTargetId);
+        var targetPresetId = PresetId.NormalizeReference(rawTargetId);
         var presetViewModels = presetFile.Presets
             .Select(preset => new LauncherPresetViewModel(preset))
             .ToList();
@@ -60,7 +59,7 @@ public sealed partial class MainWindowViewModel
         if (targetPresetId.Length == 0)
             throw new InvalidDataException("Launcher selected preset id is required when presets exist.");
 
-        return presets.FirstOrDefault(preset => LauncherPresetIds.Same(preset.Id, targetPresetId))
+        return presets.FirstOrDefault(preset => PresetId.Same(preset.Id, targetPresetId))
             ?? throw new InvalidDataException(
                 $"Launcher selected preset id does not match any preset: {targetPresetId}.");
     }
@@ -81,7 +80,7 @@ public sealed partial class MainWindowViewModel
             return false;
         }
 
-        if (LauncherPresetIds.NormalizeReference(selectedPresetId).Length > 0)
+        if (PresetId.NormalizeReference(selectedPresetId).Length > 0)
         {
             ApplyPresetFileState(_presetFile, selectedPresetId);
             selectedPreset = SelectedPreset;

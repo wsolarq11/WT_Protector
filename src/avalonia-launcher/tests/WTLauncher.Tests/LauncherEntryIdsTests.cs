@@ -11,38 +11,38 @@ public sealed class LauncherEntryIdsTests
     [InlineData("one", true)]
     public void IsUsableRejectsBlankIds(string? id, bool expected)
     {
-        Assert.Equal(expected, LauncherEntryIds.IsUsable(id));
+        Assert.Equal(expected, EntryId.IsUsable(id));
     }
 
     [Fact]
     public void NormalizeTrimsEntryIds()
     {
-        Assert.Equal("one", LauncherEntryIds.Normalize(" one "));
-        Assert.Equal(string.Empty, LauncherEntryIds.Normalize(null));
+        Assert.Equal("one", EntryId.Normalize(" one "));
+        Assert.Equal(string.Empty, EntryId.Normalize(null));
     }
 
     [Fact]
     public void SameUsesOrdinalEntryIdMatch()
     {
-        Assert.True(LauncherEntryIds.Same("one", "one"));
-        Assert.True(LauncherEntryIds.Same(null, null));
-        Assert.False(LauncherEntryIds.Same("One", "one"));
-        Assert.False(LauncherEntryIds.Same(null, "one"));
+        Assert.True(EntryId.Same("one", "one"));
+        Assert.True(EntryId.Same(null, null));
+        Assert.False(EntryId.Same("One", "one"));
+        Assert.False(EntryId.Same(null, "one"));
     }
 
     [Fact]
     public void SameNormalizedTrimsThenUsesOrdinalMatch()
     {
-        Assert.True(LauncherEntryIds.SameNormalized(" one ", "one"));
-        Assert.True(LauncherEntryIds.SameNormalized(null, " "));
-        Assert.False(LauncherEntryIds.SameNormalized(" One ", "one"));
+        Assert.True(EntryId.SameNormalized(" one ", "one"));
+        Assert.False(EntryId.SameNormalized(null, " "));
+        Assert.False(EntryId.SameNormalized(" One ", "one"));
     }
 
     [Fact]
     public void ToRequiredUniqueListRejectsBlankIds()
     {
         var exception = Assert.Throws<ArgumentException>(() =>
-            LauncherEntryIds.ToRequiredUniqueList(["one", " "], "ids"));
+            EntryId.ToRequiredUniqueList(["one", " "], "ids"));
 
         Assert.Equal("ids", exception.ParamName);
     }
@@ -51,7 +51,7 @@ public sealed class LauncherEntryIdsTests
     public void ToRequiredUniqueListRejectsDuplicateIds()
     {
         var exception = Assert.Throws<ArgumentException>(() =>
-            LauncherEntryIds.ToRequiredUniqueList(["one", " one "], "ids"));
+            EntryId.ToRequiredUniqueList(["one", " one "], "ids"));
 
         Assert.Equal("ids", exception.ParamName);
     }
@@ -59,7 +59,7 @@ public sealed class LauncherEntryIdsTests
     [Fact]
     public void ToRequiredUniqueListNormalizesValidIdsInOrder()
     {
-        var ids = LauncherEntryIds.ToRequiredUniqueList([" one ", "Two"], "ids");
+        var ids = EntryId.ToRequiredUniqueList([" one ", "Two"], "ids");
 
         Assert.Equal(["one", "Two"], ids);
     }
@@ -70,7 +70,7 @@ public sealed class LauncherEntryIdsTests
         // Build a string longer than 256 characters.
         var longId = new string('X', 500);
 
-        var result = LauncherEntryIds.Normalize(longId);
+        var result = EntryId.Normalize(longId);
 
         // Must not throw. Must produce at most 256 characters.
         Assert.Equal(new string('X', 256), result);
@@ -82,7 +82,7 @@ public sealed class LauncherEntryIdsTests
         // 257 chars — truncation to 256 should kick in.
         var id = new string('Y', 257);
 
-        var result = LauncherEntryIds.Normalize(id);
+        var result = EntryId.Normalize(id);
 
         Assert.Equal(256, result.Length);
         Assert.Equal(new string('Y', 256), result);
@@ -93,7 +93,7 @@ public sealed class LauncherEntryIdsTests
     {
         var id = new string('Z', 256);
 
-        var result = LauncherEntryIds.Normalize(id);
+        var result = EntryId.Normalize(id);
 
         Assert.Equal(256, result.Length);
         Assert.Equal(new string('Z', 256), result);
@@ -110,7 +110,7 @@ public sealed class LauncherEntryIdsTests
         var lowSurrogate = '\uDC00';
         var id = regular + highSurrogate + lowSurrogate;
 
-        var result = LauncherEntryIds.Normalize(id);
+        var result = EntryId.Normalize(id);
 
         Assert.Equal(257, result.Length);
         Assert.EndsWith("\uD800\uDC00", result);

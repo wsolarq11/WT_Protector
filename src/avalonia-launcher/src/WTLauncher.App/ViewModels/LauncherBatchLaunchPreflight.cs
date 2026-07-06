@@ -1,4 +1,6 @@
 using WTLauncher.Core;
+using _EntryId = WTLauncher.Core.EntryId;
+using _EntryName = WTLauncher.Core.EntryName;
 
 namespace WTLauncher.App.ViewModels;
 
@@ -8,8 +10,8 @@ public sealed record LauncherBatchLaunchItem
     {
         ArgumentNullException.ThrowIfNull(entry);
 
-        EntryId = LauncherEntryIds.RequireEntryId(entry.Id, nameof(entry.Id));
-        EntryName = LauncherEntryText.RequireNonEmpty(entry.Name);
+        EntryId = _EntryId.RequireEntryId(entry.Id, nameof(entry.Id));
+        EntryName = _EntryName.RequireNonEmpty(entry.Name);
         Plan = plan ?? throw new ArgumentNullException(nameof(plan));
     }
 
@@ -71,7 +73,7 @@ public sealed record LauncherBatchLaunchConfirmation
 
     private static string RequireTargetLabel(string? targetLabel)
     {
-        var normalized = LauncherEntryText.Normalize(targetLabel);
+        var normalized = _EntryName.Normalize(targetLabel);
         if (normalized.Length == 0)
             throw new ArgumentException("Batch launch confirmation target label is required.", nameof(targetLabel));
 

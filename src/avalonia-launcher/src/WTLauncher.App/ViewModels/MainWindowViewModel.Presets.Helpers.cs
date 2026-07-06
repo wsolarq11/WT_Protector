@@ -78,7 +78,7 @@ public sealed partial class MainWindowViewModel
             return null;
         }
 
-        var normalizedName = LauncherEntryText.Normalize(presetName);
+        var normalizedName = EntryName.Normalize(presetName);
         if (normalizedName.Length == 0)
         {
             StatusText = LauncherPresetStatus.NameRequired;
@@ -172,14 +172,14 @@ public sealed partial class MainWindowViewModel
 
     private List<LauncherEntryViewModel> GetPresetEntries(IEnumerable<string> entryIds)
     {
-        var entriesById = new Dictionary<string, LauncherEntryViewModel>(LauncherEntryIds.Comparer);
+        var entriesById = new Dictionary<string, LauncherEntryViewModel>(EntryId.Comparer);
         foreach (var entry in _entries)
         {
             if (!entriesById.ContainsKey(entry.Id))
                 entriesById[entry.Id] = entry;
         }
 
-        var uniqueIds = LauncherEntryIds.ToRequiredUniqueList(entryIds, nameof(entryIds));
+        var uniqueIds = EntryId.ToRequiredUniqueList(entryIds, nameof(entryIds));
         var result = new List<LauncherEntryViewModel>(uniqueIds.Count);
         foreach (var id in uniqueIds)
         {

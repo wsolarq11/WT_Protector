@@ -22,7 +22,7 @@ public sealed class StatusTextContractTests
     [InlineData(null, "")]
     public void NormalizeTrimsTextAndConvertsNullToEmpty(string? value, string expected)
     {
-        Assert.Equal(expected, LauncherEntryText.Normalize(value));
+        Assert.Equal(expected, EntryName.Normalize(value));
     }
 
     [Fact]
@@ -30,10 +30,10 @@ public sealed class StatusTextContractTests
     {
         // Fullwidth latin letters normalize to halfwidth ASCII under FormKC.
         // U+FF23=Ｃ, U+FF41=ａ, U+FF46=ｆ, U+FF45=ｅ
-        Assert.Equal("Cafe", LauncherEntryText.Normalize("Ｃａｆｅ"));
+        Assert.Equal("Cafe", EntryName.Normalize("Ｃａｆｅ"));
 
         // Combining acute accent (U+0301) composes to precomposed é (U+00E9).
-        Assert.Equal("Café", LauncherEntryText.Normalize("Café"));
+        Assert.Equal("Café", EntryName.Normalize("Café"));
     }
 
     // ── LauncherSettingsStatus (conditional confirmation text) ──

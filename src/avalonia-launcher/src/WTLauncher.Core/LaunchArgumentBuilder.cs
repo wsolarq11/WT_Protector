@@ -46,8 +46,8 @@ public static class LaunchArgumentBuilder
     {
         ArgumentNullException.ThrowIfNull(entry);
 
-        var name = StripUnsafeCharacters(LauncherEntryText.Normalize(entry.Name));
-        var normalizedDirectory = LauncherEntryText.Normalize(entry.Directory);
+        var name = StripUnsafeCharacters(EntryName.Normalize(entry.Name));
+        var normalizedDirectory = EntryName.Normalize(entry.Directory);
         // FormKC normalization converts fullwidth characters (e.g. U+FF05 ％ → U+0025 %).
         // If % appears after normalization but before ExpandEnvironmentVariables, an
         // attacker can inject environment-variable expansion into the directory path.
@@ -60,7 +60,7 @@ public static class LaunchArgumentBuilder
         // Path.GetFullPath resolves relative segments (..) and normalizes separators,
         // preventing directory traversal bypass of the UNC and existence checks below.
         directory = Path.GetFullPath(directory);
-        var command = StripUnsafeCharacters(LauncherCommandTemplateResolver.Resolve(LauncherEntryText.Normalize(entry.Command), commandTemplates));
+        var command = StripUnsafeCharacters(LauncherCommandTemplateResolver.Resolve(EntryName.Normalize(entry.Command), commandTemplates));
 
         if (name.Length == 0)
             throw new InvalidOperationException("Launch entry name is empty.");

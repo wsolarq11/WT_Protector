@@ -12,13 +12,13 @@ public sealed class LauncherPresetWorkflowTests
     [InlineData("!!!", "preset")]
     public void NormalizePresetId_ProducesStableHumanReadableIds(string name, string expected)
     {
-        Assert.Equal(expected, LauncherPresetIds.Normalize(name));
+        Assert.Equal(expected, PresetId.Normalize(name));
     }
 
     [Fact]
     public void GenerateUniquePresetId_AppendsStableNumericSuffix()
     {
-        var id = LauncherPresetIds.GenerateUnique("Project Pair", [" Project Pair ", "project-pair-2"]);
+        var id = PresetId.GenerateUnique("Project Pair", [" Project Pair ", "project-pair-2"]);
 
         Assert.Equal("project-pair-3", id);
     }
@@ -26,10 +26,10 @@ public sealed class LauncherPresetWorkflowTests
     [Fact]
     public void PresetIdMatchUsesOrdinalComparison()
     {
-        Assert.True(LauncherPresetIds.Same("daily", "daily"));
-        Assert.False(LauncherPresetIds.Same("Daily", "daily"));
-        Assert.True(LauncherPresetIds.Comparer.Equals("daily", "daily"));
-        Assert.False(LauncherPresetIds.Comparer.Equals("Daily", "daily"));
+        Assert.True(PresetId.Same("daily", "daily"));
+        Assert.False(PresetId.Same("Daily", "daily"));
+        Assert.True(PresetId.Comparer.Equals("daily", "daily"));
+        Assert.False(PresetId.Comparer.Equals("Daily", "daily"));
     }
 
     [Theory]
@@ -38,7 +38,7 @@ public sealed class LauncherPresetWorkflowTests
     [InlineData(" ", "")]
     public void NormalizePresetReference_DoesNotGenerateIdsForBlankReferences(string? id, string expected)
     {
-        Assert.Equal(expected, LauncherPresetIds.NormalizeReference(id));
+        Assert.Equal(expected, PresetId.NormalizeReference(id));
     }
 
     [Fact]

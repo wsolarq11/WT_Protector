@@ -58,7 +58,7 @@ public static class LauncherEntryStatus
 ```csharp
 private static string RequireEntryId(string? id, int index, HashSet<string> seenIds)
 {
-    var normalized = LauncherEntryIds.RequireEntryId(id, nameof(id));
+    var normalized = EntryId.RequireEntryId(id, nameof(id));
     if (!seenIds.Add(normalized))
         throw new InvalidDataException($"Launcher config entry {index} id is duplicate: {normalized}.");
     return normalized;
@@ -70,6 +70,34 @@ private static string RequireEntryId(string? id, int index, HashSet<string> seen
 2. **Throw `InvalidDataException`** for malformed config/user input.
 3. **Throw `ArgumentException` / `ArgumentNullException`** for programming errors.
 4. **Include index and field name** in error messages for pinpoint debugging.
+
+### Parse Pattern (replaces Result<T,E>, 2026-07-06)
+
+Value objects use a `Parse(throw)` / `Normalize(catch)` pattern instead of the old `Result<T, E>`:
+
+```csharp
+// Parse — throws FormatException on invalid input
+public static EntryId Parse(string? raw)
+{
+    if (string.IsNullOrWhiteSpace(raw))
+        throw new FormatException("ID 不能为空。");
+    // ... validation ...
+    return new EntryId(trimmed);
+}
+
+// Normalize — returns empty on failure (no throw)
+public static string Normalize(string? value)
+{
+    try { return Parse(value).Value; }
+    catch (FormatException) { return string.Empty; }
+}
+```
+
+**Rules:**
+1. `Parse` throws `FormatException` for invalid input — never returns null or uses Result<T,E>.
+2. `Normalize` catches `FormatException` and returns `string.Empty` on failure.
+3. JSON converters call `Parse` directly (let exception propagate as `InvalidDataException`).
+4. Callers that need "throw on invalid" use `Parse`; callers that need "default on invalid" use `Normalize` or wrap in try/catch.
 
 ---
 

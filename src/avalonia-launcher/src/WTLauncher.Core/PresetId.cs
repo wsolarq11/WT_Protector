@@ -4,24 +4,20 @@ using System.Text.Json.Serialization;
 
 namespace WTLauncher.Core;
 
-/// <summary>
-/// A validated and normalized preset ID. FormC normalization, lowercase conversion,
-/// alphanumeric/separator filtering, and 256-char truncation happen at construction time.
-/// </summary>
-[JsonConverter(typeof(PresetIdJsonConverter))]
 public readonly record struct PresetId
 {
+    public const int MaxIdLength = 256;
+
     public static readonly StringComparer Comparer = StringComparer.Ordinal;
 
     public string Value { get; }
 
     private PresetId(string value) => Value = value;
 
-    public static Result<PresetId, IdError> TryParse(string? raw)
+    public static PresetId Parse(string? raw)
     {
         var value = (raw ?? string.Empty).Trim();
 
-        // Truncate at code-point boundary
         const int maxLength = 256;
         if (value.Length > maxLength)
         {
@@ -59,24 +55,15 @@ public readonly record struct PresetId
         return new PresetId(normalized);
     }
 
-    /// <summary>Normalizes a preset ID. For backward compatibility.</summary>
     public static string Normalize(string? value)
-    {
-        var result = TryParse(value);
-        return result.Match(ok: p => p.Value, err: _ => "preset");
-    }
+        => Parse(value).Value;
 
-    /// <summary>Normalizes a reference that may be empty (optional).</summary>
     public static string NormalizeReference(string? value)
         => string.IsNullOrWhiteSpace(value) ? string.Empty : Normalize(value);
 
-    /// <summary>Ordinal equality comparison.</summary>
     public static bool Same(string? left, string? right)
         => string.Equals(left, right, StringComparison.Ordinal);
 
-    /// <summary>
-    /// Generates a unique preset ID from a name, avoiding collisions with existing IDs.
-    /// </summary>
     public static string GenerateUnique(string name, IEnumerable<string> existingIds)
     {
         ArgumentNullException.ThrowIfNull(existingIds);
@@ -103,10 +90,7 @@ public sealed class PresetIdJsonConverter : JsonConverter<PresetId>
     public override PresetId Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var raw = reader.GetString();
-        var result = PresetId.TryParse(raw);
-        return result.Match(
-            ok: id => id,
-            err: error => throw new InvalidDataException(error.Message));
+        return PresetId.Parse(raw);
     }
 
     public override void Write(Utf8JsonWriter writer, PresetId value, JsonSerializerOptions options)

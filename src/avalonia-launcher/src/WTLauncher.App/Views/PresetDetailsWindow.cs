@@ -73,7 +73,7 @@ public sealed class PresetDetailsWindow : Window
     // before the save-path delegates to ViewModel validation. Keep both.
     private void Submit()
     {
-        var name = LauncherEntryText.Normalize(_nameBox.Text);
+        var name = EntryName.Normalize(_nameBox.Text);
         if (name.Length == 0)
         {
             _errorText.Text = "请输入启动组名称。";

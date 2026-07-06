@@ -10,7 +10,7 @@ public sealed class LauncherDragReorderSession
 
     private LauncherDragReorderSession(
         string draggedEntryId,
-        LauncherSettingsSnapshot snapshot,
+        LauncherSettings snapshot,
         LauncherEntryViewModel source)
     {
         DraggedEntryId = draggedEntryId;
@@ -20,11 +20,11 @@ public sealed class LauncherDragReorderSession
 
     public string DraggedEntryId { get; }
 
-    internal LauncherSettingsSnapshot Snapshot { get; }
+    internal LauncherSettings Snapshot { get; }
 
     public static LauncherDragReorderSession Start(
         LauncherEntryViewModel source,
-        LauncherSettingsSnapshot snapshot)
+        LauncherSettings snapshot)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(snapshot);
@@ -36,8 +36,8 @@ public sealed class LauncherDragReorderSession
 
     private static string RequireSourceEntryId(LauncherEntryViewModel source)
     {
-        var entryId = LauncherEntryIds.Normalize(source.Id);
-        if (!LauncherEntryIds.IsUsable(entryId))
+        var entryId = EntryId.Normalize(source.Id);
+        if (!EntryId.IsUsable(entryId))
             throw new InvalidOperationException("Drag source entry id is required.");
 
         return entryId;
@@ -45,12 +45,12 @@ public sealed class LauncherDragReorderSession
 
     public bool IsFor(string draggedEntryId)
     {
-        return LauncherEntryIds.SameNormalized(DraggedEntryId, draggedEntryId);
+        return EntryId.SameNormalized(DraggedEntryId, draggedEntryId);
     }
 
     public bool TryRecordPreview(string targetEntryId, bool insertAfter)
     {
-        var nextPreview = new LauncherDragInsertPreview(LauncherEntryIds.Normalize(targetEntryId), insertAfter);
+        var nextPreview = new LauncherDragInsertPreview(EntryId.Normalize(targetEntryId), insertAfter);
         if (_lastPreview == nextPreview)
             return false;
 
@@ -60,7 +60,7 @@ public sealed class LauncherDragReorderSession
 
     public bool WouldSkip(string targetEntryId, bool insertAfter)
     {
-        var nextPreview = new LauncherDragInsertPreview(LauncherEntryIds.Normalize(targetEntryId), insertAfter);
+        var nextPreview = new LauncherDragInsertPreview(EntryId.Normalize(targetEntryId), insertAfter);
         return _lastPreview == nextPreview;
     }
 

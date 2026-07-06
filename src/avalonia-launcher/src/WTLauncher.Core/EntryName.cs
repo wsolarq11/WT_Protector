@@ -4,44 +4,34 @@ using System.Text.Json.Serialization;
 
 namespace WTLauncher.Core;
 
-/// <summary>
-/// A validated and normalized entry name. FormKC normalization and unpaired-surrogate
-/// stripping happen at construction time. The private constructor ensures invalid
-/// names cannot exist.
-/// </summary>
-[JsonConverter(typeof(EntryNameJsonConverter))]
 public readonly record struct EntryName
 {
     public string Value { get; }
 
     private EntryName(string value) => Value = value;
 
-    public static Result<EntryName, NameError> TryParse(string? raw)
+    public static EntryName Parse(string? raw)
     {
         var source = raw ?? string.Empty;
         source = StripUnpairedSurrogates(source);
         var normalized = source.Trim().Normalize(NormalizationForm.FormKC);
 
         if (normalized.Length == 0)
-            return new NameError.Empty();
+            throw new FormatException("名称不能为空。");
 
         return new EntryName(normalized);
     }
 
-    /// <summary>Normalizes and returns the string value. For backward compatibility.</summary>
     public static string Normalize(string? value)
     {
-        var result = TryParse(value);
-        return result.Match(ok: e => e.Value, err: _ => string.Empty);
+        try { return Parse(value).Value; }
+        catch (FormatException) { return string.Empty; }
     }
 
-    /// <summary>Requires a non-empty name, throwing on failure.</summary>
     public static string RequireNonEmpty(string? value, string fieldName = "Entry name")
     {
-        var result = TryParse(value);
-        return result.Match(
-            ok: e => e.Value,
-            err: _ => throw new InvalidOperationException($"{fieldName} is required."));
+        try { return Parse(value).Value; }
+        catch (FormatException ex) { throw new InvalidOperationException($"{fieldName} is required.", ex); }
     }
 
     public static implicit operator string(EntryName name) => name.Value;
@@ -79,10 +69,7 @@ public sealed class EntryNameJsonConverter : JsonConverter<EntryName>
     public override EntryName Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var raw = reader.GetString();
-        var result = EntryName.TryParse(raw);
-        return result.Match(
-            ok: name => name,
-            err: error => throw new InvalidDataException(error.Message));
+        return EntryName.Parse(raw);
     }
 
     public override void Write(Utf8JsonWriter writer, EntryName value, JsonSerializerOptions options)

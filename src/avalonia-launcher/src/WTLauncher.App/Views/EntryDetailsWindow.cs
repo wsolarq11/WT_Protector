@@ -42,7 +42,7 @@ public sealed class EntryDetailsWindow : Window
         _directoryBox = LauncherDialogText.Input(RequireInitialEntryText(prefill, static item => item.Directory, "directory"));
         _commandBox = LauncherDialogText.Input(RequireInitialEntryText(prefill, static item => item.Command, "command"));
         // MaxLength must match store-level limits to prevent overwrites that the
-        // store will later reject. LauncherEntryIds.Normalize truncates at 256;
+        // store will later reject. EntryId.Normalize truncates at 256;
         // LauncherStore rejects entry text >4096 chars.
         _idBox.MaxLength = 256;
         _nameBox.MaxLength = 4096;
@@ -97,7 +97,7 @@ public sealed class EntryDetailsWindow : Window
             };
             _commandBox.TextChanged += (_, _) =>
             {
-                var cmd = LauncherEntryText.Normalize(_commandBox.Text);
+                var cmd = EntryName.Normalize(_commandBox.Text);
                 if (cmd.StartsWith("$") && cmd.Length > 1)
                 {
                     var key = cmd[1..];
@@ -113,7 +113,7 @@ public sealed class EntryDetailsWindow : Window
                 }
             };
             // Trigger initial preview for edit mode
-            var initialCmd = LauncherEntryText.Normalize(_commandBox.Text ?? "");
+            var initialCmd = EntryName.Normalize(_commandBox.Text ?? "");
             if (initialCmd.StartsWith("$") && initialCmd.Length > 1)
             {
                 var key = initialCmd[1..];
@@ -184,8 +184,8 @@ public sealed class EntryDetailsWindow : Window
         if (prefill is null)
             return string.Empty;
 
-        var id = LauncherEntryIds.Normalize(prefill.Id);
-        if (!LauncherEntryIds.IsUsable(id))
+        var id = EntryId.Normalize(prefill.Id);
+        if (!EntryId.IsUsable(id))
             throw new InvalidDataException("Launcher entry dialog initial id is required.");
 
         return id;
@@ -199,7 +199,7 @@ public sealed class EntryDetailsWindow : Window
         if (prefill is null)
             return string.Empty;
 
-        var text = LauncherEntryText.Normalize(selectText(prefill));
+        var text = EntryName.Normalize(selectText(prefill));
         if (text.Length == 0)
             throw new InvalidDataException($"Launcher entry dialog initial {fieldName} is required.");
 

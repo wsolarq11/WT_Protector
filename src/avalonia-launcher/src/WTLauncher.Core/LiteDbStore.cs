@@ -3,12 +3,12 @@ using LiteDB;
 namespace WTLauncher.Core;
 
 /// <summary>
-/// LiteDB-backed implementation of <see cref="IStore"/>. Stores the entire
+/// LiteDB-backed store. Stores the entire
 /// <see cref="LauncherStoreFile"/> as a single BSON document in a collection
 /// named "store". Provides ACID transactions via LiteDB's built-in journal.
 /// Phase 3 implementation — replaces hand-written JSON crash recovery.
 /// </summary>
-public sealed class LiteDbStore : IStore, IDisposable
+public sealed class LiteDbStore : IDisposable
 {
     private readonly LiteDatabase _db;
 
@@ -26,7 +26,7 @@ public sealed class LiteDbStore : IStore, IDisposable
         return new LiteDbStore(dbPath);
     }
 
-    public Result<LauncherStoreFile, StoreLoadError> Load(string storePath)
+    public LauncherStoreFile Load(string storePath)
     {
         try
         {
@@ -35,9 +35,9 @@ public sealed class LiteDbStore : IStore, IDisposable
             if (doc is null)
                 return new LauncherStoreFile();
 
-            // F12: Reject schema versions newer than what this app supports
             if (doc.SchemaVersion > LauncherStore.ExpectedStoreSchemaVersion)
-                return new StoreLoadError.SchemaTooNew(doc.SchemaVersion);
+                throw new InvalidDataException(
+                    $"Launcher store schema version {doc.SchemaVersion} is from a newer version of the app. Please upgrade WT Launcher.");
 
             return new LauncherStoreFile
             {
@@ -50,15 +50,11 @@ public sealed class LiteDbStore : IStore, IDisposable
         }
         catch (LiteException ex)
         {
-            return new StoreLoadError.JsonError(ex.Message);
-        }
-        catch (IOException ex)
-        {
-            return new StoreLoadError.IoError(ex.Message);
+            throw new InvalidDataException($"LiteDB store load error: {ex.Message}", ex);
         }
     }
 
-    public Result<Unit, StoreSaveError> Save(LauncherStoreFile data, string storePath)
+    public void Save(LauncherStoreFile data, string storePath)
     {
         try
         {
@@ -72,21 +68,11 @@ public sealed class LiteDbStore : IStore, IDisposable
                 Presets = data.Presets,
                 DefaultPresetId = data.DefaultPresetId,
             });
-            // LiteDB auto-commits on dispose or explicit checkpoint
             _db.Checkpoint();
-            return Unit.Value;
         }
         catch (LiteException ex)
         {
-            return new StoreSaveError.SerializationError(ex.Message);
-        }
-        catch (IOException ex)
-        {
-            return new StoreSaveError.IoError(ex.Message);
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return new StoreSaveError.AccessDenied(storePath);
+            throw new InvalidDataException($"LiteDB store save error: {ex.Message}", ex);
         }
     }
 

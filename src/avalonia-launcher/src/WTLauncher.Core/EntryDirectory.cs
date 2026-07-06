@@ -4,62 +4,39 @@ using System.Text.Json.Serialization;
 
 namespace WTLauncher.Core;
 
-/// <summary>
-/// A validated and normalized entry directory path. FormKC normalization, %-injection
-/// detection (on raw input BEFORE normalization), environment-variable expansion,
-/// Path.GetFullPath resolution, UNC path rejection, and DOS device path rejection
-/// all happen at construction time.
-/// </summary>
-[JsonConverter(typeof(EntryDirectoryJsonConverter))]
 public readonly record struct EntryDirectory
 {
     public string Value { get; }
 
     private EntryDirectory(string value) => Value = value;
 
-    /// <summary>
-    /// Validates and normalizes a directory path.
-    /// KEY FIX (C1): %-injection detection runs on the RAW input before FormKC normalization.
-    /// If FormKC introduces a % that was not in the original, the input is rejected.
-    /// This prevents fullwidth % (U+FF05) → ASCII % injection into ExpandEnvironmentVariables.
-    /// </summary>
-    public static Result<EntryDirectory, DirectoryError> TryParse(string? raw)
+    public static EntryDirectory Parse(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw))
-            return new DirectoryError.Empty();
+            throw new FormatException("目录不能为空。");
 
         var normalized = raw.Trim().Normalize(NormalizationForm.FormKC);
 
-        // Detect FormKC-introduced % characters BEFORE ExpandEnvironmentVariables.
-        // Compare raw (pre-normalized) against normalized to catch fullwidth % (U+FF05 → %).
         if (normalized.Contains('%') && !raw.Contains('%', StringComparison.Ordinal))
-            return new DirectoryError.PercentInjection();
+            throw new FormatException("目录包含规范化后引入 % 的字符，不允许。");
 
-        // Expand environment variables, then resolve to absolute path.
         var expanded = Environment.ExpandEnvironmentVariables(normalized);
         var fullPath = Path.GetFullPath(expanded);
 
-        // Reject UNC paths to prevent NTLM credential relay.
         if (fullPath.StartsWith(@"\\", StringComparison.Ordinal) || fullPath.StartsWith("//", StringComparison.Ordinal))
-            return new DirectoryError.UncPath(fullPath);
+            throw new FormatException("目录不允许使用网络路径 (UNC)。");
 
-        // Reject DOS device paths.
         if (fullPath.StartsWith(@"\\.\", StringComparison.Ordinal) || fullPath.StartsWith(@"\??\", StringComparison.Ordinal))
-            return new DirectoryError.DevicePath(fullPath);
+            throw new FormatException("目录不允许使用设备路径。");
 
         return new EntryDirectory(fullPath);
     }
 
-    /// <summary>
-    /// Validates directory AND checks it exists on disk. Used during launch (validateDirectory: true).
-    /// </summary>
-    public static Result<EntryDirectory, DirectoryError> TryParseAndValidateExists(string? raw)
+    public static EntryDirectory ParseAndValidateExists(string? raw)
     {
-        var result = TryParse(raw);
-        if (result.IsErr) return result;
-        var dir = result.Match(ok: d => d, err: _ => default);
+        var dir = Parse(raw);
         if (!Directory.Exists(dir.Value))
-            return new DirectoryError.NotFound(dir.Value);
+            throw new DirectoryNotFoundException($"目录不存在: {dir.Value}");
         return dir;
     }
 
@@ -72,10 +49,7 @@ public sealed class EntryDirectoryJsonConverter : JsonConverter<EntryDirectory>
     public override EntryDirectory Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var raw = reader.GetString();
-        var result = EntryDirectory.TryParse(raw);
-        return result.Match(
-            ok: dir => dir,
-            err: error => throw new InvalidDataException(error.Message));
+        return EntryDirectory.Parse(raw);
     }
 
     public override void Write(Utf8JsonWriter writer, EntryDirectory value, JsonSerializerOptions options)

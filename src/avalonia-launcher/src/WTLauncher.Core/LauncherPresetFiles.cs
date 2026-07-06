@@ -16,7 +16,7 @@ public static class LauncherPresetFiles
             throw new InvalidDataException($"Launcher preset count {presetRows.Count} exceeds maximum of 1000.");
 
         List<LauncherPreset> normalizedPresets = [];
-        var usedPresetIds = new HashSet<string>(LauncherPresetIds.Comparer);
+        var usedPresetIds = new HashSet<string>(PresetId.Comparer);
         var usedPresetNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var index = 0;
         foreach (var presetRow in presetRows)
@@ -48,7 +48,7 @@ public static class LauncherPresetFiles
 
     private static string NormalizePresetId(string? id, int index)
     {
-        var normalized = LauncherPresetIds.NormalizeReference(id);
+        var normalized = PresetId.NormalizeReference(id);
         if (normalized.Length == 0)
             throw new InvalidDataException($"Launcher preset {index} id is empty.");
 
@@ -57,7 +57,7 @@ public static class LauncherPresetFiles
 
     private static string NormalizePresetName(string? name, int index)
     {
-        var normalized = LauncherEntryText.Normalize(name);
+        var normalized = EntryName.Normalize(name);
         if (normalized.Length > 256)
             throw new InvalidDataException($"Launcher preset {index} name exceeds 256 character limit.");
         if (normalized.Length == 0)
@@ -77,16 +77,16 @@ public static class LauncherPresetFiles
             throw new InvalidDataException($"Launcher preset {index} entryIds count {source.Count} exceeds maximum of 10000.");
 
         var normalized = new List<string>(source.Count);
-        var seen = new HashSet<string>(LauncherEntryIds.Comparer);
+        var seen = new HashSet<string>(EntryId.Comparer);
         for (var i = 0; i < source.Count; i++)
         {
-            var entryId = LauncherEntryIds.Normalize(source[i]);
+            var entryId = EntryId.Normalize(source[i]);
             if (entryId.Length == 0)
                 throw new InvalidDataException($"Launcher preset {index} entryIds[{i}] is empty.");
 
             if (!seen.Add(entryId))
                 throw new InvalidDataException($"Launcher preset {index} entryIds[{i}] is duplicate: {entryId}.");
-            if (LauncherEntryIds.WindowsReservedNames.Contains(entryId))
+            if (EntryId.WindowsReservedNames.Contains(entryId))
                 throw new InvalidDataException($"Launcher preset {index} entryIds[{i}] is a Windows reserved name: {entryId}.");
             if (entryId.Contains('\\') || entryId.Contains('/') || entryId.Contains(".."))
                 throw new InvalidDataException($"Launcher preset {index} entryIds[{i}] contains path separators or '..': {entryId}.");
@@ -99,7 +99,7 @@ public static class LauncherPresetFiles
 
     private static string NormalizeDefaultPresetId(string? defaultPresetId, IReadOnlyList<LauncherPreset> presets)
     {
-        var normalized = LauncherPresetIds.NormalizeReference(defaultPresetId);
+        var normalized = PresetId.NormalizeReference(defaultPresetId);
         if (presets.Count == 0)
         {
             if (normalized.Length != 0)
@@ -111,7 +111,7 @@ public static class LauncherPresetFiles
         if (normalized.Length == 0)
             throw new InvalidDataException("Launcher preset default id is required when presets exist.");
 
-        if (!presets.Any(preset => LauncherPresetIds.Same(preset.Id, normalized)))
+        if (!presets.Any(preset => PresetId.Same(preset.Id, normalized)))
             throw new InvalidDataException($"Launcher preset default id does not match any preset: {normalized}.");
 
         return normalized;

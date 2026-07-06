@@ -53,7 +53,7 @@ public sealed class LauncherDragReorderWorkflow
 
         _session = LauncherDragReorderSession.Start(
             source,
-            LauncherSettingsSnapshot.Capture(_settings));
+            _settings with { SchemaVersion = 1 });
         return refreshEntries;
     }
 
@@ -62,7 +62,7 @@ public sealed class LauncherDragReorderWorkflow
         if (!isCustomSortMode)
             return false;
 
-        if (LauncherEntryIds.SameNormalized(draggedEntryId, targetEntryId))
+        if (EntryId.SameNormalized(draggedEntryId, targetEntryId))
             return false;
 
         var session = _session;
@@ -86,7 +86,7 @@ public sealed class LauncherDragReorderWorkflow
         }
         if (session is null)
             return (false, refreshEntries);
-        if (LauncherEntryIds.SameNormalized(draggedEntryId, targetEntryId))
+        if (EntryId.SameNormalized(draggedEntryId, targetEntryId))
             return (false, refreshEntries);
 
         var target = FindEntry(targetEntryId);
@@ -112,7 +112,7 @@ public sealed class LauncherDragReorderWorkflow
     private LauncherEntryViewModel? FindEntry(string entryId)
     {
         for (int i = 0; i < _entries.Count; i++)
-            if (LauncherEntryIds.Same(_entries[i].Id, entryId))
+            if (EntryId.Same(_entries[i].Id, entryId))
                 return _entries[i];
         return null;
     }
@@ -141,7 +141,7 @@ public sealed class LauncherDragReorderWorkflow
             if (saveFailure is not null)
             {
                 // Rollback settings on save failure so the caller sees the pre-commit order.
-                _settings = session.Snapshot.RestoreCustomEntryOrder(_settings);
+                _settings = _settings with { CustomEntryOrder = session.Snapshot.CustomEntryOrder };
                 return (saveFailure, true);
             }
 
@@ -150,7 +150,7 @@ public sealed class LauncherDragReorderWorkflow
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             // Rollback settings on any unexpected commit failure.
-            _settings = session.Snapshot.RestoreCustomEntryOrder(_settings);
+            _settings = _settings with { CustomEntryOrder = session.Snapshot.CustomEntryOrder };
             return ($"保存失败: {ExceptionMessageFormatter.ForUser(ex)}", true);
         }
         finally
@@ -173,7 +173,7 @@ public sealed class LauncherDragReorderWorkflow
         if (session is null)
             return false;
 
-        _settings = session.Snapshot.RestoreCustomEntryOrder(_settings);
+        _settings = _settings with { CustomEntryOrder = session.Snapshot.CustomEntryOrder };
         ClearPreviewState();
         return true;
     }

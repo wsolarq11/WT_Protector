@@ -201,7 +201,7 @@ public sealed partial class MainWindowViewModel
         var saveFailure = SaveSettingsChange(snapshot);
         if (saveFailure is not null)
         {
-            _settings = snapshot.Restore();
+            _settings = snapshot;
             ApplyStatusText(saveFailure);
             return false;
         }
@@ -238,7 +238,7 @@ public sealed partial class MainWindowViewModel
             // P1: Only recalculate card sizes when available size actually changed.
             if (_cardsAvailableSize != _lastAppliedCardsAvailableSize)
             {
-                LauncherEntryLayoutPresentation.ApplyCardSize(_entries, _visibleEntries, _cardsAvailableSize, _syncSortedSet);
+                LauncherEntryLayoutPresentation.ApplyCardSize(_entries, _visibleEntries, _cardsAvailableSize);
                 _lastAppliedCardsAvailableSize = _cardsAvailableSize;
             }
         }
@@ -264,7 +264,7 @@ public sealed partial class MainWindowViewModel
         if (string.IsNullOrWhiteSpace(term))
             return;
 
-        var normalized = LauncherEntryText.Normalize(term);
+        var normalized = EntryName.Normalize(term);
 
         // No-op when already the most recent entry.
         if (_settings.SearchHistory.Count > 0 &&
@@ -382,12 +382,7 @@ public sealed partial class MainWindowViewModel
 
         try
         {
-            var result = _store.Save(nextStore, _storePath);
-            if (result.IsErr)
-            {
-                StatusText = LauncherSettingsStatus.WindowBoundsSaveFailed;
-                return false;
-            }
+            LauncherStore.Save(nextStore, _storePath);
             _settings = nextSettings;
             return true;
         }
@@ -421,8 +416,8 @@ public sealed partial class MainWindowViewModel
         if (string.IsNullOrWhiteSpace(entryId))
             return 0;
 
-        var normalized = LauncherEntryIds.Normalize(entryId);
+        var normalized = EntryId.Normalize(entryId);
         return _presetFile.Presets.Count(preset =>
-            preset.EntryIds.Any(id => LauncherEntryIds.Same(id, normalized)));
+            preset.EntryIds.Any(id => EntryId.Same(id, normalized)));
     }
 }

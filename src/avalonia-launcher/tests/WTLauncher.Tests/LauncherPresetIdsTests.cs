@@ -10,7 +10,7 @@ public sealed class LauncherPresetIdsTests
         // Build a string longer than 256 characters.
         var longName = new string('A', 500);
 
-        var result = LauncherPresetIds.Normalize(longName);
+        var result = PresetId.Normalize(longName);
 
         // Must not throw. Must produce at most 256 chars of raw input,
         // further reduced by character filtering and FormKC normalization.
@@ -23,22 +23,22 @@ public sealed class LauncherPresetIdsTests
     public void Normalize_ExactMaxLength_ReturnsNormalizedFullString()
     {
         // Exactly 256 chars — no truncation needed, all normalization still applied.
-        var name = new string('X', LauncherPresetIds.MaxIdLength);
+        var name = new string('X', PresetId.MaxIdLength);
 
-        var result = LauncherPresetIds.Normalize(name);
+        var result = PresetId.Normalize(name);
 
-        Assert.Equal(new string('x', LauncherPresetIds.MaxIdLength), result);
+        Assert.Equal(new string('x', PresetId.MaxIdLength), result);
     }
 
     [Fact]
     public void Normalize_JustOverMaxLength_Truncates()
     {
         // 257 chars — truncation to 256 should kick in.
-        var name = new string('Y', LauncherPresetIds.MaxIdLength + 1);
+        var name = new string('Y', PresetId.MaxIdLength + 1);
 
-        var result = LauncherPresetIds.Normalize(name);
+        var result = PresetId.Normalize(name);
 
-        Assert.Equal(new string('y', LauncherPresetIds.MaxIdLength), result);
+        Assert.Equal(new string('y', PresetId.MaxIdLength), result);
     }
 
     [Fact]
@@ -49,8 +49,8 @@ public sealed class LauncherPresetIdsTests
         // but both must produce at most 256 characters.
         var longInput = new string('Z', 500);
 
-        var entryResult = LauncherEntryIds.Normalize(longInput);
-        var presetResult = LauncherPresetIds.Normalize(longInput);
+        var entryResult = EntryId.Normalize(longInput);
+        var presetResult = PresetId.Normalize(longInput);
 
         // LauncherEntryIds: trims whitespace then truncates (none here), returns as-is.
         Assert.Equal(new string('Z', 256), entryResult);
@@ -65,6 +65,6 @@ public sealed class LauncherPresetIdsTests
     public void Normalize_MaxIdLengthConstant_Is256()
     {
         // The design decision is 256 — this test catches accidental changes.
-        Assert.Equal(256, LauncherPresetIds.MaxIdLength);
+        Assert.Equal(256, PresetId.MaxIdLength);
     }
 }

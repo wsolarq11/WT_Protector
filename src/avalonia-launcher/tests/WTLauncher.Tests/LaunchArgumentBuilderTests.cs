@@ -135,7 +135,7 @@ public sealed class LaunchArgumentBuilderTests
     public void Build_DetectsPercentInjectionViaFullwidthNormalization()
     {
         // U+FF05 (fullwidth percent sign) normalizes to U+0025 (%) via FormKC in
-        // LauncherEntryText.Normalize. The build must detect this and reject it
+        // EntryName.Normalize. The build must detect this and reject it
         // before ExpandEnvironmentVariables sees a literal %.
         var fullwidthPercent = '\uFF05';
         var entry = Entry($"C:\\tmp\\user{fullwidthPercent}data", name: "inject");

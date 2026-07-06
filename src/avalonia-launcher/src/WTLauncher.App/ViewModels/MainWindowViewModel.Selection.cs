@@ -137,7 +137,7 @@ public sealed partial class MainWindowViewModel
             var timestamp = CurrentTimestampUtc();
             var startedCount = report.RequestedCount;
             var preflightItems = preflight.Items;
-            var entryById = new Dictionary<string, LauncherEntryViewModel>(LauncherEntryIds.Comparer);
+            var entryById = new Dictionary<string, LauncherEntryViewModel>(EntryId.Comparer);
             foreach (var e in _entries)
             {
                 if (!entryById.TryAdd(e.Id, e))

@@ -46,7 +46,7 @@ public sealed class LauncherDragReorderSessionTests
     {
         using var temp = new TempDirectory();
         var source = MainWindowEntryCardTestFactory.CreateEntryViewModel(temp.Path, "one");
-        var snapshot = LauncherSettingsSnapshot.Capture(new LauncherSettings());
+        var snapshot = new LauncherSettings();
 
         Assert.Throws<ArgumentNullException>(() =>
             LauncherDragReorderSession.Start(null!, snapshot));
@@ -91,6 +91,6 @@ public sealed class LauncherDragReorderSessionTests
     {
         return LauncherDragReorderSession.Start(
             MainWindowEntryCardTestFactory.CreateEntryViewModel(temp.Path, draggedEntryId),
-            LauncherSettingsSnapshot.Capture(new LauncherSettings()));
+            new LauncherSettings());
     }
 }

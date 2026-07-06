@@ -36,26 +36,10 @@ public static class LauncherEntryLayoutPresentation
             availableSize.Height,
             count);
 
-        // P5: Only set properties that changed — avoids redundant PropertyChanged → layout invalidations.
-        // During dropdown mode changes or window resize, the card size is typically identical across all entries.
-        foreach (var entry in visibleEntries)
-        {
-            if (entry.CardWidth != layout.CardWidth)
-                entry.CardWidth = layout.CardWidth;
-            if (entry.CardHeight != layout.CardHeight)
-                entry.CardHeight = layout.CardHeight;
-            if (entry.NameTileWidth != layout.NameTileWidth)
-                entry.NameTileWidth = layout.NameTileWidth;
-            if (entry.NameTileHeight != layout.NameTileHeight)
-                entry.NameTileHeight = layout.NameTileHeight;
-        }
-
-        // Update hidden entries too — prevents stale card sizes when they become visible later.
-        // P1: Reuse caller's _syncSortedSet when available to avoid per-call HashSet allocation.
-        var visibleSet = reusableVisibleSet ?? new HashSet<LauncherEntryViewModel>(visibleEntries);
+        // Single pass over all entries — sets both visible and hidden entries.
+        // Hidden entries also get updated to prevent stale card sizes when they become visible later.
         foreach (var entry in entries)
         {
-            if (visibleSet.Contains(entry)) continue;
             if (entry.CardWidth != layout.CardWidth)
                 entry.CardWidth = layout.CardWidth;
             if (entry.CardHeight != layout.CardHeight)

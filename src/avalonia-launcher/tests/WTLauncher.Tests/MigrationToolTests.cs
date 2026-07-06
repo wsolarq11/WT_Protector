@@ -19,18 +19,16 @@ public class MigrationToolTests : IDisposable
     }
 
     [Fact]
-    public void MigrateIfNeeded_NoDbAndNoJson_ReturnsOk()
+    public void MigrateIfNeeded_NoDbAndNoJson_DoesNotThrow()
     {
-        var result = MigrationTool.MigrateIfNeeded(_tempDir);
-        Assert.True(result.IsOk);
+        MigrationTool.MigrateIfNeeded(_tempDir);
     }
 
     [Fact]
-    public void MigrateIfNeeded_DbExists_ReturnsOk()
+    public void MigrateIfNeeded_DbExists_DoesNotThrow()
     {
         File.WriteAllText(Path.Combine(_tempDir, "store.db"), "");
-        var result = MigrationTool.MigrateIfNeeded(_tempDir);
-        Assert.True(result.IsOk);
+        MigrationTool.MigrateIfNeeded(_tempDir);
     }
 
     [Fact]
@@ -43,8 +41,7 @@ public class MigrationToolTests : IDisposable
         var json = JsonSerializer.Serialize(storeFile);
         File.WriteAllText(jsonPath, json);
 
-        var result = MigrationTool.MigrateIfNeeded(_tempDir);
-        Assert.True(result.IsOk);
+        MigrationTool.MigrateIfNeeded(_tempDir);
 
         Assert.False(File.Exists(jsonPath));
         Assert.True(File.Exists(jsonPath + ".bak"));

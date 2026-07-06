@@ -58,7 +58,7 @@ public static class LauncherCommandTemplateResolver
 
         foreach (var entry in entries)
         {
-            var command = LauncherEntryText.Normalize(entry.Command);
+            var command = EntryName.Normalize(entry.Command);
             if (command.StartsWith("$$", StringComparison.Ordinal))
                 continue;
             if (command.Length == 0 || !command.StartsWith(TemplatePrefix, StringComparison.Ordinal))

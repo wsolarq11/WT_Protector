@@ -10,7 +10,6 @@ namespace WTLauncher.App.ViewModels;
 public sealed partial class MainWindowViewModel : ObservableObject
 {
     private readonly string _storePath;
-    private readonly IStore _store;
     private LauncherSettings _settings;
     private readonly LauncherLaunchWorkflow _launchWorkflow;
     private readonly Func<DateTimeOffset> _utcNow;
@@ -68,12 +67,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         string storePath,
         LauncherStoreFile storeFile,
         LauncherLaunchWorkflow launchWorkflow,
-        Func<DateTimeOffset> utcNow,
-        IStore? store = null)
+        Func<DateTimeOffset> utcNow)
     {
         ArgumentNullException.ThrowIfNull(storeFile);
         _storePath = storePath;
-        _store = store ?? new JsonStore();
         _settings = storeFile.Settings;
         _launchWorkflow = launchWorkflow ?? throw new ArgumentNullException(nameof(launchWorkflow));
         _launchWorkflow.CommandTemplates = _settings.CommandTemplates;
@@ -138,14 +135,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         try
         {
             DiscardDragReorderPreview();
-            var loadResult = _store.Load(_storePath);
-            if (loadResult.IsErr)
-            {
-                var err = loadResult.Match(ok: _ => "", err: e => e.Message);
-                StatusText = $"加载失败: {err}";
-                return;
-            }
-            var storeFile = loadResult.Match(ok: f => f, err: _ => default!);
+            var storeFile = LauncherStore.Load(_storePath);
             ReplaceEntries(storeFile.Entries);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
@@ -200,7 +190,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// </summary>
     private void ValidatePresetEntryReferences()
     {
-        var entryIdSet = GetEntryIds().ToHashSet(LauncherEntryIds.Comparer);
+        var entryIdSet = GetEntryIds().ToHashSet(EntryId.Comparer);
         foreach (var preset in _presetFile.Presets)
         {
             foreach (var entryId in preset.EntryIds)
@@ -248,10 +238,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// or an error message on failure.</summary>
     private string? SaveStoreFile(LauncherStoreFile storeFile)
     {
-        var result = _store.Save(storeFile, _storePath);
-        return result.Match(
-            ok: _ => (string?)null,
-            err: e => LauncherPersistenceStatus.StoreSaveFailed(new InvalidOperationException(e.Message)));
+        try { LauncherStore.Save(storeFile, _storePath); return null; }
+        catch (Exception ex) { return LauncherPersistenceStatus.StoreSaveFailed(ex); }
     }
 
     /// <summary>Saves settings to the unified store. Used as callback by
@@ -278,10 +266,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    private LauncherSettingsSnapshot CaptureSettingsMutationSnapshot()
+    private LauncherSettings CaptureSettingsMutationSnapshot()
     {
         DiscardDragReorderPreview();
-        return LauncherSettingsSnapshot.Capture(_settings);
+        return _settings with { SchemaVersion = 1 };
     }
 
     private static LaunchEntry ToLaunchEntry(LauncherEntryViewModel entry) => entry.SnapshotEntry();
@@ -289,17 +277,17 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private static string RequireSettingsText(string? value, string fieldName) =>
         value ?? throw new InvalidDataException($"Launcher settings {fieldName} is null.");
 
-    private string? SaveSettingsChange(LauncherSettingsSnapshot snapshot)
+    private string? SaveSettingsChange(LauncherSettings snapshot)
     {
         var saveFailure = SaveStoreFile(BuildStoreFile());
         if (saveFailure is not null)
-            _settings = snapshot.Restore();
+            _settings = snapshot;
         return saveFailure;
     }
 
     internal void SetKeyboardFocusedEntryId(string? value)
     {
-        if (LauncherEntryIds.Same(_keyboardFocusedEntryId, value))
+        if (EntryId.Same(_keyboardFocusedEntryId, value))
             return;
 
         // Clear old focus.
@@ -308,7 +296,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             foreach (var e in _entries)
             {
                 if (e is null) continue;
-                if (LauncherEntryIds.Same(e.Id, _keyboardFocusedEntryId))
+                if (EntryId.Same(e.Id, _keyboardFocusedEntryId))
                     e.IsKeyboardFocused = false;
             }
         }
@@ -321,7 +309,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             foreach (var e in _entries)
             {
                 if (e is null) continue;
-                if (LauncherEntryIds.Same(e.Id, value))
+                if (EntryId.Same(e.Id, value))
                     e.IsKeyboardFocused = true;
             }
         }
@@ -712,7 +700,7 @@ public static class LauncherSingleLaunchReceiptText
     {
         ArgumentNullException.ThrowIfNull(entryName);
 
-        var normalizedName = LauncherEntryText.Normalize(entryName);
+        var normalizedName = EntryName.Normalize(entryName);
         if (normalizedName.Length == 0)
             throw new ArgumentException("Entry name is required for single launch receipt.", nameof(entryName));
 

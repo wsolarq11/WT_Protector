@@ -115,11 +115,11 @@ public sealed partial class MainWindowViewModel
 
     public static string GenerateUniqueCloneId(string sourceId, IEnumerable<string> existingIds)
     {
-        var normalizedSourceId = LauncherEntryIds.Normalize(sourceId);
+        var normalizedSourceId = EntryId.Normalize(sourceId);
         var baseId = normalizedSourceId + "-copy";
         var candidate = baseId;
         var index = 2;
-        var idSet = existingIds.ToHashSet(LauncherEntryIds.Comparer);
+        var idSet = existingIds.ToHashSet(EntryId.Comparer);
         while (idSet.Contains(candidate))
         {
             if (index > 10000)
@@ -157,7 +157,7 @@ public sealed partial class MainWindowViewModel
 
         // F11: Step 1 — Handle ID rename FIRST (before mutating the item)
         var snapshot = CaptureEntryMutationSnapshot();
-        if (!LauncherEntryIds.Same(oldId, updated.Id))
+        if (!EntryId.Same(oldId, updated.Id))
         {
             try
             {
@@ -191,7 +191,7 @@ public sealed partial class MainWindowViewModel
 
         // Clear keyboard focus before removal so _keyboardFocusedEntryId does not
         // retain a stale reference to the deleted entry.
-        if (LauncherEntryIds.Same(_keyboardFocusedEntryId, target.EntryId))
+        if (EntryId.Same(_keyboardFocusedEntryId, target.EntryId))
             KeyboardFocusedEntryId = null;
 
         var snapshot = CaptureEntryMutationSnapshot();

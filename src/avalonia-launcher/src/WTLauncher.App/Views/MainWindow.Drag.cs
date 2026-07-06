@@ -192,7 +192,7 @@ public sealed partial class MainWindow
         foreach (var control in MainWindowVisualTree.ControlsFromSource(visual))
         {
             var entry = MainWindowEntryCardResolver.ResolveCard(control);
-            if (entry is not null && !LauncherEntryIds.SameNormalized(entry.Id, _activeDragEntryId ?? ""))
+            if (entry is not null && !EntryId.SameNormalized(entry.Id, _activeDragEntryId ?? ""))
                 return (entry, control);
         }
         return null;

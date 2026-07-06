@@ -76,8 +76,8 @@ public sealed partial class MainWindowViewModel
         for (int i = 0; i < _visibleEntries.Count; i++)
         {
             var id = _visibleEntries[i].Id;
-            if (LauncherEntryIds.Same(id, draggedId)) dragIdx = i;
-            if (LauncherEntryIds.Same(id, targetId)) targetIdx = i;
+            if (EntryId.Same(id, draggedId)) dragIdx = i;
+            if (EntryId.Same(id, targetId)) targetIdx = i;
             if (dragIdx >= 0 && targetIdx >= 0) break;
         }
         if (dragIdx < 0 || targetIdx < 0 || dragIdx == targetIdx) return;
