@@ -5,11 +5,11 @@ Follow-up to the goal "深度全网deepsearch调研出新架构来剪掉一切�
 
 ## Bug sources being cut (11/13)
 - **S1** Multi-layer validation drift → **Misidentified**: value-object `Parse` (EntryId/EntryName/PresetId) already implements Parse-Don't-Validate; no drift exists. **No action.** (T5)
-- **S2** Schema implicit in C# types → Schema-First (T7)
-- **S3** SchemaVersion magic constant → `$schema` URL (T7, auto-fixes #1 schemaVersion bug)
+- **S2** Schema implicit in C# types → **Misidentified**: C# records ARE the schema for app-internal persistence; Corvus.JsonSchema migration rejected (would create second source of truth). **No action.** (T7)
+- **S3** SchemaVersion magic constant → **Partially valid**: dead `LauncherSettings.SchemaVersion` field removed; top-level `ExpectedStoreSchemaVersion=2` const kept (correct for offline portable app, not `$schema` URL). (T7)
 - **S4** Exception-based control flow → **Misidentified**: catch sites are error boundaries (not control flow); 2025 modern .NET practice confirms exceptions are correct for UNEXPECTED technical errors in single-user desktop persistence. **No action.** (T5)
 - **S6** Hand-rolled atomic I/O → Confirmed sufficient (no change, decision recorded)
-- **S9** Docs/code drift → Schema-generated docs (T7 follow-up)
+- **S9** Docs/code drift → **Already cut**: T2's verify.ps1 negative gate enforces no three-file references. **No action.** (T7)
 - **S10** Flat settings record → **Misidentified**: `LauncherSettings` already contains only UI state; business state lives at `LauncherStoreFile` top level. **No action.** (T4)
 - **S11** Multi-process file contention → **Already cut**: `Local\WTLauncher_ConfigMutex` in `Program.cs:71-105` (Mutex + AbandonedMutexException handling + best-effort fallback). No Named Pipe IPC added: no CLI args need forwarding (ponytail: speculative abstraction). **No action.** (T6)
 - **S12** Hand-rolled migration → SchemaMigrationRegistry (T8)
@@ -27,7 +27,7 @@ Follow-up to the goal "深度全网deepsearch调研出新架构来剪掉一切�
 4. **T4 07-09-split-settings** — ✅ Closed: S10/S13 misidentified, no action needed (investigation recorded)
 5. **T5 07-09-result-types-migration** — ✅ Closed: S1/S4 misidentified, current exception flow is 2025 modern practice (investigation recorded)
 6. **T6 07-09-single-instance-lock** — ✅ Closed: mutex already cuts S11; no CLI args need IPC forwarding (investigation recorded)
-7. **T7 07-09-schema-first-persistence** — Corvus.JsonSchema source generator (largest)
+7. **T7 07-09-schema-first-persistence** — ✅ Closed: Schema-First migration rejected (C# records ARE the schema); real dual-SchemaVersion bug fixed (dead field removed, 4 mutation sites cleaned, 2 new pin tests)
 8. **T8 07-09-schema-migration-registry** — Replace hand-rolled migration (depends on T7)
 
 ## Cross-child acceptance criteria

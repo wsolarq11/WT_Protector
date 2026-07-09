@@ -5,13 +5,11 @@ namespace WTLauncher.Core;
 
 /// <summary>Immutable runtime settings. All properties are init-only — mutations
 /// produce a new instance via <c>with { }</c>. Collection properties use
-/// ImmutableList/ImmutableDictionary for true immutability.</summary>
+/// ImmutableList/ImmutableDictionary for true immutability.
+/// ponytail: SchemaVersion lives only at LauncherStoreFile top level — single source of truth.
+/// Old launcher.json files with settings.schemaVersion still load (UnmappedMemberHandling=Skip).</summary>
 public sealed record LauncherSettings
 {
-    [JsonPropertyName("schemaVersion")]
-    [JsonRequired]
-    public int SchemaVersion { get; init; } = 1;
-
     [JsonPropertyName("lastFilterText")]
     [JsonRequired]
     public string LastFilterText { get; init; } = "";

@@ -40,7 +40,7 @@ public sealed class LauncherEntryMutationSnapshot
         return new LauncherEntryMutationSnapshot(
             [.. entries.Select(entry => entry with { })],
             LauncherPresetValidator.Validate(presetFile),
-            settings with { SchemaVersion = 1 },
+            settings,
             selectedPresetId);
     }
 
@@ -56,7 +56,7 @@ public sealed class LauncherEntryMutationSnapshot
 
     public LauncherSettings CloneSettings()
     {
-        return _settings with { SchemaVersion = 1 };
+        return _settings;
     }
 
     public ImmutableList<string> GetCustomEntryOrder()

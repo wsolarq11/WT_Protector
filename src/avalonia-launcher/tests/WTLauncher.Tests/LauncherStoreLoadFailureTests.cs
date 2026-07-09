@@ -97,4 +97,36 @@ public sealed class LauncherStoreLoadFailureTests
         var ex = Assert.Throws<InvalidDataException>(() => LauncherStore.Load(path));
         Assert.Contains("50 MB", ex.Message);
     }
+
+    [Fact]
+    public void LauncherSettings_NoSchemaVersionField_SingleSourceOfTruth()
+    {
+        // ponytail: SchemaVersion lives only at LauncherStoreFile top level.
+        // Settings had a dead SchemaVersion=1 field removed 2026-07-09 (task 07-09-schema-first-persistence).
+        // This test pins the removal — re-adding it would create dual-source drift (pitfalls §6.1).
+        var settings = new LauncherSettings();
+        var json = JsonSerializer.Serialize(settings, LauncherJson.Options);
+        var doc = JsonDocument.Parse(json);
+
+        Assert.False(doc.RootElement.TryGetProperty("schemaVersion", out _),
+            "LauncherSettings must NOT serialize schemaVersion — single source is LauncherStoreFile.SchemaVersion.");
+    }
+
+    [Fact]
+    public void LauncherSettings_LegacySchemaVersionInJson_IsIgnoredForwardCompatible()
+    {
+        // Old launcher.json files have settings.schemaVersion baked in.
+        // UnmappedMemberHandling=Skip ensures they still load cleanly.
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "settings.json");
+        File.WriteAllText(path,
+            "{\"schemaVersion\":2,\"lastFilterText\":\"legacy\",\"sortMode\":\"custom\"," +
+            "\"entryViewMode\":\"cards\",\"requireConfirmationForLaunches\":true," +
+            "\"customEntryOrder\":[],\"commandTemplates\":{},\"searchHistory\":[]," +
+            "\"window\":{\"width\":1180,\"height\":760}}");
+
+        var settings = LauncherJson.LoadRequired<LauncherSettings>(path, "legacy settings");
+
+        Assert.Equal("legacy", settings.LastFilterText);
+    }
 }

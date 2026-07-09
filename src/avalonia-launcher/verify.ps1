@@ -81,7 +81,7 @@ if ($isWindowsPlatform) {
     $smokeStoreJson = @{
         schemaVersion = 2
         entries = @(@{id="smoke";name="smoke";directory=".";command="echo smoke";selected=$false;updatedAtUtc="";launchedAtUtc=""})
-        settings = @{schemaVersion=1;lastFilterText="";sortMode="custom";entryViewMode="cards";requireConfirmationForLaunches=$true;customEntryOrder=@("smoke");searchHistory=@();commandTemplates=@{};window=@{width=1180;height=760;windowState="Normal"}}
+        settings = @{lastFilterText="";sortMode="custom";entryViewMode="cards";requireConfirmationForLaunches=$true;customEntryOrder=@("smoke");searchHistory=@();commandTemplates=@{};window=@{width=1180;height=760;windowState="Normal"}}
         presets = @(@{id="smoke-group";name="Smoke";entryIds=@("smoke")})
         defaultPresetId = "smoke-group"
     } | ConvertTo-Json -Depth 6

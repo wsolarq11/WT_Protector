@@ -1,9 +1,9 @@
 {
   "id": "schema-first-persistence",
   "name": "schema-first-persistence",
-  "title": "Schema-First Persistence via Corvus.JsonSchema",
+  "title": "Schema-first persistence via Corvus.JsonSchema",
   "description": "",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

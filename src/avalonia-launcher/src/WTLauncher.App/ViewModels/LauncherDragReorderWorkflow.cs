@@ -53,7 +53,7 @@ public sealed class LauncherDragReorderWorkflow
 
         _session = LauncherDragReorderSession.Start(
             source,
-            _settings with { SchemaVersion = 1 });
+            _settings);
         return refreshEntries;
     }
 

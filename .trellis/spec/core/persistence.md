@@ -101,6 +101,16 @@ The store is a **single file** `config/launcher.json` owning five sections toget
 | `presets` | `ImmutableList<LauncherPreset>` | saved selection groups |
 | `defaultPresetId` | `string` | which preset is active on startup |
 
+### Single Source of Truth: SchemaVersion (2026-07-09, task 07-09-schema-first-persistence)
+
+`schemaVersion` lives **only** at the `LauncherStoreFile` top level. `LauncherSettings` does NOT have its own `SchemaVersion` field — historical dual-versioning (top-level `=2` + nested `=1`) created drift bugs (pitfalls §6.1).
+
+**Why single source:** The whole file is one atomic unit (single-file persistence). Versioning the settings section separately from entries/presets has no meaning — they all migrate together. The previous `LauncherSettings.SchemaVersion = 1` was a dead field never validated, and 4 mutation sites reset it on every save — confusing and bug-prone.
+
+**Forward compatibility:** Old `launcher.json` files with `settings.schemaVersion` baked in still load cleanly because `UnmappedMemberHandling = Skip` discards unknown properties during deserialization. The legacy field silently disappears on the next save.
+
+**Decision:** Schema-First migration (Corvus.JsonSchema source generator) was rejected — C# records ARE the schema for app-internal persistence. Adding a JSON Schema file would create a second source of truth and increase drift risk, not decrease it. Corvus is correct for API contracts / externally-authored config, not for sole-author sole-reader app persistence.
+
 `LauncherStoreFile` is a `sealed record` with init-only properties — mutations produce a new instance via `with { }`.
 
 ### Why Settings Is Nested, Not Split (audit 2026-07-09)

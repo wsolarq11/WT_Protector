@@ -260,7 +260,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private LauncherSettings CaptureSettingsMutationSnapshot()
     {
         DiscardDragReorderPreview();
-        return _settings with { SchemaVersion = 1 };
+        return _settings;
     }
 
     private static LaunchEntry ToLaunchEntry(LauncherEntryViewModel entry) => entry.SnapshotEntry();
