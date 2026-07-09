@@ -1,0 +1,51 @@
+# Parent PRD: Schema-Driven Architecture Migration
+
+## Source
+Follow-up to the goal "深度全网deepsearch调研出新架构来剪掉一切问题的源头，而不是仅仅是修复". Research delivered 13 bug-generating sources; 11 are addressable by migrating to a 5-layer Schema-Driven Architecture. This parent task tracks the migration across 8 independently-verifiable child tasks.
+
+## Bug sources being cut (11/13)
+- **S1** Multi-layer validation drift → Parse-Don't-Validate total (T5 Result types)
+- **S2** Schema implicit in C# types → Schema-First (T7)
+- **S3** SchemaVersion magic constant → `$schema` URL (T7, auto-fixes #1 schemaVersion bug)
+- **S4** Exception-based control flow → Result<T, StoreError> (T5)
+- **S6** Hand-rolled atomic I/O → Confirmed sufficient (no change, decision recorded)
+- **S9** Docs/code drift → Schema-generated docs (T7 follow-up)
+- **S10** Flat settings record → Split UiSettings + LauncherConfig (T4)
+- **S11** Multi-process file contention → SingleInstanceLock (T6)
+- **S12** Hand-rolled migration → SchemaMigrationRegistry (T8)
+- **S13** UI/business state entanglement → Settings split (T4)
+- ShellCommand 62-line dead class + LiteDB PackageVersion orphan → T1
+
+## Sources NOT cut (2/13, no architectural solution)
+- **S5** Record copy propagation drift — C# language limitation
+- **S7** Sync I/O — ROI too low for single-user desktop scale
+
+## Child task execution order (smallest/safest first)
+1. **T1 07-09-remove-dead-code** — ShellCommand + LiteDB PackageVersion
+2. **T2 07-09-stale-strings-remediation** — Doc cleanup + verify.ps1 negative gate
+3. **T3 07-09-enable-compiled-bindings** — Verify XAML then enable or document why-off
+4. **T4 07-09-split-settings** — UiSettings + LauncherConfig separation
+5. **T5 07-09-result-types-migration** — Result<T, StoreError> + ExceptionFilters removal
+6. **T6 07-09-single-instance-lock** — Named Mutex + Named Pipe IPC
+7. **T7 07-09-schema-first-persistence** — Corvus.JsonSchema source generator (largest)
+8. **T8 07-09-schema-migration-registry** — Replace hand-rolled migration (depends on T7)
+
+## Cross-child acceptance criteria
+- After EACH child: `dotnet build -c Release` 0 warnings 0 errors + `dotnet test` 451+ pass
+- After EACH child: commit on main (no long-lived branches)
+- Parent complete when all 8 children archived AND final integration review confirms:
+  - launcher.json schema-driven (single source of truth)
+  - ExceptionFilters.IsRecoverable removed from production paths
+  - SchemaVersion 3-way inconsistency resolved
+  - verify.ps1 enforces no three-file references in docs
+  - Single-instance behavior verified
+  - No regressions in 451-test suite
+
+## Out-of-scope (explicitly deferred)
+- MainWindowViewModel further splitting (decision: don't touch, 8 partials sufficient)
+- Microsoft.Extensions.DependencyInjection (decision: keep manual wiring, ROI low)
+- async I/O migration (decision: keep sync, ROI low)
+- ReactiveUI migration (decision: CommunityToolkit.Mvvm sufficient)
+
+## Autonomy contract
+Per goal directive "创建后无需确认" — each child proceeds without inter-child confirmation. Decision points resolved via web research, defaulting to most-modern-practice solution. Exceptions logged in child prd.md.
