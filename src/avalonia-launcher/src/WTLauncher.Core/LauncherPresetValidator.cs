@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 
 namespace WTLauncher.Core;
 
-public static class LauncherPresetFiles
+public static class LauncherPresetValidator
 {
     public static LauncherPresetFile Validate(LauncherPresetFile presets)
     {
@@ -39,7 +39,6 @@ public static class LauncherPresetFiles
         {
             Presets = normalizedPresets.ToImmutableList(),
             DefaultPresetId = NormalizeDefaultPresetId(presets.DefaultPresetId, normalizedPresets),
-            SchemaVersion = LauncherStore.ExpectedStoreSchemaVersion,
         };
     }
 

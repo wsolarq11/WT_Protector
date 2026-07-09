@@ -102,7 +102,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ReplaceEntries(storeFile.Entries);
         _presetFile = new LauncherPresetFile
         {
-            SchemaVersion = 1,
             Presets = storeFile.Presets,
             DefaultPresetId = storeFile.DefaultPresetId,
         };
@@ -1517,7 +1516,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         catch { storeFile = new LauncherStoreFile(); }
         _presetFile = new LauncherPresetFile
         {
-            SchemaVersion = 1,
             Presets = storeFile.Presets,
             DefaultPresetId = storeFile.DefaultPresetId,
         };

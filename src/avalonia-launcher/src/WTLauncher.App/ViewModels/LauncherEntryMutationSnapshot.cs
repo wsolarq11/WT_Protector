@@ -39,7 +39,7 @@ public sealed class LauncherEntryMutationSnapshot
     {
         return new LauncherEntryMutationSnapshot(
             [.. entries.Select(entry => entry with { })],
-            LauncherPresetFiles.Validate(presetFile),
+            LauncherPresetValidator.Validate(presetFile),
             settings with { SchemaVersion = 1 },
             selectedPresetId);
     }
@@ -51,7 +51,7 @@ public sealed class LauncherEntryMutationSnapshot
 
     public LauncherPresetFile ClonePresetFile()
     {
-        return LauncherPresetFiles.Validate(_presetFile);
+        return LauncherPresetValidator.Validate(_presetFile);
     }
 
     public LauncherSettings CloneSettings()

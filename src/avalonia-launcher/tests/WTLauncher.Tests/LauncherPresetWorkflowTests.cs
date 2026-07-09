@@ -44,9 +44,9 @@ public sealed class LauncherPresetWorkflowTests
     [Fact]
     public void ClonePresetFile_CreatesDeepCopyForRollback()
     {
-        var original = PresetFile("daily", Preset("daily", "Daily", true, "one")) with { SchemaVersion = 1 };
+        var original = PresetFile("daily", Preset("daily", "Daily", true, "one"));
 
-        var clone = LauncherPresetFiles.Validate(original);
+        var clone = LauncherPresetValidator.Validate(original);
 
         original = original with
         {
@@ -88,7 +88,7 @@ public sealed class LauncherPresetWorkflowTests
             ],
         };
 
-        var exception = Assert.Throws<InvalidDataException>(() => LauncherPresetFiles.Validate(original));
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherPresetValidator.Validate(original));
 
         Assert.Equal("Launcher preset 0 name is empty.", exception.Message);
         Assert.Equal(" Daily ", original.DefaultPresetId);
@@ -105,7 +105,7 @@ public sealed class LauncherPresetWorkflowTests
             Presets = [null!],
         };
 
-        var exception = Assert.Throws<InvalidDataException>(() => LauncherPresetFiles.Validate(original));
+        var exception = Assert.Throws<InvalidDataException>(() => LauncherPresetValidator.Validate(original));
         Assert.Equal("Launcher preset 0 is null.", exception.Message);
     }
 

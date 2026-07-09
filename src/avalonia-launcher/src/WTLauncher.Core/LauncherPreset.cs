@@ -4,13 +4,11 @@ using System.Text.Json.Serialization;
 namespace WTLauncher.Core;
 
 /// <summary>Immutable preset container. All properties are init-only — mutations
-/// produce a new instance via <c>with { }</c>, making every state change explicit.</summary>
+/// produce a new instance via <c>with { }</c>, making every state change explicit.
+/// In-memory VM state only — not the JSON shape. <c>launcher.json</c> deserializes
+/// into <see cref="LauncherStoreFile"/> which carries presets inline.</summary>
 public sealed record LauncherPresetFile
 {
-    [JsonPropertyName("schemaVersion")]
-    [JsonRequired]
-    public int SchemaVersion { get; init; } = 1;
-
     [JsonPropertyName("defaultPresetId")]
     [JsonRequired]
     public string DefaultPresetId { get; init; } = "";
