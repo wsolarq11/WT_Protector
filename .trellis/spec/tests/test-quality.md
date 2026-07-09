@@ -33,12 +33,12 @@ Two kinds of tests in this project:
 ### Persistence Tests
 
 Every new persistence path must test:
-1. **Normal save:** data round-trips correctly.
-2. **Save failure (config):** rollback restores previous state.
-3. **Save failure (presets):** config saved, presets rolled back.
-4. **Save failure (settings):** config + presets saved, settings rolled back.
+1. **Normal save:** data round-trips correctly through `LauncherStore.Save` → `LauncherStore.Load`.
+2. **Save failure:** `LauncherStore.Save` throws → caller's snapshot restore returns VM state to pre-mutation values (entries + settings + presets + custom order + selection).
 
-**Reference:** `LauncherEntryMutationSnapshotTests.cs`, ``
+Single-file atomic save means there is no partial-failure path — either all of `launcher.json` commits via `File.Replace` or none of it does. The rollback contract lives at the VM layer (`LauncherEntryMutationSnapshot`), not the store layer.
+
+**Reference:** `LauncherEntryMutationSnapshotTests.cs`, `LauncherSelectionMutationSnapshotTests.cs`, `LauncherStoreLoadFailureTests.cs`
 
 ### ViewModel Command Tests
 

@@ -80,15 +80,12 @@ internal static class ErrorLog
     }
 
     /// <summary>
-    /// Ensures the log directory exists. Cached by directory path to avoid
-    /// repeated <see cref="Directory.CreateDirectory"/> calls on every write.
-    /// The directory string is used instead of a bool so that the test seam
-    /// (which can inject a different directory) does not share state with the
-    /// production path.
+    /// Ensures the log directory exists. <see cref="Directory.CreateDirectory"/>
+    /// is idempotent so no cache is needed — the previous "cached by directory
+    /// path" comment described a cache that has since been removed.
     /// </summary>
     private static void EnsureLogDirectory(string logDirectory)
     {
-        // ponytail: drop cache — Directory.CreateDirectory is idempotent.
         Directory.CreateDirectory(logDirectory);
     }
 

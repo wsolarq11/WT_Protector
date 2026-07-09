@@ -125,7 +125,7 @@ View-logic tests live in `WTLauncher.Tests/` and test **extracted pure functions
 
 | Test file | What it tests |
 |-----------|--------------|
-| `MainWindow.Drag.cs (inline)Tests.cs` | Ghost element creation |
+| `LauncherDragGhostLayoutCalculatorTests.cs` | Ghost element layout math |
 | `MainWindowDragInsertDecisionTests.cs` | Drop target resolution |
 | `MainWindowDragInsertDecisionTests.cs` | Insert position logic |
 | `MainWindowEntryCardResolverTests.cs` | Visual tree card detection |

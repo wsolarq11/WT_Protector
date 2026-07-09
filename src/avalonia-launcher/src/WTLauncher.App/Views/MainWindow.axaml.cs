@@ -15,6 +15,12 @@ namespace WTLauncher.App.Views;
 public sealed partial class MainWindow : Window
 {
     // ── M25: Chrome measurement constants ────────────────────────────────────
+    // ponytail: hardcoded layout chrome — recalibrate when the XAML layout changes.
+    // Triggers: (a) outer Grid Margin in MainWindow.axaml changes; (b) header /
+    // status row heights shift (added/removed controls, font size, padding);
+    // (c) row gaps or border padding change. Measure live with a pixel ruler
+    // after the XAML edit, then update both constants to match the new total.
+    //
     // CardsRegionHorizontalChromeWidth = 48
     //   Composed of the outer Grid Margin (24 left + 24 right = 48).
     //   These 24px come from MainWindow.axaml line 280:
