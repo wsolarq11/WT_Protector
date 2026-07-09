@@ -40,7 +40,7 @@ Layer 4 ─ Views/                     XAML + code-behind + drag-drop
 
 ## Layer 1 — Command-Local Mutations (ViewModels)
 
-`src/WTLauncher.App/ViewModels/MainWindowViewModel.cs` (single 2796-line file today — god-class awaiting split, see task `07-09-split-mainviewmodel-godclass`)
+`src/WTLauncher.App/ViewModels/MainWindowViewModel.cs` (2587 lines + 2 partials after Stage 1 split — see Layer 3)
 
 - Entry add/edit/delete command handlers own: **validate → mutate → save**.
 - Shared rules stay in narrow helpers (`LauncherEntryDrafts`, `LauncherEntryReferences`, `LauncherEntryMutationSnapshot`).
@@ -63,13 +63,19 @@ Key file:
 
 ## Layer 3 — ViewModel Orchestration
 
-`src/WTLauncher.App/ViewModels/MainWindowViewModel.cs` — **single 2796-line file** (god-class).
+`src/WTLauncher.App/ViewModels/MainWindowViewModel*.cs` — **partial class, 3 files**:
+
+| File | Responsibility |
+|------|---------------|
+| `MainWindowViewModel.cs` (2587 lines) | Constructor, core state, refresh, entries, launch, layout, presets, batch — Stage 2 will keep splitting this |
+| `MainWindowViewModel.Drag.cs` (151 lines) | Drag reorder session management (Stage 1) |
+| `MainWindowViewModel.Reorder.cs` (78 lines) | Keyboard MoveUp / MoveDown commands (Stage 1) |
 
 - The single writable owner of launcher UI state.
 - Delegates reusable rules to Core helpers.
 - Injects dialog confirmation `Func<>` delegates through the `MainWindow` constructor.
 
-This file is the pending refactor target: `07-09-split-mainviewmodel-godclass` plans to split it into `MainWindowViewModel.<Area>.cs` partials (Entries / Launch / Selection / Layout / Presets / Drag / Reorder). Until that lands, treat the single file as the de-facto partial layout — search by symbol, not by file.
+Stage 1 of the god-class split (this task) extracted Drag + Reorder as the two cleanest boundaries. Stage 2 (follow-up) will extract Entries / Launch / Layout / Presets / Batch — those share more helpers (`SaveStoreFile`, `BuildStoreFile`, `CaptureSettingsMutationSnapshot`) and need deeper dependency analysis.
 
 ---
 
