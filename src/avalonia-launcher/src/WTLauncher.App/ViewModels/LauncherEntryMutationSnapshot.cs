@@ -7,6 +7,9 @@ public sealed class LauncherEntryMutationSnapshot
 {
     private readonly List<LaunchEntry> _entries;
     private readonly LauncherPresetFile _presetFile;
+    // ponytail: snapshot field — immutable capture of settings at mutation start,
+    // used to restore on rollback. NOT a parallel live truth.
+    // (2026-07-09 task 07-09-settings-single-source: R2 evaluated, mirror retained.)
     private readonly LauncherSettings _settings;
 
     private LauncherEntryMutationSnapshot(

@@ -128,6 +128,18 @@ Until then, hand-rolled one-shot migration is correct for this codebase.
 
 `LauncherStoreFile` is a `sealed record` with init-only properties — mutations produce a new instance via `with { }`.
 
+### Single Canonical Assembler: BuildStoreFile (2026-07-09, task 07-09-settings-single-source)
+
+`MainWindowViewModel.BuildStoreFile()` is the **only** method that hand-assembles a `LauncherStoreFile` for persistence. Every save path must route through it.
+
+**Why single assembler:** Pre-2026-07-09 there were two — `BuildStoreFile()` and `SaveSettingsToStore(settings)` — and the latter hand-assembled the same 4 fields (`Entries` / `Settings` / `Presets` / `DefaultPresetId`) independently. The dual path meant any field-addition or re-ordering had to be mirrored in both sites, creating drift risk.
+
+**Pin gate:** `tools/verify.ps1` check `settings-single-source-buildstorefile` regex-counts the unique hand-assembly signature in `MainWindowViewModel.cs` and asserts exactly 1 match. Regression triggers a verify failure.
+
+**Collaborator working state is NOT dual truth:** `LauncherDragReorderWorkflow._settings` and `LauncherEntryMutationSnapshot._settings` are sometimes mistaken for dual-truth — they are not. Both are **working state for rollback semantics** (workflow mutates during Preview before persist; snapshot captures at mutation start for restore). Main VM syncs via `_settings = _dragReorderWorkflow.Settings` (5 sites in `Drag.cs`) and `_settings = snapshot.CloneSettings()`. This manual sync is the cost of collaborator-boundary design, NOT a bug. Verified by 7 equivalence tests in `MainWindowViewModelTests.DragTests.cs`.
+
+
+
 ### Why Settings Is Nested, Not Split (audit 2026-07-09)
 
 The 2026-07-09 schema-driven-architecture audit re-examined whether `settings` should be split out of `launcher.json` into a separate file (concern S13). **Decision: keep nested.**

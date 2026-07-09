@@ -5,6 +5,13 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed class LauncherDragReorderWorkflow
 {
+    // ponytail: this field is working state for drag reorder, NOT a duplicate of
+    // MainWindowViewModel._settings. Workflow mutates during Preview (before persist),
+    // rolls back via session.Snapshot on Cancel/commit-failure. Main VM syncs back
+    // via `_settings = _dragReorderWorkflow.Settings` (5 sites in Drag.cs) — this is
+    // the cost of collaborator-boundary design, NOT a dual-truth bug. Verified by 7
+    // equivalence tests in MainWindowViewModelTests.DragTests.cs.
+    // (2026-07-09 task 07-09-settings-single-source: R2 evaluated, mirror retained.)
     private LauncherSettings _settings;
     private readonly Func<LauncherSettings, string?> _saveSettings;
     private readonly IReadOnlyList<LauncherEntryViewModel> _entries;

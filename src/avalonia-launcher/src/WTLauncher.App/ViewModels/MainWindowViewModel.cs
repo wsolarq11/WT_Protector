@@ -245,16 +245,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     /// <summary>Saves settings to the unified store. Used as callback by
     /// LauncherDragReorderWorkflow during drag commit.</summary>
+    // ponytail: mutate _settings first, then route through BuildStoreFile —
+    // eliminates the hand-assembly dual path that existed here pre-2026-07-09
+    // (task 07-09-settings-single-source). The 5 `_settings = _dragReorderWorkflow.Settings`
+    // sites in Drag.cs remain (workflow still owns working/rollback state for
+    // non-commit paths) but become no-ops in the commit-success case.
     private string? SaveSettingsToStore(LauncherSettings settings)
     {
-        var storeFile = new LauncherStoreFile
-        {
-            Entries = _entries.Select(ToLaunchEntry).ToImmutableList(),
-            Settings = settings,
-            Presets = _presetFile.Presets,
-            DefaultPresetId = _presetFile.DefaultPresetId,
-        };
-        return SaveStoreFile(storeFile);
+        _settings = settings;
+        return SaveStoreFile(BuildStoreFile());
     }
 
     private LauncherSettings CaptureSettingsMutationSnapshot()
