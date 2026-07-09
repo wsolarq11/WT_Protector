@@ -12,7 +12,7 @@ Follow-up to the goal "深度全网deepsearch调研出新架构来剪掉一切�
 - **S9** Docs/code drift → **Already cut**: T2's verify.ps1 negative gate enforces no three-file references. **No action.** (T7)
 - **S10** Flat settings record → **Misidentified**: `LauncherSettings` already contains only UI state; business state lives at `LauncherStoreFile` top level. **No action.** (T4)
 - **S11** Multi-process file contention → **Already cut**: `Local\WTLauncher_ConfigMutex` in `Program.cs:71-105` (Mutex + AbandonedMutexException handling + best-effort fallback). No Named Pipe IPC added: no CLI args need forwarding (ponytail: speculative abstraction). **No action.** (T6)
-- **S12** Hand-rolled migration → SchemaMigrationRegistry (T8)
+- **S12** Hand-rolled migration → **Misidentified**: only ONE migration exists (`MigrateFromLegacyFiles`, one-time legacy→unified, already executed on all installations). No v3 schema bump planned. Registry pattern would be "interface with one implementation" (ponytail forbidden). Deferred until v3 breaking change actually required. **No action.** (T8)
 - **S13** UI/business state entanglement → **Misidentified**: UI/business state already separated at data-structure level (Settings nested, Entries/Presets/DefaultPresetId at top). Single-file atomic write beats multi-file split. **No action.** (T4)
 - ShellCommand 62-line dead class + LiteDB PackageVersion orphan → T1
 
@@ -28,7 +28,7 @@ Follow-up to the goal "深度全网deepsearch调研出新架构来剪掉一切�
 5. **T5 07-09-result-types-migration** — ✅ Closed: S1/S4 misidentified, current exception flow is 2025 modern practice (investigation recorded)
 6. **T6 07-09-single-instance-lock** — ✅ Closed: mutex already cuts S11; no CLI args need IPC forwarding (investigation recorded)
 7. **T7 07-09-schema-first-persistence** — ✅ Closed: Schema-First migration rejected (C# records ARE the schema); real dual-SchemaVersion bug fixed (dead field removed, 4 mutation sites cleaned, 2 new pin tests)
-8. **T8 07-09-schema-migration-registry** — Replace hand-rolled migration (depends on T7)
+8. **T8 07-09-schema-migration-registry** — ✅ Closed: deferred until v3 breaking change (S12 misidentified; only one-shot migration exists)
 
 ## Cross-child acceptance criteria
 - After EACH child: `dotnet build -c Release` 0 warnings 0 errors + `dotnet test` 451+ pass

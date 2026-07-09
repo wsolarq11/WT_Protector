@@ -111,6 +111,21 @@ The store is a **single file** `config/launcher.json` owning five sections toget
 
 **Decision:** Schema-First migration (Corvus.JsonSchema source generator) was rejected — C# records ARE the schema for app-internal persistence. Adding a JSON Schema file would create a second source of truth and increase drift risk, not decrease it. Corvus is correct for API contracts / externally-authored config, not for sole-author sole-reader app persistence.
 
+### SchemaMigrationRegistry: deferred until v3 bump (2026-07-09, task 07-09-schema-migration-registry)
+
+A versioned `SchemaMigrationRegistry` (EF Core / Rails style) was considered and **deferred**. The current migration surface is exactly ONE path: `MigrateFromLegacyFiles` (one-time, three-file → single-file, already executed on all real installations). There is no v3 schema bump planned.
+
+**Why deferred:**
+- Registry requires at least 2 migration paths to justify the abstraction (else it's an "interface with one implementation").
+- Forward-compatible field additions (`UnmappedMemberHandling = Skip` + default values) handle most schema growth without any migration code.
+- The 60-line static `MigrateFromLegacyFiles` is well-tested, self-documenting, and isolated.
+
+**When to revisit:**
+1. v3 schema bump involves breaking structural change (not just field additions), OR
+2. Two parallel migration paths coexist (e.g., legacy + v2 → v3).
+
+Until then, hand-rolled one-shot migration is correct for this codebase.
+
 `LauncherStoreFile` is a `sealed record` with init-only properties — mutations produce a new instance via `with { }`.
 
 ### Why Settings Is Nested, Not Split (audit 2026-07-09)
