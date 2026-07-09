@@ -41,11 +41,55 @@ Follow-up to the goal "深度全网deepsearch调研出新架构来剪掉一切�
   - Single-instance behavior verified
   - No regressions in 451-test suite
 
+## Final integration review (2026-07-09, all 8 children archived)
+
+### What was actually delivered
+
+| Task | Verdict | Code change |
+|------|---------|-------------|
+| T1 remove-dead-code | Real fix | ShellCommand class deleted, LiteDB PackageVersion orphan removed |
+| T2 stale-strings-remediation | Real fix | Doc cleanup (15+ refs) + verify.ps1 negative gate |
+| T3 enable-compiled-bindings | Investigation | CompiledBindings stays off (documented why) |
+| T4 split-settings | Closed misidentified | No code change (Settings already correct shape) |
+| T5 result-types-migration | Closed misidentified | No code change (exceptions are 2025 modern practice) |
+| T6 single-instance-lock | Closed already-cut | No code change (Mutex already exists, no IPC needed) |
+| T7 schema-first-persistence | Mixed | Schema-First rejected; dead `LauncherSettings.SchemaVersion` removed, 4 mutation sites cleaned, 2 pin tests added |
+| T8 schema-migration-registry | Closed misidentified | No code change (deferred until v3 breaking change) |
+
+### Scorecard vs original audit claim (11 sources)
+
+- **2 real fixes:** S3 (dual-version drift), ShellCommand dead code + LiteDB orphan
+- **2 already-cut:** S9 (T2 gate), S11 (existing Mutex)
+- **7 misidentified:** S1, S2, S4, S6, S10, S12, S13
+
+### Cross-child acceptance criteria status
+
+- [x] All 8 children archived on main
+- [x] `dotnet build -c Release` 0 warnings 0 errors (verified after each task)
+- [x] `dotnet test` 453 tests passing (451 baseline + 2 new T7 pin tests)
+- [x] `tools/verify.ps1` 16/16 checks PASS, including new `no-stale-three-file-refs` gate
+- [x] SchemaVersion 3-way inconsistency resolved (T7: dead `LauncherSettings.SchemaVersion` removed, single source at top level)
+- [x] verify.ps1 enforces no three-file references in docs (T2 gate)
+- [x] Single-instance behavior verified (T6: existing Mutex re-confirmed)
+- [x] No regressions in test suite (453/453 pass)
+- [~] **`launcher.json` schema-driven** — adjusted: C# records ARE the schema (single source), Corvus.JsonSchema migration rejected
+- [~] **`ExceptionFilters.IsRecoverable` removed from production paths** — adjusted: kept; 2025 modern practice confirms exceptions are correct for UNEXPECTED technical errors
+
+### Ponytail outcome
+
+The original premise — "5-layer Schema-Driven Architecture migration cuts 11 bug sources" — was largely incorrect. 9 of 11 sources were misidentified or already-cut. The 2 real fixes were small (dead code + dual-version field). The audit-driven "cut every source" approach would have introduced MORE complexity (Corvus.JsonSchema dependency, broken `record with { }` patterns, registry abstractions with one implementation, named-pipe IPC without args to forward) without cutting bugs.
+
+The lazy senior developer move was: investigate each source, reject the speculative ones with evidence, fix the real ones at root cause, document the reasoning in spec to prevent future re-litigation.
+
 ## Out-of-scope (explicitly deferred)
 - MainWindowViewModel further splitting (decision: don't touch, 8 partials sufficient)
 - Microsoft.Extensions.DependencyInjection (decision: keep manual wiring, ROI low)
 - async I/O migration (decision: keep sync, ROI low)
 - ReactiveUI migration (decision: CommunityToolkit.Mvvm sufficient)
+- Corvus.JsonSchema migration (decision: C# records ARE the schema)
+- SchemaMigrationRegistry (decision: deferred until v3 breaking change)
+- Result<T, StoreError> (decision: exceptions are 2025 modern practice for unexpected errors)
+- Named Pipe IPC for single-instance (decision: no CLI args need forwarding)
 
 ## Autonomy contract
 Per goal directive "创建后无需确认" — each child proceeds without inter-child confirmation. Decision points resolved via web research, defaulting to most-modern-practice solution. Exceptions logged in child prd.md.
