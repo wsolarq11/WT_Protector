@@ -957,3 +957,45 @@ Step 3 /trellis-update-spec: synced specs to single-file architecture — guides
 ### Next Steps
 
 - None - task complete
+
+
+## Session 28: Schema-driven-arch-migration 8-phase execution: 2 real fixes + 6 investigations
+
+**Date**: 2026-07-09
+**Task**: Schema-driven-arch-migration 8-phase execution: 2 real fixes + 6 investigations
+**Branch**: `main`
+
+### Summary
+
+Executed all 8 phases of the schema-driven-arch-migration parent under /goal autonomy. T1 (dead code: ShellCommand+LiteDB orphan) and T7 (real dual-SchemaVersion drift bug: removed dead LauncherSettings.SchemaVersion + 4 mutation sites + 2 pin tests) shipped real fixes. T2 (15+ stale three-file refs cleaned + verify.ps1 negative gate) shipped a real safety-net fix. T3/T4/T5/T6/T8 each investigated against actual code with 2025 modern-practice web research and closed as misidentified/already-cut/speculative. Final: 453/453 tests pass (451 baseline + 2 new T7 pin tests), verify.ps1 16/16 PASS, 0 active Trellis tasks. Spec docs (persistence.md single-source-of-truth, error-handling.md re-audit, pitfalls.md §8.4) updated to prevent re-litigation. Meta-lesson: audit-driven proposals over-count bug sources 7/11; investigate each per-source before multi-phase migration.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ef978b7` | (see git log) |
+| `139538e` | (see git log) |
+| `b0cca49` | (see git log) |
+| `d8ccfcc` | (see git log) |
+| `945f1bd` | (see git log) |
+| `6c151b2` | (see git log) |
+| `7af8951` | (see git log) |
+| `9e54c53` | (see git log) |
+| `8bbe98c` | (see git log) |
+| `8c3ede8` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
