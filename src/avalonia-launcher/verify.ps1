@@ -76,7 +76,7 @@ $isWindowsPlatform = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPl
 $processSmoke = 'skipped-non-windows'
 if ($isWindowsPlatform) {
     Remove-Item -LiteralPath $smokeRoot -Recurse -Force -ErrorAction SilentlyContinue
-    $smokeStore = Join-Path $smokeRoot 'config\store.json'
+    $smokeStore = Join-Path $smokeRoot 'config\launcher.json'
     New-Item -ItemType Directory -Path (Split-Path -Parent $smokeStore) -Force | Out-Null
     $smokeStoreJson = @{
         schemaVersion = 2

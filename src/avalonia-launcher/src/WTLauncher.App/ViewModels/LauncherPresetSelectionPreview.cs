@@ -90,7 +90,7 @@ public sealed class LauncherPresetSelectionPreview
         {
             return Create(
                 "检查启动组",
-                $"启动组“{presetName}”引用了 {missingConfigIds.Count} 个不存在的启动项；请先修 config\\presets.json。");
+                $"启动组“{presetName}”引用了 {missingConfigIds.Count} 个不存在的启动项；请先修 config\\launcher.json。");
         }
 
         if (presetSet.Count == 0)

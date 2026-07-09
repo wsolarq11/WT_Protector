@@ -55,8 +55,7 @@ public static class LauncherStore
     // ---- Path resolution ----
 
     /// <summary>
-    /// Resolves the path to config/store.json. Mirrors LauncherConfigStore.ResolveConfigPath
-    /// but targets the unified store file instead of config.json.
+    /// Resolves the path to config/launcher.json (the unified store file).
     /// </summary>
     public static string ResolveStorePath(string? explicitPath, string? currentDirectory = null,
         string? appBaseDirectory = null)

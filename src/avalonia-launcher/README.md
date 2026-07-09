@@ -10,7 +10,7 @@ From the repository root:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\run.ps1
 ```
 
-The app reads the repository-root `config/config.json`, persists selected checkboxes there, and stores portable UI preferences in `config/settings.json`. The header batch controls can select all visible filtered entries, clear the saved selection, or one-click launch the saved checked set.
+The app reads the repository-root `config/launcher.json` (entries + presets + settings + defaultPresetId as one atomic unit) and persists all mutations there. The header batch controls can select all visible filtered entries, clear the saved selection, or one-click launch the saved checked set.
 
 ## Verify
 
@@ -65,7 +65,7 @@ The codebase is organized in five logical layers. Each layer depends only on the
 
 - Save-then-rollback pattern: snapshot-before → mutate → save all → restore on failure
 - `LauncherEntryMutationSnapshot`, command-local entry replacement
-- Coordinates config.json + presets.json + settings.json as an atomic unit
+- Coordinates `launcher.json` (entries + presets + settings + defaultPresetId) as one atomic unit
 
 ### Layer 3 — ViewModel orchestration
 

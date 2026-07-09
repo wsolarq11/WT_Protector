@@ -37,7 +37,7 @@ public sealed class ConfirmEntryDeleteWindow : Window
                 Children =
                 {
                     LauncherDialogText.Title("确认删除启动按钮？"),
-                    LauncherDialogText.Body($"“{target.EntryName}” 会从 config\\config.json 删除，并从所有启动组里移除引用。"),
+                    LauncherDialogText.Body($"“{target.EntryName}” 会从 config\\launcher.json 删除，并从所有启动组里移除引用。"),
                     LauncherDialogButtons.Footer(24, cancel, delete),
                 },
             },
