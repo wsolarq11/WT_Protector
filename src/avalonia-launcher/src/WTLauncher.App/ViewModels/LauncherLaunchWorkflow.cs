@@ -15,7 +15,6 @@ public sealed class LauncherLaunchWorkflow
         _start = start ?? throw new ArgumentNullException(nameof(start));
     }
 
-    // ponytail: Process.Start factory replaces deleted LauncherProcess thin wrapper.
     public static LauncherLaunchWorkflow Create() =>
         new(plan =>
         {
