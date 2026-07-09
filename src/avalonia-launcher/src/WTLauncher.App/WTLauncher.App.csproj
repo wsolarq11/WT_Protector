@@ -4,6 +4,10 @@
     <TargetFramework>net10.0</TargetFramework>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <Nullable>enable</Nullable>
+    <!-- ponytail: CompiledBindings kept off — enabling requires x:DataType on ~30+ DataTemplates
+         in MainWindow.axaml (100 build errors when toggled on, see task 07-09-enable-compiled-bindings).
+         Single-user launcher with ≤200 entries: runtime reflection cost is invisible.
+         451 tests cover binding correctness. Revisit if entry count or perf budget demands it. -->
     <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
     <!-- CS0618: LaunchPlan.CommandLine is [Obsolete] for logging but still used for UI display (DryRun). -->
     <NoWarn>$(NoWarn);CS0618</NoWarn>
