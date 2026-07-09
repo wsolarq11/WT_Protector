@@ -263,6 +263,27 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **教训** | PowerShell 脚本需要 UTF-8 BOM（Windows 兼容）。`git diff` 看到首行字符级变化时要警惕。 |
 | **WT_Protector 适用** | `verify.ps1` 和相关 PowerShell 脚本，commit 前检查 BOM 完整性。 |
 
+### 3.9 `grep -c "Add-Check"` 把函数定义也算进去 — 计数 off-by-one
+
+| 属性 | 值 |
+|---|---|
+| **证据** | wt-protector session `c38ce17d-7e8`（2026-07-09 reorg-audit-pass） |
+| **问题** | 审计用 `grep -c "Add-Check" tools/verify.ps1` 得到 19，实际是 18 —— 第 12 行 `function Add-Check([string]$Name, [object]$Detail) {` 也被匹配，多算 1。审计报告把这个错误数字写进 D1 第 4 项，落地阶段又把它写进 `AGENTS.md:39` 和 `README.md:138`，引入新的文档漂移。 |
+| **后果** | 文档与 `verify.ps1` receipt 实际发出 18 项检查矛盾；`AGENTS.md:39` 的 "19 项" 与同行的 18-item 括号枚举内部不一致。第一轮对抗性验证抓出，订正为 18。 |
+| **预防** | 计数函数调用时，**永远用锚定正则排除函数定义**：`grep -cE "^\s*Add-Check\s+['\"]"`（要求调用形式以引号开头）。更稳健的做法：**直接解析 receipt 的 `checks` 数组长度**，不依赖 grep。 |
+| **WT_Protector 适用** | 任何"统计 N 个调用/N 项检查/N 条规则"的审计或文档动作，先用最严格的正则，或直接读权威 receipt。审计方法学本身也要被独立对抗性验证。 |
+
+### 3.10 PRD 引用 spec 文件前必须验证存在性 — phantom reference
+
+| 属性 | 值 |
+|---|---|
+| **证据** | wt-protector session `c38ce17d-7e8`（2026-07-09 reorg-org） |
+| **问题** | 8 处 PRD/spec 引用 `.trellis/spec/guides/feedback_audit_driven_proposals_verify_each_source.md` 作为 audit-driven-verify 准则的来源，但**该文件从未存在**（Glob 全仓零匹配）。引用传播到父任务 PRD、子任务 PRD/design/implement、4 份归档 PRD。 |
+| **后果** | 未来读者按引用路径找不到文件，浪费排查时间；audit-driven-verify 准则本身被"幻影引用"反噬——一个要求"验证每条提案"的准则，自己的引用都没验证。 |
+| **修复** | 删除 8 处 phantom 引用，改为通用表述"严守审计准则：每条提案都是假设，必须用当前代码/文档验证后才决定动作"。**不补建文件**——补建等于为了 8 处引用造一份新文档，反而增加维护面。 |
+| **预防** | 写"严守某文件：某准则"之前，**先用 Glob 或 `ls` 验证文件存在**。更稳健的做法：**把准则内容直接内联**在 PRD 里，不引用外部文件——单一权威源，不会漂移。 |
+| **WT_Protector 适用** | PRD / spec / docs 之间的引用必须可解析。引用前 Glob 验证；删除文件时 grep 反向引用确认无残留。 |
+
 ---
 
 ## 4. 元教训
