@@ -15,11 +15,11 @@ WT_Protector/
 │   └── avalonia-launcher/ → 活动主线：Avalonia/.NET 源码 + 测试 + 构建
 │       ├── README.md      → 源码架构（5层模型）、构建与验证
 │       ├── src/
-│       │   ├── WTLauncher.Core/   → Layer 0: 纯数据/规则（26文件, 零Avalonia依赖）
+│       │   ├── WTLauncher.Core/   → Layer 0: 纯数据/规则（24文件, 零Avalonia依赖）
 │       │   └── WTLauncher.App/    → Layer 1-4: ViewModels + Views
-│       │       ├── ViewModels/    → 34文件, 单 MainWindowViewModel + 9 partial
-│       │       └── Views/        → 15文件, 单 MainWindow.axaml 三视图
-│       ├── tests/WTLauncher.Tests/ → 77测试文件, xUnit
+│       │       ├── ViewModels/    → 28文件, 单 MainWindowViewModel + 7 partial
+│       │       └── Views/        → 13文件, 单 MainWindow.axaml 三视图
+│       ├── tests/WTLauncher.Tests/ → 61测试文件, xUnit
 │       ├── run.ps1        → 开发运行
 │       └── verify.ps1     → 主线门禁（restore → test → publish → GUI smoke）
 ├── tools/                 → 🧰 脚本工具箱（详见下方）
@@ -36,7 +36,7 @@ WT_Protector/
 
 | 脚本                                          | 用途                                                                                                                                                                                                     | 何时用                                               |
 | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `verify.ps1`                                  | **全量门禁**：16 项检查（行尾策略、退役路径、主线布局、README、功能审计、声明边界、GitHub 快照、launcher.json schema、快捷方式退役、WinForms 退役、HTA 归档、Avalonia 主线测试+发布+GUI 冒烟） | 每次提交前；声称"完成"前                             |
+| `verify.ps1`                                  | **全量门禁**：18 项检查（行尾策略、`.snow/` 忽略状态、退役路径、主线布局、README、功能审计、声明边界、GitHub 快照、launcher.json schema、config-schema、presets-schema、settings-json、settings-single-source、no-stale-three-file-refs、快捷方式退役、WinForms 退役、HTA 归档、Avalonia 主线测试+发布+GUI 冒烟） | 每次提交前；声称"完成"前                             |
 | `build-release.ps1`                           | **稳定发布构建**：win-x64 self-contained publish → `src/avalonia-launcher/artifacts/publish/win-x64/`                                                                                                    | 需要产出可分发的 exe 时                              |
 | `config-lib.ps1`                              | **共享 PowerShell 函数库**：被 verify.ps1、build-release.ps1 等引用                                                                                                                                      | 不直接调用；被其他脚本 dot-source                    |
 | `test-launch-args.ps1`                        | **聚焦测试**：仅运行 LaunchArgumentBuilder 测试                                                                                                                                                          | 快速验证启动参数逻辑                                 |

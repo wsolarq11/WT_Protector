@@ -2,7 +2,7 @@
 
 ## Goal
 
-Investigate and resolve the 6 remaining items from the 2026-07-09 second-pass architecture audit + R5 (dual truth fix) just landed. Apply `feedback_audit_driven_proposals_verify_each_source.md` strictly: each item is a hypothesis that must be verified against current code. **Action OR NO-ACTION with reasoning are both valid deliverables.**
+Investigate and resolve the 6 remaining items from the 2026-07-09 second-pass architecture audit + R5 (dual truth fix) just landed. Apply the audit-driven-verify discipline strictly: each item is a hypothesis that must be verified against current code. **Action OR NO-ACTION with reasoning are both valid deliverables.**
 
 ## Backlog
 

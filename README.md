@@ -135,19 +135,16 @@ Run the project gate from the repository root:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
 ```
 
-The verifier currently checks:
+The verifier currently enforces 18 checks — see the `Add-Check` calls in `tools/verify.ps1` for the canonical list. Summary by category:
 
-- old `WT Launcher.exe`, `src/winforms-launcher/`, and `spikes/` do not return;
-- `src/avalonia-launcher/` has the solution, app project, tests project, and mainline verify script;
-- root `config/launcher.json` parses as `LauncherStoreFile` (schemaVersion=2), item `id` values are unique, persistent `selected` state remains part of the contract, and preset references only known entry ids;
-- every active entry `directory` exists on this machine, so stale launcher buttons fail the gate instead of failing later at click time;
-- `launcher.json` `settings` object is the portable source for sort mode, view mode, launch-confirmation state, and complete custom entry order;
-- `docs/feature-reality-north-star-audit.md` keeps the 21/21 narrow-domain north-star coverage and the explicit `not-complete-as-written` full-objective boundary;
-- the claim-boundary ledger keeps allowed narrow-scope claims separate from forbidden broad, unimprovable, universal-superiority, absolute-side-effect, and post-`wt.exe` health claims;
-- `docs/reference/github-similar-projects-snapshot.json` keeps the current GitHub similar-project evidence schema, representative repos, broad-market proof counters, controlled yardstick verdicts, summary counts, repo-local refresh command, and freshness metadata readable;
-- `retired/design/winforms-launcher.md` exists with the absorbed WinForms design lessons;
-- retired HTA and shortcut-backup reference material remain readable;
-- Avalonia mainline restore/test/isolated verification publish passes, including launch-argument tests; on Windows the gate also performs a hidden temp-config startup smoke of the published exe, while non-Windows hosts record that GUI smoke as skipped after the win-x64 publish is verified.
+- **repo hygiene**: line-ending policy (LF), `.snow/` ignored local state, retired paths (`WT Launcher.exe`, `src/winforms-launcher/`, `spikes/`) do not return;
+- **mainline layout**: `src/avalonia-launcher/` has the solution, app project, tests project, and mainline verify script;
+- **documentation**: `README.md` readability, `docs/feature-reality-north-star-audit.md` keeps 21/21 narrow-domain north-star coverage and the `not-complete-as-written` boundary, claim-boundary ledger separates allowed narrow-scope claims from forbidden broad/unimprovable/universal/absolute-side-effect/post-`wt.exe` claims;
+- **market evidence**: `docs/reference/github-similar-projects-snapshot.json` schema, representative repos, freshness metadata;
+- **launcher.json contract**: top-level `LauncherStoreFile` (schemaVersion=2) parses, unique entry `id`s, preset `entryIds` reference known entries only, every active entry `directory` exists on this machine;
+- **schema invariants**: `config-schema`, `presets-schema`, `settings-json`, `settings-single-source-buildstorefile` (single canonical assembler), `no-stale-three-file-refs` (active docs must not reference abandoned three-file architecture);
+- **retirement hygiene**: shortcut-backup retirement, WinForms retired design (`retired/design/winforms-launcher.md`), HTA retired config;
+- **Avalonia mainline**: restore/test/isolated verification publish passes; on Windows a hidden temp-config startup smoke of the published exe; non-Windows hosts skip GUI smoke after win-x64 publish verification.
 
 The final verifier line is a JSON receipt with `schemaVersion`, `kind`, `status`, `repoHead`, `worktreeDirty`, and `worktreeStatus` fields before tool-specific evidence. The Avalonia mainline receipt uses the same schema and is checked by the root gate.
 

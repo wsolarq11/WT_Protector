@@ -34,14 +34,14 @@ All three are expected NO-ACTION:
 - R6: DI container adds ceremony without testability gain (already have `Func<>` injection); introduce when dependency graph complexity justifies it
 - R7: Sync I/O at <50MB / <100 entries has no measurable latency; async adds complexity for no observed benefit
 
-But hypothesis must be verified per `feedback_audit_driven_proposals_verify_each_source.md`.
+But hypothesis must be verified per the audit-driven-verify discipline (each proposal checked against actual code before action).
 
 ## Investigation results
 
 ### R1: Composition refactor — DEFER
 
 **Current state verified:**
-- MainWindowViewModel 8 partials total **2305 lines** (main 333 + Drag 151 + Entries 288 + Launch 163 + Presets 537 + Batch 339 + Layout 416 + Reorder 78)
+- MainWindowViewModel 1 main + 7 partials (8 files) total **2305 lines** (main 333 + Drag 151 + Entries 288 + Launch 163 + Presets 537 + Batch 339 + Layout 416 + Reorder 78)
 - Largest partial: Presets 537 lines — still manageable
 - All partials share `_settings`, `_entries`, `_presetFile` fields via `this.` access
 
@@ -123,6 +123,6 @@ var viewModel = new MainWindowViewModel(
 
 ## Conclusion
 
-All 3 items: NO-ACTION with documented reasoning. Matches `feedback_audit_driven_proposals_verify_each_source.md` pattern — each audited source verified against actual code before accepting deferral.
+All 3 items: NO-ACTION with documented reasoning. Matches the audit-driven-verify discipline (each proposal verified against actual code before action) — each audited source verified against actual code before accepting deferral.
 
 This closes the residual backlog clearance parent task: 6 items investigated (R3+R4 already completed by earlier tasks; R2 deferred with ponytail comment; R1+R6+R7 deferred with explicit triggers). 1 real action (R5 from prior task) + 5 documented NO-ACTIONs + 0 speculative abstractions introduced.

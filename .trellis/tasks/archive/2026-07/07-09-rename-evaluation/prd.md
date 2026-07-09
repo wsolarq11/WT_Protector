@@ -61,4 +61,4 @@ Add a `ponytail:` comment above the class declaration documenting the evaluation
 - [ ] Build PASS
 - [ ] 453/453 tests PASS
 - [ ] verify.ps1 18/18 PASS
-- [ ] Update `feedback_audit_driven_proposals_verify_each_source.md` or spec with the "85 refs / single-user / no bug = defer mechanical rename" rule
+- [ ] Update the audit-driven-verify spec guidance (or relevant spec doc) with the "85 refs / single-user / no bug = defer mechanical rename" rule
