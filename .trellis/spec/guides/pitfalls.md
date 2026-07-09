@@ -753,3 +753,15 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **根因** | 旧 WTLauncher App 进程（通过 Explorer 双击启动的）持有 Debug 构建输出的文件锁，`dotnet build` 无法覆盖。`dotnet run` 被迫运行旧 exe，而旧 exe 使用 LiteDB 路径加载 0 条目后覆盖 `config/launcher.json`，形成"旧 exe 加载空数据→覆盖配置文件→新 exe 启动读空数据→旧 exe 仍在运行→锁死"的循环 |
 | **当时修复** | `wmic process where "name='WTLauncher.App.exe'" delete` + `Stop-Process -Force` + 删除旧构建输出 |
 | **教训** | 嵌入式数据库引入进程级文件锁，对桌面单用户应用是净负担。单文件 JSON 无锁、可随时覆盖、原子性由文件系统保证。见 §7.3。 |
+
+### 8.4 Schema 合并遗留死字段 → 双源漂移
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-07-09 任务 `07-09-schema-first-persistence` (T7) |
+| **问题** | 2026-07 三文件（config.json/presets.json/settings.json）合并为单文件 `launcher.json` 时，`LauncherSettings.SchemaVersion` 字段保留为死代码（默认 1，从未被 `ExpectedStoreSchemaVersion` 校验）。4 个 mutation 站点（`LauncherEntryMutationSnapshot.Capture/CloneSettings`、`LauncherDragReorderWorkflow.Begin`、`MainWindowViewModel.CaptureSettingsMutationSnapshot`）持续强制 `with { SchemaVersion = 1 }`，而顶层 `LauncherStoreFile.SchemaVersion = 2` 是真正校验来源。settings 级 schema version 字段从未被消费 → 与 §6.1 / §6.19 同性质的双源漂移。 |
+| **根因** | (1) 文件合并后未做 dead-field 审计；(2) mutation 站点的 `with { SchemaVersion = 1 }` 是迁移过渡代码，未在合并完成后清理；(3) 缺少 pin 测试钉死"哪些 record 应该有/没有 schemaVersion"。 |
+| **修复** | (1) 移除 `LauncherSettings.SchemaVersion` 属性（含 `[JsonPropertyName]` / `[JsonRequired]`）；(2) 清理 4 处 mutation 死代码；(3) 加 pin 测试 `LauncherSettings_NoSchemaVersionField_SingleSourceOfTruth`；(4) 加向前兼容测试 `LauncherSettings_LegacySchemaVersionInJson_IsIgnoredForwardCompatible`（`UnmappedMemberHandling=Skip` 保证旧文件仍可加载）。 |
+| **预防** | (1) **Schema 合并/迁移完成时**：grep 所有 `[JsonPropertyName("schemaVersion")]` 或其他"version-like"字段，标_dead_并清理。(2) **每个 schema-bearing record 必须有 pin 测试**：序列化后 JSON 必须包含/不包含特定字段。(3) **Single source of truth**：如果一个版本号字段在 N 个 record 中存在，N-1 个是 dead，必须移除。 |
+| **Bayesian 应用** | 初始假设：可能是 `LoadWithRecovery` 误恢复（H1, 30%）/ 可能是 mutation snapshot 漏抓字段（H2, 30%）/ 可能是死字段漂移（H3, 40%）。证据：`git diff` 显示 `settings.schemaVersion` 从 2 变为 1 after mutation → 强烈支持 H3，否定 H1/H2。修复后 pin 测试一次性通过，无重试 → 高置信度（95%+）。 |
+| **适用** | 所有经历 schema 合并/迁移的序列化 record 树。本次审计确认 `LaunchEntry`、`LauncherPreset`、`LauncherPresetFile`、`LauncherWindowSettings` 均无类似 dead field。 |
