@@ -63,19 +63,24 @@ Key file:
 
 ## Layer 3 — ViewModel Orchestration
 
-`src/WTLauncher.App/ViewModels/MainWindowViewModel*.cs` — **partial class, 3 files**:
+`src/WTLauncher.App/ViewModels/MainWindowViewModel*.cs` — **partial class, 8 files** + 1 status-text file:
 
-| File | Responsibility |
-|------|---------------|
-| `MainWindowViewModel.cs` (2587 lines) | Constructor, core state, refresh, entries, launch, layout, presets, batch — Stage 2 will keep splitting this |
-| `MainWindowViewModel.Drag.cs` (151 lines) | Drag reorder session management (Stage 1) |
-| `MainWindowViewModel.Reorder.cs` (78 lines) | Keyboard MoveUp / MoveDown commands (Stage 1) |
+| File | Responsibility | Lines |
+|------|---------------|-------|
+| `MainWindowViewModel.cs` | Constructor, core state, refresh, validation, save helpers, ReplaceEntries, CurrentTimestampUtc | ~334 |
+| `MainWindowViewModel.Drag.cs` | Drag reorder session management | ~151 |
+| `MainWindowViewModel.Reorder.cs` | Keyboard MoveUp / MoveDown commands | ~78 |
+| `MainWindowViewModel.Entries.cs` | Add / Clone / Edit / Delete entry command flow + entry snapshot helpers | ~288 |
+| `MainWindowViewModel.Launch.cs` | Single-entry launch (DryRun + Launch) + RequireConfirmationForLaunches toggle | ~163 |
+| `MainWindowViewModel.Presets.cs` | Preset CRUD + apply / preview / launch + preset state management | ~537 |
+| `MainWindowViewModel.Batch.cs` | Selection ops + batch launch + selection snapshot helpers | ~339 |
+| `MainWindowViewModel.Layout.cs` | Filter / sort / view-mode / scroll-offset / cards-available-size + OnXxxChanged callbacks | ~416 |
+| `LauncherStatusText.cs` | Static containers for all user-facing status / receipt strings | ~581 |
 
 - The single writable owner of launcher UI state.
 - Delegates reusable rules to Core helpers.
 - Injects dialog confirmation `Func<>` delegates through the `MainWindow` constructor.
-
-Stage 1 of the god-class split (this task) extracted Drag + Reorder as the two cleanest boundaries. Stage 2 (follow-up) will extract Entries / Launch / Layout / Presets / Batch — those share more helpers (`SaveStoreFile`, `BuildStoreFile`, `CaptureSettingsMutationSnapshot`) and need deeper dependency analysis.
+- Split completed 2026-07-09 (Stage 1: Drag + Reorder; Stage 2: Entries / Launch / Presets / Batch / Layout + LauncherStatusText extraction). Further decomposition would be composition (separate collaborator classes), not more partials.
 
 ---
 
