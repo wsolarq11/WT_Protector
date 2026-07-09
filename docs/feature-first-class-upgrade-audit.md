@@ -7,9 +7,7 @@ Scope: HEAD `22f57a9` 的 Avalonia 主线、根配置、发布/验证脚本和�
 Current evidence used in this pass:
 
 - `git rev-parse --short HEAD` → `22f57a9`; worktree clean on source files.
-- `config/config.json` → 19 entries / 19 unique ids / 19 existing directories.
-- `config/presets.json` → 2 presets（`core-projects`, `blank-manual`）。
-- `config/settings.json` → `sortMode=custom`, `entryViewMode=cards`, `requireConfirmationForLaunches=false`, 3 commandTemplates, 2 searchHistory entries.
+- `config/launcher.json` → 19 entries / 19 unique ids / 19 existing directories; 2 presets（`core-projects`, `blank-manual`）; settings with `sortMode=custom`, `entryViewMode=cards`, `requireConfirmationForLaunches=false`, 3 commandTemplates, 2 searchHistory entries.
 - `git diff --check` → PASS.
 - `dotnet test` → 542 tests PASS.
 - Full gate `tools\verify.ps1` → 16/16 root checks structural PASS (GUI smoke skipped on non-Windows; mainline verify receipt validates SHA256 of published DLL).
@@ -60,7 +58,7 @@ Current evidence used in this pass:
 | 3 | Search/filter | ⭐⭐⭐⭐ | 19 entries 需要快速定位 | `LauncherEntryVisibility.cs:124-141` 多词匹配正确；`searchHistory` 已通过 AutoCompleteBox 绑定到搜索输入——不再是无 UI 死数据 | 加 150ms 去抖（当前无去抖）；或保持当前实现——完整搜索 history 已经可用 |
 | 4 | Direct single launch | ⭐⭐⭐⭐⭐ | 核心动作——找到并启动 | `LaunchArgumentBuilder.cs` 构造 `wt.exe` plan；snapshot + confirmation + receipt 三层契约 | 无——不用加"危险命令分类剧场" |
 | 5 | Checkbox selection & batch launch | ⭐⭐⭐⭐⭐ | 每天一键启动一组工作区 | preflight/confirmation/receipt 分离；snapshot 防 mutation 漂移；`LauncherBatchLaunchReport` 不可变 | 可选：`continueOnError` 参数支持"全启"模式 |
-| 6 | Named launch groups / presets | ⭐⭐⭐⭐⭐ | 子集需要命名、审查、可移植 | `presets.json` 引用 stable entry ids；`LauncherPresetFiles.Validate` 三阶段校验；Normalize id 消除大小写特殊情况 | 无——这是项目最好的数据结构 |
+| 6 | Named launch groups / presets | ⭐⭐⭐⭐⭐ | 子集需要命名、审查、可移植 | `launcher.json` presets 引用 stable entry ids；`LauncherPresetFiles.Validate` 三阶段校验；Normalize id 消除大小写特殊情况 | 无——这是项目最好的数据结构 |
 | 7 | First-class preset actions | ⭐⭐⭐⭐⭐ | 不能要求用户手改 JSON | `MainWindowViewModel.Presets*.cs` CRUD + locked preset + rollback；快照-写入-回滚 3 操作一致 | 无 |
 | 8 | Preset-vs-selection preview | ⭐⭐⭐⭐⭐ | 应用前必须预知变化 | `LauncherPresetSelectionPreview` 纯函数；Matched/Missing/Extra 三元组；已匹配时禁用 no-op | 可选：展示差异条目名称（数据结构已备好） |
 | 9 | Preset launch plan preview | ⭐⭐⭐⭐⭐ | 批量启动前看到实际命令 | 复用 `PreflightBatch`——预演和实际启动同一路径；预演不启动进程快照验证 | 无 |
@@ -75,7 +73,7 @@ Current evidence used in this pass:
 | 18 | Core/App/Tests separation | ⭐⭐⭐⭐⭐ | 启动参数/排序/配置规则必须可测试 | Core 零 Avalonia 依赖；542 tests；Test 结构镜像生产架构 | 无 |
 | 19 | Self-contained win-x64 publish & native gate | ⭐⭐⭐⭐⭐ | 桌面工具必须产出可运行 exe | `build-release.ps1` SHA256 receipt；`verify.ps1` 16 checks + GUI smoke；双 receipt 路径 | 无 |
 | 20 | Retired legacy surfaces | ⭐⭐⭐⭐⭐ | HTA/WinForms 留作活路径 = 第二套真相 | `retired/` 归档；root gate 阻止 4 个旧路径复活；退役文档完整性验证 | 无 |
-| 21 | Design benchmark & giants-shoulders | ⭐⭐⭐⭐⭐ | 设计判断不能靠感觉 | 12 基准→10 本地验收规则；12 工具对标↔presets.json 映射；xUnit 锁定文档结构 | 考虑 CI 中自动检查快照新鲜度 |
+| 21 | Design benchmark & giants-shoulders | ⭐⭐⭐⭐⭐ | 设计判断不能靠感觉 | 12 基准→10 本地验收规则；12 工具对标↔`launcher.json` presets 映射；xUnit 锁定文档结构 | 考虑 CI 中自动检查快照新鲜度 |
 | 22 | Command templates | ⭐⭐⭐⭐ | 长命令重复制造错误 | `LauncherCommandTemplateResolver` 纯函数；unknown key fail-fast；`$key` 预览 | 补 20 行 xUnit 合约测试 |
 | 23 | Design tokens | ⭐⭐⭐⭐⭐ | 颜色/间距分散→视觉漂移 | `LauncherDesignTokens.cs` 66 行单一源；`App.axaml.cs` 注入→XAML `{StaticResource}`；合约测试禁止硬编码 | 无 |
 
@@ -97,10 +95,10 @@ Current evidence used in this pass:
 
 ## Linus 式方案
 
-1. **先固定数据结构**：`config.json` entries、`presets.json` named groups、`settings.json` UI preferences 三个源够清楚。不新增第四个状态文件。
+1. **先固定数据结构**：`launcher.json` 单一统一源（entries + presets + settings + defaultPresetId）。不新增第二个状态文件。
 2. **消除特殊情况**：保留全局 confirmation，不恢复 per-entry confirm；command template unknown key 直接 fail-fast；id 统一 normalize 消除大小写分支。
 3. **用最笨但清楚的方式实现**：Core 纯规则→ViewModel mutation+rollback→View 交互边界。PreflightBatch 一函数用于预演和实际启动——消灭"预演路径≠实际路径"这个 bug 类别。
-4. **确保零破坏性**：任何改造先证明不破坏 `config/*.json` schema、preset 引用、custom order、launch preflight、root native gate。
+4. **确保零破坏性**：任何改造先证明不破坏 `config/launcher.json` schema、preset 引用、custom order、launch preflight、root native gate。
 
 ## 不要做的蠢事
 

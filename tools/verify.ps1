@@ -477,6 +477,29 @@ Add-Check 'avalonia-mainline-verify' @{
     dllSha256 = $mainline.dllSha256
 }
 
+# ponytail: Negative gate — active docs must not reference the abandoned three-file architecture.
+# Catches `config/(config|presets|settings).json` not preceded by retired/. Does NOT catch
+# Windows Terminal's own settings.json (lives in docs/research/, not in $activeDocs).
+# Add new active docs here when they describe the current single-file launcher.json contract.
+$activeDocs = @(
+    'README.md', 'AGENTS.md', 'DESIGN.md',
+    'docs\feature-reality-north-star-audit.md',
+    'docs\feature-first-class-upgrade-audit.md',
+    'docs\giants-shoulders\launcher-first-class-patterns.md'
+)
+foreach ($doc in $activeDocs) {
+    $docPath = Get-RepoPath $doc
+    if (-not (Test-Path -LiteralPath $docPath)) { continue }
+    $docText = Get-Content -Raw -Encoding UTF8 -LiteralPath $docPath
+    # Negative lookbehind: config/(config|presets|settings).json not preceded by retired[/\]
+    $staleMatches = [regex]::Matches($docText, '(?<!retired[/\\])config[/\\](?:config|presets|settings)\.json')
+    if ($staleMatches.Count -gt 0) {
+        $examples = ($staleMatches | Select-Object -First 3 | ForEach-Object { $_.Value }) -join ', '
+        throw "Stale three-file reference in ${doc}: $examples (use config/launcher.json)"
+    }
+}
+Add-Check 'no-stale-three-file-refs' @{ docs = ($activeDocs -join ', ') }
+
 New-ToolReceipt 'root-verify' @{
     root = $root
     checks = $checks

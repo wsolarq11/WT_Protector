@@ -10,9 +10,7 @@ WT_Protector/
 ├── README.md              → 详细项目文档（配置schema、安全说明、功能清单）
 ├── DESIGN.md              → 设计契约（品牌、原则、视觉语言、组件所有权）
 ├── config/                → 运行时配置（JSON, 人可读写）
-│   ├── config.json        → 启动条目（id/name/directory/command/selected）
-│   ├── presets.json       → 命名启动组（引用 config.json entry ids）
-│   └── settings.json      → 便携UI偏好（排序/视图/确认/窗口尺寸）
+│   └── launcher.json      → 统一存储：启动条目 + 命名启动组 + UI 偏好 + defaultPresetId
 ├── src/
 │   └── avalonia-launcher/ → 活动主线：Avalonia/.NET 源码 + 测试 + 构建
 │       ├── README.md      → 源码架构（5层模型）、构建与验证
@@ -38,7 +36,7 @@ WT_Protector/
 
 | 脚本                                          | 用途                                                                                                                                                                                                     | 何时用                                               |
 | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `verify.ps1`                                  | **全量门禁**：16 项检查（行尾策略、退役路径、主线布局、README、功能审计、声明边界、GitHub 快照、config/presets/settings schema、快捷方式退役、WinForms 退役、HTA 归档、Avalonia 主线测试+发布+GUI 冒烟） | 每次提交前；声称"完成"前                             |
+| `verify.ps1`                                  | **全量门禁**：16 项检查（行尾策略、退役路径、主线布局、README、功能审计、声明边界、GitHub 快照、launcher.json schema、快捷方式退役、WinForms 退役、HTA 归档、Avalonia 主线测试+发布+GUI 冒烟） | 每次提交前；声称"完成"前                             |
 | `build-release.ps1`                           | **稳定发布构建**：win-x64 self-contained publish → `src/avalonia-launcher/artifacts/publish/win-x64/`                                                                                                    | 需要产出可分发的 exe 时                              |
 | `config-lib.ps1`                              | **共享 PowerShell 函数库**：被 verify.ps1、build-release.ps1 等引用                                                                                                                                      | 不直接调用；被其他脚本 dot-source                    |
 | `test-launch-args.ps1`                        | **聚焦测试**：仅运行 LaunchArgumentBuilder 测试                                                                                                                                                          | 快速验证启动参数逻辑                                 |
@@ -62,7 +60,7 @@ WT_Protector/
 - 行尾由 `.gitattributes` 管理：全部文本归一化为 LF
 - 声称仓库变更"完成"前必须跑通：`git diff --check` + `tools\verify.ps1`
 - 源码在 `src/avalonia-launcher/`，退役物在 `retired/`，不恢复退役路径
-- 配置文件（`config/*.json`）是唯一权威源，无 AppData/registry 后备
+- 配置文件 `config/launcher.json` 是唯一权威源（entries + presets + settings + defaultPresetId 一体），无 AppData/registry 后备
 
 <!-- TRELLIS:START -->
 # Trellis Instructions

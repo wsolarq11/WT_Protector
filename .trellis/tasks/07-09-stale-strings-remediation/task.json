@@ -3,7 +3,7 @@
   "name": "stale-strings-remediation",
   "title": "Stale three-file strings remediation + verify.ps1 gate",
   "description": "",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

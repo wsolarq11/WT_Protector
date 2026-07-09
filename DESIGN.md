@@ -97,7 +97,7 @@
   - 三档密度卡片布局（Normal / Compact / Micro）
   - Cards / 详细列表 / 名称墙三视图：卡片保留可读操作，详细列表用于紧凑字段扫描，名称墙只显示名称并自适应多列
   - 四框控制行：搜索框、排序模式框、视图模式框、启动组框，必须一个父 Grid 管理，列宽可响应但总宽刚好占满当前内容区
-  - 搜索框 AutoCompleteBox 下拉：搜索框集成 AutoCompleteBox，根据 `settings.json` 的 `searchHistory` 提供历史搜索词匹配下拉；按 Enter 提交时将当前搜索词写入搜索历史（去重、上限裁切）
+  - 搜索框 AutoCompleteBox 下拉：搜索框集成 AutoCompleteBox，根据 `launcher.json` 的 `searchHistory` 提供历史搜索词匹配下拉；按 Enter 提交时将当前搜索词写入搜索历史（去重、上限裁切）
   - 全局启动确认 ToggleSwitch：放在动作行或启动区附近显示“启动需确认 / 启动无需确认”，立即保存，所有启动项按同一规则处理
 - Variants and states:
   - Normal：展示名称、目录、命令摘要、启动

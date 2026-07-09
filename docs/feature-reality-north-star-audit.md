@@ -9,9 +9,7 @@ Purpose: evaluate whether each active WT Launcher feature mapping solves a real 
 This audit covers the active Avalonia mainline and repository-level launcher contract:
 
 - `src/avalonia-launcher/`
-- `config/config.json`
-- `config/presets.json`
-- `config/settings.json`
+- `config/launcher.json` (unified store: entries + presets + settings + defaultPresetId)
 - `README.md`
 - `DESIGN.md`
 - `docs/design-benchmark-digest.md`
@@ -245,7 +243,7 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Proof type: repo-battle-tested, market-informed
 - Verdict level: narrow-north-star
 - Gap class: future-workload
-- Current data owner: `config/config.json` entry rows with `id`, `name`, `directory`, `command`, `selected`, optional `updatedAtUtc`.
+- Current data owner: `config/launcher.json` entry rows with `id`, `name`, `directory`, `command`, `selected`, optional `updatedAtUtc`.
 - Evidence: `README.md` documents the schema; `LaunchArgumentBuilder.Build` turns a row into the `wt.exe` launch plan; repository config tests build dry-run plans for active config rows.
 - Verdict: north-star for this narrow Windows Terminal launcher.
 - Remaining gap: no import/export format for external launch definitions; keep that out of scope until real user need appears.
@@ -257,7 +255,7 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: external-process-limit
-- Current data owner: `config/config.json` `directory`; current local truth is the filesystem.
+- Current data owner: `config/launcher.json` `directory`; current local truth is the filesystem.
 - Evidence: `tools/verify.ps1` rejects active config rows whose `directory` is not an existing container.
 - Verdict: north-star. This is the right boundary: fail fast at the repo gate instead of adding UI guesswork.
 - Remaining gap: command executability is intentionally not probed because commands are arbitrary trusted local shell text.
@@ -269,7 +267,7 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: future-workload
-- Current data owner: in-memory `FilterText` derived from portable `settings.json` when saved.
+- Current data owner: in-memory `FilterText` derived from portable `launcher.json` settings when saved.
 - Evidence: XAML placeholder says it searches name/directory/command; tests cover filtering across all three fields, persisted filter state, runtime filter mutations and core filter projection rejecting null instead of inventing an empty filter, projection rejection of null entry text/timestamps or blank ids, and filter/sort projection returning a read-only collection snapshot instead of a mutable projection list.
 - Verdict: north-star for current entry count and local use.
 - Remaining gap: fuzzy ranking is unnecessary until exact substring search stops solving the real workload.
@@ -293,8 +291,8 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Proof type: repo-battle-tested, legacy-flow-informed
 - Verdict level: narrow-north-star
 - Gap class: future-workload, external-process-limit
-- Current data owner: `selected` in `config/config.json`, representing the current ad-hoc launch group; named repeatable intent belongs to `config/presets.json`.
-- Evidence: selection changes are saved, batch launch uses selected entries, tests cover selection outcomes and batch confirmation/cancellation, and config-save failures during select-all/clear/checkbox mutation now prove visible `配置保存失败` status plus memory/file rollback instead of a false saved action. `LauncherLaunchWorkflow.PreflightBatch` prepares every selected launch plan before confirmation or external process start. Each preflight item snapshots the entry id and name, so confirmation text and batch receipts cannot drift if the mutable entry object changes after preflight. Batch preflight exposes its prepared item list as read-only state instead of leaking the mutable staging list. Batch launch reports are immutable snapshots, and starting a preflight returns a separate launch report instead of mutating the preflight report. Batch confirmation snapshots its item list as read-only state plus a required target label, so selected-entry confirmation says `已勾选项` and direct preset launch says the selected launch group instead of pretending every batch is checkbox state. The batch confirmation receives the generated `LaunchPlan` items, and if an external start still fails after earlier starts, the workflow records the failure and stops the remaining starts instead of compounding side effects. Named presets can now launch directly from `config/presets.json` without rewriting checkbox state first, and confirmation-cancel/failure tests prove that direct preset launch receives preflighted generated command lines before any process start while preserving the preset name in cancellation and unexpected-failure status. Current-group preview uses the same preflight output and formatter, then writes only transient dry-run/status text instead of starting processes or persisting checkbox state. Batch launch writes a transient `启动回执` that lists requested, failed, and skipped plans, exposes batch failure messages as read-only report state instead of handing formatters the mutable failure list, rejects blank failure entry names instead of rendering fake `(unnamed)` rows, reports blank-name batch preflight/start failures without inventing fallback names, and unexpected batch exceptions now replace stale dry-run text with a failure receipt instead of leaving old success-looking output behind; UI status says `已请求启动` instead of pretending the terminal session completed healthy.
+- Current data owner: `selected` in `config/launcher.json`, representing the current ad-hoc launch group; named repeatable intent belongs to `config/launcher.json`.
+- Evidence: selection changes are saved, batch launch uses selected entries, tests cover selection outcomes and batch confirmation/cancellation, and config-save failures during select-all/clear/checkbox mutation now prove visible `配置保存失败` status plus memory/file rollback instead of a false saved action. `LauncherLaunchWorkflow.PreflightBatch` prepares every selected launch plan before confirmation or external process start. Each preflight item snapshots the entry id and name, so confirmation text and batch receipts cannot drift if the mutable entry object changes after preflight. Batch preflight exposes its prepared item list as read-only state instead of leaking the mutable staging list. Batch launch reports are immutable snapshots, and starting a preflight returns a separate launch report instead of mutating the preflight report. Batch confirmation snapshots its item list as read-only state plus a required target label, so selected-entry confirmation says `已勾选项` and direct preset launch says the selected launch group instead of pretending every batch is checkbox state. The batch confirmation receives the generated `LaunchPlan` items, and if an external start still fails after earlier starts, the workflow records the failure and stops the remaining starts instead of compounding side effects. Named presets can now launch directly from `config/launcher.json` without rewriting checkbox state first, and confirmation-cancel/failure tests prove that direct preset launch receives preflighted generated command lines before any process start while preserving the preset name in cancellation and unexpected-failure status. Current-group preview uses the same preflight output and formatter, then writes only transient dry-run/status text instead of starting processes or persisting checkbox state. Batch launch writes a transient `启动回执` that lists requested, failed, and skipped plans, exposes batch failure messages as read-only report state instead of handing formatters the mutable failure list, rejects blank failure entry names instead of rendering fake `(unnamed)` rows, reports blank-name batch preflight/start failures without inventing fallback names, and unexpected batch exceptions now replace stale dry-run text with a failure receipt instead of leaving old success-looking output behind; UI status says `已请求启动` instead of pretending the terminal session completed healthy.
 - Verdict: north-star for current ad-hoc group launch. It is not a compatibility branch: `selected` is the one portable current-group owner, presets own named groups, and both share the same preflight/confirmation/receipt boundary.
 - Remaining gap: named repeatable intent belongs in presets, not in another checkbox model. Once an external process has started, the app cannot honestly guarantee zero side effects if a later external start fails; that is a property of launching real processes, not a missing fallback branch.
 
@@ -305,8 +303,8 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Proof type: repo-battle-tested, market-informed
 - Verdict level: narrow-north-star
 - Gap class: future-workload
-- Current data owner: `config/presets.json`, referencing stable entry ids.
-- Evidence: preset schema is documented, validated by `tools/verify.ps1`, and covered by store/workflow/ViewModel tests, including missing `entryIds` rejection and invalid preset references rejected before label/preview/launch projection. The ViewModel load path propagates missing or failed `presets.json` instead of replacing it with an empty launch-group model, and preset view models snapshot preset facts plus read-only entry ids instead of exposing the live mutable preset object. The selected preset can be launched directly, preserving current checkbox state instead of forcing a selection rewrite before launch, while still sharing the same preflight/confirmation path as selected-item batch launch. Applying, previewing, or launching a preset also discards uncommitted drag-sort preview state first, so a visual ghost order is not silently persisted by a launch-group action. Applying a preset has a failure contract too: config backup/write failures leave the preset selection and config file unchanged and report `配置保存失败` instead of claiming the group was applied.
+- Current data owner: `config/launcher.json`, referencing stable entry ids.
+- Evidence: preset schema is documented, validated by `tools/verify.ps1`, and covered by store/workflow/ViewModel tests, including missing `entryIds` rejection and invalid preset references rejected before label/preview/launch projection. The ViewModel load path propagates missing or failed `launcher.json` presets instead of replacing it with an empty launch-group model, and preset view models snapshot preset facts plus read-only entry ids instead of exposing the live mutable preset object. The selected preset can be launched directly, preserving current checkbox state instead of forcing a selection rewrite before launch, while still sharing the same preflight/confirmation path as selected-item batch launch. Applying, previewing, or launching a preset also discards uncommitted drag-sort preview state first, so a visual ghost order is not silently persisted by a launch-group action. Applying a preset has a failure contract too: config backup/write failures leave the preset selection and config file unchanged and report `配置保存失败` instead of claiming the group was applied.
 - Verdict: north-star. This is the best current data-structure move in the project.
 - Remaining gap: no external import/export yet; not needed for the current local workflow.
 
@@ -317,7 +315,7 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: future-workload
-- Current data owner: `config/presets.json`.
+- Current data owner: `config/launcher.json`.
 - Evidence: ViewModel commands save current selection as a new group, update current group, delete editable groups, preserve locked groups, report dialog-boundary failures without mutating portable files, roll back memory/file state on preset save failures, save-new-preset dialogs receiving a read-only snapshot target so the saved entry ids cannot drift during the dialog, reject blank/duplicate preset entry ids before add/update mutation, reject invalid fallback preset references, blank fallback preset ids, and missing default-preset state before delete mutation instead of repairing corrupt state, reject missing selected-preset ids during preset state restore instead of silently selecting the first group, and report the new current launch group from the selected fallback view model after deletion instead of hiding fallback selection or rendering `(none)`.
 - Verdict: north-star inside this scope.
 - Remaining gap: no conflict UI for simultaneous external JSON edits; current repo-local app does not need multi-writer machinery.
@@ -341,7 +339,7 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: external-process-limit
-- Current data owner: `config/presets.json` owns desired group membership; `LaunchPlan` owns generated command lines; `DryRunText` is transient UI output, not persisted state.
+- Current data owner: `config/launcher.json` owns desired group membership; `LaunchPlan` owns generated command lines; `DryRunText` is transient UI output, not persisted state.
 - Evidence: `PreviewSelectedPresetCommand` calls the same `LauncherLaunchWorkflow.PreflightBatch` path as launch, formats plans through `LauncherBatchLaunchPlanText`, starts no process, and preserves checkbox state; tests cover successful preview, mixed valid/invalid plan-failure preview, including valid generated command lines marked as not started plus the failure list, and blank-name preview preflight failures replacing stale preview text with a preview failure receipt.
 - Verdict: north-star for the repo-owned side-effect boundary. It converts the impossible "0% side effects after launch" demand into a true pre-launch no-side-effect inspection path.
 - Remaining gap: once the user chooses real launch, arbitrary external commands still have side effects outside this app's control.
@@ -353,7 +351,7 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: future-workload
-- Current data owner: `config/config.json`, with preset/settings references updated or rolled back together.
+- Current data owner: `config/launcher.json`, with preset/settings references updated or rolled back together.
 - Evidence: entry mutation tests cover add/edit/delete, dialog-boundary failure without file mutation, dialog-boundary handler assignments rejecting null instead of storing a broken runtime callback, failed save rollback, preset/settings coordination, status text, blank/duplicate reference rejection before reference rename/remove mutation, entry delete confirmation snapshotting target id/name before dialog mutation so references and rollback cannot drift, preset delete confirmation snapshotting target id/name/count before dialog mutation so the target and status cannot drift, entry view models exposing snapshot copies instead of public live `LaunchEntry` rows, entry edit dialogs receiving a snapshot entry instead of the live mutable row, and entry edit dialogs rejecting null initial/submitted text instead of converting it into empty required-field input.
 - Verdict: north-star for current local entry CRUD. It keeps one config owner, snapshots dialog/delete targets, updates references in one mutation slice, and fails before corrupting portable files.
 - Remaining gap: no bulk import; that remains rejected scope until a real import workload beats current manual add/edit/delete with less complexity.
@@ -365,7 +363,7 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Proof type: repo-battle-tested, accessibility-informed
 - Verdict level: narrow-north-star
 - Gap class: none-proven
-- Current data owner: `settings.json` `customEntryOrder`; drag session is a single transient object.
+- Current data owner: `launcher.json` settings `customEntryOrder`; drag session is a single transient object.
 - Evidence: drag reorder session/workflow tests cover preview, commit, cancel, rollback, single-session ownership, sessions not publicly exposing mutable source view models or settings snapshots, drag sessions deriving the dragged id from the source entry instead of accepting a second mismatched id, required drag workflow dependencies failing fast at construction, custom-order index returning a read-only dictionary snapshot instead of a mutable index map, reorder bounds capture and animation scheduling exposing read-only cloned snapshots instead of caller-owned mutable dictionaries, invalid move/custom-order rejection before mutation or sort projection, missing or stale custom-order ids rejected before sort projection instead of buried at the end, and custom-order sync rejection of invalid order or known ids before mutation; context-menu `上移排序` / `下移排序` commands persist the same `customEntryOrder` without creating a second reorder model, and when invoked during a drag preview they discard the preview before resolving targets so ghost order cannot become a hidden source of truth.
 - Verdict: north-star for mouse-first local use.
 - Remaining gap: none proven. Non-drag reorder now uses the same data owner and persistence path as drag reorder.
@@ -377,7 +375,7 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: none-proven
-- Current data owner: `settings.json` `sortMode`.
+- Current data owner: `launcher.json` settings `sortMode`.
 - Evidence: tests cover custom/updated/alphabetic sort behavior and reject missing or unknown mode ids.
 - Verdict: north-star; three modes are enough and not a framework.
 - Remaining gap: none proven.
@@ -389,7 +387,7 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: visual-proof
-- Current data owner: `settings.json` `entryViewMode`.
+- Current data owner: `launcher.json` settings `entryViewMode`.
 - Evidence: code exposes `cards`, `details`, and `names`; XAML has three roots; tests cover mode persistence and root selection.
 - Verdict: north-star data model; README needed to name the already-implemented `Names` mode explicitly.
 - Remaining gap: screenshot-backed comfort pass only after visual changes.
@@ -413,7 +411,7 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: none-proven
-- Current data owner: `settings.json` `requireConfirmationForLaunches`.
+- Current data owner: `launcher.json` settings `requireConfirmationForLaunches`.
 - Evidence: launch confirmation tests cover saved setting, confirmation/cancel, and `LaunchPlan.RequiresConfirmation`; missing, unknown, or wrong-case JSON fields now fail fast, so obsolete per-entry `confirm` cannot silently compete with the global setting.
 - Verdict: north-star. One switch is simpler and safer than command-classification theater.
 - Remaining gap: none proven.
@@ -425,7 +423,7 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Proof type: repo-battle-tested, market-informed
 - Verdict level: narrow-north-star
 - Gap class: future-workload
-- Current data owner: `config/settings.json`.
+- Current data owner: `config/launcher.json`.
 - Evidence: settings schema is documented and tests cover sort/view/confirmation/filter/order/window fields; null settings fields, null saved filter state at ViewModel construction, null runtime filter mutations, null runtime sort/display mode assignments, missing/blank mode ids, invalid in-memory settings during close-time window save, and non-positive persisted window dimensions now fail fast instead of being rewritten or carried into default/broken UI state; unused `theme` state was removed instead of kept as a fake preference.
 - Verdict: north-star for this local tool.
 - Remaining gap: no cross-machine path normalization; this is fine because launch directories are machine-local facts.
