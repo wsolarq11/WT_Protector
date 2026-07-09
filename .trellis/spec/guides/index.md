@@ -67,9 +67,9 @@
 
 > 完整跨会话踩坑见 [pitfalls.md](./pitfalls.md)。此处仅保留最频繁触发的 5 条项目特有坑。
 
-### 1. Triple-File Atomicity
+### 1. Single-File Atomicity
 
-`config.json` + `presets.json` + `settings.json` must stay consistent. A save that succeeds on config but fails on presets MUST roll back config. Never save files independently — always through the persistence pipeline (`LauncherEntryMutationSnapshot.Save()`).
+All state lives in one file: `config/launcher.json` (entries + presets + settings + defaultPresetId). `LauncherJson.Save` writes a temp file then `File.Replace` for NTFS-atomic commit — either the whole file commits or none of it does. The rollback contract lives at the VM layer (`LauncherEntryMutationSnapshot` captures pre-mutation state; command handlers restore from it on save failure). Never write JSON files directly outside `LauncherStore`.
 
 ### 2. Design Token Drift
 

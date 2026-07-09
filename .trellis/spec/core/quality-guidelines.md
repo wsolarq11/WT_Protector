@@ -9,7 +9,7 @@
 1. **Core never references Avalonia** — verified by `dotnet test`.
 2. **Core never references CommunityToolkit.Mvvm** — verified by `dotnet test`.
 3. **All persisted JSON uses LF (`\n`) line endings** — verified by `verify.ps1`.
-4. **`config.json` entries always have `id`, `name`, `directory`, `command` non-empty** — enforced by `LauncherStore`.
+4. **`launcher.json` entries always have `id`, `name`, `directory`, `command` non-empty** — enforced by `LauncherStore`.
 5. **One source per state** — view mode, sort mode, drag session, card density each have exactly ONE writable owner.
 
 **Source:** `src/avalonia-launcher/README.md` — "Key invariants" section.

@@ -132,14 +132,15 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **预防** | 遇到性能问题，**第 1 轮就做消除测试**：（1）隐藏/移除目标组件 → 测性能变化 → 确定组件是否是瓶颈 → 再深入优化。不做"看起来很慢所以优化它"。 |
 | **诊断顺序** | 消除测试 → 定位瓶颈层 → 分析该层特有开销 → 针对性修复。跳过消除测试直接优化 = 在错误的维度上做正确的事。 |
 
-### 2.7 LiteDbStore 非原子写入=Crash 即丢数据
+### 2.7 [已反转] LiteDbStore 非原子写入=Crash 即丢数据
 
 | 属性 | 值 |
 |---|---|
+| **状态** | LiteDB 已于 2026-07-09 移除（归档任务 `07-09-remove-litedb-deadcode`）。此坑保留供历史参考。 |
 | **证据** | UltraReview 2026-07-05，LiteDbStore.cs:62-63 |
 | **根因** | `DeleteAll()` + `Insert()` 是两个独立操作，中间无事务保护。进程在两者间崩溃 = 数据永久丢失。 |
-| **修复** | 用 `collection.Upsert(new StoreDocument { Id = 1, ... })` 替代 DeleteAll+Insert。LiteDB 支持事务（`BeginTrans`/`Commit`）。 |
-| **预防** | 所有数据库/文件写入必须原子化：LiteDB 用 Upsert 或事务，JSON 用 `File.Replace`（NTFS 原子）。绝不假设两步操作不会中断。 |
+| **当时修复** | 用 `collection.Upsert(new StoreDocument { Id = 1, ... })` 替代 DeleteAll+Insert。LiteDB 支持事务（`BeginTrans`/`Commit`）。 |
+| **预防** | 所有数据库/文件写入必须原子化：JSON 用 `File.Replace`（NTFS 原子）。绝不假设两步操作不会中断。当前架构无 LiteDB，此规则适用于所有未来引入的持久化路径。 |
 
 ### 2.8 AutoCompleteBox Enter 键检测—e.Source 指向内部 TextBox
 
@@ -681,14 +682,15 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **预防** | (1) 注入检测必须在**原始输入**上执行。(2) 类型构造时检测：`EntryDirectory.TryParse` 比较原始输入 `raw` 和规范化后 `normalized` 的 `%` 差异。(3) 类型内部为"已验证"状态，不再执行二次安全检测。 |
 | **适用** | 所有需要防注入的字段。见 `EntryDirectory.cs:TryParse()` 实现。 |
 
-### 7.3 手写崩溃恢复不可靠 → 数据库 ACID 替代
+### 7.3 手写崩溃恢复不可靠 → [已反转] LiteDB 路径已回退
 
 | 属性 | 值 |
 |---|---|
 | **证据** | `CommitJournal.Replay` 在目标文件缺失时 `File.Replace` 抛异常，journal 文件不删除→下次启动重放→永久循环。`File.Replace` 失败不删除 journal→无限重试。null/空 `Target` 字段崩溃未处理。非原子部分回放留下不一致状态。 |
 | **根因** | 手写 journal 协议实现 5 个 CRITICAL 级缺陷。temp-file + backup-rotation + journal-replay 三个机制各不完整。 |
-| **预防** | (1) 用 LiteDB 嵌入式数据库替代手写文件 I/O。(2) LiteDB 提供 ACID 事务 + WAL + 自动崩溃恢复——零应用层恢复代码。(3) 迁移工具在首次启动自动导入 `store.json`→`store.db`，保留 JSON 为 `.bak`。(4) 彻底删除 `CommitJournal` 及相关恢复代码。 |
-| **适用** | 所有需要事务性持久化的场景。见 `LiteDbStore.cs`、`MigrationTool.cs`。 |
+| **原方案（已废弃）** | 当时用 LiteDB 嵌入式数据库替代手写文件 I/O。**该路径已于 2026-07-09 回退**——见归档任务 `07-09-remove-litedb-deadcode`。LiteDB 引入了进程文件锁（见 §2.14）且对桌面单用户场景过度工程，单文件 JSON + temp-file + `File.Replace` + `.bak` rotation 足够安全。 |
+| **当前方案** | `LauncherJson.Save` 用 temp-file + `File.Replace`（NTFS 原子）+ `.bak` rotation。`LauncherStore.Load` 在损坏时自动回退到 `.bak`。零应用层恢复代码。 |
+| **适用** | 所有需要事务性持久化的场景。优先单文件 + 文件系统原子性，仅在单文件不足时（多进程并发写、超大数据库）才考虑嵌入式 DB。 |
 
 ### 7.4 硬编码环境假设 → 静默故障
 
@@ -719,22 +721,35 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 
 ---
 
-## 2. WT_Protector 项目坑
+## 8. 架构演进教训 (2026-07)
 
-### 2.6 FindUpward 幽灵配置文件陷阱
+> 来源：MainWindowViewModel 巨类拆分（2587 行 → 8 partial + 1 状态文本文件）
+
+### 8.1 Partial 类拆分是机械操作，不要以"共享状态纠缠"为由推迟
 
 | 属性 | 值 |
 |---|---|
-| **频次** | 10+ 次（本次会话反复出现） |
-| **根因** | 项目子目录（如 `src/avalonia-launcher/`）有自己的 `README.md`。当 `FindUpward` 在该目录找到 `README.md` + `config/launcher.json`（来自之前误操作保存的幽灵文件）时，误判为仓库根目录停止向上搜索，导致真正的 `config/launcher.json`（19 条）从未被加载 |
+| **证据** | 2026-07-09 Stage 2 拆分，单次会话交付 6 个 partial 提取，451/451 测试全程通过 |
+| **问题** | 此前以"partial 类共享可变状态会形成依赖纠缠，组合优于继续拆 partial"为由推迟 Stage 2。这个论断基于未经验证的隐含假设：partial 类间共享可变状态会让提取变得危险。 |
+| **根因** | 把**未来理想态**当成了**当前阻塞理由**。partial 类在编译期合并为单一类型，共享状态是语言特性而非风险点——提取是纯机械操作：编写新文件（带正确 using）→ 从主文件 head/tail 删除 → `dotnet build` → `dotnet test`。 |
+| **预防** | 推延清理工作的决策必须用**具体阻塞点**论证，不能用**架构审美**论证。当前价值（文件可维护性、diff 噪音降低）是立即兑现的，未来理想态（组合优于 partial）可以未来做，但不是今天不做拆分的理由。 |
+| **适用** | 所有 C# partial 类拆分决策。同样的逻辑适用于：函数提取（共享局部状态不是阻塞理由）、文件拆分（跨文件 using 不是阻塞理由）。 |
+
+### 8.2 FindUpward 幽灵配置文件陷阱
+
+| 属性 | 值 |
+|---|---|
+| **频次** | 10+ 次（2026-07 会话反复出现） |
+| **根因** | 项目子目录（如 `src/avalonia-launcher/`）有自己的 `README.md`。当 `FindUpward` 在该目录找到 `README.md` + `config/launcher.json`（来自之前误操作保存的幽灵文件）时，误判为仓库根目录停止向上搜索，导致真正的 `config/launcher.json` 从未被加载 |
 | **修复** | 删除幽灵文件 `src/avalonia-launcher/config/launcher.json`。未来如果再有子目录配置干扰 `FindUpward`，考虑添加 `.git` 目录检查作为更可靠的仓库根标记 |
 | **预防** | 运行 `.exe` 时不加 `--config` 参数，依赖 auto-discovery 从当前目录向上搜索。运行 `dotnet run` 始终从仓库根目录执行。发现视图为空时首先检查 `FindUpward` 搜索路径 |
 
-### 2.7 `resolved store path` 被旧 LiteDB 进程锁定的死循环
+### 8.3 [已反转] 旧 LiteDB 进程文件锁死循环
 
 | 属性 | 值 |
 |---|---|
-| **频次** | 8+ 次 |
+| **状态** | LiteDB 已于 2026-07-09 移除（归档任务 `07-09-remove-litedb-deadcode`）。此坑保留供历史参考。 |
+| **频次** | 8+ 次（LiteDB 时代） |
 | **根因** | 旧 WTLauncher App 进程（通过 Explorer 双击启动的）持有 Debug 构建输出的文件锁，`dotnet build` 无法覆盖。`dotnet run` 被迫运行旧 exe，而旧 exe 使用 LiteDB 路径加载 0 条目后覆盖 `config/launcher.json`，形成"旧 exe 加载空数据→覆盖配置文件→新 exe 启动读空数据→旧 exe 仍在运行→锁死"的循环 |
-| **修复** | `wmic process where "name='WTLauncher.App.exe'" delete` + `Stop-Process -Force` + 删除旧构建输出 |
-| **预防** | 开发时始终在关闭所有旧实例后再构建。添加 `*.db` 到 `.gitignore` |
+| **当时修复** | `wmic process where "name='WTLauncher.App.exe'" delete` + `Stop-Process -Force` + 删除旧构建输出 |
+| **教训** | 嵌入式数据库引入进程级文件锁，对桌面单用户应用是净负担。单文件 JSON 无锁、可随时覆盖、原子性由文件系统保证。见 §7.3。 |
