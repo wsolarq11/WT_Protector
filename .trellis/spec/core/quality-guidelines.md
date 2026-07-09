@@ -36,18 +36,21 @@ Per `DESIGN.md` token ownership rules:
 ## Testing Requirements
 
 **Test framework:** xUnit
-**Test project:** `tests/WTLauncher.Tests/` — 49 test files (approximately 410 `[Fact]`/`[Theory]` attributes)
-**Run gate:** `dotnet test -c Release` (457 tests, updated 2026-07-06)
+**Test project:** `tests/WTLauncher.Tests/` — 61 test files
+**Run gate:** `dotnet test -c Release` (451 tests, updated 2026-07-09)
 
 ### Test Categories
 
-| Category | Example files | Count |
-|----------|--------------|-------|
-| Core unit tests | `LaunchArgumentBuilderTests.cs`, `LauncherStoreTests.*.cs`, `LauncherEntryLayoutCalculatorTests.cs` | ~25 |
-| ViewModel tests | `MainWindowViewModelTests.*.cs` (12 partial files) | ~12 |
-| View logic tests | `MainWindow.Drag.cs (inline)Tests.cs`, `MainWindowEntryCardContextMenuTests.cs` | ~15 |
-| Contract/integration tests | `RepositoryConfigContractTests.*.cs`, `StatusTextContractTests.cs`, `DialogLayoutContractTests.cs` | ~8 |
-| Persistence tests | ``, `LauncherEntryMutationSnapshotTests.cs` | ~10 |
+| Category | Example files |
+|----------|--------------|
+| Core unit tests | `LaunchArgumentBuilderTests.cs`, `LauncherStoreTests.*.cs`, `LauncherEntryLayoutCalculatorTests.cs` |
+| ViewModel tests | `MainWindowViewModelTests.*.cs` (split by area) |
+| Drag / reorder tests | `LauncherDragReorderSessionTests.cs`, `LauncherDragReorderWorkflowTests.cs`, `LauncherDragGhostLayoutCalculatorTests.cs` |
+| View logic tests | `MainWindowEntryCardContextMenuTests.cs` |
+| Contract/integration tests | `RepositoryConfigContractTests.*.cs`, `StatusTextContractTests.cs`, `DialogLayoutContractTests.cs` |
+| Persistence tests | `LauncherJson*.cs`, `LauncherEntryMutationSnapshotTests.cs`, `LauncherSettingsTests.cs` |
+
+Total counts evolve with the codebase — run `ls tests/WTLauncher.Tests/*.cs | wc -l` for the current file count and `dotnet test -c Release` for the current test count.
 
 ### Test Patterns
 
@@ -158,7 +161,7 @@ GitHub Actions sets `CI=true`. Use this to skip checks requiring a display (GUI 
 - [ ] **PATH hijack**: Does any code resolve executables? → Never fall back to bare names resolved via `PATH`.
 - [ ] **Test assertions**: Are any `Assert.Equal(X, X)` self-comparisons? → Replace with concrete expected values.
 - [ ] **Test assertions**: Do JSON property checks verify BOTH missing AND extra fields? → Use bidirectional set comparison.
-- [ ] **Multi-file saves**: Do they touch 2+ config files? → Must use stage-all-then-commit, not sequential-save-with-rollback.
+- [ ] **Atomic saves**: Does the save path use `LauncherJson.Save` (temp file → atomic `File.Move(overwrite:true)` → backup rotation)? → Never `File.WriteAllText` directly. (Single-file store since 2026-07: launcher.json owns entries + presets + settings + defaultPresetId + window state together.)
 - [ ] **Backup recovery**: Is the retry OUTSIDE the try/catch? → Inside = infinite loop when backup is also corrupt.
 - [ ] **Schema version**: Are `!=` checks replaced with directional `<` and `>` checks? → Old reject + new upgrade message.
 - [ ] **`[JsonRequired]` propagation**: When adding `[JsonRequired]` to any model property, did you search and update ALL JSON fixtures? → `verify.ps1` smoke config, test factories, README examples, `config-lib.ps1` defaults. (Added 2026-06-26 UltraReview smoke fix)

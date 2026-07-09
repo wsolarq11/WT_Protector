@@ -22,15 +22,15 @@ Layer 4 ─ Views/                     XAML + code-behind + drag-drop
 
 ## Layer 0 — Pure Data & Contracts (Core)
 
-`src/WTLauncher.Core/` — 26 files, zero framework dependencies.
+`src/WTLauncher.Core/` — 25 files, zero framework dependencies.
 
 | Responsibility | Key Files |
 |---------------|-----------|
-| Data records | `LaunchEntry.cs`, `LaunchPlan.cs`, `LauncherPreset.cs`, `LauncherSettings.cs` |
+| Data records | `LaunchEntry.cs`, `LaunchPlan.cs`, `LauncherPreset.cs`, `LauncherSettings.cs`, `LauncherStoreFile.cs` |
 | Argument building | `LaunchArgumentBuilder.cs` — `wt.exe` quoting with Windows rules |
 | JSON persistence | `LauncherJson.cs` — atomic temp-file + `.bak` rotation |
 | Design tokens | `LauncherDesignTokens.cs` — colors, spacing, sizing (single source) |
-| Config store | `LauncherStore.cs` — load/validate/normalize pipeline |
+| Config store | `LauncherStore.cs` — load/validate + legacy migration |
 | Pure rules | `LauncherEntryOrder.cs`, `LauncherEntryLayoutCalculator.cs`, `LauncherDragGhostLayoutCalculator.cs` |
 | View mode enum | `LauncherEntryViewMode.cs` — Cards / Details / Names |
 
@@ -40,60 +40,49 @@ Layer 4 ─ Views/                     XAML + code-behind + drag-drop
 
 ## Layer 1 — Command-Local Mutations (ViewModels)
 
-`src/WTLauncher.App/ViewModels/MainWindowViewModel.Entries.cs`
+`src/WTLauncher.App/ViewModels/MainWindowViewModel.cs` (single 2796-line file today — god-class awaiting split, see task `07-09-split-mainviewmodel-godclass`)
 
 - Entry add/edit/delete command handlers own: **validate → mutate → save**.
-- Shared rules stay in narrow helpers (`LauncherEntryDrafts`, `LauncherEntryReferences`).
+- Shared rules stay in narrow helpers (`LauncherEntryDrafts`, `LauncherEntryReferences`, `LauncherEntryMutationSnapshot`).
 - Don't create a second ViewModel workflow when there's only one caller.
 
 ---
 
-## Layer 2 — Persistence + Rollback via IStore (ViewModels)
+## Layer 2 — Persistence + Rollback (ViewModels)
 
-`src/WTLauncher.App/ViewModels/` — delegates to `IStore` via `LauncherStoreFile`
+`src/WTLauncher.App/ViewModels/` — delegates to `LauncherStore.Save(LauncherStoreFile)`
 
-- **Snapshot-before → mutate → save-all → restore-on-failure** via `IStore.Save(LauncherStoreFile)`.
-- Coordinates entries + presets + settings as a single atomic unit in `launcher.json`.
+- **Snapshot-before → mutate → save-all → restore-on-failure** via `LauncherStore.Save(LauncherStoreFile)`.
+- The store is a single file (`config/launcher.json`) owning entries + presets + settings + defaultPresetId as one atomic unit.
 - Rollback restores from deep-cloned snapshots (`entry with { }` pattern).
 
-Key files:
-- `LauncherEntryMutationSnapshot.cs` — captures entries + presets + custom order + selection
-- `LauncherEntryMutationSnapshot.cs` — snapshot → IStore save → rollback on failure
+Key file:
+- `LauncherEntryMutationSnapshot.cs` — captures entries + preset file + settings + custom order + selection; exposes `Capture` / `CloneEntries` / `ClonePresetFile` / `CloneSettings`. (Save and rollback are inlined into `MainWindowViewModel` command handlers; this type is now a pure snapshot carrier.)
 
 ---
 
 ## Layer 3 — ViewModel Orchestration
 
-`src/WTLauncher.App/ViewModels/MainWindowViewModel.cs` (9 partial class files)
+`src/WTLauncher.App/ViewModels/MainWindowViewModel.cs` — **single 2796-line file** (god-class).
 
 - The single writable owner of launcher UI state.
 - Delegates reusable rules to Core helpers.
 - Injects dialog confirmation `Func<>` delegates through the `MainWindow` constructor.
 
-Partial file breakdown:
-| File | Responsibility |
-|------|---------------|
-| `MainWindowViewModel.cs` | Constructor, core state, refresh |
-| `MainWindowViewModel.Entries.cs` | Add/edit/delete/clone commands |
-| `MainWindowViewModel.Launch.cs` | Single + batch launch workflows |
-| `MainWindowViewModel.Selection.cs` | Checkbox selection + batch select/clear |
-| `MainWindowViewModel.Layout.cs` | Card density, view modes, sizing, search/filter + sort |
-| `MainWindowViewModel.Presets.cs` | Preset selection + application |
-| `MainWindowViewModel.Presets.Persistence.cs` | Preset save/update/delete |
-| `MainWindowViewModel.Presets.Helpers.cs` | Preset reference counting |
-| `MainWindowViewModel.Drag.cs` | Drag reorder session management |
-| `MainWindowViewModel.Reorder.cs` | Move up/down commands |
+This file is the pending refactor target: `07-09-split-mainviewmodel-godclass` plans to split it into `MainWindowViewModel.<Area>.cs` partials (Entries / Launch / Selection / Layout / Presets / Drag / Reorder). Until that lands, treat the single file as the de-facto partial layout — search by symbol, not by file.
 
 ---
 
 ## Layer 4 — Views & Drag-Drop
 
-`src/WTLauncher.App/Views/` — 15 files
+`src/WTLauncher.App/Views/` — 13 files.
 
 - XAML with three view modes: Cards / Details / Names.
 - Drag reorder: ghost factory (FLIP animation removed 2026-06-23).
 - Dialog windows: confirmations, entry editor, preset editor.
 - Focused view helpers for shared drag/hit-test behavior.
+
+See [Views / Directory Structure](../views/directory-structure.md) for the full file list.
 
 ---
 
@@ -105,13 +94,13 @@ src/avalonia-launcher/
 ├── run.ps1                             # Dev run script
 ├── verify.ps1                          # Mainline gate (restore → test → publish → smoke)
 ├── src/
-│   ├── WTLauncher.Core/                # Layer 0: 26 files
+│   ├── WTLauncher.Core/                # Layer 0: 25 files
 │   └── WTLauncher.App/
 │       ├── Program.cs                  # Entry point
 │       ├── App.axaml / App.axaml.cs    # Design token injection
-│       ├── ViewModels/                 # Layer 1-3: 34 files
-│       └── Views/                      # Layer 4: 15 files
-├── tests/WTLauncher.Tests/             # 71 xUnit test files
+│       ├── ViewModels/                 # Layer 1-3: 20 files
+│       └── Views/                      # Layer 4: 13 files
+├── tests/WTLauncher.Tests/             # 61 xUnit test files
 └── artifacts/                          # Build outputs (gitignored)
 ```
 
@@ -120,7 +109,7 @@ src/avalonia-launcher/
 ## Naming Conventions
 
 - **Files:** PascalCase matching the primary type they contain.
-- **Partial classes:** `MainWindowViewModel.<Area>.cs` — area name in PascalCase.
+- **Partial classes:** `MainWindowViewModel.<Area>.cs` — area name in PascalCase (convention for the future split).
 - **Tests:** `<TypeUnderTest>Tests.cs` or `<TypeUnderTest>Tests.<Area>Tests.cs` for split test files.
 - **Core namespace:** `WTLauncher.Core`
 - **App namespace:** `WTLauncher.App.ViewModels`, `WTLauncher.App.Views`
@@ -134,7 +123,7 @@ src/avalonia-launcher/
 |-------------------|---------------|
 | Pure data type with no UI deps | `WTLauncher.Core/` |
 | Validation/normalization logic | `WTLauncher.Core/` (if pure) or ViewModels helper |
-| A new user command | `MainWindowViewModel.<Area>.cs` partial |
+| A new user command | `MainWindowViewModel.cs` (or split into `MainWindowViewModel.<Area>.cs` partial once the god-class refactor lands) |
 | Entry-level ViewModel property | `LauncherEntryViewModel.cs` or `.Layout.cs` / `.Drag.cs` |
 | A dialog window | `Views/` — one file per dialog |
 | XAML-only styling | `App.axaml` resources or local `Styles` |

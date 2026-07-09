@@ -101,35 +101,27 @@ public static string Normalize(string? value)
 
 ---
 
-## Snapshot-Rollback Pattern → Stage-All-Then-Commit (2026-06-25)
+## Single-File Atomic Save (2026-07-09)
 
-**Source:** `LauncherEntryMutationSnapshot.Save()`
+**Source:** `src/avalonia-launcher/src/WTLauncher.Core/LauncherJson.cs`
 
-The old snapshot-rollback pattern (save config → on failure, rollback config; save presets → on failure, rollback both) has been replaced with **stage-all-then-commit**:
+The store is a **single file** (`config/launcher.json`) owning entries + presets + settings + defaultPresetId together. The previous three-file stage-all-then-commit protocol (config.json + presets.json + settings.json) is gone — there is nothing to coordinate across files.
 
-```csharp
-// Stage: write all files to temp paths
-var configTemp = configPath + $".stage-{Guid.NewGuid():N}";
-LauncherJson.Save(configClone, configTemp, backup: false);
-// ... repeat for presets, settings ...
+`LauncherJson.Save` is the single atomic write path:
+1. Write JSON to `launcher.json.tmp-{Guid:N}`.
+2. `File.Move(temp, launcher.json, overwrite: true)` — atomic on the same NTFS volume.
+3. Rotate `.bak` → `.bak.1` → `.bak.2` → delete (copy-then-rotate, not rotate-then-copy).
+4. `finally` block cleans up the temp file (wrapped in its own try/catch so cleanup failure cannot replace the original exception).
 
-// Commit: atomically rename all staged files
-File.Move(configTemp, configPath, overwrite: true);
-// ... repeat for presets, settings ...
-```
+ViewModels call `LauncherJson.Save` after every mutation. If save throws, the in-memory ViewModel state has already been updated — callers capture a `LauncherEntryMutationSnapshot` BEFORE the mutation and restore from it on save failure.
 
-**Key properties:**
-- If staging fails, originals are untouched (no rollback needed).
-- `File.Move` on the same NTFS volume is atomic.
-- All three files are either fully committed or not — no cross-file inconsistency window.
-
-**When snapshot-rollback is still appropriate:** Single mutations that modify in-memory ViewModel state before the save. The snapshot restores the ViewModel, not the files.
+**When snapshot-rollback is still appropriate:** Single mutations that modify in-memory ViewModel state before the save. The snapshot restores the ViewModel, not the files (the files are protected by the atomic write inside `LauncherJson.Save`).
 
 ---
 
 ## Exception Catching Discipline
 
-**Source:** `LauncherEntryMutationSnapshot.RestoreSnapshotOnPersistenceFailure()`
+**Source:** `src/avalonia-launcher/src/WTLauncher.App/ViewModels/MainWindowViewModel.cs` (mutation command catch blocks)
 
 ```csharp
 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

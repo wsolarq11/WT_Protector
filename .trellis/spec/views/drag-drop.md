@@ -13,19 +13,21 @@ User starts drag on card
 MainWindow.Drag.cs (event handlers)
     │  DragOver → update insert indicator
     │  Drop → commit reorder
+    │
     ▼
-MainWindow.Drag.cs (inline).cs
-    │  Creates semi-transparent ghost card overlay
+LauncherDragReorderWorkflow (ViewModels)
+    │  Coordinates ghost layout + reorder logic
+    │
     ▼
-MainWindow.Drag.cs
-    │  Pure logic: where does the drop go?
+LauncherDragReorderSession (ViewModels)
+    │  Single owner of all drag state
 ```
 
 ---
 
 ## Ghost Factory
 
-**Source:** `src/avalonia-launcher/src/WTLauncher.App/Views/MainWindow.Drag.cs (inline).cs`
+**Source:** `src/avalonia-launcher/src/WTLauncher.App/Views/MainWindow.Drag.cs`
 
 Creates a visual clone of the dragged card as an overlay with:
 - Reduced opacity (60-80%)
@@ -33,7 +35,7 @@ Creates a visual clone of the dragged card as an overlay with:
 - Offset from pointer by a fixed delta
 - **All colors from `LauncherDesignTokens`** (not hardcoded brushes)
 
-**Test coverage:** `MainWindow.Drag.cs (inline)Tests.cs`
+Ghost dimensions and pointer offset are computed by `LauncherDragGhostLayoutCalculator` (Core layer) — see below.
 
 ---
 
@@ -64,15 +66,19 @@ public sealed class LauncherDragReorderSession
 }
 ```
 
+**Companion:** `src/avalonia-launcher/src/WTLauncher.App/ViewModels/LauncherDragReorderWorkflow.cs` — coordinates the multi-step drag workflow (snapshot → preview → commit) on top of the session.
+
 **Rule:** All drag state lives in ONE `DragReorderSession?` field. If you find yourself adding a `_dragSource` or `_dragTarget` field to the ViewModel, stop — it already exists in the session.
+
+**Tests:** `LauncherDragReorderSessionTests.cs`, `LauncherDragReorderWorkflowTests.cs`.
 
 ---
 
 ## Keyboard Reorder (Non-Drag Alternative)
 
-**Source:** `MainWindowViewModel.Reorder.cs`
+**Source:** `src/avalonia-launcher/src/WTLauncher.App/ViewModels/MainWindowViewModel.cs`
 
-Entries support `MoveUp()` / `MoveDown()` commands with `CanMoveUp()` / `CanMoveDown()` guards. These are the keyboard-accessible alternatives to drag reorder.
+Entries support `MoveUp()` / `MoveDown()` commands with `CanMoveUp()` / `CanMoveDown()` guards. These are the keyboard-accessible alternatives to drag reorder. (Until the god-class is split, these commands live in the single MainWindowViewModel file.)
 
 ---
 
