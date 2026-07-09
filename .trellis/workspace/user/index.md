@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 31
-- **Last Active**: 2026-07-09
+- **Total Sessions**: 32
+- **Last Active**: 2026-07-10
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1102 | Active |
+| `journal-1.md` | ~1135 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 32 | 2026-07-10 | post-reorg /goal chain: check + break-loop + update-spec + dream + finish-work | `988db9c` | `main` |
 | 31 | 2026-07-09 | Residual backlog clearance: 6 items, 5 NO-ACTION + 0 speculative abstractions | `78689c8`, `1a1a20f` | `main` |
 | 30 | 2026-07-09 | Settings single-source-of-truth refactor: R5 fix + R2 docs + R3 pin | `d1969be` | `main` |
 | 29 | 2026-07-09 | 7-step goal round 2: verify.ps1 sync + pitfalls §8.4 second-pass + MEMORY.md index refresh | `b987a84`, `4eaf9f6` | `main` |

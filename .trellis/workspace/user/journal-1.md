@@ -1100,3 +1100,36 @@ Investigated 6 second-pass-audit residual items. R3 (LiteDB PackageVersion) + R4
 ### Next Steps
 
 - None - task complete
+
+
+## Session 32: post-reorg /goal chain: check + break-loop + update-spec + dream + finish-work
+
+**Date**: 2026-07-10
+**Task**: post-reorg /goal chain: check + break-loop + update-spec + dream + finish-work
+**Branch**: `main`
+
+### Summary
+
+Executed 7-step /goal workflow after 07-09-project-wide-reorg archive. (1) /trellis-check added pitfalls §3.9 (grep -c overcounts function definitions). (2) /trellis-break-loop ran 5-dim analysis; confirmed all spec updates landed. (3) /trellis-update-spec added pitfalls §3.10 (phantom reference cleanup). (4) /dream consolidated 4 new feedback memories into MEMORY.md index + fixed stale 19-count references in 2 existing memories. Avalonia mainline gate PASS: 453/453 tests, GUI smoke green. Full verify.ps1 gate has 1 environmental red (github-similar-projects-snapshot 30-day clock drift, no gh CLI locally) — documented as recurring followup.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `988db9c` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
