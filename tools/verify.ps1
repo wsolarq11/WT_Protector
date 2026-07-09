@@ -364,8 +364,11 @@ Add-Check 'presets-schema' @{
 
 $settings = $store.settings
 if ($null -eq $settings) { throw 'launcher.json settings is required' }
-Assert-OnlyJsonKeys $settings @('schemaVersion', 'lastFilterText', 'sortMode', 'entryViewMode', 'requireConfirmationForLaunches', 'commandTemplates', 'searchHistory', 'customEntryOrder', 'window') 'launcher.json settings'
-if ([int]$settings.schemaVersion -ne 2) { throw "Unsupported settings schemaVersion: $($settings.schemaVersion)" }
+# ponytail: settings.schemaVersion is intentionally absent — single source of truth is top-level
+# LauncherStoreFile.SchemaVersion. T7 (2026-07-09) removed the dead field; this negative gate
+# prevents re-introduction (would resurrect dual-source drift, see pitfalls §8.4).
+if ($settings.PSObject.Properties['schemaVersion']) { throw 'launcher.json settings must NOT carry schemaVersion — single source is top-level store.schemaVersion' }
+Assert-OnlyJsonKeys $settings @('lastFilterText', 'sortMode', 'entryViewMode', 'requireConfirmationForLaunches', 'commandTemplates', 'searchHistory', 'customEntryOrder', 'window') 'launcher.json settings'
 if ($null -eq $settings.lastFilterText) { throw 'launcher.json settings lastFilterText is required' }
 if (-not ($settings.lastFilterText -is [string])) { throw 'launcher.json settings lastFilterText must be string' }
 if ($null -eq $settings.customEntryOrder) { throw 'launcher.json settings customEntryOrder is required' }
