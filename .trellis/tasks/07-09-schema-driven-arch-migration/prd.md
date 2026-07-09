@@ -10,10 +10,10 @@ Follow-up to the goal "深度全网deepsearch调研出新架构来剪掉一切�
 - **S4** Exception-based control flow → Result<T, StoreError> (T5)
 - **S6** Hand-rolled atomic I/O → Confirmed sufficient (no change, decision recorded)
 - **S9** Docs/code drift → Schema-generated docs (T7 follow-up)
-- **S10** Flat settings record → Split UiSettings + LauncherConfig (T4)
+- **S10** Flat settings record → **Misidentified**: `LauncherSettings` already contains only UI state; business state lives at `LauncherStoreFile` top level. **No action.** (T4)
 - **S11** Multi-process file contention → SingleInstanceLock (T6)
 - **S12** Hand-rolled migration → SchemaMigrationRegistry (T8)
-- **S13** UI/business state entanglement → Settings split (T4)
+- **S13** UI/business state entanglement → **Misidentified**: UI/business state already separated at data-structure level (Settings nested, Entries/Presets/DefaultPresetId at top). Single-file atomic write beats multi-file split. **No action.** (T4)
 - ShellCommand 62-line dead class + LiteDB PackageVersion orphan → T1
 
 ## Sources NOT cut (2/13, no architectural solution)
@@ -24,7 +24,7 @@ Follow-up to the goal "深度全网deepsearch调研出新架构来剪掉一切�
 1. **T1 07-09-remove-dead-code** — ShellCommand + LiteDB PackageVersion
 2. **T2 07-09-stale-strings-remediation** — Doc cleanup + verify.ps1 negative gate
 3. **T3 07-09-enable-compiled-bindings** — Verify XAML then enable or document why-off
-4. **T4 07-09-split-settings** — UiSettings + LauncherConfig separation
+4. **T4 07-09-split-settings** — ✅ Closed: S10/S13 misidentified, no action needed (investigation recorded)
 5. **T5 07-09-result-types-migration** — Result<T, StoreError> + ExceptionFilters removal
 6. **T6 07-09-single-instance-lock** — Named Mutex + Named Pipe IPC
 7. **T7 07-09-schema-first-persistence** — Corvus.JsonSchema source generator (largest)

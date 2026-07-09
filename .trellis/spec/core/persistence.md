@@ -103,6 +103,17 @@ The store is a **single file** `config/launcher.json` owning five sections toget
 
 `LauncherStoreFile` is a `sealed record` with init-only properties — mutations produce a new instance via `with { }`.
 
+### Why Settings Is Nested, Not Split (audit 2026-07-09)
+
+The 2026-07-09 schema-driven-architecture audit re-examined whether `settings` should be split out of `launcher.json` into a separate file (concern S13). **Decision: keep nested.**
+
+**Why nested is correct:**
+1. **UI/business state already separated at the data-structure level** — `LauncherSettings` contains only UI/presentation state (lastFilterText, sortMode, entryViewMode, window bounds, command templates, search history, customEntryOrder, requireConfirmationForLaunches). Business state (entries, presets, defaultPresetId) lives at the top level. The nested design does not mix concerns.
+2. **Single-file atomicity beats multi-file** — splitting into two files introduces a cross-file consistency window: settings.json writes succeed while entries.json fails (or vice versa). The current `LauncherJson.Save` writes one file atomically via temp→`File.Replace`→`.bak` rotation. Splitting would require a two-phase commit, which is overkill for a single-user launcher.
+3. **No real problem to solve** — 19 entries, 2 presets, 9 UI settings run cleanly in one file. No user-visible bug, no test pressure, no perf constraint driving a split.
+
+**When to revisit:** only if a real workload emerges that needs independent settings writes (e.g., window bounds written on every resize while entries are unchanged, causing excessive entry-array serialization). Until then, single-file wins.
+
 ### API
 
 ```csharp
