@@ -1066,3 +1066,37 @@ Eliminated SaveStoreFile dual path: SaveSettingsToStore now mutates _settings th
 ### Next Steps
 
 - None - task complete
+
+
+## Session 31: Residual backlog clearance: 6 items, 5 NO-ACTION + 0 speculative abstractions
+
+**Date**: 2026-07-09
+**Task**: Residual backlog clearance: 6 items, 5 NO-ACTION + 0 speculative abstractions
+**Branch**: `main`
+
+### Summary
+
+Investigated 6 second-pass-audit residual items. R3 (LiteDB PackageVersion) + R4 (CompiledBindings comment) already completed by earlier same-day tasks. R2 (LauncherEntryVisibility rename) deferred with ponytail: comment documenting 85 refs / single-user / no bug. R1 (composition) + R6 (DI container) + R7 (async I/O) all DEFER with explicit revisit triggers. 1 real action (R5 from prior task) + 5 documented NO-ACTIONs + 0 speculative abstractions. verify.ps1 18/18, 453 tests PASS.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `78689c8` | (see git log) |
+| `1a1a20f` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
