@@ -923,3 +923,37 @@ Further MainWindowViewModel splits (Entries / Launch / Layout / Presets / Batch)
 ### Next Steps
 
 - None blocking. If composition refactor of MainWindowViewModel is desired, open a dedicated design task (not "split into partials").
+
+
+## Session 27: Spec sync + stale string cleanup post-Stage2 split
+
+**Date**: 2026-07-09
+**Task**: Spec sync + stale string cleanup post-Stage2 split
+**Branch**: `main`
+
+### Summary
+
+Step 3 /trellis-update-spec: synced specs to single-file architecture — guides/index.md Triple-File→Single-File Atomicity, pitfalls.md §7.3/§2.7 LiteDB marked [已反转], §8.1 added partial-class extraction lesson, duplicate §2.6/§2.7 numbering fixed. Step 4 /dream: inline architectural vision (no skill exists) — 3 future directions identified, all YAGNI-deferred. Step 7 cleanup: fixed 5 stale code files referencing three-file architecture (README, ConfirmEntryDeleteWindow dialog text, LauncherPresetSelectionPreview status text, LauncherStore comment, verify.ps1 smoke filename). Build 0 warnings, 451/451 tests pass. Local main now 25 commits ahead of origin/main.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3d86e63` | (see git log) |
+| `e3b5658` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
