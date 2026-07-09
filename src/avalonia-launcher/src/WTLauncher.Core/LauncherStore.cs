@@ -120,7 +120,7 @@ public static class LauncherStore
         var configPath = Path.Combine(configDirectory, "config.json");
         var presetsPath = Path.Combine(configDirectory, "presets.json");
         var settingsPath = Path.Combine(configDirectory, "settings.json");
-        var storePath = Path.Combine(configDirectory, "store.json");
+        var storePath = Path.Combine(configDirectory, StoreFileName);
 
         // Only migrate if unified store doesn't exist but legacy files do
         if (File.Exists(storePath))

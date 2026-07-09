@@ -4,7 +4,4 @@
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="LiteDB" />
-  </ItemGroup>
 </Project>

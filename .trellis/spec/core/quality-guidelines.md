@@ -66,7 +66,6 @@ Per `DESIGN.md` token ownership rules:
 - ❌ **Static mutable state** — all static classes are stateless helpers.
 - ❌ **Direct `File.WriteAllText` outside `LauncherJson`** — always use the persistence wrapper.
 - ❌ **Adding a NuGet reference to Core** — Core must stay dependency-free (beyond BCL).
-  // ponytail: LiteDB reference (`LiteDB` NuGet) is an intentional exception for the IStore persistence abstraction. If adding another dependency, challenge it against the same bar: is this the minimum viable dependency for a cross-layer concern that cannot be implemented via BCL alone?
 - ❌ **Silent null-to-empty coercion without validation** — bad data should throw, not silently normalize.
 - ❌ **`catch (Exception)` without narrowing** — only catch specific types you can actually handle. In ViewModel command handlers, use `catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))` — the shared filter in `ExceptionFilters.cs` centralizes the fatal-exception exclusion. For UI delegate calls (dialog confirmations), bare `catch (Exception)` is acceptable because the delegate boundary is unknown. See [pitfalls §2.3](../guides/pitfalls.md#23-kiss-合并后-catch-过宽).
 - ❌ **Snapshot captured before `await` in mutation methods** — snapshot must be captured AFTER async dialog confirmation, not before. Capturing before creates a window where concurrent operations can be lost on rollback. (Added 2026-06-23 ultrareview B6)

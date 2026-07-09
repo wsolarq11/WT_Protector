@@ -51,7 +51,6 @@ internal static class Program
         try
         {
             DeleteStaleTempFiles();
-            // MigrateJsonToLiteDb();  // LiteDB Phase 3 deferred
 
             BuildAvaloniaApp()
                 .StartWithClassicDesktopLifetime(args, ShutdownMode.OnMainWindowClose);
@@ -133,32 +132,6 @@ internal static class Program
             "WT Launcher is already running. Only one instance can be open at a time.",
             "WT Launcher",
             mbIconStop | mbOk);
-    }
-
-    /// <summary>
-    /// Phase 3: One-time JSON→LiteDB migration. Best-effort — if it fails,
-    /// the app continues using JSON. The migration will be retried on next startup.
-    /// </summary>
-    private static void MigrateJsonToLiteDb()
-    {
-        try
-        {
-            var storePath = LauncherStore.ResolveStorePath(null, Environment.CurrentDirectory, AppContext.BaseDirectory);
-            var storeDir = Path.GetDirectoryName(Path.GetFullPath(storePath));
-            if (string.IsNullOrWhiteSpace(storeDir) || !Directory.Exists(storeDir))
-                return;
-
-            try { MigrationTool.MigrateIfNeeded(storeDir); }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[WTLauncher] JSON→LiteDB migration skipped: {ex.Message}");
-                Trace.WriteLine($"[WTLauncher] JSON→LiteDB migration skipped: {ex.Message}");
-            }
-        }
-        catch
-        {
-            // Best-effort — migration failure must never block startup.
-        }
     }
 
     /// <summary>Best-effort cleanup of leftover temp files from prior crashes.
