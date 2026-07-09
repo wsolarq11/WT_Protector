@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 28
+- **Total Sessions**: 29
 - **Last Active**: 2026-07-09
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1001 | Active |
+| `journal-1.md` | ~1035 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 29 | 2026-07-09 | 7-step goal round 2: verify.ps1 sync + pitfalls §8.4 second-pass + MEMORY.md index refresh | `b987a84`, `4eaf9f6` | `main` |
 | 28 | 2026-07-09 | Schema-driven-arch-migration 8-phase execution: 2 real fixes + 6 investigations | `ef978b7`, `139538e`, `b0cca49`, `d8ccfcc`, `945f1bd`, `6c151b2`, `7af8951`, `9e54c53`, `8bbe98c`, `8c3ede8` | `main` |
 | 27 | 2026-07-09 | Spec sync + stale string cleanup post-Stage2 split | `3d86e63`, `e3b5658` | `main` |
 | 26 | 2026-07-07 | Follow-up execution: partial merge cleanup, spec update, snapshot inline | `87c2626`, `c740057`, `1c28e19` | `main` |

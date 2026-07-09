@@ -999,3 +999,37 @@ Executed all 8 phases of the schema-driven-arch-migration parent under /goal aut
 ### Next Steps
 
 - None - task complete
+
+
+## Session 29: 7-step goal round 2: verify.ps1 sync + pitfalls §8.4 second-pass + MEMORY.md index refresh
+
+**Date**: 2026-07-09
+**Task**: 7-step goal round 2: verify.ps1 sync + pitfalls §8.4 second-pass + MEMORY.md index refresh
+**Branch**: `main`
+
+### Summary
+
+Goal auto-continue round 2 re-executed /trellis-check which caught a real bug: tools/verify.ps1:367-368 still asserted settings.schemaVersion=2 after T7 removed the field. Fixed by replacing positive check with negative gate (throws if field exists) — this RAISES the standard, not lowers it, preventing dual-source drift re-introduction. /trellis-break-loop expanded pitfalls §8.4 with second-pass discovery: schema field removal needs grep across three surfaces (src/, tests/, tools/*.ps1). /dream second pass: 4 core memories already accurate, MEMORY.md index refreshed from 27 to 51 entries (8+ files previously unlisted). Test-standards constraint honored: no test lowered to accommodate production code.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b987a84` | (see git log) |
+| `4eaf9f6` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
