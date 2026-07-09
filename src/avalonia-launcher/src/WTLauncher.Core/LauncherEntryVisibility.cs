@@ -4,6 +4,11 @@ namespace WTLauncher.Core;
 
 public enum LauncherSortMode { Recent, Updated, Alphabetical, Custom }
 
+// ponytail: class name says "Visibility" but contents are query/filter/sort ops.
+// Renaming to LauncherEntryQuery considered 2026-07-09 (task 07-09-rename-evaluation)
+// and DEFERRED — 85 refs / 10 .cs files, no functional bug, single-user familiarity
+// wins over academic accuracy. Revisit when this class is naturally refactored
+// (e.g., FilterAndSort split out into its own type).
 public static class LauncherEntryVisibility
 {
     public const string CustomSortModeId = "custom";
