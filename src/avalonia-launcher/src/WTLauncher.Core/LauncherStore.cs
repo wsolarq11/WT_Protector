@@ -111,9 +111,9 @@ public static class LauncherStore
         public ImmutableList<LauncherPreset>? Presets { get; init; }
     }
 
-    // F06: One-time migration from legacy three-file format to unified store.json
+    // F06: One-time migration from legacy three-file format to unified launcher.json
 
-    /// <summary>Detects old config.json/presets.json/settings.json and migrates to store.json.</summary>
+    /// <summary>Detects old config.json/presets.json/settings.json and migrates to launcher.json.</summary>
     public static LauncherStoreFile? MigrateFromLegacyFiles(string configDirectory)
     {
         var configPath = Path.Combine(configDirectory, "config.json");
