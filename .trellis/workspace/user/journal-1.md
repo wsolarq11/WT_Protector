@@ -875,3 +875,51 @@ Executed follow-up items: merged 10 partial files into 1 (MainWindowViewModel.cs
 ### Next Steps
 
 - None - task complete
+
+
+## Session 27: Architecture review cleanup — full landing
+
+**Date**: 2026-07-09
+**Task**: 07-09-arch-review-cleanup (parent, archived) + 5 children
+**Branch**: `main`
+
+### Summary
+
+Landed 5-child architecture cleanup driven by the 7-round review. All children archived; root `verify.ps1` green (17 checks, 451 tests).
+
+### Children Delivered
+
+| # | Task | Outcome |
+|---|------|---------|
+| 1 | remove-litedb-deadcode | -250 lines + 1 NuGet dep |
+| 2 | rewrite-stale-specs | ~1100 lines across 6 specs |
+| 3 | remove-preset-file-abstraction | dropped dead `LauncherPresetFile.SchemaVersion`; renamed `LauncherPresetFiles` → `LauncherPresetValidator` |
+| 4 | split-mainviewmodel-godclass | **Stage 1 only**: extracted `.Drag.cs` (151 lines) + `.Reorder.cs` (78 lines). Stage 2 deferred. |
+| 5 | misc-light-cleanup | 4/5 items; `LauncherEntryVisibility → LauncherEntryQuery` rename deferred (84 refs). |
+
+### Stage 2 Deferral (ponytail ultra call)
+
+Further MainWindowViewModel splits (Entries / Launch / Layout / Presets / Batch) would share state (`_entries`, `_visibleEntries`, `_settings`) — partials would hide coupling rather than fix it. Modern god-class decomposition is **composition** (separate collaborator classes), not partials. That's a larger design effort and should not land under "split into partials" framing.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `411cb40` | fix: migrate root verify gate to single-file launcher.json schema |
+| `15f5d64` | docs(spec): rewrite 6 stale specs to match current code |
+| `2a8f752` | refactor: drop dead LauncherPresetFile.SchemaVersion, rename Validator |
+| `3ab8dce` | refactor(viewmodel): split Drag + Reorder out of MainWindowViewModel (Stage 1) |
+| `23506de` | docs: cleanup stale comments, plug template hole, mark chrome recalibration |
+
+### Testing
+
+- [OK] `dotnet test -c Release` — 451 tests pass
+- [OK] `tools/verify.ps1` — 17 checks PASS, GUI smoke PASS
+
+### Status
+
+[OK] **Completed — parent + 5 children archived**
+
+### Next Steps
+
+- None blocking. If composition refactor of MainWindowViewModel is desired, open a dedicated design task (not "split into partials").
