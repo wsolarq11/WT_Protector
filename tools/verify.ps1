@@ -273,9 +273,15 @@ Add-Check 'github-similar-projects-snapshot' @{
     woxStars = $woxStars
 }
 
-$rootConfigPath = Get-LauncherConfigPath
-$canonicalKey = 'config\config.json'
-$configItems = @(Read-ConfigItems $rootConfigPath)
+$storePath = Get-LauncherStorePath
+$canonicalKey = 'config\launcher.json'
+if (-not (Test-Path -LiteralPath $storePath)) { throw "Missing portable launcher store: $storePath" }
+$store = Get-Content -Raw -Encoding UTF8 -LiteralPath $storePath | ConvertFrom-Json
+if ($null -eq $store) { throw "Launcher store parsed to null: $storePath" }
+Assert-OnlyJsonKeys $store @('schemaVersion', 'entries', 'presets', 'defaultPresetId', 'settings') 'launcher.json'
+if ([int]$store.schemaVersion -ne 2) { throw "Unsupported launcher.json schemaVersion: $($store.schemaVersion)" }
+
+$configItems = @($store.entries)
 Add-Check 'json' @{ path = $canonicalKey; items = $configItems.Count }
 
 $seenIds = @{}
@@ -289,7 +295,7 @@ foreach ($item in $configItems) {
         }
     }
     if ($item.PSObject.Properties.Name -contains 'confirm') {
-        throw "Config item $idx must not use obsolete per-entry confirm field; settings.json requireConfirmationForLaunches is the single authority"
+        throw "Config item $idx must not use obsolete per-entry confirm field; settings requireConfirmationForLaunches is the single authority"
     }
     if (-not ($item.PSObject.Properties.Name -contains 'selected')) {
         throw "Config item $idx is missing persistent selected field"
@@ -313,19 +319,13 @@ Add-Check 'config-schema' @{
     existingDirectories = $configItems.Count
 }
 
-$presetPath = Join-Path (Split-Path -Parent $rootConfigPath) 'presets.json'
-if (-not (Test-Path -LiteralPath $presetPath)) { throw "Missing portable launcher presets: $presetPath" }
-$presetDoc = Get-Content -Raw -Encoding UTF8 -LiteralPath $presetPath | ConvertFrom-Json
-if ($null -eq $presetDoc) { throw "Presets parsed to null: $presetPath" }
-Assert-OnlyJsonKeys $presetDoc @('schemaVersion', 'defaultPresetId', 'presets') 'presets.json'
-if ([int]$presetDoc.schemaVersion -ne 1) { throw "Unsupported presets schemaVersion: $($presetDoc.schemaVersion)" }
-$defaultPresetId = [string]$presetDoc.defaultPresetId
-if ([string]::IsNullOrWhiteSpace($defaultPresetId)) { throw 'presets.json defaultPresetId is required' }
+$defaultPresetId = [string]$store.defaultPresetId
+if ([string]::IsNullOrWhiteSpace($defaultPresetId)) { throw 'launcher.json defaultPresetId is required' }
 $presetSeen = @{}
 $referencedEntryIds = @{}
 $presetCount = 0
 $nonEmptyPresetCount = 0
-foreach ($preset in @($presetDoc.presets)) {
+foreach ($preset in @($store.presets)) {
     $presetCount++
     $presetId = [string]$preset.id
     Assert-OnlyJsonKeys $preset @('id', 'name', 'entryIds', 'locked') "Preset $presetCount"
@@ -352,42 +352,40 @@ foreach ($preset in @($presetDoc.presets)) {
         $referencedEntryIds[$entryId] = $true
     }
 }
-if ($presetCount -lt 1) { throw 'presets.json must contain at least one preset' }
+if ($presetCount -lt 1) { throw 'launcher.json must contain at least one preset' }
 if (-not $presetSeen.ContainsKey($defaultPresetId)) { throw "defaultPresetId does not match any preset: $defaultPresetId" }
-if ($nonEmptyPresetCount -lt 1) { throw 'presets.json must contain at least one preset with entryIds' }
+if ($nonEmptyPresetCount -lt 1) { throw 'launcher.json must contain at least one preset with entryIds' }
 Add-Check 'presets-schema' @{
-    path = 'config\presets.json'
+    path = 'config\launcher.json'
     presets = $presetCount
     defaultPresetId = $defaultPresetId
     referencedEntries = $referencedEntryIds.Count
 }
 
-$settingsPath = Get-LauncherSettingsPath
-if (-not (Test-Path -LiteralPath $settingsPath)) { throw "Missing portable settings: $settingsPath" }
-$settings = Get-Content -Raw -Encoding UTF8 -LiteralPath $settingsPath | ConvertFrom-Json
-if ($null -eq $settings) { throw "Settings parsed to null: $settingsPath" }
-Assert-OnlyJsonKeys $settings @('schemaVersion', 'lastFilterText', 'sortMode', 'entryViewMode', 'requireConfirmationForLaunches', 'commandTemplates', 'searchHistory', 'customEntryOrder', 'window') 'settings.json'
-if ([int]$settings.schemaVersion -ne 1) { throw "Unsupported settings schemaVersion: $($settings.schemaVersion)" }
-if ($null -eq $settings.lastFilterText) { throw 'settings.json lastFilterText is required' }
-if (-not ($settings.lastFilterText -is [string])) { throw 'settings.json lastFilterText must be string' }
-if ($null -eq $settings.customEntryOrder) { throw 'settings.json customEntryOrder is required' }
-if ($null -eq $settings.window) { throw 'settings.json window is required' }
-Assert-OnlyJsonKeys $settings.window @('width', 'height', 'x', 'y', 'windowState') 'settings.json window'
-Assert-PositiveJsonNumber $settings.window.width 'settings.json window width'
-Assert-PositiveJsonNumber $settings.window.height 'settings.json window height'
+$settings = $store.settings
+if ($null -eq $settings) { throw 'launcher.json settings is required' }
+Assert-OnlyJsonKeys $settings @('schemaVersion', 'lastFilterText', 'sortMode', 'entryViewMode', 'requireConfirmationForLaunches', 'commandTemplates', 'searchHistory', 'customEntryOrder', 'window') 'launcher.json settings'
+if ([int]$settings.schemaVersion -ne 2) { throw "Unsupported settings schemaVersion: $($settings.schemaVersion)" }
+if ($null -eq $settings.lastFilterText) { throw 'launcher.json settings lastFilterText is required' }
+if (-not ($settings.lastFilterText -is [string])) { throw 'launcher.json settings lastFilterText must be string' }
+if ($null -eq $settings.customEntryOrder) { throw 'launcher.json settings customEntryOrder is required' }
+if ($null -eq $settings.window) { throw 'launcher.json settings window is required' }
+Assert-OnlyJsonKeys $settings.window @('width', 'height', 'x', 'y', 'windowState') 'launcher.json settings window'
+Assert-PositiveJsonNumber $settings.window.width 'launcher.json settings window width'
+Assert-PositiveJsonNumber $settings.window.height 'launcher.json settings window height'
 $settingsOrder = @($settings.customEntryOrder)
 $settingsOrderSeen = @{}
 foreach ($id in $settingsOrder) {
-    if (-not $seenIds.ContainsKey([string]$id)) { throw "settings.json customEntryOrder references missing config entry id: $id" }
-    if ($settingsOrderSeen.ContainsKey([string]$id)) { throw "settings.json customEntryOrder has duplicate config entry id: $id" }
+    if (-not $seenIds.ContainsKey([string]$id)) { throw "launcher.json settings customEntryOrder references missing config entry id: $id" }
+    if ($settingsOrderSeen.ContainsKey([string]$id)) { throw "launcher.json settings customEntryOrder has duplicate config entry id: $id" }
     $settingsOrderSeen[[string]$id] = $true
 }
-if ($settingsOrder.Count -ne $seenIds.Count) { throw "settings.json customEntryOrder should contain every config entry id once" }
-if ([string]::IsNullOrWhiteSpace([string]$settings.sortMode)) { throw 'settings.json sortMode is required' }
-if ([string]::IsNullOrWhiteSpace([string]$settings.entryViewMode)) { throw 'settings.json entryViewMode is required' }
-if (-not ($settings.requireConfirmationForLaunches -is [bool])) { throw 'settings.json requireConfirmationForLaunches must be boolean' }
+if ($settingsOrder.Count -ne $seenIds.Count) { throw 'launcher.json settings customEntryOrder should contain every config entry id once' }
+if ([string]::IsNullOrWhiteSpace([string]$settings.sortMode)) { throw 'launcher.json settings sortMode is required' }
+if ([string]::IsNullOrWhiteSpace([string]$settings.entryViewMode)) { throw 'launcher.json settings entryViewMode is required' }
+if (-not ($settings.requireConfirmationForLaunches -is [bool])) { throw 'launcher.json settings requireConfirmationForLaunches must be boolean' }
 Add-Check 'settings-json' @{
-    path = 'config\settings.json'
+    path = 'config\launcher.json'
     sortMode = $settings.sortMode
     entryViewMode = $settings.entryViewMode
     requireConfirmationForLaunches = $settings.requireConfirmationForLaunches
@@ -397,15 +395,15 @@ Add-Check 'settings-json' @{
 
 # Validate commandTemplates structure.
 $commandTemplates = $settings.commandTemplates
-if ($null -eq $commandTemplates) { throw 'settings.json commandTemplates is required' }
-if ($commandTemplates -is [array]) { throw 'settings.json commandTemplates must be an object, not an array' }
+if ($null -eq $commandTemplates) { throw 'launcher.json settings commandTemplates is required' }
+if ($commandTemplates -is [array]) { throw 'launcher.json settings commandTemplates must be an object, not an array' }
 foreach ($templateKey in @($commandTemplates.PSObject.Properties.Name)) {
     $templateValue = $commandTemplates.$templateKey
     if ([string]::IsNullOrWhiteSpace([string]$templateValue)) {
-        throw "settings.json commandTemplates key '$templateKey' must be a non-empty string"
+        throw "launcher.json settings commandTemplates key '$templateKey' must be a non-empty string"
     }
 }
-# Cross-validate: every $key command reference in config.json must exist in commandTemplates.
+# Cross-validate: every $key command reference in entries must exist in commandTemplates.
 $templateKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
 foreach ($templateKey in @($commandTemplates.PSObject.Properties.Name)) { [void]$templateKeys.Add($templateKey) }
 foreach ($item in $configItems) {

@@ -68,14 +68,6 @@ function Get-LauncherStorePath {
     return (Get-RepoPath 'config\launcher.json')
 }
 
-function Get-LauncherConfigPath {
-    return (Get-RepoPath 'config\config.json')
-}
-
-function Get-LauncherSettingsPath {
-    return (Get-RepoPath 'config\settings.json')
-}
-
 function Get-ShortcutBackupManifestPath {
     return (Get-RepoPath 'docs\reference\shortcut-backup-manifest.json')
 }
@@ -84,8 +76,11 @@ function Read-ConfigItems([string]$Path) {
     if (-not (Test-Path -LiteralPath $Path)) { throw "Missing config: $Path" }
     $json = Get-Content -Raw -Encoding UTF8 -LiteralPath $Path | ConvertFrom-Json
     if ($null -eq $json) { throw "Config parsed to null: $Path" }
-    # Support both wrapper format {"schemaVersion":1,"entries":[...]} and legacy array format.
-    $items = if ($null -ne $json.entries) { $json.entries } else { $json }
+    # Support wrapper format {"schemaVersion":1,"entries":[...]} and legacy array format.
+    # StrictMode forbids accessing a property that doesn't exist (arrays have no .entries),
+    # so check PSObject.Properties instead of probing $null.
+    $hasEntries = $json -isnot [array] -and $json.PSObject.Properties.Name -contains 'entries'
+    $items = if ($hasEntries) { $json.entries } else { $json }
     $idx = 0
     foreach ($item in @($items)) {
         foreach ($field in @('id', 'name', 'directory', 'command')) {

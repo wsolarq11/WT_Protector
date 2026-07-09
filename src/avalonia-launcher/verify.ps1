@@ -41,7 +41,8 @@ $jsonRequiredFields = @{}
 foreach ($src in $modelSources) {
     $content = Get-Content -Raw -Encoding UTF8 -LiteralPath $src.FullName
     # Extract type name + [JsonPropertyName] + [JsonRequired] patterns.
-    if ($content -match 'public \w*record (\w+)') {
+    # Allow optional modifiers (sealed / readonly / etc.) between "public" and "record".
+    if ($content -match 'public\s+(?:\w+\s+)*record\s+(\w+)') {
         $typeName = $Matches[1]
         $fields = [regex]::Matches($content, '\[JsonPropertyName\("(\w+)"\)\]\s*\[JsonRequired\]\s*public \S+ (\w+)')
         foreach ($f in $fields) { $jsonRequiredFields[$f.Groups[1].Value] = $typeName }
@@ -139,7 +140,7 @@ New-ToolReceipt 'avalonia-mainline-verify' @{
     publishedExe = $exe
     publishedDll = $dll
     bytes = (Get-Item -LiteralPath $exe).Length
-    sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $exe).Hash.Substring(0, 16)
+    sha256 = (Get-FileSha256 $exe).Substring(0, 16)
     dllBytes = (Get-Item -LiteralPath $dll).Length
-    dllSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $dll).Hash.Substring(0, 16)
+    dllSha256 = (Get-FileSha256 $dll).Substring(0, 16)
 } | ConvertTo-Json -Depth 4 -Compress
