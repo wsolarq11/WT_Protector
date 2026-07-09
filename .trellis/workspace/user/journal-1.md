@@ -1033,3 +1033,36 @@ Goal auto-continue round 2 re-executed /trellis-check which caught a real bug: t
 ### Next Steps
 
 - None - task complete
+
+
+## Session 30: Settings single-source-of-truth refactor: R5 fix + R2 docs + R3 pin
+
+**Date**: 2026-07-09
+**Task**: Settings single-source-of-truth refactor: R5 fix + R2 docs + R3 pin
+**Branch**: `main`
+
+### Summary
+
+Eliminated SaveStoreFile dual path: SaveSettingsToStore now mutates _settings then routes through BuildStoreFile (canonical assembler). Added ponytail: comments on LauncherDragReorderWorkflow._settings and LauncherEntryMutationSnapshot._settings documenting that these are working state for rollback semantics (NOT dual truth). R2 evaluated mirror collapse, retained — manual sync in Drag.cs is collaborator-boundary cost, verified by 7 equivalence tests. Added verify.ps1 'settings-single-source-buildstorefile' check (regex-count=1). Updated persistence.md with 'Single Canonical Assembler' section. 453/453 tests passing, 18/18 verify checks PASS.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d1969be` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
