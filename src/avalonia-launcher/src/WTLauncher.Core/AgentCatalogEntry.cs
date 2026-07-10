@@ -29,4 +29,9 @@ public sealed record AgentCatalogEntry
 
     /// <summary>Optional homepage URL for the "learn more" link in the dialog.</summary>
     public string HomePageUrl { get; init; } = string.Empty;
+
+    /// <summary>Approximate brand color as #RRGGBB for the card badge. Not a
+    /// vendor-official asset; a visually distinct signal per agent. Parsed by
+    /// the UI layer for badge background.</summary>
+    public required string BrandColorHex { get; init; }
 }

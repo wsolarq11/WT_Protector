@@ -218,6 +218,25 @@ public sealed class DiscoverAgentsWindow : Window
                 : LauncherDesignTokens.TextPrimaryColor),
         };
 
+        var brandBadge = new Border
+        {
+            Width = LauncherDesignTokens.BrandBadgeSize,
+            Height = LauncherDesignTokens.BrandBadgeSize,
+            CornerRadius = new CornerRadius(LauncherDesignTokens.BrandBadgeCornerRadius),
+            Background = Brush.Parse(row.BrandColorHex),
+            IsVisible = row.HasBrand,
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = new TextBlock
+            {
+                Text = row.BrandGlyph,
+                FontSize = 11,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brush.Parse(LauncherDesignTokens.BrandBadgeForegroundColor),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            },
+        };
+
         var vendorBadge = new Border
         {
             Background = Brush.Parse(LauncherDesignTokens.BadgeInfoBackgroundColor),
@@ -266,6 +285,7 @@ public sealed class DiscoverAgentsWindow : Window
             Spacing = 8,
             Children =
             {
+                brandBadge,
                 nameBlock,
                 vendorBadge,
                 versionBlock,

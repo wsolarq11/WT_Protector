@@ -62,6 +62,11 @@ public sealed partial class App : Application
         // ── Drag handle ────────────────────────────────────
         Resources["DragHandleTextBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.DragHandleTextColor));
 
+        // ── Per-agent brand badge ──────────────────────────
+        Resources["BrandBadgeSize"] = LauncherDesignTokens.BrandBadgeSize;
+        Resources["BrandBadgeCornerRadius"] = new CornerRadius(LauncherDesignTokens.BrandBadgeCornerRadius);
+        Resources["BrandBadgeForegroundBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BrandBadgeForegroundColor));
+
         // ── Dimensions / Spacing ────────────────────────────
         Resources["CardBorderRadius"] = new CornerRadius(LauncherDesignTokens.CardBorderRadius);
         Resources["CardPadding"] = new Thickness(LauncherDesignTokens.CardPadding);

@@ -121,6 +121,11 @@ public sealed partial class DiscoveredAgentRow : ObservableObject
     public string ResolvedPath => Discovered.ResolvedPath;
     public string ExecName => Discovered.Catalog.ExecName;
     public string HomePageUrl => Discovered.Catalog.HomePageUrl;
+    public string BrandColorHex => Discovered.Catalog.BrandColorHex;
+    public string BrandGlyph => Discovered.Catalog.ExecName.Length >= 2
+        ? Discovered.Catalog.ExecName.Substring(0, 2).ToUpperInvariant()
+        : Discovered.Catalog.ExecName.ToUpperInvariant();
+    public bool HasBrand => !string.IsNullOrEmpty(BrandColorHex);
 
     public DiscoveredAgentRow(DiscoveredAgent discovered, bool IsAlreadyAdded)
     {

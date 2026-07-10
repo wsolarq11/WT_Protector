@@ -16,6 +16,7 @@ public sealed class AgentRecommendationFactoryTests
                 VersionArgs = "--version",
                 RecommendedArgs = recommendedArgs,
                 Category = AgentCategory.TerminalNative,
+                BrandColorHex = "#D97757",
             },
             ResolvedPath = @"C:\tools\claude.exe",
             Version = "1.0.14",

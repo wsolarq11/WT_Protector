@@ -16,6 +16,7 @@ public sealed partial class MainWindowViewModelTests
                 Vendor = vendor,
                 VersionArgs = "--version",
                 Category = AgentCategory.TerminalNative,
+                BrandColorHex = "#D97757",
             },
             ResolvedPath = $@"C:\tools\{execName}.exe",
             Version = "1.0.0",

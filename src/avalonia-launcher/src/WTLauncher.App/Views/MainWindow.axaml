@@ -521,10 +521,25 @@
                           VerticalAlignment="Stretch"
                           IsVisible="{Binding IsDragInsertAfter}"/>
                   <Grid Classes="entry-header"
-                        ColumnDefinitions="Auto,*">
+                        ColumnDefinitions="Auto,Auto,*">
                     <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
                               VerticalAlignment="Center"/>
-                    <TextBlock Grid.Column="1"
+                    <Border Grid.Column="1"
+                            Width="{StaticResource BrandBadgeSize}"
+                            Height="{StaticResource BrandBadgeSize}"
+                            CornerRadius="{StaticResource BrandBadgeCornerRadius}"
+                            Background="{Binding BrandColorHex}"
+                            Margin="8,0,0,0"
+                            IsVisible="{Binding HasBrand}"
+                            VerticalAlignment="Center">
+                      <TextBlock Foreground="{StaticResource BrandBadgeForegroundBrush}"
+                                 FontSize="11"
+                                 FontWeight="Bold"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 Text="{Binding BrandGlyph}"/>
+                    </Border>
+                    <TextBlock Grid.Column="2"
                                Margin="8,0,0,0"
                                Classes="card-title"
                                FontSize="{Binding TitleFontSize}"

@@ -18,6 +18,7 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         _entry = entry;
         _owner = owner;
         _isSelected = entry.Selected;
+        RefreshBrand();
     }
 
     /// <remarks>Callers must ensure _isSelected and _entry.Selected are in sync before calling this method during selection mutations.</remarks>
@@ -30,6 +31,30 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     public string Directory => _entry.Directory;
 
     public string Command => _entry.Command;
+
+    // Per-agent brand projection. Empty when the command doesn't match a
+    // catalog-known agent (user-added custom entries stay unbadged).
+    private string _brandColorHex = string.Empty;
+    private string _brandGlyph = string.Empty;
+    public string BrandColorHex => _brandColorHex;
+    public string BrandGlyph => _brandGlyph;
+    public bool HasBrand => !string.IsNullOrEmpty(_brandColorHex);
+
+    private void RefreshBrand()
+    {
+        if (AgentBrandMatcher.TryMatch(_entry.Command, out var catalogEntry))
+        {
+            _brandColorHex = catalogEntry.BrandColorHex;
+            _brandGlyph = catalogEntry.ExecName.Length >= 2
+                ? catalogEntry.ExecName.Substring(0, 2).ToUpperInvariant()
+                : catalogEntry.ExecName.ToUpperInvariant();
+        }
+        else
+        {
+            _brandColorHex = string.Empty;
+            _brandGlyph = string.Empty;
+        }
+    }
 
     private bool _isSelected;
 
@@ -125,10 +150,14 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     public void RefreshDisplay()
     {
+        RefreshBrand();
         OnPropertyChanged(nameof(Id));
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Directory));
         OnPropertyChanged(nameof(Command));
+        OnPropertyChanged(nameof(BrandColorHex));
+        OnPropertyChanged(nameof(BrandGlyph));
+        OnPropertyChanged(nameof(HasBrand));
         RefreshLayoutPresentation();
     }
 

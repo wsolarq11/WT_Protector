@@ -76,6 +76,7 @@ public sealed class AgentDiscoveryScannerTests
             Vendor = "Test",
             VersionArgs = "--version",
             Category = AgentCategory.TerminalNative,
+            BrandColorHex = "#D97757",
         };
 
         var result = AgentDiscoveryScanner.Scan(new[] { catalogEntry }, pathOverride: temp.Path);

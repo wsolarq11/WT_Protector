@@ -42,6 +42,11 @@ public static class LauncherDesignTokens
     // ── Drag handle ────────────────────────────────────────
     public const string DragHandleTextColor = "#334155";        // drag handle label text
 
+    // ── Per-agent brand badge ──────────────────────────────
+    public const double BrandBadgeSize = 22;                    // brand badge width/height on cards
+    public const double BrandBadgeCornerRadius = 6;             // brand badge corner radius
+    public const string BrandBadgeForegroundColor = "White";    // brand badge glyph text color
+
     // ── Spacing / Rhythm (golden-ratio aligned) ─────────────
     public const double SpacingSmall = 8;
 

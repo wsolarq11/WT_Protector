@@ -52,4 +52,24 @@ public sealed class AgentCatalogTests
         var distinct = urls.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         Assert.Equal(urls.Length, distinct.Length);
     }
+
+    [Fact]
+    public void Entries_AllHaveValidBrandColorHex()
+    {
+        // BrandColorHex must be #RRGGBB; the UI layer parses it via Color.Parse.
+        Assert.NotEmpty(AgentCatalog.Entries);
+        foreach (var entry in AgentCatalog.Entries)
+        {
+            Assert.Matches("^#[0-9A-Fa-f]{6}$", entry.BrandColorHex);
+        }
+    }
+
+    [Fact]
+    public void Entries_HaveDistinctBrandColorHex()
+    {
+        // ponytail: pairwise distinct so the badge is a real differentiator.
+        var hexes = AgentCatalog.Entries.Select(e => e.BrandColorHex).ToArray();
+        var distinct = hexes.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        Assert.Equal(hexes.Length, distinct.Length);
+    }
 }

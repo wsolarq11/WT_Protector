@@ -247,6 +247,7 @@ The Avalonia mainline supports:
 - header actions for selecting all visible items or clearing the saved selection;
 - add/edit/delete/clone launch buttons inside the app, with every editable field saved back to portable config; right-click "复制副本" creates a deep copy of an entry;
 - 🔍 **AI Agent CLI auto-discovery** ("🔍 发现" button): scans PATH for installed agent CLIs (claude / codex / cursor / antigravity / gemini / opencode / aider / qwen-code), detects versions, and imports selected ones as launcher entries in one click — already-added agents are greyed out and deduped;
+- 🎨 **Per-agent brand badges**: each catalog-known agent shows a small colored badge (approximate brand color + 2-letter glyph) on its card and in the discovery dialog, so Claude / Codex / Cursor / etc. are visually distinguishable at a glance;
 - named launch groups/presets that replace the saved selection through explicit apply;
 - first-class launch group actions: save current selection as a new group, update the current group from current selection, and delete editable groups;
 - direct launch of the current group without rewriting checkbox selection first;
