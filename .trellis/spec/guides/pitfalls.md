@@ -284,6 +284,28 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **预防** | 写"严守某文件：某准则"之前，**先用 Glob 或 `ls` 验证文件存在**。更稳健的做法：**把准则内容直接内联**在 PRD 里，不引用外部文件——单一权威源，不会漂移。 |
 | **WT_Protector 适用** | PRD / spec / docs 之间的引用必须可解析。引用前 Glob 验证；删除文件时 grep 反向引用确认无残留。 |
 
+### 3.11 .NET 10 NuGet audit 通过 MSBuild 属性触发，不是 `dotnet restore --audit`
+
+| 属性 | 值 |
+|---|---|
+| **证据** | wt-protector session `52e06929-0c1e`（2026-07-10 modernization-wave P3） |
+| **问题** | `verify.yml` 的 Audit 步骤用了 `dotnet restore --audit`（+ `continue-on-error: true`），CI 报错"unknown option `--audit`"。这是 .NET 9 早期文档遗留的假设——**.NET 10 SDK 没有 `--audit` CLI 标志**。Audit 通过 `Directory.Build.props` 的 `<NuGetAudit>true</NuGetAudit>` + `<NuGetAuditMode>all</NuGetAuditMode>` MSBuild 属性在 restore/build 时透明运行，警告作为 NU30xx 系列。 |
+| **后果** | 带有 `continue-on-error: true` 的失效步骤会**伪装成通过**——CI 绿但 audit 从未运行；移除 continue-on-error 后立刻暴露标志不存在。 |
+| **修复** | 删除 `--audit` 标志，audit 由 `Directory.Build.props` 的两个属性负责；步骤改为普通 `dotnet restore`，warning-as-error 在 build 阶段捕获 NU30xx。 |
+| **预防** | 升级 .NET SDK 时，**先验证 CLI 标志存在性**（`dotnet restore --help | grep audit`）再写进 CI。NuGet audit 的权威接口是 MSBuild 属性，不是 CLI。 |
+| **WT_Protector 适用** | `tools/verify.ps1` 和 `.github/workflows/verify.yml` 的 audit 触发点必须是 MSBuild 属性；任何"加 `--audit` 标志"的提议都要拒绝。 |
+
+### 3.12 xunit.v3 的 xUnit1051 = CancellationToken 传播，不是 IDisposable/IClassFixture
+
+| 属性 | 值 |
+|---|---|
+| **证据** | wt-protector session `52e06929-0c1e`（2026-07-10 modernization-wave，依赖升级触发分析器） |
+| **问题** | 5 处测试方法收到 xUnit1051（"Missing CancellationToken"）。第一反应假设是 IDisposable/IClassFixture 生命周期规则——**错误**。xunit.v3 把 xUnit1051 重定义为：异步测试方法应接受 `CancellationToken` 以响应 `TestContext.Current.CancellationToken`（测试取消/超时传播）。xunit.v2 没有这条规则，迁移代码或文档引用 v2 语义会走弯路。 |
+| **后果** | 按错误假设改测试类签名（加 IDisposable/IClassFixture）会让 xUnit1051 继续报错，且引入不必要的测试 fixture 复杂度。 |
+| **修复** | 测试方法签名加 `CancellationToken` 参数，调用传入 `TestContext.Current.CancellationToken`。xunit.v3 在测试取消时通过该 token 协作式中断。 |
+| **预防** | 遇到 xUnit1051，**直接查 xunit.v3 文档**而不是套用 v2 经验。v3 的分析器规则集与 v2 不完全兼容。 |
+| **WT_Protector 适用** | `WTLauncher.Tests` 全部测试方法的异步签名必须接受 `TestContext.Current.CancellationToken`；未来任何"v2 经验"都要先验证 v3 语义。 |
+
 ---
 
 ## 4. 元教训
