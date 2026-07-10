@@ -3,7 +3,7 @@
   "name": "agent-cli-discovery",
   "title": "AI Agent CLI Discovery feature",
   "description": "Scan PATH for known AI agent CLIs (claude/codex/opencode/gemini/aider/qwen-code etc), detect versions, recommend entries via GUI dialog, one-click add through existing atomic-write pipeline",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

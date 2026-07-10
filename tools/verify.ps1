@@ -85,7 +85,7 @@ foreach ($section in @('Configuration schema', 'Build and verification', 'Run th
     if (-not $readme.Contains($section)) { throw "README missing section: $section" }
 }
 foreach ($requiredObjectiveBoundary in @(
-    'all 21 active feature mappings as narrow-domain north-star',
+    'all 22 active feature mappings as narrow-domain north-star',
     'portable Windows Terminal workspace-launcher scope only',
     'full absolute objective remains not complete as written',
     'unimprovable-product, stronger-than-every-GitHub-similar, and absolute zero-side-effect claims'
@@ -104,10 +104,10 @@ if (-not (Test-Path -LiteralPath $featureAuditPath)) { throw "Missing feature re
 $featureAudit = Get-Content -Raw -Encoding UTF8 -LiteralPath $featureAuditPath
 foreach ($requiredObjectiveBoundary in @(
     'Full objective result: not-complete-as-written',
-    'Feature north-star coverage: current-active-features=21,narrow-north-star=21,non-north-star=0',
+    'Feature north-star coverage: current-active-features=22,narrow-north-star=22,non-north-star=0',
     'Blocked absolute requirements: unimprovable-product,stronger-than-every-github-similar,absolute-confidence-zero-side-effects',
     'The full objective remains not complete as written.',
-    'All 21 current feature mappings classify as narrow-domain north-star',
+    'All 22 current feature mappings classify as narrow-domain north-star',
     'It is not a broad-domain north star for every launcher or automation product'
 )) {
     if (-not $featureAudit.Contains($requiredObjectiveBoundary)) {
@@ -116,7 +116,7 @@ foreach ($requiredObjectiveBoundary in @(
 }
 $featureHeadingCount = [regex]::Matches($featureAudit, '(?m)^### \d+\. ').Count
 $narrowNorthStarVerdictCount = [regex]::Matches($featureAudit, '(?m)^- Verdict level: narrow-north-star$').Count
-if ($featureHeadingCount -ne 21) { throw "Feature reality/north-star audit must cover 21 active feature mappings; found $featureHeadingCount" }
+if ($featureHeadingCount -ne 22) { throw "Feature reality/north-star audit must cover 22 active feature mappings; found $featureHeadingCount" }
 if ($narrowNorthStarVerdictCount -ne $featureHeadingCount) {
     throw "Feature reality/north-star audit has non-north-star feature verdicts: narrow=$narrowNorthStarVerdictCount total=$featureHeadingCount"
 }

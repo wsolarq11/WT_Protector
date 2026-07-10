@@ -24,7 +24,7 @@ WT_Protector/
 │       └── verify.ps1     → 主线门禁（restore → test → publish → GUI smoke）
 ├── tools/                 → 🧰 脚本工具箱（详见下方）
 ├── docs/                  → 设计审计、基准对标、巨人肩膀库
-│   ├── feature-reality-north-star-audit.md → 21项功能审计 + 声明边界账本
+│   ├── feature-reality-north-star-audit.md → 22项功能审计 + 声明边界账本
 │   ├── feature-first-class-upgrade-audit.md → 23项功能一等公民改造审计 (2026-06-10)
 │   ├── design-benchmark-digest.md          → 12项外部设计基准 → 本地验收规则
 │   ├── giants-shoulders/  → 巨人肩膀库（外部项目教训）
@@ -51,7 +51,7 @@ WT_Protector/
 1. **想了解项目全貌？** → `README.md`（配置 schema、安全说明、功能清单、实现状态）
 2. **想改源码？** → `src/avalonia-launcher/README.md`（5 层架构、关键不变量）
 3. **想做 UI/UX 决策？** → `DESIGN.md`（品牌、原则、组件所有权、Token 规则）
-4. **想审计功能边界？** → `docs/feature-reality-north-star-audit.md`（21 项功能、声明边界账本）
+4. **想审计功能边界？** → `docs/feature-reality-north-star-audit.md`（22 项功能、声明边界账本）
 5. **想参考外部设计？** → `docs/design-benchmark-digest.md` + `docs/giants-shoulders/`
 6. **想运行/测试？** → `powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\run.ps1`
 7. **想验证全仓？** → `powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1`

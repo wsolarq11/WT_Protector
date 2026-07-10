@@ -225,13 +225,13 @@ It is not a general launcher/automation north star. That broader domain includes
 
 ## Feature verdict summary
 
-The counts below are a summary ledger for the 21 feature sections. They are not a substitute for the per-feature evidence.
+The counts below are a summary ledger for the 22 feature sections. They are not a substitute for the per-feature evidence.
 
-- Feature count: 21
-- Verdict count: narrow-north-star=21
+- Feature count: 22
+- Verdict count: narrow-north-star=22
 - Gap count: none-proven=5,future-workload=8,external-process-limit=4,visual-proof=3,distribution-scope=1,source-freshness=1
 - Proof count: repo-battle-tested=20,market-informed=4,legacy-flow-informed=1,accessibility-informed=1,source-backed=1
-- Completion boundary: all 21 feature verdicts support the narrow portable Windows Terminal workspace-launcher claim only; broad, unimprovable, universal-superiority, and absolute zero-side-effect claims remain blocked by the objective and gap ledgers.
+- Completion boundary: all 22 feature verdicts support the narrow portable Windows Terminal workspace-launcher claim only; broad, unimprovable, universal-superiority, and absolute zero-side-effect claims remain blocked by the objective and gap ledgers.
 - Absolute boundary: future-workload, external-process-limit, visual-proof, distribution-scope, and source-freshness gaps block "100% confidence / 0% side effects" as a product-wide claim.
 
 ## Feature mapping audit
@@ -488,6 +488,18 @@ The counts below are a summary ledger for the 21 feature sections. They are not 
 - Verdict: north-star for source-tracked decision support in this repo. It converts outside lessons into local acceptance rules and explicit rejection boundaries instead of importing frameworks.
 - Remaining gap: source freshness must be refreshed when a decision depends on a changed external standard; stale references are not current proof.
 
+### 22. AI Agent CLI auto-discovery
+
+- Feature id: ai-agent-cli-auto-discovery
+- Real problem: users want to launch multiple AI agent CLIs (claude / codex / aider / qwen-code / opencode / cursor / antigravity / gemini) across different workspaces but manually entering each one's exec name + directory is tedious and error-prone.
+- Proof type: repo-battle-tested, market-informed
+- Verdict level: narrow-north-star
+- Gap class: future-workload
+- Current data owner: `src/WTLauncher.Core/AgentCatalog.cs`, `src/WTLauncher.Core/AgentDiscoveryScanner.cs`, `src/WTLauncher.App/Views/DiscoverAgentsWindow.cs`, and the discovery ViewModel partial.
+- Evidence: catalog covers the 2026 AI agent CLI market, scanner is a pure function in Core (no Avalonia dependency, exempted in ArchUnitNET R5 alongside LaunchArgumentBuilder/LauncherStore for File.Exists reads only), dialog follows the existing pure-C# code-behind pattern (matches ConfirmBatchLaunchWindow), MainWindowViewModel.Discovery reuses the existing snapshot + atomic-save + rollback pipeline (no second persistence path), tests cover scanner PATH resolution, version regex, per-agent failure isolation, dedup against existing entries, and rollback on save failure.
+- Verdict: north-star for narrowing "auto-detect + one-click add" to the documented 8-agent CLI market on Windows. It is not a cross-platform auto-installer and does not claim universal coverage of every future agent.
+- Remaining gap: catalog must be refreshed when a new agent CLI reaches market adoption; absent agents are silently skipped (not a failure), so users won't see agents they haven't installed.
+
 ## Gaps that block a broad-domain north-star claim
 
 These are not defects in the current narrow product. They are the reasons not to claim "best launcher/automation tool in the whole domain":
@@ -530,7 +542,7 @@ Objective verdict classes used below:
 
 Objective status count: proven-current-scope=1,proven-audit-only=1,contradicted=1,false-broad-scope=1,preserved-current-scope=1,impossible-absolute=1
 Full objective result: not-complete-as-written
-Feature north-star coverage: current-active-features=21,narrow-north-star=21,non-north-star=0
+Feature north-star coverage: current-active-features=22,narrow-north-star=22,non-north-star=0
 Blocked absolute requirements: unimprovable-product,stronger-than-every-github-similar,absolute-confidence-zero-side-effects
 
 Objective claim impact tokens used below:
@@ -545,12 +557,12 @@ Objective claim impact tokens used below:
 - Requirement: evaluate every active feature.
   - Requirement id: evaluate-every-active-feature
   - Claim impact: supports-current-feature-coverage
-  - Evidence: the 21 feature sections above cover every active feature mapping documented in `README.md` and the current Avalonia mainline scope.
+  - Evidence: the 22 feature sections above cover every active feature mapping documented in `README.md` and the current Avalonia mainline scope.
   - Status: proven-current-scope — the audit covers the current repository scope.
 - Requirement: decide whether each feature is battle-practice or market-proven north-star.
   - Requirement id: classify-battle-practice-or-market-proven
   - Claim impact: classifies-without-supremacy
-  - Evidence: every feature section has a real problem, controlled proof type, controlled verdict level, controlled gap class, data owner, evidence, verdict, and remaining gap; all 21 current feature sections now have `Verdict level: narrow-north-star`; the GitHub snapshot separates narrow direct competitors from broad launchers.
+  - Evidence: every feature section has a real problem, controlled proof type, controlled verdict level, controlled gap class, data owner, evidence, verdict, and remaining gap; all 22 current feature sections now have `Verdict level: narrow-north-star`; the GitHub snapshot separates narrow direct competitors from broad launchers.
   - Status: proven-audit-only — the classification is proven as an audit, not as a universal supremacy claim.
 - Requirement: current ability is already unimprovable.
   - Requirement id: prove-unimprovable-current-ability
@@ -638,7 +650,7 @@ Evidence owner tokens used below:
 
 The full objective remains not complete as written.
 
-All 21 current feature mappings classify as narrow-domain north-star. The current project is a north-star implementation only for the narrow domain of a portable Windows Terminal workspace launcher. The strongest mappings are launch entries, named presets, adaptive card sizing/density, side-effect-free current-group preview, honest requested-start wording, transient single and batch launch receipts, global launch confirmation, portable settings, JSON persistence/rollback, batch preflight-before-confirmation, exact generated command confirmation, abort-after-first-start-failure, and the native verify/publish gate.
+All 22 current feature mappings classify as narrow-domain north-star. The current project is a north-star implementation only for the narrow domain of a portable Windows Terminal workspace launcher. The strongest mappings are launch entries, named presets, adaptive card sizing/density, side-effect-free current-group preview, honest requested-start wording, transient single and batch launch receipts, global launch confirmation, portable settings, JSON persistence/rollback, batch preflight-before-confirmation, exact generated command confirmation, abort-after-first-start-failure, and the native verify/publish gate.
 
 It is not a broad-domain north star for every launcher or automation product. GitHub market evidence contradicts that broad claim. Building import/export, status history, distribution/update, split panes, or a plugin system now would be speculative unless a real workflow beats the current small local contract.
 

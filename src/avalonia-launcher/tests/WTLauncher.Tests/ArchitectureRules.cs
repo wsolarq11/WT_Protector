@@ -105,8 +105,9 @@ public sealed class ArchitectureRules
     // is a no-op: external framework methods appear only as MethodCallDependency targets,
     // never in MethodMembers (which is restricted to methods defined in loaded assemblies).
     // Type-level is the coarsest check that actually has teeth. LaunchArgumentBuilder
-    // (wt.exe path resolution) and LauncherStore (store-path resolution) are exempted
-    // because their File dependency is File.Exists reads, not writes.
+    // (wt.exe path resolution), LauncherStore (store-path resolution), and
+    // AgentDiscoveryScanner (PATH probe for AI agent CLIs) are exempted because their
+    // File dependency is File.Exists reads, not writes.
 
     [Fact]
     public void R5_Only_LauncherJson_AndKnownReaders_MayDependOn_SystemIoFile_In_Core()
@@ -115,8 +116,9 @@ public sealed class ArchitectureRules
             .And().DoNotHaveFullName("WTLauncher.Core.LauncherJson")
             .And().DoNotHaveFullName("WTLauncher.Core.LaunchArgumentBuilder")
             .And().DoNotHaveFullName("WTLauncher.Core.LauncherStore")
+            .And().DoNotHaveFullName("WTLauncher.Core.AgentDiscoveryScanner")
             .Should().NotDependOnAnyTypesThat().HaveFullName("System.IO.File")
-            .Because("LauncherJson is the single atomic-write gateway; LaunchArgumentBuilder and LauncherStore only do File.Exists reads.");
+            .Because("LauncherJson is the single atomic-write gateway; LaunchArgumentBuilder, LauncherStore and AgentDiscoveryScanner only do File.Exists reads.");
         rule.Check(Architecture);
     }
 

@@ -139,7 +139,7 @@ The verifier currently enforces 18 checks — see the `Add-Check` calls in `tool
 
 - **repo hygiene**: line-ending policy (LF), `.snow/` ignored local state, retired paths (`WT Launcher.exe`, `src/winforms-launcher/`, `spikes/`) do not return;
 - **mainline layout**: `src/avalonia-launcher/` has the solution, app project, tests project, and mainline verify script;
-- **documentation**: `README.md` readability, `docs/feature-reality-north-star-audit.md` keeps 21/21 narrow-domain north-star coverage and the `not-complete-as-written` boundary, claim-boundary ledger separates allowed narrow-scope claims from forbidden broad/unimprovable/universal/absolute-side-effect/post-`wt.exe` claims;
+- **documentation**: `README.md` readability, `docs/feature-reality-north-star-audit.md` keeps 22/22 narrow-domain north-star coverage and the `not-complete-as-written` boundary, claim-boundary ledger separates allowed narrow-scope claims from forbidden broad/unimprovable/universal/absolute-side-effect/post-`wt.exe` claims;
 - **market evidence**: `docs/reference/github-similar-projects-snapshot.json` schema, representative repos, freshness metadata;
 - **launcher.json contract**: top-level `LauncherStoreFile` (schemaVersion=2) parses, unique entry `id`s, preset `entryIds` reference known entries only, every active entry `directory` exists on this machine;
 - **schema invariants**: `config-schema`, `presets-schema`, `settings-json`, `settings-single-source-buildstorefile` (single canonical assembler), `no-stale-three-file-refs` (active docs must not reference abandoned three-file architecture);
@@ -215,6 +215,7 @@ The Avalonia mainline supports:
 - a Cards / Details (“详细列表”) / Names (“名称墙”) view mode toggle for readable actions, dense scanning, and overview;
 - header actions for selecting all visible items or clearing the saved selection;
 - add/edit/delete/clone launch buttons inside the app, with every editable field saved back to portable config; right-click "复制副本" creates a deep copy of an entry;
+- 🔍 **AI Agent CLI auto-discovery** ("🔍 发现" button): scans PATH for installed agent CLIs (claude / codex / cursor / antigravity / gemini / opencode / aider / qwen-code), detects versions, and imports selected ones as launcher entries in one click — already-added agents are greyed out and deduped;
 - named launch groups/presets that replace the saved selection through explicit apply;
 - first-class launch group actions: save current selection as a new group, update the current group from current selection, and delete editable groups;
 - direct launch of the current group without rewriting checkbox selection first;
@@ -230,7 +231,7 @@ The Avalonia mainline supports:
 
 Current gate state:
 
-- the feature audit currently classifies all 21 active feature mappings as narrow-domain north-star for the portable Windows Terminal workspace-launcher scope only;
+- the feature audit currently classifies all 22 active feature mappings as narrow-domain north-star for the portable Windows Terminal workspace-launcher scope only;
 - the full absolute objective remains not complete as written because unimprovable-product, stronger-than-every-GitHub-similar, and absolute zero-side-effect claims are still blocked by current evidence;
 - no current native-gate blocker is known after a fresh `tools/verify.ps1` PASS;
 - this is not a claim that the launcher is unimprovable, stronger than every GitHub alternative, or capable of 0% side effects after starting arbitrary external processes;
