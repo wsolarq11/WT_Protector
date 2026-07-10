@@ -1,0 +1,74 @@
+# yaml-language-server: $schema=https://aka.ms/configuration-dsc-schema/0.2
+# WT Launcher / WT Protector — fresh-machine setup
+#
+# Run: winget configure --file .wt-protector.dsc.yaml
+# Or:  .\tools\apply-machine-config.ps1
+#
+# Declares the minimum prerequisites for WT Launcher to be useful on a fresh
+# Windows machine: Windows Terminal (the launcher starts wt.exe) + PowerShell 7
+# (the default shell). Optional AI agent CLIs are commented out — enable per
+# machine after verifying the winget package id is current.
+#
+# Agent CLIs that ship via `irm | iex` (claude, codex) cannot be installed
+# through winget today; install those manually then run the launcher's
+# "🔍 发现" button to import them as launch entries.
+
+properties:
+  assertions:
+    - resource: Microsoft.Windows.Developer/OsVersion
+      directives:
+        description: Verify Windows 10 1809+ (WinGet minimum requirement)
+        allowPrerelease: true
+      settings:
+        MinVersion: '10.0.17763'
+  resources:
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: windowsTerminal
+      directives:
+        description: Install Windows Terminal (stable)
+      settings:
+        id: Microsoft.WindowsTerminal
+        source: winget
+
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: powershell
+      dependsOn:
+        - windowsTerminal
+      directives:
+        description: Install PowerShell 7.x (stable)
+      settings:
+        id: Microsoft.PowerShell
+        source: winget
+
+    # ── Optional AI agent CLIs ────────────────────────────────────────
+    # Uncomment to install via winget. Verify each package id is current
+    # at https://github.com/microsoft/winget-pkgs before enabling — ids
+    # change as publishers update their manifests.
+    #
+    # - resource: Microsoft.WinGet.DSC/WinGetPackage
+    #   id: opencode
+    #   dependsOn:
+    #     - powershell
+    #   directives:
+    #     description: Install opencode CLI (community)
+    #   settings:
+    #     id: sbssts.opencode
+    #     source: winget
+    #
+    # - resource: Microsoft.WinGet.DSC/WinGetPackage
+    #   id: aider
+    #   dependsOn:
+    #     - powershell
+    #   directives:
+    #     description: Install aider (community)
+    #   settings:
+    #     id: PaulHarris.Aider
+    #     source: winget
+    #
+    # claude / codex / cursor / antigravity / gemini / qwen-code:
+    #   These agents do not currently ship as winget packages. Install
+    #   them via the publisher's documented method (typically `irm | iex`
+    #   for npm-based installers), then run the launcher's 🔍 发现 button
+    #   to import them as launch entries.
+
+  configurationVersion: 0.2.0

@@ -489,6 +489,28 @@ if ($signatureCount -ne 1) {
 }
 Add-Check 'settings-single-source-buildstorefile' @{ signatureCount = $signatureCount }
 
+# task 07-10-winget-machine-ready R4: structural gate for the DSC yaml.
+# ponytail: `winget configure validate` requires DSC v3 on the host — that's a
+# machine-setup dependency, not a dev dependency, so the gate does structural
+# validation only. Run `.\tools\apply-machine-config.ps1 -DryRun` for the full
+# winget validation when DSC v3 is installed.
+$dscPath = Get-RepoPath '.wt-protector.dsc.yaml'
+if (-not (Test-Path -LiteralPath $dscPath)) { throw "Missing .wt-protector.dsc.yaml at repo root (task 07-10-winget-machine-ready R1)" }
+$dscText = Get-Content -Raw -Encoding UTF8 -LiteralPath $dscPath
+$dscRequiredMarkers = @(
+    'configuration-dsc-schema/0.2',
+    'configurationVersion: 0.2.0',
+    'id: Microsoft.WindowsTerminal',
+    'id: Microsoft.PowerShell'
+)
+foreach ($required in $dscRequiredMarkers) {
+    if (-not $dscText.Contains($required)) { throw ".wt-protector.dsc.yaml missing required marker: $required" }
+}
+Add-Check 'winget-config-schema-valid' @{
+    path = '.wt-protector.dsc.yaml'
+    requiredMarkers = @('schema-0.2', 'configVersion-0.2.0', 'WindowsTerminal', 'PowerShell')
+}
+
 New-ToolReceipt 'root-verify' @{
     root = $root
     checks = $checks

@@ -14,8 +14,10 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `docs/feature-first-class-upgrade-audit.md` — current all-capability real-problem and first-class upgrade audit.
 - `.snow/` — ignored local runtime/index state; Git and verification intentionally do not track or validate it.
 - `.gitattributes` — repository line-ending policy; text is normalized as LF to avoid CRLF-only churn.
+- `.wt-protector.dsc.yaml` — WinGet Configuration file declaring fresh-machine prerequisites (Windows Terminal + PowerShell 7); applied via `winget configure` or `tools/apply-machine-config.ps1`.
 - `tools/verify.ps1` — no-interaction local verification gate.
 - `tools/config-lib.ps1` — shared helper functions used by verification and config tools.
+- `tools/apply-machine-config.ps1` — thin wrapper that applies (or `-DryRun` validates) `.wt-protector.dsc.yaml` for fresh-machine setup.
 - `docs/reference/github-similar-projects-snapshot.json` — current GitHub similar-project evidence used by the feature north-star audit.
 - `tools/update-github-similar-projects-snapshot.ps1` — refreshes that market snapshot through `gh repo view`; the root gate rejects stale snapshots.
 - `docs/giants-shoulders/` — "巨人肩膀库": curated external project lessons and source links for future stack/reflection decisions.
@@ -127,6 +129,34 @@ Startup arguments are intentionally strict: the app accepts only one optional `-
 
 The app reads and writes `config/launcher.json` as the unified store (entries, presets, settings all in one file). It does not use AppData or the registry for launcher state.
 
+## Fresh-machine setup
+
+The launcher needs Windows Terminal + PowerShell 7 on the host. A WinGet Configuration file at repo root (`.wt-protector.dsc.yaml`) declares these prerequisites declaratively so a fresh Windows machine converges to the declared state in one command:
+
+```powershell
+winget configure --file .\.wt-protector.dsc.yaml
+```
+
+Or the thin wrapper (resolves the path, exposes a `-DryRun` validate-only mode):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\apply-machine-config.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\apply-machine-config.ps1 -DryRun
+```
+
+What the configuration does:
+
+- Asserts Windows 10 1809+ via `Microsoft.Windows.Developer/OsVersion` before applying anything.
+- Installs `Microsoft.WindowsTerminal` and `Microsoft.PowerShell` through the `Microsoft.WinGet.DSC/WinGetPackage` resource (idempotent — safe to re-run).
+- Optional AI agent CLIs (`opencode`, `aider`) are commented out; uncomment only after verifying the winget package id is current at `microsoft/winget-pkgs`, since publisher manifests change.
+
+WinGet Configuration vs the launcher — different concerns, complementary layers:
+
+- **WinGet Configuration** sets up the *machine*: "what's installed on this Windows host". Run once on a fresh machine.
+- **The launcher** manages the *workspace*: "which project folders open in `wt.exe` with which command". Daily use.
+
+Agent CLIs that ship via `irm | iex` (`claude`, `codex`, `cursor`, `antigravity`, `gemini`, `qwen-code`) are not winget packages today. Install them per the publisher's documented method, then run the launcher's 🔍 发现 button to import them as launch entries — the two layers compose: WinGet/irm installs the binary, the launcher wires it into a workspace button.
+
 ## Build and verification
 
 Run the project gate from the repository root:
@@ -135,7 +165,7 @@ Run the project gate from the repository root:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
 ```
 
-The verifier currently enforces 18 checks — see the `Add-Check` calls in `tools/verify.ps1` for the canonical list. Summary by category:
+The verifier currently enforces 19 checks — see the `Add-Check` calls in `tools/verify.ps1` for the canonical list. Summary by category:
 
 - **repo hygiene**: line-ending policy (LF), `.snow/` ignored local state, retired paths (`WT Launcher.exe`, `src/winforms-launcher/`, `spikes/`) do not return;
 - **mainline layout**: `src/avalonia-launcher/` has the solution, app project, tests project, and mainline verify script;
@@ -144,6 +174,7 @@ The verifier currently enforces 18 checks — see the `Add-Check` calls in `tool
 - **launcher.json contract**: top-level `LauncherStoreFile` (schemaVersion=2) parses, unique entry `id`s, preset `entryIds` reference known entries only, every active entry `directory` exists on this machine;
 - **schema invariants**: `config-schema`, `presets-schema`, `settings-json`, `settings-single-source-buildstorefile` (single canonical assembler), `no-stale-three-file-refs` (active docs must not reference abandoned three-file architecture);
 - **retirement hygiene**: shortcut-backup retirement, WinForms retired design (`retired/design/winforms-launcher.md`), HTA retired config;
+- **machine setup**: `.wt-protector.dsc.yaml` exists at repo root and carries the required DSC v3 schema markers (`configuration-dsc-schema/0.2`, `configurationVersion: 0.2.0`) plus the two required `WinGetPackage` resources (`Microsoft.WindowsTerminal`, `Microsoft.PowerShell`); structural validation only — run `tools/apply-machine-config.ps1 -DryRun` for winget's own schema validation when DSC v3 is installed;
 - **Avalonia mainline**: restore/test/isolated verification publish passes; on Windows a hidden temp-config startup smoke of the published exe; non-Windows hosts skip GUI smoke after win-x64 publish verification.
 
 The final verifier line is a JSON receipt with `schemaVersion`, `kind`, `status`, `repoHead`, `worktreeDirty`, and `worktreeStatus` fields before tool-specific evidence. The Avalonia mainline receipt uses the same schema and is checked by the root gate.

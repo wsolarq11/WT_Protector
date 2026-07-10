@@ -9,6 +9,7 @@ WT_Protector/
 ├── AGENTS.md              ← 你在这里。全仓导航中枢
 ├── README.md              → 详细项目文档（配置schema、安全说明、功能清单）
 ├── DESIGN.md              → 设计契约（品牌、原则、视觉语言、组件所有权）
+├── .wt-protector.dsc.yaml → WinGet Configuration：新机就绪层（Windows Terminal + PowerShell 7）
 ├── config/                → 运行时配置（JSON, 人可读写）
 │   └── launcher.json      → 统一存储：启动条目 + 命名启动组 + UI 偏好 + defaultPresetId
 ├── src/
@@ -38,8 +39,9 @@ WT_Protector/
 
 | 脚本                                          | 用途                                                                                                                                                                                                     | 何时用                                               |
 | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `verify.ps1`                                  | **全量门禁**：18 项检查（行尾策略、`.snow/` 忽略状态、退役路径、主线布局、README、功能审计、声明边界、GitHub 快照、launcher.json schema、config-schema、presets-schema、settings-json、settings-single-source、no-stale-three-file-refs、快捷方式退役、WinForms 退役、HTA 归档、Avalonia 主线测试+发布+GUI 冒烟） | 每次提交前；声称"完成"前                             |
+| `verify.ps1`                                  | **全量门禁**：19 项检查（行尾策略、`.snow/` 忽略状态、退役路径、主线布局、README、功能审计、声明边界、GitHub 快照、launcher.json schema、config-schema、presets-schema、settings-json、settings-single-source、no-stale-three-file-refs、快捷方式退役、WinForms 退役、HTA 归档、winget-config-schema-valid、Avalonia 主线测试+发布+GUI 冒烟） | 每次提交前；声称"完成"前                             |
 | `build-release.ps1`                           | **稳定发布构建**：win-x64 self-contained publish → `src/avalonia-launcher/artifacts/publish/win-x64/`                                                                                                    | 需要产出可分发的 exe 时                              |
+| `apply-machine-config.ps1`                    | **新机配置包装器**：`winget configure --file .wt-protector.dsc.yaml`；`-DryRun` 仅 validate                                                                                                              | 拿到新 Windows 机器、想一键声明式安装前置依赖时      |
 | `config-lib.ps1`                              | **共享 PowerShell 函数库**：被 verify.ps1、build-release.ps1 等引用                                                                                                                                      | 不直接调用；被其他脚本 dot-source                    |
 | `test-launch-args.ps1`                        | **聚焦测试**：仅运行 LaunchArgumentBuilder 测试                                                                                                                                                          | 快速验证启动参数逻辑                                 |
 | `update-github-similar-projects-snapshot.ps1` | **刷新 GitHub 对标快照**：通过 `gh repo view` 拉取 12 个对标项目的最新数据                                                                                                                               | 需要更新市场对标证据时（快照超过 30 天会被门禁拒绝） |
