@@ -1237,3 +1237,36 @@ Executed 7-step /goal chain after 改造 1-5 wave. trellis-check: 460/460 tests 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 36: Session: /goal pipeline (check/break-loop/update-spec/dream/finish-work)
+
+**Date**: 2026-07-10
+**Task**: Session: /goal pipeline (check/break-loop/update-spec/dream/finish-work)
+**Branch**: `main`
+
+### Summary
+
+Executed 7-step /goal pipeline. trellis-check: gate PASS 19 checks/505 tests. trellis-break-loop: bare catch root cause = implicit assumption, added no-bare-catch-exception gate check (19->20 checks). trellis-update-spec: added Catch Filter Convention code-spec depth to error-handling.md + M12 meta-lesson to pitfalls.md. dream: +2 memory files (project_per_agent_branding, feedback_spec_invariant_gate_enforcement) + 3 MEMORY.md index entries. Iron rule audit: zero tests weakened, gate standard RAISED (added regression-prevention check). finish-work: phase 3.4 batch commit 7935b3b.
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `7935b3b` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
