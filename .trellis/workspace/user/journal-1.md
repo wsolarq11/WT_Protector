@@ -1203,3 +1203,37 @@ PASS：build-release + verify 18/18 + 453 xUnit + GUI smoke + 21-feature 弱代�
 ### Next Steps
 
 - None - task complete
+
+
+## Session 35: Post-reorg /goal chain: check + break-loop + update-spec + dream(N/A) + finish-work
+
+**Date**: 2026-07-10
+**Task**: Post-reorg /goal chain: check + break-loop + update-spec + dream(N/A) + finish-work
+**Branch**: `main`
+
+### Summary
+
+Executed 7-step /goal chain after 改造 1-5 wave. trellis-check: 460/460 tests + build clean, identified 7 spec drifts. trellis-break-loop: N/A (no debug loop). trellis-update-spec: synced persistence.md (Skip→Disallow), quality-guidelines.md (ArchUnitNET R1/R2/R3/R6 invariants + dropped hardcoded count), tests/index.md + test-patterns.md (new ArchUnitNET section with type-level vs method-level gotcha). dream: skill not found locally or globally — N/A. Hard constraint audit: zero tests weakened; net +7 tests + 1 reversal (lenient→strict). finish-work: archived 6 tasks (5 改造 children + 1 parent mainline).
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1732754` | (see git log) |
+| `e4398b3` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
