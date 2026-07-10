@@ -1133,3 +1133,40 @@ Executed 7-step /goal workflow after 07-09-project-wide-reorg archive. (1) /trel
 ### Next Steps
 
 - None - task complete
+
+
+## Session 33: Modernization wave P2-P7 + dependency upgrades + pitfalls §3.11-3.12
+
+**Date**: 2026-07-10
+**Task**: Modernization wave P2-P7 + dependency upgrades + pitfalls §3.11-3.12
+**Branch**: `main`
+
+### Summary
+
+Landed the full modernization wave (P2-P7): analysis-level latest-recommended + EnforceCodeStyleInBuild + NuGetAudit MSBuild properties, narrowed 5 real CA violations, demoted 4 architectural/style rules to suggestions via .editorconfig. Upgraded Avalonia 12.0.3→12.1.0, coverlet 6.0.4→10.0.1, Test.Sdk 18.6→18.7. Zero regressions: build 0/0, tests 453/453, verify.ps1 18/18. CompiledBindings kept off (100 AVLN errors from ~30 DataTemplates without x:DataType — negative ROI for single-user launcher). Added pitfalls §3.11 (.NET 10 NuGet audit = MSBuild property not CLI flag) and §3.12 (xunit.v3 xUnit1051 = CancellationToken propagation not IDisposable). Refreshed github-similar-projects snapshot via curl+Python fallback (gh CLI unavailable, Invoke-RestMethod 403).
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ad9d80f` | (see git log) |
+| `4e8f90d` | (see git log) |
+| `8809ce3` | (see git log) |
+| `4811df3` | (see git log) |
+| `671f583` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

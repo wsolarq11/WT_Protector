@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 32
+- **Total Sessions**: 33
 - **Last Active**: 2026-07-10
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1135 | Active |
+| `journal-1.md` | ~1172 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 33 | 2026-07-10 | Modernization wave P2-P7 + dependency upgrades + pitfalls §3.11-3.12 | `ad9d80f`, `4e8f90d`, `8809ce3`, `4811df3`, `671f583` | `main` |
 | 32 | 2026-07-10 | post-reorg /goal chain: check + break-loop + update-spec + dream + finish-work | `988db9c` | `main` |
 | 31 | 2026-07-09 | Residual backlog clearance: 6 items, 5 NO-ACTION + 0 speculative abstractions | `78689c8`, `1a1a20f` | `main` |
 | 30 | 2026-07-09 | Settings single-source-of-truth refactor: R5 fix + R2 docs + R3 pin | `d1969be` | `main` |
