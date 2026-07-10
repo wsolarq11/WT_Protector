@@ -25,9 +25,11 @@ WT_Protector/
 ├── tools/                 → 🧰 脚本工具箱（详见下方）
 ├── docs/                  → 设计审计、基准对标、巨人肩膀库
 │   ├── feature-reality-north-star-audit.md → 21项功能审计 + 声明边界账本
+│   ├── feature-first-class-upgrade-audit.md → 23项功能一等公民改造审计 (2026-06-10)
 │   ├── design-benchmark-digest.md          → 12项外部设计基准 → 本地验收规则
 │   ├── giants-shoulders/  → 巨人肩膀库（外部项目教训）
-│   └── reference/         → GitHub对标快照 + 快捷方式退役清单
+│   ├── reference/         → GitHub对标快照 + 快捷方式退役清单
+│   └── research/          → 探索性研究（含 architecture-zero.md 退路方案，非行动方案）
 └── retired/               → 退役归档（旧HTA启动器 + WinForms设计教训）
     └── README.md          → 退役说明
 ```

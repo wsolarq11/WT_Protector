@@ -1,5 +1,11 @@
 # Architecture Zero — Eliminate the Launcher Entirely
 
+> **Status (2026-07-10): Contingency record, not an active recommendation.**
+> This document explores eliminating the GUI entirely. After the v2 AI Agent
+> Discovery feature lands (parent task `07-10-v2-agent-discovery-and-hygiene`),
+> the GUI's product value increases. Keep this doc as the "if we ever abandon
+> the GUI" fallback audit; do not act on it as a migration plan.
+
 > Research result: "深度全网deepsearch调研出新架构来剪掉一切问题的源头"
 > 2026-07-06
 
