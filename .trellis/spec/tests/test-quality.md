@@ -54,7 +54,7 @@ Every command (Add/Edit/Delete/Launch/Reorder) must test:
 
 ## Line Ending Contract
 
-All persisted JSON uses LF (`\n`) — verified by `tools/verify.ps1` (the `launcher-uses-lf-line-endings` check), not by per-test unit assertions. `LauncherJson.NormalizeLineEndings` enforces it at write time inside `Save`. No test-side fixture method is needed.
+All persisted JSON uses LF (`\n`). `LauncherJson.NormalizeLineEndings` enforces it at write time inside `Save`, so every byte stream written through `LauncherStore.Save` is LF-normalized regardless of input. The repo-level `.gitattributes` LF policy is enforced by the `line-ending-policy` check in `tools/verify.ps1` (that check inspects `.gitattributes`, not `launcher.json` bytes). No per-test fixture method is needed.
 
 ---
 

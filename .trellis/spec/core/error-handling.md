@@ -18,7 +18,7 @@ The 2026-07-09 schema-driven-architecture audit re-examined whether the exceptio
 
 **Why exceptions remain correct for this codebase:**
 1. **Modern .NET practice (2025) confirms the split**: Result pattern for EXPECTED business-domain errors (validation, not-found, permission); exceptions for UNEXPECTED technical errors (I/O failure, contract violation, deserialization). Single-user launcher persistence failures are UNEXPECTED.
-2. **No bug to cut**: 451 tests pass; the audit cited no specific bug caused by exception flow. "Exception-based control flow" was a misread — the 20+ `catch` sites are error boundaries, not control-flow branches.
+2. **No bug to cut**: the test suite (count evolves; run `dotnet test -c Release` for current numbers) passes, and the audit cited no specific bug caused by exception flow. "Exception-based control flow" was a misread — the 20+ `catch` sites are error boundaries, not control-flow branches.
 3. **Cost > benefit**: ~50 throw sites + ~20 catch sites + ~50 tests would have to change to introduce a single-implementation `StoreError` abstraction (ponytail: no abstraction with one implementation).
 4. **Layered discipline already in place**: value-object `Parse` (Parse-Don't-Validate), `ExceptionFilters.IsRecoverable` (fatal/recoverable classifier), `ExceptionMessageFormatter.ForUser` (UI sanitization), `LauncherPersistenceStatus.*` (typed status factories).
 
