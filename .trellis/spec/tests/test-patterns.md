@@ -26,10 +26,13 @@
 Each test shared file provides factory methods for creating test data:
 
 ```csharp
-// LauncherPersistenceTestFixtures.cs
-private static LauncherPresetFile PresetFile(string name, params string[] entryIds) => ...;
-private static LaunchEntry Entry(bool selected = false) => ...;
+// LauncherPersistenceTestFixtures.cs (persistence-roundtrip helpers)
+public static LaunchEntry Entry(string id) => new() { Id = id, Name = id, Directory = ..., Command = "pwsh" };
+public static LauncherPresetFile PresetFile(params LauncherPreset[] presets) => new() { ... };
+public static LauncherPreset Preset(string id, params string[] entryIds) => new() { ... };
 ```
+
+ViewModel-area tests have their own private `Entry(id, name?, directory?, command?, selected?)` factory in `MainWindowViewModelTests.Shared.cs` for behavior-test ergonomics.
 
 **Rules:**
 1. Factory methods are `private static` in the test class or shared file.
@@ -120,17 +123,17 @@ Test extracted pure functions, not Avalonia controls.
 
 **Examples:**
 - `MainWindowDragInsertDecisionTests.cs` — pure drop target logic
-- `MainWindow.Drag.cs (inline)Tests.cs` — ghost creation
+- `LauncherDragGhostLayoutCalculatorTests.cs` — ghost element layout math
 - `MainWindowEntryCardResolverTests.cs` — visual tree resolution
-- `MainWindowReorderFlipAnimationTests.cs` — FLIP math (removed 2026-06-23; FLIP animation retired)
+- `MainWindowEntryRowDoubleTapTests.cs` — double-tap launch decision
 
 ### Contract Tests
 
 Verify structural contracts that span layers:
 
 - `StatusTextContractTests.cs` — status text format contracts
-- `MainWindowViewModelTests.CollectionContractTests.cs` — collection invariants (ordering, dedup, length bounds)
-- `MainWindowViewModelTests.DialogBoundaryTests.cs` — dialog round-trip contracts (open / accept / cancel / validation)
+- `MainWindowViewModelTests.CollectionContractTests.cs` — collection invariants (read-only projection consistency, entry snapshot equivalence)
+- `MainWindowViewModelTests.DialogBoundaryTests.cs` — dialog delegate boundary contracts (null-handler rejection on `RequestEntryDraftAsync` / `ConfirmLaunchAsync` / etc.)
 - `MainWindowViewModelTests.PresetPersistenceTests.cs` — preset save/load round-trip
 
 ---

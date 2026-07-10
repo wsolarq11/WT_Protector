@@ -54,17 +54,7 @@ Every command (Add/Edit/Delete/Launch/Reorder) must test:
 
 ## Line Ending Contract
 
-**Source:** `LauncherPersistenceTestFixtures.cs`
-
-```csharp
-private static void AssertUsesRepositoryLineEndings(string text)
-{
-    Assert.EndsWith("\n", text, StringComparison.Ordinal);
-    Assert.DoesNotContain("\r", text);
-}
-```
-
-Every test that writes a JSON file asserts LF line endings.
+All persisted JSON uses LF (`\n`) — verified by `tools/verify.ps1` (the `launcher-uses-lf-line-endings` check), not by per-test unit assertions. `LauncherJson.NormalizeLineEndings` enforces it at write time inside `Save`. No test-side fixture method is needed.
 
 ---
 
