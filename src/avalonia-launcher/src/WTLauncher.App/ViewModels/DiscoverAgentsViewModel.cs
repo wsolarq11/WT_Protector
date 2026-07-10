@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Immutable;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -67,10 +68,14 @@ public sealed partial class DiscoverAgentsViewModel : ObservableObject
                     ? "未发现任何已安装的 AI Agent"
                     : $"发现 {result.Found.Length} 个 AI Agent";
             }
-            catch (Exception)
+            catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
             {
                 // ponytail: per-agent failures are already captured in the result.
-                // Surface a generic error; do not crash the dialog.
+                // Surface a generic error; do not crash the dialog. Narrowed via
+                // ExceptionFilters so unrecoverable faults (OOM/SEH/AccessViolation)
+                // crash instead of being hidden behind a status string — matches
+                // MainWindowViewModel.Discovery dialog-open catch pattern.
+                ErrorLog.Write(ex, "DiscoverAgents.Scan");
                 StatusText = "扫描过程中发生错误";
             }
             finally
