@@ -6,11 +6,14 @@
 
 ## Invariants (Must Never Break)
 
-1. **Core never references Avalonia** — verified by `dotnet test`.
-2. **Core never references CommunityToolkit.Mvvm** — verified by `dotnet test`.
-3. **All persisted JSON uses LF (`\n`) line endings** — verified by `verify.ps1`.
-4. **`launcher.json` entries always have `id`, `name`, `directory`, `command` non-empty** — enforced by `LauncherStore`.
-5. **One source per state** — view mode, sort mode, drag session, card density each have exactly ONE writable owner.
+1. **Core never references Avalonia** — enforced at test time by `ArchitectureRules.R1_Core_MustNotReference_Avalonia` (ArchUnitNET type-level dependency rule).
+2. **Core never references CommunityToolkit.Mvvm** — enforced by `ArchitectureRules.R2_Core_MustNotReference_CommunityToolkitMvvm`.
+3. **Core never references `WTLauncher.App`** (dependency direction) — enforced by `ArchitectureRules.R3_Core_MustNotDependOn_App` and `R6_Core_MustNotReference_AppViewModels`.
+4. **All persisted JSON uses LF (`\n`) line endings** — verified by `verify.ps1`.
+5. **`launcher.json` entries always have `id`, `name`, `directory`, `command` non-empty** — enforced by `LauncherStore`.
+6. **One source per state** — view mode, sort mode, drag session, card density each have exactly ONE writable owner.
+
+The architecture rules live in `tests/WTLauncher.Tests/ArchitectureRules.cs`. See [Tests / Architecture Rules](../tests/test-patterns.md#architecture-rules-archunitnet) for the ArchUnitNET patterns and the type-level vs method-level gotcha.
 
 **Source:** `src/avalonia-launcher/README.md` — "Key invariants" section.
 
@@ -35,9 +38,9 @@ Per `DESIGN.md` token ownership rules:
 
 ## Testing Requirements
 
-**Test framework:** xUnit
-**Test project:** `tests/WTLauncher.Tests/` — 61 test files
-**Run gate:** `dotnet test -c Release` (451 tests, updated 2026-07-09)
+**Test framework:** xUnit (v3) + ArchUnitNET for architecture invariants
+**Test project:** `tests/WTLauncher.Tests/` — file/test counts evolve; run `ls tests/WTLauncher.Tests/*.cs | wc -l` and `dotnet test -c Release` for current numbers
+**Run gate:** `dotnet test -c Release` — all tests must pass before commit
 
 ### Test Categories
 

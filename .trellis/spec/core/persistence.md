@@ -63,7 +63,7 @@ internal static readonly JsonSerializerOptions Options = new()
 {
     ReadCommentHandling = JsonCommentHandling.Skip,
     AllowTrailingCommas = true,
-    UnmappedMemberHandling = JsonUnmappedMemberHandling.Skip,
+    UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
     WriteIndented = false,
     MaxDepth = 64,
     Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -72,8 +72,20 @@ internal static readonly JsonSerializerOptions Options = new()
 
 **Key decisions:**
 - `AllowTrailingCommas = true` → user-friendly config editing.
-- `UnmappedMemberHandling = Skip` → forward-compatible: old binaries load configs with new fields. SchemaVersion provides version gating instead.
+- `UnmappedMemberHandling = Disallow` → **schema-first**: the C# record IS the schema contract. Any JSON key not declared as `[JsonPropertyName]` on the corresponding record fails loudly at load time. Updated 2026-07-10 (task 07-10-schema-first-persistence-strict-mode) — see "Schema-First Enforcement" below.
 - `UnsafeRelaxedJsonEscaping` → Chinese characters stay readable in JSON.
+
+### Schema-First Enforcement: `Disallow` (2026-07-10, task 07-10-schema-first-persistence-strict-mode)
+
+`UnmappedMemberHandling = Disallow` (.NET 9+ native) makes the C# record the **single source of truth** for JSON structure. Before this change, `Skip` silently dropped unknown keys, which meant:
+
+- Renaming a `[JsonPropertyName]` left orphan JSON keys that loaded as defaults silently.
+- Removing a field from a record didn't flag stale data still on disk.
+- `settings.schemaVersion` (legacy dual-versioning, removed 2026-07-09) would have silently drifted forever.
+
+With `Disallow`, every unmapped key throws `JsonException` at load time. This is correct for app-internal sole-author sole-reader persistence: the same binary writes and reads, so any drift is a real bug to surface, not a compatibility scenario to paper over.
+
+**Trade-off accepted:** no silent forward-compatibility. If a future binary writes a field an older binary doesn't know, the older binary fails loudly. That's the right default for a self-contained local launcher (no rolling upgrades across nodes, no mixed-version fleets). For API contracts or externally-authored config, use Corvus.JsonSchema instead.
 
 ---
 
@@ -107,7 +119,7 @@ The store is a **single file** `config/launcher.json` owning five sections toget
 
 **Why single source:** The whole file is one atomic unit (single-file persistence). Versioning the settings section separately from entries/presets has no meaning — they all migrate together. The previous `LauncherSettings.SchemaVersion = 1` was a dead field never validated, and 4 mutation sites reset it on every save — confusing and bug-prone.
 
-**Forward compatibility:** Old `launcher.json` files with `settings.schemaVersion` baked in still load cleanly because `UnmappedMemberHandling = Skip` discards unknown properties during deserialization. The legacy field silently disappears on the next save.
+**Forward compatibility:** Rejected in favor of fail-loud (2026-07-10). With `UnmappedMemberHandling = Disallow`, any `launcher.json` file still carrying the legacy `settings.schemaVersion` key now throws `JsonException` at load time rather than silently dropping it. This is the intended behavior: the legacy field was removed specifically to eliminate dual-source drift, and silent acceptance would re-introduce that drift. Pinned by `LauncherStoreLoadFailureTests.LauncherSettings_LegacySchemaVersionInJson_IsRejectedByStrictSchema`.
 
 **Decision:** Schema-First migration (Corvus.JsonSchema source generator) was rejected — C# records ARE the schema for app-internal persistence. Adding a JSON Schema file would create a second source of truth and increase drift risk, not decrease it. Corvus is correct for API contracts / externally-authored config, not for sole-author sole-reader app persistence.
 
@@ -117,7 +129,7 @@ A versioned `SchemaMigrationRegistry` (EF Core / Rails style) was considered and
 
 **Why deferred:**
 - Registry requires at least 2 migration paths to justify the abstraction (else it's an "interface with one implementation").
-- Forward-compatible field additions (`UnmappedMemberHandling = Skip` + default values) handle most schema growth without any migration code.
+- Field additions inside an existing record are now **breaking changes** under `UnmappedMemberHandling = Disallow` (2026-07-10): removing or renaming a `[JsonPropertyName]` fails loudly on the next load of any pre-change file. This is the intended schema-first contract — it does not eliminate migration work, it just surfaces it immediately instead of letting it drift silently. The current migration surface is still one path, and now it cannot grow unnoticed.
 - The 60-line static `MigrateFromLegacyFiles` is well-tested, self-documenting, and isolated.
 
 **When to revisit:**

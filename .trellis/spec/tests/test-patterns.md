@@ -134,6 +134,61 @@ Verify structural contracts that span layers:
 
 ---
 
+## Architecture Rules (ArchUnitNET)
+
+**Source:** `tests/WTLauncher.Tests/ArchitectureRules.cs`
+
+Architecture invariants that prose `quality-guidelines.md` rules translate into executable checks. Violations fail `dotnet test` immediately, not after human review.
+
+**Packages:** `TngTech.ArchUnitNET` 0.13.3 + `TngTech.ArchUnitNET.xUnitV3` 0.13.3 (in `Directory.Packages.props`).
+
+**Rules currently encoded (R1-R6):**
+- R1: Core must not reference `Avalonia.*`
+- R2: Core must not reference `CommunityToolkit.*`
+- R3: Core must not depend on `WTLauncher.App.*` (dependency direction)
+- R4: ViewModels must not depend on `System.IO.File` (persistence gateway rule)
+- R5: Only `LauncherJson` + known readers (`LaunchArgumentBuilder`, `LauncherStore`) may depend on `System.IO.File` inside Core
+- R6: Core must not reference `WTLauncher.App.ViewModels.*` (belt-and-suspenders to R3)
+
+### Critical Gotcha: Type-Level vs Method-Level Rules
+
+ArchUnitNET's `MethodMembers` collection **only contains methods defined in loaded assemblies**. External framework methods (`System.IO.File.WriteAllText`, `System.IO.File.Exists`, etc.) appear **only** as `MethodCallDependency` targets, never as `MethodMembers`.
+
+A rule like this is a **silent no-op** — it matches an empty set and passes vacuously:
+
+```csharp
+// ❌ WRONG — vacuously true, never catches violations
+Types().That().Are(CoreLayer)
+    .Should().NotCallAny(
+        MethodMembers().That().HaveFullName("System.IO.File.WriteAllText"))
+    .Because("...");
+```
+
+Use the **type-level** formulation instead — it resolves via the `arch.Types` dependency edges and actually catches the violation:
+
+```csharp
+// ✅ Correct — type-level dependency check
+Types().That().Are(CoreLayer)
+    .Should().NotDependOnAnyTypesThat().HaveFullName("System.IO.File")
+    .Because("...");
+```
+
+The trade-off: type-level is coarser — it also catches read-only `File.Exists` callers, not just writers. If that matters, narrow with explicit per-type exemptions (see R5's `DoNotHaveFullName(...)` exclusions for `LaunchArgumentBuilder` and `LauncherStore`, which only do reads).
+
+### Critical Gotcha: `IObjectProvider` Is a Stateful Builder
+
+Each `[Fact]` method must build **fresh** predicates. ArchUnitNET's `IObjectProvider<T>` accumulates state across `That()` chains; reusing a static provider across multiple rules silently merges their conditions. Pattern in `ArchitectureRules.cs`: every test declares its own local `IArchRule rule = Types()...` inside the method body.
+
+### Adding a New Rule
+
+1. Add a new `[Fact]` method `R7_<Layer>_<Constraint>`.
+2. Build the predicate inline (don't reuse static providers — see gotcha above).
+3. Decide type-level vs method-level based on whether the target is in a loaded assembly.
+4. If exempting specific types, add `.And().DoNotHaveFullName("...")` clauses with a `Because(...)` comment naming the reason.
+5. Cross-reference the new rule from `quality-guidelines.md` invariants table.
+
+---
+
 ## Mocking Strategy
 
 **No mocking framework.** The project uses hand-rolled test doubles:
