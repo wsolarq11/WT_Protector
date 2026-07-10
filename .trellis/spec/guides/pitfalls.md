@@ -395,6 +395,15 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **修复** | 将收集时机从每次按键改为仅按 Enter 键时写入，并补齐 AutoCompleteBox 下拉消费端。数据模型和验证保留（向后兼容）。 |
 | **适用** | 每添加一个数据收集路径，必须同时有对应的消费路径。高频写入应降为有意义的触发点（如回车），而非每次输入事件。 |
 
+### M12. Spec 不变量必须有 gate 强制层，否则会漂移
+
+| 来源 | 2026-07-10 任务 `07-10-discovery-scan-narrow-catch`（提交 `266aa6f`） |
+|---|---|
+| **问题** | `.trellis/spec/guides/index.md` §5 "Never `catch (Exception)` — Narrow It" 不变量已存在多时，但 `4c67183 feat(discovery)` 任务合入时仍在 `DiscoverAgentsViewModel.ScanAsync:70` 引入了裸 `catch (Exception)`。spec 写了规则，gate 没有强制执行 → 新代码能违反不变量合入。 |
+| **修复** | (1) 修源码（narrow 化为 `when (ExceptionFilters.IsRecoverable(ex))` + `ErrorLog.Write`）；(2) 在 `tools/verify.ps1` 加 `no-bare-catch-exception` 检查，扫 `src/avalonia-launcher/src/**/*.cs` 排除 obj/bin，任何 `catch (Exception)` 或 `catch (Exception ex)` 且同行无 `when` 都让 gate 失败；(3) 更新 spec 引用 gate 强制层。 |
+| **适用** | **每条 spec 不变量都问：gate 在哪里强制？** 如果答案"没有"，这条不变量只是建议。所有可静态检测的不变量（裸 catch、硬编码颜色、retired 路径回归、schema 字段名等）都应在 `tools/verify.ps1` 有对应检查。**spec/guides + gate check = 完整不变量**。 |
+| **元模式** | 这与 M2 互补：M2 说"不要削弱 gate 换速度"，M12 说"不要让不变量没 gate"。两者一起 = gate 既是底线也是天花板。 |
+
 ---
 
 ## 维护规则

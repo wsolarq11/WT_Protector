@@ -64,6 +64,32 @@ foreach ($forbidden in @('spikes', 'src\winforms-launcher', 'WT Launcher.exe', '
 }
 Add-Check 'retired-paths-removed' @{ paths = @('spikes', 'src\winforms-launcher', 'WT Launcher.exe', 'WT Launcher') }
 
+# Spec invariant .trellis/spec/guides/index.md §5: "Never catch (Exception) — Narrow It".
+# A bare catch swallows unrecoverable exceptions (OOM/SEH/AccessViolation) behind a
+# status string, hiding real bugs. Enforcing here prevents future regressions of the
+# bug fixed in 266aa6f. Filtered catches (`catch (Exception ex) when (...)`) are allowed.
+$srcRootForCatchCheck = Join-Path $root 'src/avalonia-launcher/src'
+$csFilesForCatchCheck = Get-ChildItem -LiteralPath $srcRootForCatchCheck -Recurse -Filter '*.cs' |
+    Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' }
+$bareCatchViolations = @()
+foreach ($file in $csFilesForCatchCheck) {
+    $lineNum = 0
+    foreach ($line in Get-Content -LiteralPath $file.FullName -Encoding UTF8) {
+        $lineNum++
+        if ($line -match 'catch\s*\(\s*Exception\b' -and $line -notmatch '\bwhen\b') {
+            $bareCatchViolations += "$($file.FullName.Substring($root.Length)):$lineNum"
+        }
+    }
+}
+if ($bareCatchViolations.Count -gt 0) {
+    throw "Bare catch(Exception) found (use catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex)) or specific types): $($bareCatchViolations -join '; ')"
+}
+Add-Check 'no-bare-catch-exception' @{
+    path = 'src/avalonia-launcher/src'
+    violations = 0
+    invariant = '.trellis/spec/guides/index.md §5'
+}
+
 $sourceRoot = Get-AvaloniaRoot
 $solution = Get-AvaloniaSolutionPath
 $app = Get-AvaloniaAppProjectPath

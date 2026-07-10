@@ -156,6 +156,90 @@ catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
 
 **CRITICAL:** Exception types are public API. Changing them requires auditing all `Assert.Throws<T>` tests.
 
+### Catch Filter Convention (Gate-Enforced since `266aa6f`)
+
+**Scope / Trigger:** Any `catch` clause in `src/avalonia-launcher/src/**/*.cs`. The `tools/verify.ps1` check `no-bare-catch-exception` rejects any `catch (Exception)` or `catch (Exception ex)` whose source line lacks a `when` filter. This is the architectural enforcement of the bare-catch invariant.
+
+**Signatures:**
+
+```csharp
+// Narrow by exception type — preferred when the caller can enumerate the escapes
+catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SecurityException)
+{
+    // handle
+}
+
+// Orchestration-level — when escapes are not enumerable, narrow via classifier
+catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+{
+    ErrorLog.Write(ex, "<Scope>.<Action>");
+    StatusText = "<user-facing 简体中文 message>";
+}
+```
+
+**Contracts:**
+
+| Field | Type | Constraint |
+|-------|------|-----------|
+| `ExceptionFilters.IsRecoverable(ex)` | `bool` | Returns `false` for `OutOfMemoryException`, `StackOverflowException`, `AccessViolationException`, `SEHException` (after unwrapping `AggregateException` / `TypeInitializationException`, max 16 levels). DEBUG builds rethrow `NullReferenceException` / `IndexOutOfRangeException` / `ArgumentNullException` as `InvalidOperationException` so logic bugs crash during development. |
+| `ErrorLog.Write(ex, context)` | `void` | Writes to `%LOCALAPPDATA%/WTLauncher/errors.log`. Never throws. Internal narrow catches (`IOException \| UnauthorizedAccessException \| DirectoryNotFoundException`). Concurrent writes dropped via `Interlocked.Exchange`, not queued. |
+| Scope string | `string` | `"<Component>.<Action>"` shape — e.g. `"DiscoverAgents.Scan"`, `"DiscoverAgents.Dialog"`. |
+
+**Validation & Error Matrix:**
+
+| Condition | Behavior |
+|-----------|----------|
+| Recoverable exception thrown inside try | `when` returns `true` → catch engages → status text set → state cleared in `finally` |
+| Unrecoverable exception (OOM / SEH / AccessViolation) thrown | `when` returns `false` → catch skipped → exception propagates and crashes the process — intentional |
+| Logic bug (NRE / IndexOutOfBounds / ArgNull) in DEBUG | `IsRecoverable` itself throws `InvalidOperationException` → forced crash during development |
+| Logic bug in RELEASE | `IsRecoverable` returns `true` → catch engages → error logged → production stays up |
+
+**Good / Base / Bad Cases:**
+
+- **Good** — orchestration catch with classifier + log + status:
+  ```csharp
+  catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+  {
+      ErrorLog.Write(ex, "DiscoverAgents.Scan");
+      StatusText = "扫描过程中发生错误";
+  }
+  ```
+- **Base** — specific exception filter when types are enumerable:
+  ```csharp
+  catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+  {
+      ErrorLog.Write(ex, "LauncherJson.Save");
+      // ...
+  }
+  ```
+- **Bad** — bare catch (gate rejects at `tools/verify.ps1`):
+  ```csharp
+  catch (Exception) { /* swallow */ }      // ❌ gate fails
+  catch (Exception ex) { ... }             // ❌ gate fails
+  ```
+
+**Tests Required:**
+
+- **Recoverable-path test** — inject a recoverable exception through the seam (Func / mock / test hook), assert status text + state-cleared contract. Reference: `DiscoverAgentsViewModelTests.ScanAsync_WhenScanFuncThrowsRecoverable_SurfacesErrorAndClearsScanning` (`InvalidOperationException` injection → `StatusText == "扫描过程中发生错误"` + `IsScanning == false`).
+- **Unrecoverable-path test** — NOT REQUIRED. C# language semantics of `when (false)` guarantee the catch is skipped; `ExceptionFilters.IsRecoverable` predicate behavior is independently verified. Adding a test that throws a reserved runtime exception (`OutOfMemoryException` / `SEHException` / `AccessViolationException`) triggers `CA2201`, enforced as error via `-warnaserror` — analyzer theater for a behavior the language already guarantees.
+
+**Wrong vs Correct:**
+
+```csharp
+// WRONG — gate rejects; swallows OOM/SEH behind status string
+catch (Exception)
+{
+    StatusText = "扫描过程中发生错误";
+}
+
+// CORRECT — narrowed via classifier; unrecoverable exceptions propagate
+catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+{
+    ErrorLog.Write(ex, "DiscoverAgents.Scan");
+    StatusText = "扫描过程中发生错误";
+}
+```
+
 ---
 
 ## Exception Message Sanitization (2026-06-24)
@@ -188,7 +272,7 @@ internal static class ExceptionMessageFormatter
 
 ## Forbidden Patterns
 
-- ❌ **Bare `catch (Exception)`** — always filter to specific types.
+- ❌ **Bare `catch (Exception)`** — gate-enforced via `tools/verify.ps1` `no-bare-catch-exception` check (since `266aa6f`). Filter to specific types or use `catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))`.
 - ❌ **Swallowing exceptions silently** — always log/display to user.
 - ❌ **Returning `null` for "not found" without documentation** — use exceptions for unexpected absence.
 - ❌ **English status text** — all user-facing text in Chinese.
