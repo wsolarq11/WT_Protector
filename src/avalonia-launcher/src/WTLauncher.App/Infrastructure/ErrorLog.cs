@@ -60,7 +60,7 @@ internal static class ErrorLog
             var entry = $"{DateTimeOffset.UtcNow:O} [{context}] {exception}{Environment.NewLine}";
             File.AppendAllText(logPath, entry);
         }
-        catch
+        catch (Exception writeEx) when (writeEx is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
         {
             try
             {
@@ -68,9 +68,10 @@ internal static class ErrorLog
                 Debug.WriteLine($"[ErrorLog] Failed to write: {exception}");
                 Trace.WriteLine($"[ErrorLog] Failed to write: {exception}");
             }
-            catch
+            catch (Exception fallbackEx) when (fallbackEx is IOException or UnauthorizedAccessException)
             {
-                // Debug/Trace themselves can fail — swallow everything.
+                // Debug/Trace themselves can fail on a dying disk — nothing more we can do.
+                // Trust boundary: this is the absolute last-resort swallow, intentionally typed.
             }
         }
         finally
@@ -105,7 +106,7 @@ internal static class ErrorLog
                 File.Move(logPath, oldPath, overwrite: true);
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FileNotFoundException)
         {
             Debug.WriteLine($"[ErrorLog] Rotation failed: {ex.Message}");
             Trace.WriteLine($"[ErrorLog] Rotation failed: {ex.Message}");

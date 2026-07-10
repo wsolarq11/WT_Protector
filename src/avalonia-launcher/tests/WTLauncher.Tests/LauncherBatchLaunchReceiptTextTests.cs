@@ -24,7 +24,7 @@ public sealed class LauncherBatchLaunchReceiptTextTests
             ],
             requireConfirmation: false);
 
-        var report = workflow.StartBatch(preflight);
+        var report = workflow.StartBatch(preflight, TestContext.Current.CancellationToken);
         var receipt = LauncherBatchLaunchReceiptText.Format(preflight, report);
 
         Assert.Contains("启动回执", receipt);
@@ -58,7 +58,7 @@ public sealed class LauncherBatchLaunchReceiptTextTests
             ],
             requireConfirmation: false);
 
-        var report = workflow.StartBatch(preflight);
+        var report = workflow.StartBatch(preflight, TestContext.Current.CancellationToken);
         var receipt = LauncherBatchLaunchReceiptText.Format(preflight, report);
 
         Assert.Contains("已请求启动 0 项，失败 2 项，未启动 0 项", receipt);
@@ -75,7 +75,7 @@ public sealed class LauncherBatchLaunchReceiptTextTests
         var preflight = workflow.PreflightBatch([entry], requireConfirmation: false);
         entry = entry with { Name = " " };
 
-        var report = workflow.StartBatch(preflight);
+        var report = workflow.StartBatch(preflight, TestContext.Current.CancellationToken);
         var receipt = LauncherBatchLaunchReceiptText.Format(preflight, report);
 
         Assert.Contains("• 启动失败: one", receipt);

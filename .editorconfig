@@ -1,0 +1,144 @@
+# EditorConfig — https://editorconfig.org
+# Repo-wide baseline. .NET/C# rules documented at:
+# https://learn.microsoft.com/dotnet/fundamentals/code-analysis/style-rules/
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{md,markdown}]
+trim_trailing_whitespace = false
+
+[*.{json,xml,axaml,xaml,props,targets,yml,yaml}]
+indent_size = 2
+
+[*.{ps1,sh}]
+indent_size = 2
+
+[*.cs]
+# ── Language version ─────────────────────────────────────
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_prefer_braces = true:warning
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+
+# ── Pattern matching (modern C#) ─────────────────────────
+csharp_style_pattern_matching_over_is_with_cast_check = true:warning
+csharp_style_pattern_matching_over_as_with_null_check = true:warning
+csharp_style_prefer_switch_expression = true:warning
+csharp_style_prefer_pattern_matching = true:warning
+csharp_style_prefer_not_pattern = true:warning
+
+# ── Null checking ────────────────────────────────────────
+csharp_style_throw_expression = true:warning
+csharp_style_conditional_delegate_call = true:warning
+csharp_style_prefer_null_check_over_type_check = true:suggestion
+
+# ── Modifiers ────────────────────────────────────────────
+csharp_preferred_modifier_order = public,private,protected,internal,file,static,extern,new,virtual,abstract,sealed,override,readonly,unsafe,required,volatile,async:warning
+csharp_prefer_static_local_function = true:warning
+
+# ── New-line preferences ─────────────────────────────────
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+csharp_new_line_before_members_in_object_initializers = true
+csharp_new_line_before_members_in_object_collections = true
+
+# ── .NET code style ──────────────────────────────────────
+dotnet_style_qualification_for_field = false:warning
+dotnet_style_qualification_for_property = false:warning
+dotnet_style_qualification_for_method = false:warning
+dotnet_style_qualification_for_event = false:warning
+dotnet_style_predefined_type_for_locals_parameters_members = true:warning
+dotnet_style_predefined_type_for_member_access = true:warning
+dotnet_style_require_accessibility_modifiers = always:warning
+dotnet_style_readonly_field = true:warning
+dotnet_style_prefer_auto_properties = true:warning
+dotnet_style_prefer_collection_expression = when_types_exactly_match:suggestion
+dotnet_style_prefer_compound_assignment = true:warning
+dotnet_style_prefer_simplified_interpolation = true:warning
+dotnet_style_prefer_simplified_boolean_expressions = true:warning
+
+# ── Naming conventions ───────────────────────────────────
+## Interfaces: IPascalCase
+dotnet_naming_rule.interface_should_begin_with_i.severity = warning
+dotnet_naming_rule.interface_should_begin_with_i.symbols = interface
+dotnet_naming_rule.interface_should_begin_with_i.style = begins_with_i
+dotnet_naming_symbols.interface.applicable_kinds = interface
+dotnet_naming_style.begins_with_i.required_prefix = I
+dotnet_naming_style.begins_with_i.capitalization = pascal_case
+
+## Private fields: _camelCase
+dotnet_naming_rule.private_fields_underscore.severity = warning
+dotnet_naming_rule.private_fields_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_underscore.style = underscore_camel
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_style.underscore_camel.required_prefix = _
+dotnet_naming_style.underscore_camel.capitalization = camel_case
+
+## Const fields: PascalCase
+dotnet_naming_rule.const_fields_pascal.severity = warning
+dotnet_naming_rule.const_fields_pascal.symbols = const_fields
+dotnet_naming_rule.const_fields_pascal.style = pascal_case
+dotnet_naming_symbols.const_fields.applicable_kinds = field
+dotnet_naming_symbols.const_fields.required_modifiers = const
+dotnet_naming_symbols.const_fields.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+## Public/internal types & members: PascalCase
+dotnet_naming_rule.public_members_pascal.severity = warning
+dotnet_naming_rule.public_members_pascal.symbols = public_members
+dotnet_naming_rule.public_members_pascal.style = pascal_case
+dotnet_naming_symbols.public_members.applicable_kinds = class, struct, interface, enum, property, method, event, delegate
+dotnet_naming_symbols.public_members.applicable_accessibilities = public, internal
+
+## Parameters: camelCase
+dotnet_naming_rule.parameters_camel.severity = suggestion
+dotnet_naming_rule.parameters_camel.symbols = parameters
+dotnet_naming_rule.parameters_camel.style = camel_case_param
+dotnet_naming_symbols.parameters.applicable_kinds = parameter
+dotnet_naming_style.camel_case_param.capitalization = camel_case
+
+# ── Analyzer severities ──────────────────────────────────
+# CA1051: Do not declare visible instance fields — error (we want properties)
+dotnet_diagnostic.CA1051.severity = warning
+# CA1062: Validate public args — already enforced manually via ArgumentNullException.ThrowIfNull
+dotnet_diagnostic.CA1062.severity = none
+# CA1305: Specify IFormatProvider — too noisy for this launcher
+dotnet_diagnostic.CA1305.severity = none
+# CA1707: No underscores in identifiers — conflicts with test naming (test_method_state)
+dotnet_diagnostic.CA1707.severity = none
+# CA1716: Components should not clash with reserved language keywords — false positives on `Directory`/`Command`
+dotnet_diagnostic.CA1716.severity = none
+# CA1848: Use LoggerMessage delegates — we don't use Microsoft.Extensions.Logging
+dotnet_diagnostic.CA1848.severity = none
+# CA2007: ConfigureAwait — explicitly chosen per call site (UI thread)
+dotnet_diagnostic.CA2007.severity = none
+
+# ── Style rules downgraded to suggestion (IDE hint only, not build-blocking) ──
+# IDE0011 (braces): historical codebase has mixed brace style; unifying is a
+# separate churn-heavy refactor, not in scope for the P2 analyzer baseline.
+dotnet_diagnostic.IDE0011.severity = suggestion
+# IDE0032 (auto-property): LaunchPlan uses explicit fields + init accessors
+# intentionally — field initializers validate primary construction while init
+# accessors validate `with` expressions (see LaunchPlan.cs:10-16). Auto-property
+# would collapse the two validation paths into one and break the invariant.
+dotnet_diagnostic.IDE0032.severity = suggestion
+# IDE0062 (static local function): minor perf, not build-blocking.
+dotnet_diagnostic.IDE0062.severity = suggestion
+
+# CA1859 (prefer concrete types for perf): Core layer exposes interfaces as
+# architecture contracts; call sites are low-frequency (config/preset/validation
+# paths). Forcing concrete types would leak implementation details.
+dotnet_diagnostic.CA1859.severity = suggestion

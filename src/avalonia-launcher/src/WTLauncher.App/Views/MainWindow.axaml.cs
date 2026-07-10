@@ -48,8 +48,8 @@ public sealed partial class MainWindow : Window
     // -1 so the first Down press moves to index 0 rather than skipping it.
     private int _keyboardFocusIndex = -1;
     private int _pendingScrollRestoreVersion;
-    private EventHandler<SizeChangedEventArgs>? _onSizeChangedHandler;
-    private EventHandler? _onOpenedHandler;
+    private readonly EventHandler<SizeChangedEventArgs>? _onSizeChangedHandler;
+    private readonly EventHandler? _onOpenedHandler;
 
     public MainWindow()
     {
@@ -107,7 +107,7 @@ public sealed partial class MainWindow : Window
                     }
                     if (!onScreen)
                     {
-                        var primary = screens.First();
+                        var primary = screens[0];
                         Position = new PixelPoint(
                             primary.Bounds.X + (primary.Bounds.Width - (int)Width) / 2,
                             primary.Bounds.Y + (primary.Bounds.Height - (int)Height) / 2);
@@ -299,7 +299,7 @@ public sealed partial class MainWindow : Window
                     windowState: WindowState.ToString());
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "OnClosing");
         }

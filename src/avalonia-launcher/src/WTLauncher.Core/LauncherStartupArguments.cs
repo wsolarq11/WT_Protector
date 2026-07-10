@@ -24,7 +24,7 @@ public static class LauncherStartupArguments
                     throw new ArgumentException("Config path flag must appear at most once.", nameof(args));
 
                 configPath = arg["--config=".Length..].Trim();
-                if (configPath.Length == 0 || configPath.StartsWith("-", StringComparison.Ordinal))
+                if (configPath.Length == 0 || configPath.StartsWith('-'))
                     throw new ArgumentException("Config path value is required after --config.", nameof(args));
                 if (configPath.StartsWith(@"\\", StringComparison.Ordinal) || configPath.StartsWith("//", StringComparison.Ordinal))
                     throw new ArgumentException("Network/UNC paths are not allowed for the launcher configuration.", nameof(args));
@@ -51,7 +51,7 @@ public static class LauncherStartupArguments
                 throw new ArgumentException("Config path value is required after --config.", nameof(args));
 
             configPath = args[++i].Trim();
-            if (configPath.Length == 0 || configPath.StartsWith("-", StringComparison.Ordinal))
+            if (configPath.Length == 0 || configPath.StartsWith('-'))
                 throw new ArgumentException("Config path value is required after --config.", nameof(args));
             if (configPath.StartsWith(@"\\", StringComparison.Ordinal) || configPath.StartsWith("//", StringComparison.Ordinal))
                 throw new ArgumentException("Network/UNC paths are not allowed for the launcher configuration.", nameof(args));

@@ -7,6 +7,12 @@ namespace WTLauncher.App.ViewModels;
 // Selection + batch launch. Split from MainWindowViewModel.cs as part of
 // 07-09-split-mainviewmodel-stage2.
 
+// ponytail: CA1001 wants MainWindowViewModel to be IDisposable because of the
+// _batchCts field below. That CTS is deterministically disposed in StartBatch's
+// finally block (see line ~181); making the ViewModel IDisposable would require
+// wiring a Dispose caller (window close → view model dispose) for no behavioural
+// gain — the field never outlives its enclosing operation.
+#pragma warning disable CA1001
 public sealed partial class MainWindowViewModel
 {
     private CancellationTokenSource? _batchCts;

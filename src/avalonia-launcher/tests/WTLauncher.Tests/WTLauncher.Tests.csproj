@@ -4,7 +4,9 @@
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
-    <NoWarn>xUnit1031;xUnit1051;CS0618</NoWarn>
+    <!-- CS0618: tests deliberately exercise the [Obsolete] LaunchPlan.CommandLine
+         plaintext API for backward-compat verification (see LaunchPlan.cs:29). -->
+    <NoWarn>CS0618</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />

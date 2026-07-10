@@ -114,10 +114,10 @@ public sealed partial class App : Application
                         File.WriteAllText(testPath, "test");
                         File.Delete(testPath);
                     }
-                    catch
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DirectoryNotFoundException or System.Security.SecurityException)
                     {
                         Console.Error.WriteLine(
-                            $"[WTLauncher] WARNING: Config directory is not writable: {configDirectory}");
+                            $"[WTLauncher] WARNING: Config directory is not writable ({ex.GetType().Name}): {configDirectory}");
                     }
                 }
 

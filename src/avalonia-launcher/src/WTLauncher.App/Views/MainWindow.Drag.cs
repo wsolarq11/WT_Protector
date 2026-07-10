@@ -47,7 +47,7 @@ public sealed partial class MainWindow
             var (item, card) = resolved.Value;
             BeginDrag(viewModel, item, card, e);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "DragPointerPressed");
             ForceCleanup();
@@ -100,7 +100,7 @@ public sealed partial class MainWindow
             MoveDragGhost(e);
             ApplyDragPreview(e);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "DragPointerMoved");
         }
@@ -116,7 +116,7 @@ public sealed partial class MainWindow
             if (DataContext is MainWindowViewModel viewModel)
                 viewModel.CommitDragReorder();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "DragPointerReleased");
         }
@@ -136,7 +136,7 @@ public sealed partial class MainWindow
             if (DataContext is MainWindowViewModel viewModel)
                 viewModel.CancelDragReorder();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "DragCaptureLost");
         }

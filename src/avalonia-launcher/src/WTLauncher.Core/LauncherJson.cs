@@ -154,7 +154,11 @@ public static class LauncherJson
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
             {
-                try { File.Delete(bakTempPath); } catch { /* best-effort */ }
+                try { File.Delete(bakTempPath); }
+                catch (Exception deleteEx) when (deleteEx is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
+                {
+                    Debug.WriteLine($"[LauncherJson] Stale bak-tmp cleanup failed: {deleteEx.Message}");
+                }
                 var msg = $"[LauncherJson] Backup rotation failed: {ex.Message}";
                 Debug.WriteLine(msg);
                 Trace.WriteLine(msg);

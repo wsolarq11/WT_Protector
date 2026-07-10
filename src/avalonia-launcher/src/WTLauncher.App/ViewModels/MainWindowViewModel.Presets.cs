@@ -222,7 +222,11 @@ public sealed partial class MainWindowViewModel
     {
         LauncherStoreFile storeFile;
         try { storeFile = LauncherStore.Load(_storePath); }
-        catch { storeFile = new LauncherStoreFile(); }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "LoadPresetFile");
+            storeFile = new LauncherStoreFile();
+        }
         _presetFile = new LauncherPresetFile
         {
             Presets = storeFile.Presets,

@@ -61,8 +61,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Audit
-        run: dotnet restore src/avalonia-launcher/WTLauncher.Avalonia.sln --audit
-        continue-on-error: true
+        run: dotnet restore src/avalonia-launcher/WTLauncher.Avalonia.sln
 
   full-gate:
     name: Full Native Gate (verify.ps1)

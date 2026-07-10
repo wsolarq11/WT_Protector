@@ -95,7 +95,7 @@ public sealed class LauncherLaunchWorkflowTests
         Assert.Equal(0, preflight.Report.RequestedCount);
         Assert.Equal(0, preflight.Report.SkippedCount);
 
-        var report = workflow.StartBatch(preflight);
+        var report = workflow.StartBatch(preflight, TestContext.Current.CancellationToken);
 
         Assert.NotSame(preflight.Report, report);
         Assert.Equal(1, preflight.Report.FailedCount);
@@ -205,7 +205,7 @@ public sealed class LauncherLaunchWorkflowTests
         var preflight = workflow.PreflightBatch([entry], requireConfirmation: false);
         entry = entry with { Name = " " };
 
-        var report = workflow.StartBatch(preflight);
+        var report = workflow.StartBatch(preflight, TestContext.Current.CancellationToken);
 
         var item = Assert.Single(preflight.Items);
         Assert.Equal("one", item.EntryId);

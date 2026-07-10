@@ -98,7 +98,7 @@ public sealed class EntryDetailsWindow : Window
             _commandBox.TextChanged += (_, _) =>
             {
                 var cmd = EntryName.Normalize(_commandBox.Text);
-                if (cmd.StartsWith("$") && cmd.Length > 1)
+                if (cmd.StartsWith('$') && cmd.Length > 1)
                 {
                     var key = cmd[1..];
                     if (commandTemplates.TryGetValue(key, out var resolved))
@@ -114,7 +114,7 @@ public sealed class EntryDetailsWindow : Window
             };
             // Trigger initial preview for edit mode
             var initialCmd = EntryName.Normalize(_commandBox.Text ?? "");
-            if (initialCmd.StartsWith("$") && initialCmd.Length > 1)
+            if (initialCmd.StartsWith('$') && initialCmd.Length > 1)
             {
                 var key = initialCmd[1..];
                 if (commandTemplates.TryGetValue(key, out var resolved))

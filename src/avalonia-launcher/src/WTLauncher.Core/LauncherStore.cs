@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace WTLauncher.Core;
@@ -136,7 +137,10 @@ public static class LauncherStore
         if (File.Exists(settingsPath))
         {
             try { settings = LauncherJson.LoadRequired<LauncherSettings>(settingsPath, "legacy settings"); }
-            catch { /* use defaults */ }
+            catch (Exception ex) when (ex is JsonException or IOException or FileNotFoundException)
+            {
+                Trace.WriteLine($"[LauncherStore] Legacy settings.json unreadable, using defaults: {ex.Message}");
+            }
         }
 
         // Read legacy presets (optional — may not exist)
@@ -153,7 +157,10 @@ public static class LauncherStore
                     defaultPresetId = legacy.DefaultPresetId ?? "";
                 }
             }
-            catch { /* use empty presets */ }
+            catch (Exception ex) when (ex is JsonException or IOException or FileNotFoundException)
+            {
+                Trace.WriteLine($"[LauncherStore] Legacy presets.json unreadable, using empty presets: {ex.Message}");
+            }
         }
 
         var storeFile = new LauncherStoreFile
@@ -178,7 +185,10 @@ public static class LauncherStore
     private static void TryMoveToBak(string path)
     {
         try { File.Move(path, path + ".bak", overwrite: true); }
-        catch { /* best-effort */ }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FileNotFoundException)
+        {
+            Trace.WriteLine($"[LauncherStore] Legacy file rename to .bak failed for {path}: {ex.Message}");
+        }
     }
 
     // ---- Path resolution helpers ----
@@ -214,7 +224,7 @@ public static class LauncherStore
 
         throw new ArgumentException(
             "Cannot resolve store path: no explicit path was provided and both currentDirectory and appBaseDirectory are null or empty.",
-            "currentDirectory");
+            nameof(candidateRoots));
     }
 
     private static string BuildStorePath(string root) =>

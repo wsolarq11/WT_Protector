@@ -163,7 +163,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
             StatusText = $"配置验证失败: {ExceptionMessageFormatter.ForUser(ex)}";
             // Reload preset file to ensure _presetFile and UI state are consistent
             // after a partial failure during Phase 2 validation.
-            try { LoadPresetFile(preferredPresetId: null); } catch { /* best-effort */ }
+            try { LoadPresetFile(preferredPresetId: null); }
+            catch (Exception presetEx) when (ExceptionFilters.IsRecoverable(presetEx))
+            {
+                ErrorLog.Write(presetEx, "Refresh.ReloadPresetFile");
+            }
             RefreshSelectionState();
             ApplyFilter();
             return;
@@ -240,7 +244,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private string? SaveStoreFile(LauncherStoreFile storeFile)
     {
         try { LauncherStore.Save(storeFile, _storePath); return null; }
-        catch (Exception ex) { return LauncherPersistenceStatus.StoreSaveFailed(ex); }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "SaveStoreFile");
+            return LauncherPersistenceStatus.StoreSaveFailed(ex);
+        }
     }
 
     /// <summary>Saves settings to the unified store. Used as callback by

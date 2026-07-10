@@ -28,7 +28,6 @@ internal static class Program
             Console.Error.WriteLine(message);
             if (ex is not null)
                 ErrorLog.Write(ex, "AppDomain.UnhandledException");
-            Environment.ExitCode = 2;
             Environment.Exit(2);
         };
 
@@ -145,9 +144,10 @@ internal static class Program
             if (!string.IsNullOrWhiteSpace(storeDir) && Directory.Exists(storeDir))
                 LauncherJson.CleanupStaleTempFiles(storeDir);
         }
-        catch
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
         {
             // Best-effort at startup: no config directory yet, nothing to clean.
+            Debug.WriteLine($"[WTLauncher] Stale temp cleanup failed at startup: {ex.Message}");
         }
     }
 
