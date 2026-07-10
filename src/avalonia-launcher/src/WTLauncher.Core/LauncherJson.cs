@@ -27,7 +27,13 @@ public static class LauncherJson
     {
         ReadCommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true,
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Skip,
+        // C# record types ARE the schema contract: [JsonRequired] for required
+        // fields, [JsonPropertyName] for names, property types for value types.
+        // Disallow makes "unknown JSON key" a load-time error rather than a
+        // silent skip — catches schema drift (e.g. reintroducing the obsolete
+        // settings.schemaVersion) immediately. schemaVersion at the top level
+        // remains the cross-version guard for newer-file formats.
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
         WriteIndented = false,
         MaxDepth = 64,
         // UnsafeRelaxedJsonEscaping does not escape HTML-sensitive characters

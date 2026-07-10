@@ -70,7 +70,7 @@ public sealed class LaunchArgumentBuilderTests
             Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")),
             name: "missing");
 
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<DirectoryNotFoundException>(() =>
             LaunchArgumentBuilder.Build(entry, validateDirectory: true, requireConfirmation: false));
     }
 
@@ -125,10 +125,9 @@ public sealed class LaunchArgumentBuilderTests
     {
         var entry = Entry(@"\\server\share\folder", name: "network");
 
-        var ex = Assert.Throws<InvalidOperationException>(() =>
+        var ex = Assert.Throws<FormatException>(() =>
             LaunchArgumentBuilder.Build(entry, validateDirectory: false, requireConfirmation: false));
-        Assert.Contains("network path", ex.Message);
-        Assert.Contains("network", ex.Message);
+        Assert.Contains("网络路径", ex.Message);
     }
 
     [Fact]
@@ -140,10 +139,9 @@ public sealed class LaunchArgumentBuilderTests
         var fullwidthPercent = '\uFF05';
         var entry = Entry($"C:\\tmp\\user{fullwidthPercent}data", name: "inject");
 
-        var ex = Assert.Throws<InvalidOperationException>(() =>
+        var ex = Assert.Throws<FormatException>(() =>
             LaunchArgumentBuilder.Build(entry, validateDirectory: false, requireConfirmation: false));
-        Assert.Contains("normalize to '%'", ex.Message);
-        Assert.Contains("inject", ex.Message);
+        Assert.Contains("规范化后引入 %", ex.Message);
     }
 
     [Fact]

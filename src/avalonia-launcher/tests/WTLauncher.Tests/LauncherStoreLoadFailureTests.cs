@@ -17,6 +17,25 @@ public sealed class LauncherStoreLoadFailureTests
     }
 
     [Fact]
+    public void UnknownJsonKey_Load_RejectedByStrictSchema()
+    {
+        // UnmappedMemberHandling=Disallow makes the C# record type the single
+        // schema contract. Any JSON key not declared as [JsonPropertyName] on
+        // the corresponding record fails loudly at load time.
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "store.json");
+        File.WriteAllText(path,
+            "{\"schemaVersion\":2," +
+            "\"settings\":{\"lastFilterText\":\"\",\"sortMode\":\"custom\",\"entryViewMode\":\"cards\"," +
+            "\"requireConfirmationForLaunches\":false,\"customEntryOrder\":[]," +
+            "\"commandTemplates\":{},\"searchHistory\":[],\"window\":{\"width\":1180,\"height\":760}}," +
+            "\"entries\":[],\"presets\":[],\"defaultPresetId\":\"\"," +
+            "\"unknownTopLevelKey\":42}");
+
+        Assert.Throws<JsonException>(() => LauncherJson.Load<LauncherStoreFile>(path));
+    }
+
+    [Fact]
     public void MissingStoreFile_Load_ReturnsDefaultStoreFile()
     {
         using var temp = new TempDirectory();
@@ -113,10 +132,12 @@ public sealed class LauncherStoreLoadFailureTests
     }
 
     [Fact]
-    public void LauncherSettings_LegacySchemaVersionInJson_IsIgnoredForwardCompatible()
+    public void LauncherSettings_LegacySchemaVersionInJson_IsRejectedByStrictSchema()
     {
-        // Old launcher.json files have settings.schemaVersion baked in.
-        // UnmappedMemberHandling=Skip ensures they still load cleanly.
+        // T7 (2026-07-09) removed settings.schemaVersion — single source is top-level
+        // LauncherStoreFile.SchemaVersion. UnmappedMemberHandling=Disallow makes
+        // any lingering settings.schemaVersion fail loudly at load time rather than
+        // silently drifting. This is the contract verify.ps1 already enforces.
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "settings.json");
         File.WriteAllText(path,
@@ -125,8 +146,7 @@ public sealed class LauncherStoreLoadFailureTests
             "\"customEntryOrder\":[],\"commandTemplates\":{},\"searchHistory\":[]," +
             "\"window\":{\"width\":1180,\"height\":760}}");
 
-        var settings = LauncherJson.LoadRequired<LauncherSettings>(path, "legacy settings");
-
-        Assert.Equal("legacy", settings.LastFilterText);
+        Assert.Throws<System.Text.Json.JsonException>(() =>
+            LauncherJson.LoadRequired<LauncherSettings>(path, "legacy settings"));
     }
 }

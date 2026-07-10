@@ -252,7 +252,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Contains("• 未启动: two", viewModel.DryRunText);
         Assert.Contains("opencode", viewModel.DryRunText);
         Assert.Contains("one:", viewModel.DryRunText);
-        Assert.Contains("directory does not exist", viewModel.DryRunText);
+        Assert.Contains("找不到目录", viewModel.DryRunText);
         Assert.Equal("启动组“Daily”预演失败: 1 个失败", viewModel.StatusText);
         var entries = LoadEntriesById(config);
         Assert.All(entries, entry => Assert.False(entry.Selected));

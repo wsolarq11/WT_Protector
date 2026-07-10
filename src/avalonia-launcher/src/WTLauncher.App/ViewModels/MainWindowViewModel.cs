@@ -36,14 +36,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private int _totalCount;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsVisibleEmpty))]
     private int _visibleCount;
 
     public bool IsVisibleEmpty => VisibleCount == 0;
-
-    partial void OnVisibleCountChanged(int value)
-    {
-        OnPropertyChanged(nameof(IsVisibleEmpty));
-    }
 
     [ObservableProperty]
     private int _selectedCount;

@@ -241,7 +241,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Empty(startedPlans);
         Assert.Contains("启动回执", viewModel.DryRunText);
         Assert.Contains("启动失败: one", viewModel.DryRunText);
-        Assert.Contains("directory does not exist", viewModel.DryRunText);
+        Assert.Contains("找不到目录", viewModel.DryRunText);
         Assert.DoesNotContain(LaunchArgumentBuilder.TerminalExecutable, viewModel.DryRunText);
         Assert.Contains("启动失败: one", viewModel.StatusText);
     }

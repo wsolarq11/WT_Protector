@@ -46,38 +46,21 @@ public static class LaunchArgumentBuilder
     {
         ArgumentNullException.ThrowIfNull(entry);
 
+        // Directory trust-boundary validation is centralized in EntryDirectory.Parse:
+        // FormKC normalization, % injection detection, env var expansion, GetFullPath
+        // traversal defense, UNC rejection, DOS device rejection. Single source of truth.
+        var directory = validateDirectory
+            ? EntryDirectory.ParseAndValidateExists(entry.Directory).Value
+            : EntryDirectory.Parse(entry.Directory).Value;
+
         var name = StripUnsafeCharacters(EntryName.Normalize(entry.Name));
-        var normalizedDirectory = EntryName.Normalize(entry.Directory);
-        // FormKC normalization converts fullwidth characters (e.g. U+FF05 ％ → U+0025 %).
-        // If % appears after normalization but before ExpandEnvironmentVariables, an
-        // attacker can inject environment-variable expansion into the directory path.
-        // Detect and reject this before expansion.
-        if (normalizedDirectory.Contains('%') && !entry.Directory.Contains('%', StringComparison.Ordinal))
-            throw new InvalidOperationException(
-                $"Launch entry '{name}' directory contains characters that normalize to '%' — " +
-                "this is not allowed because it would trigger unintended environment-variable expansion.");
-        var directory = StripUnsafeCharacters(Environment.ExpandEnvironmentVariables(normalizedDirectory));
-        // Path.GetFullPath resolves relative segments (..) and normalizes separators,
-        // preventing directory traversal bypass of the UNC and existence checks below.
-        directory = Path.GetFullPath(directory);
         var command = StripUnsafeCharacters(LauncherCommandTemplateResolver.Resolve(EntryName.Normalize(entry.Command), commandTemplates));
 
         if (name.Length == 0)
             throw new InvalidOperationException("Launch entry name is empty.");
-        if (directory.Length == 0)
-            throw new InvalidOperationException($"Launch entry '{name}' has an empty directory.");
-        // Reject UNC paths to prevent NTLM credential relay to attacker-controlled SMB servers.
-        // Check both backslash and forward-slash variants — Windows treats both as UNC.
-        if (directory.StartsWith(@"\\", StringComparison.Ordinal) || directory.StartsWith("//", StringComparison.Ordinal))
-            throw new InvalidOperationException($"Launch entry '{name}' directory is a network path, which is not allowed.");
-        // Reject DOS device paths (\\.\COM1, \\.\PhysicalDrive0, etc.) to prevent raw device access.
-        if (directory.StartsWith(@"\\.\", StringComparison.Ordinal))
-            throw new InvalidOperationException($"Launch entry '{name}' directory is a device path, which is not allowed.");
-        if (validateDirectory && !System.IO.Directory.Exists(directory))
-            throw new InvalidOperationException($"Launch entry '{name}' directory does not exist: {directory}");
         if (command.Length == 0)
             throw new InvalidOperationException($"Launch entry '{name}' has an empty command.");
-        // Command length is validated against the Windows CreateProcessW 32767-char limit 
+        // Command length is validated against the Windows CreateProcessW 32767-char limit
         // during argument construction below — no need for an earlier soft limit.
 
         // Encode command as Base64 to eliminate PowerShell metacharacter interpretation.

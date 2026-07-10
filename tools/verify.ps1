@@ -278,7 +278,11 @@ $canonicalKey = 'config\launcher.json'
 if (-not (Test-Path -LiteralPath $storePath)) { throw "Missing portable launcher store: $storePath" }
 $store = Get-Content -Raw -Encoding UTF8 -LiteralPath $storePath | ConvertFrom-Json
 if ($null -eq $store) { throw "Launcher store parsed to null: $storePath" }
-Assert-OnlyJsonKeys $store @('schemaVersion', 'entries', 'presets', 'defaultPresetId', 'settings') 'launcher.json'
+# Unknown-key and type/required-field validation is enforced by LauncherJson's
+# UnmappedMemberHandling=Disallow contract: the C# record shapes ARE the schema.
+# The dotnet test run earlier in this gate covers the contract end-to-end
+# (UnknownJsonKey_Load_RejectedByStrictSchema etc.). PowerShell keeps only the
+# referential-integrity and business-rule checks below.
 if ([int]$store.schemaVersion -ne 2) { throw "Unsupported launcher.json schemaVersion: $($store.schemaVersion)" }
 
 $configItems = @($store.entries)
@@ -288,21 +292,6 @@ $seenIds = @{}
 $selectedFields = 0
 $idx = 0
 foreach ($item in $configItems) {
-    Assert-OnlyJsonKeys $item @('id', 'name', 'directory', 'command', 'selected', 'updatedAtUtc', 'launchedAtUtc') "Config item $idx"
-    foreach ($field in @('id', 'name', 'directory', 'command')) {
-        if ([string]::IsNullOrWhiteSpace([string]$item.$field)) {
-            throw "Config item $idx is missing field: $field"
-        }
-    }
-    if ($item.PSObject.Properties.Name -contains 'confirm') {
-        throw "Config item $idx must not use obsolete per-entry confirm field; settings requireConfirmationForLaunches is the single authority"
-    }
-    if (-not ($item.PSObject.Properties.Name -contains 'selected')) {
-        throw "Config item $idx is missing persistent selected field"
-    }
-    if (-not ($item.selected -is [bool])) {
-        throw "Config item $idx selected field must be boolean"
-    }
     # CI runners lack user workspace directories — skip existence check in CI
     if ($env:CI -ne 'true' -and -not (Test-Path -LiteralPath ([string]$item.directory) -PathType Container)) {
         throw "Config item $idx directory does not exist: $($item.directory)"
@@ -328,14 +317,9 @@ $nonEmptyPresetCount = 0
 foreach ($preset in @($store.presets)) {
     $presetCount++
     $presetId = [string]$preset.id
-    Assert-OnlyJsonKeys $preset @('id', 'name', 'entryIds', 'locked') "Preset $presetCount"
     if ([string]::IsNullOrWhiteSpace($presetId)) { throw "Preset $presetCount is missing id" }
-    if ([string]::IsNullOrWhiteSpace([string]$preset.name)) { throw "Preset $presetId is missing name" }
     if ($presetSeen.ContainsKey($presetId)) { throw "Duplicate preset id: $presetId" }
     $presetSeen[$presetId] = $true
-    if ($preset.PSObject.Properties.Name -contains 'locked') {
-        if (-not ($preset.locked -is [bool])) { throw "Preset $presetId locked field must be boolean" }
-    }
     if (($presetId -eq 'blank-manual') -and ($preset.locked -ne $true)) {
         throw 'Preset blank-manual must stay locked so manual mode cannot be deleted in the UI'
     }
@@ -364,16 +348,6 @@ Add-Check 'presets-schema' @{
 
 $settings = $store.settings
 if ($null -eq $settings) { throw 'launcher.json settings is required' }
-# ponytail: settings.schemaVersion is intentionally absent — single source of truth is top-level
-# LauncherStoreFile.SchemaVersion. T7 (2026-07-09) removed the dead field; this negative gate
-# prevents re-introduction (would resurrect dual-source drift, see pitfalls §8.4).
-if ($settings.PSObject.Properties['schemaVersion']) { throw 'launcher.json settings must NOT carry schemaVersion — single source is top-level store.schemaVersion' }
-Assert-OnlyJsonKeys $settings @('lastFilterText', 'sortMode', 'entryViewMode', 'requireConfirmationForLaunches', 'commandTemplates', 'searchHistory', 'customEntryOrder', 'window') 'launcher.json settings'
-if ($null -eq $settings.lastFilterText) { throw 'launcher.json settings lastFilterText is required' }
-if (-not ($settings.lastFilterText -is [string])) { throw 'launcher.json settings lastFilterText must be string' }
-if ($null -eq $settings.customEntryOrder) { throw 'launcher.json settings customEntryOrder is required' }
-if ($null -eq $settings.window) { throw 'launcher.json settings window is required' }
-Assert-OnlyJsonKeys $settings.window @('width', 'height', 'x', 'y', 'windowState') 'launcher.json settings window'
 Assert-PositiveJsonNumber $settings.window.width 'launcher.json settings window width'
 Assert-PositiveJsonNumber $settings.window.height 'launcher.json settings window height'
 $settingsOrder = @($settings.customEntryOrder)
@@ -384,9 +358,6 @@ foreach ($id in $settingsOrder) {
     $settingsOrderSeen[[string]$id] = $true
 }
 if ($settingsOrder.Count -ne $seenIds.Count) { throw 'launcher.json settings customEntryOrder should contain every config entry id once' }
-if ([string]::IsNullOrWhiteSpace([string]$settings.sortMode)) { throw 'launcher.json settings sortMode is required' }
-if ([string]::IsNullOrWhiteSpace([string]$settings.entryViewMode)) { throw 'launcher.json settings entryViewMode is required' }
-if (-not ($settings.requireConfirmationForLaunches -is [bool])) { throw 'launcher.json settings requireConfirmationForLaunches must be boolean' }
 Add-Check 'settings-json' @{
     path = 'config\launcher.json'
     sortMode = $settings.sortMode
@@ -396,10 +367,11 @@ Add-Check 'settings-json' @{
     hasWindow = $null -ne $settings.window
 }
 
-# Validate commandTemplates structure.
+# commandTemplates object shape is enforced by the C# record contract
+# (ImmutableDictionary<string,string>). The non-empty value constraint is
+# a business rule (an empty template value would surface as "empty command"
+# at launch time), so it stays here as a static gate.
 $commandTemplates = $settings.commandTemplates
-if ($null -eq $commandTemplates) { throw 'launcher.json settings commandTemplates is required' }
-if ($commandTemplates -is [array]) { throw 'launcher.json settings commandTemplates must be an object, not an array' }
 foreach ($templateKey in @($commandTemplates.PSObject.Properties.Name)) {
     $templateValue = $commandTemplates.$templateKey
     if ([string]::IsNullOrWhiteSpace([string]$templateValue)) {
