@@ -13,9 +13,9 @@
 
 **Examples:**
 - `LaunchArgumentBuilderTests.cs` — single class, one file
-- `LauncherStoreTests.ConfigPersistenceTests.cs` — `ConfigPersistence` area
-- `LauncherStoreTests.PathTests.cs` — `Path` area
-- `MainWindowViewModelTests.DragTests.cs` — partial ViewModel, drag area
+- `MainWindowViewModelTests.DragTests.cs` — partial ViewModel, `Drag` area
+- `MainWindowViewModelTests.PresetCommandTests.cs` — partial ViewModel, `PresetCommand` area
+- `LauncherStoreLoadFailureTests.cs` — single class, persistence failure scenarios
 
 ---
 
@@ -26,7 +26,7 @@
 Each test shared file provides factory methods for creating test data:
 
 ```csharp
-// LauncherStoreTests.Shared.cs
+// LauncherPersistenceTestFixtures.cs
 private static LauncherPresetFile PresetFile(string name, params string[] entryIds) => ...;
 private static LaunchEntry Entry(bool selected = false) => ...;
 ```
@@ -128,9 +128,10 @@ Test extracted pure functions, not Avalonia controls.
 
 Verify structural contracts that span layers:
 
-- `RepositoryConfigContractTests.*.cs` — config/schema/settings integrity
 - `StatusTextContractTests.cs` — status text format contracts
-- `DialogLayoutContractTests.cs` — dialog layout contracts
+- `MainWindowViewModelTests.CollectionContractTests.cs` — collection invariants (ordering, dedup, length bounds)
+- `MainWindowViewModelTests.DialogBoundaryTests.cs` — dialog round-trip contracts (open / accept / cancel / validation)
+- `MainWindowViewModelTests.PresetPersistenceTests.cs` — preset save/load round-trip
 
 ---
 
@@ -209,11 +210,11 @@ var viewModel = new MainWindowViewModel(
 
 | File | Purpose |
 |------|---------|
-| `LauncherPersistenceTestFixtures.cs` | Shared persistence test helpers |
+| `LauncherPersistenceTestFixtures.cs` | Shared persistence test helpers (`Entry()`, `PresetFile()` factories) |
 | `TestRepositoryPaths.cs` | Temp directory creation and path helpers |
 | `TempDirectory.cs` | IDisposable temp directory wrapper |
 | `MainWindowEntryCardTestFactory.cs` | Entry card factory for View tests |
-| `LauncherStoreTests.Shared.cs` | Config test factories and assertions |
+| `MainWindowViewModelTests.Shared.cs` | ViewModel test shared setup (`Entry()`, default settings) |
 
 **Rule:** If you write the same factory method in 3+ test files, move it to a Shared fixture.
 

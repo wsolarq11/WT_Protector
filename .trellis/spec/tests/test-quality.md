@@ -54,7 +54,7 @@ Every command (Add/Edit/Delete/Launch/Reorder) must test:
 
 ## Line Ending Contract
 
-**Source:** `LauncherStoreTests.Shared.cs`
+**Source:** `LauncherPersistenceTestFixtures.cs`
 
 ```csharp
 private static void AssertUsesRepositoryLineEndings(string text)
