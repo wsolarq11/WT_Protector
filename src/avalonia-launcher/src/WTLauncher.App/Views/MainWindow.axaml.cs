@@ -87,6 +87,16 @@ public sealed partial class MainWindow : Window
                 alreadyAdded);
             return new DiscoverAgentsWindow(vm).ShowDialog<IReadOnlyList<DiscoveredAgent>?>(this);
         };
+        viewModel.OpenCommandManagementDialog = async applyEdit =>
+        {
+            var initialCommands = WTLauncher.Core.CommandUsageAnalyzer.Analyze(
+                viewModel.Entries.Select(e => e.SnapshotEntry()));
+            var initialTemplates = WTLauncher.Core.CommandUsageAnalyzer.AnalyzeTemplates(
+                viewModel.Settings.CommandTemplates,
+                viewModel.Entries.Select(e => e.SnapshotEntry()));
+            var vm = new CommandManagementViewModel(initialCommands, initialTemplates, applyEdit);
+            await new CommandManagementWindow(vm).ShowDialog<object?>(this);
+        };
         // P6: Pointer-capture drag replaces OLE DragDrop.
         // OLE DragDrop runs a nested Win32 message loop that blocks Avalonia's render
         // scheduling. Pointer capture fires on the normal render loop, synced to display

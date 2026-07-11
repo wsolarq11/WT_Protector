@@ -422,6 +422,9 @@
                 Content="🔍 发现"
                 Command="{Binding DiscoverAgentsCommand}"/>
         <Button Classes="secondary"
+                Content="🛠 管理"
+                Command="{Binding OpenCommandManagementCommand}"/>
+        <Button Classes="secondary"
                 Content="保存为新启动组"
                 Command="{Binding SaveSelectionAsPresetCommand}"/>
         <Button Classes="secondary"

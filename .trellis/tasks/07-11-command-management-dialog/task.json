@@ -3,7 +3,7 @@
   "name": "command-management-dialog",
   "title": "命令管理面板（含 commandTemplates CRUD）",
   "description": "",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
