@@ -1,0 +1,32 @@
+{
+  "id": "centralize-declutter",
+  "name": "centralize-declutter",
+  "title": "集中管理与视觉降噪",
+  "description": "",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "<USER>",
+  "assignee": "<USER>",
+  "createdAt": "2026-07-11",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "07-11-cards-command-grouping",
+    "07-11-entry-launch-count-frecency",
+    "07-11-command-management-dialog",
+    "07-11-directory-management-dialog",
+    "07-11-directory-scan-wizard"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}
