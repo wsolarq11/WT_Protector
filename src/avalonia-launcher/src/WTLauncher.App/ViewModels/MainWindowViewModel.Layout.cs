@@ -265,6 +265,7 @@ public sealed partial class MainWindowViewModel
 
         VisibleCount = _visibleEntries.Count;
         SelectVisibleCommand.NotifyCanExecuteChanged();
+        RebuildVisibleGroups();
     }
 
     /// <summary>

@@ -87,6 +87,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settings = _settings with { SortMode = _selectedSortMode.Id };
         _selectedDisplayMode = ResolveDisplayMode(_settings.EntryViewMode);
         _settings = _settings with { EntryViewMode = _selectedDisplayMode.Id };
+        _cardsGroupKey = LauncherCardsGroupKeys.Normalize(_settings.CardsGroupKey);
+        _settings = _settings with { CardsGroupKey = _cardsGroupKey };
         NotifyDisplayModeProjectionChanged();
         // Construct workflow AFTER settings normalization so it captures
         // the normalized values — DiscardDragReorderPreview syncs from it.

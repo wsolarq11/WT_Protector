@@ -24,6 +24,10 @@ public sealed record LauncherSettings
     [JsonRequired]
     public string EntryViewMode { get; init; } = LauncherEntryViewModes.CardsId;
 
+    /// <summary>Cards 视图分组维度: none / command / directory. Optional — missing/null/unknown defaults to none (forward compat).</summary>
+    [JsonPropertyName("cardsGroupKey")]
+    public string CardsGroupKey { get; init; } = LauncherCardsGroupKeys.None;
+
     [JsonPropertyName("requireConfirmationForLaunches")]
     [JsonRequired]
     public bool RequireConfirmationForLaunches { get; init; } = true;
