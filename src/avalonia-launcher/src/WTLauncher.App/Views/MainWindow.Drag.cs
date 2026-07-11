@@ -33,7 +33,7 @@ public sealed partial class MainWindow
             if (_isDragging)
                 ForceCleanup();
 
-            if (DataContext is not MainWindowViewModel { IsCustomSortMode: true } viewModel)
+            if (DataContext is not MainWindowViewModel viewModel)
                 return;
 
             var point = e.GetCurrentPoint(this);

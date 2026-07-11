@@ -149,6 +149,47 @@ public sealed partial class MainWindowViewModelTests
         Assert.True(usage.UsedHeight > availableHeight + 0.001, $"expected min-window height to overflow so the ScrollViewer can act as fallback, got {usage.UsedHeight}");
     }
 
+    [Fact]
+    public async Task ApplyCardSize_RetriggersAfterAddingEntrySoAllCardsShareUniformSize()
+    {
+        // ponytail: 07-10 button shape bug 根因 —— AddEntry / CloneEntry / DiscoverAgents
+        // 添加新 entry 后, ApplyFilter 的优化条件 (_cardsAvailableSize != _lastAppliedCardsAvailableSize)
+        // 忽略了 count 变化, 导致新 entry 用默认 CardWidth=300/CardHeight=164, 其他 entries
+        // 用旧 layout 平分值 → 卡片大小不一致。修复: 条件加 || _visibleEntries.Count != _lastAppliedVisibleCount。
+        using var temp = new TempDirectory();
+        var entries = NumberedEntries(6);
+        var (config, settings, _) = CreatePortableFixture(temp, entries);
+        var viewModel = CreateViewModel(config, settings);
+        viewModel.UpdateCardsAvailableSize(new Size(640, 260));
+
+        // Original entries got layout-computed sizes (NOT the 300x164 default).
+        var originalWidth = viewModel.Entries[0].CardWidth;
+        var originalHeight = viewModel.Entries[0].CardHeight;
+        Assert.True(originalWidth < 300, "layout-computed width should be below default");
+        Assert.True(originalHeight < 164, "layout-computed height should be below default");
+
+        viewModel.DiscoverAgentsDialogAsync = ReturnDiscoverySelection(
+            SampleDiscoveredAgent("claude", "Claude Code", "Anthropic"),
+            SampleDiscoveredAgent("aider", "Aider", "community"));
+        await viewModel.DiscoverAgentsCommand.ExecuteAsync(null);
+
+        // After adding 2 entries (6 → 8), all 8 entries must share the SAME CardWidth/CardHeight.
+        // The bug: new entries stayed at default 300x164 while originals kept old layout.
+        Assert.Equal(8, viewModel.Entries.Count);
+        // Specifically: post-add layout WILL differ from pre-add (count changed → recompute),
+        // but ALL entries must agree on the new value.
+        var firstWidth = viewModel.Entries[0].CardWidth;
+        var firstHeight = viewModel.Entries[0].CardHeight;
+        Assert.All(viewModel.Entries, entry =>
+        {
+            Assert.Equal(firstWidth, entry.CardWidth);
+            Assert.Equal(firstHeight, entry.CardHeight);
+        });
+        // And the new value must be the layout-computed one, NOT the 300x164 default.
+        Assert.True(firstWidth < 300, "post-add width must be layout-computed, not the 300 default");
+        Assert.True(firstHeight < 164, "post-add height must be layout-computed, not the 164 default");
+    }
+
     private static LayoutGridUsage MeasureLayoutGridUsage(
         int itemCount,
         double availableWidth,

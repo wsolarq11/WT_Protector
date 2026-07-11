@@ -12,6 +12,11 @@ public sealed partial class MainWindowViewModel
 {
     private Size _cardsAvailableSize = new(900, 420);
     private Size _lastAppliedCardsAvailableSize;
+    // ponytail: ApplyCardSize also depends on entry count (layout 平分可用空间),
+    // 所以 _lastAppliedVisibleCount 跟踪 count; count 变了即使 size 没变也要重算。
+    // 否则 Add/Clone/DiscoverAgents 添加的新 entry 用默认 CardWidth=300/Height=164,
+    // 其他 entries 用旧 layout → 卡片大小不一致(07-10 button shape bug 根因)。
+    private int _lastAppliedVisibleCount = -1;
 
     // Prevents infinite recursion when a settings save failure triggers
     // a property rollback that re-enters the OnXxxChanged callback.
@@ -241,11 +246,14 @@ public sealed partial class MainWindowViewModel
 
             SyncVisibleEntries(sorted);
 
-            // P1: Only recalculate card sizes when available size actually changed.
-            if (_cardsAvailableSize != _lastAppliedCardsAvailableSize)
+            // P1: Recalculate card sizes when available size OR visible count changed.
+            // count 变了 layout 平分会变（ LauncherEntryLayoutCalculator.Calculate 用 count 平分可用空间）。
+            if (_cardsAvailableSize != _lastAppliedCardsAvailableSize
+                || _visibleEntries.Count != _lastAppliedVisibleCount)
             {
                 LauncherEntryLayoutPresentation.ApplyCardSize(_entries, _visibleEntries, _cardsAvailableSize);
                 _lastAppliedCardsAvailableSize = _cardsAvailableSize;
+                _lastAppliedVisibleCount = _visibleEntries.Count;
             }
         }
         else
@@ -371,6 +379,7 @@ public sealed partial class MainWindowViewModel
         _cardsAvailableSize = normalized;
         LauncherEntryLayoutPresentation.ApplyCardSize(_entries, _visibleEntries, _cardsAvailableSize);
         _lastAppliedCardsAvailableSize = _cardsAvailableSize;
+        _lastAppliedVisibleCount = _visibleEntries.Count;
     }
 
     public bool TrySaveWindowBounds(double width, double height, double x = 0, double y = 0, string windowState = "Normal")

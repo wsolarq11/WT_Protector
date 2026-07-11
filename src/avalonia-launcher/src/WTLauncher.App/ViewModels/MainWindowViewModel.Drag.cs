@@ -25,11 +25,23 @@ public sealed partial class MainWindowViewModel
     public void BeginDragReorder(string draggedEntryId)
     {
         _lastPreviewParams = null; // reset debounce on new drag
+        EnsureDragSortMode();
         if (_dragReorderWorkflow.Begin(IsCustomSortMode, draggedEntryId))
         {
             _settings = _dragReorderWorkflow.Settings;
             ApplyFilter();
         }
+    }
+
+    /// <summary>
+    /// ponytail: 用户要求拖拽始终可用,不由排序方式限定。非 custom 模式下,
+    /// 拖拽开始时切到 custom,这样 LauncherDragReorderWorkflow 的 isCustomSortMode=true
+    /// 路径生效,customEntryOrder 立即可视化重排。Workflow 签名零改动。
+    /// </summary>
+    private void EnsureDragSortMode()
+    {
+        if (IsCustomSortMode) return;
+        SelectedSortMode = _sortModes.First(m => m.Id == LauncherEntryVisibility.CustomSortModeId);
     }
 
     public bool PreviewMoveEntry(string draggedEntryId, string targetEntryId, bool insertAfter)

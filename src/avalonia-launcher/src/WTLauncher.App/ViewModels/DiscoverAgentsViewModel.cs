@@ -45,44 +45,45 @@ public sealed partial class DiscoverAgentsViewModel : ObservableObject
     public bool CanAddSelected => SelectedCount > 0;
 
     [RelayCommand]
-    internal Task ScanAsync()
+    internal async Task ScanAsync()
     {
         if (IsScanning)
-            return Task.CompletedTask;
+            return;
 
         IsScanning = true;
         StatusText = "扫描中…";
 
-        return Task.Run(() =>
+        AgentDiscoveryResult result;
+        try
         {
-            try
+            // Scanner is slow (spawns 8 CLI processes); offload to thread pool.
+            // await resumes on UI thread (Avalonia SynchronizationContext captures it),
+            // so Rows/StatusText mutations below are on UI thread — required because
+            // CollectionChanged fires synchronously into RenderRows which mutates the
+            // visual tree. Pre-fix this was inside Task.Run, threw
+            // InvalidOperationException cross-thread, and silently left UI stuck.
+            result = await Task.Run(() => _scanFunc());
+
+            Rows.Clear();
+            foreach (var discovered in result.Found)
             {
-                var result = _scanFunc();
-                Rows.Clear();
-                foreach (var discovered in result.Found)
-                {
-                    var alreadyAdded = _alreadyAddedExecNames.Contains(discovered.Catalog.ExecName);
-                    Rows.Add(new DiscoveredAgentRow(discovered, IsAlreadyAdded: alreadyAdded));
-                }
-                StatusText = result.Found.Length == 0
-                    ? "未发现任何已安装的 AI Agent"
-                    : $"发现 {result.Found.Length} 个 AI Agent";
+                var alreadyAdded = _alreadyAddedExecNames.Contains(discovered.Catalog.ExecName);
+                Rows.Add(new DiscoveredAgentRow(discovered, IsAlreadyAdded: alreadyAdded));
             }
-            catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-            {
-                // ponytail: per-agent failures are already captured in the result.
-                // Surface a generic error; do not crash the dialog. Narrowed via
-                // ExceptionFilters so unrecoverable faults (OOM/SEH/AccessViolation)
-                // crash instead of being hidden behind a status string — matches
-                // MainWindowViewModel.Discovery dialog-open catch pattern.
-                ErrorLog.Write(ex, "DiscoverAgents.Scan");
-                StatusText = "扫描过程中发生错误";
-            }
-            finally
-            {
-                IsScanning = false;
-            }
-        });
+
+            StatusText = result.Found.Length == 0
+                ? "未发现任何已安装的 AI Agent"
+                : $"发现 {result.Found.Length} 个 AI Agent";
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "DiscoverAgents.Scan");
+            StatusText = "扫描过程中发生错误";
+        }
+        finally
+        {
+            IsScanning = false;
+        }
     }
 
     [RelayCommand]
