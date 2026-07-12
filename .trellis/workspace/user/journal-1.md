@@ -1303,3 +1303,36 @@ Completed 07-12-modernization-audit: CompiledBindings (4 x:DataType, 0 binding e
 ### Next Steps
 
 - None - task complete
+
+
+## Session 38: FMA Phase 0-1 实施 + 卡片视图拖拽修复 + 拖拽性能审计
+
+**Date**: 2026-07-12
+**Task**: FMA Phase 0-1 实施 + 卡片视图拖拽修复 + 拖拽性能审计
+**Branch**: `main`
+
+### Summary
+
+FMA Phase 0-1: IDialogService, PresetService 提取并集成; 卡片视图拖拽修复 (CommitDragReorder 始终调用 ApplyFilter); 三视图拖拽架构调研与验证 (Sortable.Avalonia 对照); 拖拽性能全方位审计 (结论: 已到位, 无需优化); spec 更新 (pitfalls.md 2.13 + drag-drop.md Forbidden Patterns)
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6906006` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

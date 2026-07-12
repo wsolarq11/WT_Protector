@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 37
+- **Total Sessions**: 38
 - **Last Active**: 2026-07-12
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1305 | Active |
+| `journal-1.md` | ~1338 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 38 | 2026-07-12 | FMA Phase 0-1 实施 + 卡片视图拖拽修复 + 拖拽性能审计 | `6906006` | `main` |
 | 37 | 2026-07-12 | Modernization 8-task wave + consistency verification | `ac675a4` | `main` |
 | 36 | 2026-07-10 | Session: /goal pipeline (check/break-loop/update-spec/dream/finish-work) | `7935b3b` | `main` |
 | 35 | 2026-07-10 | Post-reorg /goal chain: check + break-loop + update-spec + dream(N/A) + finish-work | `1732754`, `e4398b3` | `main` |
