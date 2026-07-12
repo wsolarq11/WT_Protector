@@ -6,24 +6,12 @@ using WTLauncher.Core;
 namespace WTLauncher.App.ViewModels;
 
 // 命令管理 dialog 集成。Split from MainWindowViewModel.cs (task 07-11-command-management-dialog).
-// Dialog 通过 Func 注入,与 DiscoverAgentsDialogAsync 同模式。
+// 使用 IDialogService 打开命令管理 dialog。
 // Owner 通过 ApplyCommandManagementEdit 回调执行 snapshot/mutate/save/rollback。
 // ponytail: edit 是 sealed record 多态,owner pattern-match 处理。
 
 public sealed partial class MainWindowViewModel
 {
-    private Func<Func<CommandManagementEdit, CommandManagementResult>, Task> _openCommandManagementDialog =
-        static _ => Task.CompletedTask;
-
-    /// <summary>
-    /// 注入点: 打开命令管理 dialog。callback 参数是 owner 提供的 apply 函数,dialog 每次 edit 调一次。
-    /// 默认 no-op 让单元测试构造 MainWindowViewModel 时不需要 UI。
-    /// </summary>
-    public Func<Func<CommandManagementEdit, CommandManagementResult>, Task> OpenCommandManagementDialog
-    {
-        get => _openCommandManagementDialog;
-        set => _openCommandManagementDialog = value ?? throw new ArgumentNullException(nameof(value));
-    }
 
     [RelayCommand]
     private async Task OpenCommandManagementAsync()
@@ -31,7 +19,10 @@ public sealed partial class MainWindowViewModel
         DiscardDragReorderPreview();
         try
         {
-            await OpenCommandManagementDialog(ApplyCommandManagementEdit).ConfigureAwait(true);
+            await _dialogService.OpenCommandManagementAsync(
+                GetCommandRowsSnapshot(),
+                GetTemplateRowsSnapshot(),
+                ApplyCommandManagementEdit).ConfigureAwait(true);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {

@@ -159,7 +159,14 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var entries = NumberedEntries(6);
         var (config, settings, _) = CreatePortableFixture(temp, entries);
-        var viewModel = CreateViewModel(config, settings);
+        var dialogService = new StubDialogService
+        {
+            OnDiscoverAgents = _ => Task.FromResult<IReadOnlyList<DiscoveredAgent>?>([
+                SampleDiscoveredAgent("claude", "Claude Code", "Anthropic"),
+                SampleDiscoveredAgent("aider", "Aider", "community"),
+            ]),
+        };
+        var viewModel = CreateViewModel(config, settings, dialogService: dialogService);
         viewModel.UpdateCardsAvailableSize(new Size(640, 260));
 
         // Original entries got layout-computed sizes (NOT the 300x164 default).
@@ -168,9 +175,6 @@ public sealed partial class MainWindowViewModelTests
         Assert.True(originalWidth < 300, "layout-computed width should be below default");
         Assert.True(originalHeight < 164, "layout-computed height should be below default");
 
-        viewModel.DiscoverAgentsDialogAsync = ReturnDiscoverySelection(
-            SampleDiscoveredAgent("claude", "Claude Code", "Anthropic"),
-            SampleDiscoveredAgent("aider", "Aider", "community"));
         await viewModel.DiscoverAgentsCommand.ExecuteAsync(null);
 
         // After adding 2 entries (6 → 8), all 8 entries must share the SAME CardWidth/CardHeight.

@@ -1,3 +1,4 @@
+using WTLauncher.App.Features.Entries;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -15,12 +16,14 @@ public sealed partial class MainWindowViewModelTests
             SortMode = LauncherEntryQuery.CustomSortModeId,
             CustomEntryOrder = ["one", "two"],
         };
+        var dialogService = new StubDialogService();
+        dialogService.OnRequestEntryDraft = (_, _, _) => Task.FromResult<EntryDraft?>(
+            NewThreeEntryDraft());
         var viewModel = CreateViewModel(
             config,
             settings,
             launcherSettings,
-            vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
-                NewThreeEntryDraft()));
+            dialogService: dialogService);
 
         File.Delete(config);
         Directory.CreateDirectory(config);
@@ -40,11 +43,13 @@ public sealed partial class MainWindowViewModelTests
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        var dialogService = new StubDialogService();
+        dialogService.OnRequestEntryDraft = (_, _, _) => Task.FromResult<EntryDraft?>(
+            NewThreeEntryDraft());
         var viewModel = CreateViewModel(
             config,
             settings,
-            configure: vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
-                NewThreeEntryDraft()));
+            dialogService: dialogService);
 
         File.Delete(settings);
         Directory.CreateDirectory(settings);
@@ -65,11 +70,13 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, presets) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
         SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
+        var dialogService = new StubDialogService();
+        dialogService.OnRequestEntryDraft = (_, _, _) => Task.FromResult<EntryDraft?>(
+            RenamedOneEntryDraft());
         var viewModel = CreateViewModel(
             config,
             settings,
-            configure: vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
-                RenamedOneEntryDraft()));
+            dialogService: dialogService);
         File.Delete(presets);
         Directory.CreateDirectory(presets);
 
@@ -90,11 +97,13 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreateDragFixture(temp);
         var launcherSettings = CreateDragSettings();
+        var dialogService = new StubDialogService();
+        dialogService.OnRequestEntryDraft = (_, _, _) => Task.FromResult<EntryDraft?>(null);
         var viewModel = CreateViewModel(
             config,
             settings,
             launcherSettings,
-            vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(null));
+            dialogService: dialogService);
 
         StartDefaultDragPreview(viewModel, launcherSettings);
 
@@ -114,15 +123,14 @@ public sealed partial class MainWindowViewModelTests
         var (config, settings, presets) = CreateDragFixture(temp);
         SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
         var launcherSettings = CreateDragSettings();
+        var dialogService = new StubDialogService();
+        dialogService.OnRequestEntryDraft = (_, _, _) => throw new InvalidOperationException("dialog unavailable");
+        dialogService.OnConfirmDeleteEntry = _ => throw new InvalidOperationException("dialog unavailable");
         var viewModel = CreateViewModel(
             config,
             settings,
             launcherSettings,
-            vm =>
-            {
-                vm.RequestEntryDraftAsync = _ => throw new InvalidOperationException("dialog unavailable");
-                vm.ConfirmDeleteEntryAsync = _ => throw new InvalidOperationException("dialog unavailable");
-            });
+            dialogService: dialogService);
 
         StartDefaultDragPreview(viewModel, launcherSettings);
         await viewModel.AddEntryCommand.ExecuteAsync(null);
@@ -149,12 +157,14 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreateDragFixture(temp);
         var launcherSettings = CreateDragSettings();
+        var dialogService = new StubDialogService();
+        dialogService.OnRequestEntryDraft = (_, _, _) => Task.FromResult<EntryDraft?>(
+            NewFourEntryDraft());
         var viewModel = CreateViewModel(
             config,
             settings,
             launcherSettings,
-            vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
-                NewFourEntryDraft()));
+            dialogService: dialogService);
 
         StartDefaultDragPreview(viewModel, launcherSettings);
 
@@ -173,11 +183,13 @@ public sealed partial class MainWindowViewModelTests
         var (config, settings, presets) = CreateDragFixture(temp);
         SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
         var launcherSettings = CreateDragSettings();
+        var dialogService = new StubDialogService();
+        dialogService.OnRequestEntryDraft = (_, _, _) => Task.FromResult<EntryDraft?>(null);
         var viewModel = CreateViewModel(
             config,
             settings,
             launcherSettings,
-            vm => vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(null));
+            dialogService: dialogService);
 
         StartDefaultDragPreview(viewModel, launcherSettings);
 
@@ -199,17 +211,19 @@ public sealed partial class MainWindowViewModelTests
         SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
         var launcherSettings = CreateDragSettings();
         LaunchEntry? dialogEntry = null;
+        var dialogService = new StubDialogService();
+        dialogService.OnRequestEntryDraft = (entry, _, _) =>
+        {
+            dialogEntry = entry;
+            entry = entry! with { Id = "broken", Name = "" };
+            dialogEntry = entry;
+            return Task.FromResult<EntryDraft?>(null);
+        };
         var viewModel = CreateViewModel(
             config,
             settings,
             launcherSettings,
-            configure: vm => vm.RequestEntryDraftAsync = entry =>
-            {
-                dialogEntry = entry;
-                entry = entry! with { Id = "broken", Name = "" };
-                dialogEntry = entry;
-                return Task.FromResult<EntryDraft?>(null);
-            });
+            dialogService: dialogService);
 
         await viewModel.Entries.Single(entry => entry.Id == "one").EditCommand.ExecuteAsync(null);
 
@@ -232,15 +246,17 @@ public sealed partial class MainWindowViewModelTests
         var (config, settings, presets) = CreateDragFixture(temp);
         SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
         var launcherSettings = CreateDragSettings();
+        var dialogService = new StubDialogService();
+        dialogService.OnRequestEntryDraft = (entry, _, _) =>
+        {
+            entry = entry! with { Id = "broken", Name = "" };
+            return Task.FromResult<EntryDraft?>(RenamedOneEntryDraft());
+        };
         var viewModel = CreateViewModel(
             config,
             settings,
             launcherSettings,
-            configure: vm => vm.RequestEntryDraftAsync = entry =>
-            {
-                entry = entry! with { Id = "broken", Name = "" };
-                return Task.FromResult<EntryDraft?>(RenamedOneEntryDraft());
-            });
+            dialogService: dialogService);
 
         await viewModel.Entries.Single(entry => entry.Id == "one").EditCommand.ExecuteAsync(null);
 
@@ -263,6 +279,12 @@ public sealed partial class MainWindowViewModelTests
             DateTimeOffset.Parse("2026-05-30T01:02:03Z"),
             DateTimeOffset.Parse("2026-05-30T04:05:06Z"),
         ]);
+        var dialogService = new StubDialogService();
+        dialogService.OnRequestEntryDraft = (_, _, _) => Task.FromResult<EntryDraft?>(
+            requestCount++ == 0
+                ? NewThreeEntryDraft()
+                : RenamedOneEntryDraft());
+        dialogService.OnConfirmDeleteEntry = _ => Task.FromResult(true);
         var viewModel = CreateViewModel(
             config,
             settings,
@@ -271,15 +293,8 @@ public sealed partial class MainWindowViewModelTests
                 SortMode = LauncherEntryQuery.CustomSortModeId,
                 CustomEntryOrder = ["one", "two"],
             },
-            vm =>
-            {
-                vm.RequestEntryDraftAsync = _ => Task.FromResult<EntryDraft?>(
-                    requestCount++ == 0
-                        ? NewThreeEntryDraft()
-                        : RenamedOneEntryDraft());
-                vm.ConfirmDeleteEntryAsync = _ => Task.FromResult(true);
-            },
-            utcNow: timestamps.Dequeue);
+            utcNow: timestamps.Dequeue,
+            dialogService: dialogService);
 
         await viewModel.AddEntryCommand.ExecuteAsync(null);
 
@@ -323,11 +338,13 @@ public sealed partial class MainWindowViewModelTests
         var (config, settings, presets) = CreateDragFixture(temp);
         SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
         var launcherSettings = CreateDragSettings();
+        var dialogService = new StubDialogService();
+        dialogService.OnConfirmDeleteEntry = _ => Task.FromResult(false);
         var viewModel = CreateViewModel(
             config,
             settings,
             launcherSettings,
-            vm => vm.ConfirmDeleteEntryAsync = _ => Task.FromResult(false));
+            dialogService: dialogService);
 
         StartDefaultDragPreview(viewModel, launcherSettings);
 
@@ -348,10 +365,11 @@ public sealed partial class MainWindowViewModelTests
         var (config, settings, presets) = CreateDragFixture(temp);
         SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
         var launcherSettings = CreateDragSettings();
-        var viewModel = CreateViewModel(config, settings, launcherSettings);
         LaunchEntry? externalSnapshot = null;
         LauncherEntryDeleteTarget? target = null;
-        viewModel.ConfirmDeleteEntryAsync = candidate =>
+        var dialogService = new StubDialogService();
+        var viewModel = CreateViewModel(config, settings, launcherSettings, dialogService: dialogService);
+        dialogService.OnConfirmDeleteEntry = candidate =>
         {
             target = candidate;
             externalSnapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
@@ -380,10 +398,11 @@ public sealed partial class MainWindowViewModelTests
         var (config, settings, presets) = CreateDragFixture(temp);
         SavePresetFile(presets, "daily", Preset("daily", "Daily", "one"));
         var launcherSettings = CreateDragSettings();
-        var viewModel = CreateViewModel(config, settings, launcherSettings);
         LaunchEntry? externalSnapshot = null;
         LauncherEntryDeleteTarget? target = null;
-        viewModel.ConfirmDeleteEntryAsync = candidate =>
+        var dialogService = new StubDialogService();
+        var viewModel = CreateViewModel(config, settings, launcherSettings, dialogService: dialogService);
+        dialogService.OnConfirmDeleteEntry = candidate =>
         {
             target = candidate;
             externalSnapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
@@ -420,7 +439,8 @@ public sealed partial class MainWindowViewModelTests
     [Fact]
     public void GenerateUniqueCloneIdReturnsSourceCopyWhenNoConflict()
     {
-        var result = MainWindowViewModel.GenerateUniqueCloneId(
+        var svc = new EntryService(new StubDialogService());
+        var result = svc.GenerateUniqueCloneId(
             "myentry",
             ["one", "two", "three"]);
 
@@ -430,7 +450,8 @@ public sealed partial class MainWindowViewModelTests
     [Fact]
     public void GenerateUniqueCloneIdAppendsSuffixWhenCopyExists()
     {
-        var result = MainWindowViewModel.GenerateUniqueCloneId(
+        var svc = new EntryService(new StubDialogService());
+        var result = svc.GenerateUniqueCloneId(
             "myentry",
             ["one", "myentry-copy", "two"]);
 
@@ -440,7 +461,8 @@ public sealed partial class MainWindowViewModelTests
     [Fact]
     public void GenerateUniqueCloneIdSkipsIntermediateCollisions()
     {
-        var result = MainWindowViewModel.GenerateUniqueCloneId(
+        var svc = new EntryService(new StubDialogService());
+        var result = svc.GenerateUniqueCloneId(
             "myentry",
             ["one", "myentry-copy", "myentry-copy-2", "myentry-copy-3"]);
 
@@ -450,7 +472,8 @@ public sealed partial class MainWindowViewModelTests
     [Fact]
     public void GenerateUniqueCloneIdOnlyDetectsExactOrdinalCollision()
     {
-        var result = MainWindowViewModel.GenerateUniqueCloneId(
+        var svc = new EntryService(new StubDialogService());
+        var result = svc.GenerateUniqueCloneId(
             "myentry",
             [" myentry-copy "]);
 

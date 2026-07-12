@@ -5,18 +5,11 @@ using WTLauncher.Core;
 namespace WTLauncher.App.ViewModels;
 
 // 地址管理 dialog 集成。Split from MainWindowViewModel.cs (task 07-11-directory-management-dialog).
-// 与 CommandManagement 同模式: Func 注入 dialog,owner 提供 Apply 回调做 snapshot/mutate/save/rollback。
+// 使用 IDialogService 打开地址管理 dialog。
+// Owner 通过 Apply 回调做 snapshot/mutate/save/rollback。
 
 public sealed partial class MainWindowViewModel
 {
-    private Func<Func<DirectoryManagementEdit, DirectoryManagementResult>, Task> _openDirectoryManagementDialog =
-        static _ => Task.CompletedTask;
-
-    public Func<Func<DirectoryManagementEdit, DirectoryManagementResult>, Task> OpenDirectoryManagementDialog
-    {
-        get => _openDirectoryManagementDialog;
-        set => _openDirectoryManagementDialog = value ?? throw new ArgumentNullException(nameof(value));
-    }
 
     [RelayCommand]
     private async Task OpenDirectoryManagementAsync()
@@ -24,7 +17,9 @@ public sealed partial class MainWindowViewModel
         DiscardDragReorderPreview();
         try
         {
-            await OpenDirectoryManagementDialog(ApplyDirectoryManagementEdit).ConfigureAwait(true);
+            await _dialogService.OpenDirectoryManagementAsync(
+                GetDirectoryRowsSnapshot(),
+                ApplyDirectoryManagementEdit).ConfigureAwait(true);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {

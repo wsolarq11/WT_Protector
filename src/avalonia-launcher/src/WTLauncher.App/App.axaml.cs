@@ -7,6 +7,7 @@ using Avalonia.Threading;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
 using WTLauncher.App.Views;
+using WTLauncher.App.Features.Dialogs;
 using WTLauncher.Core;
 
 namespace WTLauncher.App;
@@ -134,10 +135,12 @@ public sealed partial class App : Application
                     storeFile = new LauncherStoreFile();
                 }
                 var launchWorkflow = LauncherLaunchWorkflow.Create();
+                var dialogService = new DialogService();
                 var viewModel = new MainWindowViewModel(
                     storePath,
                     storeFile,
                     launchWorkflow,
+                    dialogService,
                     static () => DateTimeOffset.UtcNow);
                 var windowSettings = storeFile.Settings.Window;
                 var mainWindow = new MainWindow(viewModel)
@@ -145,6 +148,7 @@ public sealed partial class App : Application
                     Width = Math.Max(windowSettings.Width, LauncherDesignTokens.WindowMinWidth),
                     Height = Math.Max(windowSettings.Height, LauncherDesignTokens.WindowMinHeight),
                 };
+                dialogService.Initialize(mainWindow);
                 desktop.MainWindow = mainWindow;
             }
         }

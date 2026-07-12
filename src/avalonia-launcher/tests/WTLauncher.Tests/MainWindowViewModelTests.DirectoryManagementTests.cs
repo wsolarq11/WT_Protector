@@ -108,14 +108,16 @@ public sealed partial class MainWindowViewModelTests
             temp,
             Entry("a", "A", directory: @"D:\x"),
             Entry("b", "B", directory: @"D:\x"));
-        var viewModel = CreateViewModel(config, config);
-
         Func<DirectoryManagementEdit, DirectoryManagementResult>? capturedApply = null;
-        viewModel.OpenDirectoryManagementDialog = async apply =>
+        var dialogService = new StubDialogService
         {
-            capturedApply = apply;
-            await Task.CompletedTask;
+            OnOpenDirectoryManagement = (_, apply) =>
+            {
+                capturedApply = apply;
+                return Task.CompletedTask;
+            },
         };
+        var viewModel = CreateViewModel(config, config, dialogService: dialogService);
 
         await viewModel.OpenDirectoryManagementCommand.ExecuteAsync(null);
 

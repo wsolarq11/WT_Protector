@@ -16,10 +16,12 @@ public sealed partial class MainWindowViewModelTests
             Preset("daily", "Daily", "one"),
             Preset("blank-manual", "Manual", locked: true));
 
+        var dialogService = new StubDialogService();
+        dialogService.OnRequestNewPreset = (_, _) => Task.FromResult<string?>("Project Pair");
         var viewModel = CreateViewModel(
             config,
             settings,
-            configure: vm => vm.RequestNewPresetAsync = _ => Task.FromResult<string?>("Project Pair"));
+            dialogService: dialogService);
 
         Assert.True(viewModel.SaveSelectionAsPresetCommand.CanExecute(null));
 
@@ -44,7 +46,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(["one", "two"], created.EntryIds);
         Assert.False(viewModel.UpdateSelectedPresetCommand.CanExecute(null));
 
-        viewModel.ConfirmDeletePresetAsync = preset => Task.FromResult(preset.PresetId == "project-pair");
+        dialogService.OnConfirmDeletePreset = preset => Task.FromResult(preset.PresetId == "project-pair");
 
         Assert.True(viewModel.DeleteSelectedPresetCommand.CanExecute(null));
 
@@ -306,11 +308,14 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            vm => vm.ConfirmBatchLaunchAsync = candidate =>
+            dialogService: new StubDialogService
             {
-                confirmation = candidate;
-                confirmedItems = candidate.Items.ToArray();
-                return Task.FromResult(false);
+                OnConfirmBatchLaunch = candidate =>
+                {
+                    confirmation = candidate;
+                    confirmedItems = candidate.Items.ToArray();
+                    return Task.FromResult(false);
+                },
             },
             launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
 
@@ -348,11 +353,14 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            vm => vm.ConfirmBatchLaunchAsync = candidate =>
+            dialogService: new StubDialogService
             {
-                confirmation = candidate;
-                confirmedItems = candidate.Items.ToArray();
-                return Task.FromResult(true);
+                OnConfirmBatchLaunch = candidate =>
+                {
+                    confirmation = candidate;
+                    confirmedItems = candidate.Items.ToArray();
+                    return Task.FromResult(true);
+                },
             },
             launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
 
@@ -388,10 +396,13 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = false },
-            vm => vm.ConfirmBatchLaunchAsync = _ =>
+            dialogService: new StubDialogService
             {
-                confirmCalls++;
-                return Task.FromResult(true);
+                OnConfirmBatchLaunch = _ =>
+                {
+                    confirmCalls++;
+                    return Task.FromResult(true);
+                },
             },
             launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
 
@@ -420,7 +431,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            vm => vm.ConfirmBatchLaunchAsync = _ => throw new InvalidOperationException("dialog unavailable"),
+            dialogService: new StubDialogService { OnConfirmBatchLaunch = _ => throw new InvalidOperationException("dialog unavailable") },
             launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
 
         await viewModel.LaunchSelectedPresetCommand.ExecuteAsync(null);
@@ -460,11 +471,13 @@ public sealed partial class MainWindowViewModelTests
             Preset("daily", "Daily", "one"),
             Preset("secondary", "Secondary", "two"));
         var launcherSettings = CreateDragSettings();
+        var dialogService = new StubDialogService();
+        dialogService.OnConfirmDeletePreset = _ => Task.FromResult(false);
         var viewModel = CreateViewModel(
             config,
             settings,
             launcherSettings,
-            configure: vm => vm.ConfirmDeletePresetAsync = _ => Task.FromResult(false));
+            dialogService: dialogService);
 
         StartDefaultDragPreview(viewModel, launcherSettings);
 
@@ -489,12 +502,14 @@ public sealed partial class MainWindowViewModelTests
             Preset("daily", "Daily", "one"),
             Preset("secondary", "Secondary", "two"));
         var launcherSettings = CreateDragSettings();
+        var dialogService = new StubDialogService();
+        dialogService.OnConfirmDeletePreset = _ =>
+            throw new InvalidOperationException("dialog unavailable");
         var viewModel = CreateViewModel(
             config,
             settings,
             launcherSettings,
-            configure: vm => vm.ConfirmDeletePresetAsync = _ =>
-                throw new InvalidOperationException("dialog unavailable"));
+            dialogService: dialogService);
 
         StartDefaultDragPreview(viewModel, launcherSettings);
 
@@ -519,9 +534,10 @@ public sealed partial class MainWindowViewModelTests
             Preset("daily", "Daily", "one"),
             Preset("secondary", "Secondary", "two"));
         var launcherSettings = CreateDragSettings();
-        var viewModel = CreateViewModel(config, settings, launcherSettings);
+        var dialogService = new StubDialogService();
+        var viewModel = CreateViewModel(config, settings, launcherSettings, dialogService: dialogService);
         LauncherPresetDeleteTarget? target = null;
-        viewModel.ConfirmDeletePresetAsync = candidate =>
+        dialogService.OnConfirmDeletePreset = candidate =>
         {
             target = candidate;
             return Task.FromResult(false);
@@ -553,9 +569,10 @@ public sealed partial class MainWindowViewModelTests
             Preset("daily", "Daily", "one"),
             Preset("secondary", "Secondary", "two"));
         var launcherSettings = CreateDragSettings();
-        var viewModel = CreateViewModel(config, settings, launcherSettings);
+        var dialogService = new StubDialogService();
+        var viewModel = CreateViewModel(config, settings, launcherSettings, dialogService: dialogService);
         LauncherPresetDeleteTarget? target = null;
-        viewModel.ConfirmDeletePresetAsync = candidate =>
+        dialogService.OnConfirmDeletePreset = candidate =>
         {
             target = candidate;
             return Task.FromResult(true);
@@ -585,11 +602,13 @@ public sealed partial class MainWindowViewModelTests
             Preset("daily", "Daily", "one"),
             Preset("secondary", "Secondary", "two"));
         var launcherSettings = CreateDragSettings();
+        var dialogService = new StubDialogService();
+        dialogService.OnConfirmDeletePreset = _ => Task.FromResult(true);
         var viewModel = CreateViewModel(
             config,
             settings,
             launcherSettings,
-            configure: vm => vm.ConfirmDeletePresetAsync = _ => Task.FromResult(true));
+            dialogService: dialogService);
 
         StartDefaultDragPreview(viewModel, launcherSettings);
 

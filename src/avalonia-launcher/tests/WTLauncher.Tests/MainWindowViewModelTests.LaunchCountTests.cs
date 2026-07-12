@@ -57,11 +57,12 @@ public sealed partial class MainWindowViewModelTests
             Entry("three", directory: temp.Path, command: "pwsh", selected: false),
         };
         var (config, settings, _) = CreatePortableFixture(temp, entries);
+        var dialogService = new StubDialogService { OnConfirmBatchLaunch = _ => Task.FromResult(true) };
         var viewModel = CreateViewModel(
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = false },
-            vm => vm.ConfirmBatchLaunchAsync = _ => Task.FromResult(true));
+            dialogService: dialogService);
 
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 

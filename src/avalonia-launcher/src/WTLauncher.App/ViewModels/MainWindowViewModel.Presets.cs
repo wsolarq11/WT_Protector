@@ -56,51 +56,19 @@ public sealed partial class MainWindowViewModel
 
     private async Task<bool> ConfirmDeletePresetIfRequiredAsync(LauncherPresetDeleteTarget target)
     {
-        bool accepted;
-        try
-        {
-            accepted = await ConfirmDeletePresetAsync(target).ConfigureAwait(true);
-        }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-        {
-            StatusText = LauncherPresetStatus.DeleteConfirmationFailed(target.PresetName, ex);
-            return false;
-        }
-
-        if (accepted)
-            return true;
-
-        StatusText = LauncherPresetStatus.DeleteCanceled(target.PresetName);
-        return false;
+        var (accepted, status) = await _presetService.ConfirmDeletePresetAsync(target).ConfigureAwait(true);
+        if (status is not null)
+            StatusText = status;
+        return accepted;
     }
 
     private async Task<string?> RequestPresetNameIfRequiredAsync(LauncherPresetSaveTarget target)
     {
-        string? presetName;
-        try
-        {
-            presetName = await RequestNewPresetAsync(target).ConfigureAwait(true);
-        }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-        {
-            StatusText = LauncherPresetStatus.SaveDialogFailed(ex);
-            return null;
-        }
-
-        if (presetName is null)
-        {
-            StatusText = LauncherPresetStatus.SaveCanceled;
-            return null;
-        }
-
-        var normalizedName = EntryName.Normalize(presetName);
-        if (normalizedName.Length == 0)
-        {
-            StatusText = LauncherPresetStatus.NameRequired;
-            return null;
-        }
-
-        return normalizedName;
+        var (name, status) = await _presetService.RequestNewPresetAsync(
+            target, _presets.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase)).ConfigureAwait(true);
+        if (status is not null)
+            StatusText = status;
+        return name;
     }
 
     private (LauncherPresetFile PresetFile, string? SelectedPresetId) CapturePresetMutationSnapshot()
@@ -308,23 +276,7 @@ public sealed partial class MainWindowViewModel
         return true;
     }
 
-    private Func<LauncherPresetSaveTarget, Task<string?>> _requestNewPresetAsync =
-        static _ => Task.FromResult<string?>(null);
-
-    private Func<LauncherPresetDeleteTarget, Task<bool>> _confirmDeletePresetAsync =
-        static _ => Task.FromResult(false);
-
-    public Func<LauncherPresetSaveTarget, Task<string?>> RequestNewPresetAsync
-    {
-        get => _requestNewPresetAsync;
-        set => _requestNewPresetAsync = value ?? throw new ArgumentNullException(nameof(value));
-    }
-
-    public Func<LauncherPresetDeleteTarget, Task<bool>> ConfirmDeletePresetAsync
-    {
-        get => _confirmDeletePresetAsync;
-        set => _confirmDeletePresetAsync = value ?? throw new ArgumentNullException(nameof(value));
-    }
+    // RequestNewPresetAsync and ConfirmDeletePresetAsync are delegated through IDialogService.
 
     [RelayCommand(CanExecute = nameof(CanApplyPreset))]
     private void ApplyPreset()
@@ -410,18 +362,15 @@ public sealed partial class MainWindowViewModel
             return;
 
         var snapshot = CapturePresetMutationSnapshot();
-        LauncherPreset? preset;
-        try
+        var (updatedFile, preset, addStatus) = _presetService.AddPreset(_presetFile, presetName, target.EntryIds);
+        if (preset is null)
         {
-            preset = LauncherPresetWorkflow.AddPreset(ref _presetFile, presetName, target.EntryIds);
-        }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-        {
-            ErrorLog.Write(ex, "AddPreset");
+            _presetFile = updatedFile;
             RestorePresetSnapshotAndReportMissing(snapshot);
-            StatusText = LauncherRefreshStatus.AddGroupFailed(ex);
+            if (addStatus is not null) StatusText = addStatus;
             return;
         }
+        _presetFile = updatedFile;
         if (!SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset))
             return;
 
@@ -462,23 +411,15 @@ public sealed partial class MainWindowViewModel
         }
 
         var snapshot = CapturePresetMutationSnapshot();
-        LauncherPreset? preset;
-        try
-        {
-            preset = LauncherPresetWorkflow.UpdatePreset(ref _presetFile, selectedPreset.Id, selectedPreset.Name, entryIds);
-        }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-        {
-            ErrorLog.Write(ex, "UpdatePreset");
-            RestorePresetSnapshotAndReportMissing(snapshot);
-            StatusText = LauncherPresetStatus.UpdateFailed(selectedPreset.Name, ex);
-            return;
-        }
+        var (updatedFile, preset, updateStatus, _) = _presetService.UpdatePreset(_presetFile, selectedPreset.Id, selectedPreset.Name, entryIds);
         if (preset is null)
         {
+            _presetFile = updatedFile;
             RestorePresetSnapshotAndReportMissing(snapshot);
+            if (updateStatus is not null) StatusText = updateStatus;
             return;
         }
+        _presetFile = updatedFile;
         if (!SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset))
             return;
 
@@ -513,24 +454,15 @@ public sealed partial class MainWindowViewModel
 
         var snapshot = CapturePresetMutationSnapshot();
 
-        LauncherPreset? preset;
-        string fallbackPresetId;
-        try
-        {
-            preset = LauncherPresetWorkflow.DeletePreset(ref _presetFile, target.PresetId, out fallbackPresetId);
-        }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-        {
-            ErrorLog.Write(ex, "DeletePreset");
-            RestorePresetSnapshotAndReportMissing(snapshot);
-            StatusText = LauncherRefreshStatus.DeleteGroupFailed(ex);
-            return;
-        }
+        var (updatedFile, preset, deleteStatus, fallbackPresetId) = _presetService.DeletePreset(_presetFile, target.PresetId);
         if (preset is null)
         {
+            _presetFile = updatedFile;
             RestorePresetSnapshotAndReportMissing(snapshot);
+            if (deleteStatus is not null) StatusText = deleteStatus;
             return;
         }
+        _presetFile = updatedFile;
         if (!SavePresetMutationAndApply(snapshot, fallbackPresetId, out var fallbackPreset))
             return;
 

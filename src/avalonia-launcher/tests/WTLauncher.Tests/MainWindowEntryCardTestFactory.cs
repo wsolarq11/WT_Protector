@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.ViewModels;
 using WTLauncher.App.Views;
 using WTLauncher.Core;
@@ -40,6 +41,7 @@ internal static class MainWindowEntryCardTestFactory
             storePath,
             storeFile,
             CreateLaunchWorkflow(),
+            new StubDialogService(),
             static () => DateTimeOffset.UtcNow);
     }
 
@@ -72,6 +74,7 @@ internal static class MainWindowEntryCardTestFactory
             storePath,
             storeFile,
             CreateLaunchWorkflow(),
+            new StubDialogService(),
             static () => DateTimeOffset.UtcNow));
     }
 

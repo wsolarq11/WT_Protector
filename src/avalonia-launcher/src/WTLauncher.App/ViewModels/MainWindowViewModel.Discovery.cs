@@ -6,25 +6,10 @@ using WTLauncher.Core;
 namespace WTLauncher.App.ViewModels;
 
 // Discovery Add flow. Split from MainWindowViewModel.cs as part of
-// 07-10-agent-cli-discovery. Dialog Func properties are bound by the View
-// (MainWindow.axaml.cs) and are owned by this partial — same pattern as
-// Entries.AddEntry's RequestEntryDraftAsync.
+// 07-10-agent-cli-discovery. Uses IDialogService for dialog interaction.
 
 public sealed partial class MainWindowViewModel
 {
-    private Func<Task<IReadOnlyList<DiscoveredAgent>?>> _discoverAgentsDialogAsync =
-        static () => Task.FromResult<IReadOnlyList<DiscoveredAgent>?>(null);
-
-    /// <summary>
-    /// Injected dialog that scans PATH for AI agent CLIs and returns the
-    /// user's selection (or null if canceled). Default returns null so unit
-    /// tests can construct MainWindowViewModel without spawning a UI.
-    /// </summary>
-    public Func<Task<IReadOnlyList<DiscoveredAgent>?>> DiscoverAgentsDialogAsync
-    {
-        get => _discoverAgentsDialogAsync;
-        set => _discoverAgentsDialogAsync = value ?? throw new ArgumentNullException(nameof(value));
-    }
 
     [RelayCommand]
     private async Task DiscoverAgentsAsync()
@@ -34,7 +19,13 @@ public sealed partial class MainWindowViewModel
         IReadOnlyList<DiscoveredAgent>? selected;
         try
         {
-            selected = await DiscoverAgentsDialogAsync().ConfigureAwait(true);
+            selected = await _dialogService.DiscoverAgentsAsync(
+                Entries
+                    .Select(e => (e.Command ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty)
+                    .Select(token => Path.GetFileNameWithoutExtension(token))
+                    .Where(name => !string.IsNullOrWhiteSpace(name))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase))
+                .ConfigureAwait(true);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
@@ -57,9 +48,11 @@ public sealed partial class MainWindowViewModel
         foreach (var discovered in selected)
         {
             var draft = AgentRecommendationFactory.ToDraft(discovered, userHome);
-            var entry = CreateEntryFromDraftOrReportValidation(draft, originalId: null, previousEntry: null);
+            var entry = _entryService.CreateEntryFromDraft(draft, originalId: null, previousEntry: null, _entries.Select(ToLaunchEntry), out var validationMessage);
             if (entry is null)
             {
+                if (validationMessage is not null)
+                    StatusText = validationMessage;
                 skipped.Add(discovered.Catalog.DisplayName);
                 continue;
             }

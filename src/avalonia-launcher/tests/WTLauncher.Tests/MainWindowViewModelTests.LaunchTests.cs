@@ -48,16 +48,18 @@ public sealed partial class MainWindowViewModelTests
         var (config, settings, _) = CreatePortableFixture(
             temp,
             Entry("one", directory: temp.Path, command: "codex --version"));
-        var viewModel = CreateViewModel(
-            config,
-            settings,
-            new LauncherSettings { RequireConfirmationForLaunches = true });
+        var dialogService = new StubDialogService();
         var confirmCalls = 0;
-        viewModel.ConfirmLaunchAsync = _ =>
+        dialogService.OnConfirmLaunch = _ =>
         {
             confirmCalls++;
             return Task.FromResult(false);
         };
+        var viewModel = CreateViewModel(
+            config,
+            settings,
+            new LauncherSettings { RequireConfirmationForLaunches = true },
+            dialogService: dialogService);
 
         await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
 
@@ -76,13 +78,15 @@ public sealed partial class MainWindowViewModelTests
             temp,
             Entry("one", directory: temp.Path, command: "codex --version"));
         var startedPlans = new List<LaunchPlan>();
+        var dialogService = new StubDialogService();
+        dialogService.OnConfirmLaunch = _ =>
+            throw new InvalidOperationException("dialog unavailable");
         var viewModel = CreateViewModel(
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            vm => vm.ConfirmLaunchAsync = _ =>
-                throw new InvalidOperationException("dialog unavailable"),
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add),
+            dialogService: dialogService);
 
         await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
 
@@ -103,14 +107,16 @@ public sealed partial class MainWindowViewModelTests
             temp,
             Entry("one", directory: temp.Path, command: "codex --version"));
         var startedPlans = new List<LaunchPlan>();
+        LaunchEntry? externalSnapshot = null;
+        LauncherSingleLaunchConfirmation? confirmation = null;
+        var dialogService = new StubDialogService();
         var viewModel = CreateViewModel(
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
-        LaunchEntry? externalSnapshot = null;
-        LauncherSingleLaunchConfirmation? confirmation = null;
-        viewModel.ConfirmLaunchAsync = candidate =>
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add),
+            dialogService: dialogService);
+        dialogService.OnConfirmLaunch = candidate =>
         {
             confirmation = candidate;
             externalSnapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
@@ -141,15 +147,17 @@ public sealed partial class MainWindowViewModelTests
             temp,
             Entry("one", directory: temp.Path, command: "codex --version"));
         LaunchPlan? confirmedPlan = null;
+        var dialogService = new StubDialogService();
+        dialogService.OnConfirmLaunch = confirmation =>
+        {
+            confirmedPlan = confirmation.Plan;
+            return Task.FromResult(true);
+        };
         var viewModel = CreateViewModel(
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            vm => vm.ConfirmLaunchAsync = confirmation =>
-            {
-                confirmedPlan = confirmation.Plan;
-                return Task.FromResult(true);
-            });
+            dialogService: dialogService);
 
         await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
 
@@ -168,14 +176,16 @@ public sealed partial class MainWindowViewModelTests
             temp,
             Entry("one", directory: temp.Path, command: "codex --version"));
         var startedPlans = new List<LaunchPlan>();
+        LaunchEntry? externalSnapshot = null;
+        LauncherSingleLaunchConfirmation? confirmation = null;
+        var dialogService = new StubDialogService();
         var viewModel = CreateViewModel(
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
-        LaunchEntry? externalSnapshot = null;
-        LauncherSingleLaunchConfirmation? confirmation = null;
-        viewModel.ConfirmLaunchAsync = candidate =>
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add),
+            dialogService: dialogService);
+        dialogService.OnConfirmLaunch = candidate =>
         {
             confirmation = candidate;
             externalSnapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
@@ -350,11 +360,13 @@ public sealed partial class MainWindowViewModelTests
             temp,
             Entry("one", directory: Path.Combine(temp.Path, "missing-one"), command: "codex", selected: true),
             Entry("two", directory: Path.Combine(temp.Path, "missing-two"), command: "opencode", selected: true));
+        var dialogService = new StubDialogService();
+        dialogService.OnConfirmBatchLaunch = _ => Task.FromResult(true);
         var viewModel = CreateViewModel(
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = false },
-            vm => vm.ConfirmBatchLaunchAsync = _ => Task.FromResult(true));
+            dialogService: dialogService);
 
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 
@@ -376,16 +388,18 @@ public sealed partial class MainWindowViewModelTests
             Entry("one", directory: Path.Combine(temp.Path, "missing-one"), command: "codex", selected: true));
         var confirmCalls = 0;
         LauncherBatchLaunchConfirmation? confirmation = null;
+        var dialogService = new StubDialogService();
+        dialogService.OnConfirmBatchLaunch = candidate =>
+        {
+            confirmCalls++;
+            confirmation = candidate;
+            return Task.FromResult(false);
+        };
         var viewModel = CreateViewModel(
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            vm => vm.ConfirmBatchLaunchAsync = candidate =>
-            {
-                confirmCalls++;
-                confirmation = candidate;
-                return Task.FromResult(false);
-            });
+            dialogService: dialogService);
 
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 
@@ -434,16 +448,18 @@ public sealed partial class MainWindowViewModelTests
             Entry("two", directory: temp.Path, command: "opencode", selected: true));
         LauncherBatchLaunchConfirmation? confirmation = null;
         IReadOnlyList<LauncherBatchLaunchItem>? confirmedItems = null;
+        var dialogService = new StubDialogService();
+        dialogService.OnConfirmBatchLaunch = candidate =>
+        {
+            confirmation = candidate;
+            confirmedItems = candidate.Items.ToArray();
+            return Task.FromResult(false);
+        };
         var viewModel = CreateViewModel(
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            vm => vm.ConfirmBatchLaunchAsync = candidate =>
-            {
-                confirmation = candidate;
-                confirmedItems = candidate.Items.ToArray();
-                return Task.FromResult(false);
-            });
+            dialogService: dialogService);
 
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 
@@ -469,13 +485,15 @@ public sealed partial class MainWindowViewModelTests
             Entry("one", directory: temp.Path, command: "codex", selected: true),
             Entry("two", directory: temp.Path, command: "opencode", selected: true));
         var startedPlans = new List<LaunchPlan>();
+        var dialogService = new StubDialogService();
+        dialogService.OnConfirmBatchLaunch = _ =>
+            throw new InvalidOperationException("dialog unavailable");
         var viewModel = CreateViewModel(
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            vm => vm.ConfirmBatchLaunchAsync = _ =>
-                throw new InvalidOperationException("dialog unavailable"),
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add),
+            dialogService: dialogService);
 
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 

@@ -19,14 +19,7 @@ public sealed partial class MainWindowViewModel
 
     public bool IsBatchLaunching => _batchCts is not null;
 
-    private Func<LauncherBatchLaunchConfirmation, Task<bool>> _confirmBatchLaunchAsync =
-        static _ => throw new InvalidOperationException("ConfirmBatchLaunchAsync is not bound by the View.");
-
-    public Func<LauncherBatchLaunchConfirmation, Task<bool>> ConfirmBatchLaunchAsync
-    {
-        get => _confirmBatchLaunchAsync;
-        set => _confirmBatchLaunchAsync = value ?? throw new ArgumentNullException(nameof(value));
-    }
+    // ConfirmBatchLaunchAsync is delegated through IDialogService.
 
     [RelayCommand(CanExecute = nameof(CanCancelBatch))]
     private void CancelBatch()
@@ -210,7 +203,7 @@ public sealed partial class MainWindowViewModel
             report.FailureMessages);
         try
         {
-            accepted = await ConfirmBatchLaunchAsync(confirmation).ConfigureAwait(true);
+            accepted = await _dialogService.ConfirmBatchLaunchAsync(confirmation).ConfigureAwait(true);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {

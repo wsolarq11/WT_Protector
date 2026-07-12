@@ -122,37 +122,23 @@ public sealed partial class MainWindowViewModel
 
         DiscardDragReorderPreview();
         var target = new LauncherPresetSaveTarget(entryIds);
-        string? presetName;
-        try
-        {
-            presetName = await RequestNewPresetAsync(target).ConfigureAwait(true);
-        }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-        {
-            ErrorLog.Write(ex, "Grouping.SaveAsPreset");
-            StatusText = LauncherRefreshStatus.SaveGroupFailed(ex);
-            return;
-        }
-
+        var (presetName, nameStatus) = await _presetService.RequestNewPresetAsync(target, _presets.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase)).ConfigureAwait(true);
         if (presetName is null)
         {
-            StatusText = LauncherRefreshStatus.DialogCanceled("保存启动组");
+            if (nameStatus is not null) StatusText = nameStatus;
             return;
         }
 
         var snapshot = CapturePresetMutationSnapshot();
-        LauncherPreset? preset;
-        try
+        var (updatedFile, preset, addStatus) = _presetService.AddPreset(_presetFile, presetName, target.EntryIds);
+        if (preset is null)
         {
-            preset = LauncherPresetWorkflow.AddPreset(ref _presetFile, presetName, target.EntryIds);
-        }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-        {
-            ErrorLog.Write(ex, "Grouping.AddPreset");
+            _presetFile = updatedFile;
             RestorePresetSnapshotAndReportMissing(snapshot);
-            StatusText = LauncherRefreshStatus.AddGroupFailed(ex);
+            if (addStatus is not null) StatusText = addStatus;
             return;
         }
+        _presetFile = updatedFile;
         if (SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset) && savedPreset is not null)
             ApplyStatusText(LauncherPresetStatus.Saved(savedPreset.Name, savedPreset.EntryIds.Count));
     }

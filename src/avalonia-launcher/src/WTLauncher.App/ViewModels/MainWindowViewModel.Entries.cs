@@ -1,203 +1,118 @@
+using System.Collections.Immutable;
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
 // Entry Add/Clone/Edit/Delete command flow. Split from MainWindowViewModel.cs as
-// part of 07-09-split-mainviewmodel-stage2. Dialog Func properties are bound by
-// the View (MainWindow.axaml.cs) and are owned by this partial.
+// part of 07-09-split-mainviewmodel-stage2. Uses IEntryService for command logic.
 
 public sealed partial class MainWindowViewModel
 {
-    private Func<LaunchEntry?, Task<EntryDraft?>> _requestEntryDraftAsync =
-        static _ => Task.FromResult<EntryDraft?>(null);
-
-    private Func<LauncherEntryDeleteTarget, Task<bool>> _confirmDeleteEntryAsync =
-        static _ => Task.FromResult(false);
-
-    public Func<LaunchEntry?, Task<EntryDraft?>> RequestEntryDraftAsync
-    {
-        get => _requestEntryDraftAsync;
-        set => _requestEntryDraftAsync = value ?? throw new ArgumentNullException(nameof(value));
-    }
-
-    public Func<LauncherEntryDeleteTarget, Task<bool>> ConfirmDeleteEntryAsync
-    {
-        get => _confirmDeleteEntryAsync;
-        set => _confirmDeleteEntryAsync = value ?? throw new ArgumentNullException(nameof(value));
-    }
-
     [RelayCommand]
     private async Task AddEntryAsync()
     {
         DiscardDragReorderPreview();
-        EntryDraft? draft;
-        try
+        var (entry, status) = await _entryService.AddEntryAsync(
+            _entries, _settings, CommandTemplates, GetPresetReferenceCount(""), _utcNow).ConfigureAwait(true);
+
+        if (entry is not null)
         {
-            draft = await RequestEntryDraftAsync(null).ConfigureAwait(true);
+            var snapshot = CaptureEntryMutationSnapshot();
+            _entries.Add(new LauncherEntryViewModel(entry, this));
+            _settings = _settings with { CustomEntryOrder = _settings.CustomEntryOrder.Add(entry.Id) };
+
+            if (!SaveEntryCollectionChanges(snapshot))
+                return;
+
+            ApplyStatusText(LauncherEntryStatus.Added(entry.Name));
         }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        else if (status is not null)
         {
-            ErrorLog.Write(ex, "AddEntry");
-            StatusText = LauncherEntryStatus.AddDialogFailed(ex);
-            return;
+            StatusText = status;
         }
-
-        if (draft is null)
-        {
-            StatusText = LauncherEntryStatus.AddCanceled;
-            return;
-        }
-
-        var entry = CreateEntryFromDraftOrReportValidation(
-            draft,
-            originalId: null,
-            previousEntry: null);
-        if (entry is null)
-            return;
-
-        var snapshot = CaptureEntryMutationSnapshot();
-        entry = entry with { UpdatedAtUtc = CurrentTimestampUtc() };
-        _entries.Add(new LauncherEntryViewModel(entry, this));
-        _settings = _settings with { CustomEntryOrder = _settings.CustomEntryOrder.Add(entry.Id) };
-
-        if (!SaveEntryCollectionChanges(snapshot))
-            return;
-
-        ApplyStatusText(LauncherEntryStatus.Added(entry.Name));
     }
 
     internal async Task CloneEntryAsync(LauncherEntryViewModel item)
     {
         DiscardDragReorderPreview();
-        var source = item.SnapshotEntry();
-        var cloneSource = new LaunchEntry
-        {
-            Id = GenerateUniqueCloneId(source.Id, _entries.Select(e => e.Id)),
-            Name = source.Name + " (副本)",
-            Directory = source.Directory,
-            Command = source.Command,
-            Selected = false,
-        };
+        var (entry, status) = await _entryService.CloneEntryAsync(
+            item, _entries, _settings, CommandTemplates, GetPresetReferenceCount(item.Id), _utcNow).ConfigureAwait(true);
 
-        EntryDraft? draft;
-        try
+        if (entry is not null)
         {
-            draft = await RequestEntryDraftAsync(cloneSource).ConfigureAwait(true);
+            var snapshot = CaptureEntryMutationSnapshot();
+            _entries.Add(new LauncherEntryViewModel(entry, this));
+            _settings = _settings with { CustomEntryOrder = _settings.CustomEntryOrder.Add(entry.Id) };
+
+            if (!SaveEntryCollectionChanges(snapshot))
+                return;
+
+            ApplyStatusText($"已复制按钮: {item.Name} → {entry.Name}（已保存）");
         }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        else if (status is not null)
         {
-            ErrorLog.Write(ex, "CloneEntry");
-            StatusText = LauncherEntryStatus.AddDialogFailed(ex);
-            return;
+            StatusText = status;
         }
-
-        if (draft is null)
-        {
-            StatusText = LauncherEntryStatus.AddCanceled;
-            return;
-        }
-
-        var entry = CreateEntryFromDraftOrReportValidation(
-            draft,
-            originalId: null,
-            previousEntry: null);
-        if (entry is null)
-            return;
-
-        var snapshot = CaptureEntryMutationSnapshot();
-        entry = entry with { UpdatedAtUtc = CurrentTimestampUtc() };
-        _entries.Add(new LauncherEntryViewModel(entry, this));
-        _settings = _settings with { CustomEntryOrder = _settings.CustomEntryOrder.Add(entry.Id) };
-
-        if (!SaveEntryCollectionChanges(snapshot))
-            return;
-
-        ApplyStatusText($"已复制按钮: {source.Name} → {entry.Name}（已保存）");
-    }
-
-    public static string GenerateUniqueCloneId(string sourceId, IEnumerable<string> existingIds)
-    {
-        var normalizedSourceId = EntryId.Normalize(sourceId);
-        var baseId = normalizedSourceId + "-copy";
-        var candidate = baseId;
-        var index = 2;
-        var idSet = existingIds.ToHashSet(EntryId.Comparer);
-        while (idSet.Contains(candidate))
-        {
-            if (index > 10000)
-                throw new InvalidOperationException("Cannot generate a unique clone ID — too many copies exist.");
-            candidate = $"{baseId}-{index++}";
-        }
-        return candidate;
     }
 
     internal async Task EditEntryAsync(LauncherEntryViewModel item)
     {
         DiscardDragReorderPreview();
-        EntryDraft? draft;
-        try
-        {
-            draft = await RequestEntryDraftAsync(item.SnapshotEntry()).ConfigureAwait(true);
-        }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-        {
-            ErrorLog.Write(ex, "EditEntry.Draft");
-            StatusText = LauncherEntryStatus.EditDialogFailed(item.Name, ex);
-            return;
-        }
+        var (updated, status) = await _entryService.EditEntryAsync(
+            item, _entries, _presetFile, _settings, CommandTemplates, GetPresetReferenceCount(item.Id), _utcNow).ConfigureAwait(true);
 
-        if (draft is null)
+        if (updated is not null)
         {
-            StatusText = LauncherEntryStatus.EditCanceled(item.Name);
-            return;
-        }
-
-        var oldId = item.Id;
-        var updated = CreateEntryFromDraftOrReportValidation(draft, oldId, item.SnapshotEntry());
-        if (updated is null)
-            return;
-
-        // F11: Step 1 — Handle ID rename FIRST (before mutating the item)
-        var snapshot = CaptureEntryMutationSnapshot();
-        if (!EntryId.Same(oldId, updated.Id))
-        {
-            try
+            var oldId = item.Id;
+            var snapshot = CaptureEntryMutationSnapshot();
+            if (!EntryId.Same(oldId, updated.Id))
             {
-                var (updatedPresetFile, updatedOrder, _) = LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, updated.Id);
-                _presetFile = updatedPresetFile;
-                _settings = _settings with { CustomEntryOrder = updatedOrder };
+                try
+                {
+                    var (updatedPresetFile, updatedOrder, _) = LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, updated.Id);
+                    _presetFile = updatedPresetFile;
+                    _settings = _settings with { CustomEntryOrder = updatedOrder };
+                }
+                catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+                {
+                    ErrorLog.Write(ex, "EditEntry.RenameReference");
+                    RestoreEntryMutationSnapshot(snapshot);
+                    StatusText = LauncherEntryStatus.EditDialogFailed(item.Name, ex);
+                    return;
+                }
             }
-            catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-            {
-                ErrorLog.Write(ex, "EditEntry.RenameReference");
-                RestoreEntryMutationSnapshot(snapshot);
-                StatusText = LauncherEntryStatus.EditDialogFailed(item.Name, ex);
+            item.ReplaceEntryFromOwner(updated, CurrentTimestampUtc());
+
+            if (!SaveEntryCollectionChanges(snapshot))
                 return;
-            }
+
+            ApplyStatusText(LauncherEntryStatus.Updated(item.Name));
         }
-        // F11: Step 2 — Now mutate the item (safe — rename already persisted)
-        item.ReplaceEntryFromOwner(updated, CurrentTimestampUtc());
-
-        if (!SaveEntryCollectionChanges(snapshot))
-            return;
-
-        ApplyStatusText(LauncherEntryStatus.Updated(item.Name));
+        else if (status is not null)
+        {
+            StatusText = status;
+        }
     }
 
     internal async Task DeleteEntryAsync(LauncherEntryViewModel item)
     {
         DiscardDragReorderPreview();
-        var target = new LauncherEntryDeleteTarget(item.SnapshotEntry());
-        if (!await ConfirmDeleteEntryIfRequiredAsync(target).ConfigureAwait(true))
+        var (status, clearFocusId) = await _entryService.DeleteEntryAsync(
+            item, _keyboardFocusedEntryId).ConfigureAwait(true);
+
+        if (status is not null)
+        {
+            StatusText = status;
             return;
+        }
 
-        // Clear keyboard focus before removal so _keyboardFocusedEntryId does not
-        // retain a stale reference to the deleted entry.
-        if (EntryId.Same(_keyboardFocusedEntryId, target.EntryId))
-            KeyboardFocusedEntryId = null;
+        if (clearFocusId is not null)
+            _keyboardFocusedEntryId = null;
 
+        var target = new LauncherEntryDeleteTarget(item.SnapshotEntry());
         var snapshot = CaptureEntryMutationSnapshot();
         var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RemoveEntryId(_presetFile, _settings.CustomEntryOrder, target.EntryId);
         _presetFile = updatedPresetFile;
@@ -207,44 +122,6 @@ public sealed partial class MainWindowViewModel
             return;
 
         ApplyStatusText(LauncherEntryStatus.Deleted(target.EntryName));
-    }
-
-    private async Task<bool> ConfirmDeleteEntryIfRequiredAsync(LauncherEntryDeleteTarget target)
-    {
-        bool accepted;
-        try
-        {
-            accepted = await ConfirmDeleteEntryAsync(target).ConfigureAwait(true);
-        }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-        {
-            ErrorLog.Write(ex, "DeleteConfirmation");
-            StatusText = LauncherEntryStatus.DeleteConfirmationFailed(target.EntryName, ex);
-            return false;
-        }
-
-        if (accepted)
-            return true;
-
-        StatusText = LauncherEntryStatus.DeleteCanceled(target.EntryName);
-        return false;
-    }
-
-    private LaunchEntry? CreateEntryFromDraftOrReportValidation(
-        EntryDraft draft,
-        string? originalId,
-        LaunchEntry? previousEntry)
-    {
-        var entry = LauncherEntryDrafts.CreateEntry(draft, previousEntry);
-        var validation = LauncherEntryDrafts.ValidateEntry(
-            entry,
-            originalId,
-            _entries.Select(ToLaunchEntry));
-        if (validation is null)
-            return entry;
-
-        ApplyStatusText(validation);
-        return null;
     }
 
     private bool SaveEntryCollectionChanges(LauncherEntryMutationSnapshot rollbackSnapshot)

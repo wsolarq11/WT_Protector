@@ -4,6 +4,9 @@ using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Diagnostics.CodeAnalysis;
+using WTLauncher.App.Features.Dialogs;
+using WTLauncher.App.Features.Entries;
+using WTLauncher.App.Features.Presets;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
@@ -14,6 +17,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly string _storePath;
     private LauncherSettings _settings;
     private readonly LauncherLaunchWorkflow _launchWorkflow;
+    private readonly IDialogService _dialogService;
+    private readonly IEntryService _entryService = null!;
+    private readonly IPresetService _presetService = null!;
     private readonly Func<DateTimeOffset> _utcNow;
     private LauncherPresetFile _presetFile = new();
     private readonly ObservableCollection<LauncherEntryViewModel> _entries = [];
@@ -65,6 +71,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         string storePath,
         LauncherStoreFile storeFile,
         LauncherLaunchWorkflow launchWorkflow,
+        IDialogService dialogService,
         Func<DateTimeOffset> utcNow)
     {
         ArgumentNullException.ThrowIfNull(storeFile);
@@ -72,6 +79,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settings = storeFile.Settings;
         _launchWorkflow = launchWorkflow ?? throw new ArgumentNullException(nameof(launchWorkflow));
         _launchWorkflow.CommandTemplates = _settings.CommandTemplates;
+        _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+        _entryService = new EntryService(_dialogService);
+        _presetService = new PresetService(_dialogService);
         _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
         Entries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_entries);
         VisibleEntries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_visibleEntries);

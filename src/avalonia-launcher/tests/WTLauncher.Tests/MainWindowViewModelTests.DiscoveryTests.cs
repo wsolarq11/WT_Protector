@@ -22,20 +22,14 @@ public sealed partial class MainWindowViewModelTests
             Version = "1.0.0",
         };
 
-    private static Func<Task<IReadOnlyList<DiscoveredAgent>?>> ReturnDiscoverySelection(
-        params DiscoveredAgent[] selected) =>
-        () => Task.FromResult<IReadOnlyList<DiscoveredAgent>?>(selected.ToImmutableList());
-
-    private static Func<Task<IReadOnlyList<DiscoveredAgent>?>> ReturnCanceledDiscovery() =>
-        () => Task.FromResult<IReadOnlyList<DiscoveredAgent>?>(null);
-
     [Fact]
     public async Task DiscoverAgents_WithCanceledDialog_MakesNoMutation()
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
-        var viewModel = CreateViewModel(config, settings);
-        viewModel.DiscoverAgentsDialogAsync = ReturnCanceledDiscovery();
+        var dialogService = new StubDialogService();
+        dialogService.OnDiscoverAgents = _ => Task.FromResult<IReadOnlyList<DiscoveredAgent>?>(null);
+        var viewModel = CreateViewModel(config, settings, dialogService: dialogService);
 
         await viewModel.DiscoverAgentsCommand.ExecuteAsync(null);
 
@@ -48,8 +42,9 @@ public sealed partial class MainWindowViewModelTests
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
-        var viewModel = CreateViewModel(config, settings);
-        viewModel.DiscoverAgentsDialogAsync = ReturnDiscoverySelection();
+        var dialogService = new StubDialogService();
+        dialogService.OnDiscoverAgents = _ => Task.FromResult<IReadOnlyList<DiscoveredAgent>?>([]);
+        var viewModel = CreateViewModel(config, settings, dialogService: dialogService);
 
         await viewModel.DiscoverAgentsCommand.ExecuteAsync(null);
 
@@ -62,10 +57,12 @@ public sealed partial class MainWindowViewModelTests
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
-        var viewModel = CreateViewModel(config, settings);
-        viewModel.DiscoverAgentsDialogAsync = ReturnDiscoverySelection(
+        var dialogService = new StubDialogService();
+        dialogService.OnDiscoverAgents = _ => Task.FromResult<IReadOnlyList<DiscoveredAgent>?>([
             SampleDiscoveredAgent("claude", "Claude Code", "Anthropic"),
-            SampleDiscoveredAgent("aider", "Aider", "community"));
+            SampleDiscoveredAgent("aider", "Aider", "community"),
+        ]);
+        var viewModel = CreateViewModel(config, settings, dialogService: dialogService);
 
         await viewModel.DiscoverAgentsCommand.ExecuteAsync(null);
 
@@ -84,9 +81,11 @@ public sealed partial class MainWindowViewModelTests
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
-        var viewModel = CreateViewModel(config, settings);
-        viewModel.DiscoverAgentsDialogAsync = ReturnDiscoverySelection(
-            SampleDiscoveredAgent("claude", "Claude Code", "Anthropic"));
+        var dialogService = new StubDialogService();
+        dialogService.OnDiscoverAgents = _ => Task.FromResult<IReadOnlyList<DiscoveredAgent>?>([
+            SampleDiscoveredAgent("claude", "Claude Code", "Anthropic"),
+        ]);
+        var viewModel = CreateViewModel(config, settings, dialogService: dialogService);
 
         // ponytail: simulate save failure by replacing store file path with a directory.
         Directory.CreateDirectory(config + ".blocker");
@@ -105,24 +104,13 @@ public sealed partial class MainWindowViewModelTests
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
-        var viewModel = CreateViewModel(config, settings);
-        viewModel.DiscoverAgentsDialogAsync = () => throw new InvalidOperationException("dialog blew up");
+        var dialogService = new StubDialogService();
+        dialogService.OnDiscoverAgents = _ => throw new InvalidOperationException("dialog blew up");
+        var viewModel = CreateViewModel(config, settings, dialogService: dialogService);
 
         await viewModel.DiscoverAgentsCommand.ExecuteAsync(null);
 
         Assert.Equal(2, viewModel.Entries.Count);
         Assert.Contains("发现对话框打开失败", viewModel.StatusText);
-    }
-
-    [Fact]
-    public void DiscoverAgentsDialogAsync_RejectsNullAssignment()
-    {
-        using var temp = new TempDirectory();
-        var (config, settings, _) = CreateSingleEntryFixture(temp);
-        var viewModel = CreateViewModel(config, settings);
-
-        var exception = Assert.Throws<ArgumentNullException>(() =>
-            viewModel.DiscoverAgentsDialogAsync = null!);
-        Assert.Equal("value", exception.ParamName);
     }
 }

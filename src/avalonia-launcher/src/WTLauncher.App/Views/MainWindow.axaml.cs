@@ -31,50 +31,7 @@ public sealed partial class MainWindow : Window
         : this()
     {
         DataContext = viewModel;
-        viewModel.ConfirmLaunchAsync = confirmation => new ConfirmLaunchWindow(confirmation).ShowDialog<bool>(this);
-        viewModel.ConfirmBatchLaunchAsync = confirmation => new ConfirmBatchLaunchWindow(confirmation).ShowDialog<bool>(this);
-        viewModel.RequestNewPresetAsync = target =>
-            new PresetDetailsWindow(
-                target,
-                viewModel.Presets.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase))
-                .ShowDialog<string?>(this);
-        viewModel.ConfirmDeletePresetAsync = target => new ConfirmPresetDeleteWindow(target).ShowDialog<bool>(this);
-        viewModel.RequestEntryDraftAsync = entry => new EntryDetailsWindow(
-            entry is not null ? new EntryDetailsWindow.EntryPrefill(entry.Id, entry.Name, entry.Directory, entry.Command, entry.Selected) : null,
-            viewModel.GetPresetReferenceCount(entry?.Id ?? ""), viewModel.CommandTemplates).ShowDialog<EntryDraft?>(this);
-        viewModel.ConfirmDeleteEntryAsync = target => new ConfirmEntryDeleteWindow(target).ShowDialog<bool>(this);
-        viewModel.DiscoverAgentsDialogAsync = () =>
-        {
-            // ponytail: "already added" = first whitespace-token of any existing entry's
-            // command matches a catalog exec name (case-insensitive). Survives users who
-            // manually edit to full paths or add args — first token is always the exec.
-            var alreadyAdded = viewModel.Entries
-                .Select(e => (e.Command ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty)
-                .Select(token => Path.GetFileNameWithoutExtension(token))
-                .Where(name => !string.IsNullOrWhiteSpace(name))
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var vm = new DiscoverAgentsViewModel(
-                () => AgentDiscoveryScanner.Scan(AgentCatalog.Entries),
-                alreadyAdded);
-            return new DiscoverAgentsWindow(vm).ShowDialog<IReadOnlyList<DiscoveredAgent>?>(this);
-        };
-        viewModel.OpenCommandManagementDialog = async applyEdit =>
-        {
-            var initialCommands = WTLauncher.Core.CommandUsageAnalyzer.Analyze(
-                viewModel.Entries.Select(e => e.SnapshotEntry()));
-            var initialTemplates = WTLauncher.Core.CommandUsageAnalyzer.AnalyzeTemplates(
-                viewModel.Settings.CommandTemplates,
-                viewModel.Entries.Select(e => e.SnapshotEntry()));
-            var vm = new CommandManagementViewModel(initialCommands, initialTemplates, applyEdit);
-            await new CommandManagementWindow(vm).ShowDialog<object?>(this);
-        };
-        viewModel.OpenDirectoryManagementDialog = async applyEdit =>
-        {
-            var initialDirs = WTLauncher.Core.DirectoryUsageAnalyzer.Analyze(
-                viewModel.Entries.Select(e => e.SnapshotEntry()));
-            var vm = new DirectoryManagementViewModel(initialDirs, applyEdit);
-            await new DirectoryManagementWindow(vm).ShowDialog<object?>(this);
-        };
+        // Dialog interactions are handled by IDialogService — wired in App.axaml.cs.
         // P6: Pointer-capture drag replaces OLE DragDrop.
         // OLE DragDrop runs a nested Win32 message loop that blocks Avalonia's render
         // scheduling. Pointer capture fires on the normal render loop, synced to display

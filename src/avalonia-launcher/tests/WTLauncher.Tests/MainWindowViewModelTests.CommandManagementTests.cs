@@ -17,11 +17,12 @@ public sealed partial class MainWindowViewModelTests
     private static MainWindowViewModel CreateViewModelWithTemplates(
         string config,
         ImmutableDictionary<string, string> templates,
-        Func<MainWindowViewModel, LauncherLaunchWorkflow>? workflowFactory = null)
+        Func<MainWindowViewModel, LauncherLaunchWorkflow>? workflowFactory = null,
+        StubDialogService? dialogService = null)
     {
         var settings = new LauncherSettings { CommandTemplates = templates };
         var workflow = workflowFactory is null ? CreateLaunchWorkflow() : workflowFactory(null!);
-        return CreateViewModel(config, config, settings, launchWorkflow: workflow);
+        return CreateViewModel(config, config, settings, launchWorkflow: workflow, dialogService: dialogService);
     }
 
     [Fact]
@@ -228,11 +229,15 @@ public sealed partial class MainWindowViewModelTests
             Templates(("codex", "codex --enable goals")));
 
         Func<CommandManagementEdit, CommandManagementResult>? capturedApply = null;
-        viewModel.OpenCommandManagementDialog = async apply =>
+        var dialogService = new StubDialogService
         {
-            capturedApply = apply;
-            await Task.CompletedTask;
+            OnOpenCommandManagement = (_, _, apply) =>
+            {
+                capturedApply = apply;
+                return Task.CompletedTask;
+            },
         };
+        viewModel = CreateViewModelWithTemplates(config, Templates(("codex", "codex --enable goals")), dialogService: dialogService);
 
         await viewModel.OpenCommandManagementCommand.ExecuteAsync(null);
 

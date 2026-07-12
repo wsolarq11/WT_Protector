@@ -15,14 +15,7 @@ public sealed partial class MainWindowViewModel
         ? "所有启动项启动前统一确认。"
         : "所有启动项直接启动，不弹确认。";
 
-    private Func<LauncherSingleLaunchConfirmation, Task<bool>> _confirmLaunchAsync =
-        static _ => throw new InvalidOperationException("ConfirmLaunchAsync is not bound by the View.");
-
-    public Func<LauncherSingleLaunchConfirmation, Task<bool>> ConfirmLaunchAsync
-    {
-        get => _confirmLaunchAsync;
-        set => _confirmLaunchAsync = value ?? throw new ArgumentNullException(nameof(value));
-    }
+    // ConfirmLaunchAsync is delegated through IDialogService.
 
     partial void OnRequireConfirmationForLaunchesChanged(bool value)
     {
@@ -135,7 +128,7 @@ public sealed partial class MainWindowViewModel
         bool accepted;
         try
         {
-            accepted = await ConfirmLaunchAsync(confirmation).ConfigureAwait(true);
+            accepted = await _dialogService.ConfirmLaunchAsync(confirmation).ConfigureAwait(true);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {

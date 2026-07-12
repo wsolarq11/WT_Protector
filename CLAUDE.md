@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## MCP Knowledge Graph
+
+This repo is indexed by codebase-memory-mcp. The project name for all MCP graph tools is:
+**`D-_AI_-_projects-WT_Protector`**
+
+Usage: `search_graph(project="D-_AI_-_projects-WT_Protector", name_pattern="...")` —
+all tools (`get_architecture`, `search_graph`, `trace_path`, `get_code_snippet`, `query_graph`)
+require this `project` parameter. There is no `list_projects` tool.
+
 ## What this is
 
 `WT Launcher` / `WT Protector` — a local Windows Terminal workspace launcher. Avalonia 12 + .NET 10, win-x64 self-contained. All launcher state lives in one atomic JSON store at `config/launcher.json` (entries + presets + settings + `defaultPresetId` together). No AppData, no registry, no DB.

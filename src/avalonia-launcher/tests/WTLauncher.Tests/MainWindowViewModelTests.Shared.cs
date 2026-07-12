@@ -108,7 +108,8 @@ public sealed partial class MainWindowViewModelTests
         LauncherSettings? launcherSettings = null,
         Action<MainWindowViewModel>? configure = null,
         Func<DateTimeOffset>? utcNow = null,
-        LauncherLaunchWorkflow? launchWorkflow = null)
+        LauncherLaunchWorkflow? launchWorkflow = null,
+        StubDialogService? dialogService = null)
     {
         // Both config and settings point to the same unified store file now.
         var storeFile = LauncherStore.Load(config);
@@ -116,6 +117,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             launcherSettings is not null ? storeFile with { Settings = launcherSettings } : storeFile,
             launchWorkflow ?? CreateLaunchWorkflow(),
+            dialogService ?? new StubDialogService(),
             utcNow ?? SystemUtcNow);
         configure?.Invoke(viewModel);
         return viewModel;

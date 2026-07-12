@@ -28,7 +28,7 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(
             config,
             settings,
-            configure: vm => vm.RequestNewPresetAsync = _ => Task.FromResult<string?>("Project Pair"));
+            dialogService: new StubDialogService { OnRequestNewPreset = (_, _) => Task.FromResult<string?>("Project Pair") });
 
         // Force save failure by replacing the presets file with a directory
         // so File.Move fails. C6 fix wraps backup in try/catch, so the old
@@ -59,7 +59,7 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(
             config,
             settings,
-            configure: vm => vm.RequestNewPresetAsync = _ => Task.FromResult<string?>("Project Pair"));
+            dialogService: new StubDialogService { OnRequestNewPreset = (_, _) => Task.FromResult<string?>("Project Pair") });
         viewModel.SelectedPreset = new LauncherPresetViewModel(Preset("ghost", "Ghost", "one"));
         // Force save failure by replacing the presets file with a directory
         // so File.Move fails. C6 fix wraps backup in try/catch, so the old
@@ -111,7 +111,7 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(
             config,
             settings,
-            configure: vm => vm.ConfirmDeletePresetAsync = _ => Task.FromResult(true));
+            dialogService: new StubDialogService { OnConfirmDeletePreset = _ => Task.FromResult(true) });
 
         // Force save failure by replacing the presets file with a directory
         // so File.Move fails. C6 fix wraps backup in try/catch, so the old
@@ -143,11 +143,11 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             launcherSettings,
-            configure: vm => vm.RequestNewPresetAsync = candidate =>
+            dialogService: new StubDialogService { OnRequestNewPreset = (candidate, _) =>
             {
                 target = candidate;
                 return Task.FromResult<string?>(null);
-            });
+            } });
 
         StartDefaultDragPreview(viewModel, launcherSettings);
 
@@ -173,12 +173,12 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(
             config,
             settings,
-            configure: vm => vm.RequestNewPresetAsync = target =>
+            dialogService: new StubDialogService { OnRequestNewPreset = (target, _) =>
             {
                 var mutable = Assert.IsAssignableFrom<IList<string>>(target.EntryIds);
                 Assert.Throws<NotSupportedException>(() => mutable.Clear());
                 return Task.FromResult<string?>("Snapshot");
-            });
+            } });
 
         await viewModel.SaveSelectionAsPresetCommand.ExecuteAsync(null);
 
@@ -196,8 +196,8 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(
             config,
             settings,
-            configure: vm => vm.RequestNewPresetAsync = _ =>
-                throw new InvalidOperationException("dialog unavailable"));
+            dialogService: new StubDialogService { OnRequestNewPreset = (_, _) =>
+                throw new InvalidOperationException("dialog unavailable") });
 
         await viewModel.SaveSelectionAsPresetCommand.ExecuteAsync(null);
 
@@ -217,7 +217,7 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(
             config,
             settings,
-            configure: vm => vm.RequestNewPresetAsync = _ => Task.FromResult<string?>("   "));
+            dialogService: new StubDialogService { OnRequestNewPreset = (_, _) => Task.FromResult<string?>("   ") });
 
         await viewModel.SaveSelectionAsPresetCommand.ExecuteAsync(null);
 
