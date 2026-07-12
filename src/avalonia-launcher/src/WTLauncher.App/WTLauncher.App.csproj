@@ -4,17 +4,12 @@
     <TargetFramework>net10.0</TargetFramework>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <Nullable>enable</Nullable>
-    <!-- ponytail: CompiledBindings kept off — re-verified by P7 (task 07-10-p7-compiled-bindings-reassessment).
-         Toggling to `true` produces 100 AVLN2000/AVLN2100 errors from ~30 DataTemplates in
-         MainWindow.axaml that lack `x:DataType` directives (XamlPseudoType fallback).
-         Fixing them is a 1–2 hour mechanical churn PLUS GUI smoke regression risk
-         the 453 unit tests don't cover.
-         ROI is negative for this app: single-user launcher, sub-second startup,
-         ≤200 entries — reflection binding cost is invisible. P6 (Native AOT)
-         was also deferred for the same reason.
-         Revisit only if (a) entry count grows >10x, (b) a perf budget mandates it,
-         or (c) Native AOT becomes a real requirement. -->
-    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <!-- 07-12-modernization: Compiled bindings for compile-time type safety. -->
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- 07-12-modernization: AOT-compatible build; PublishAot is enabled via command-line
+         during release publish (build-release.ps1 passes -p:PublishAot=true). -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
     <!-- CS0618: LaunchPlan.CommandLine is [Obsolete] for logging but still used for UI display (DryRun). -->
     <NoWarn>$(NoWarn);CS0618</NoWarn>
   </PropertyGroup>

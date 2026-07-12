@@ -2,7 +2,7 @@ using WTLauncher.Core;
 
 namespace WTLauncher.Tests;
 
-public sealed class LauncherEntryVisibilityTests
+public sealed class LauncherEntryQueryTests
 {
     [Theory]
     [InlineData(null)]
@@ -11,7 +11,7 @@ public sealed class LauncherEntryVisibilityTests
     public void NormalizeSortModeIdRejectsMissingModeIds(string? sortModeId)
     {
         var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherEntryVisibility.NormalizeSortModeId(sortModeId));
+            LauncherEntryQuery.NormalizeSortModeId(sortModeId));
 
         Assert.Equal("Launcher sort mode is required.", exception.Message);
     }
@@ -27,10 +27,10 @@ public sealed class LauncherEntryVisibilityTests
         };
         var customOrder = new List<string> { "one", "two", "three" };
 
-        var visible = LauncherEntryVisibility.FilterAndSort(
+        var visible = LauncherEntryQuery.FilterAndSort(
             entries,
             " codeX ",
-            LauncherEntryVisibility.CustomSortModeId,
+            LauncherEntryQuery.CustomSortModeId,
             customOrder,
             static entry => entry);
 
@@ -46,10 +46,10 @@ public sealed class LauncherEntryVisibilityTests
         };
 
         var exception = Assert.Throws<ArgumentNullException>(() =>
-            LauncherEntryVisibility.FilterAndSort(
+            LauncherEntryQuery.FilterAndSort(
                 entries,
                 null!,
-                LauncherEntryVisibility.CustomSortModeId,
+                LauncherEntryQuery.CustomSortModeId,
                 ["one"],
                 static entry => entry));
 
@@ -70,10 +70,10 @@ public sealed class LauncherEntryVisibilityTests
         // is validated in the sort-phase ThrowIfInvalidProjection instead of
         // depending on RequireNonEmpty inside MatchesFilter (which no longer normalizes).
         var exception = Assert.Throws<InvalidOperationException>(() =>
-            LauncherEntryVisibility.FilterAndSort(
+            LauncherEntryQuery.FilterAndSort(
                 entries,
                 string.Empty,
-                LauncherEntryVisibility.AlphabeticalSortModeId,
+                LauncherEntryQuery.AlphabeticalSortModeId,
                 customOrder,
                 static entry => entry));
 
@@ -91,10 +91,10 @@ public sealed class LauncherEntryVisibilityTests
         };
         var customOrder = new List<string> { "two", "one", "three" };
 
-        var visible = LauncherEntryVisibility.FilterAndSort(
+        var visible = LauncherEntryQuery.FilterAndSort(
             entries,
             string.Empty,
-            LauncherEntryVisibility.CustomSortModeId,
+            LauncherEntryQuery.CustomSortModeId,
             customOrder,
             static entry => entry);
 
@@ -110,10 +110,10 @@ public sealed class LauncherEntryVisibilityTests
             Entry("one", "One"),
         };
 
-        var visible = LauncherEntryVisibility.FilterAndSort(
+        var visible = LauncherEntryQuery.FilterAndSort(
             entries,
             string.Empty,
-            LauncherEntryVisibility.AlphabeticalSortModeId,
+            LauncherEntryQuery.AlphabeticalSortModeId,
             [],
             static entry => entry);
 
@@ -134,10 +134,10 @@ public sealed class LauncherEntryVisibilityTests
         var customOrder = new List<string> { "two", "one" };
 
         var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherEntryVisibility.FilterAndSort(
+            LauncherEntryQuery.FilterAndSort(
                 entries,
                 string.Empty,
-                LauncherEntryVisibility.CustomSortModeId,
+                LauncherEntryQuery.CustomSortModeId,
                 customOrder,
                 static entry => entry));
 
@@ -156,10 +156,10 @@ public sealed class LauncherEntryVisibilityTests
         var customOrder = new List<string> { "two", "one", "missing" };
 
         var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherEntryVisibility.FilterAndSort(
+            LauncherEntryQuery.FilterAndSort(
                 entries,
                 string.Empty,
-                LauncherEntryVisibility.CustomSortModeId,
+                LauncherEntryQuery.CustomSortModeId,
                 customOrder,
                 static entry => entry));
 
@@ -178,10 +178,10 @@ public sealed class LauncherEntryVisibilityTests
         var customOrder = new List<string> { "two", " two " };
 
         var exception = Assert.Throws<ArgumentException>(() =>
-            LauncherEntryVisibility.FilterAndSort(
+            LauncherEntryQuery.FilterAndSort(
                 entries,
                 string.Empty,
-                LauncherEntryVisibility.CustomSortModeId,
+                LauncherEntryQuery.CustomSortModeId,
                 customOrder,
                 static entry => entry));
 
@@ -200,10 +200,10 @@ public sealed class LauncherEntryVisibilityTests
         };
         var customOrder = new List<string> { " one ", " two ", "three" };
 
-        var visible = LauncherEntryVisibility.FilterAndSort(
+        var visible = LauncherEntryQuery.FilterAndSort(
             entries,
             string.Empty,
-            LauncherEntryVisibility.CustomSortModeId,
+            LauncherEntryQuery.CustomSortModeId,
             customOrder,
             static entry => entry);
 
@@ -221,10 +221,10 @@ public sealed class LauncherEntryVisibilityTests
         };
 
         var exception = Assert.Throws<ArgumentException>(() =>
-            LauncherEntryVisibility.FilterAndSort(
+            LauncherEntryQuery.FilterAndSort(
                 entries,
                 string.Empty,
-                LauncherEntryVisibility.AlphabeticalSortModeId,
+                LauncherEntryQuery.AlphabeticalSortModeId,
                 [],
                 static entry => entry));
 
@@ -243,10 +243,10 @@ public sealed class LauncherEntryVisibilityTests
         };
         var customOrder = new List<string> { "two", "three", "one" };
 
-        var visible = LauncherEntryVisibility.FilterAndSort(
+        var visible = LauncherEntryQuery.FilterAndSort(
             entries,
             string.Empty,
-            LauncherEntryVisibility.AlphabeticalSortModeId,
+            LauncherEntryQuery.AlphabeticalSortModeId,
             customOrder,
             static entry => entry);
 
@@ -265,10 +265,10 @@ public sealed class LauncherEntryVisibilityTests
         };
         var customOrder = new List<string> { "zero", "three", "two", "one" };
 
-        var visible = LauncherEntryVisibility.FilterAndSort(
+        var visible = LauncherEntryQuery.FilterAndSort(
             entries,
             string.Empty,
-            LauncherEntryVisibility.UpdatedSortModeId,
+            LauncherEntryQuery.UpdatedSortModeId,
             customOrder,
             static entry => entry);
 
@@ -285,10 +285,10 @@ public sealed class LauncherEntryVisibilityTests
         };
 
         var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherEntryVisibility.FilterAndSort(
+            LauncherEntryQuery.FilterAndSort(
                 entries,
                 string.Empty,
-                LauncherEntryVisibility.UpdatedSortModeId,
+                LauncherEntryQuery.UpdatedSortModeId,
                 [],
                 static entry => entry));
 
@@ -305,10 +305,10 @@ public sealed class LauncherEntryVisibilityTests
         };
 
         var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherEntryVisibility.FilterAndSort(
+            LauncherEntryQuery.FilterAndSort(
                 entries,
                 string.Empty,
-                LauncherEntryVisibility.UpdatedSortModeId,
+                LauncherEntryQuery.UpdatedSortModeId,
                 [],
                 static entry => entry));
 
@@ -327,10 +327,10 @@ public sealed class LauncherEntryVisibilityTests
         };
         var customOrder = new List<string> { "zero", "three", "two", "one" };
 
-        var visible = LauncherEntryVisibility.FilterAndSort(
+        var visible = LauncherEntryQuery.FilterAndSort(
             entries,
             string.Empty,
-            LauncherEntryVisibility.RecentSortModeId,
+            LauncherEntryQuery.RecentSortModeId,
             customOrder,
             static entry => entry);
 
@@ -347,10 +347,10 @@ public sealed class LauncherEntryVisibilityTests
         };
 
         var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherEntryVisibility.FilterAndSort(
+            LauncherEntryQuery.FilterAndSort(
                 entries,
                 string.Empty,
-                LauncherEntryVisibility.RecentSortModeId,
+                LauncherEntryQuery.RecentSortModeId,
                 [],
                 static entry => entry));
 
@@ -367,10 +367,10 @@ public sealed class LauncherEntryVisibilityTests
         };
 
         var exception = Assert.Throws<InvalidDataException>(() =>
-            LauncherEntryVisibility.FilterAndSort(
+            LauncherEntryQuery.FilterAndSort(
                 entries,
                 string.Empty,
-                LauncherEntryVisibility.RecentSortModeId,
+                LauncherEntryQuery.RecentSortModeId,
                 [],
                 static entry => entry));
 
@@ -387,10 +387,10 @@ public sealed class LauncherEntryVisibilityTests
             Entry("never", "Never", launchedAtUtc: ""),
         };
 
-        var visible = LauncherEntryVisibility.FilterAndSort(
+        var visible = LauncherEntryQuery.FilterAndSort(
             entries,
             string.Empty,
-            LauncherEntryVisibility.RecentSortModeId,
+            LauncherEntryQuery.RecentSortModeId,
             [],
             static entry => entry);
 
@@ -408,10 +408,10 @@ public sealed class LauncherEntryVisibilityTests
         };
         var customOrder = new List<string> { "one", "two", "three" };
 
-        var visible = LauncherEntryVisibility.FilterAndSort(
+        var visible = LauncherEntryQuery.FilterAndSort(
             entries,
             "pwsh D:",
-            LauncherEntryVisibility.CustomSortModeId,
+            LauncherEntryQuery.CustomSortModeId,
             customOrder,
             static entry => entry);
 
@@ -429,10 +429,10 @@ public sealed class LauncherEntryVisibilityTests
         };
         var customOrder = new List<string> { "one", "two", "three" };
 
-        var visible = LauncherEntryVisibility.FilterAndSort(
+        var visible = LauncherEntryQuery.FilterAndSort(
             entries,
             "pwsh foo",
-            LauncherEntryVisibility.CustomSortModeId,
+            LauncherEntryQuery.CustomSortModeId,
             customOrder,
             static entry => entry);
 
@@ -449,10 +449,10 @@ public sealed class LauncherEntryVisibilityTests
         };
         var customOrder = new List<string> { "one", "two" };
 
-        var visible = LauncherEntryVisibility.FilterAndSort(
+        var visible = LauncherEntryQuery.FilterAndSort(
             entries,
             "pwsh bar",
-            LauncherEntryVisibility.CustomSortModeId,
+            LauncherEntryQuery.CustomSortModeId,
             customOrder,
             static entry => entry);
 

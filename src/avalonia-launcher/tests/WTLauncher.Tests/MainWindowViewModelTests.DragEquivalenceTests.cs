@@ -8,7 +8,7 @@ public sealed partial class MainWindowViewModelTests
     /// <summary>
     /// H5 equivalence validation: verifies that <see cref="ReorderVisibleEntryForDrag"/>
     /// (the O(n) fast path used during drag reorder) produces the same visible entry
-    /// order as the full <see cref="LauncherEntryVisibility.FilterAndSort{TEntry}"/>
+    /// order as the full <see cref="LauncherEntryQuery.FilterAndSort{TEntry}"/>
     /// pipeline after the equivalent <see cref="LauncherEntryOrder.MoveRelative"/>
     /// mutation on the full <c>CustomEntryOrder</c>.
     ///
@@ -162,10 +162,10 @@ public sealed partial class MainWindowViewModelTests
         // Ground truth: FilterAndSort on the full entry set with the
         // updated CustomEntryOrder (already mutated by MoveRelative
         // inside the drag workflow).
-        var expected = LauncherEntryVisibility.FilterAndSort(
+        var expected = LauncherEntryQuery.FilterAndSort(
             viewModel.Entries,
             viewModel.FilterText,
-            LauncherEntryVisibility.CustomSortModeId,
+            LauncherEntryQuery.CustomSortModeId,
             viewModel.Settings.CustomEntryOrder,
             e => e.SnapshotEntry());
 
@@ -186,10 +186,10 @@ public sealed partial class MainWindowViewModelTests
     {
         var fastPath = viewModel.VisibleEntries.Select(e => e.Id).ToArray();
 
-        var expected = LauncherEntryVisibility.FilterAndSort(
+        var expected = LauncherEntryQuery.FilterAndSort(
             viewModel.Entries,
             filterText,
-            LauncherEntryVisibility.CustomSortModeId,
+            LauncherEntryQuery.CustomSortModeId,
             viewModel.Settings.CustomEntryOrder,
             e => e.SnapshotEntry());
 
@@ -209,10 +209,10 @@ public sealed partial class MainWindowViewModelTests
         var fastPath = viewModel.VisibleEntries.Select(e => e.Id).ToArray();
         Assert.Equal(expectedOrder, fastPath);
 
-        var groundTruth = LauncherEntryVisibility.FilterAndSort(
+        var groundTruth = LauncherEntryQuery.FilterAndSort(
             viewModel.Entries,
             viewModel.FilterText,
-            LauncherEntryVisibility.CustomSortModeId,
+            LauncherEntryQuery.CustomSortModeId,
             viewModel.Settings.CustomEntryOrder,
             e => e.SnapshotEntry())
             .Select(e => e.Id)
@@ -264,7 +264,7 @@ public sealed partial class MainWindowViewModelTests
         var launcherSettings = new LauncherSettings
         {
             LastFilterText = "",
-            SortMode = LauncherEntryVisibility.CustomSortModeId,
+            SortMode = LauncherEntryQuery.CustomSortModeId,
             EntryViewMode = LauncherEntryViewModes.CardsId,
             RequireConfirmationForLaunches = false,
             CustomEntryOrder = ["a", "b", "c", "d", "e"],

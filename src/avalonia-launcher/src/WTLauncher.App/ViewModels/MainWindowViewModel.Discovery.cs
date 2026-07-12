@@ -39,13 +39,13 @@ public sealed partial class MainWindowViewModel
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "DiscoverAgents.Dialog");
-            StatusText = $"发现对话框打开失败: {ExceptionMessageFormatter.ForUser(ex)}";
+            StatusText = LauncherRefreshStatus.DialogOpenFailed("发现", ex);
             return;
         }
 
         if (selected is null || selected.Count == 0)
         {
-            StatusText = "已取消发现";
+            StatusText = LauncherRefreshStatus.DialogCanceled("发现");
             return;
         }
 

@@ -25,16 +25,17 @@ public sealed partial class MainWindowViewModelTests
             new LauncherSettings
             {
                 LastFilterText = "",
-                SortMode = LauncherEntryVisibility.CustomSortModeId,
+                SortMode = LauncherEntryQuery.CustomSortModeId,
                 CustomEntryOrder = ["three", "one", "two"],
             });
 
         Assert.Equal(
             [
-                LauncherEntryVisibility.CustomSortModeId,
-                LauncherEntryVisibility.RecentSortModeId,
-                LauncherEntryVisibility.UpdatedSortModeId,
-                LauncherEntryVisibility.AlphabeticalSortModeId,
+                LauncherEntryQuery.CustomSortModeId,
+                LauncherEntryQuery.RecentSortModeId,
+                LauncherEntryQuery.UpdatedSortModeId,
+                LauncherEntryQuery.AlphabeticalSortModeId,
+                LauncherEntryQuery.FrequentSortModeId,
             ],
             viewModel.SortModes.Select(mode => mode.Id).ToArray());
         Assert.Equal(["three", "one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
@@ -45,21 +46,21 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(["two", "three", "one"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         var savedSettings = LauncherStore.Load(settings).Settings;
-        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, savedSettings.SortMode);
+        Assert.Equal(LauncherEntryQuery.CustomSortModeId, savedSettings.SortMode);
         Assert.Equal(["two", "three", "one"], savedSettings.CustomEntryOrder);
 
-        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == LauncherEntryVisibility.AlphabeticalSortModeId);
+        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == LauncherEntryQuery.AlphabeticalSortModeId);
 
         Assert.Equal(["two", "three", "one"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         savedSettings = LauncherStore.Load(settings).Settings;
-        Assert.Equal(LauncherEntryVisibility.AlphabeticalSortModeId, savedSettings.SortMode);
+        Assert.Equal(LauncherEntryQuery.AlphabeticalSortModeId, savedSettings.SortMode);
         Assert.Equal(["two", "three", "one"], savedSettings.CustomEntryOrder);
 
-        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == LauncherEntryVisibility.UpdatedSortModeId);
+        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == LauncherEntryQuery.UpdatedSortModeId);
 
         Assert.Equal(["two", "one", "three"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         savedSettings = LauncherStore.Load(settings).Settings;
-        Assert.Equal(LauncherEntryVisibility.UpdatedSortModeId, savedSettings.SortMode);
+        Assert.Equal(LauncherEntryQuery.UpdatedSortModeId, savedSettings.SortMode);
     }
 
     [Fact]
@@ -74,7 +75,7 @@ public sealed partial class MainWindowViewModelTests
         var launcherSettings = new LauncherSettings
         {
             LastFilterText = "",
-            SortMode = LauncherEntryVisibility.CustomSortModeId,
+            SortMode = LauncherEntryQuery.CustomSortModeId,
             EntryViewMode = LauncherEntryViewModes.CardsId,
             RequireConfirmationForLaunches = true,
             CustomEntryOrder = ["one", "two"],
@@ -89,9 +90,9 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(2, viewModel.VisibleCount);
         Assert.Contains("存储保存失败", viewModel.StatusText);
 
-        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == LauncherEntryVisibility.AlphabeticalSortModeId);
-        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, viewModel.SelectedSortMode?.Id);
-        Assert.Equal(LauncherEntryVisibility.CustomSortModeId, viewModel.Settings.SortMode);
+        viewModel.SelectedSortMode = viewModel.SortModes.Single(mode => mode.Id == LauncherEntryQuery.AlphabeticalSortModeId);
+        Assert.Equal(LauncherEntryQuery.CustomSortModeId, viewModel.SelectedSortMode?.Id);
+        Assert.Equal(LauncherEntryQuery.CustomSortModeId, viewModel.Settings.SortMode);
         Assert.Equal(["one", "two"], viewModel.Settings.CustomEntryOrder);
         Assert.Contains("存储保存失败", viewModel.StatusText);
 

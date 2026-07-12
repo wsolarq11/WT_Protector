@@ -169,7 +169,7 @@ public sealed class LauncherDragReorderWorkflowTests
         var three = MainWindowEntryCardTestFactory.CreateEntryViewModel(temp.Path, "three");
         var settings = new LauncherSettings
         {
-            SortMode = LauncherEntryVisibility.CustomSortModeId,
+            SortMode = LauncherEntryQuery.CustomSortModeId,
             CustomEntryOrder = ["one", "two", "three"],
         };
         return (settings, [one, two, three]);

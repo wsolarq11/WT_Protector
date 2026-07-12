@@ -66,6 +66,14 @@ public static class LauncherDesignTokens
     public const double DetailsDirectoryColumnWeight = 2;
     public const double DetailsCommandColumnWeight = 3;
 
+    // ── Layout chrome (non-card area consumed by header/footer/margins) ──
+    // Horizontal: outer Grid left + right margin (24 + 24 in MainWindow.axaml).
+    // Recalibrate when the outer Grid Margin changes.
+    public const double CardsRegionHorizontalChromeWidth = 48;
+    // Vertical: total chrome in header (Row 0) + status bar (Row 2) + margins/gaps.
+    // Conservative estimate — recalibrate when header/footer layout changes.
+    public const double CardsRegionVerticalChromeHeight = 270;
+
     // ── Window ──────────────────────────────────────────────
     public const double WindowDefaultWidth = 1180;
     public const double WindowDefaultHeight = 760;

@@ -127,7 +127,7 @@ public sealed partial class App : Application
                 }
 
                 LauncherStoreFile storeFile;
-                try { storeFile = LauncherStore.Load(storePath); }
+                try { storeFile = LauncherStore.Load(storePath, (ex, ctx) => ErrorLog.Write(ex, ctx)); }
                 catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
                 {
                     ErrorLog.Write(ex, "Startup.Load");

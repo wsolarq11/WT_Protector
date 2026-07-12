@@ -1,1 +1,4 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/core/index.md", "reason": "Core 层守则 — 验证 launchCount 字段 + FilterAndSort 分支符合 single-source / 前向兼容不变量"}
+{"file": ".trellis/spec/guides/pitfalls.md", "reason": "已知陷阱 — bare catch / ToDictionary / JSON 字段加错位置等"}
+{"file": ".trellis/spec/views/index.md", "reason": "视图层规范 — sort ComboBox 新增项的绑定模式"}
+{"file": ".trellis/spec/tests/index.md", "reason": "测试规范 — Theory 数据 + 命名约定"}

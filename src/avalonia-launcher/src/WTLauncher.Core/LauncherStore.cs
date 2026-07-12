@@ -13,7 +13,7 @@ public static class LauncherStore
 
     // ---- Load / Save ----
 
-    public static LauncherStoreFile Load(string storePath)
+    public static LauncherStoreFile Load(string storePath, Action<Exception, string>? onRecovery = null)
     {
         ThrowIfStorePathMissing(storePath);
 
@@ -42,7 +42,7 @@ public static class LauncherStore
         }
 
         return LauncherJson.LoadWithRecovery(storePath, LoadAndValidate, "StoreLoad.RecoveredFromBackup",
-            new LauncherStoreFile());
+            new LauncherStoreFile(), onRecovery);
     }
 
     public static void Save(LauncherStoreFile store, string storePath, bool backup = true)

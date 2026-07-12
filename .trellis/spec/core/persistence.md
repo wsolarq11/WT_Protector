@@ -56,6 +56,53 @@ private static string NormalizeLineEndings(string text) =>
     text.ReplaceLineEndings(RepositoryLineEnding);
 ```
 
+### Native AOT: Source-Generated JsonSerializerContext (2026-07-12)
+
+For Native AOT publishing (`-p:PublishAot=true`), `System.Text.Json` uses a **source-generated** `JsonSerializerContext` instead of reflection-based serializers. Every type that passes through `LauncherJson.Load<T>` / `Save<T>` must be registered.
+
+**Source:** `src/avalonia-launcher/src/WTLauncher.Core/LauncherJsonContext.cs`
+
+```csharp
+[JsonSourceGenerationOptions(
+    WriteIndented = false,
+    UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
+[JsonSerializable(typeof(LauncherStoreFile))]
+[JsonSerializable(typeof(LauncherSettings))]
+[JsonSerializable(typeof(LaunchEntry))]
+[JsonSerializable(typeof(LauncherPreset))]
+[JsonSerializable(typeof(List<LaunchEntry>))]
+[JsonSerializable(typeof(List<LauncherPreset>))]
+internal sealed partial class LauncherJsonContext : JsonSerializerContext
+{
+}
+```
+
+**Key rules:**
+1. `[JsonSourceGenerationOptions]` on the context class --- NOT on `JsonSerializerOptions`. At runtime, source gen only reads options from the attribute, not from the options object.
+2. All generic types used (e.g., `List<LaunchEntry>`) must have explicit `[JsonSerializable]` attributes --- `JsonSerializerContext` does not auto-generate for generic type arguments.
+3. **new type -> add attribute** --- every new `LauncherJson.Load<T>` / `Save<T>` call with a type not yet registered will throw `InvalidOperationException` at runtime via `GetRequiredTypeInfo<T>()`.
+
+**Loading pattern** (uses `JsonTypeInfo<T>` for AOT safety):
+```csharp
+private static JsonTypeInfo<T> GetRequiredTypeInfo<T>()
+{
+    var info = LauncherJsonContext.Default.GetTypeInfo(typeof(T));
+    return info is JsonTypeInfo<T> typed
+        ? typed
+        : throw new InvalidOperationException(
+            $"Type {typeof(T)} is not registered in LauncherJsonContext.");
+}
+```
+
+**Source-gen resolver wiring**:
+```csharp
+internal static readonly JsonSerializerOptions Options = new()
+{
+    TypeInfoResolver = LauncherJsonContext.Default,
+    // ...
+};
+```
+
 ### Serializer Options
 
 ```csharp

@@ -174,7 +174,7 @@ public sealed partial class MainWindowViewModel
         catch (OperationCanceledException)
         {
             DryRunText = LauncherBatchLaunchReceiptText.Canceled(preflight?.Items ?? []);
-            StatusText = "已取消批量启动";
+            StatusText = LauncherRefreshStatus.CanceledBatch;
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {

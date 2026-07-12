@@ -30,6 +30,67 @@ public static class LauncherMainWindowText
 
     public static string Loaded(int entryCount, int presetCount) =>
         $"已加载 {entryCount} 个启动项、{presetCount} 个启动组；勾选自动保存到 config\\launcher.json";
+
+    public static string ConfigLoadFailed(string detail) =>
+        $"配置加载失败: {detail}";
+
+    public static string ConfigValidationFailed(string detail) =>
+        $"配置验证失败: {detail}";
+
+    public static string UndefinedCommandTemplateKeys(string keys) =>
+        $"警告：以下命令模板键未定义: {keys}";
+}
+
+public static class LauncherRefreshStatus
+{
+    public static string DialogOpenFailed(string dialogName, Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+        return $"{dialogName}对话框打开失败: {ExceptionMessageFormatter.ForUser(exception)}";
+    }
+
+    public static string DialogCanceled(string action) =>
+        $"已取消{action}";
+
+    public static string SaveGroupFailed(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+        return $"保存启动组失败: {ExceptionMessageFormatter.ForUser(exception)}";
+    }
+
+    public static string AddGroupFailed(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+        return $"新增启动组失败: {ExceptionMessageFormatter.ForUser(exception)}";
+    }
+
+    public static string DeleteGroupFailed(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+        return $"删除启动组失败: {ExceptionMessageFormatter.ForUser(exception)}";
+    }
+
+    public static string GroupAlreadyUpToDate(string groupName) =>
+        $"启动组已是最新状态: {groupName}";
+
+    public static string SaveFailed(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+        return $"保存失败: {ExceptionMessageFormatter.ForUser(exception)}";
+    }
+
+    public static string DiscoveryScanning => "扫描中…";
+
+    public static string DiscoveryFailed => "扫描过程中发生错误";
+
+    public static string ProcessLaunchFailed(string execName, string detail) =>
+        $"进程启动失败: {detail}";
+
+    public static string GroupNoEntries => "组内无 entry。";
+
+    public static string GroupNoEntriesCannotSave => "组内无 entry,无法保存为启动组。";
+
+    public static string CanceledBatch => "已取消批量启动";
 }
 
 public static class ExceptionMessageFormatter

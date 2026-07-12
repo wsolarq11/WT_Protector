@@ -144,7 +144,12 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         if (launchedAtUtc.Length > 0 && !DateTimeOffset.TryParseExact(launchedAtUtc, "O", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out _))
             throw new ArgumentException("Invalid ISO 8601 timestamp format (expected 'O' round-trip format).", nameof(launchedAtUtc));
         var previous = _entry.LaunchedAtUtc;
-        _entry = _entry with { LaunchedAtUtc = launchedAtUtc };
+        // ponytail: launchCount 同步自增,与 LaunchedAtUtc 一同 mutate。两路 launch (单启+批启) 都走这里,不会漏。
+        _entry = _entry with
+        {
+            LaunchedAtUtc = launchedAtUtc,
+            LaunchCount = _entry.LaunchCount + 1,
+        };
         return previous;
     }
 

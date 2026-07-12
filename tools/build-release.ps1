@@ -40,10 +40,10 @@ $version = & {
 New-Item -ItemType Directory -Force -Path $publishDir | Out-Null
 
 Invoke-NativeStep 'dotnet restore solution win-x64' { dotnet restore $solution -r win-x64 }
-Invoke-NativeStep 'dotnet publish app win-x64' { dotnet publish $app -c Release -r win-x64 --self-contained true --no-restore -o $publishDir -p:Version=$version -p:InformationalVersion=$version }
+# 07-12-modernization: Native AOT publish (PublishAot=true produces single native exe, no .dll).
+Invoke-NativeStep 'dotnet publish app win-x64 native-aot' { dotnet publish $app -c Release -r win-x64 -p:PublishAot=true --no-restore -o $publishDir -p:Version=$version -p:InformationalVersion=$version }
 
 if (-not (Test-Path -LiteralPath $exe)) { throw "Published exe missing: $exe" }
-if (-not (Test-Path -LiteralPath $dll)) { throw "Published app dll missing: $dll" }
 
 $receipt = New-ToolReceipt 'release-build' @{
     sourceRoot = Get-AvaloniaRoot

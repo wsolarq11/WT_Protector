@@ -12,7 +12,7 @@ public sealed partial class MainWindowViewModelTests
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
         var launcherSettings = new LauncherSettings
         {
-            SortMode = LauncherEntryVisibility.CustomSortModeId,
+            SortMode = LauncherEntryQuery.CustomSortModeId,
             CustomEntryOrder = ["one", "two"],
         };
         var viewModel = CreateViewModel(
@@ -268,7 +268,7 @@ public sealed partial class MainWindowViewModelTests
             settings,
             new LauncherSettings
             {
-                SortMode = LauncherEntryVisibility.CustomSortModeId,
+                SortMode = LauncherEntryQuery.CustomSortModeId,
                 CustomEntryOrder = ["one", "two"],
             },
             vm =>

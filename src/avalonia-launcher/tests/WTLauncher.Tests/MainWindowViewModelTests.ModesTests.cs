@@ -27,14 +27,14 @@ public sealed partial class MainWindowViewModelTests
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
         var launcherSettings = new LauncherSettings
         {
-            SortMode = $" {LauncherEntryVisibility.UpdatedSortModeId} ",
+            SortMode = $" {LauncherEntryQuery.UpdatedSortModeId} ",
             EntryViewMode = $" {LauncherEntryViewModes.DetailsId} ",
         };
 
         var viewModel = CreateViewModel(config, settings, launcherSettings);
 
-        Assert.Equal(LauncherEntryVisibility.UpdatedSortModeId, viewModel.SelectedSortMode?.Id);
-        Assert.Equal(LauncherEntryVisibility.UpdatedSortModeId, viewModel.Settings.SortMode);
+        Assert.Equal(LauncherEntryQuery.UpdatedSortModeId, viewModel.SelectedSortMode?.Id);
+        Assert.Equal(LauncherEntryQuery.UpdatedSortModeId, viewModel.Settings.SortMode);
         Assert.Equal(LauncherEntryViewModes.DetailsId, viewModel.SelectedDisplayMode?.Id);
         Assert.Equal(LauncherEntryViewModes.DetailsId, viewModel.Settings.EntryViewMode);
     }
@@ -97,7 +97,7 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(
             config,
             settings,
-            new LauncherSettings { SortMode = LauncherEntryVisibility.CustomSortModeId, EntryViewMode = LauncherEntryViewModes.CardsId });
+            new LauncherSettings { SortMode = LauncherEntryQuery.CustomSortModeId, EntryViewMode = LauncherEntryViewModes.CardsId });
 
         var sortMode = viewModel.SelectedSortMode;
         var displayMode = viewModel.SelectedDisplayMode;

@@ -29,7 +29,7 @@ public sealed partial class MainWindowViewModel
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "DirectoryManagement.OpenDialog");
-            StatusText = $"地址管理对话框打开失败: {ExceptionMessageFormatter.ForUser(ex)}";
+            StatusText = LauncherRefreshStatus.DialogOpenFailed("地址管理", ex);
         }
     }
 

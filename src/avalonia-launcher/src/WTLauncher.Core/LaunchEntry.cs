@@ -41,4 +41,11 @@ public sealed record LaunchEntry
     /// </summary>
     [JsonPropertyName("launchedAtUtc")]
     public string LaunchedAtUtc { get; init; } = "";
+
+    /// <summary>
+    /// 累积启动次数。frequent sort 模式按 frecency(count, recency) 评分排序。
+    /// Optional — 旧版本 JSON 无此字段时反序列化为 0（前向兼容）。
+    /// </summary>
+    [JsonPropertyName("launchCount")]
+    public int LaunchCount { get; init; }
 }

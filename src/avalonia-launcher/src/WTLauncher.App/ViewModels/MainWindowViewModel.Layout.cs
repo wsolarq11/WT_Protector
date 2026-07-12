@@ -48,10 +48,11 @@ public sealed partial class MainWindowViewModel
 
     private readonly ObservableCollection<LauncherSortModeViewModel> _sortModes =
     [
-        new(LauncherEntryVisibility.CustomSortModeId, "自定义拖拽"),
-        new(LauncherEntryVisibility.RecentSortModeId, "最近启动"),
-        new(LauncherEntryVisibility.UpdatedSortModeId, "更新时间"),
-        new(LauncherEntryVisibility.AlphabeticalSortModeId, "首字母顺序"),
+        new(LauncherEntryQuery.CustomSortModeId, "自定义拖拽"),
+        new(LauncherEntryQuery.RecentSortModeId, "最近启动"),
+        new(LauncherEntryQuery.UpdatedSortModeId, "更新时间"),
+        new(LauncherEntryQuery.AlphabeticalSortModeId, "首字母顺序"),
+        new(LauncherEntryQuery.FrequentSortModeId, "使用频率"),
     ];
 
     private readonly ObservableCollection<LauncherDisplayModeViewModel> _displayModes =
@@ -66,7 +67,7 @@ public sealed partial class MainWindowViewModel
     public ReadOnlyObservableCollection<LauncherDisplayModeViewModel> DisplayModes { get; }
 
     private LauncherSortModeViewModel ResolveSortMode(string? sortModeId) =>
-        _sortModes.First(mode => mode.Id == LauncherEntryVisibility.NormalizeSortModeId(sortModeId));
+        _sortModes.First(mode => mode.Id == LauncherEntryQuery.NormalizeSortModeId(sortModeId));
 
     private LauncherDisplayModeViewModel ResolveDisplayMode(string? entryViewMode) =>
         _displayModes.First(mode => mode.Id == LauncherEntryViewModes.NormalizeId(entryViewMode));
@@ -75,7 +76,7 @@ public sealed partial class MainWindowViewModel
 
     // ponytail: null-conditional avoids throwing when SelectedSortMode is null
     // (corrupted settings / deserialization failure). Returns false safely.
-    public bool IsCustomSortMode => SelectedSortMode?.Id == LauncherEntryVisibility.CustomSortModeId;
+    public bool IsCustomSortMode => SelectedSortMode?.Id == LauncherEntryQuery.CustomSortModeId;
 
     public bool IsCardsViewMode => CurrentEntryViewMode == LauncherEntryViewMode.Cards;
 
@@ -237,7 +238,7 @@ public sealed partial class MainWindowViewModel
         // P1: During drag reorder, card sizes don't change — skip the calculation.
         if (!isDragging)
         {
-            var sorted = LauncherEntryVisibility.FilterAndSort(
+            var sorted = LauncherEntryQuery.FilterAndSort(
                 _entries,
                 FilterText,
                 RequireSortModeSelection(SelectedSortMode).Id,

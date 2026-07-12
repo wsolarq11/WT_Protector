@@ -140,7 +140,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "Refresh.LoadStore");
-            StatusText = $"配置加载失败: {ExceptionMessageFormatter.ForUser(ex)}";
+            StatusText = LauncherMainWindowText.ConfigLoadFailed(ExceptionMessageFormatter.ForUser(ex));
             return;
         }
 
@@ -158,7 +158,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "Refresh.Validate");
-            StatusText = $"配置验证失败: {ExceptionMessageFormatter.ForUser(ex)}";
+            StatusText = LauncherMainWindowText.ConfigValidationFailed(ExceptionMessageFormatter.ForUser(ex));
             // Reload preset file to ensure _presetFile and UI state are consistent
             // after a partial failure during Phase 2 validation.
             try { LoadPresetFile(preferredPresetId: null); }
@@ -184,7 +184,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _settings.CommandTemplates);
 
         if (missingKeys.Count > 0)
-            StatusText = $"警告：以下命令模板键未定义: {string.Join(", ", missingKeys)}";
+            StatusText = LauncherMainWindowText.UndefinedCommandTemplateKeys(string.Join(", ", missingKeys));
     }
 
     /// <summary>

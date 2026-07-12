@@ -99,7 +99,7 @@ public sealed partial class MainWindowViewModel
     {
         if (entries.Count == 0)
         {
-            StatusText = "组内无 entry。";
+            StatusText = LauncherRefreshStatus.GroupNoEntries;
             return;
         }
 
@@ -116,7 +116,7 @@ public sealed partial class MainWindowViewModel
     {
         if (entryIds.Count == 0)
         {
-            StatusText = "组内无 entry,无法保存为启动组。";
+            StatusText = LauncherRefreshStatus.GroupNoEntriesCannotSave;
             return;
         }
 
@@ -130,13 +130,13 @@ public sealed partial class MainWindowViewModel
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "Grouping.SaveAsPreset");
-            StatusText = $"保存启动组失败: {ExceptionMessageFormatter.ForUser(ex)}";
+            StatusText = LauncherRefreshStatus.SaveGroupFailed(ex);
             return;
         }
 
         if (presetName is null)
         {
-            StatusText = "已取消保存启动组";
+            StatusText = LauncherRefreshStatus.DialogCanceled("保存启动组");
             return;
         }
 
@@ -150,7 +150,7 @@ public sealed partial class MainWindowViewModel
         {
             ErrorLog.Write(ex, "Grouping.AddPreset");
             RestorePresetSnapshotAndReportMissing(snapshot);
-            StatusText = $"新增启动组失败: {ExceptionMessageFormatter.ForUser(ex)}";
+            StatusText = LauncherRefreshStatus.AddGroupFailed(ex);
             return;
         }
         if (SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset) && savedPreset is not null)

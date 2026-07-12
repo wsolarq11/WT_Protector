@@ -97,7 +97,7 @@ public sealed partial class MainWindowViewModelTests
         var (config, settings, _) = CreateDragFixture(temp);
 
         var launcherSettings = CreateDragSettings();
-        launcherSettings = launcherSettings with { SortMode = LauncherEntryVisibility.AlphabeticalSortModeId };
+        launcherSettings = launcherSettings with { SortMode = LauncherEntryQuery.AlphabeticalSortModeId };
         var viewModel = CreateViewModel(config, settings, launcherSettings);
 
         Assert.All(viewModel.VisibleEntries, entry =>
@@ -231,7 +231,7 @@ public sealed partial class MainWindowViewModelTests
         var launcherSettings = new LauncherSettings
         {
             LastFilterText = "",
-            SortMode = LauncherEntryVisibility.CustomSortModeId,
+            SortMode = LauncherEntryQuery.CustomSortModeId,
             EntryViewMode = LauncherEntryViewModes.CardsId,
             RequireConfirmationForLaunches = false,
             CustomEntryOrder = ["one", "two", "three"],
@@ -255,7 +255,7 @@ public sealed partial class MainWindowViewModelTests
     private static LauncherSettings CreateDragSettings() => new()
     {
         LastFilterText = "",
-        SortMode = LauncherEntryVisibility.CustomSortModeId,
+        SortMode = LauncherEntryQuery.CustomSortModeId,
         EntryViewMode = LauncherEntryViewModes.CardsId,
         RequireConfirmationForLaunches = false,
         CustomEntryOrder = [.. DefaultDragOrder()],

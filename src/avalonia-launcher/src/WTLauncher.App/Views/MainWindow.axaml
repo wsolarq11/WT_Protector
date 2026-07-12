@@ -5,6 +5,7 @@
         xmlns:automation="clr-namespace:Avalonia.Automation;assembly=Avalonia.Controls"
         xmlns:vm="clr-namespace:WTLauncher.App.ViewModels"
         x:Class="WTLauncher.App.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
         Title="WT Launcher"
         Width="{StaticResource WindowDefaultWidth}"
         Height="{StaticResource WindowDefaultHeight}"
@@ -487,7 +488,7 @@
             </ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
-            <DataTemplate>
+            <DataTemplate x:DataType="vm:LauncherCardGroupViewModel">
               <StackPanel Spacing="6">
                 <!-- Group header (hidden when groupKey=none) -->
                 <Border IsVisible="{Binding ShowHeader}"
@@ -540,7 +541,7 @@
                     </ItemsPanelTemplate>
                   </ItemsControl.ItemsPanel>
                   <ItemsControl.ItemTemplate>
-                    <DataTemplate>
+                    <DataTemplate x:DataType="vm:LauncherEntryViewModel">
                       <Border Classes="card"
                               Classes.selected="{Binding IsSelected}"
                               Classes.drag-target="{Binding IsDragPreviewTarget}"
@@ -730,7 +731,7 @@
                      Classes="details-list"
                      ItemsSource="{Binding VisibleEntries}">
               <ListBox.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="vm:LauncherEntryViewModel">
                   <Border Classes="card detail-row"
                           Classes.drag-target="{Binding IsDragPreviewTarget}"
                           Classes.drag-source="{Binding IsDragPreviewSource}"
@@ -874,7 +875,7 @@
             </ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
-            <DataTemplate>
+            <DataTemplate x:DataType="vm:LauncherEntryViewModel">
               <Border Classes="card name-tile"
                       Classes.drag-target="{Binding IsDragPreviewTarget}"
                       Classes.drag-source="{Binding IsDragPreviewSource}"

@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 [assembly: InternalsVisibleTo("WTLauncher.App")]
 [assembly: InternalsVisibleTo("WTLauncher.Tests")]
@@ -14,15 +15,9 @@ public static class LauncherJson
     private const string RepositoryLineEnding = "\n";
     private const int DefaultMaxBackups = 3;
 
-    /// <summary>
-    /// Optional hook for logging recovery-from-backup events. Set once by the App
-    /// layer at startup to avoid coupling Core to app-layer infrastructure.
-    /// ponytail: mutable static — tests or future code that replaces this delegate
-    /// must restore the original after. A DI-based callback would be cleaner but
-    /// adds complexity for a single hook point.
-    /// </summary>
-    internal static Action<Exception, string>? OnRecoveryFromBackup { get; set; }
 
+    /// <summary>Source-generated JSON serialization context for Native AOT.
+    /// All types must be registered in <see cref="LauncherJsonContext"/>.</summary>
     internal static readonly JsonSerializerOptions Options = new()
     {
         ReadCommentHandling = JsonCommentHandling.Skip,
@@ -40,15 +35,19 @@ public static class LauncherJson
         // (< > &). This is acceptable because config/settings JSON is never
         // rendered in a browser — it is consumed exclusively by System.Text.Json.
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        // Source-generated resolver for Native AOT compatibility.
+        // Without this, JsonSerializer calls require dynamic code generation.
+        TypeInfoResolver = LauncherJsonContext.Default,
     };
 
-    public static T? Load<T>(string path)
+    public static T? Load<T>(string path) where T : notnull
     {
         using var stream = File.OpenRead(path);
-        return JsonSerializer.Deserialize<T>(stream, Options);
+        var typeInfo = GetRequiredTypeInfo<T>();
+        return JsonSerializer.Deserialize(stream, typeInfo);
     }
 
-    public static T LoadRequired<T>(string path, string documentName)
+    public static T LoadRequired<T>(string path, string documentName) where T : notnull
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(documentName);
 
@@ -65,7 +64,8 @@ public static class LauncherJson
         string path,
         Func<string, T> loadAndValidate,
         string recoveryContext,
-        T defaultValue)
+        T defaultValue,
+        Action<Exception, string>? onRecovery = null)
     {
         if (File.Exists(path))
         {
@@ -91,7 +91,7 @@ public static class LauncherJson
                         // Atomic replace — path exists (we just failed to load it).
                         File.Replace(recoveryTempPath, path, null);
                         var recovered = loadAndValidate(path);
-                        OnRecoveryFromBackup?.Invoke(loadException, recoveryContext);
+                        onRecovery?.Invoke(loadException, recoveryContext);
                         return recovered;
                     }
                     catch (Exception recoveryEx) when (recoveryEx is IOException or UnauthorizedAccessException)
@@ -117,7 +117,7 @@ public static class LauncherJson
                 // here since the destination is empty.
                 File.Move(recoveryTempPath, path);
                 var recovered = loadAndValidate(path);
-                OnRecoveryFromBackup?.Invoke(new InvalidDataException("Config file was missing and recovered from backup."), recoveryContext);
+                onRecovery?.Invoke(new InvalidDataException("Config file was missing and recovered from backup."), recoveryContext);
                 return recovered;
             }
             catch (Exception recoveryEx) when (recoveryEx is IOException or UnauthorizedAccessException)
@@ -138,7 +138,8 @@ public static class LauncherJson
             // No explicit permission set is needed — the OS default is correct.
             Directory.CreateDirectory(directory);
 
-        var json = NormalizeLineEndings(JsonSerializer.Serialize(value, Options));
+        var typeInfo = GetRequiredTypeInfo<T>();
+        var json = NormalizeLineEndings(JsonSerializer.Serialize(value, typeInfo));
         var tempPath = fullPath + $".tmp-{Guid.NewGuid():N}";
 
         File.WriteAllText(tempPath, json + RepositoryLineEnding);
@@ -190,6 +191,19 @@ public static class LauncherJson
     // ponytail: ReplaceLineEndings replaces the hand-rolled \r\n → \n normalizer.
     private static string NormalizeLineEndings(string text) =>
         text.ReplaceLineEndings(RepositoryLineEnding);
+
+    /// <summary>Returns the source-generated JsonTypeInfo for <typeparamref name="T"/>,
+    /// throwing if the type isn't registered in <see cref="LauncherJsonContext"/>.
+    /// Required for Native AOT — no fallback to reflection-based serialization.</summary>
+    private static JsonTypeInfo<T> GetRequiredTypeInfo<T>()
+    {
+        var info = LauncherJsonContext.Default.GetTypeInfo(typeof(T));
+        return info is JsonTypeInfo<T> typed
+            ? typed
+            : throw new InvalidOperationException(
+                $"Type {typeof(T)} is not registered in LauncherJsonContext. " +
+                "Add a [JsonSerializable] attribute to LauncherJsonContext.");
+    }
 
     /// <summary>Delete all <c>*.tmp-*</c>, <c>*.stage-*</c>, <c>*.bak-tmp-*</c>, and
     /// <c>*.recovery-*</c> files left behind by crashed Save() or recovery

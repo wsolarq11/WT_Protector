@@ -18,7 +18,7 @@ public sealed record LauncherSettings
 
     [JsonPropertyName("sortMode")]
     [JsonRequired]
-    public string SortMode { get; init; } = LauncherEntryVisibility.CustomSortModeId;
+    public string SortMode { get; init; } = LauncherEntryQuery.CustomSortModeId;
 
     [JsonPropertyName("entryViewMode")]
     [JsonRequired]

@@ -2,7 +2,7 @@ namespace WTLauncher.Core;
 
 /// <summary>
 /// Cards 视图分组维度键。schema 以 string 形式持久化到 settings.cardsGroupKey。
-/// ponytail: 与 LauncherEntryViewModes/LauncherEntryVisibility 同模式 — string IDs + 默认值。
+/// ponytail: 与 LauncherEntryViewModes/LauncherEntryQuery 同模式 — string IDs + 默认值。
 /// </summary>
 public static class LauncherCardsGroupKeys
 {

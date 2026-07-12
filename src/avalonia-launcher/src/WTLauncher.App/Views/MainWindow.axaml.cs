@@ -14,37 +14,8 @@ namespace WTLauncher.App.Views;
 
 public sealed partial class MainWindow : Window
 {
-    // ── M25: Chrome measurement constants ────────────────────────────────────
-    // ponytail: hardcoded layout chrome — recalibrate when the XAML layout changes.
-    // Triggers: (a) outer Grid Margin in MainWindow.axaml changes; (b) header /
-    // status row heights shift (added/removed controls, font size, padding);
-    // (c) row gaps or border padding change. Measure live with a pixel ruler
-    // after the XAML edit, then update both constants to match the new total.
-    //
-    // CardsRegionHorizontalChromeWidth = 48
-    //   Composed of the outer Grid Margin (24 left + 24 right = 48).
-    //   These 24px come from MainWindow.axaml line 280:
-    //     <Grid RowDefinitions="Auto,*,Auto" Margin="24,20">
-    //   If the XAML layout changes (e.g. the outer Grid margin is adjusted, or
-    //   additional left/right padding is added to the card region container),
-    //   update this constant to match the new total horizontal chrome.
-    //
-    // CardsRegionVerticalChromeHeight = 270
-    //   This is the total height consumed by non-card chrome:
-    //     Row 0 (header): ~230px — title, filter/sort/view/preset controls,
-    //                     action buttons, plus grid margins and spacing.
-    //     Row 2 (status): ~40px — status bar border with padding.
-    //   Breakdown (approx):
-    //     - Outer Grid margin top+bottom: 20+20 = 40
-    //     - Row 0 content: ~190 (controls, buttons, spacings within header Grid)
-    //     - Row 1→Row 2 gap (Margin="0,16,0,14" on card region Grid): 30
-    //     - Row 2 status bar: Border Padding="16" + TextBlock height ≈ 48
-    //     Total ≈ 40 + 190 + 30 + 48 = 308 → conservatively 270.
-    //   The constant is intentionally slightly under the absolute chrome to ensure
-    //   cards always fit within the visible area. If the header or footer layout
-    //   changes significantly, recalculate with the actual measured heights.
-    private const double CardsRegionHorizontalChromeWidth = 48;
-    private const double CardsRegionVerticalChromeHeight = 270;
+    // Chrome measurement constants live in LauncherDesignTokens.
+    // Recalibrate both when the outer Grid margin or header/footer layout changes.
     // -1 so the first Down press moves to index 0 rather than skipping it.
     private int _keyboardFocusIndex = -1;
     private int _pendingScrollRestoreVersion;
@@ -159,8 +130,8 @@ public sealed partial class MainWindow : Window
     {
         // Header/footer take the stable chrome area; the view model owns the cheap grid sizing.
         viewModel.UpdateCardsAvailableSize(new Size(
-            Bounds.Width - CardsRegionHorizontalChromeWidth,
-            Bounds.Height - CardsRegionVerticalChromeHeight));
+            Bounds.Width - LauncherDesignTokens.CardsRegionHorizontalChromeWidth,
+            Bounds.Height - LauncherDesignTokens.CardsRegionVerticalChromeHeight));
     }
 
     private void OnEntryMoreClicked(object? sender, RoutedEventArgs e)

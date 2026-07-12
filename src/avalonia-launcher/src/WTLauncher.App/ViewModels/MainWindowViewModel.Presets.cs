@@ -419,7 +419,7 @@ public sealed partial class MainWindowViewModel
         {
             ErrorLog.Write(ex, "AddPreset");
             RestorePresetSnapshotAndReportMissing(snapshot);
-            StatusText = $"新增启动组失败: {ExceptionMessageFormatter.ForUser(ex)}";
+            StatusText = LauncherRefreshStatus.AddGroupFailed(ex);
             return;
         }
         if (!SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset))
@@ -457,7 +457,7 @@ public sealed partial class MainWindowViewModel
         var preview = BuildPresetSelectionPreview(selectedPreset, entryIds);
         if (!preview.HasChanges)
         {
-            StatusText = $"启动组已是最新状态: {selectedPreset.Name}";
+            StatusText = LauncherRefreshStatus.GroupAlreadyUpToDate(selectedPreset.Name);
             return;
         }
 
@@ -523,7 +523,7 @@ public sealed partial class MainWindowViewModel
         {
             ErrorLog.Write(ex, "DeletePreset");
             RestorePresetSnapshotAndReportMissing(snapshot);
-            StatusText = $"删除启动组失败: {ExceptionMessageFormatter.ForUser(ex)}";
+            StatusText = LauncherRefreshStatus.DeleteGroupFailed(ex);
             return;
         }
         if (preset is null)
