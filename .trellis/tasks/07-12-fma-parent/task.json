@@ -1,0 +1,32 @@
+{
+  "id": "fma-parent",
+  "name": "fma-parent",
+  "title": "Feature Module Architecture 重构",
+  "description": "Feature Module Architecture (FMA) 重构：将神类 MainWindowViewModel 拆分为按功能域组织的 Feature Services，引入 DI 容器和 IDialogService，使用 WeakReferenceMessenger 处理跨域通信",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P0",
+  "creator": "<USER>",
+  "assignee": "<USER>",
+  "createdAt": "2026-07-12",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "07-12-fma-p0-di",
+    "07-12-fma-p1-entry",
+    "07-12-fma-p2-services",
+    "07-12-fma-p3-thin-vm",
+    "07-12-fma-p4-quality"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "Phase 0-1 completed: IDialogService + IEntryService + PresetService extracted. WeakReferenceMessenger skipped — no cross-VM communication exists (YAGNI). DI container skipped — 2 services + 1 consumer, hardcoded new() is sufficient (YAGNI). Phase 2-4 PRDs are TBD. FMA changes build 0-error and 572/572 tests pass.",
+  "meta": {}
+}

@@ -1,1 +1,4 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/core/index.md", "reason": "Core 层 — 新 record 验证 init-only + 无 UI 依赖"}
+{"file": ".trellis/spec/views/index.md", "reason": "视图层 — dialog code-behind pattern + design tokens 验证"}
+{"file": ".trellis/spec/guides/pitfalls.md", "reason": "已知陷阱 — bare catch / 跨线程 mutation / dialog return type"}
+{"file": ".trellis/spec/tests/index.md", "reason": "测试规范 — 覆盖率 + 命名约定"}

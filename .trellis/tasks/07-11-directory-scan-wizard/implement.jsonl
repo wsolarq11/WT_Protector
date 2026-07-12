@@ -1,1 +1,4 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/core/index.md", "reason": "Core 层不变量 — 新增 record 必须遵守 init-only / 无 UI 依赖"}
+{"file": ".trellis/spec/views/index.md", "reason": "视图层规范 — 纯 code-behind dialog pattern + design tokens"}
+{"file": ".trellis/spec/guides/pitfalls.md", "reason": "已知陷阱 — Avalonia 12 RadioButton / ComboBox SelectedItem / 跨线程 UI mutation"}
+{"file": ".trellis/spec/tests/index.md", "reason": "测试规范 — ViewModel 测试 + owner 集成测试命名约定"}
