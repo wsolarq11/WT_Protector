@@ -1270,3 +1270,36 @@ Executed 7-step /goal pipeline. trellis-check: gate PASS 19 checks/505 tests. tr
 ### Next Steps
 
 - None - task complete
+
+
+## Session 37: Modernization 8-task wave + consistency verification
+
+**Date**: 2026-07-12
+**Task**: Modernization 8-task wave + consistency verification
+**Branch**: `main`
+
+### Summary
+
+Completed 07-12-modernization-audit: CompiledBindings (4 x:DataType, 0 binding errors), Native AOT (source-gen JsonSerializerContext, 22MB binary), Chrome constants to LauncherDesignTokens, static delegate removal (OnRecoveryFromBackup → optional param), LauncherEntryVisibility→Query rename (85 refs, 13 files), frecency sort (zoxide formula, 8 tests), status text centralization (LauncherStatusText.cs), DI container eval→skip. Gate: 574/574 tests, 0 errors 0 warnings. Persisted Native AOT docs to persistence.md spec. Dream memory consolidation: 9 unindexed files indexed in MEMORY.md.
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ac675a4` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
