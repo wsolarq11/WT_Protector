@@ -187,6 +187,16 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **修复** | 新增 `LauncherStoreLoadFailureTests.cs`（6 个测试：corrupt JSON、empty file、backup recovery、file locked、50MB limit）。 |
 | **预防** | 持久化组件的测试必须覆盖**成功+失败**两个路径。只测 happy path = 没有测试防御能力。 |
 
+### 2.13 跳过 ApplyFilter 必须验证所有派生投影已重建
+
+| 属性 | 值 |
+|---|---|
+| **证据** | FMA session 2026-07-12, `MainWindowViewModel.Drag.cs` — 卡片视图拖拽修复 |
+| **根因** | `CommitDragReorder()` 在保存成功后返回 `RefreshEntries=false`，跳过 `ApplyFilter()`。卡片视图绑定 `VisibleGroups`（由 `ApplyFilter()` → `RebuildVisibleGroups()` 构建），从未被重建。详情/名称视图直接绑定 `VisibleEntries`（拖拽预览时已通过 `ReorderVisibleEntryForDrag` 更新），没受影响。 |
+| **修复** | `CommitDragReorder()` 无条件调用 `ApplyFilter()`，移除 `if (result.RefreshEntries)` 条件。 |
+| **预防** | 任何"跳过 ApplyFilter"的优化（`RefreshEntries=false`、`isDragging` 早退等）必须验证所有派生投影：`VisibleGroups`、`VisibleCount`、`SelectVisibleCommand`、`IsVisibleEmpty`。只检查 `_visibleEntries` 是不够的——卡片视图还依赖 `VisibleGroups`。 |
+| **适用** | 任何 `ApplyFilter()` 的优化/条件跳过。 |
+
 ---
 
 ### 3.1 不要在文档里硬编码"N 条/N 类"

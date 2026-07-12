@@ -130,8 +130,7 @@ public sealed partial class MainWindowViewModel
     {
         var result = _dragReorderWorkflow.Commit(IsCustomSortMode);
         _settings = _dragReorderWorkflow.Settings;
-        if (result.RefreshEntries)
-            ApplyFilter();
+        ApplyFilter();
         ApplyStatusText(result.Status);
         _lastPreviewParams = null;
     }

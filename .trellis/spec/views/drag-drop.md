@@ -100,3 +100,4 @@ Pure Core-layer calculation of ghost dimensions and pointer offset. Lives in Cor
 - ❌ **Ghost colors hardcoded** — use `LauncherDesignTokens` (fixed 2026-06-23 ultrareview Q7).
 - ❌ **Drag as the ONLY way to reorder** — always keep MoveUp/MoveDown as keyboard fallback.
 - ❌ **`_dragCardCache` fallback pattern** — removed 2026-06-23 ultrareview B2. Visual hit-test (`GetVisualAt`) is the correct fallback.
+- ❌ **`CommitDragReorder` 成功后跳过 `ApplyFilter`** — 卡片视图绑定 `VisibleGroups`（由 `ApplyFilter` → `RebuildVisibleGroups` 构建），跳过则卡片位置不更新。`CommitDragReorder` 必须无条件调用 `ApplyFilter()`。所有条件跳过必须验证 `VisibleGroups` / `VisibleCount` / `IsVisibleEmpty` 等派生投影已被重建。
