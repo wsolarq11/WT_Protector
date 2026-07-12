@@ -25,3 +25,6 @@ omx_wiki/session-log-*.md
 .claude/
 config/*.legacybak
 config/*.legacybak2
+
+# Windows shortcuts (local launcher references)
+*.lnk
