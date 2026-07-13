@@ -19,16 +19,29 @@ public sealed partial class CommandManagementViewModel : ObservableObject
     public ObservableCollection<TemplateRow> TemplateRows { get; } = new();
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsCommandTabActive))]
+    [NotifyPropertyChangedFor(nameof(IsTemplateTabActive))]
     private int _activeTab; // 0 = 命令引用, 1 = 命令模板
 
     [ObservableProperty]
     private string _statusMessage = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSelectedCommand))]
     private CommandRow? _selectedCommandRow;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSelectedTemplate))]
     private TemplateRow? _selectedTemplateRow;
+
+    public bool IsCommandTabActive => ActiveTab == 0;
+    public bool IsTemplateTabActive => ActiveTab == 1;
+    public bool HasCommandRows => CommandRows.Count > 0;
+    public bool HasNoCommandRows => !HasCommandRows;
+    public bool HasTemplateRows => TemplateRows.Count > 0;
+    public bool HasNoTemplateRows => !HasTemplateRows;
+    public bool HasSelectedCommand => SelectedCommandRow is not null;
+    public bool HasSelectedTemplate => SelectedTemplateRow is not null;
 
     public CommandManagementViewModel(
         IReadOnlyList<CommandRow> initialCommandRows,
@@ -47,6 +60,12 @@ public sealed partial class CommandManagementViewModel : ObservableObject
     public IReadOnlyList<string> TemplateKeys => TemplateRows.Select(r => r.Key).ToList();
 
     partial void OnActiveTabChanged(int value) => StatusMessage = string.Empty;
+
+    [RelayCommand]
+    private void SelectCommandTab() => ActiveTab = 0;
+
+    [RelayCommand]
+    private void SelectTemplateTab() => ActiveTab = 1;
 
     /// <summary>
     /// 应用一个 edit。失败 (Success=false) 时只刷状态消息,不动 rows;
@@ -75,6 +94,10 @@ public sealed partial class CommandManagementViewModel : ObservableObject
         TemplateRows.Clear();
         foreach (var r in result.UpdatedTemplateRows) TemplateRows.Add(r);
         OnPropertyChanged(nameof(TemplateKeys));
+        OnPropertyChanged(nameof(HasCommandRows));
+        OnPropertyChanged(nameof(HasNoCommandRows));
+        OnPropertyChanged(nameof(HasTemplateRows));
+        OnPropertyChanged(nameof(HasNoTemplateRows));
     }
 
     // — Command 引用 tab 的操作 ———————————————————————

@@ -169,6 +169,63 @@ public bool IsSelected
 
 **Source:** `LauncherEntryViewModel.cs` lines 33-41.
 
+## Scenario: Declarative management window with modal editor routing
+
+### 1. Scope / Trigger
+
+Use this when a management Window has stable tabs, toolbars, list rows and empty states but still needs owner-relative modal editors.
+
+### 2. Signatures
+
+```csharp
+public ObservableCollection<CommandRow> CommandRows { get; }
+public CommandRow? SelectedCommandRow { get; set; }
+public bool HasNoCommandRows => CommandRows.Count == 0;
+
+public CommandManagementWindow(); // Avalonia runtime loader
+public CommandManagementWindow(CommandManagementViewModel viewModel); // production owner
+```
+
+### 3. Contracts
+
+- Stable layout and row rendering live in compiled XAML using `ItemsSource`, `SelectedItem` and typed `DataTemplate`.
+- Collection mutations notify empty-state projections after replacement; code-behind never clears/rebuilds controls.
+- Code-behind may open owner-relative modal editors and route returned values into existing ViewModel commands.
+- The public parameterless constructor exists only so Avalonia can reach the XAML resource; production composition uses the typed constructor.
+
+### 4. Validation & Error Matrix
+
+| Event | Owner |
+| --- | --- |
+| tab switch, selection, delete command, visibility | ViewModel binding |
+| list row rendering and selected border | XAML/DataTemplate |
+| double-tap or toolbar opens modal editor | code-behind |
+| validation, mutation, persistence, rollback | ViewModel/Core owner |
+
+### 5. Good/Base/Bad Cases
+
+- Good: `ListBox SelectedItem` binds two-way to the existing selected row and its template owns all row pixels.
+- Base: a click handler reads the selected row only to open `ShowDialog<T>(this)`.
+- Bad: `RenderRows()` clears a StackPanel and reconstructs every child after each collection change.
+
+### 6. Tests Required
+
+- ViewModel tests cover tab and empty/selection projections.
+- XAML structure test proves typed templates, collection bindings, selection bindings and automation status.
+- Structure test rejects retired render/build helpers and manual `PropertyChanged` subscriptions.
+- Full publish and GUI smoke prove XAML resources and the public loader constructor resolve.
+
+### 7. Wrong vs Correct
+
+```csharp
+// Wrong: the View mirrors observable state by rebuilding controls.
+rows.CollectionChanged += (_, _) => RenderRows();
+
+// Correct: XAML observes the collection directly.
+ItemsSource="{Binding CommandRows}"
+SelectedItem="{Binding SelectedCommandRow, Mode=TwoWay}"
+```
+
 ---
 
 ## ObservableObject Pattern

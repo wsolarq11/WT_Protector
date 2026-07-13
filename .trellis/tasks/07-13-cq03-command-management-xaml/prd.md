@@ -23,13 +23,13 @@
 
 ## Acceptance Criteria
 
-- [ ] AC1：存在编译型 `CommandManagementWindow.axaml`，窗口能由 `InitializeComponent` 正常加载。
-- [ ] AC2：命令与模板集合各由一个 DataTemplate 渲染，新增/重命名/删除后集合通知自动更新 UI。
-- [ ] AC3：tab 切换、空状态、计数、status、可用性均由 ViewModel 绑定驱动，没有 code-behind 镜像字段。
-- [ ] AC4：四类编辑子对话框仍可触发对应 ViewModel command；关闭窗口行为不变。
-- [ ] AC5：旧命令式视觉树 helper 全部删除，code-behind 明显缩减且无业务判断。
-- [ ] AC6：现有 command-management contract/integration tests 全绿，并新增 XAML 结构契约覆盖 DataTemplate、binding 与 automation name。
-- [ ] AC7：`git diff --check`、Release tests、`tools/verify.ps1`、publish 与 GUI smoke 全部通过。
+- [x] AC1：存在编译型 `CommandManagementWindow.axaml`，窗口能由 `InitializeComponent` 正常加载。
+- [x] AC2：命令与模板集合各由一个 DataTemplate 渲染，新增/重命名/删除后集合通知自动更新 UI。
+- [x] AC3：tab 切换、空状态、计数、status、可用性均由 ViewModel 绑定驱动，没有 code-behind 镜像字段。
+- [x] AC4：四类编辑子对话框仍可触发对应 ViewModel command；关闭窗口行为不变。
+- [x] AC5：旧命令式视觉树 helper 全部删除，code-behind 明显缩减且无业务判断。
+- [x] AC6：现有 command-management contract/integration tests 全绿，并新增 XAML 结构契约覆盖 DataTemplate、binding 与 automation name。
+- [x] AC7：`git diff --check`、Release tests、`tools/verify.ps1`、publish 与 GUI smoke 全部通过。
 
 ## Out of Scope
 

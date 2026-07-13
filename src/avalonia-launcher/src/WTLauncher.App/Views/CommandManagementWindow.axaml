@@ -1,0 +1,197 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:automation="clr-namespace:Avalonia.Automation;assembly=Avalonia.Controls"
+        xmlns:core="clr-namespace:WTLauncher.Core;assembly=WTLauncher.Core"
+        xmlns:vm="clr-namespace:WTLauncher.App.ViewModels"
+        x:Class="WTLauncher.App.Views.CommandManagementWindow"
+        x:DataType="vm:CommandManagementViewModel"
+        Title="🛠 命令管理"
+        Width="820"
+        Height="600"
+        MinWidth="560"
+        MinHeight="420"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource SurfaceBrush}">
+  <Window.Styles>
+    <Style Selector="Button.tab.active">
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+    </Style>
+    <Style Selector="ListBox.management-list">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Padding" Value="0"/>
+    </Style>
+    <Style Selector="ListBox.management-list ListBoxItem">
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="Margin" Value="0,0,0,6"/>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    </Style>
+    <Style Selector="ListBox.management-list ListBoxItem /template/ ContentPresenter">
+      <Setter Property="Background" Value="Transparent"/>
+    </Style>
+    <Style Selector="ListBox.management-list ListBoxItem:selected Border.management-row">
+      <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+    </Style>
+    <Style Selector="Border.management-row">
+      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="6"/>
+      <Setter Property="Padding" Value="10,6"/>
+    </Style>
+    <Style Selector="TextBlock.mono-command">
+      <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Courier New, monospace"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="FontSize" Value="14"/>
+    </Style>
+    <Style Selector="TextBlock.muted-detail">
+      <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+    </Style>
+  </Window.Styles>
+
+  <Border Padding="22">
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+      <TextBlock Grid.Row="0"
+                 Text="命令与模板集中管理"
+                 FontSize="20"
+                 FontWeight="SemiBold"
+                 Foreground="{StaticResource TextPrimaryBrush}"/>
+      <TextBlock Grid.Row="1"
+                 Margin="0,4,0,12"
+                 TextWrapping="Wrap"
+                 Foreground="{StaticResource TextMutedBrush}"
+                 Text="Tab 1 列出 command 引用并同步重命名；Tab 2 管理 commandTemplates，Key 与展开内容变更会立即影响引用。"/>
+
+      <Grid Grid.Row="2" RowDefinitions="Auto,Auto" Margin="0,0,0,8">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <Button Content="📋 命令引用"
+                  MinWidth="130"
+                  Classes="secondary tab"
+                  Classes.active="{Binding IsCommandTabActive}"
+                  Command="{Binding SelectCommandTabCommand}"/>
+          <Button Content="📑 命令模板"
+                  MinWidth="130"
+                  Classes="secondary tab"
+                  Classes.active="{Binding IsTemplateTabActive}"
+                  Command="{Binding SelectTemplateTabCommand}"/>
+          <TextBlock Margin="12,6,0,0"
+                     Text="{Binding StatusMessage}"
+                     TextWrapping="Wrap"
+                     Foreground="{StaticResource TextMutedBrush}"
+                     automation:AutomationProperties.Name="命令管理状态"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1"
+                    Orientation="Horizontal"
+                    Spacing="6"
+                    Margin="0,6,0,0"
+                    IsVisible="{Binding IsCommandTabActive}">
+          <Button Content="✏ 编辑/重命名"
+                  Classes="secondary"
+                  MinWidth="90"
+                  IsEnabled="{Binding HasSelectedCommand}"
+                  Click="OnRenameCommandClicked"/>
+          <Button Content="🗑 删除"
+                  Classes="secondary"
+                  MinWidth="90"
+                  IsEnabled="{Binding HasSelectedCommand}"
+                  Command="{Binding DeleteCommandCommand}"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1"
+                    Orientation="Horizontal"
+                    Spacing="6"
+                    Margin="0,6,0,0"
+                    IsVisible="{Binding IsTemplateTabActive}">
+          <Button Content="➕ 新模板" Classes="secondary" MinWidth="90" Click="OnAddTemplateClicked"/>
+          <Button Content="✏ 改 Key" Classes="secondary" MinWidth="90"
+                  IsEnabled="{Binding HasSelectedTemplate}" Click="OnUpdateTemplateKeyClicked"/>
+          <Button Content="📝 改展开内容" Classes="secondary" MinWidth="110"
+                  IsEnabled="{Binding HasSelectedTemplate}" Click="OnUpdateTemplateValueClicked"/>
+          <Button Content="🗑 删除" Classes="secondary" MinWidth="90"
+                  IsEnabled="{Binding HasSelectedTemplate}" Command="{Binding DeleteTemplateCommand}"/>
+        </StackPanel>
+      </Grid>
+
+      <Border Grid.Row="3"
+              BorderThickness="1"
+              CornerRadius="10"
+              BorderBrush="{StaticResource CardBorderBrush}"
+              Padding="8">
+        <Grid>
+          <Grid IsVisible="{Binding IsCommandTabActive}">
+            <ListBox Classes="management-list"
+                     ItemsSource="{Binding CommandRows}"
+                     SelectedItem="{Binding SelectedCommandRow, Mode=TwoWay}"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="core:CommandRow">
+                  <Border Classes="management-row" DoubleTapped="OnCommandRowDoubleTapped">
+                    <Grid ColumnDefinitions="Auto,8,*,8,Auto">
+                      <TextBlock Grid.Column="0" Classes="mono-command" Text="{Binding Command}"/>
+                      <ItemsControl Grid.Column="2" ItemsSource="{Binding ReferencingEntryNames}">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="6"/>
+                          </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <TextBlock Classes="muted-detail" Text="{Binding}"/>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                      <TextBlock Grid.Column="4" FontSize="12" Foreground="{StaticResource TextMutedBrush}">
+                        <Run Text="引用 "/><Run Text="{Binding ReferenceCount}"/>
+                      </TextBlock>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock IsVisible="{Binding HasNoCommandRows}"
+                       Margin="8,12"
+                       Text="(无 command — 还没有任何启动按钮)"
+                       Foreground="{StaticResource TextMutedBrush}"/>
+          </Grid>
+
+          <Grid IsVisible="{Binding IsTemplateTabActive}">
+            <ListBox Classes="management-list"
+                     ItemsSource="{Binding TemplateRows}"
+                     SelectedItem="{Binding SelectedTemplateRow, Mode=TwoWay}"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="core:TemplateRow">
+                  <Border Classes="management-row" DoubleTapped="OnTemplateRowDoubleTapped">
+                    <Grid ColumnDefinitions="Auto,8,*,8,Auto">
+                      <TextBlock Grid.Column="0" Classes="mono-command">
+                        <Run Text="$"/><Run Text="{Binding Key}"/>
+                      </TextBlock>
+                      <TextBlock Grid.Column="2" Classes="muted-detail"
+                                 FontFamily="Cascadia Code, Consolas, Courier New, monospace"
+                                 Text="{Binding ExpandedValue}"/>
+                      <TextBlock Grid.Column="4" FontSize="12" Foreground="{StaticResource TextMutedBrush}">
+                        <Run Text="引用 "/><Run Text="{Binding ReferenceCount}"/>
+                      </TextBlock>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock IsVisible="{Binding HasNoTemplateRows}"
+                       Margin="8,12"
+                       Text="(无模板 — 添加一个模板来批量定义命令参数)"
+                       Foreground="{StaticResource TextMutedBrush}"/>
+          </Grid>
+        </Grid>
+      </Border>
+
+      <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+        <Button Content="关闭" Classes="primary" MinWidth="110" Click="OnCloseClicked"/>
+      </StackPanel>
+    </Grid>
+  </Border>
+</Window>

@@ -2,13 +2,13 @@
 
 ## Steps
 
-- [ ] 读取完整 window/VM 与 command-management tests，列出每个控件行为和 enablement contract。
-- [ ] 新建 `.axaml`，迁移窗口资源、标题、tab、toolbar、两套 ItemsControl/DataTemplate、空状态与 footer。
-- [ ] 精简 `.axaml.cs` 为初始化、关闭和 editor-dialog 路由；删除所有手工 render/sync helpers。
-- [ ] 如 XAML 需要，给 ViewModel 增加最小只读 projection/command，不迁移业务到 View。
-- [ ] 添加 XAML 结构契约并运行 command-management 聚焦测试。
-- [ ] 运行完整 Release tests、`git diff --check`、`tools/verify.ps1`。
-- [ ] 更新 views/tests spec（如形成新契约），提交并归档。
+- [x] 读取完整 window/VM 与 command-management tests，列出每个控件行为和 enablement contract。
+- [x] 新建 `.axaml`，迁移窗口资源、标题、tab、toolbar、两套 ItemsControl/DataTemplate、空状态与 footer。
+- [x] 精简 `.axaml.cs` 为初始化、关闭和 editor-dialog 路由；删除所有手工 render/sync helpers。
+- [x] 给 ViewModel 增加最小只读 projection/command，不迁移业务到 View。
+- [x] 添加 XAML 结构契约并运行 command-management 聚焦测试。
+- [x] 运行完整 Release tests、`git diff --check`、`tools/verify.ps1`。
+- [x] 更新 views spec，提交并归档。
 
 ## Risks
 
