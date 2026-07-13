@@ -135,4 +135,40 @@ public sealed class ArchitectureRules
             .Because("Core is Layer 0; ViewModels are Layer 1-3.");
         rule.Check(Architecture);
     }
+
+    [Fact]
+    public void R7_PresetServices_MustNotReference_Views()
+    {
+        IArchRule rule = Types().That().ResideInNamespace("WTLauncher.App.Features.Presets")
+            .Should().NotDependOnAnyTypesThat().ResideInNamespace("WTLauncher.App.Views")
+            .Because("preset services own workflows and contracts, while Views own pixels and window lifecycle only.");
+        rule.Check(Architecture);
+    }
+
+    [Fact]
+    public void R8_EntryServices_MustNotReference_Views()
+    {
+        IArchRule rule = Types().That().ResideInNamespace("WTLauncher.App.Features.Entries")
+            .Should().NotDependOnAnyTypesThat().ResideInNamespace("WTLauncher.App.Views")
+            .Because("entry services own workflows and contracts, while Views own pixels and window lifecycle only.");
+        rule.Check(Architecture);
+    }
+
+    [Fact]
+    public void R9_PresetServices_MustNot_DependOn_SystemIoFile()
+    {
+        IArchRule rule = Types().That().ResideInNamespace("WTLauncher.App.Features.Presets")
+            .Should().NotDependOnAnyTypesThat().HaveFullName("System.IO.File")
+            .Because("preset services must use the single LauncherStore persistence boundary rather than direct file access.");
+        rule.Check(Architecture);
+    }
+
+    [Fact]
+    public void R10_EntryServices_MustNot_DependOn_SystemIoFile()
+    {
+        IArchRule rule = Types().That().ResideInNamespace("WTLauncher.App.Features.Entries")
+            .Should().NotDependOnAnyTypesThat().HaveFullName("System.IO.File")
+            .Because("entry services must use the single LauncherStore persistence boundary rather than direct file access.");
+        rule.Check(Architecture);
+    }
 }

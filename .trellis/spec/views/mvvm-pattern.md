@@ -15,12 +15,76 @@ App.axaml.cs (composition root)
         ├─ LauncherStore.ResolveConfigPath()
         ├─ LauncherStore.Load()
         ├─ new LauncherLaunchWorkflow()
-        ├─ new MainWindowViewModel(config, settings, workflow, utcNow)
+        ├─ new DialogService()
+        ├─ new EntryService(dialogService)
+        ├─ new PresetService(dialogService)
+        ├─ new MainWindowViewModel(...interfaces...)
         └─ new MainWindow(viewModel)
-            └─ Injects dialog Func<> delegates
+            └─ dialogService.Initialize(mainWindow)
 ```
 
 **Source:** `src/avalonia-launcher/src/WTLauncher.App/App.axaml.cs`
+
+---
+
+## Scenario: Feature-service construction and ViewModel ownership
+
+### 1. Scope / Trigger
+
+Apply this contract whenever a workflow is extracted from `MainWindowViewModel` or a new feature service is added.
+
+### 2. Signatures
+
+```csharp
+public MainWindowViewModel(
+    string storePath,
+    LauncherStoreFile storeFile,
+    LauncherLaunchWorkflow launchWorkflow,
+    IDialogService dialogService,
+    IEntryService entryService,
+    IPresetService presetService,
+    Func<DateTimeOffset> utcNow);
+```
+
+### 3. Contracts
+
+- `App.axaml.cs` is the production composition root and constructs concrete feature services.
+- `MainWindowViewModel` receives interfaces and must not `new EntryService` or `new PresetService`.
+- Feature services are stateless workflow owners. They do not own the observable aggregate and do not persist directly.
+- ViewModel retains bindable state, commands, CQ-02 transaction application, status/receipt mapping and property notification order.
+- Reuse an existing Core owner or injected workflow directly; do not add a service that only forwards one method.
+
+### 4. Validation & Error Matrix
+
+| Condition | Required behavior |
+| --- | --- |
+| Any injected service is null | Constructor throws `ArgumentNullException` |
+| Service returns validation/cancel status | ViewModel publishes status without mutating/persisting |
+| Service returns updated immutable state | ViewModel applies it through the mutation transaction |
+| Store commit fails | ViewModel restores the complete snapshot and preserves the save error |
+| Proposed extraction needs the whole ViewModel/callback bag | Keep it as orchestration; the seam is not stable |
+
+### 5. Good/Base/Bad Cases
+
+- Good: `PresetService` owns CRUD, eligibility, reference counting and selection-preview rules.
+- Base: `LauncherEntryQuery.FilterAndSort` remains a direct one-line Core call; collection synchronization remains in ViewModel.
+- Bad: adding `LayoutService.FilterAndSort(...) => LauncherEntryQuery.FilterAndSort(...)` with no new contract.
+
+### 6. Tests Required
+
+- Direct service tests cover success, cancel/validation and recoverable failure where applicable.
+- `ArchitectureRules` R7–R10 prevent Entry/Preset services from referencing Views or `System.IO.File`.
+- Existing ViewModel tests prove binding, persistence and rollback behavior remain compatible.
+
+### 7. Wrong vs Correct
+
+```csharp
+// Wrong: hidden concrete construction inside the ViewModel.
+_presetService = new PresetService(dialogService);
+
+// Correct: composition root constructs; ViewModel validates the interface.
+_presetService = presetService ?? throw new ArgumentNullException(nameof(presetService));
+```
 
 ---
 
@@ -170,14 +234,14 @@ private Task LaunchAsync() => _owner.LaunchAsync(this);
 Code-behind OnWindowKeyDown:
   Enter + Source is SearchTextBox + !SearchTextBox.IsDropDownOpen
     → viewModel.RecordSearchTerm()
-      → 去重（已有词条移到最前）
-      → 上限 20 条
+      → LauncherSearchHistory.Record()（Normalize + 去重 + 最新置顶）
+      → LauncherSearchHistory.MaximumTerms（上限 20 条）
       → snapshot/rollback 持久化
 ```
 
 **为什么不在 `OnFilterTextChanged` 里写搜索历史？** `FilterText` 每次按键都触发——LastFilterText 持久化是有意设计（保存/恢复搜索框文本）。但搜索历史应该是用户"确认"的搜索词（按 Enter 的动作），不是每次按键。
 
-**Source:** `MainWindow.axaml.cs` lines 96-104, `MainWindowViewModel.Layout.cs` `RecordSearchTerm()`.
+**Source:** `MainWindow.axaml.cs` `OnWindowKeyDown`, `LauncherSearchHistory.cs`, `MainWindowViewModel.Layout.cs` `RecordSearchTerm()`.
 
 ---
 

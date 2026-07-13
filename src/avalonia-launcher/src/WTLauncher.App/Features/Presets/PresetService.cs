@@ -14,6 +14,33 @@ public sealed class PresetService : IPresetService
         _dialog = dialog ?? throw new ArgumentNullException(nameof(dialog));
     }
 
+    public int CountEntryReferences(LauncherPresetFile presetFile, string entryId)
+    {
+        if (string.IsNullOrWhiteSpace(entryId))
+            return 0;
+
+        var normalized = EntryId.Normalize(entryId);
+        return presetFile.Presets.Count(preset =>
+            preset.EntryIds.Any(id => EntryId.Same(id, normalized)));
+    }
+
+    public LauncherPresetSelectionPreview BuildSelectionPreview(
+        string presetName,
+        IEnumerable<string> selectedEntryIds,
+        IEnumerable<string> configuredEntryIds,
+        IEnumerable<string> presetEntryIds) =>
+        LauncherPresetSelectionPreview.ForPreset(
+            presetName,
+            selectedEntryIds,
+            configuredEntryIds,
+            presetEntryIds);
+
+    public bool CanUpdatePreset(LauncherPresetFile presetFile, string presetId) =>
+        LauncherPresetWorkflow.CanUpdatePreset(presetFile, presetId);
+
+    public bool CanDeletePreset(LauncherPresetFile presetFile, string presetId) =>
+        LauncherPresetWorkflow.CanDeletePreset(presetFile, presetId);
+
     public async Task<(string? PresetName, string? Status)> RequestNewPresetAsync(
         LauncherPresetSaveTarget target, HashSet<string> existingNames)
     {

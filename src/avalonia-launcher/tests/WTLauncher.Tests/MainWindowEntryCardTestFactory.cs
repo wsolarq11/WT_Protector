@@ -1,5 +1,7 @@
 using Avalonia.Controls;
 using WTLauncher.App.Features.Dialogs;
+using WTLauncher.App.Features.Entries;
+using WTLauncher.App.Features.Presets;
 using WTLauncher.App.ViewModels;
 using WTLauncher.App.Views;
 using WTLauncher.Core;
@@ -37,11 +39,14 @@ internal static class MainWindowEntryCardTestFactory
             DefaultPresetId = "default",
         };
         LauncherStore.Save(storeFile, storePath, backup: true);
+        var dialogs = new StubDialogService();
         return new MainWindowViewModel(
             storePath,
             storeFile,
             CreateLaunchWorkflow(),
-            new StubDialogService(),
+            dialogs,
+            new EntryService(dialogs),
+            new PresetService(dialogs),
             static () => DateTimeOffset.UtcNow);
     }
 
@@ -70,11 +75,14 @@ internal static class MainWindowEntryCardTestFactory
             DefaultPresetId = "default",
         };
         LauncherStore.Save(storeFile, storePath, backup: true);
+        var dialogs = new StubDialogService();
         return new LauncherEntryViewModel(entry, new MainWindowViewModel(
             storePath,
             storeFile,
             CreateLaunchWorkflow(),
-            new StubDialogService(),
+            dialogs,
+            new EntryService(dialogs),
+            new PresetService(dialogs),
             static () => DateTimeOffset.UtcNow));
     }
 

@@ -10,15 +10,8 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
-    public int GetPresetReferenceCount(string entryId)
-    {
-        if (string.IsNullOrWhiteSpace(entryId))
-            return 0;
-
-        var normalized = EntryId.Normalize(entryId);
-        return _presetFile.Presets.Count(preset =>
-            preset.EntryIds.Any(id => EntryId.Same(id, normalized)));
-    }
+    public int GetPresetReferenceCount(string entryId) =>
+        _presetService.CountEntryReferences(_presetFile, entryId);
 
     private bool TryGetApplicablePresetSelection(
         [NotNullWhen(true)] out LauncherPresetViewModel? selectedPreset,
@@ -111,7 +104,7 @@ public sealed partial class MainWindowViewModel
         if (!TryBuildPresetSelectionPreviewForCommand(out var selectedPreset, out var selection))
             return false;
 
-        if (!LauncherPresetWorkflow.CanUpdatePreset(_presetFile, selectedPreset.Id))
+        if (!_presetService.CanUpdatePreset(_presetFile, selectedPreset.Id))
             return false;
 
         return selection.SelectedIds.Count > 0 && selection.HasChanges;
@@ -119,7 +112,7 @@ public sealed partial class MainWindowViewModel
 
     private bool CanDeleteSelectedPreset() =>
         TryGetSelectedPreset(out var selectedPreset)
-        && LauncherPresetWorkflow.CanDeletePreset(_presetFile, selectedPreset.Id);
+        && _presetService.CanDeletePreset(_presetFile, selectedPreset.Id);
 
     private LauncherPresetSelectionPreview BuildPresetSelectionPreview(IReadOnlyList<string> selectedEntryIds)
     {
@@ -133,7 +126,7 @@ public sealed partial class MainWindowViewModel
         LauncherPresetViewModel selectedPreset,
         IReadOnlyList<string> selectedEntryIds)
     {
-        return LauncherPresetSelectionPreview.ForPreset(
+        return _presetService.BuildSelectionPreview(
             selectedPreset.Name,
             selectedEntryIds,
             GetEntryIds(),
@@ -389,7 +382,7 @@ public sealed partial class MainWindowViewModel
         if (selectedPreset is null)
             return;
 
-        if (!LauncherPresetWorkflow.CanUpdatePreset(_presetFile, selectedPreset.Id))
+        if (!_presetService.CanUpdatePreset(_presetFile, selectedPreset.Id))
         {
             StatusText = LauncherPresetStatus.UpdateBlocked(selectedPreset.Name);
             return;
@@ -443,7 +436,7 @@ public sealed partial class MainWindowViewModel
             selectedPreset.Id,
             selectedPreset.Name,
             selectedPreset.EntryIds);
-        if (!LauncherPresetWorkflow.CanDeletePreset(_presetFile, target.PresetId))
+        if (!_presetService.CanDeletePreset(_presetFile, target.PresetId))
         {
             StatusText = LauncherPresetStatus.DeleteBlocked(target.PresetName);
             return;

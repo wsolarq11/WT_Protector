@@ -146,13 +146,17 @@ Architecture invariants that prose `quality-guidelines.md` rules translate into 
 
 **Packages:** `TngTech.ArchUnitNET` 0.13.3 + `TngTech.ArchUnitNET.xUnitV3` 0.13.3 (in `Directory.Packages.props`).
 
-**Rules currently encoded (R1-R6):**
+**Rules currently encoded (R1-R10):**
 - R1: Core must not reference `Avalonia.*`
 - R2: Core must not reference `CommunityToolkit.*`
 - R3: Core must not depend on `WTLauncher.App.*` (dependency direction)
 - R4: ViewModels must not depend on `System.IO.File` (persistence gateway rule)
 - R5: Only `LauncherJson` + known readers (`LaunchArgumentBuilder`, `LauncherStore`) may depend on `System.IO.File` inside Core
 - R6: Core must not reference `WTLauncher.App.ViewModels.*` (belt-and-suspenders to R3)
+- R7: Preset feature services must not reference Views
+- R8: Entry feature services must not reference Views
+- R9: Preset feature services must not depend on `System.IO.File`
+- R10: Entry feature services must not depend on `System.IO.File`
 
 ### Critical Gotcha: Type-Level vs Method-Level Rules
 

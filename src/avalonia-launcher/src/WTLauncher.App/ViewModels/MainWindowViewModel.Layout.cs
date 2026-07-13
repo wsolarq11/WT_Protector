@@ -275,27 +275,9 @@ public sealed partial class MainWindowViewModel
     /// </summary>
     public void RecordSearchTerm()
     {
-        var term = FilterText;
-        if (string.IsNullOrWhiteSpace(term))
+        var newHistory = LauncherSearchHistory.Record(_settings.SearchHistory, FilterText);
+        if (ReferenceEquals(newHistory, _settings.SearchHistory))
             return;
-
-        var normalized = EntryName.Normalize(term);
-
-        // No-op when already the most recent entry.
-        if (_settings.SearchHistory.Count > 0 &&
-            string.Equals(_settings.SearchHistory[0], normalized, StringComparison.OrdinalIgnoreCase))
-            return;
-
-        // Remove existing match (case-insensitive) to dedup, then insert at front.
-        // Insert at front: most-recent-first ordering. RequireSearchHistory truncates
-        // from the tail, so the newest 20 entries survive.
-        var newHistory = _settings.SearchHistory.RemoveAll(
-            t => string.Equals(t, normalized, StringComparison.OrdinalIgnoreCase));
-        newHistory = newHistory.Insert(0, normalized);
-
-        // Cap at MaxSearchHistoryTerms.
-        if (newHistory.Count > 20)
-            newHistory = newHistory.RemoveRange(20, newHistory.Count - 20);
 
         TryPersistSettingsChange(s => s with { SearchHistory = newHistory });
         OnPropertyChanged(nameof(SearchHistoryItems));

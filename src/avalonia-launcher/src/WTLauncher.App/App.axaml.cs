@@ -4,10 +4,12 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Threading;
+using WTLauncher.App.Features.Dialogs;
+using WTLauncher.App.Features.Entries;
+using WTLauncher.App.Features.Presets;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
 using WTLauncher.App.Views;
-using WTLauncher.App.Features.Dialogs;
 using WTLauncher.Core;
 
 namespace WTLauncher.App;
@@ -136,11 +138,15 @@ public sealed partial class App : Application
                 }
                 var launchWorkflow = LauncherLaunchWorkflow.Create();
                 var dialogService = new DialogService();
+                var entryService = new EntryService(dialogService);
+                var presetService = new PresetService(dialogService);
                 var viewModel = new MainWindowViewModel(
                     storePath,
                     storeFile,
                     launchWorkflow,
                     dialogService,
+                    entryService,
+                    presetService,
                     static () => DateTimeOffset.UtcNow);
                 var windowSettings = storeFile.Settings.Window;
                 var mainWindow = new MainWindow(viewModel)

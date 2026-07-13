@@ -72,6 +72,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         LauncherStoreFile storeFile,
         LauncherLaunchWorkflow launchWorkflow,
         IDialogService dialogService,
+        IEntryService entryService,
+        IPresetService presetService,
         Func<DateTimeOffset> utcNow)
     {
         ArgumentNullException.ThrowIfNull(storeFile);
@@ -80,8 +82,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _launchWorkflow = launchWorkflow ?? throw new ArgumentNullException(nameof(launchWorkflow));
         _launchWorkflow.CommandTemplates = _settings.CommandTemplates;
         _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
-        _entryService = new EntryService(_dialogService);
-        _presetService = new PresetService(_dialogService);
+        _entryService = entryService ?? throw new ArgumentNullException(nameof(entryService));
+        _presetService = presetService ?? throw new ArgumentNullException(nameof(presetService));
         _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
         Entries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_entries);
         VisibleEntries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_visibleEntries);

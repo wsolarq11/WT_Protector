@@ -3,7 +3,7 @@
 ## Stage 1 — Architecture safety
 
 - [x] 完成 CQ-02，统一 mutation 的持久化与回滚边界。
-- [ ] 完成 CQ-01，并复用 FMA Phase 2/3 的 service extraction。
+- [x] 完成 CQ-01，并复用 FMA Phase 2/3 的 service extraction。
 - [ ] 完成 CQ-06，只在调用方确实需要分支的 service 边界引入 typed result。
 - [ ] 完成 CQ-07，为上述边界补公共行为契约测试。
 

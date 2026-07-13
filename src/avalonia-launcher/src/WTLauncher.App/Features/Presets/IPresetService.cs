@@ -7,6 +7,18 @@ namespace WTLauncher.App.Features.Presets;
 /// Does NOT own state — the ViewModel passes preset file and coordinates rollback.</summary>
 public interface IPresetService
 {
+    public int CountEntryReferences(LauncherPresetFile presetFile, string entryId);
+
+    public LauncherPresetSelectionPreview BuildSelectionPreview(
+        string presetName,
+        IEnumerable<string> selectedEntryIds,
+        IEnumerable<string> configuredEntryIds,
+        IEnumerable<string> presetEntryIds);
+
+    public bool CanUpdatePreset(LauncherPresetFile presetFile, string presetId);
+
+    public bool CanDeletePreset(LauncherPresetFile presetFile, string presetId);
+
     /// <summary>Walk the user through creating a new preset name.</summary>
     public Task<(string? PresetName, string? Status)> RequestNewPresetAsync(
         LauncherPresetSaveTarget target, HashSet<string> existingNames);

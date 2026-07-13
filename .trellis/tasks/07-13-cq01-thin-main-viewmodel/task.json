@@ -3,7 +3,7 @@
   "name": "cq01-thin-main-viewmodel",
   "title": "CQ01 薄 MainWindowViewModel",
   "description": "完成剩余服务提取并将主ViewModel收敛为组合与命令转发",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

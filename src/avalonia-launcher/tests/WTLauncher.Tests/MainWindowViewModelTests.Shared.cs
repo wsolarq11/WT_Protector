@@ -1,4 +1,6 @@
 using System.Collections.Immutable;
+using WTLauncher.App.Features.Entries;
+using WTLauncher.App.Features.Presets;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -113,11 +115,14 @@ public sealed partial class MainWindowViewModelTests
     {
         // Both config and settings point to the same unified store file now.
         var storeFile = LauncherStore.Load(config);
+        var dialogs = dialogService ?? new StubDialogService();
         var viewModel = new MainWindowViewModel(
             config,
             launcherSettings is not null ? storeFile with { Settings = launcherSettings } : storeFile,
             launchWorkflow ?? CreateLaunchWorkflow(),
-            dialogService ?? new StubDialogService(),
+            dialogs,
+            new EntryService(dialogs),
+            new PresetService(dialogs),
             utcNow ?? SystemUtcNow);
         configure?.Invoke(viewModel);
         return viewModel;

@@ -52,7 +52,7 @@ Per `DESIGN.md` token ownership rules:
 | View logic tests | `MainWindowEntryCardContextMenuTests.cs`, `MainWindowDragInsertDecisionTests.cs` |
 | Contract/integration tests | `StatusTextContractTests.cs`, `MainWindowViewModelTests.CollectionContractTests.cs`, `MainWindowViewModelTests.DialogBoundaryTests.cs` |
 | Persistence tests | `LauncherStoreLoadFailureTests.cs`, `LauncherEntryMutationSnapshotTests.cs`, `LauncherPersistenceTestFixtures.cs`, `MainWindowViewModelTests.SettingsTests.cs` |
-| Architecture invariants | `ArchitectureRules.cs` (ArchUnitNET R1-R6 — see [Tests / Architecture Rules](../tests/test-patterns.md#architecture-rules-archunitnet)) |
+| Architecture invariants | `ArchitectureRules.cs` (ArchUnitNET R1-R10 — see [Tests / Architecture Rules](../tests/test-patterns.md#architecture-rules-archunitnet)) |
 
 Total counts evolve with the codebase — run `ls tests/WTLauncher.Tests/*.cs | wc -l` for the current file count and `dotnet test -c Release` for the current test count.
 
