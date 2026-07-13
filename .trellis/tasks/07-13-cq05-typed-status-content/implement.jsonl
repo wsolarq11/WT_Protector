@@ -1,1 +1,2 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file":".trellis/spec/views/mvvm-pattern.md","reason":"MainWindow authoritative status, derived presentation and typed service-result ownership contracts."}
+{"file":".trellis/spec/tests/test-quality.md","reason":"Behavioral contract coverage expectations for typed status values and notification projections."}
