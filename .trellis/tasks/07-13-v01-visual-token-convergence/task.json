@@ -3,7 +3,7 @@
   "name": "v01-visual-token-convergence",
   "title": "V01 视觉Token收敛",
   "description": "清理重复硬编码视觉值并建立raw-hex门禁",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
