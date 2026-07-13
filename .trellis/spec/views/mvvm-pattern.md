@@ -307,6 +307,77 @@ Do not replace this narrow helper with a repository, Unit of Work, or event bus:
 
 ---
 
+## Scenario: Typed feature-service outcomes
+
+### 1. Scope / Trigger
+
+Use this contract when an App feature service operation can succeed, be canceled by the user, or fail recoverably and the ViewModel must branch on that outcome. Raw dialog adapters may retain nullable/bool window semantics; translate them at the feature-service boundary.
+
+### 2. Signatures
+
+```csharp
+public abstract record ServiceResult<T>;
+public sealed record ServiceSuccess<T> : ServiceResult<T>;
+public sealed record ServiceCanceled<T> : ServiceResult<T>;
+public sealed record ServiceFailure<T> : ServiceResult<T>;
+
+Task<ServiceResult<LaunchEntry>> IEntryService.AddEntryAsync(...);
+Task<ServiceResult<string>> IPresetService.RequestNewPresetAsync(...);
+ServiceResult<PresetMutation> IPresetService.AddPreset(...);
+```
+
+### 3. Contracts
+
+- `ServiceSuccess<T>.Value` is non-null and carries the complete data required for the caller's success path.
+- `ServiceCanceled<T>.Status` and `ServiceFailure<T>.Status` are non-empty existing user-facing status strings.
+- Dialog `null`/`false` becomes Canceled; recoverable exceptions and validation rejection become Failure; valid data becomes Success.
+- ViewModels match all three branches and use an unreachable default. Persistence, snapshot, mutation, save, and rollback remain outside the service.
+- Operation-specific success shapes use immutable sealed payload records instead of anonymous tuples.
+
+### 4. Validation & Error Matrix
+
+| Condition | Required result |
+| --- | --- |
+| Dialog closes or rejects confirmation | `ServiceCanceled<T>` with the existing cancellation status |
+| Dialog throws a recoverable exception | Log it and return `ServiceFailure<T>` with sanitized status |
+| Draft/name/domain validation rejects input | `ServiceFailure<T>`; do not mutate caller state |
+| Domain workflow returns the expected payload | `ServiceSuccess<T>` with a non-null immutable payload |
+| Store save fails after success | ViewModel transaction restores its snapshot; service result is not rewritten |
+
+### 5. Good/Base/Bad Cases
+
+- Good: entry deletion success carries the snapshotted delete target and optional focused entry ID.
+- Base: preset name success carries the normalized string; cancel and failure carry only status.
+- Bad: `(LaunchEntry? Entry, string? Status)` permits both fields to be null or non-null and forces callers to infer the state.
+
+### 6. Tests Required
+
+- Result constructors reject null success payloads and empty cancel/failure statuses.
+- Each service family directly tests success, user cancellation, validation/recoverable failure, and operation-specific payload fields.
+- ViewModel regressions continue to assert status text, focus cleanup, preset fallback, persistence failure, and complete rollback.
+
+### 7. Wrong vs Correct
+
+```csharp
+// Wrong: four representable states, only two intended.
+var (entry, status) = await service.AddEntryAsync(...);
+if (entry is not null) { ... }
+else if (status is not null) StatusText = status;
+
+// Correct: every outcome is named and handled explicitly.
+switch (await service.AddEntryAsync(...))
+{
+    case ServiceSuccess<LaunchEntry> success: Add(success.Value); break;
+    case ServiceCanceled<LaunchEntry> canceled: StatusText = canceled.Status; break;
+    case ServiceFailure<LaunchEntry> failure: StatusText = failure.Status; break;
+    default: throw new UnreachableException();
+}
+```
+
+Do not grow this into a global exception taxonomy or replace direct Core contracts that do not require caller branching.
+
+---
+
 ## Forbidden Patterns
 
 - ❌ **ViewModel creates a `new Window()`** — dialogs always injected via `Func<>`.

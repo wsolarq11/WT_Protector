@@ -15,7 +15,7 @@ public sealed class EntryService : IEntryService
         _dialog = dialog ?? throw new ArgumentNullException(nameof(dialog));
     }
 
-    public async Task<(LaunchEntry? Entry, string? Status)> AddEntryAsync(
+    public async Task<ServiceResult<LaunchEntry>> AddEntryAsync(
         ObservableCollection<LauncherEntryViewModel> entries,
         LauncherSettings settings,
         IReadOnlyDictionary<string, string>? commandTemplates,
@@ -30,21 +30,20 @@ public sealed class EntryService : IEntryService
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "AddEntry");
-            return (null, LauncherEntryStatus.AddDialogFailed(ex));
+            return new ServiceFailure<LaunchEntry>(LauncherEntryStatus.AddDialogFailed(ex));
         }
 
         if (draft is null)
-            return (null, LauncherEntryStatus.AddCanceled);
+            return new ServiceCanceled<LaunchEntry>(LauncherEntryStatus.AddCanceled);
 
-        var entry = CreateEntryFromDraft(draft, originalId: null, previousEntry: null, entries.Select(e => e.SnapshotEntry()), out var validation);
-        if (entry is null)
-            return (null, validation);
+        var result = CreateEntryFromDraft(draft, originalId: null, previousEntry: null, entries.Select(e => e.SnapshotEntry()));
+        if (result is not ServiceSuccess<LaunchEntry> success)
+            return result;
 
-        entry = entry with { UpdatedAtUtc = utcNow().ToString("O") };
-        return (entry, null);
+        return new ServiceSuccess<LaunchEntry>(success.Value with { UpdatedAtUtc = utcNow().ToString("O") });
     }
 
-    public async Task<(LaunchEntry? Entry, string? Status)> CloneEntryAsync(
+    public async Task<ServiceResult<LaunchEntry>> CloneEntryAsync(
         LauncherEntryViewModel source,
         ObservableCollection<LauncherEntryViewModel> entries,
         LauncherSettings settings,
@@ -70,21 +69,20 @@ public sealed class EntryService : IEntryService
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "CloneEntry");
-            return (null, LauncherEntryStatus.AddDialogFailed(ex));
+            return new ServiceFailure<LaunchEntry>(LauncherEntryStatus.AddDialogFailed(ex));
         }
 
         if (draft is null)
-            return (null, LauncherEntryStatus.AddCanceled);
+            return new ServiceCanceled<LaunchEntry>(LauncherEntryStatus.AddCanceled);
 
-        var entry = CreateEntryFromDraft(draft, originalId: null, previousEntry: null, entries.Select(e => e.SnapshotEntry()), out var validation);
-        if (entry is null)
-            return (null, validation);
+        var result = CreateEntryFromDraft(draft, originalId: null, previousEntry: null, entries.Select(e => e.SnapshotEntry()));
+        if (result is not ServiceSuccess<LaunchEntry> success)
+            return result;
 
-        entry = entry with { UpdatedAtUtc = utcNow().ToString("O") };
-        return (entry, null);
+        return new ServiceSuccess<LaunchEntry>(success.Value with { UpdatedAtUtc = utcNow().ToString("O") });
     }
 
-    public async Task<(LaunchEntry? Updated, string? Status)> EditEntryAsync(
+    public async Task<ServiceResult<LaunchEntry>> EditEntryAsync(
         LauncherEntryViewModel item,
         ObservableCollection<LauncherEntryViewModel> entries,
         LauncherPresetFile presetFile,
@@ -101,21 +99,17 @@ public sealed class EntryService : IEntryService
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "EditEntry.Draft");
-            return (null, LauncherEntryStatus.EditDialogFailed(item.Name, ex));
+            return new ServiceFailure<LaunchEntry>(LauncherEntryStatus.EditDialogFailed(item.Name, ex));
         }
 
         if (draft is null)
-            return (null, LauncherEntryStatus.EditCanceled(item.Name));
+            return new ServiceCanceled<LaunchEntry>(LauncherEntryStatus.EditCanceled(item.Name));
 
         var oldId = item.Id;
-        var updated = CreateEntryFromDraft(draft, oldId, item.SnapshotEntry(), entries.Select(e => e.SnapshotEntry()), out var validation);
-        if (updated is null)
-            return (null, validation);
-
-        return (updated, null);
+        return CreateEntryFromDraft(draft, oldId, item.SnapshotEntry(), entries.Select(e => e.SnapshotEntry()));
     }
 
-    public async Task<(string? Status, string? ClearKeyboardFocusId)> DeleteEntryAsync(
+    public async Task<ServiceResult<EntryDeleteApproval>> DeleteEntryAsync(
         LauncherEntryViewModel item,
         string? keyboardFocusedEntryId)
     {
@@ -128,30 +122,27 @@ public sealed class EntryService : IEntryService
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "DeleteConfirmation");
-            return (LauncherEntryStatus.DeleteConfirmationFailed(target.EntryName, ex), null);
+            return new ServiceFailure<EntryDeleteApproval>(LauncherEntryStatus.DeleteConfirmationFailed(target.EntryName, ex));
         }
 
         if (!accepted)
-            return (LauncherEntryStatus.DeleteCanceled(target.EntryName), null);
+            return new ServiceCanceled<EntryDeleteApproval>(LauncherEntryStatus.DeleteCanceled(target.EntryName));
 
         var clearFocus = (keyboardFocusedEntryId is not null && EntryId.Same(keyboardFocusedEntryId, target.EntryId))
             ? target.EntryId
             : null;
 
-        return (null, clearFocus);
+        return new ServiceSuccess<EntryDeleteApproval>(new EntryDeleteApproval(target, clearFocus));
     }
 
-    public LaunchEntry? CreateEntryFromDraft(EntryDraft draft, string? originalId, LaunchEntry? previousEntry, IEnumerable<LaunchEntry> existingEntries, out string? validationMessage)
+    public ServiceResult<LaunchEntry> CreateEntryFromDraft(EntryDraft draft, string? originalId, LaunchEntry? previousEntry, IEnumerable<LaunchEntry> existingEntries)
     {
-        validationMessage = null;
         var entry = LauncherEntryDrafts.CreateEntry(draft, previousEntry);
         var validation = LauncherEntryDrafts.ValidateEntry(entry, originalId, existingEntries);
         if (validation is not null)
-        {
-            validationMessage = validation;
-            return null;
-        }
-        return entry;
+            return new ServiceFailure<LaunchEntry>(validation);
+
+        return new ServiceSuccess<LaunchEntry>(entry);
     }
 
     public string GenerateUniqueCloneId(string sourceId, IEnumerable<string> existingIds)

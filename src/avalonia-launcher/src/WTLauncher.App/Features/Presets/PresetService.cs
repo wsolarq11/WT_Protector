@@ -41,7 +41,7 @@ public sealed class PresetService : IPresetService
     public bool CanDeletePreset(LauncherPresetFile presetFile, string presetId) =>
         LauncherPresetWorkflow.CanDeletePreset(presetFile, presetId);
 
-    public async Task<(string? PresetName, string? Status)> RequestNewPresetAsync(
+    public async Task<ServiceResult<string>> RequestNewPresetAsync(
         LauncherPresetSaveTarget target, HashSet<string> existingNames)
     {
         string? presetName;
@@ -52,20 +52,20 @@ public sealed class PresetService : IPresetService
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "RequestPresetName");
-            return (null, LauncherPresetStatus.SaveDialogFailed(ex));
+            return new ServiceFailure<string>(LauncherPresetStatus.SaveDialogFailed(ex));
         }
 
         if (presetName is null)
-            return (null, LauncherPresetStatus.SaveCanceled);
+            return new ServiceCanceled<string>(LauncherPresetStatus.SaveCanceled);
 
         var normalizedName = EntryName.Normalize(presetName);
         if (normalizedName.Length == 0)
-            return (null, LauncherPresetStatus.NameRequired);
+            return new ServiceFailure<string>(LauncherPresetStatus.NameRequired);
 
-        return (normalizedName, null);
+        return new ServiceSuccess<string>(normalizedName);
     }
 
-    public async Task<(bool Accepted, string? Status)> ConfirmDeletePresetAsync(
+    public async Task<ServiceResult<LauncherPresetDeleteTarget>> ConfirmDeletePresetAsync(
         LauncherPresetDeleteTarget target)
     {
         bool accepted;
@@ -76,60 +76,64 @@ public sealed class PresetService : IPresetService
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "DeletePresetConfirmation");
-            return (false, LauncherPresetStatus.DeleteConfirmationFailed(target.PresetName, ex));
+            return new ServiceFailure<LauncherPresetDeleteTarget>(LauncherPresetStatus.DeleteConfirmationFailed(target.PresetName, ex));
         }
 
         if (!accepted)
-            return (false, LauncherPresetStatus.DeleteCanceled(target.PresetName));
+            return new ServiceCanceled<LauncherPresetDeleteTarget>(LauncherPresetStatus.DeleteCanceled(target.PresetName));
 
-        return (true, null);
+        return new ServiceSuccess<LauncherPresetDeleteTarget>(target);
     }
 
-    public (LauncherPresetFile PresetFile, LauncherPreset? Preset, string? Status) AddPreset(
+    public ServiceResult<PresetMutation> AddPreset(
         LauncherPresetFile presetFile, string name, IReadOnlyList<string> entryIds)
     {
         try
         {
             var mutable = presetFile;
             var preset = LauncherPresetWorkflow.AddPreset(ref mutable, name, entryIds);
-            return (mutable, preset, null);
+            return new ServiceSuccess<PresetMutation>(new PresetMutation(mutable, preset));
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "AddPreset");
-            return (presetFile, null, LauncherRefreshStatus.AddGroupFailed(ex));
+            return new ServiceFailure<PresetMutation>(LauncherRefreshStatus.AddGroupFailed(ex));
         }
     }
 
-    public (LauncherPresetFile PresetFile, LauncherPreset? Preset, string? Status, string FallbackPresetId) UpdatePreset(
+    public ServiceResult<PresetMutation> UpdatePreset(
         LauncherPresetFile presetFile, string presetId, string name, IReadOnlyList<string> entryIds)
     {
         try
         {
             var mutable = presetFile;
             var preset = LauncherPresetWorkflow.UpdatePreset(ref mutable, presetId, name, entryIds);
-            return (mutable, preset, null, string.Empty);
+            return preset is not null
+                ? new ServiceSuccess<PresetMutation>(new PresetMutation(mutable, preset))
+                : new ServiceFailure<PresetMutation>(LauncherPresetStatus.CurrentPresetMissing);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "UpdatePreset");
-            return (presetFile, null, LauncherPresetStatus.UpdateFailed(name, ex), string.Empty);
+            return new ServiceFailure<PresetMutation>(LauncherPresetStatus.UpdateFailed(name, ex));
         }
     }
 
-    public (LauncherPresetFile PresetFile, LauncherPreset? Preset, string? Status, string FallbackPresetId) DeletePreset(
+    public ServiceResult<PresetDeleteMutation> DeletePreset(
         LauncherPresetFile presetFile, string presetId)
     {
         try
         {
             var mutable = presetFile;
             var preset = LauncherPresetWorkflow.DeletePreset(ref mutable, presetId, out var fallback);
-            return (mutable, preset, null, fallback);
+            return preset is not null
+                ? new ServiceSuccess<PresetDeleteMutation>(new PresetDeleteMutation(mutable, preset, fallback))
+                : new ServiceFailure<PresetDeleteMutation>(LauncherPresetStatus.CurrentPresetMissing);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "DeletePreset");
-            return (presetFile, null, LauncherRefreshStatus.DeleteGroupFailed(ex), string.Empty);
+            return new ServiceFailure<PresetDeleteMutation>(LauncherRefreshStatus.DeleteGroupFailed(ex));
         }
     }
 }

@@ -20,22 +20,22 @@ public interface IPresetService
     public bool CanDeletePreset(LauncherPresetFile presetFile, string presetId);
 
     /// <summary>Walk the user through creating a new preset name.</summary>
-    public Task<(string? PresetName, string? Status)> RequestNewPresetAsync(
+    public Task<ServiceResult<string>> RequestNewPresetAsync(
         LauncherPresetSaveTarget target, HashSet<string> existingNames);
 
     /// <summary>Confirm deletion with the user.</summary>
-    public Task<(bool Accepted, string? Status)> ConfirmDeletePresetAsync(
+    public Task<ServiceResult<LauncherPresetDeleteTarget>> ConfirmDeletePresetAsync(
         LauncherPresetDeleteTarget target);
 
     /// <summary>Add a preset to the file. Returns the updated file and the new preset, or an error status.</summary>
-    public (LauncherPresetFile PresetFile, LauncherPreset? Preset, string? Status) AddPreset(
+    public ServiceResult<PresetMutation> AddPreset(
         LauncherPresetFile presetFile, string name, IReadOnlyList<string> entryIds);
 
     /// <summary>Update a preset in the file. Returns the updated file and preset, or null with status.</summary>
-    public (LauncherPresetFile PresetFile, LauncherPreset? Preset, string? Status, string FallbackPresetId) UpdatePreset(
+    public ServiceResult<PresetMutation> UpdatePreset(
         LauncherPresetFile presetFile, string presetId, string name, IReadOnlyList<string> entryIds);
 
     /// <summary>Delete a preset from the file. Returns the updated file and deleted preset, or null with status.</summary>
-    public (LauncherPresetFile PresetFile, LauncherPreset? Preset, string? Status, string FallbackPresetId) DeletePreset(
+    public ServiceResult<PresetDeleteMutation> DeletePreset(
         LauncherPresetFile presetFile, string presetId);
 }

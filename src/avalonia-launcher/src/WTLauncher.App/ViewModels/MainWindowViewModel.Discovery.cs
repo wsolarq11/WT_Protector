@@ -1,5 +1,7 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.App.Features;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
@@ -48,15 +50,20 @@ public sealed partial class MainWindowViewModel
         foreach (var discovered in selected)
         {
             var draft = AgentRecommendationFactory.ToDraft(discovered, userHome);
-            var entry = _entryService.CreateEntryFromDraft(draft, originalId: null, previousEntry: null, _entries.Select(ToLaunchEntry), out var validationMessage);
-            if (entry is null)
+            var result = _entryService.CreateEntryFromDraft(draft, originalId: null, previousEntry: null, _entries.Select(ToLaunchEntry));
+            if (result is not ServiceSuccess<LaunchEntry> success)
             {
-                if (validationMessage is not null)
-                    StatusText = validationMessage;
+                StatusText = result switch
+                {
+                    ServiceCanceled<LaunchEntry> canceled => canceled.Status,
+                    ServiceFailure<LaunchEntry> failure => failure.Status,
+                    _ => throw new UnreachableException(),
+                };
                 skipped.Add(discovered.Catalog.DisplayName);
                 continue;
             }
 
+            var entry = success.Value;
             entry = entry with { UpdatedAtUtc = CurrentTimestampUtc() };
             _entries.Add(new LauncherEntryViewModel(entry, this));
             _settings = _settings with { CustomEntryOrder = _settings.CustomEntryOrder.Add(entry.Id) };

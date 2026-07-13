@@ -1,5 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.App.Features;
+using WTLauncher.App.Features.Presets;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
@@ -49,19 +52,39 @@ public sealed partial class MainWindowViewModel
 
     private async Task<bool> ConfirmDeletePresetIfRequiredAsync(LauncherPresetDeleteTarget target)
     {
-        var (accepted, status) = await _presetService.ConfirmDeletePresetAsync(target).ConfigureAwait(true);
-        if (status is not null)
-            StatusText = status;
-        return accepted;
+        var result = await _presetService.ConfirmDeletePresetAsync(target).ConfigureAwait(true);
+        switch (result)
+        {
+            case ServiceSuccess<LauncherPresetDeleteTarget>:
+                return true;
+            case ServiceCanceled<LauncherPresetDeleteTarget> canceled:
+                StatusText = canceled.Status;
+                return false;
+            case ServiceFailure<LauncherPresetDeleteTarget> failure:
+                StatusText = failure.Status;
+                return false;
+            default:
+                throw new UnreachableException();
+        }
     }
 
     private async Task<string?> RequestPresetNameIfRequiredAsync(LauncherPresetSaveTarget target)
     {
-        var (name, status) = await _presetService.RequestNewPresetAsync(
+        var result = await _presetService.RequestNewPresetAsync(
             target, _presets.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase)).ConfigureAwait(true);
-        if (status is not null)
-            StatusText = status;
-        return name;
+        switch (result)
+        {
+            case ServiceSuccess<string> success:
+                return success.Value;
+            case ServiceCanceled<string> canceled:
+                StatusText = canceled.Status;
+                return null;
+            case ServiceFailure<string> failure:
+                StatusText = failure.Status;
+                return null;
+            default:
+                throw new UnreachableException();
+        }
     }
 
     private (LauncherPresetFile PresetFile, string? SelectedPresetId) CapturePresetMutationSnapshot()
@@ -359,15 +382,20 @@ public sealed partial class MainWindowViewModel
             return;
 
         var snapshot = CapturePresetMutationSnapshot();
-        var (updatedFile, preset, addStatus) = _presetService.AddPreset(_presetFile, presetName, target.EntryIds);
-        if (preset is null)
+        var addResult = _presetService.AddPreset(_presetFile, presetName, target.EntryIds);
+        if (addResult is not ServiceSuccess<PresetMutation> addSuccess)
         {
-            _presetFile = updatedFile;
             RestorePresetSnapshotAndReportMissing(snapshot);
-            if (addStatus is not null) StatusText = addStatus;
+            StatusText = addResult switch
+            {
+                ServiceCanceled<PresetMutation> canceled => canceled.Status,
+                ServiceFailure<PresetMutation> failure => failure.Status,
+                _ => throw new UnreachableException(),
+            };
             return;
         }
-        _presetFile = updatedFile;
+        var preset = addSuccess.Value.Preset;
+        _presetFile = addSuccess.Value.PresetFile;
         if (!SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset))
             return;
 
@@ -408,15 +436,20 @@ public sealed partial class MainWindowViewModel
         }
 
         var snapshot = CapturePresetMutationSnapshot();
-        var (updatedFile, preset, updateStatus, _) = _presetService.UpdatePreset(_presetFile, selectedPreset.Id, selectedPreset.Name, entryIds);
-        if (preset is null)
+        var updateResult = _presetService.UpdatePreset(_presetFile, selectedPreset.Id, selectedPreset.Name, entryIds);
+        if (updateResult is not ServiceSuccess<PresetMutation> updateSuccess)
         {
-            _presetFile = updatedFile;
             RestorePresetSnapshotAndReportMissing(snapshot);
-            if (updateStatus is not null) StatusText = updateStatus;
+            StatusText = updateResult switch
+            {
+                ServiceCanceled<PresetMutation> canceled => canceled.Status,
+                ServiceFailure<PresetMutation> failure => failure.Status,
+                _ => throw new UnreachableException(),
+            };
             return;
         }
-        _presetFile = updatedFile;
+        var preset = updateSuccess.Value.Preset;
+        _presetFile = updateSuccess.Value.PresetFile;
         if (!SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset))
             return;
 
@@ -451,16 +484,20 @@ public sealed partial class MainWindowViewModel
 
         var snapshot = CapturePresetMutationSnapshot();
 
-        var (updatedFile, preset, deleteStatus, fallbackPresetId) = _presetService.DeletePreset(_presetFile, target.PresetId);
-        if (preset is null)
+        var deleteResult = _presetService.DeletePreset(_presetFile, target.PresetId);
+        if (deleteResult is not ServiceSuccess<PresetDeleteMutation> deleteSuccess)
         {
-            _presetFile = updatedFile;
             RestorePresetSnapshotAndReportMissing(snapshot);
-            if (deleteStatus is not null) StatusText = deleteStatus;
+            StatusText = deleteResult switch
+            {
+                ServiceCanceled<PresetDeleteMutation> canceled => canceled.Status,
+                ServiceFailure<PresetDeleteMutation> failure => failure.Status,
+                _ => throw new UnreachableException(),
+            };
             return;
         }
-        _presetFile = updatedFile;
-        if (!SavePresetMutationAndApply(snapshot, fallbackPresetId, out var fallbackPreset))
+        _presetFile = deleteSuccess.Value.PresetFile;
+        if (!SavePresetMutationAndApply(snapshot, deleteSuccess.Value.FallbackPresetId, out var fallbackPreset))
             return;
 
         ApplyStatusText(fallbackPreset is not null

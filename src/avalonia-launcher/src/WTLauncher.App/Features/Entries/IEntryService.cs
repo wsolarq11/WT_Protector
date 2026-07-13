@@ -9,7 +9,7 @@ namespace WTLauncher.App.Features.Entries;
 public interface IEntryService
 {
     /// <summary>Walk the user through adding a new entry.</summary>
-    public Task<(LaunchEntry? Entry, string? Status)> AddEntryAsync(
+    public Task<ServiceResult<LaunchEntry>> AddEntryAsync(
         ObservableCollection<LauncherEntryViewModel> entries,
         LauncherSettings settings,
         IReadOnlyDictionary<string, string>? commandTemplates,
@@ -17,7 +17,7 @@ public interface IEntryService
         Func<DateTimeOffset> utcNow);
 
     /// <summary>Clone an existing entry with user-modified fields.</summary>
-    public Task<(LaunchEntry? Entry, string? Status)> CloneEntryAsync(
+    public Task<ServiceResult<LaunchEntry>> CloneEntryAsync(
         LauncherEntryViewModel source,
         ObservableCollection<LauncherEntryViewModel> entries,
         LauncherSettings settings,
@@ -26,7 +26,7 @@ public interface IEntryService
         Func<DateTimeOffset> utcNow);
 
     /// <summary>Edit an existing entry's fields.</summary>
-    public Task<(LaunchEntry? Updated, string? Status)> EditEntryAsync(
+    public Task<ServiceResult<LaunchEntry>> EditEntryAsync(
         LauncherEntryViewModel item,
         ObservableCollection<LauncherEntryViewModel> entries,
         LauncherPresetFile presetFile,
@@ -35,13 +35,13 @@ public interface IEntryService
         int presetReferenceCount,
         Func<DateTimeOffset> utcNow);
 
-    /// <summary>Delete an entry after confirmation. Returns (status, clearKeyboardFocusId).</summary>
-    public Task<(string? Status, string? ClearKeyboardFocusId)> DeleteEntryAsync(
+    /// <summary>Delete an entry after confirmation.</summary>
+    public Task<ServiceResult<EntryDeleteApproval>> DeleteEntryAsync(
         LauncherEntryViewModel item,
         string? keyboardFocusedEntryId);
 
-    /// <summary>Validate a draft and create a LaunchEntry, or return a validation error message.</summary>
-    public LaunchEntry? CreateEntryFromDraft(EntryDraft draft, string? originalId, LaunchEntry? previousEntry, IEnumerable<LaunchEntry> existingEntries, out string? validationMessage);
+    /// <summary>Validate a draft and create a LaunchEntry.</summary>
+    public ServiceResult<LaunchEntry> CreateEntryFromDraft(EntryDraft draft, string? originalId, LaunchEntry? previousEntry, IEnumerable<LaunchEntry> existingEntries);
 
     /// <summary>Generate a unique clone ID avoiding collisions.</summary>
     public string GenerateUniqueCloneId(string sourceId, IEnumerable<string> existingIds);

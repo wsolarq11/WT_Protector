@@ -1,3 +1,4 @@
+using WTLauncher.App.Features;
 using WTLauncher.App.Features.Presets;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
@@ -15,12 +16,12 @@ public sealed class PresetServiceTests
         };
         var service = new PresetService(dialogs);
 
-        var (name, status) = await service.RequestNewPresetAsync(
+        var result = await service.RequestNewPresetAsync(
             new LauncherPresetSaveTarget(["one"]),
             new HashSet<string>(StringComparer.OrdinalIgnoreCase));
 
-        Assert.Equal("Daily Work", name);
-        Assert.Null(status);
+        var success = Assert.IsType<ServiceSuccess<string>>(result);
+        Assert.Equal("Daily Work", success.Value);
     }
 
     [Fact]
@@ -33,12 +34,12 @@ public sealed class PresetServiceTests
         };
         var service = new PresetService(dialogs);
 
-        var (name, status) = await service.RequestNewPresetAsync(
+        var result = await service.RequestNewPresetAsync(
             new LauncherPresetSaveTarget(["one"]),
             new HashSet<string>(StringComparer.OrdinalIgnoreCase));
 
-        Assert.Null(name);
-        Assert.Equal(LauncherPresetStatus.SaveDialogFailed(expected), status);
+        var failure = Assert.IsType<ServiceFailure<string>>(result);
+        Assert.Equal(LauncherPresetStatus.SaveDialogFailed(expected), failure.Status);
     }
 
     [Fact]
@@ -46,12 +47,12 @@ public sealed class PresetServiceTests
     {
         var service = new PresetService(new StubDialogService());
 
-        var (name, status) = await service.RequestNewPresetAsync(
+        var result = await service.RequestNewPresetAsync(
             new LauncherPresetSaveTarget(["one"]),
             new HashSet<string>(StringComparer.OrdinalIgnoreCase));
 
-        Assert.Null(name);
-        Assert.Equal(LauncherPresetStatus.SaveCanceled, status);
+        var canceled = Assert.IsType<ServiceCanceled<string>>(result);
+        Assert.Equal(LauncherPresetStatus.SaveCanceled, canceled.Status);
     }
 
     [Fact]
@@ -60,12 +61,49 @@ public sealed class PresetServiceTests
         var service = new PresetService(new StubDialogService());
         var original = new LauncherPresetFile();
 
-        var (updated, preset, status) = service.AddPreset(original, "Daily", ["one"]);
+        var result = service.AddPreset(original, "Daily", ["one"]);
 
         Assert.Empty(original.Presets);
-        Assert.NotNull(preset);
-        Assert.Single(updated.Presets);
-        Assert.Null(status);
+        var success = Assert.IsType<ServiceSuccess<PresetMutation>>(result);
+        Assert.Equal("Daily", success.Value.Preset.Name);
+        Assert.Single(success.Value.PresetFile.Presets);
+    }
+
+    [Fact]
+    public async Task ConfirmDeletePresetAsync_ReturnsApprovedTarget()
+    {
+        var target = new LauncherPresetDeleteTarget("daily", "Daily", ["one"]);
+        var dialogs = new StubDialogService
+        {
+            OnConfirmDeletePreset = _ => Task.FromResult(true),
+        };
+        var service = new PresetService(dialogs);
+
+        var result = await service.ConfirmDeletePresetAsync(target);
+
+        Assert.Same(target, Assert.IsType<ServiceSuccess<LauncherPresetDeleteTarget>>(result).Value);
+    }
+
+    [Fact]
+    public void DeletePreset_ReturnsFallbackInTypedPayload()
+    {
+        var service = new PresetService(new StubDialogService());
+        var original = new LauncherPresetFile
+        {
+            Presets =
+            [
+                new LauncherPreset { Id = "daily", Name = "Daily", EntryIds = ["one"] },
+                new LauncherPreset { Id = "other", Name = "Other", EntryIds = ["one"] },
+            ],
+            DefaultPresetId = "daily",
+        };
+
+        var result = service.DeletePreset(original, "daily");
+
+        var success = Assert.IsType<ServiceSuccess<PresetDeleteMutation>>(result);
+        Assert.Equal("daily", success.Value.Preset.Id);
+        Assert.Equal("other", success.Value.FallbackPresetId);
+        Assert.Single(success.Value.PresetFile.Presets);
     }
 
     [Fact]

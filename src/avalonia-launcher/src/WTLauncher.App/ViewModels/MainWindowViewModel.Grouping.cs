@@ -1,5 +1,8 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
+using WTLauncher.App.Features;
+using WTLauncher.App.Features.Presets;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
@@ -122,23 +125,34 @@ public sealed partial class MainWindowViewModel
 
         DiscardDragReorderPreview();
         var target = new LauncherPresetSaveTarget(entryIds);
-        var (presetName, nameStatus) = await _presetService.RequestNewPresetAsync(target, _presets.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase)).ConfigureAwait(true);
-        if (presetName is null)
+        var nameResult = await _presetService.RequestNewPresetAsync(target, _presets.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase)).ConfigureAwait(true);
+        if (nameResult is not ServiceSuccess<string> nameSuccess)
         {
-            if (nameStatus is not null) StatusText = nameStatus;
+            StatusText = nameResult switch
+            {
+                ServiceCanceled<string> canceled => canceled.Status,
+                ServiceFailure<string> failure => failure.Status,
+                _ => throw new UnreachableException(),
+            };
             return;
         }
+        var presetName = nameSuccess.Value;
 
         var snapshot = CapturePresetMutationSnapshot();
-        var (updatedFile, preset, addStatus) = _presetService.AddPreset(_presetFile, presetName, target.EntryIds);
-        if (preset is null)
+        var addResult = _presetService.AddPreset(_presetFile, presetName, target.EntryIds);
+        if (addResult is not ServiceSuccess<PresetMutation> addSuccess)
         {
-            _presetFile = updatedFile;
             RestorePresetSnapshotAndReportMissing(snapshot);
-            if (addStatus is not null) StatusText = addStatus;
+            StatusText = addResult switch
+            {
+                ServiceCanceled<PresetMutation> canceled => canceled.Status,
+                ServiceFailure<PresetMutation> failure => failure.Status,
+                _ => throw new UnreachableException(),
+            };
             return;
         }
-        _presetFile = updatedFile;
+        var preset = addSuccess.Value.Preset;
+        _presetFile = addSuccess.Value.PresetFile;
         if (SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset) && savedPreset is not null)
             ApplyStatusText(LauncherPresetStatus.Saved(savedPreset.Name, savedPreset.EntryIds.Count));
     }
