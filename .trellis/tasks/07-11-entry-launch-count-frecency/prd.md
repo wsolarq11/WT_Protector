@@ -22,11 +22,11 @@
 
 - `RecordLaunchFromOwner` 既要更新 `LaunchedAtUtc` 也要 +1 `LaunchCount`。
 - 单一 mutation point：所有 launch 路径（单启 + 批启）都走这个方法，不会遗漏。
-- 撤销/回滚路径不变：快照机制已捕获整个 `_entries`，count 字段自动随快照恢复。
+- 启动已经发生后不伪造回滚：保存失败时内存保留本次 `LaunchCount`/`LaunchedAtUtc`，磁盘保持旧值并报告保存失败。
 
 ### R3 — 新增 `frequent` sort 模式（frecency 评分）
 
-- `LauncherEntryVisibility.FrequentSortModeId = "frequent"`。
+- `LauncherEntryQuery.FrequentSortModeId = "frequent"`。
 - `NormalizeSortModeId` 接受 `frequent`。
 - `LauncherSortMode` enum 新增 `Frequent` 项。
 - 在 `FilterAndSort` 添加 `frequent` 分支：计算每条 entry 的 frecency score，按 score desc 排序。
@@ -45,7 +45,7 @@
 ### R4 — `frequent` sort 模式持久化
 
 - `LauncherSettings.SortMode` 已是 string，`NormalizeSortModeId` 自动处理。无需 schema 变更。
-- `LauncherEntryVisibility.NormalizeSortModeId` 新增 `frequent` 分支（不抛 UnknownLauncherSortMode）。
+- `LauncherEntryQuery.NormalizeSortModeId` 接受 `frequent`。
 
 ### R5 — UI：sort 模式 ComboBox 新增"按使用频率"项
 
@@ -62,16 +62,22 @@
 
 ## Acceptance Criteria
 
-- [ ] AC-1：`LaunchEntry.LaunchCount` 字段存在，optional，默认 0；现有 `config/launcher.json`（无此字段）加载后所有 entry LaunchCount=0，gate 通过。
-- [ ] AC-2：调用 `RecordLaunchFromOwner(timestamp)` 后，目标 entry 的 `LaunchedAtUtc` 更新且 `LaunchCount` +1（单元测试覆盖单启路径）。
-- [ ] AC-3：批启后，所有被启动 entry 的 `LaunchCount` 各自 +1（单元测试覆盖批启路径）。
-- [ ] AC-4：sort mode 设为 `frequent` 后，`VisibleEntries` 按 frecency score desc 排序（构造 3 条 entry：A=高频+1h前, B=低频+10min前, C=零频+1天前 → 顺序应为 A > B > C）。
-- [ ] AC-5：score 相等时按 name asc（构造 2 条同 score entry，name "B" 在 "A" 之后）。
-- [ ] AC-6：从未启动的 entry（count=0 + launchedAt=""）在任何 frecency 排序中 score=0，排到列表末尾（与有 score 的 entry 混排时不浮起）。
-- [ ] AC-7：sort mode `frequent` 在 `LauncherStore.Load` 后正确还原；持久化 JSON 中 `sortMode="frequent"` 可被下次启动解析。
-- [ ] AC-8：UI sort 模式 ComboBox 显示"按使用频率"选项；选中后 `VisibleEntries` 立即按 frecency 排序，且持久化。
-- [ ] AC-9：撤销/回滚（save 失败）路径下 `LaunchCount` 与 `LaunchedAtUtc` 一并回滚（已有快照机制覆盖，无需新增逻辑，但要有一行测试断言）。
-- [ ] AC-10：`tools/verify.ps1` 通过。
+- [x] AC-1：`LaunchEntry.LaunchCount` 字段存在，optional，默认 0；旧配置加载为 0。
+- [x] AC-2：单次启动更新 `LaunchedAtUtc` 且 `LaunchCount` +1。
+- [x] AC-3：批量启动为每个实际启动 entry 分别递增。
+- [x] AC-4：`frequent` 按 frecency score 降序排列。
+- [x] AC-5：同分时按 name、再按 id 稳定排序。
+- [x] AC-6：零次数 entry 的 score 为 0；从未启动兼容路径有直接测试。
+- [x] AC-7：`frequent` 可由 `LauncherStore` 持久化并恢复。
+- [x] AC-8：排序选项显示“按使用频率”，选择后即时应用并持久化。
+- [x] AC-9：启动已发生但保存失败时，内存保留真实计数、磁盘保持旧值并报告保存失败。
+- [x] AC-10：`tools/verify.ps1` 通过。
+
+## Verification evidence
+
+- `LauncherEntryQueryFrecencyTests` covers all decay buckets, zero/never-launched behavior, name and ID tie-breaks.
+- `MainWindowViewModelTests.LaunchCountTests` covers single/batch increments, reload persistence, legacy optional-field compatibility and save-failure semantics.
+- Current repository production gate passes with 610 tests, self-contained publish and GUI smoke.
 
 ## Out of Scope
 

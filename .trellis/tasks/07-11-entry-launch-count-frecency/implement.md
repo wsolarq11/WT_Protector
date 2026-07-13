@@ -131,15 +131,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/verify.ps1
 
 ## 完成检查清单
 
-- [ ] Step 1-8 全部绿
-- [ ] 新增 12 条单元测试全过
-- [ ] 560 → 572+ 测试数
-- [ ] GUI smoke 在 frequent sort 模式下不崩溃
-- [ ] `git diff` 无残留调试代码（无 `console.writeline`/`Debug.WriteLine` 之外的新输出）
-- [ ] 提交 commit message 风格：`feat(frecency): add launchCount + frecency sort mode (child 2)`
+- [x] Step 1-8 全部绿（实现随 `ac675a4` 落地，后续重命名为 `LauncherEntryQuery`）。
+- [x] frecency 与 launch-count 聚焦测试全过。
+- [x] 当前完整测试数 610。
+- [x] GUI smoke 通过。
+- [x] `git diff --check` 与调试输出审计通过。
+- [x] 实现已由 `ac675a4 feat(modernize): ... frecency ...` 提交。
 
 ## 跟进检查（实施后）
 
-- [ ] 更新父任务 `07-11-centralize-declutter` 进度 `[2/5 done]` → `[3/5 done]`
-- [ ] journal 记录 session（zoxide 公式选择 + ADR 决策）
-- [ ] 准备进入子任务 5（directory-scan-wizard）
+- [ ] 归档后由 Trellis 自动更新父任务进度。
+- [x] zoxide 公式与 ADR 已记录在本任务 design。
+- [x] 后续任务已由生产现代化父计划统一排序。
