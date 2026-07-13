@@ -259,4 +259,56 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.NotNull(viewModel.StatusText);
     }
+
+    [Fact]
+    public void ApplyCommandManagementEdit_SuccessRefreshesResultRowsAndFilteredMainList()
+    {
+        using var temp = new TempDirectory();
+        var (config, _, _) = CreatePortableFixture(
+            temp,
+            Entry("a", "A", command: "$codex"),
+            Entry("b", "B", command: "$codex"));
+        var viewModel = CreateViewModelWithTemplates(
+            config,
+            Templates(("codex", "codex --enable goals")));
+        viewModel.FilterText = "$claude";
+        Assert.Empty(viewModel.VisibleEntries);
+
+        var result = viewModel.ApplyCommandManagementEdit(
+            new CommandManagementEdit.UpdateTemplateKey("codex", "claude", "claude --skip"));
+
+        Assert.True(result.Success);
+        var command = Assert.Single(result.UpdatedCommandRows);
+        Assert.Equal("$claude", command.Command);
+        Assert.Equal(2, command.ReferenceCount);
+        var template = Assert.Single(result.UpdatedTemplateRows);
+        Assert.Equal("claude", template.Key);
+        Assert.Equal(2, template.ReferenceCount);
+        Assert.Equal(2, viewModel.VisibleEntries.Count);
+    }
+
+    [Fact]
+    public void ApplyCommandManagementEdit_SaveFailureRestoresEntriesTemplatesAndResultRows()
+    {
+        using var temp = new TempDirectory();
+        var (config, _, _) = CreatePortableFixture(
+            temp,
+            Entry("a", "A", command: "$codex"));
+        var viewModel = CreateViewModelWithTemplates(
+            config,
+            Templates(("codex", "codex --enable goals")));
+        var configDir = Path.GetDirectoryName(config)!;
+        Directory.Delete(configDir, recursive: true);
+        File.WriteAllText(configDir, "blocked");
+
+        var result = viewModel.ApplyCommandManagementEdit(
+            new CommandManagementEdit.UpdateTemplateKey("codex", "claude", "claude --skip"));
+
+        Assert.False(result.Success);
+        Assert.Equal("$codex", viewModel.Entries[0].Command);
+        Assert.True(viewModel.Settings.CommandTemplates.ContainsKey("codex"));
+        Assert.False(viewModel.Settings.CommandTemplates.ContainsKey("claude"));
+        Assert.Equal("$codex", Assert.Single(result.UpdatedCommandRows).Command);
+        Assert.Equal("codex", Assert.Single(result.UpdatedTemplateRows).Key);
+    }
 }

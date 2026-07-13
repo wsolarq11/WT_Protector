@@ -155,4 +155,46 @@ public sealed partial class MainWindowViewModelTests
         Assert.Contains("无变更", result.StatusMessage);
         Assert.Equal(@"D:\x", viewModel.Entries[0].Directory);
     }
+
+    [Fact]
+    public void ApplyDirectoryManagementEdit_SuccessRefreshesResultRowsAndFilteredMainList()
+    {
+        using var temp = new TempDirectory();
+        var (config, _, _) = CreatePortableFixture(
+            temp,
+            Entry("a", "A", directory: @"D:\old"),
+            Entry("b", "B", directory: @"D:\old"));
+        var viewModel = CreateViewModel(config, config);
+        viewModel.FilterText = @"D:\new";
+        Assert.Empty(viewModel.VisibleEntries);
+
+        var result = viewModel.ApplyDirectoryManagementEdit(
+            new DirectoryManagementEdit.RenameDirectory(@"D:\old", @"D:\new"));
+
+        Assert.True(result.Success);
+        var row = Assert.Single(result.UpdatedDirectoryRows);
+        Assert.Equal(@"D:\new", row.Directory);
+        Assert.Equal(2, row.ReferenceCount);
+        Assert.Equal(2, viewModel.VisibleEntries.Count);
+    }
+
+    [Fact]
+    public void ApplyDirectoryManagementEdit_SaveFailureRestoresEntriesAndResultRows()
+    {
+        using var temp = new TempDirectory();
+        var (config, _, _) = CreatePortableFixture(
+            temp,
+            Entry("a", "A", directory: @"D:\old"));
+        var viewModel = CreateViewModel(config, config);
+        var configDir = Path.GetDirectoryName(config)!;
+        Directory.Delete(configDir, recursive: true);
+        File.WriteAllText(configDir, "blocked");
+
+        var result = viewModel.ApplyDirectoryManagementEdit(
+            new DirectoryManagementEdit.RenameDirectory(@"D:\old", @"D:\new"));
+
+        Assert.False(result.Success);
+        Assert.Equal(@"D:\old", viewModel.Entries[0].Directory);
+        Assert.Equal(@"D:\old", Assert.Single(result.UpdatedDirectoryRows).Directory);
+    }
 }
