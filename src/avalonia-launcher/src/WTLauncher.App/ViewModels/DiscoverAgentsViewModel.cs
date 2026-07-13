@@ -21,8 +21,31 @@ public sealed partial class DiscoverAgentsViewModel : ObservableObject
 {
     private readonly Func<AgentDiscoveryResult> _scanFunc;
     private readonly HashSet<string> _alreadyAddedExecNames;
+    private readonly IReadOnlyDictionary<string, string> _commandTemplates;
 
     public ObservableCollection<DiscoveredAgentRow> Rows { get; } = new();
+    public IReadOnlyList<DirectoryRow> ExistingDirectories { get; }
+    public IReadOnlyList<string> CommandTemplateKeys { get; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPathScanMode))]
+    [NotifyPropertyChangedFor(nameof(IsExistingDirectoryMode))]
+    [NotifyPropertyChangedFor(nameof(CanConfirm))]
+    private DiscoveryMode _mode;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanCreateFromDirectory))]
+    [NotifyPropertyChangedFor(nameof(CanConfirm))]
+    private DirectoryRow? _selectedDirectory;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CommandPreview))]
+    [NotifyPropertyChangedFor(nameof(CanCreateFromDirectory))]
+    [NotifyPropertyChangedFor(nameof(CanConfirm))]
+    private string? _selectedCommandTemplateKey;
+
+    [ObservableProperty]
+    private string _entryName = string.Empty;
 
     [ObservableProperty]
     private bool _isScanning;
@@ -33,16 +56,40 @@ public sealed partial class DiscoverAgentsViewModel : ObservableObject
     [ObservableProperty]
     private int _selectedCount;
 
-    public DiscoverAgentsViewModel(Func<AgentDiscoveryResult> scanFunc, IEnumerable<string> alreadyAddedExecNames)
+    public DiscoverAgentsViewModel(
+        Func<AgentDiscoveryResult> scanFunc,
+        IEnumerable<string> alreadyAddedExecNames,
+        IEnumerable<DirectoryRow>? existingDirectories = null,
+        IReadOnlyDictionary<string, string>? commandTemplates = null)
     {
         _scanFunc = scanFunc ?? throw new ArgumentNullException(nameof(scanFunc));
         _alreadyAddedExecNames = new HashSet<string>(
             alreadyAddedExecNames,
             StringComparer.OrdinalIgnoreCase);
+        ExistingDirectories = (existingDirectories ?? [])
+            .OrderByDescending(row => row.ReferenceCount)
+            .ThenBy(row => row.Directory, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        _commandTemplates = commandTemplates ?? new Dictionary<string, string>();
+        CommandTemplateKeys = _commandTemplates.Keys
+            .OrderBy(key => key, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        SelectedCommandTemplateKey = CommandTemplateKeys.Count == 0 ? null : CommandTemplateKeys[0];
     }
 
     /// <summary>True if at least one row is selected for import.</summary>
     public bool CanAddSelected => SelectedCount > 0;
+    public bool IsPathScanMode => Mode == DiscoveryMode.PathScan;
+    public bool IsExistingDirectoryMode => Mode == DiscoveryMode.ExistingDirectory;
+    public bool CanCreateFromDirectory =>
+        SelectedDirectory is not null
+        && !string.IsNullOrWhiteSpace(SelectedCommandTemplateKey);
+    public bool CanConfirm => IsPathScanMode ? CanAddSelected : CanCreateFromDirectory;
+    public string CommandPreview =>
+        SelectedCommandTemplateKey is not null
+        && _commandTemplates.TryGetValue(SelectedCommandTemplateKey, out var command)
+            ? command
+            : string.Empty;
 
     [RelayCommand]
     internal async Task ScanAsync()
@@ -100,6 +147,43 @@ public sealed partial class DiscoverAgentsViewModel : ObservableObject
     {
         SelectedCount = Rows.Count(r => r.IsSelected);
         OnPropertyChanged(nameof(CanAddSelected));
+        OnPropertyChanged(nameof(CanConfirm));
+    }
+
+    partial void OnSelectedDirectoryChanged(DirectoryRow? value)
+    {
+        if (value is not null)
+            EntryName = DefaultNameFromDirectory(value.Directory);
+    }
+
+    public DiscoveryDialogResult? GetResult()
+    {
+        if (IsPathScanMode)
+        {
+            var selected = GetSelected();
+            return selected.Count > 0 ? new DiscoveredAgentsSelection(selected) : null;
+        }
+
+        if (!CanCreateFromDirectory)
+            return null;
+
+        var directory = SelectedDirectory!.Directory;
+        var name = string.IsNullOrWhiteSpace(EntryName)
+            ? DefaultNameFromDirectory(directory)
+            : EntryName.Trim();
+        var draft = new EntryDraft(
+            Guid.NewGuid().ToString("N"),
+            name,
+            directory,
+            "$" + SelectedCommandTemplateKey);
+        return new ExistingDirectorySelection(draft);
+    }
+
+    internal static string DefaultNameFromDirectory(string directory)
+    {
+        var trimmed = directory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var name = Path.GetFileName(trimmed);
+        return string.IsNullOrWhiteSpace(name) ? trimmed : name;
     }
 
     /// <summary>Returns the DiscoveredAgents the user selected. Empty when user cancels.</summary>

@@ -2,7 +2,7 @@
 
 ## 实施顺序
 
-### Step 1 — Core 新 record
+### Step 1 — Core 数据契约复用
 
 **文件（新增）**：
 - `src/avalonia-launcher/src/WTLauncher.Core/ExistingDirectoryRow.cs`
@@ -10,7 +10,7 @@
 
 或合并到单个文件 `src/avalonia-launcher/src/WTLauncher.Core/DiscoveryWizardRecords.cs`（ponytail：少文件）。
 
-**改动**：写两个 record（design.md 已示）。
+**实际改动**：复用 `DirectoryRow`、`DirectoryUsageAnalyzer` 与 `EntryDraft`；类型化 dialog result 留在 App 层，未扩张 Core。
 
 **验证**：
 ```bash
@@ -130,8 +130,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/verify.ps1
 
 ## 完成检查清单
 
-- [ ] Step 1-7 全部绿
-- [ ] 新增 12 条单元测试全过
+- [x] Step 1-6 已实施，Release 全量测试 622/622 通过
+- [x] 新增目录模式 ViewModel 与 owner 集成测试
 - [ ] 572+ → 584+ 测试数（假设 frecency 子任务先落地）
 - [ ] GUI smoke 在 mode 切换 + 创建 entry 后不崩溃
 - [ ] commit message 风格：`feat(discovery): add directory scan wizard mode (child 5)`

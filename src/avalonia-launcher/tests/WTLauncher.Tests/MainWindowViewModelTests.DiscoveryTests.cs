@@ -28,7 +28,7 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
         var dialogService = new StubDialogService();
-        dialogService.OnDiscoverAgents = _ => Task.FromResult<IReadOnlyList<DiscoveredAgent>?>(null);
+        dialogService.OnDiscoverAgents = (_, _, _) => Task.FromResult<DiscoveryDialogResult?>(null);
         var viewModel = CreateViewModel(config, settings, dialogService: dialogService);
 
         await viewModel.DiscoverAgentsCommand.ExecuteAsync(null);
@@ -43,7 +43,7 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
         var dialogService = new StubDialogService();
-        dialogService.OnDiscoverAgents = _ => Task.FromResult<IReadOnlyList<DiscoveredAgent>?>([]);
+        dialogService.OnDiscoverAgents = (_, _, _) => Task.FromResult<DiscoveryDialogResult?>(new DiscoveredAgentsSelection([]));
         var viewModel = CreateViewModel(config, settings, dialogService: dialogService);
 
         await viewModel.DiscoverAgentsCommand.ExecuteAsync(null);
@@ -58,10 +58,10 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
         var dialogService = new StubDialogService();
-        dialogService.OnDiscoverAgents = _ => Task.FromResult<IReadOnlyList<DiscoveredAgent>?>([
+        dialogService.OnDiscoverAgents = (_, _, _) => Task.FromResult<DiscoveryDialogResult?>(new DiscoveredAgentsSelection([
             SampleDiscoveredAgent("claude", "Claude Code", "Anthropic"),
             SampleDiscoveredAgent("aider", "Aider", "community"),
-        ]);
+        ]));
         var viewModel = CreateViewModel(config, settings, dialogService: dialogService);
 
         await viewModel.DiscoverAgentsCommand.ExecuteAsync(null);
@@ -82,9 +82,9 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
         var dialogService = new StubDialogService();
-        dialogService.OnDiscoverAgents = _ => Task.FromResult<IReadOnlyList<DiscoveredAgent>?>([
+        dialogService.OnDiscoverAgents = (_, _, _) => Task.FromResult<DiscoveryDialogResult?>(new DiscoveredAgentsSelection([
             SampleDiscoveredAgent("claude", "Claude Code", "Anthropic"),
-        ]);
+        ]));
         var viewModel = CreateViewModel(config, settings, dialogService: dialogService);
 
         // ponytail: simulate save failure by replacing store file path with a directory.
@@ -105,12 +105,56 @@ public sealed partial class MainWindowViewModelTests
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
         var dialogService = new StubDialogService();
-        dialogService.OnDiscoverAgents = _ => throw new InvalidOperationException("dialog blew up");
+        dialogService.OnDiscoverAgents = (_, _, _) => throw new InvalidOperationException("dialog blew up");
         var viewModel = CreateViewModel(config, settings, dialogService: dialogService);
 
         await viewModel.DiscoverAgentsCommand.ExecuteAsync(null);
 
         Assert.Equal(2, viewModel.Entries.Count);
         Assert.Contains("发现对话框打开失败", viewModel.StatusText);
+    }
+
+    [Fact]
+    public async Task DiscoverAgents_ExistingDirectorySelection_AddsAndPersistsEntry()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        var dialogService = new StubDialogService
+        {
+            OnDiscoverAgents = (_, directories, templates) =>
+            {
+                Assert.Equal(2, directories.Count);
+                Assert.NotNull(templates);
+                return Task.FromResult<DiscoveryDialogResult?>(new ExistingDirectorySelection(
+                    new EntryDraft("three", "Three", directories[0].Directory, "pwsh")));
+            },
+        };
+        var viewModel = CreateViewModel(config, settings, dialogService: dialogService);
+
+        await viewModel.DiscoverAgentsCommand.ExecuteAsync(null);
+
+        Assert.Contains(viewModel.Entries, entry => entry.Id == "three" && entry.Name == "Three");
+        Assert.Contains("已新增按钮", viewModel.StatusText);
+        Assert.Contains(LauncherStore.Load(config).Entries, entry => entry.Id == "three");
+    }
+
+    [Fact]
+    public async Task DiscoverAgents_ExistingDirectorySelection_RollsBackOnSaveFailure()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
+        var dialogService = new StubDialogService
+        {
+            OnDiscoverAgents = (_, directories, _) => Task.FromResult<DiscoveryDialogResult?>(
+                new ExistingDirectorySelection(new EntryDraft("three", "Three", directories[0].Directory, "pwsh"))),
+        };
+        var viewModel = CreateViewModel(config, settings, dialogService: dialogService);
+        File.Delete(config);
+        Directory.CreateDirectory(config);
+
+        await viewModel.DiscoverAgentsCommand.ExecuteAsync(null);
+
+        Assert.Equal(2, viewModel.Entries.Count);
+        Assert.Contains("存储保存失败", viewModel.StatusText);
     }
 }

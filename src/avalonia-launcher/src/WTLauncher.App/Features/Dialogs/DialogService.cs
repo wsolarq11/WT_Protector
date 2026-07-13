@@ -38,12 +38,17 @@ public sealed class DialogService : IDialogService
     public Task<bool> ConfirmDeleteEntryAsync(LauncherEntryDeleteTarget target) =>
         new ConfirmEntryDeleteWindow(target).ShowDialog<bool>(Owner);
 
-    public async Task<IReadOnlyList<DiscoveredAgent>?> DiscoverAgentsAsync(HashSet<string> alreadyAdded)
+    public async Task<DiscoveryDialogResult?> DiscoverAgentsAsync(
+        HashSet<string> alreadyAdded,
+        IReadOnlyList<DirectoryRow> existingDirectories,
+        IReadOnlyDictionary<string, string> commandTemplates)
     {
         var vm = new DiscoverAgentsViewModel(
             () => AgentDiscoveryScanner.Scan(AgentCatalog.Entries),
-            alreadyAdded);
-        return await new DiscoverAgentsWindow(vm).ShowDialog<IReadOnlyList<DiscoveredAgent>?>(Owner);
+            alreadyAdded,
+            existingDirectories,
+            commandTemplates);
+        return await new DiscoverAgentsWindow(vm).ShowDialog<DiscoveryDialogResult?>(Owner);
     }
 
     public async Task OpenCommandManagementAsync(

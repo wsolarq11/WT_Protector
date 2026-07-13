@@ -161,10 +161,10 @@ public sealed partial class MainWindowViewModelTests
         var (config, settings, _) = CreatePortableFixture(temp, entries);
         var dialogService = new StubDialogService
         {
-            OnDiscoverAgents = _ => Task.FromResult<IReadOnlyList<DiscoveredAgent>?>([
+            OnDiscoverAgents = (_, _, _) => Task.FromResult<DiscoveryDialogResult?>(new DiscoveredAgentsSelection([
                 SampleDiscoveredAgent("claude", "Claude Code", "Anthropic"),
                 SampleDiscoveredAgent("aider", "Aider", "community"),
-            ]),
+            ])),
         };
         var viewModel = CreateViewModel(config, settings, dialogService: dialogService);
         viewModel.UpdateCardsAvailableSize(new Size(640, 260));

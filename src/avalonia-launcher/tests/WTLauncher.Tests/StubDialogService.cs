@@ -12,7 +12,7 @@ internal sealed class StubDialogService : IDialogService
     public Func<LauncherPresetDeleteTarget, Task<bool>>? OnConfirmDeletePreset { get; set; }
     public Func<LaunchEntry?, int, IReadOnlyDictionary<string, string>?, Task<EntryDraft?>>? OnRequestEntryDraft { get; set; }
     public Func<LauncherEntryDeleteTarget, Task<bool>>? OnConfirmDeleteEntry { get; set; }
-    public Func<HashSet<string>, Task<IReadOnlyList<DiscoveredAgent>?>>? OnDiscoverAgents { get; set; }
+    public Func<HashSet<string>, IReadOnlyList<DirectoryRow>, IReadOnlyDictionary<string, string>, Task<DiscoveryDialogResult?>>? OnDiscoverAgents { get; set; }
     public Func<IReadOnlyList<CommandRow>, IReadOnlyList<TemplateRow>, Func<CommandManagementEdit, CommandManagementResult>, Task>? OnOpenCommandManagement { get; set; }
     public Func<IReadOnlyList<DirectoryRow>, Func<DirectoryManagementEdit, DirectoryManagementResult>, Task>? OnOpenDirectoryManagement { get; set; }
 
@@ -34,8 +34,12 @@ internal sealed class StubDialogService : IDialogService
     public Task<bool> ConfirmDeleteEntryAsync(LauncherEntryDeleteTarget target) =>
         OnConfirmDeleteEntry?.Invoke(target) ?? Task.FromResult(false);
 
-    public Task<IReadOnlyList<DiscoveredAgent>?> DiscoverAgentsAsync(HashSet<string> alreadyAdded) =>
-        OnDiscoverAgents?.Invoke(alreadyAdded) ?? Task.FromResult<IReadOnlyList<DiscoveredAgent>?>(null);
+    public Task<DiscoveryDialogResult?> DiscoverAgentsAsync(
+        HashSet<string> alreadyAdded,
+        IReadOnlyList<DirectoryRow> existingDirectories,
+        IReadOnlyDictionary<string, string> commandTemplates) =>
+        OnDiscoverAgents?.Invoke(alreadyAdded, existingDirectories, commandTemplates)
+        ?? Task.FromResult<DiscoveryDialogResult?>(null);
 
     public Task OpenCommandManagementAsync(IReadOnlyList<CommandRow> initialCommandRows, IReadOnlyList<TemplateRow> initialTemplateRows, Func<CommandManagementEdit, CommandManagementResult> applyEdit) =>
         OnOpenCommandManagement?.Invoke(initialCommandRows, initialTemplateRows, applyEdit) ?? Task.CompletedTask;

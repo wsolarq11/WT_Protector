@@ -29,6 +29,9 @@ public sealed class DiscoverAgentsWindow : Window
     private Button _scanButton = null!;
     private Button _addButton = null!;
     private StackPanel _rowsPanel = null!;
+    private Control _pathPanel = null!;
+    private Control _directoryPanel = null!;
+    private TextBlock _commandPreview = null!;
 
     public DiscoverAgentsWindow(DiscoverAgentsViewModel viewModel)
     {
@@ -55,9 +58,28 @@ public sealed class DiscoverAgentsWindow : Window
     {
         var title = LauncherDialogText.Title("发现并添加 AI Agent CLI 启动项");
         var subtitle = LauncherDialogText.Body(
-            "扫描本机 PATH 上的已知 AI Agent CLI（claude / codex / opencode 等），" +
-            "勾选要添加的项并一键生成为启动按钮。");
+            "扫描 PATH 上的 AI Agent CLI，或复用已有目录和命令模板快速创建启动项。");
         subtitle.Margin = new Thickness(0, 4, 0, 12);
+
+        var pathMode = new RadioButton { Content = "发现 AI Agent", GroupName = "DiscoveryMode", IsChecked = true };
+        var directoryMode = new RadioButton { Content = "从已有目录创建", GroupName = "DiscoveryMode" };
+        pathMode.IsCheckedChanged += (_, _) =>
+        {
+            if (pathMode.IsChecked == true)
+                _viewModel.Mode = DiscoveryMode.PathScan;
+        };
+        directoryMode.IsCheckedChanged += (_, _) =>
+        {
+            if (directoryMode.IsChecked == true)
+                _viewModel.Mode = DiscoveryMode.ExistingDirectory;
+        };
+        var modePicker = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 18,
+            Margin = new Thickness(0, 0, 0, 10),
+            Children = { pathMode, directoryMode },
+        };
 
         _statusText = new TextBlock
         {
@@ -93,11 +115,30 @@ public sealed class DiscoverAgentsWindow : Window
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
         };
 
+        _pathPanel = new Grid
+        {
+            RowDefinitions = new RowDefinitions("Auto,*"),
+            Children =
+            {
+                headerRow.WithGridRow(0),
+                new Border
+                {
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(10),
+                    BorderBrush = Brush.Parse(LauncherDesignTokens.BorderColor),
+                    Padding = new Thickness(8),
+                    Margin = new Thickness(0, 10, 0, 0),
+                    Child = rowsScroll,
+                }.WithGridRow(1),
+            },
+        };
+        _directoryPanel = BuildDirectoryPanel();
+
         var cancelButton = LauncherDialogButtons.Cancel(minWidth: 96);
         cancelButton.Click += (_, _) => Close(null);
 
         _addButton = LauncherDialogButtons.Primary("添加选中", minWidth: 132);
-        _addButton.Click += (_, _) => Close(_viewModel.GetSelected());
+        _addButton.Click += (_, _) => Close(_viewModel.GetResult());
 
         var footer = LauncherDialogButtons.Footer(18, cancelButton, _addButton);
 
@@ -108,15 +149,10 @@ public sealed class DiscoverAgentsWindow : Window
             {
                 title.WithGridRow(0),
                 subtitle.WithGridRow(1),
-                headerRow.WithGridRow(2),
-                new Border
+                modePicker.WithGridRow(2),
+                new Grid
                 {
-                    BorderThickness = new Thickness(1),
-                    CornerRadius = new CornerRadius(10),
-                    BorderBrush = Brush.Parse(LauncherDesignTokens.BorderColor),
-                    Padding = new Thickness(8),
-                    Margin = new Thickness(0, 10, 0, 0),
-                    Child = rowsScroll,
+                    Children = { _pathPanel, _directoryPanel },
                 }.WithGridRow(3),
                 footer.WithGridRow(4),
             },
@@ -147,10 +183,10 @@ public sealed class DiscoverAgentsWindow : Window
                 break;
             case nameof(DiscoverAgentsViewModel.SelectedCount):
             case nameof(DiscoverAgentsViewModel.CanAddSelected):
-                _addButton.IsEnabled = _viewModel.CanAddSelected;
-                _addButton.Content = _viewModel.SelectedCount == 0
-                    ? "添加选中"
-                    : $"添加选中 ({_viewModel.SelectedCount})";
+            case nameof(DiscoverAgentsViewModel.CanConfirm):
+            case nameof(DiscoverAgentsViewModel.Mode):
+            case nameof(DiscoverAgentsViewModel.CommandPreview):
+                SyncUiFromViewModel();
                 break;
         }
     }
@@ -159,10 +195,86 @@ public sealed class DiscoverAgentsWindow : Window
     {
         _statusText.Text = _viewModel.StatusText;
         _scanButton.IsEnabled = !_viewModel.IsScanning;
-        _addButton.IsEnabled = _viewModel.CanAddSelected;
-        _addButton.Content = _viewModel.SelectedCount == 0
-            ? "添加选中"
-            : $"添加选中 ({_viewModel.SelectedCount})";
+        _pathPanel.IsVisible = _viewModel.IsPathScanMode;
+        _directoryPanel.IsVisible = _viewModel.IsExistingDirectoryMode;
+        _addButton.IsEnabled = _viewModel.CanConfirm;
+        _addButton.Content = _viewModel.IsExistingDirectoryMode
+            ? "创建启动项"
+            : _viewModel.SelectedCount == 0 ? "添加选中" : $"添加选中 ({_viewModel.SelectedCount})";
+        _commandPreview.Text = _viewModel.CommandPreview;
+    }
+
+    private Control BuildDirectoryPanel()
+    {
+        var directories = new StackPanel { Spacing = 6 };
+        foreach (var row in _viewModel.ExistingDirectories)
+        {
+            var radio = new RadioButton
+            {
+                GroupName = "ExistingDirectory",
+                Content = $"{row.Directory}  ·  被 {row.ReferenceCount} 个启动项使用",
+            };
+            radio.IsCheckedChanged += (_, _) =>
+            {
+                if (radio.IsChecked == true)
+                    _viewModel.SelectedDirectory = row;
+            };
+            directories.Children.Add(radio);
+        }
+
+        var commandPicker = new ComboBox
+        {
+            ItemsSource = _viewModel.CommandTemplateKeys,
+            SelectedItem = _viewModel.SelectedCommandTemplateKey,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        };
+        commandPicker.SelectionChanged += (_, _) =>
+            _viewModel.SelectedCommandTemplateKey = commandPicker.SelectedItem as string;
+
+        var entryName = new TextBox { Watermark = "启动项名称" };
+        entryName.TextChanged += (_, _) => _viewModel.EntryName = entryName.Text ?? string.Empty;
+        _viewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(DiscoverAgentsViewModel.EntryName) && entryName.Text != _viewModel.EntryName)
+                entryName.Text = _viewModel.EntryName;
+        };
+
+        _commandPreview = new TextBlock
+        {
+            FontFamily = new FontFamily(MonospaceFontFamily),
+            FontSize = 12,
+            Foreground = Brush.Parse(LauncherDesignTokens.TextMutedColor),
+            TextWrapping = TextWrapping.Wrap,
+        };
+
+        return new StackPanel
+        {
+            Spacing = 10,
+            Children =
+            {
+                LauncherDialogText.Body("选择一个已在使用的目录："),
+                new Border
+                {
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(10),
+                    BorderBrush = Brush.Parse(LauncherDesignTokens.BorderColor),
+                    Padding = new Thickness(10),
+                    Child = new ScrollViewer { Content = directories, MaxHeight = 220 },
+                },
+                LauncherDialogText.Body("命令模板"),
+                commandPicker,
+                LauncherDialogText.Body("启动项名称"),
+                entryName,
+                LauncherDialogText.Body("命令预览"),
+                new Border
+                {
+                    Background = Brush.Parse(LauncherDesignTokens.BackgroundColor),
+                    CornerRadius = new CornerRadius(8),
+                    Padding = new Thickness(10),
+                    Child = _commandPreview,
+                },
+            },
+        };
     }
 
     private void RenderRows()

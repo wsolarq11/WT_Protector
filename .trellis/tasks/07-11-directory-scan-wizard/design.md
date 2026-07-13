@@ -4,13 +4,20 @@
 
 | 层 | 改动 | 不变量保持 |
 |----|------|------------|
-| 0 — Core | 新增 `ExistingDirectoryRow` record（不可变） | 纯 record，无 UI 依赖 |
+| 0 — Core | 复用现有 `DirectoryRow` 与 `DirectoryUsageAnalyzer` | Core 无新增类型、无 UI 依赖 |
 | 1 — Mutation | 复用 `AddEntry` 路径（无新 mutation 代码） | snapshot/save/rollback 不变 |
 | 2 — 持久化 | 无新逻辑 | 原子写路径不变 |
 | 3 — 编排 | `MainWindowViewModel` 注入两个 dialog factory（已有 PATH discovery + 新增 directory wizard），通过 callback 拿结果 | 单源真不变 |
 | 4 — 视图 | `DiscoverAgentsWindow` 新增 mode 切换 + 第二 panel | 纯 code-behind，无新 XAML 文件 |
 
-## 数据契约
+## 实施收敛（2026-07-13）
+
+- 不新增 `ExistingDirectoryRow` / `DirectoryWizardResult` Core records；直接复用现有 `DirectoryRow` 和 `EntryDraft`。
+- 对话框返回 App 层类型化 union：`DiscoveredAgentsSelection` 或 `ExistingDirectorySelection`，取消为 `null`。
+- `IDialogService` 接收 owner 已分析好的 directories 与 command templates；View 不接触持久化。
+- MainWindow owner 使用 `EntryService.CreateEntryFromDraft` 验证，再复用 `SaveEntryCollectionChanges` 的 snapshot/save/rollback 边界。
+
+## 原始设计记录
 
 ### `ExistingDirectoryRow`（新 record，Core 层）
 

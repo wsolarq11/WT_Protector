@@ -11,7 +11,10 @@ public interface IDialogService
     public Task<bool> ConfirmDeletePresetAsync(LauncherPresetDeleteTarget target);
     public Task<EntryDraft?> RequestEntryDraftAsync(LaunchEntry? prefill, int presetReferenceCount, IReadOnlyDictionary<string, string>? commandTemplates);
     public Task<bool> ConfirmDeleteEntryAsync(LauncherEntryDeleteTarget target);
-    public Task<IReadOnlyList<DiscoveredAgent>?> DiscoverAgentsAsync(HashSet<string> alreadyAdded);
+    public Task<DiscoveryDialogResult?> DiscoverAgentsAsync(
+        HashSet<string> alreadyAdded,
+        IReadOnlyList<DirectoryRow> existingDirectories,
+        IReadOnlyDictionary<string, string> commandTemplates);
     public Task OpenCommandManagementAsync(IReadOnlyList<CommandRow> initialCommandRows, IReadOnlyList<TemplateRow> initialTemplateRows, Func<CommandManagementEdit, CommandManagementResult> applyEdit);
     public Task OpenDirectoryManagementAsync(IReadOnlyList<DirectoryRow> initialDirectoryRows, Func<DirectoryManagementEdit, DirectoryManagementResult> applyEdit);
 }

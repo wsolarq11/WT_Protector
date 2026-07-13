@@ -50,7 +50,7 @@
   - `Selected`：false
   - `UpdatedAtUtc` / `LaunchedAtUtc`：empty string
 - 创建成功后 dialog 关闭，主窗口可见到新 entry（按当前 sort 模式刷新）。
-- 创建失败（save 失败）：快照回滚 + StatusText 显示错误，dialog 不关。
+- 创建失败（save 失败）：快照回滚 + 主窗口 StatusText 显示错误。对话框以类型化结果关闭后，持久化仍由主窗口 owner 完成，避免把存储职责注入 View。
 
 ### R5 — UX 一致性
 
@@ -67,14 +67,14 @@
 
 ## Acceptance Criteria
 
-- [ ] AC-1：Discovery dialog 顶部有 mode 切换控件；切换不重建 dialog、不丢失另一 mode 的状态（如 PATH 模式已扫到的 agent 列表）。
-- [ ] AC-2：切到目录模式后，列出当前所有 distinct directory，按引用计数 desc + 路径 asc 排序；选中某行后高亮。
-- [ ] AC-3：选中 directory 后，命令 ComboBox 列出 `commandTemplates` 所有 key；选 key 后下方预览展开命令（`$codex` → 实际命令字符串）。
-- [ ] AC-4：确认按钮在 (directory 选中) AND (command 选中) 后启用；点击后创建新 entry，走 snapshot/save/rollback 路径；创建成功 dialog 关闭，主窗口刷新可见新 entry。
-- [ ] AC-5：创建失败（注入 save 失败）时，`_entries` 不变（快照回滚），dialog 不关，StatusText 显示错误。
-- [ ] AC-6：取消按钮永远可用；点击后 dialog 关闭，无任何 mutation。
-- [ ] AC-7：Name 字段默认填 directory 的文件夹名（如 `D:\_AI_\foo` → `foo`），用户可改。
-- [ ] AC-8：单元测试覆盖：(a) directory 去重列表构造（含引用计数），(b) 命令 ComboBox 选项 = commandTemplates keys，(c) 确认按钮启用条件（directory + command 都选中），(d) 创建 entry 走 AddEntry 路径，(e) rollback 路径。
+- [x] AC-1：Discovery dialog 顶部有 mode 切换控件；切换不重建 dialog、不丢失另一 mode 的状态（如 PATH 模式已扫到的 agent 列表）。
+- [x] AC-2：切到目录模式后，列出当前所有 distinct directory，按引用计数 desc + 路径 asc 排序；选中某行后高亮。
+- [x] AC-3：选中 directory 后，命令 ComboBox 列出 `commandTemplates` 所有 key；选 key 后下方预览展开命令（`$codex` → 实际命令字符串）。
+- [x] AC-4：确认按钮在 (directory 选中) AND (command 选中) 后启用；点击后创建新 entry，走 snapshot/save/rollback 路径；创建成功 dialog 关闭，主窗口刷新可见新 entry。
+- [x] AC-5：创建失败（注入 save 失败）时，`_entries` 不变（快照回滚），StatusText 显示错误。
+- [x] AC-6：取消按钮永远可用；点击后 dialog 关闭，无任何 mutation。
+- [x] AC-7：Name 字段默认填 directory 的文件夹名（如 `D:\_AI_\foo` → `foo`），用户可改。
+- [x] AC-8：单元测试覆盖：(a) directory 去重列表构造（含引用计数），(b) 命令 ComboBox 选项 = commandTemplates keys，(c) 确认按钮启用条件（directory + command 都选中），(d) 创建 entry 走 AddEntry 路径，(e) rollback 路径。
 - [ ] AC-9：`tools/verify.ps1` 通过。
 
 ## Out of Scope
