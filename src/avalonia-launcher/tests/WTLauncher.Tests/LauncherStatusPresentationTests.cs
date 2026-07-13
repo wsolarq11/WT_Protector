@@ -5,17 +5,21 @@ namespace WTLauncher.Tests;
 public sealed class LauncherStatusPresentationTests
 {
     [Theory]
-    [InlineData("已新增按钮: 演示（已保存）", LauncherStatusTone.Success)]
-    [InlineData("启动成功: 演示", LauncherStatusTone.Success)]
-    [InlineData("已取消新增", LauncherStatusTone.Warning)]
-    [InlineData("已添加 2 个（1 个跳过）", LauncherStatusTone.Warning)]
-    [InlineData("存储保存失败: access denied", LauncherStatusTone.Error)]
-    [InlineData("命令模板不存在", LauncherStatusTone.Error)]
-    [InlineData("已加载 20 个按钮", LauncherStatusTone.Neutral)]
-    [InlineData("正在扫描", LauncherStatusTone.Neutral)]
-    public void Classify_MapsUserFacingStatus(string text, LauncherStatusTone expected)
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void StatusContentRejectsMissingText(string? text)
     {
-        Assert.Equal(expected, LauncherStatusPresentation.Classify(text));
+        Assert.ThrowsAny<ArgumentException>(() => new LauncherStatusContent(text!, LauncherStatusTone.Neutral));
+    }
+
+    [Fact]
+    public void StatusFactoriesKeepTextAndToneTogether()
+    {
+        Assert.Equal(new LauncherStatusContent("ready", LauncherStatusTone.Neutral), LauncherStatusContent.Neutral("ready"));
+        Assert.Equal(new LauncherStatusContent("done", LauncherStatusTone.Success), LauncherStatusContent.Success("done"));
+        Assert.Equal(new LauncherStatusContent("canceled", LauncherStatusTone.Warning), LauncherStatusContent.Warning("canceled"));
+        Assert.Equal(new LauncherStatusContent("failed", LauncherStatusTone.Error), LauncherStatusContent.Error("failed"));
     }
 
     [Theory]

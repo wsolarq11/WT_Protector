@@ -27,7 +27,7 @@ public sealed partial class MainWindowViewModel
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "CommandManagement.OpenDialog");
-            StatusText = LauncherRefreshStatus.DialogOpenFailed("命令管理", ex);
+            StatusContent = LauncherRefreshStatus.DialogOpenFailed("命令管理", ex);
         }
     }
 

@@ -33,10 +33,10 @@ public sealed partial class MainWindowViewModel
                 ApplyStatusText(LauncherEntryStatus.Added(entry.Name));
                 return;
             case ServiceCanceled<LaunchEntry> canceled:
-                StatusText = canceled.Status;
+                StatusContent = canceled.Status;
                 return;
             case ServiceFailure<LaunchEntry> failure:
-                StatusText = failure.Status;
+                StatusContent = failure.Status;
                 return;
             default:
                 throw new UnreachableException();
@@ -62,10 +62,10 @@ public sealed partial class MainWindowViewModel
                 ApplyStatusText($"已复制按钮: {item.Name} → {entry.Name}（已保存）");
                 return;
             case ServiceCanceled<LaunchEntry> canceled:
-                StatusText = canceled.Status;
+                StatusContent = canceled.Status;
                 return;
             case ServiceFailure<LaunchEntry> failure:
-                StatusText = failure.Status;
+                StatusContent = failure.Status;
                 return;
             default:
                 throw new UnreachableException();
@@ -95,7 +95,7 @@ public sealed partial class MainWindowViewModel
                     {
                         ErrorLog.Write(ex, "EditEntry.RenameReference");
                         RestoreEntryMutationSnapshot(snapshot);
-                        StatusText = LauncherEntryStatus.EditDialogFailed(item.Name, ex);
+                        StatusContent = LauncherEntryStatus.EditDialogFailed(item.Name, ex);
                         return;
                     }
                 }
@@ -107,10 +107,10 @@ public sealed partial class MainWindowViewModel
                 ApplyStatusText(LauncherEntryStatus.Updated(item.Name));
                 return;
             case ServiceCanceled<LaunchEntry> canceled:
-                StatusText = canceled.Status;
+                StatusContent = canceled.Status;
                 return;
             case ServiceFailure<LaunchEntry> failure:
-                StatusText = failure.Status;
+                StatusContent = failure.Status;
                 return;
             default:
                 throw new UnreachableException();
@@ -129,10 +129,10 @@ public sealed partial class MainWindowViewModel
                 approval = success.Value;
                 break;
             case ServiceCanceled<EntryDeleteApproval> canceled:
-                StatusText = canceled.Status;
+                StatusContent = canceled.Status;
                 return;
             case ServiceFailure<EntryDeleteApproval> failure:
-                StatusText = failure.Status;
+                StatusContent = failure.Status;
                 return;
             default:
                 throw new UnreachableException();
@@ -165,7 +165,7 @@ public sealed partial class MainWindowViewModel
 
         if (saveFailure is not null)
         {
-            StatusText = saveFailure;
+            StatusContent = LauncherStatusContent.Error(saveFailure);
             return false;
         }
 

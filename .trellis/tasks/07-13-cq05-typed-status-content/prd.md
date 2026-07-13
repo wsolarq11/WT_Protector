@@ -23,13 +23,13 @@
 
 ## Acceptance Criteria
 
-- [ ] AC1：LauncherStatusContent 验证空文本并提供 Neutral/Success/Warning/Error 明确构造边界。
-- [ ] AC2：MainWindowViewModel 不再从 StatusText 文本分类 tone，文字与 tone 在一次赋值中同步通知。
-- [ ] AC3：ServiceCanceled/ServiceFailure 的 Status 为 LauncherStatusContent，所有调用方穷尽处理仍通过。
-- [ ] AC4：LauncherStatusText 工作流 formatter 和剩余主窗口状态写入均使用类型化内容；无调用点中文 marker 分类。
-- [ ] AC5：测试覆盖内容验证、四种 tone、service result、通知顺序及代表性取消/部分成功/失败重叠文案。
-- [ ] AC6：没有 toast/history/event bus/schema/dependency/Core-Avalonia 泄漏或持久化变化。
-- [ ] AC7：Release tests、git diff --check、tools/verify.ps1、publish 与 GUI smoke 全绿。
+- [x] AC1：LauncherStatusContent 验证空文本并提供 Neutral/Success/Warning/Error 明确构造边界。
+- [x] AC2：MainWindowViewModel 不再从 StatusText 文本分类 tone，文字与 tone 在一次赋值中同步通知。
+- [x] AC3：ServiceCanceled/ServiceFailure 的 Status 为 LauncherStatusContent，所有调用方穷尽处理仍通过。
+- [x] AC4：LauncherStatusText 工作流 formatter 和剩余主窗口状态写入均使用类型化内容；无调用点中文 marker 分类。
+- [x] AC5：测试覆盖内容验证、四种 tone、service result、通知顺序及代表性取消/部分成功/失败重叠文案。
+- [x] AC6：没有 toast/history/event bus/schema/dependency/Core-Avalonia 泄漏或持久化变化。
+- [x] AC7：Release tests、git diff --check、tools/verify.ps1、publish 与 GUI smoke 全绿。
 
 ## Out of Scope
 

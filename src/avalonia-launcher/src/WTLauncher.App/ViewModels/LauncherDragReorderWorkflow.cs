@@ -134,7 +134,7 @@ public sealed class LauncherDragReorderWorkflow
         _session?.ClearHover();
     }
 
-    public (string? Status, bool RefreshEntries) Commit(bool isCustomSortMode)
+    public (LauncherStatusContent? Status, bool RefreshEntries) Commit(bool isCustomSortMode)
     {
         if (!isCustomSortMode)
             return (null, false);
@@ -149,7 +149,7 @@ public sealed class LauncherDragReorderWorkflow
             {
                 // Rollback settings on save failure so the caller sees the pre-commit order.
                 _settings = _settings with { CustomEntryOrder = session.Snapshot.CustomEntryOrder };
-                return (saveFailure, true);
+                return (LauncherStatusContent.Error(saveFailure), true);
             }
 
             return (LauncherDragReorderStatus.Saved, false);
@@ -166,7 +166,7 @@ public sealed class LauncherDragReorderWorkflow
         }
     }
 
-    public (string? Status, bool RefreshEntries) Cancel()
+    public (LauncherStatusContent? Status, bool RefreshEntries) Cancel()
     {
         if (!TryRestorePreviewState())
             return (null, false);

@@ -141,7 +141,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
-        Assert.Equal(LauncherDragReorderStatus.MoveUnavailable, viewModel.StatusText);
+        Assert.Equal(LauncherDragReorderStatus.MoveUnavailable.Text, viewModel.StatusText);
         AssertNoDragCues(viewModel);
     }
 

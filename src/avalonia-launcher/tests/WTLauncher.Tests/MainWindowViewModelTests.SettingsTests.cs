@@ -142,7 +142,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.False(viewModel.TrySaveWindowBounds(width: 1320, height: 840));
 
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
-        Assert.Equal(LauncherSettingsStatus.WindowBoundsSaveFailed, viewModel.StatusText);
+        Assert.Equal(LauncherSettingsStatus.WindowBoundsSaveFailed.Text, viewModel.StatusText);
         AssertNoDragCues(viewModel);
         AssertNoStoreTempFiles(settings);
     }

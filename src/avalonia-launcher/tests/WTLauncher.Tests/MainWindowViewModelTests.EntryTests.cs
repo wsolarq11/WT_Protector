@@ -113,7 +113,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id).ToArray());
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
-        Assert.Equal(LauncherEntryStatus.AddCanceled, viewModel.StatusText);
+        Assert.Equal(LauncherEntryStatus.AddCanceled.Text, viewModel.StatusText);
         Assert.Equal(LauncherStatusTone.Warning, viewModel.StatusTone);
     }
 
@@ -201,7 +201,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(["one"], LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
-        Assert.Equal(LauncherEntryStatus.EditCanceled("One"), viewModel.StatusText);
+        Assert.Equal(LauncherEntryStatus.EditCanceled("One").Text, viewModel.StatusText);
     }
 
     [Fact]
@@ -237,7 +237,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id).ToArray());
         Assert.Equal(["one"], LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
-        Assert.Equal(LauncherEntryStatus.EditCanceled("One"), viewModel.StatusText);
+        Assert.Equal(LauncherEntryStatus.EditCanceled("One").Text, viewModel.StatusText);
     }
 
     [Fact]
@@ -264,7 +264,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(["one-renamed", "two", "three"], viewModel.Entries.Select(entry => entry.Id).ToArray());
         Assert.Equal(["one-renamed"], LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(["one-renamed", "two", "three"], viewModel.Settings.CustomEntryOrder);
-        Assert.Equal(LauncherEntryStatus.Updated("One Renamed"), viewModel.StatusText);
+        Assert.Equal(LauncherEntryStatus.Updated("One Renamed").Text, viewModel.StatusText);
         Assert.Equal(LauncherStatusTone.Success, viewModel.StatusTone);
     }
 
@@ -357,7 +357,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(["one"], LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
-        Assert.Equal(LauncherEntryStatus.DeleteCanceled("One"), viewModel.StatusText);
+        Assert.Equal(LauncherEntryStatus.DeleteCanceled("One").Text, viewModel.StatusText);
     }
 
     [Fact]
@@ -390,7 +390,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id).ToArray());
         Assert.Equal(["one"], LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
-        Assert.Equal(LauncherEntryStatus.DeleteCanceled("One"), viewModel.StatusText);
+        Assert.Equal(LauncherEntryStatus.DeleteCanceled("One").Text, viewModel.StatusText);
     }
 
     [Fact]
@@ -422,7 +422,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(["two", "three"], LauncherStore.Load(config).Entries.Select(entry => entry.Id).ToArray());
         Assert.Empty(LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(["two", "three"], viewModel.Settings.CustomEntryOrder);
-        Assert.Equal(LauncherEntryStatus.Deleted("One"), viewModel.StatusText);
+        Assert.Equal(LauncherEntryStatus.Deleted("One").Text, viewModel.StatusText);
     }
 
     private static void AssertNoEntryMutation(

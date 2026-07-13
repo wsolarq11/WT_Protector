@@ -1,4 +1,5 @@
 using WTLauncher.App.Features;
+using WTLauncher.App.ViewModels;
 
 namespace WTLauncher.Tests;
 
@@ -8,13 +9,20 @@ public sealed class ServiceResultTests
     public void SuccessRejectsNullPayload() =>
         Assert.Throws<ArgumentNullException>(() => new ServiceSuccess<string>(null!));
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData(" ")]
-    public void NonSuccessRejectsMissingStatus(string? status)
+    [Fact]
+    public void NonSuccessRejectsMissingStatus()
     {
-        Assert.ThrowsAny<ArgumentException>(() => new ServiceCanceled<string>(status!));
-        Assert.ThrowsAny<ArgumentException>(() => new ServiceFailure<string>(status!));
+        Assert.Throws<ArgumentNullException>(() => new ServiceCanceled<string>(null!));
+        Assert.Throws<ArgumentNullException>(() => new ServiceFailure<string>(null!));
+    }
+
+    [Fact]
+    public void NonSuccessPreservesTypedStatus()
+    {
+        var canceled = LauncherStatusContent.Warning("已取消");
+        var failed = LauncherStatusContent.Error("失败");
+
+        Assert.Same(canceled, new ServiceCanceled<string>(canceled).Status);
+        Assert.Same(failed, new ServiceFailure<string>(failed).Status);
     }
 }

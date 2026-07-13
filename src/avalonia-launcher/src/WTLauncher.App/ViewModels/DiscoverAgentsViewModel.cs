@@ -98,7 +98,7 @@ public sealed partial class DiscoverAgentsViewModel : ObservableObject
             return;
 
         IsScanning = true;
-        StatusText = LauncherRefreshStatus.DiscoveryScanning;
+        StatusText = LauncherRefreshStatus.DiscoveryScanning.Text;
 
         AgentDiscoveryResult result;
         try
@@ -125,7 +125,7 @@ public sealed partial class DiscoverAgentsViewModel : ObservableObject
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "DiscoverAgents.Scan");
-            StatusText = LauncherRefreshStatus.DiscoveryFailed;
+            StatusText = LauncherRefreshStatus.DiscoveryFailed.Text;
         }
         finally
         {

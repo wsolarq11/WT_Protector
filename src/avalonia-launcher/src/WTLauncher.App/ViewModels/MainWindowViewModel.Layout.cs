@@ -206,7 +206,7 @@ public sealed partial class MainWindowViewModel
     /// </summary>
     private bool TryPersistSettingsChange(
         Func<LauncherSettings, LauncherSettings> mutator,
-        string? successStatus = null)
+        LauncherStatusContent? successStatus = null)
     {
         var snapshot = CaptureSettingsMutationSnapshot();
         _settings = mutator(_settings);
@@ -218,7 +218,7 @@ public sealed partial class MainWindowViewModel
         }
 
         if (successStatus is not null)
-            StatusText = successStatus;
+            StatusContent = successStatus;
 
         return true;
     }
@@ -387,7 +387,7 @@ public sealed partial class MainWindowViewModel
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
             or PathTooLongException or DirectoryNotFoundException or System.Security.SecurityException)
         {
-            StatusText = LauncherSettingsStatus.WindowBoundsSaveFailed;
+            StatusContent = LauncherSettingsStatus.WindowBoundsSaveFailed;
             return false;
         }
     }

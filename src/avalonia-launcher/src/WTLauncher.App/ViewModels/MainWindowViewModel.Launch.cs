@@ -53,7 +53,7 @@ public sealed partial class MainWindowViewModel
         {
             var plan = _launchWorkflow.BuildPlan(entry, RequireConfirmationForLaunches);
             DryRunText = plan.CommandLine;
-            StatusText = LauncherSingleLaunchStatus.Preview(entryName, plan.RequiresConfirmation);
+            StatusContent = LauncherSingleLaunchStatus.Preview(entryName, plan.RequiresConfirmation);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
@@ -61,12 +61,12 @@ public sealed partial class MainWindowViewModel
             if (entryName.Length == 0)
             {
                 DryRunText = LauncherSingleLaunchReceiptText.PreviewFailed(ex);
-                StatusText = LauncherSingleLaunchStatus.PreviewFailed(ex);
+                StatusContent = LauncherSingleLaunchStatus.PreviewFailed(ex);
                 return;
             }
 
             DryRunText = LauncherSingleLaunchReceiptText.PreviewFailed(entryName, ex);
-            StatusText = LauncherSingleLaunchStatus.PreviewFailed(entryName);
+            StatusContent = LauncherSingleLaunchStatus.PreviewFailed(entryName);
         }
     }
 
@@ -92,7 +92,7 @@ public sealed partial class MainWindowViewModel
                 item.RecordLaunchFromOwner(CurrentTimestampUtc());
                 if (!SaveConfig())
                     return;
-                StatusText = LauncherSingleLaunchStatus.Requested(entryName);
+                StatusContent = LauncherSingleLaunchStatus.Requested(entryName);
             }
             catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
             {
@@ -100,14 +100,14 @@ public sealed partial class MainWindowViewModel
                 if (entryName.Length == 0)
                 {
                     DryRunText = LauncherSingleLaunchReceiptText.Failed(ex);
-                    StatusText = LauncherSingleLaunchStatus.Failed(ex);
+                    StatusContent = LauncherSingleLaunchStatus.Failed(ex);
                     return;
                 }
 
                 DryRunText = plan is null
                     ? LauncherSingleLaunchReceiptText.Failed(entryName, ex)
                     : LauncherSingleLaunchReceiptText.Failed(entryName, plan, ex);
-                StatusText = LauncherSingleLaunchStatus.Failed(entryName, ex);
+                StatusContent = LauncherSingleLaunchStatus.Failed(entryName, ex);
             }
         }
         finally
@@ -134,7 +134,7 @@ public sealed partial class MainWindowViewModel
         {
             ErrorLog.Write(ex, "LaunchConfirmation");
             DryRunText = LauncherSingleLaunchReceiptText.ConfirmationFailed(entryName, plan, ex);
-            StatusText = LauncherSingleLaunchStatus.Failed(entryName, ex);
+            StatusContent = LauncherSingleLaunchStatus.Failed(entryName, ex);
             return false;
         }
 
@@ -142,7 +142,7 @@ public sealed partial class MainWindowViewModel
             return true;
 
         DryRunText = LauncherSingleLaunchReceiptText.Canceled(entryName, plan);
-        StatusText = LauncherSingleLaunchStatus.Canceled(entryName);
+        StatusContent = LauncherSingleLaunchStatus.Canceled(entryName);
         return false;
     }
 

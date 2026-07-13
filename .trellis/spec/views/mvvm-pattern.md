@@ -252,61 +252,67 @@ private Task LaunchAsync() => _owner.LaunchAsync(this);
 
 **Rule:** CommunityToolkit.Mvvm is the ONLY third-party dependency allowed in ViewModels.
 
-## Scenario: Authoritative status text with derived presentation tone
+## Scenario: Typed authoritative status content
 
 ### 1. Scope / Trigger
 
-Use this when MainWindow needs semantic success/warning/error emphasis without adding toast state or duplicating status content.
+Use this when MainWindow publishes user-facing operation status with semantic success, warning or error emphasis.
 
 ### 2. Signatures
 
-```csharp
-public string StatusText { get; set; }
-public LauncherStatusTone StatusTone => LauncherStatusPresentation.Classify(StatusText);
-public string StatusIndicator => LauncherStatusPresentation.IndicatorFor(StatusTone);
-```
+~~~csharp
+public sealed record LauncherStatusContent(string Text, LauncherStatusTone Tone);
+public LauncherStatusContent StatusContent { get; set; }
+public string StatusText => StatusContent.Text;
+public LauncherStatusTone StatusTone => StatusContent.Tone;
+
+public sealed record ServiceCanceled<T>(LauncherStatusContent Status);
+public sealed record ServiceFailure<T>(LauncherStatusContent Status);
+~~~
 
 ### 3. Contracts
 
-- `StatusText` remains the only writable authority; tone, indicator and boolean XAML projections are read-only derivatives.
-- Classification precedence is error, warning, success, neutral so partial-success text containing “跳过” is not painted as pure success.
-- The status panel retains text and adds a glyph; color is never the only cue.
+- StatusContent is the only writable MainWindow status authority; text, tone, indicator and boolean XAML projections are read-only.
+- Workflow formatter methods own both exact user text and explicit tone. Production code never infers tone from Chinese keyword markers.
+- ServiceCanceled and ServiceFailure transport the typed content unchanged; success payload and persistence ownership remain separate.
+- CQ-02 save helpers may retain string error transport internally. The MainWindow boundary wraps such strings explicitly as Error.
 - No timer, queue, history, persistence field or background task is permitted.
 
 ### 4. Validation & Error Matrix
 
-| Text class | Tone |
+| Condition | Required result |
 | --- | --- |
-| save/load/dialog/launch failure, invalid or missing target | Error |
-| canceled, skipped or partial outcome | Warning |
-| saved, added, updated, deleted, launched or completed | Success |
-| ready, loaded, filtering, selection or in-progress text | Neutral |
+| Status text is null, empty or whitespace | LauncherStatusContent constructor throws |
+| User cancels an operation | Warning |
+| Operation partially succeeds or skips items | Warning |
+| Save/load/dialog/validation/launch fails | Error |
+| Mutation or launch completes | Success |
+| Ready, loaded, preview or in-progress information | Neutral |
 
 ### 5. Good/Base/Bad Cases
 
-- Good: `StatusText = "存储保存失败..."` synchronously notifies `StatusTone`, indicator and all boolean projections.
-- Base: “已加载 20 个按钮” stays neutral because it is ambient state, not an operation receipt.
-- Bad: a separately writable `StatusTone` field that can drift from `StatusText`.
+- Good: LauncherEntryStatus.Updated returns StatusContent with Success.
+- Base: launch receipt text stays a multiline string because it is not the authoritative status value.
+- Bad: Classify(StatusText) scans for 失败 or 已保存 and silently changes tone when copy changes.
 
 ### 6. Tests Required
 
-- Classifier tests cover every tone and precedence overlap.
-- ViewModel test asserts dependent `PropertyChanged` notifications.
-- MainWindow structural test proves the authoritative text binding, semantic classes and non-color glyph remain present.
-- GUI smoke proves compiled XAML resources resolve.
+- Content tests cover missing-text validation and all four named tone factories.
+- Formatter tests assert both Text and Tone for cancellation, partial success and failure overlap.
+- Service-result tests prove typed content is preserved by identity.
+- ViewModel test asserts one StatusContent change notifies StatusText, tone, indicator and boolean projections.
+- Full publish and GUI smoke prove existing XAML bindings remain valid.
 
 ### 7. Wrong vs Correct
 
-```csharp
-// Wrong: second writable truth.
-StatusText = message;
-StatusTone = LauncherStatusTone.Error;
+~~~csharp
+// Wrong: copy controls presentation semantics.
+StatusText = "已添加 2 个（1 个跳过）";
+public LauncherStatusTone StatusTone => Classify(StatusText);
 
-// Correct: presentation is always derived from the authority.
-StatusText = message;
-public LauncherStatusTone StatusTone => LauncherStatusPresentation.Classify(StatusText);
-```
-
+// Correct: the owning workflow makes the semantic decision.
+StatusContent = LauncherStatusContent.Warning("已添加 2 个（1 个跳过）");
+~~~
 ---
 
 ## AutoCompleteBox for Search
@@ -441,7 +447,7 @@ ServiceResult<PresetMutation> IPresetService.AddPreset(...);
 ### 3. Contracts
 
 - `ServiceSuccess<T>.Value` is non-null and carries the complete data required for the caller's success path.
-- `ServiceCanceled<T>.Status` and `ServiceFailure<T>.Status` are non-empty existing user-facing status strings.
+- `ServiceCanceled<T>.Status` and `ServiceFailure<T>.Status` are non-null `LauncherStatusContent` values with explicit tone.
 - Dialog `null`/`false` becomes Canceled; recoverable exceptions and validation rejection become Failure; valid data becomes Success.
 - ViewModels match all three branches and use an unreachable default. Persistence, snapshot, mutation, save, and rollback remain outside the service.
 - Operation-specific success shapes use immutable sealed payload records instead of anonymous tuples.
@@ -450,8 +456,8 @@ ServiceResult<PresetMutation> IPresetService.AddPreset(...);
 
 | Condition | Required result |
 | --- | --- |
-| Dialog closes or rejects confirmation | `ServiceCanceled<T>` with the existing cancellation status |
-| Dialog throws a recoverable exception | Log it and return `ServiceFailure<T>` with sanitized status |
+| Dialog closes or rejects confirmation | `ServiceCanceled<T>` with the existing cancellation text and Warning tone |
+| Dialog throws a recoverable exception | Log it and return `ServiceFailure<T>` with sanitized text and Error tone |
 | Draft/name/domain validation rejects input | `ServiceFailure<T>`; do not mutate caller state |
 | Domain workflow returns the expected payload | `ServiceSuccess<T>` with a non-null immutable payload |
 | Store save fails after success | ViewModel transaction restores its snapshot; service result is not rewritten |
@@ -464,7 +470,7 @@ ServiceResult<PresetMutation> IPresetService.AddPreset(...);
 
 ### 6. Tests Required
 
-- Result constructors reject null success payloads and empty cancel/failure statuses.
+- Result constructors reject null success payloads and null cancel/failure status content; content itself rejects blank text.
 - Each service family directly tests success, user cancellation, validation/recoverable failure, and operation-specific payload fields.
 - ViewModel regressions continue to assert status text, focus cleanup, preset fallback, persistence failure, and complete rollback.
 
@@ -480,8 +486,8 @@ else if (status is not null) StatusText = status;
 switch (await service.AddEntryAsync(...))
 {
     case ServiceSuccess<LaunchEntry> success: Add(success.Value); break;
-    case ServiceCanceled<LaunchEntry> canceled: StatusText = canceled.Status; break;
-    case ServiceFailure<LaunchEntry> failure: StatusText = failure.Status; break;
+    case ServiceCanceled<LaunchEntry> canceled: StatusContent = canceled.Status; break;
+    case ServiceFailure<LaunchEntry> failure: StatusContent = failure.Status; break;
     default: throw new UnreachableException();
 }
 ```

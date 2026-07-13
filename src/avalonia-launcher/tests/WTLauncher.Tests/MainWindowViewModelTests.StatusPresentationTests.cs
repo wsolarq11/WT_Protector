@@ -5,7 +5,7 @@ namespace WTLauncher.Tests;
 public sealed partial class MainWindowViewModelTests
 {
     [Fact]
-    public void StatusTextChange_NotifiesEveryDerivedPresentationProperty()
+    public void StatusContentChange_NotifiesTextAndEveryDerivedPresentationProperty()
     {
         using var temp = new TempDirectory();
         var (config, settings, _) = CreatePortableFixture(temp, oneSelected: false, twoSelected: false);
@@ -17,11 +17,12 @@ public sealed partial class MainWindowViewModelTests
                 changed.Add(args.PropertyName);
         };
 
-        viewModel.StatusText = "存储保存失败: access denied";
+        viewModel.StatusContent = LauncherStatusContent.Error("存储保存失败: access denied");
 
         Assert.Equal(LauncherStatusTone.Error, viewModel.StatusTone);
         Assert.Equal("×", viewModel.StatusIndicator);
         Assert.True(viewModel.IsStatusError, "error status should activate the non-neutral projection");
+        Assert.Contains(nameof(MainWindowViewModel.StatusText), changed);
         Assert.Contains(nameof(MainWindowViewModel.StatusTone), changed);
         Assert.Contains(nameof(MainWindowViewModel.StatusIndicator), changed);
         Assert.Contains(nameof(MainWindowViewModel.IsStatusNeutral), changed);

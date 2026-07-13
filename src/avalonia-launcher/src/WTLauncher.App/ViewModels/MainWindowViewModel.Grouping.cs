@@ -57,7 +57,7 @@ public sealed partial class MainWindowViewModel
         {
             RestoreEntryMutationSnapshot(snapshot);
             _cardsGroupKey = _settings.CardsGroupKey;
-            StatusText = saveFailure;
+            StatusContent = LauncherStatusContent.Error(saveFailure);
             return;
         }
 
@@ -102,24 +102,24 @@ public sealed partial class MainWindowViewModel
     {
         if (entries.Count == 0)
         {
-            StatusText = LauncherRefreshStatus.GroupNoEntries;
+            StatusContent = LauncherRefreshStatus.GroupNoEntries;
             return;
         }
 
         await LaunchBatchAsync(
             entries,
             confirmationTargetLabel: $"分组 \"{entries[0].Command}\"",
-            emptyStatus: "组内无 entry。",
-            canceledStatus: _ => "已取消批量启动",
-            failedStatus: ex => $"批量启动失败: {ExceptionMessageFormatter.ForUser(ex)}",
-            completedStatus: report => $"已启动组内 {report.RequestedCount} 个 entry。").ConfigureAwait(true);
+            emptyStatus: LauncherRefreshStatus.GroupNoEntries,
+            canceledStatus: _ => LauncherRefreshStatus.CanceledBatch,
+            failedStatus: LauncherSelectionStatus.BatchLaunchFailed,
+            completedStatus: LauncherGroupStatus.BatchCompleted).ConfigureAwait(true);
     }
 
     private async Task SaveGroupAsPresetAsync(IReadOnlyList<string> entryIds)
     {
         if (entryIds.Count == 0)
         {
-            StatusText = LauncherRefreshStatus.GroupNoEntriesCannotSave;
+            StatusContent = LauncherRefreshStatus.GroupNoEntriesCannotSave;
             return;
         }
 
@@ -128,7 +128,7 @@ public sealed partial class MainWindowViewModel
         var nameResult = await _presetService.RequestNewPresetAsync(target, _presets.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase)).ConfigureAwait(true);
         if (nameResult is not ServiceSuccess<string> nameSuccess)
         {
-            StatusText = nameResult switch
+            StatusContent = nameResult switch
             {
                 ServiceCanceled<string> canceled => canceled.Status,
                 ServiceFailure<string> failure => failure.Status,
@@ -143,7 +143,7 @@ public sealed partial class MainWindowViewModel
         if (addResult is not ServiceSuccess<PresetMutation> addSuccess)
         {
             RestorePresetSnapshotAndReportMissing(snapshot);
-            StatusText = addResult switch
+            StatusContent = addResult switch
             {
                 ServiceCanceled<PresetMutation> canceled => canceled.Status,
                 ServiceFailure<PresetMutation> failure => failure.Status,

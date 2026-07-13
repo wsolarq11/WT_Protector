@@ -140,7 +140,7 @@ public sealed class EntryService : IEntryService
         var entry = LauncherEntryDrafts.CreateEntry(draft, previousEntry);
         var validation = LauncherEntryDrafts.ValidateEntry(entry, originalId, existingEntries);
         if (validation is not null)
-            return new ServiceFailure<LaunchEntry>(validation);
+            return new ServiceFailure<LaunchEntry>(LauncherStatusContent.Error(validation));
 
         return new ServiceSuccess<LaunchEntry>(entry);
     }

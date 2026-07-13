@@ -27,17 +27,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly ObservableCollection<LauncherPresetViewModel> _presets = [];
 
     [ObservableProperty]
-    private string _statusText = LauncherMainWindowText.Ready;
+    private LauncherStatusContent _statusContent = LauncherMainWindowText.Ready;
 
-    public LauncherStatusTone StatusTone => LauncherStatusPresentation.Classify(StatusText);
+    public string StatusText => StatusContent.Text;
+    public LauncherStatusTone StatusTone => StatusContent.Tone;
     public string StatusIndicator => LauncherStatusPresentation.IndicatorFor(StatusTone);
     public bool IsStatusNeutral => StatusTone == LauncherStatusTone.Neutral;
     public bool IsStatusSuccess => StatusTone == LauncherStatusTone.Success;
     public bool IsStatusWarning => StatusTone == LauncherStatusTone.Warning;
     public bool IsStatusError => StatusTone == LauncherStatusTone.Error;
 
-    partial void OnStatusTextChanged(string value)
+    partial void OnStatusContentChanged(LauncherStatusContent value)
     {
+        OnPropertyChanged(nameof(StatusText));
         OnPropertyChanged(nameof(StatusTone));
         OnPropertyChanged(nameof(StatusIndicator));
         OnPropertyChanged(nameof(IsStatusNeutral));
@@ -139,7 +141,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         RefreshSelectionState();
         ApplyFilter();
         LauncherEntryLayoutPresentation.Refresh(_entries);
-        StatusText = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
+        StatusContent = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
     }
 
     public ReadOnlyObservableCollection<LauncherEntryViewModel> Entries { get; }
@@ -169,7 +171,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "Refresh.LoadStore");
-            StatusText = LauncherMainWindowText.ConfigLoadFailed(ExceptionMessageFormatter.ForUser(ex));
+            StatusContent = LauncherMainWindowText.ConfigLoadFailed(ExceptionMessageFormatter.ForUser(ex));
             return;
         }
 
@@ -187,7 +189,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "Refresh.Validate");
-            StatusText = LauncherMainWindowText.ConfigValidationFailed(ExceptionMessageFormatter.ForUser(ex));
+            StatusContent = LauncherMainWindowText.ConfigValidationFailed(ExceptionMessageFormatter.ForUser(ex));
             // Reload preset file to ensure _presetFile and UI state are consistent
             // after a partial failure during Phase 2 validation.
             try { LoadPresetFile(preferredPresetId: null); }
@@ -203,7 +205,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         RefreshSelectionState();
         ApplyFilter();
         LauncherEntryLayoutPresentation.Refresh(_entries);
-        StatusText = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
+        StatusContent = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
     }
 
     private void ValidateCommandTemplateReferences()
@@ -213,7 +215,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _settings.CommandTemplates);
 
         if (missingKeys.Count > 0)
-            StatusText = LauncherMainWindowText.UndefinedCommandTemplateKeys(string.Join(", ", missingKeys));
+            StatusContent = LauncherMainWindowText.UndefinedCommandTemplateKeys(string.Join(", ", missingKeys));
     }
 
     /// <summary>
@@ -241,7 +243,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private void ApplyStatusText(string? statusText)
     {
         if (statusText is not null)
-            StatusText = statusText;
+            StatusContent = LauncherStatusContent.Error(statusText);
+    }
+
+    private void ApplyStatusText(LauncherStatusContent? status)
+    {
+        if (status is not null)
+            StatusContent = status;
     }
 
     private bool SaveConfig()
@@ -274,7 +282,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "SaveStoreFile");
-            return LauncherPersistenceStatus.StoreSaveFailed(ex);
+            return LauncherPersistenceStatus.StoreSaveFailed(ex).Text;
         }
     }
 

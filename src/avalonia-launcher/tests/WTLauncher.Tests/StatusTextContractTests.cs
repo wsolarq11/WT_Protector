@@ -43,7 +43,7 @@ public sealed class StatusTextContractTests
     [InlineData(false, "启动确认: 所有启动项直接启动")]
     public void LaunchConfirmationSavedUsesConditionalText(bool requireConfirmation, string expected)
     {
-        Assert.Equal(expected, LauncherSettingsStatus.LaunchConfirmationSaved(requireConfirmation));
+        Assert.Equal(expected, LauncherSettingsStatus.LaunchConfirmationSaved(requireConfirmation).Text);
     }
 
     // ── LauncherSingleLaunchStatus (conditional preview + overloads) ──
@@ -53,7 +53,7 @@ public sealed class StatusTextContractTests
     [InlineData(true, "预演: one（需要确认）")]
     public void PreviewIncludesConfirmationOnlyWhenRequired(bool requiresConfirmation, string expected)
     {
-        Assert.Equal(expected, LauncherSingleLaunchStatus.Preview("one", requiresConfirmation));
+        Assert.Equal(expected, LauncherSingleLaunchStatus.Preview("one", requiresConfirmation).Text);
     }
 
     [Fact]
@@ -61,12 +61,12 @@ public sealed class StatusTextContractTests
     {
         var exception = new InvalidOperationException("missing directory");
 
-        Assert.Equal("预演失败: one", LauncherSingleLaunchStatus.PreviewFailed("one"));
-        Assert.Equal("预演失败: missing directory", LauncherSingleLaunchStatus.PreviewFailed(exception));
+        Assert.Equal("预演失败: one", LauncherSingleLaunchStatus.PreviewFailed("one").Text);
+        Assert.Equal("预演失败: missing directory", LauncherSingleLaunchStatus.PreviewFailed(exception).Text);
         Assert.Equal("启动失败: one — missing directory",
-            LauncherSingleLaunchStatus.Failed("one", exception));
+            LauncherSingleLaunchStatus.Failed("one", exception).Text);
         Assert.Equal("启动失败: missing directory",
-            LauncherSingleLaunchStatus.Failed(exception));
+            LauncherSingleLaunchStatus.Failed(exception).Text);
     }
 
     // ── LauncherSelectionStatus (batch report formatting) ──
@@ -87,10 +87,12 @@ public sealed class StatusTextContractTests
                 "four: missing four",
             ]);
 
-        Assert.Equal("已请求启动 2 个勾选项", LauncherSelectionStatus.BatchLaunchCompleted(success));
+        Assert.Equal("已请求启动 2 个勾选项", LauncherSelectionStatus.BatchLaunchCompleted(success).Text);
         Assert.Equal(
             "已请求启动 1 个勾选项，4 个失败，2 个未启动：one: missing one；two: missing two；three: missing three；…另有 1 项",
-            LauncherSelectionStatus.BatchLaunchCompleted(failures));
+            LauncherSelectionStatus.BatchLaunchCompleted(failures).Text);
+        Assert.Equal(LauncherStatusTone.Success, LauncherSelectionStatus.BatchLaunchCompleted(success).Tone);
+        Assert.Equal(LauncherStatusTone.Warning, LauncherSelectionStatus.BatchLaunchCompleted(failures).Tone);
     }
 
     // ── LauncherPresetStatus (array join) ──
@@ -100,6 +102,6 @@ public sealed class StatusTextContractTests
     {
         Assert.Equal(
             "启动组引用了不存在的启动项: one, two",
-            LauncherPresetStatus.MissingEntryReferences(["one", "two"]));
+            LauncherPresetStatus.MissingEntryReferences(["one", "two"]).Text);
     }
 }

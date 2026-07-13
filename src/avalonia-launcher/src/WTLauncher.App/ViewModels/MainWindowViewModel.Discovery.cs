@@ -34,13 +34,13 @@ public sealed partial class MainWindowViewModel
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "DiscoverAgents.Dialog");
-            StatusText = LauncherRefreshStatus.DialogOpenFailed("发现", ex);
+            StatusContent = LauncherRefreshStatus.DialogOpenFailed("发现", ex);
             return;
         }
 
         if (selection is null)
         {
-            StatusText = LauncherRefreshStatus.DialogCanceled("发现");
+            StatusContent = LauncherRefreshStatus.DialogCanceled("发现");
             return;
         }
 
@@ -57,7 +57,7 @@ public sealed partial class MainWindowViewModel
         };
         if (selected.Count == 0)
         {
-            StatusText = LauncherRefreshStatus.DialogCanceled("发现");
+            StatusContent = LauncherRefreshStatus.DialogCanceled("发现");
             return;
         }
 
@@ -72,7 +72,7 @@ public sealed partial class MainWindowViewModel
             var result = _entryService.CreateEntryFromDraft(draft, originalId: null, previousEntry: null, _entries.Select(ToLaunchEntry));
             if (result is not ServiceSuccess<LaunchEntry> success)
             {
-                StatusText = result switch
+                StatusContent = result switch
                 {
                     ServiceCanceled<LaunchEntry> canceled => canceled.Status,
                     ServiceFailure<LaunchEntry> failure => failure.Status,
@@ -92,9 +92,7 @@ public sealed partial class MainWindowViewModel
         if (!SaveEntryCollectionChanges(snapshot))
             return;
 
-        StatusText = skipped.Count == 0
-            ? $"已添加 {added} 个 AI Agent 启动项"
-            : $"已添加 {added} 个 AI Agent 启动项（{skipped.Count} 个跳过: {string.Join(", ", skipped)}）";
+        StatusContent = LauncherDiscoveryStatus.AgentsAdded(added, skipped);
     }
 
     private void AddExistingDirectoryEntry(EntryDraft draft)
@@ -112,10 +110,10 @@ public sealed partial class MainWindowViewModel
                     ApplyStatusText(LauncherEntryStatus.Added(entry.Name));
                 return;
             case ServiceCanceled<LaunchEntry> canceled:
-                StatusText = canceled.Status;
+                StatusContent = canceled.Status;
                 return;
             case ServiceFailure<LaunchEntry> failure:
-                StatusText = failure.Status;
+                StatusContent = failure.Status;
                 return;
             default:
                 throw new UnreachableException();

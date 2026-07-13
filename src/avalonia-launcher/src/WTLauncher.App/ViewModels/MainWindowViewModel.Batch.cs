@@ -103,14 +103,14 @@ public sealed partial class MainWindowViewModel
     private async Task LaunchBatchAsync(
         IReadOnlyList<LauncherEntryViewModel> entries,
         string confirmationTargetLabel,
-        string emptyStatus,
-        Func<int, string> canceledStatus,
-        Func<Exception, string> failedStatus,
-        Func<LauncherBatchLaunchReport, string> completedStatus)
+        LauncherStatusContent emptyStatus,
+        Func<int, LauncherStatusContent> canceledStatus,
+        Func<Exception, LauncherStatusContent> failedStatus,
+        Func<LauncherBatchLaunchReport, LauncherStatusContent> completedStatus)
     {
         if (entries.Count == 0)
         {
-            StatusText = emptyStatus;
+            StatusContent = emptyStatus;
             return;
         }
 
@@ -162,18 +162,18 @@ public sealed partial class MainWindowViewModel
             if (startedCount > 0 && !SaveConfig())
                 return;
             DryRunText = LauncherBatchLaunchReceiptText.Format(preflight, report);
-            StatusText = completedStatus(report);
+            StatusContent = completedStatus(report);
         }
         catch (OperationCanceledException)
         {
             DryRunText = LauncherBatchLaunchReceiptText.Canceled(preflight?.Items ?? []);
-            StatusText = LauncherRefreshStatus.CanceledBatch;
+            StatusContent = LauncherRefreshStatus.CanceledBatch;
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "BatchLaunch");
             DryRunText = LauncherBatchLaunchReceiptText.Failed(ex);
-            StatusText = failedStatus(ex);
+            StatusContent = failedStatus(ex);
         }
         finally
         {
@@ -187,8 +187,8 @@ public sealed partial class MainWindowViewModel
         IReadOnlyList<LauncherBatchLaunchItem> items,
         LauncherBatchLaunchReport report,
         string confirmationTargetLabel,
-        Func<int, string> canceledStatus,
-        Func<Exception, string> failedStatus)
+        Func<int, LauncherStatusContent> canceledStatus,
+        Func<Exception, LauncherStatusContent> failedStatus)
     {
         // Always confirm when preflight reports failures, regardless of RequireConfirmationForLaunches.
         // Also confirm when any individual item's plan requires confirmation (per-entry override).
@@ -209,7 +209,7 @@ public sealed partial class MainWindowViewModel
         {
             ErrorLog.Write(ex, "BatchLaunchConfirmation");
             DryRunText = LauncherBatchLaunchReceiptText.ConfirmationFailed(confirmation.Items, ex);
-            StatusText = failedStatus(ex);
+            StatusContent = failedStatus(ex);
             return false;
         }
 
@@ -217,7 +217,7 @@ public sealed partial class MainWindowViewModel
             return true;
 
         DryRunText = LauncherBatchLaunchReceiptText.Canceled(confirmation.Items);
-        StatusText = canceledStatus(confirmation.Items.Count);
+        StatusContent = canceledStatus(confirmation.Items.Count);
         return false;
     }
 

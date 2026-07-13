@@ -1,3 +1,5 @@
+using WTLauncher.App.ViewModels;
+
 namespace WTLauncher.App.Features;
 
 public abstract record ServiceResult<T>
@@ -20,22 +22,20 @@ public sealed record ServiceSuccess<T> : ServiceResult<T>
 
 public sealed record ServiceCanceled<T> : ServiceResult<T>
 {
-    public ServiceCanceled(string status)
+    public ServiceCanceled(LauncherStatusContent status)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(status);
-        Status = status;
+        Status = status ?? throw new ArgumentNullException(nameof(status));
     }
 
-    public string Status { get; }
+    public LauncherStatusContent Status { get; }
 }
 
 public sealed record ServiceFailure<T> : ServiceResult<T>
 {
-    public ServiceFailure(string status)
+    public ServiceFailure(LauncherStatusContent status)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(status);
-        Status = status;
+        Status = status ?? throw new ArgumentNullException(nameof(status));
     }
 
-    public string Status { get; }
+    public LauncherStatusContent Status { get; }
 }

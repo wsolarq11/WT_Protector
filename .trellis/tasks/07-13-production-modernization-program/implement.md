@@ -4,21 +4,21 @@
 
 - [x] 完成 CQ-02，统一 mutation 的持久化与回滚边界。
 - [x] 完成 CQ-01，并复用 FMA Phase 2/3 的 service extraction。
-- [ ] 完成 CQ-06，只在调用方确实需要分支的 service 边界引入 typed result。
-- [ ] 完成 CQ-07，为上述边界补公共行为契约测试。
+- [x] 完成 CQ-06，只在调用方确实需要分支的 service 边界引入 typed result。
+- [x] 完成 CQ-07，为上述边界补公共行为契约测试。
 
 ## Stage 2 — Frequent workflows
 
-- [ ] 复用既有任务完成并验收 UX-01 frecency。
-- [ ] 复用既有任务完成并验收 UX-02 central management。
-- [ ] 复用既有任务完成并验收 UX-03 existing-directory quick create。
-- [ ] 完成 UX-04 contextual feedback。
+- [x] 复用既有任务完成并验收 UX-01 frecency。
+- [x] 复用既有任务完成并验收 UX-02 central management。
+- [x] 复用既有任务完成并验收 UX-03 existing-directory quick create。
+- [x] 完成 UX-04 contextual feedback。
 
 ## Stage 3 — Declarative and visual modernization
 
-- [ ] 完成 CQ-03 CommandManagementWindow XAML 化。
-- [ ] 完成 CQ-04 MainWindow XAML 模块化。
-- [ ] 完成 CQ-05 typed status content。
+- [x] 完成 CQ-03 CommandManagementWindow XAML 化。
+- [x] 完成 CQ-04 MainWindow XAML 模块化。
+- [x] 完成 CQ-05 typed status content。
 - [ ] 完成 V-01 token convergence、V-02 declutter、V-03 dialog consistency。
 
 ## Stage 4 — Production proof

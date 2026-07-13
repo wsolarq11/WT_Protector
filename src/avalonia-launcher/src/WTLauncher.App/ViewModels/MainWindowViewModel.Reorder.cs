@@ -31,7 +31,7 @@ public sealed partial class MainWindowViewModel
 
         if (!TryResolveVisibleMoveTarget(entry, targetOffset, out var target))
         {
-            StatusText = LauncherDragReorderStatus.MoveUnavailable;
+            StatusContent = LauncherDragReorderStatus.MoveUnavailable;
             RefreshReorderCommandState();
             return;
         }
@@ -43,14 +43,17 @@ public sealed partial class MainWindowViewModel
             // the snapshot would lose them.
             EnsureCustomOrderContainsEntries();
             ApplyFilter();
-            StatusText = LauncherDragReorderStatus.MoveUnavailable;
+            StatusContent = LauncherDragReorderStatus.MoveUnavailable;
             return;
         }
         _settings = _settings with { CustomEntryOrder = updatedOrder };
 
         var saveFailure = SaveSettingsChange(snapshot);
         ApplyFilter();
-        ApplyStatusText(saveFailure ?? LauncherDragReorderStatus.Moved(entry.Name));
+        ApplyStatusText(
+            saveFailure is null
+                ? LauncherDragReorderStatus.Moved(entry.Name)
+                : LauncherStatusContent.Error(saveFailure));
     }
 
     private bool TryResolveVisibleMoveTarget(

@@ -40,7 +40,7 @@ public sealed partial class MainWindowViewModel
         if (TryGetSelectedPreset(out var selectedPreset))
             return selectedPreset;
 
-        StatusText = LauncherPresetStatus.NoPresetSelected;
+        StatusContent = LauncherPresetStatus.NoPresetSelected;
         return null;
     }
 
@@ -58,10 +58,10 @@ public sealed partial class MainWindowViewModel
             case ServiceSuccess<LauncherPresetDeleteTarget>:
                 return true;
             case ServiceCanceled<LauncherPresetDeleteTarget> canceled:
-                StatusText = canceled.Status;
+                StatusContent = canceled.Status;
                 return false;
             case ServiceFailure<LauncherPresetDeleteTarget> failure:
-                StatusText = failure.Status;
+                StatusContent = failure.Status;
                 return false;
             default:
                 throw new UnreachableException();
@@ -77,10 +77,10 @@ public sealed partial class MainWindowViewModel
             case ServiceSuccess<string> success:
                 return success.Value;
             case ServiceCanceled<string> canceled:
-                StatusText = canceled.Status;
+                StatusContent = canceled.Status;
                 return null;
             case ServiceFailure<string> failure:
-                StatusText = failure.Status;
+                StatusContent = failure.Status;
                 return null;
             default:
                 throw new UnreachableException();
@@ -338,7 +338,7 @@ public sealed partial class MainWindowViewModel
         var entries = GetPresetEntries(selectedPreset.EntryIds);
         if (entries.Count == 0)
         {
-            StatusText = LauncherPresetStatus.NoPresetEntries(selectedPreset.Name);
+            StatusContent = LauncherPresetStatus.NoPresetEntries(selectedPreset.Name);
             return;
         }
 
@@ -351,18 +351,18 @@ public sealed partial class MainWindowViewModel
             if (preflight.Report.FailedCount > 0)
             {
                 DryRunText = LauncherBatchLaunchPlanText.FailedPreflight(preflight);
-                StatusText = LauncherPresetStatus.PreviewFailed(selectedPreset.Name, preflight.Report);
+                StatusContent = LauncherPresetStatus.PreviewFailed(selectedPreset.Name, preflight.Report);
                 return;
             }
 
             DryRunText = LauncherBatchLaunchPlanText.Format(preflight.Items);
-            StatusText = LauncherPresetStatus.Previewed(selectedPreset.Name, preflight.Items.Count);
+            StatusContent = LauncherPresetStatus.Previewed(selectedPreset.Name, preflight.Items.Count);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "PresetPreview");
             DryRunText = LauncherBatchLaunchPlanText.Failed(ex);
-            StatusText = LauncherPresetStatus.PreviewFailed(selectedPreset.Name, ex);
+            StatusContent = LauncherPresetStatus.PreviewFailed(selectedPreset.Name, ex);
         }
     }
 
@@ -372,7 +372,7 @@ public sealed partial class MainWindowViewModel
         DiscardDragReorderPreview();
         if (SelectedCount == 0)
         {
-            StatusText = LauncherSelectionStatus.NoSelectedEntries;
+            StatusContent = LauncherSelectionStatus.NoSelectedEntries;
             return;
         }
 
@@ -386,7 +386,7 @@ public sealed partial class MainWindowViewModel
         if (addResult is not ServiceSuccess<PresetMutation> addSuccess)
         {
             RestorePresetSnapshotAndReportMissing(snapshot);
-            StatusText = addResult switch
+            StatusContent = addResult switch
             {
                 ServiceCanceled<PresetMutation> canceled => canceled.Status,
                 ServiceFailure<PresetMutation> failure => failure.Status,
@@ -412,14 +412,14 @@ public sealed partial class MainWindowViewModel
 
         if (!_presetService.CanUpdatePreset(_presetFile, selectedPreset.Id))
         {
-            StatusText = LauncherPresetStatus.UpdateBlocked(selectedPreset.Name);
+            StatusContent = LauncherPresetStatus.UpdateBlocked(selectedPreset.Name);
             return;
         }
 
         var entryIds = GetSelectedEntryIds();
         if (entryIds.Count == 0)
         {
-            StatusText = LauncherSelectionStatus.SelectionRequired;
+            StatusContent = LauncherSelectionStatus.SelectionRequired;
             return;
         }
 
@@ -431,7 +431,7 @@ public sealed partial class MainWindowViewModel
         var preview = BuildPresetSelectionPreview(selectedPreset, entryIds);
         if (!preview.HasChanges)
         {
-            StatusText = LauncherRefreshStatus.GroupAlreadyUpToDate(selectedPreset.Name);
+            StatusContent = LauncherRefreshStatus.GroupAlreadyUpToDate(selectedPreset.Name);
             return;
         }
 
@@ -440,7 +440,7 @@ public sealed partial class MainWindowViewModel
         if (updateResult is not ServiceSuccess<PresetMutation> updateSuccess)
         {
             RestorePresetSnapshotAndReportMissing(snapshot);
-            StatusText = updateResult switch
+            StatusContent = updateResult switch
             {
                 ServiceCanceled<PresetMutation> canceled => canceled.Status,
                 ServiceFailure<PresetMutation> failure => failure.Status,
@@ -471,7 +471,7 @@ public sealed partial class MainWindowViewModel
             selectedPreset.EntryIds);
         if (!_presetService.CanDeletePreset(_presetFile, target.PresetId))
         {
-            StatusText = LauncherPresetStatus.DeleteBlocked(target.PresetName);
+            StatusContent = LauncherPresetStatus.DeleteBlocked(target.PresetName);
             return;
         }
 
@@ -488,7 +488,7 @@ public sealed partial class MainWindowViewModel
         if (deleteResult is not ServiceSuccess<PresetDeleteMutation> deleteSuccess)
         {
             RestorePresetSnapshotAndReportMissing(snapshot);
-            StatusText = deleteResult switch
+            StatusContent = deleteResult switch
             {
                 ServiceCanceled<PresetDeleteMutation> canceled => canceled.Status,
                 ServiceFailure<PresetDeleteMutation> failure => failure.Status,
