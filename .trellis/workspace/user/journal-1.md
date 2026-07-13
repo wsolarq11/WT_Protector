@@ -1336,3 +1336,36 @@ FMA Phase 0-1: IDialogService, PresetService 提取并集成; 卡片视图拖拽
 ### Next Steps
 
 - None - task complete
+
+
+## Session 39: Codex Trellis setup and exemplar gap audit
+
+**Date**: 2026-07-13
+**Task**: Codex Trellis setup and exemplar gap audit
+**Branch**: `main`
+
+### Summary
+
+Configured and verified Codex Trellis SessionStart/UserPromptSubmit integration, documented the official hook trust boundary, audited WT Launcher against a composite code/visual/operational exemplar, and produced a prioritized feasible refactor matrix.
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `7459819` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
