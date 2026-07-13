@@ -129,12 +129,14 @@ public sealed partial class MainWindowViewModel
         TotalCount = _entries.Count;
         EnsureCustomOrderContainsEntries();
 
-        var saveFailure = SaveStoreFile(BuildStoreFile());
+        var saveFailure = LauncherMutationTransaction.Commit(
+            rollbackSnapshot,
+            () => SaveStoreFile(BuildStoreFile()),
+            RestoreEntryMutationSnapshot);
 
         if (saveFailure is not null)
         {
             StatusText = saveFailure;
-            RestoreEntryMutationSnapshot(rollbackSnapshot);
             return false;
         }
 

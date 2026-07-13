@@ -213,7 +213,6 @@ public sealed partial class MainWindowViewModel
         var saveFailure = SaveSettingsChange(snapshot);
         if (saveFailure is not null)
         {
-            _settings = snapshot;
             ApplyStatusText(saveFailure);
             return false;
         }

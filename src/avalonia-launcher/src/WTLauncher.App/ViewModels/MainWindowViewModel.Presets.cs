@@ -256,11 +256,15 @@ public sealed partial class MainWindowViewModel
         // When no preset remains (e.g., deleting the last preset), selectedPresetId
         // is empty and SelectedPreset resolves to null — the dropdown shows nothing.
         selectedPreset = null;
-        var saveFailure = SaveStoreFile(BuildStoreFile());
+        var saveFailure = LauncherMutationTransaction.Commit(
+            snapshot,
+            () => SaveStoreFile(BuildStoreFile()),
+            rollbackSnapshot => ApplyPresetFileState(
+                rollbackSnapshot.PresetFile,
+                rollbackSnapshot.SelectedPresetId));
         if (saveFailure is not null)
         {
             ApplyStatusText(saveFailure);
-            ApplyPresetFileState(snapshot.PresetFile, snapshot.SelectedPresetId);
             return false;
         }
 

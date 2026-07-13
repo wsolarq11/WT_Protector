@@ -295,11 +295,18 @@ public sealed partial class MainWindowViewModel
         LauncherSelectionMutationSnapshot snapshot)
     {
         RefreshSelectionState();
-        if (SaveConfig())
+        var saveFailure = LauncherMutationTransaction.Commit(
+            snapshot,
+            () => SaveStoreFile(BuildStoreFile()),
+            rollbackSnapshot =>
+            {
+                rollbackSnapshot.Restore();
+                RefreshSelectionState();
+            });
+        if (saveFailure is null)
             return true;
 
-        snapshot.Restore();
-        RefreshSelectionState();
+        ApplyStatusText(saveFailure);
         return false;
     }
 

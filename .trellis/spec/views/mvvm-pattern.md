@@ -181,6 +181,68 @@ Code-behind OnWindowKeyDown:
 
 ---
 
+## Scenario: Persisted ViewModel mutation transaction
+
+### 1. Scope / Trigger
+
+Use this contract when a ViewModel mutation changes in-memory state that must be restored if the unified launcher store cannot commit. It applies to settings, entries, presets, and selection; a save-only operation without a real snapshot must not claim rollback semantics.
+
+### 2. Signatures
+
+```csharp
+internal static string? LauncherMutationTransaction.Commit<TSnapshot>(
+    TSnapshot snapshot,
+    Func<string?> persist,
+    Action<TSnapshot> restore);
+```
+
+### 3. Contracts
+
+- `snapshot` is captured before the mutation and contains every observable state value owned by that mutation family.
+- `persist` routes through `MainWindowViewModel.SaveStoreFile(BuildStoreFile())`; `LauncherStore` remains the only disk writer.
+- `restore` performs in-memory restoration plus required derived-state refreshes. It must not write to disk.
+- The returned `string?` is the original persistence failure: `null` means committed; non-null means restored.
+
+### 4. Validation & Error Matrix
+
+| Condition | Required result |
+| --- | --- |
+| `persist()` returns `null` | Keep mutated state; never call `restore` |
+| `persist()` returns an error | Call `restore(snapshot)` exactly once; return the same error |
+| `persist()` throws a recoverable storage exception | `SaveStoreFile` converts it to the existing persistence status before `Commit` sees it |
+| `restore` exposes stale derived state | Contract violation; include selection/filter/count refresh in the restore callback |
+
+### 5. Good/Base/Bad Cases
+
+- Good: entry rollback restores entries, settings, presets, selection, filter projection, counts, and layout presentation.
+- Base: settings rollback restores the immutable `LauncherSettings` snapshot.
+- Bad: wrapping command-management save in `Commit` without first capturing its edited entries/settings would advertise rollback that cannot happen.
+
+### 6. Tests Required
+
+- `LauncherMutationTransactionTests`: success does not restore; failure restores once and returns the same message.
+- Every migrated mutation family keeps a save-failure regression asserting its complete observable state equals the pre-mutation snapshot.
+- Full repository verification must still prove the single-store invariant, publish, and GUI smoke.
+
+### 7. Wrong vs Correct
+
+```csharp
+// Wrong: every caller privately owns the failure branch.
+var failure = SaveStoreFile(BuildStoreFile());
+if (failure is not null)
+    Restore(snapshot);
+
+// Correct: one control-flow owner; domain restoration stays with the caller.
+var failure = LauncherMutationTransaction.Commit(
+    snapshot,
+    () => SaveStoreFile(BuildStoreFile()),
+    Restore);
+```
+
+Do not replace this narrow helper with a repository, Unit of Work, or event bus: the application commits one local JSON aggregate and has no multi-resource transaction.
+
+---
+
 ## Forbidden Patterns
 
 - ❌ **ViewModel creates a `new Window()`** — dialogs always injected via `Func<>`.

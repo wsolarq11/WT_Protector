@@ -284,12 +284,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         value ?? throw new InvalidDataException($"Launcher settings {fieldName} is null.");
 
     private string? SaveSettingsChange(LauncherSettings snapshot)
-    {
-        var saveFailure = SaveStoreFile(BuildStoreFile());
-        if (saveFailure is not null)
-            _settings = snapshot;
-        return saveFailure;
-    }
+        => LauncherMutationTransaction.Commit(
+            snapshot,
+            () => SaveStoreFile(BuildStoreFile()),
+            rollbackSnapshot => _settings = rollbackSnapshot);
 
     internal void SetKeyboardFocusedEntryId(string? value)
     {
