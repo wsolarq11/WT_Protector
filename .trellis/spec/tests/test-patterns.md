@@ -227,6 +227,71 @@ var viewModel = new MainWindowViewModel(
 
 ---
 
+## Scenario: Feature-service and ViewModel-component contracts
+
+### 1. Scope / Trigger
+
+Use direct contract tests after extracting a feature service or a stable bindable component from `MainWindowViewModel`. The goal is to prove its public boundary without duplicating the existing persistence or GUI-smoke owners.
+
+### 2. Signatures
+
+```csharp
+Task<ServiceResult<T>> FeatureService.OperationAsync(...);
+ServiceResult<T> FeatureService.Mutate(...);
+IAsyncRelayCommand BindableComponent.ActionCommand { get; }
+```
+
+Test files follow `<ProductionType>Tests.cs`, for example `EntryServiceTests.cs`, `PresetServiceTests.cs`, and `LauncherCardGroupViewModelTests.cs`.
+
+### 3. Contracts
+
+- Service tests use the real service, real Core workflow and `StubDialogService`; no mocking framework.
+- Cover Success payload, user Canceled status, recoverable Failure status, validation rejection, and input aggregate non-mutation where applicable.
+- Component tests execute generated public commands and assert bindable properties, `PropertyChanged`, callback payload values and visible order.
+- Callback collections are point-in-time payloads: later component collection mutation must not rewrite an already-delivered list.
+- MainWindowViewModel tests remain the owner of snapshot/save/rollback and status integration; GUI smoke remains the owner of XAML rendering.
+
+### 4. Validation & Error Matrix
+
+| Boundary event | Required assertion |
+| --- | --- |
+| Dialog returns data | Exact normalized/snapshotted Success payload |
+| Dialog closes or rejects | Exact `ServiceCanceled<T>.Status` |
+| Dialog throws recoverably | Exact `ServiceFailure<T>.Status`; no state mutation |
+| Domain target is invalid/missing/locked | Failure and original aggregate unchanged |
+| Component command runs | Callback receives IDs/items in current visible order |
+| Bindable state changes | Property value and dependent notification both observed |
+
+### 5. Good/Base/Bad Cases
+
+- Good: delete service test asserts both snapshotted target and focus-cleanup ID.
+- Base: group component test asserts `CountLabel`, expand icon and callback order without creating a Window.
+- Bad: invoking a private command method through reflection or asserting XAML margin values in a unit test.
+
+### 6. Tests Required
+
+- Every public feature-service operation has at least one direct success or delegation test plus every applicable cancel/failure branch.
+- Every operation-specific typed payload has field-level assertions.
+- Every extracted bindable component has construction/property and command/callback tests.
+- Full Release tests and `tools/verify.ps1` must remain green; focused tests do not replace the production gate.
+
+### 7. Wrong vs Correct
+
+```csharp
+// Wrong: only a large owner test indirectly happens to cross the service.
+await viewModel.AddEntryCommand.ExecuteAsync(null);
+Assert.Equal(1, viewModel.TotalCount);
+
+// Correct: direct boundary test names the outcome and its payload.
+var result = await service.AddEntryAsync(...);
+var success = Assert.IsType<ServiceSuccess<LaunchEntry>>(result);
+Assert.Equal("one", success.Value.Id);
+```
+
+Do not change production visibility or add interfaces solely to make these tests convenient; use existing public commands and lightweight real owners/factories.
+
+---
+
 ## Forbidden Patterns
 
 - ❌ **Tests that write to the real `config/` directory.**
