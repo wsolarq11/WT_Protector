@@ -3,7 +3,7 @@
   "name": "cq04-mainwindow-xaml-modularity",
   "title": "CQ04 MainWindow XAML模块化",
   "description": "按工具栏和三视图等已证明边界拆分992行主XAML",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
