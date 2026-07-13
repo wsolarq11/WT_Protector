@@ -76,6 +76,17 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **根因** | Deferred tool 的 schema 未加载，必须先 `ToolSearch` 加载再调用 |
 | **预防** | 凡是 `<system-reminder>` 提示 deferred tools 可用 → 用之前先 `ToolSearch(query="select:ToolName")` |
 
+### 1.7 Trellis Codex `SessionStart` 脚本存在不等于已接线
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-07-13 任务 `07-13-codex-trellis-setup`；Trellis 0.6.6 生成 `.codex/hooks/session-start.py`，但默认 `.codex/hooks.json` 仅注册 `UserPromptSubmit` |
+| **症状** | `trellis update --dry-run` 显示最新、脚本手工运行正常，但新 Codex 会话没有收到 Trellis SessionStart 概览 |
+| **根因** | 生成文件存在性被误当成平台 settings 已注册；Codex 只执行 `hooks.json` 或同层 `config.toml` 中实际接线的事件 |
+| **预防** | Codex/Trellis 安装验收必须同时检查：(1) CLI/模板版本；(2) 项目 trusted；(3) 用户级 `features.hooks=true`；(4) `.codex/hooks.json` 同时注册 `SessionStart` 与 `UserPromptSubmit`；(5) 两个脚本手工返回匹配的 `hookEventName`；(6) 新 hook 通过交互 `/hooks` 信任 |
+| **更新注意** | `.codex/hooks.json` 是 intentional local customization。未来运行 `trellis update` 时审查并合并，不用 `--force` 覆盖 |
+| **详细契约** | `docs/trellis-codex-setup-audit.md` |
+
 ---
 
 ## 2. WT_Protector 项目坑

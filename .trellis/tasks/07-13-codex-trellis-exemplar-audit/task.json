@@ -1,0 +1,29 @@
+{
+  "id": "codex-trellis-exemplar-audit",
+  "name": "codex-trellis-exemplar-audit",
+  "title": "Codex Trellis 完整配置与理想典范差距审计",
+  "description": "",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "<USER>",
+  "assignee": "<USER>",
+  "createdAt": "2026-07-13",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "07-13-codex-trellis-setup",
+    "07-13-exemplar-gap-refactor-audit"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}
