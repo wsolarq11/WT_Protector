@@ -436,6 +436,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Contains("• 已请求: one", viewModel.DryRunText);
         Assert.Contains("codex", viewModel.DryRunText);
         Assert.Equal("已请求启动 1 个勾选项", viewModel.StatusText);
+        Assert.Equal(LauncherStatusTone.Success, viewModel.StatusTone);
     }
 
     [Fact]
@@ -560,6 +561,7 @@ public sealed partial class MainWindowViewModelTests
         // set by ApplyStatusText, NOT be overwritten by "已请求启动".
         Assert.Contains("存储保存失败", viewModel.StatusText);
         Assert.DoesNotContain("已请求启动", viewModel.StatusText);
+        Assert.Equal(LauncherStatusTone.Error, viewModel.StatusTone);
 
         // DryRunText still shows the launch receipt — the process was started.
         Assert.Contains("启动回执", viewModel.DryRunText);

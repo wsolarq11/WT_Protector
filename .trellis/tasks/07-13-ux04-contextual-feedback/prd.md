@@ -22,12 +22,12 @@
 
 ## Acceptance Criteria
 
-- [ ] AC1：状态栏仍绑定唯一 `StatusText`，没有新增并行消息集合或持久化字段。
-- [ ] AC2：成功、warning、error 和 neutral 可由 ViewModel 的类型化状态属性确定，且变更通知稳定。
-- [ ] AC3：MainWindow 状态区对四种语义有结构化视觉状态，并保留文本/自动化名称，不只使用颜色。
-- [ ] AC4：至少覆盖新增/编辑/删除、launch success/failure、save failure、dialog cancel 的语义映射测试。
-- [ ] AC5：状态替换不使用延迟、动画或后台任务，不产生竞态和过期消息覆盖。
-- [ ] AC6：Release 测试、`git diff --check`、`tools/verify.ps1`、publish 与 GUI smoke 全部通过。
+- [x] AC1：状态栏仍绑定唯一 `StatusText`，没有新增并行消息集合或持久化字段。
+- [x] AC2：成功、warning、error 和 neutral 可由 ViewModel 的类型化状态属性确定，且变更通知稳定。
+- [x] AC3：MainWindow 状态区对四种语义有结构化视觉状态，并保留文本/自动化名称，不只使用颜色。
+- [x] AC4：至少覆盖新增/编辑/删除、launch success/failure、save failure、dialog cancel 的语义映射测试。
+- [x] AC5：状态替换不使用延迟、动画或后台任务，不产生竞态和过期消息覆盖。
+- [x] AC6：Release 测试、`git diff --check`、`tools/verify.ps1`、publish 与 GUI smoke 全部通过。
 
 ## Out of Scope
 

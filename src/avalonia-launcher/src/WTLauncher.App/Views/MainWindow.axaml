@@ -22,6 +22,28 @@
       <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
       <Setter Property="FontSize" Value="13"/>
     </Style>
+    <Style Selector="Border.status-panel">
+      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+    <Style Selector="Border.status-panel.status-success">
+      <Setter Property="BorderBrush" Value="{StaticResource BadgeSuccessForegroundBrush}"/>
+    </Style>
+    <Style Selector="Border.status-panel.status-warning">
+      <Setter Property="BorderBrush" Value="{StaticResource BadgeInfoForegroundBrush}"/>
+    </Style>
+    <Style Selector="Border.status-panel.status-error">
+      <Setter Property="BorderBrush" Value="{StaticResource ErrorBrush}"/>
+    </Style>
+    <Style Selector="Border.status-panel.status-success TextBlock.status-indicator">
+      <Setter Property="Foreground" Value="{StaticResource BadgeSuccessForegroundBrush}"/>
+    </Style>
+    <Style Selector="Border.status-panel.status-warning TextBlock.status-indicator">
+      <Setter Property="Foreground" Value="{StaticResource BadgeInfoForegroundBrush}"/>
+    </Style>
+    <Style Selector="Border.status-panel.status-error TextBlock.status-indicator">
+      <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
+    </Style>
     <Style Selector="Border.card">
       <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
       <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
@@ -971,18 +993,31 @@
     </Grid>
 
     <Border Grid.Row="2"
+            Classes="status-panel"
+            Classes.status-success="{Binding IsStatusSuccess}"
+            Classes.status-warning="{Binding IsStatusWarning}"
+            Classes.status-error="{Binding IsStatusError}"
             Background="{StaticResource SurfaceBrush}"
             CornerRadius="16"
             BorderBrush="{StaticResource CardBorderBrush}"
             BorderThickness="1"
             Padding="16">
-      <Grid RowDefinitions="Auto,Auto">
-        <TextBlock Text="{Binding StatusText}"
+      <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*">
+        <TextBlock Classes="status-indicator"
+                   Text="{Binding StatusIndicator}"
+                   automation:AutomationProperties.Name="状态级别"
+                   Margin="0,0,8,0"
+                   FontSize="14"
+                   FontWeight="Bold"
+                   Foreground="{StaticResource TextMutedBrush}"/>
+        <TextBlock Grid.Column="1"
+                   Text="{Binding StatusText}"
                    automation:AutomationProperties.Name="状态信息"
                    FontSize="14"
                    FontWeight="SemiBold"
                    Foreground="{StaticResource TextPrimaryBrush}"/>
         <TextBlock Grid.Row="1"
+                   Grid.ColumnSpan="2"
                    Margin="0,8,0,0"
                    Classes="mono"
                    Text="{Binding DryRunText}"/>

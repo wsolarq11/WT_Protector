@@ -195,6 +195,61 @@ private Task LaunchAsync() => _owner.LaunchAsync(this);
 
 **Rule:** CommunityToolkit.Mvvm is the ONLY third-party dependency allowed in ViewModels.
 
+## Scenario: Authoritative status text with derived presentation tone
+
+### 1. Scope / Trigger
+
+Use this when MainWindow needs semantic success/warning/error emphasis without adding toast state or duplicating status content.
+
+### 2. Signatures
+
+```csharp
+public string StatusText { get; set; }
+public LauncherStatusTone StatusTone => LauncherStatusPresentation.Classify(StatusText);
+public string StatusIndicator => LauncherStatusPresentation.IndicatorFor(StatusTone);
+```
+
+### 3. Contracts
+
+- `StatusText` remains the only writable authority; tone, indicator and boolean XAML projections are read-only derivatives.
+- Classification precedence is error, warning, success, neutral so partial-success text containing “跳过” is not painted as pure success.
+- The status panel retains text and adds a glyph; color is never the only cue.
+- No timer, queue, history, persistence field or background task is permitted.
+
+### 4. Validation & Error Matrix
+
+| Text class | Tone |
+| --- | --- |
+| save/load/dialog/launch failure, invalid or missing target | Error |
+| canceled, skipped or partial outcome | Warning |
+| saved, added, updated, deleted, launched or completed | Success |
+| ready, loaded, filtering, selection or in-progress text | Neutral |
+
+### 5. Good/Base/Bad Cases
+
+- Good: `StatusText = "存储保存失败..."` synchronously notifies `StatusTone`, indicator and all boolean projections.
+- Base: “已加载 20 个按钮” stays neutral because it is ambient state, not an operation receipt.
+- Bad: a separately writable `StatusTone` field that can drift from `StatusText`.
+
+### 6. Tests Required
+
+- Classifier tests cover every tone and precedence overlap.
+- ViewModel test asserts dependent `PropertyChanged` notifications.
+- MainWindow structural test proves the authoritative text binding, semantic classes and non-color glyph remain present.
+- GUI smoke proves compiled XAML resources resolve.
+
+### 7. Wrong vs Correct
+
+```csharp
+// Wrong: second writable truth.
+StatusText = message;
+StatusTone = LauncherStatusTone.Error;
+
+// Correct: presentation is always derived from the authority.
+StatusText = message;
+public LauncherStatusTone StatusTone => LauncherStatusPresentation.Classify(StatusText);
+```
+
 ---
 
 ## AutoCompleteBox for Search

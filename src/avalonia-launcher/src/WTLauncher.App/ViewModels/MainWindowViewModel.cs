@@ -29,6 +29,23 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private string _statusText = LauncherMainWindowText.Ready;
 
+    public LauncherStatusTone StatusTone => LauncherStatusPresentation.Classify(StatusText);
+    public string StatusIndicator => LauncherStatusPresentation.IndicatorFor(StatusTone);
+    public bool IsStatusNeutral => StatusTone == LauncherStatusTone.Neutral;
+    public bool IsStatusSuccess => StatusTone == LauncherStatusTone.Success;
+    public bool IsStatusWarning => StatusTone == LauncherStatusTone.Warning;
+    public bool IsStatusError => StatusTone == LauncherStatusTone.Error;
+
+    partial void OnStatusTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(StatusTone));
+        OnPropertyChanged(nameof(StatusIndicator));
+        OnPropertyChanged(nameof(IsStatusNeutral));
+        OnPropertyChanged(nameof(IsStatusSuccess));
+        OnPropertyChanged(nameof(IsStatusWarning));
+        OnPropertyChanged(nameof(IsStatusError));
+    }
+
     [ObservableProperty]
     private string _dryRunText = LauncherMainWindowText.DryRunPlaceholder;
 

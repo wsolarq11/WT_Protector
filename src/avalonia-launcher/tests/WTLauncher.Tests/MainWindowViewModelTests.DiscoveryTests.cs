@@ -35,6 +35,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(2, viewModel.Entries.Count);
         Assert.Equal("已取消发现", viewModel.StatusText);
+        Assert.Equal(LauncherStatusTone.Warning, viewModel.StatusTone);
     }
 
     [Fact]
@@ -71,6 +72,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Contains(viewModel.Entries, e => e.Name == "Claude Code");
         Assert.Contains(viewModel.Entries, e => e.Name == "Aider");
         Assert.Contains("已添加 2 个 AI Agent 启动项", viewModel.StatusText);
+        Assert.Equal(LauncherStatusTone.Success, viewModel.StatusTone);
 
         var saved = LauncherStore.Load(config);
         Assert.Equal(4, saved.Entries.Count);
@@ -96,6 +98,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Equal(2, viewModel.Entries.Count);
         Assert.Contains("存储保存失败", viewModel.StatusText);
+        Assert.Equal(LauncherStatusTone.Error, viewModel.StatusTone);
         AssertNoStoreTempFiles(config);
     }
 

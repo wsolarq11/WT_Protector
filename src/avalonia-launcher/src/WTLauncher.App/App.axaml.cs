@@ -34,6 +34,7 @@ public sealed partial class App : Application
         // ── Base colors ────────────────────────────────────
         Resources["PrimaryBrush"]     = new SolidColorBrush(Color.Parse(LauncherDesignTokens.PrimaryColor));
         Resources["DestructiveBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.DestructiveColor));
+        Resources["ErrorBrush"]       = new SolidColorBrush(Color.Parse(LauncherDesignTokens.ErrorColor));
         Resources["BackgroundBrush"]  = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BackgroundColor));
         Resources["TextPrimaryBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.TextPrimaryColor));
         Resources["TextMutedBrush"]   = new SolidColorBrush(Color.Parse(LauncherDesignTokens.TextMutedColor));

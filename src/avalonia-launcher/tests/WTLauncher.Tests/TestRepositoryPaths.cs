@@ -47,8 +47,7 @@ internal static class TestRepositoryPaths
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
-            if (File.Exists(Path.Combine(dir.FullName, "config", "config.json"))
-                && File.Exists(Path.Combine(dir.FullName, "config", "settings.json"))
+            if (File.Exists(Path.Combine(dir.FullName, "config", "launcher.json"))
                 && File.Exists(Path.Combine(dir.FullName, "README.md"))
                 && Directory.Exists(Path.Combine(dir.FullName, "src", "avalonia-launcher")))
             {

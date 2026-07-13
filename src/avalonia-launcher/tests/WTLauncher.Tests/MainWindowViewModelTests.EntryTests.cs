@@ -114,6 +114,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
         Assert.Equal(LauncherEntryStatus.AddCanceled, viewModel.StatusText);
+        Assert.Equal(LauncherStatusTone.Warning, viewModel.StatusTone);
     }
 
     [Fact]
@@ -264,6 +265,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(["one-renamed"], LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(["one-renamed", "two", "three"], viewModel.Settings.CustomEntryOrder);
         Assert.Equal(LauncherEntryStatus.Updated("One Renamed"), viewModel.StatusText);
+        Assert.Equal(LauncherStatusTone.Success, viewModel.StatusTone);
     }
 
     [Fact]

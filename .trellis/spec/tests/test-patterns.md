@@ -50,6 +50,8 @@ ViewModel-area tests have their own private `Entry(id, name?, directory?, comman
 
 **Rule:** Every test that touches file I/O uses a temp directory — never write to the real `config/`.
 
+`TestRepositoryPaths` locates the repository by the active single-source marker `config/launcher.json`, plus `README.md` and the Avalonia source root. Never anchor root discovery to retired `config.json`, `settings.json`, or `presets.json`; doing so makes structural tests fail only after the old files disappear.
+
 ---
 
 ## Test Structure
