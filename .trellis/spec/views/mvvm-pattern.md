@@ -488,6 +488,67 @@ switch (await service.AddEntryAsync(...))
 
 Do not grow this into a global exception taxonomy or replace direct Core contracts that do not require caller branching.
 
+## Scenario: Main-window XAML module with narrow owner contract
+
+### 1. Scope / Trigger
+
+Use this when a stable MainWindow region is large enough to own its XAML but window-level keyboard, scroll, context-menu or drag orchestration must remain in MainWindow.
+
+### 2. Signatures
+
+~~~csharp
+public sealed partial class LauncherControlBar : UserControl
+{
+    public AutoCompleteBox SearchBox { get; }
+    public ComboBox DisplayModeBox { get; }
+}
+
+public sealed partial class LauncherEntriesView : UserControl
+{
+    public event EventHandler<RoutedEventArgs>? EntryMoreClicked;
+    public event EventHandler<TappedEventArgs>? EntryRowDoubleTapped;
+    public event EventHandler<PointerPressedEventArgs>? EntryDragPointerPressed;
+}
+~~~
+
+### 3. Contracts
+
+- The module uses MainWindowViewModel as its compiled x:DataType and inherits the same DataContext; it never mirrors ViewModel state.
+- Public control access is read-only and limited to controls required by proven window behavior.
+- Child code-behind forwards original sender/event args only. MainWindow retains launch, context-menu, drag eligibility and scroll decisions.
+- Cross-module lookup by string FindControl is forbidden.
+
+### 4. Validation & Error Matrix
+
+| Condition | Required behavior |
+| --- | --- |
+| Avalonia loads the module | Public parameterless constructor calls InitializeComponent() |
+| Window needs focus/selection/scroll control | Use the module's typed read-only accessor |
+| XAML raises more/double-tap/pointer input | Forward the original event to the subscribed MainWindow handler |
+| Module would need copied state or a callback bag | Keep the orchestration in MainWindow; the proposed seam is too broad |
+
+### 5. Good/Base/Bad Cases
+
+- Good: EntriesView.EntryDragPointerPressed += OnEntryDragPointerPressed.
+- Base: the status panel stays in MainWindow because it is small and window-authoritative.
+- Bad: MainWindow.FindControl by child name, or a child ViewModel that mirrors selection.
+
+### 6. Tests Required
+
+- Structure test proves module composition, typed DataContext, named-control ownership and event forwarding.
+- Structure test rejects migrated templates and named controls remaining in MainWindow.
+- Release tests plus publish and GUI smoke prove compiled resources and loader constructors resolve.
+
+### 7. Wrong vs Correct
+
+~~~csharp
+// Wrong: fragile visual-tree reach-through.
+var cards = this.FindControl<ItemsControl>("CardsEntriesItemsControl");
+
+// Correct: explicit narrow contract.
+private ItemsControl CardsEntriesItemsControl => EntriesView.CardsItems;
+~~~
+
 ---
 
 ## Forbidden Patterns

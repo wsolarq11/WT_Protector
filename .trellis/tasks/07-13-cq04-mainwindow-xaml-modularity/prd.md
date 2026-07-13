@@ -24,13 +24,13 @@
 
 ## Acceptance Criteria
 
-- [ ] AC1：新增控制栏和条目区域两个 typed UserControl，MainWindow 壳通过声明式组合使用它们。
-- [ ] AC2：MainWindow 本体不再包含三套大型 DataTemplate 或控制栏完整视觉树，行数/职责显著下降。
-- [ ] AC3：MainWindow code-behind 和 drag 通过窄访问器继续访问所需控件，无跨组件 `FindControl` 字符串查找。
-- [ ] AC4：Cards/Details/Names 的切换、空状态、selection、context menu、double tap、drag preview 与滚动恢复行为保持。
-- [ ] AC5：compiled binding、automation names 与 token resource 引用保持，子控件不引入硬编码颜色。
-- [ ] AC6：新增结构契约证明模块边界、typed binding、关键事件和命名控件所有权。
-- [ ] AC7：Release tests、`git diff --check`、`tools/verify.ps1`、publish 与 GUI smoke 全绿。
+- [x] AC1：新增控制栏和条目区域两个 typed UserControl，MainWindow 壳通过声明式组合使用它们。
+- [x] AC2：MainWindow 本体不再包含三套大型 DataTemplate 或控制栏完整视觉树，行数/职责显著下降。
+- [x] AC3：MainWindow code-behind 和 drag 通过窄访问器继续访问所需控件，无跨组件 `FindControl` 字符串查找。
+- [x] AC4：Cards/Details/Names 的切换、空状态、selection、context menu、double tap、drag preview 与滚动恢复行为保持。
+- [x] AC5：compiled binding、automation names 与 token resource 引用保持，子控件不引入硬编码颜色。
+- [x] AC6：新增结构契约证明模块边界、typed binding、关键事件和命名控件所有权。
+- [x] AC7：Release tests、`git diff --check`、`tools/verify.ps1`、publish 与 GUI smoke 全绿。
 
 ## Out of Scope
 

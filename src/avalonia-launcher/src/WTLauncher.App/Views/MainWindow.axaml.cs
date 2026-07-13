@@ -22,6 +22,20 @@ public sealed partial class MainWindow : Window
     private readonly EventHandler<SizeChangedEventArgs>? _onSizeChangedHandler;
     private readonly EventHandler? _onOpenedHandler;
 
+    private AutoCompleteBox SearchTextBox => ControlBar.SearchBox;
+
+    private ComboBox DisplayModeComboBox => ControlBar.DisplayModeBox;
+
+    private ScrollViewer CardsScrollViewer => EntriesView.CardsScroll;
+
+    private ItemsControl CardsEntriesItemsControl => EntriesView.CardsItems;
+
+    private ListBox DetailsEntriesItemsControl => EntriesView.DetailsItems;
+
+    private ScrollViewer NamesScrollViewer => EntriesView.NamesScroll;
+
+    private ItemsControl NamesEntriesItemsControl => EntriesView.NamesItems;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -81,6 +95,9 @@ public sealed partial class MainWindow : Window
         Closing += OnClosing;
         KeyDown += OnWindowKeyDown;
         DisplayModeComboBox.SelectionChanged += OnDisplayModeSelectionChanged;
+        EntriesView.EntryMoreClicked += OnEntryMoreClicked;
+        EntriesView.EntryRowDoubleTapped += OnEntryRowDoubleTapped;
+        EntriesView.EntryDragPointerPressed += OnEntryDragPointerPressed;
     }
 
     private void UpdateCardRegionSize(MainWindowViewModel viewModel)
@@ -248,6 +265,9 @@ public sealed partial class MainWindow : Window
                 Opened -= _onOpenedHandler;
             KeyDown -= OnWindowKeyDown;
             DisplayModeComboBox.SelectionChanged -= OnDisplayModeSelectionChanged;
+            EntriesView.EntryMoreClicked -= OnEntryMoreClicked;
+            EntriesView.EntryRowDoubleTapped -= OnEntryRowDoubleTapped;
+            EntriesView.EntryDragPointerPressed -= OnEntryDragPointerPressed;
 
             if (DataContext is MainWindowViewModel viewModel)
             {

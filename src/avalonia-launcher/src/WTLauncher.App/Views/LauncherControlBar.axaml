@@ -1,0 +1,104 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:automation="clr-namespace:Avalonia.Automation;assembly=Avalonia.Controls"
+             xmlns:vm="clr-namespace:WTLauncher.App.ViewModels"
+             x:Class="WTLauncher.App.Views.LauncherControlBar"
+             x:DataType="vm:MainWindowViewModel">
+  <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+    <StackPanel>
+      <TextBlock Classes="h1" Text="WT Launcher"/>
+      <TextBlock Classes="muted" Text="绿色便携启动器 · 搜索、勾选、一键启动"/>
+    </StackPanel>
+    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Top">
+      <Border Background="{StaticResource BadgeSuccessBackgroundBrush}" CornerRadius="14" Padding="12,8" VerticalAlignment="Center">
+        <TextBlock Foreground="{StaticResource BadgeSuccessForegroundBrush}">
+          <Run Text="已勾选 "/><Run Text="{Binding SelectedCount}"/><Run Text=" 项"/>
+        </TextBlock>
+      </Border>
+      <ToggleSwitch IsChecked="{Binding RequireConfirmationForLaunches, Mode=TwoWay}"
+                    Content="{Binding LaunchConfirmationToggleText}"
+                    ToolTip.Tip="{Binding LaunchConfirmationToggleTip}"
+                    VerticalAlignment="Center"/>
+      <Button Classes="secondary" Content="全选可见" Command="{Binding SelectVisibleCommand}"/>
+      <Button Classes="secondary" Content="清空" Command="{Binding ClearSelectionCommand}"/>
+      <Button Classes="primary" Content="一键启动已勾选" Command="{Binding LaunchSelectedCommand}"/>
+      <Button Classes="secondary" Content="重新加载" Command="{Binding RefreshCommand}"/>
+    </StackPanel>
+    <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0" Classes="muted" Text="{Binding ConfigPathDisplay}"/>
+    <Grid x:Name="ControlBoxesGrid"
+          Grid.Row="2" Grid.ColumnSpan="2"
+          ColumnDefinitions="1.8*,1*,1*,2.8*" ColumnSpacing="12" Margin="0,12,0,0">
+      <Border Classes="control-box">
+        <StackPanel>
+          <TextBlock Classes="control-box-label" Text="搜索"/>
+          <AutoCompleteBox x:Name="SearchTextBox"
+                           automation:AutomationProperties.Name="搜索"
+                           PlaceholderText="搜索名称、目录或命令"
+                           Text="{Binding FilterText, Mode=TwoWay}"
+                           ItemsSource="{Binding SearchHistoryItems}"
+                           MinimumPrefixLength="1"
+                           MinimumPopulateDelay="0:0:0.150"
+                           IsTextCompletionEnabled="False"
+                           FontSize="16" Padding="12,8"/>
+        </StackPanel>
+      </Border>
+      <Border Grid.Column="1" Classes="control-box">
+        <StackPanel>
+          <TextBlock Classes="control-box-label" Text="排序"/>
+          <ComboBox ItemsSource="{Binding SortModes}"
+                    SelectedItem="{Binding SelectedSortMode, Mode=TwoWay}"
+                    HorizontalAlignment="Stretch"/>
+        </StackPanel>
+      </Border>
+      <Border Grid.Column="2" Classes="control-box">
+        <StackPanel>
+          <TextBlock Classes="control-box-label" Text="视图"/>
+          <ComboBox x:Name="DisplayModeComboBox"
+                    ItemsSource="{Binding DisplayModes}"
+                    SelectedItem="{Binding SelectedDisplayMode, Mode=TwoWay}"
+                    HorizontalAlignment="Stretch"/>
+        </StackPanel>
+      </Border>
+      <Border Grid.Column="3" Classes="control-box">
+        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
+          <TextBlock Grid.ColumnSpan="4" Classes="control-box-label" Text="启动组"/>
+          <ComboBox Grid.Row="1" ItemsSource="{Binding Presets}"
+                    SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Center" PlaceholderText="选择启动组"/>
+          <Button Grid.Row="1" Grid.Column="1" Classes="secondary"
+                  Content="{Binding ApplyPresetButtonText}" Command="{Binding ApplyPresetCommand}"/>
+          <Button Grid.Row="1" Grid.Column="2" Classes="secondary" Content="预演"
+                  Command="{Binding PreviewSelectedPresetCommand}"/>
+          <Button Grid.Row="1" Grid.Column="3" Classes="primary" Content="启动"
+                  AutomationProperties.Name="启动" Command="{Binding LaunchSelectedPresetCommand}"/>
+        </Grid>
+      </Border>
+    </Grid>
+    <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
+      <Button Classes="primary" Content="新增按钮" Command="{Binding AddEntryCommand}"/>
+      <Border Classes="control-box" IsVisible="{Binding IsCardsViewMode}" Padding="8,4" CornerRadius="6"
+              BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+        <StackPanel>
+          <TextBlock Classes="control-box-label" Text="Cards 分组"/>
+          <ComboBox ItemsSource="{Binding CardsGroupOptions}"
+                    SelectedItem="{Binding SelectedCardsGroupOption, Mode=TwoWay}"
+                    DisplayMemberBinding="{Binding Display}" MinWidth="120" VerticalAlignment="Center"/>
+        </StackPanel>
+      </Border>
+      <Button Classes="secondary" Content="🔍 发现" Command="{Binding DiscoverAgentsCommand}"/>
+      <Button Classes="secondary" Content="🛠 管理" Command="{Binding OpenCommandManagementCommand}"/>
+      <Button Classes="secondary" Content="📁 地址" Command="{Binding OpenDirectoryManagementCommand}"/>
+      <Button Classes="secondary" Content="保存为新启动组" Command="{Binding SaveSelectionAsPresetCommand}"/>
+      <Button Classes="secondary" Content="更新当前启动组" Command="{Binding UpdateSelectedPresetCommand}"/>
+      <Button Classes="secondary" Content="删除当前启动组" Command="{Binding DeleteSelectedPresetCommand}"/>
+      <Border Background="{StaticResource BadgeInfoBackgroundBrush}" CornerRadius="14" Padding="12,7"
+              Margin="12,0,0,0" VerticalAlignment="Center">
+        <TextBlock Foreground="{StaticResource BadgeInfoForegroundBrush}">
+          <Run Text="{Binding VisibleCount}"/><Run Text=" / "/><Run Text="{Binding TotalCount}"/>
+        </TextBlock>
+      </Border>
+    </StackPanel>
+    <TextBlock Grid.Row="4" Grid.ColumnSpan="2" Margin="0,8,0,0" Classes="muted"
+               Text="{Binding PresetSelectionStatusText}"/>
+  </Grid>
+</UserControl>
