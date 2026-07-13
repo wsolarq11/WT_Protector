@@ -3,7 +3,7 @@
   "name": "cq03-command-management-xaml",
   "title": "CQ03 CommandManagementWindow XAML化",
   "description": "将命令管理窗口稳定布局迁移到XAML和DataTemplate",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
