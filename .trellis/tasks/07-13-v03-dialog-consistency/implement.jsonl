@@ -1,1 +1,4 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file":".trellis/spec/core/data-types.md","reason":"Stable semantic dialog token ownership and production-consumer contract."}
+{"file":".trellis/spec/views/dialogs.md","reason":"Dialog primitive, default button, focus, spacing and return-value conventions."}
+{"file":".trellis/spec/views/quality-guidelines.md","reason":"View-only changes and destructive default-button review rules."}
+{"file":".trellis/spec/tests/test-quality.md","reason":"Structural contract and published smoke requirements."}
