@@ -1369,3 +1369,36 @@ Configured and verified Codex Trellis SessionStart/UserPromptSubmit integration,
 ### Next Steps
 
 - None - task complete
+
+
+## Session 40: V01 visual token convergence
+
+**Date**: 2026-07-14
+**Task**: V01 visual token convergence
+**Branch**: `main`
+
+### Summary
+
+Converged App raw hex and repeated 12/14/16 typography into semantic Core tokens and App resources; added VisualTokenContractTests plus app-raw-hex-zero fixture-backed root gate; 638 Release tests, publish, GUI smoke, git diff check, and tools/verify.ps1 passed.
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `434e0ca` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
