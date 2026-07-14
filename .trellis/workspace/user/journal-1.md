@@ -1402,3 +1402,36 @@ Converged App raw hex and repeated 12/14/16 typography into semantic Core tokens
 ### Next Steps
 
 - None - task complete
+
+
+## Session 41: V02 main UI declutter
+
+**Date**: 2026-07-14
+**Task**: V02 main UI declutter
+**Branch**: `main`
+
+### Summary
+
+Reduced main-window action competition by moving low-frequency selection/refresh, management, and preset-maintenance commands into three labeled keyboard-accessible menus; preserved direct launch/add/discover paths and existing command ownership; 639 Release tests, publish, GUI smoke, git diff check, and tools/verify.ps1 passed.
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `904b574` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

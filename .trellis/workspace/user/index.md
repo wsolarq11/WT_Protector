@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 40
+- **Total Sessions**: 41
 - **Last Active**: 2026-07-14
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1404 | Active |
+| `journal-1.md` | ~1437 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 41 | 2026-07-14 | V02 main UI declutter | `904b574` | `main` |
 | 40 | 2026-07-14 | V01 visual token convergence | `434e0ca` | `main` |
 | 39 | 2026-07-13 | Codex Trellis setup and exemplar gap audit | `7459819` | `main` |
 | 38 | 2026-07-12 | FMA Phase 0-1 实施 + 卡片视图拖拽修复 + 拖拽性能审计 | `6906006` | `main` |
