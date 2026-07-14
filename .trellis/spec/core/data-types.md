@@ -152,6 +152,16 @@ public static class LauncherDesignTokens
 2. **Tokens are `const`** — compile-time constants, no runtime mutation.
 3. **Injected at runtime via `App.axaml.cs`**, not hardcoded in XAML.
 4. **Never duplicate a token value in XAML** or code-behind — always reference the Core constant.
+5. **Add only stable semantic tokens with a production consumer** — repeated typography levels such as `FontSizeSmall`, `FontSizeBody`, and `FontSizeEmphasis` qualify; one-off margins, widths, heights, and grid ratios do not.
+6. **Keep framework shapes out of Core** — `LauncherDesignTokens` owns strings/doubles; `App.InjectDesignTokens()` converts them to `Brush`, `CornerRadius`, `Thickness`, or `BoxShadows` resources.
+
+```csharp
+// Core authority
+public const double FontSizeBody = 14;
+
+// App composition root
+Resources["FontSizeBody"] = LauncherDesignTokens.FontSizeBody;
+```
 
 ---
 

@@ -39,7 +39,7 @@
                            MinimumPrefixLength="1"
                            MinimumPopulateDelay="0:0:0.150"
                            IsTextCompletionEnabled="False"
-                           FontSize="16" Padding="12,8"/>
+                           FontSize="{StaticResource FontSizeEmphasis}" Padding="12,8"/>
         </StackPanel>
       </Border>
       <Border Grid.Column="1" Classes="control-box">

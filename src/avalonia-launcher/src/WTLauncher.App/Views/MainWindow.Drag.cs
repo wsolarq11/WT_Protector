@@ -320,7 +320,7 @@ public sealed partial class MainWindow
                 OffsetY = 10,
                 Blur = 28,
                 Spread = 0,
-                Color = Color.Parse("#220F172A"),
+                Color = Color.Parse(LauncherDesignTokens.DragGhostShadowColor),
             }),
             Child = new StackPanel
             {
@@ -342,7 +342,7 @@ public sealed partial class MainWindow
                     {
                         Text = directory,
                         FontFamily = GhostFontFamily,
-                        FontSize = 12,
+                        FontSize = LauncherDesignTokens.FontSizeSmall,
                         Foreground = LauncherDialogText.SafeParseBrush(LauncherDesignTokens.TextMutedColor, Brushes.Gray),
                         TextTrimming = TextTrimming.CharacterEllipsis,
                         IsHitTestVisible = false,

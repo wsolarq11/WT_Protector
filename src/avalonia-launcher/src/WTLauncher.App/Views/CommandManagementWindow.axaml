@@ -43,7 +43,7 @@
     <Style Selector="TextBlock.mono-command">
       <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Courier New, monospace"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
     </Style>
     <Style Selector="TextBlock.muted-detail">
       <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
@@ -144,7 +144,7 @@
                           </DataTemplate>
                         </ItemsControl.ItemTemplate>
                       </ItemsControl>
-                      <TextBlock Grid.Column="4" FontSize="12" Foreground="{StaticResource TextMutedBrush}">
+                      <TextBlock Grid.Column="4" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextMutedBrush}">
                         <Run Text="引用 "/><Run Text="{Binding ReferenceCount}"/>
                       </TextBlock>
                     </Grid>
@@ -173,7 +173,7 @@
                       <TextBlock Grid.Column="2" Classes="muted-detail"
                                  FontFamily="Cascadia Code, Consolas, Courier New, monospace"
                                  Text="{Binding ExpandedValue}"/>
-                      <TextBlock Grid.Column="4" FontSize="12" Foreground="{StaticResource TextMutedBrush}">
+                      <TextBlock Grid.Column="4" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextMutedBrush}">
                         <Run Text="引用 "/><Run Text="{Binding ReferenceCount}"/>
                       </TextBlock>
                     </Grid>

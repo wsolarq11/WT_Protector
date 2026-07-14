@@ -89,8 +89,8 @@ public sealed class EntryDetailsWindow : Window
             children.Add(LauncherDialogText.Subtle($"可用模板：{templateKeys}"));
             var templatePreview = new TextBlock
             {
-                Foreground = new SolidColorBrush(Color.Parse("#0369A1")),
-                FontSize = 12,
+                Foreground = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BadgeInfoForegroundColor)),
+                FontSize = LauncherDesignTokens.FontSizeSmall,
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 4),
                 IsVisible = false,

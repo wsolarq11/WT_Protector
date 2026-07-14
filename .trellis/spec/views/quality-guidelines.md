@@ -34,6 +34,18 @@ Code-behind must NOT:
 <Border Background="#2563EB" CornerRadius="13" />
 ```
 
+`WTLauncher.App` production `.cs` and `.axaml` files must contain no `#RRGGBB` or `#AARRGGBB` literals. Reuse an existing token first; add a Core token only for a distinct, stable semantic role. Framework-only values such as an empty shadow are created once in `App.InjectDesignTokens()`:
+
+```csharp
+Resources["NoBoxShadow"] = BoxShadows.Parse("0 0 0 0 Transparent");
+```
+
+```xml
+<Setter Property="BoxShadow" Value="{StaticResource NoBoxShadow}"/>
+```
+
+The root `tools/verify.ps1` gate reports `app-raw-hex-zero` and rejects a temporary raw-hex fixture, so an allowlist must not be introduced to bypass the ownership rule.
+
 ### Class-based Visual States
 
 ```xml

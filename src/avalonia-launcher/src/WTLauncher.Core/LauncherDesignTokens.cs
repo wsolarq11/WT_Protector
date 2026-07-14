@@ -16,6 +16,7 @@ public static class LauncherDesignTokens
     public const string BorderColor = "#E2E8F0";           // card/item borders
     public const string SurfaceColor = "White";            // card/item backgrounds
     public const string BoxShadowColor = "#120F172A";      // card shadow, #AARRGGBB 是 Avalonia Color.Parse 标准格式
+    public const string DragGhostShadowColor = "#220F172A"; // elevated drag preview shadow
 
     // ── Semantic state colors ──────────────────────────────
     public const string HoverBackgroundColor = "#F1F5F9";       // generic hover background
@@ -49,6 +50,11 @@ public static class LauncherDesignTokens
 
     // ── Spacing / Rhythm (golden-ratio aligned) ─────────────
     public const double SpacingSmall = 8;
+
+    // ── Typography ─────────────────────────────────────────
+    public const double FontSizeSmall = 12;
+    public const double FontSizeBody = 14;
+    public const double FontSizeEmphasis = 16;
 
     // ── Dialog ──────────────────────────────────────────────
     public const double DialogFooterSpacing = 10;

@@ -43,7 +43,7 @@
                            Classes="mono"
                            Text="{Binding DisplayName}"
                            FontWeight="SemiBold"
-                           FontSize="14"
+                           FontSize="{StaticResource FontSizeBody}"
                            VerticalAlignment="Center"/>
                 <Border Grid.Column="2"
                         Background="{StaticResource BadgeInfoBackgroundBrush}"
@@ -194,7 +194,7 @@
                                 PointerPressed="OnEntryDragPointerPressed">
                           <TextBlock Text="≡"
                                      Foreground="{StaticResource DragHandleTextBrush}"
-                                     FontSize="12"
+                                     FontSize="{StaticResource FontSizeSmall}"
                                      HorizontalAlignment="Center"
                                      VerticalAlignment="Center"/>
                         </Border>
@@ -215,7 +215,7 @@
                AutomationProperties.Name="无可见按钮"
                HorizontalAlignment="Center"
                VerticalAlignment="Center"
-               FontSize="16"
+               FontSize="{StaticResource FontSizeEmphasis}"
                Foreground="{StaticResource TextMutedBrush}"
                Text="{x:Static vm:MainWindowViewModel.EmptyStateText}"
                IsVisible="{Binding IsVisibleEmpty}"/>
@@ -374,7 +374,7 @@
                             PointerPressed="OnEntryDragPointerPressed">
                       <TextBlock Text="≡"
                                  Foreground="{StaticResource DragHandleTextBrush}"
-                                 FontSize="12"
+                                 FontSize="{StaticResource FontSizeSmall}"
                                  HorizontalAlignment="Center"
                                  VerticalAlignment="Center"/>
                     </Border>
@@ -390,7 +390,7 @@
              AutomationProperties.Name="无可见按钮"
              HorizontalAlignment="Center"
              VerticalAlignment="Center"
-             FontSize="16"
+             FontSize="{StaticResource FontSizeEmphasis}"
              Foreground="{StaticResource TextMutedBrush}"
              Text="{x:Static vm:MainWindowViewModel.EmptyStateText}"
              IsVisible="{Binding IsVisibleEmpty}"/>
@@ -496,7 +496,7 @@
                AutomationProperties.Name="无可见按钮"
                HorizontalAlignment="Center"
                VerticalAlignment="Center"
-               FontSize="16"
+               FontSize="{StaticResource FontSizeEmphasis}"
                Foreground="{StaticResource TextMutedBrush}"
                Text="{x:Static vm:MainWindowViewModel.EmptyStateText}"
                IsVisible="{Binding IsVisibleEmpty}"/>

@@ -90,6 +90,54 @@ Add-Check 'no-bare-catch-exception' @{
     invariant = '.trellis/spec/guides/index.md §5'
 }
 
+# App views consume semantic resources/tokens; raw color literals belong only in
+# WTLauncher.Core/LauncherDesignTokens.cs, the framework-neutral authority.
+$rawHexPattern = '(?<![0-9A-Fa-f])#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6})(?![0-9A-Fa-f])'
+function Get-AppRawHexViolations([System.IO.FileInfo[]]$Files) {
+    $violations = @()
+    foreach ($file in $Files) {
+        $lineNum = 0
+        foreach ($line in Get-Content -LiteralPath $file.FullName -Encoding UTF8) {
+            $lineNum++
+            if ($line -match $rawHexPattern) {
+                $displayPath = if ($file.FullName.StartsWith($root, [System.StringComparison]::OrdinalIgnoreCase)) {
+                    $file.FullName.Substring($root.Length)
+                } else {
+                    $file.FullName
+                }
+                $violations += "${displayPath}:$lineNum"
+            }
+        }
+    }
+    return $violations
+}
+
+$appSourceRoot = Join-Path $root 'src/avalonia-launcher/src/WTLauncher.App'
+$appVisualSourceFiles = @(Get-ChildItem -LiteralPath $appSourceRoot -Recurse -File |
+    Where-Object {
+        $_.FullName -notmatch '\\(obj|bin)\\' -and
+        $_.Extension -in @('.cs', '.axaml')
+    })
+$rawHexViolations = @(Get-AppRawHexViolations $appVisualSourceFiles)
+if ($rawHexViolations.Count -gt 0) {
+    throw "Raw hex color found in WTLauncher.App (use LauncherDesignTokens/resource): $($rawHexViolations -join '; ')"
+}
+
+$rawHexFixturePath = Join-Path ([System.IO.Path]::GetTempPath()) "wt-launcher-raw-hex-$PID.axaml"
+try {
+    Set-Content -LiteralPath $rawHexFixturePath -Encoding UTF8 -NoNewline -Value '<Border Background="#123456"/>'
+    $fixtureViolations = @(Get-AppRawHexViolations @([System.IO.FileInfo]$rawHexFixturePath))
+    if ($fixtureViolations.Count -ne 1) { throw 'Raw-hex gate self-check failed to reject fixture' }
+}
+finally {
+    Remove-Item -LiteralPath $rawHexFixturePath -Force -ErrorAction SilentlyContinue
+}
+Add-Check 'app-raw-hex-zero' @{
+    path = 'src/avalonia-launcher/src/WTLauncher.App'
+    violations = 0
+    fixtureRejected = $true
+}
+
 $sourceRoot = Get-AvaloniaRoot
 $solution = Get-AvaloniaSolutionPath
 $app = Get-AvaloniaAppProjectPath

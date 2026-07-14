@@ -22,13 +22,13 @@
 
 ## Acceptance Criteria
 
-- [ ] AC1：WTLauncher.App 的 cs/axaml 生产源码 raw hex 为 0。
-- [ ] AC2：EntryDetails 模板提示色复用 BadgeInfoForegroundColor；drag ghost shadow 由专用 token 拥有。
-- [ ] AC3：重复 12/14/16 字号使用语义 token，新增 token 均有生产消费。
-- [ ] AC4：verify 门禁能对临时 raw-hex fixture 失败，并在当前源码通过。
-- [ ] AC5：结构测试固定 token 注入、关键消费者和 raw-hex 零漂移。
-- [ ] AC6：没有新增依赖、设计系统、主题框架或视觉改版。
-- [ ] AC7：Release tests、git diff --check、tools/verify.ps1、publish 与 GUI smoke 全绿。
+- [x] AC1：WTLauncher.App 的 cs/axaml 生产源码 raw hex 为 0。
+- [x] AC2：EntryDetails 模板提示色复用 BadgeInfoForegroundColor；drag ghost shadow 由专用 token 拥有。
+- [x] AC3：重复 12/14/16 字号使用语义 token，新增 token 均有生产消费。
+- [x] AC4：verify 门禁能对临时 raw-hex fixture 失败，并在当前源码通过。
+- [x] AC5：结构测试固定 token 注入、关键消费者和 raw-hex 零漂移。
+- [x] AC6：没有新增依赖、设计系统、主题框架或视觉改版。
+- [x] AC7：Release tests、git diff --check、tools/verify.ps1、publish 与 GUI smoke 全绿。
 
 ## Out of Scope
 

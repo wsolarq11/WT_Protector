@@ -74,6 +74,9 @@ public sealed partial class App : Application
         // ── Dimensions / Spacing ────────────────────────────
         Resources["CardBorderRadius"] = new CornerRadius(LauncherDesignTokens.CardBorderRadius);
         Resources["CardPadding"] = new Thickness(LauncherDesignTokens.CardPadding);
+        Resources["FontSizeSmall"] = LauncherDesignTokens.FontSizeSmall;
+        Resources["FontSizeBody"] = LauncherDesignTokens.FontSizeBody;
+        Resources["FontSizeEmphasis"] = LauncherDesignTokens.FontSizeEmphasis;
         Resources["DetailsNameColumnWidth"] = new GridLength(LauncherDesignTokens.DetailsNameColumnWeight, GridUnitType.Star);
         Resources["DetailsDirectoryColumnWidth"] = new GridLength(LauncherDesignTokens.DetailsDirectoryColumnWeight, GridUnitType.Star);
         Resources["DetailsCommandColumnWidth"] = new GridLength(LauncherDesignTokens.DetailsCommandColumnWeight, GridUnitType.Star);
@@ -84,6 +87,7 @@ public sealed partial class App : Application
 
         // ── BoxShadow ───────────────────────────────────────
         Resources["CardBoxShadow"] = BoxShadows.Parse($"0 8 24 0 {LauncherDesignTokens.BoxShadowColor}");
+        Resources["NoBoxShadow"] = BoxShadows.Parse("0 0 0 0 Transparent");
     }
 
     public override void OnFrameworkInitializationCompleted()

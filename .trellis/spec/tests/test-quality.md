@@ -74,6 +74,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
 
 This runs: restore → test → publish → GUI smoke (Windows only).
 
+For visual-token changes, the gate must additionally prove:
+
+- `WTLauncher.App/**/*.cs|*.axaml` has zero raw hex colors (`app-raw-hex-zero`).
+- A temporary `#RRGGBB` fixture is rejected by the same scanner.
+- `VisualTokenContractTests` pins Core token ownership, App resource injection, production consumers, and removal of repeated XAML `12/14/16` font literals.
+
 ---
 
 ## Test Count Expectations

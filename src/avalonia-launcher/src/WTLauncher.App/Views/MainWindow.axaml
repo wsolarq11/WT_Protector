@@ -86,7 +86,7 @@
       <Setter Property="MinHeight" Value="24"/>
       <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
       <Setter Property="BorderThickness" Value="0,0,0,1"/>
-      <Setter Property="BoxShadow" Value="0 0 0 0 #00000000"/>
+      <Setter Property="BoxShadow" Value="{StaticResource NoBoxShadow}"/>
     </Style>
     <Style Selector="Border.card.detail-row:pointerover">
       <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
@@ -113,7 +113,7 @@
       <Setter Property="Padding" Value="10,6"/>
     </Style>
     <Style Selector="TextBlock.detail-header-text">
-      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
     </Style>
@@ -125,7 +125,7 @@
       <Setter Property="MinHeight" Value="24"/>
       <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="BoxShadow" Value="0 0 0 0 #00000000"/>
+      <Setter Property="BoxShadow" Value="{StaticResource NoBoxShadow}"/>
     </Style>
     <Style Selector="Border.card.name-tile:pointerover">
       <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
@@ -178,13 +178,13 @@
     <Style Selector="Border.card.detail-row Button.primary">
       <Setter Property="Padding" Value="8,2"/>
       <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
-      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
     </Style>
     <Style Selector="Border.card.detail-row Button.more">
       <Setter Property="Padding" Value="7,2"/>
       <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
       <Setter Property="MinWidth" Value="28"/>
-      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
     </Style>
     <Style Selector="Border.card.detail-row Border.entry-drag-handle">
       <Setter Property="Padding" Value="5,0"/>
@@ -198,7 +198,7 @@
     </Style>
     <Style Selector="TextBlock.mono">
       <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Courier New, monospace"/>
-      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
       <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
       <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
@@ -303,7 +303,7 @@
     </Style>
     <Style Selector="TextBlock.control-box-label">
       <Setter Property="Foreground" Value="{StaticResource ControlBoxLabelBrush}"/>
-      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="Margin" Value="0,0,0,6"/>
     </Style>
@@ -329,13 +329,13 @@
                    Text="{Binding StatusIndicator}"
                    automation:AutomationProperties.Name="状态级别"
                    Margin="0,0,8,0"
-                   FontSize="14"
+                   FontSize="{StaticResource FontSizeBody}"
                    FontWeight="Bold"
                    Foreground="{StaticResource TextMutedBrush}"/>
         <TextBlock Grid.Column="1"
                    Text="{Binding StatusText}"
                    automation:AutomationProperties.Name="状态信息"
-                   FontSize="14"
+                   FontSize="{StaticResource FontSizeBody}"
                    FontWeight="SemiBold"
                    Foreground="{StaticResource TextPrimaryBrush}"/>
         <TextBlock Grid.Row="1"

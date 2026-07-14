@@ -35,12 +35,23 @@ internal static class TestRepositoryPaths
     public static string MainWindowDragCodeBehind => View("MainWindow.Drag.cs");
 
     public static string AppCodeBehind => Path.Combine(
+        AppSourceRoot,
+        "App.axaml.cs");
+
+    public static string AppSourceRoot => Path.Combine(
         Root,
         "src",
         "avalonia-launcher",
         "src",
-        "WTLauncher.App",
-        "App.axaml.cs");
+        "WTLauncher.App");
+
+    public static string CoreSource(string fileName) => Path.Combine(
+        Root,
+        "src",
+        "avalonia-launcher",
+        "src",
+        "WTLauncher.Core",
+        fileName);
 
     private static string FindRepositoryRoot()
     {
