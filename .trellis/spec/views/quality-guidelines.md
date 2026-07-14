@@ -67,6 +67,23 @@ Control Select(bool isDetailedList, bool isNamesView, Control details, Control n
 
 **Source:** `MainWindow.axaml.cs` — `MainWindowEntriesRootSelection`
 
+### Main-window action hierarchy
+
+Keep high-frequency actions directly visible and place maintenance actions in labeled overflow menus:
+
+- Direct: launch selected, add entry, discover, preset apply/preview/launch.
+- Overflow: select/clear/refresh, command/address management, preset save/update/delete.
+
+An overflow trigger is a standard text `Button` with a `ContextMenu`, an automation name, and one shared view-only click handler. Menu items bind the existing ViewModel commands; do not create proxy commands or duplicate business logic in code-behind.
+
+```csharp
+if (sender is Control { ContextMenu: { } menu } control)
+{
+    menu.Open(control);
+    e.Handled = true;
+}
+```
+
 ---
 
 ## Performance Rules

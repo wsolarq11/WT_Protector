@@ -80,6 +80,8 @@ For visual-token changes, the gate must additionally prove:
 - A temporary `#RRGGBB` fixture is rejected by the same scanner.
 - `VisualTokenContractTests` pins Core token ownership, App resource injection, production consumers, and removal of repeated XAML `12/14/16` font literals.
 
+For main-window action-hierarchy changes, a structural contract must pin which actions remain directly visible, which existing commands moved into labeled menus, the automation names of menu triggers, and the card-level “launch + more” boundary. Published GUI smoke remains required to catch XAML parsing or resource failures.
+
 ---
 
 ## Test Count Expectations

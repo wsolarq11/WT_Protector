@@ -19,10 +19,27 @@
                     Content="{Binding LaunchConfirmationToggleText}"
                     ToolTip.Tip="{Binding LaunchConfirmationToggleTip}"
                     VerticalAlignment="Center"/>
-      <Button Classes="secondary" Content="全选可见" Command="{Binding SelectVisibleCommand}"/>
-      <Button Classes="secondary" Content="清空" Command="{Binding ClearSelectionCommand}"/>
+      <Button x:Name="SelectionActionsButton"
+              Classes="secondary"
+              Content="选择与刷新"
+              automation:AutomationProperties.Name="选择与刷新菜单"
+              Click="OnOverflowMenuClicked">
+        <Button.ContextMenu>
+          <ContextMenu>
+            <MenuItem Header="全选可见"
+                      automation:AutomationProperties.Name="全选可见"
+                      Command="{Binding SelectVisibleCommand}"/>
+            <MenuItem Header="清空选择"
+                      automation:AutomationProperties.Name="清空选择"
+                      Command="{Binding ClearSelectionCommand}"/>
+            <Separator/>
+            <MenuItem Header="重新加载"
+                      automation:AutomationProperties.Name="重新加载"
+                      Command="{Binding RefreshCommand}"/>
+          </ContextMenu>
+        </Button.ContextMenu>
+      </Button>
       <Button Classes="primary" Content="一键启动已勾选" Command="{Binding LaunchSelectedCommand}"/>
-      <Button Classes="secondary" Content="重新加载" Command="{Binding RefreshCommand}"/>
     </StackPanel>
     <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0" Classes="muted" Text="{Binding ConfigPathDisplay}"/>
     <Grid x:Name="ControlBoxesGrid"
@@ -85,12 +102,43 @@
                     DisplayMemberBinding="{Binding Display}" MinWidth="120" VerticalAlignment="Center"/>
         </StackPanel>
       </Border>
-      <Button Classes="secondary" Content="🔍 发现" Command="{Binding DiscoverAgentsCommand}"/>
-      <Button Classes="secondary" Content="🛠 管理" Command="{Binding OpenCommandManagementCommand}"/>
-      <Button Classes="secondary" Content="📁 地址" Command="{Binding OpenDirectoryManagementCommand}"/>
-      <Button Classes="secondary" Content="保存为新启动组" Command="{Binding SaveSelectionAsPresetCommand}"/>
-      <Button Classes="secondary" Content="更新当前启动组" Command="{Binding UpdateSelectedPresetCommand}"/>
-      <Button Classes="secondary" Content="删除当前启动组" Command="{Binding DeleteSelectedPresetCommand}"/>
+      <Button Classes="secondary" Content="发现" Command="{Binding DiscoverAgentsCommand}"/>
+      <Button x:Name="ManagementActionsButton"
+              Classes="secondary"
+              Content="管理"
+              automation:AutomationProperties.Name="管理菜单"
+              Click="OnOverflowMenuClicked">
+        <Button.ContextMenu>
+          <ContextMenu>
+            <MenuItem Header="命令与模板"
+                      automation:AutomationProperties.Name="命令与模板管理"
+                      Command="{Binding OpenCommandManagementCommand}"/>
+            <MenuItem Header="地址"
+                      automation:AutomationProperties.Name="地址管理"
+                      Command="{Binding OpenDirectoryManagementCommand}"/>
+          </ContextMenu>
+        </Button.ContextMenu>
+      </Button>
+      <Button x:Name="PresetActionsButton"
+              Classes="secondary"
+              Content="启动组维护"
+              automation:AutomationProperties.Name="启动组维护菜单"
+              Click="OnOverflowMenuClicked">
+        <Button.ContextMenu>
+          <ContextMenu>
+            <MenuItem Header="保存为新启动组"
+                      automation:AutomationProperties.Name="保存为新启动组"
+                      Command="{Binding SaveSelectionAsPresetCommand}"/>
+            <MenuItem Header="更新当前启动组"
+                      automation:AutomationProperties.Name="更新当前启动组"
+                      Command="{Binding UpdateSelectedPresetCommand}"/>
+            <Separator/>
+            <MenuItem Header="删除当前启动组"
+                      automation:AutomationProperties.Name="删除当前启动组"
+                      Command="{Binding DeleteSelectedPresetCommand}"/>
+          </ContextMenu>
+        </Button.ContextMenu>
+      </Button>
       <Border Background="{StaticResource BadgeInfoBackgroundBrush}" CornerRadius="14" Padding="12,7"
               Margin="12,0,0,0" VerticalAlignment="Center">
         <TextBlock Foreground="{StaticResource BadgeInfoForegroundBrush}">
