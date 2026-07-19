@@ -327,6 +327,17 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **预防** | 遇到 xUnit1051，**直接查 xunit.v3 文档**而不是套用 v2 经验。v3 的分析器规则集与 v2 不完全兼容。 |
 | **WT_Protector 适用** | `WTLauncher.Tests` 全部测试方法的异步签名必须接受 `TestContext.Current.CancellationToken`；未来任何"v2 经验"都要先验证 v3 语义。 |
 
+### 3.13 快照恢复空桩导致回滚测试"假绿"
+
+| 属性 | 值 |
+|---|---|
+| **证据** | wt-protector session `289f3860`（2026-07-19 architecture-migration P5） |
+| **问题** | `MainWindowViewModel.RestoreShellSnapshot` 原本是 `static` 空桩，方法体为空。测试 `AddEntryRollsBackInMemoryStateWhenConfigSaveFails` 触发存盘失败时调用此方法，但空桩什么都不做，导致 `Settings.CustomEntryOrder` 保留已添加的 entry ID 未回滚。测试在 `_settings` 行失败，但失败信息不指向空桩本身——看起来像是回滚逻辑或字段不同步的问题。 |
+| **后果** | 测试"假绿"（失败的测试因其他原因被误判）→ 回滚路径没有覆盖到。如果空桩未被发现，后续所有基于 `ShellSnapshot` 的回滚都不可靠。 |
+| **修复** | `RestoreShellSnapshot` 改为实例方法，正确恢复 `_settings`、`_presetFile`、`TotalCount`。 |
+| **预防** | 快照恢复方法必须有回归测试证明其真实执行回滚。如果恢复方法看起来像空桩（空方法体或 `static` 无副作用签名），在 code review 中被标记为可疑。对 `Bridge` 中暴露的 `RestoreSnapshot` 回调，写一个测试在 save-failure 后验证 `_settings.CustomEntryOrder` 和 `_presetFile` 回滚到快照值。 |
+| **WT_Protector 适用** | `MainWindowViewModel` 中所有 `Restore*` 方法和 ELVM `EntryListBridge` 的 `RestoreSnapshot` 回调必须有对应回归测试。空桩 stub = 未完成，不是因为"暂时不实现"就安全。 |
+
 ---
 
 ## 4. 元教训

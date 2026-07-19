@@ -123,6 +123,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
             _settings,
             _entries,
             SaveSettingsToStore);
+        // Construct entry-list VM early so ReplaceEntries creates cards
+        // that own EntryListViewModel (not MainWindowViewModel) as host.
+        _entryListViewModel = CreateEntryListViewModel();
         // Load entries and presets from the unified store.
         ReplaceEntries(storeFile.Entries);
         _presetFile = new LauncherPresetFile
@@ -138,6 +141,57 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         ApplyFilter();
         LauncherEntryLayoutPresentation.Refresh(_entries);
         StatusContent = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
+        SubscribeToMessages();
+    }
+
+    private readonly EntryListViewModel _entryListViewModel;
+
+    private EntryListViewModel CreateEntryListViewModel()
+    {
+        return new EntryListViewModel(
+            _entries,
+            _visibleEntries,
+            _entryService,
+            new EntryListBridge(
+                Settings: () => _settings,
+                PresetFile: () => _presetFile,
+                CommandTemplates: () => CommandTemplates,
+                GetPresetReferenceCount: GetPresetReferenceCount,
+                GetKeyboardFocusedEntryId: () => _keyboardFocusedEntryId,
+                SetKeyboardFocusedEntryId: value => _keyboardFocusedEntryId = value,
+                CaptureSnapshot: () => new ShellSnapshot(_settings, _presetFile, SelectedPreset?.Id),
+                RestoreSnapshot: RestoreShellSnapshot,
+                ApplyChanges: ApplyEntryChanges,
+                ApplyStatusText: ApplyStatusText,
+                DiscardDragReorderPreview: DiscardDragReorderPreview,
+                UpdateSelection: UpdateSelection,
+                IsDetailedListMode: () => IsDetailedListMode,
+                IsNamesViewMode: () => IsNamesViewMode,
+                ShowDryRun: ShowDryRun,
+                LaunchAsync: LaunchAsync,
+                MoveEntryUp: MoveEntryUp,
+                CanMoveEntryUp: CanMoveEntryUp,
+                MoveEntryDown: MoveEntryDown,
+                CanMoveEntryDown: CanMoveEntryDown),
+            _utcNow);
+    }
+
+    private void RestoreShellSnapshot(ShellSnapshot snap)
+    {
+        _settings = snap.Settings;
+        _presetFile = snap.PresetFile;
+        TotalCount = _entries.Count;
+    }
+
+    private string? ApplyEntryChanges(
+        IEnumerable<LaunchEntry> entries,
+        LauncherSettings settings,
+        LauncherPresetFile presetFile)
+    {
+        _settings = settings;
+        _presetFile = presetFile;
+        TotalCount = _entries.Count;
+        return SaveStoreFile(BuildStoreFile());
     }
 
     public ReadOnlyObservableCollection<LauncherEntryViewModel> Entries { get; }
@@ -348,12 +402,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
     private void ReplaceEntries(IEnumerable<LaunchEntry> entries)
     {
-        _entries.Clear();
-        foreach (var entry in entries)
-        {
-            _entries.Add(new LauncherEntryViewModel(entry, this));
-        }
-
+        _entryListViewModel.ReplaceEntries(entries);
         TotalCount = _entries.Count;
         _keyboardFocusedEntryId = null;
         OnPropertyChanged(nameof(KeyboardFocusedEntryId));

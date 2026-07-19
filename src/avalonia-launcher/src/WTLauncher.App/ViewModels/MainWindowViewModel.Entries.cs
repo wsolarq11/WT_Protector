@@ -1,10 +1,4 @@
-using System.Collections.Immutable;
-using System.Diagnostics;
 using CommunityToolkit.Mvvm.Input;
-using WTLauncher.App.Features;
-using WTLauncher.App.Features.Entries;
-using WTLauncher.App.Infrastructure;
-using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
@@ -16,141 +10,22 @@ public sealed partial class MainWindowViewModel
     [RelayCommand]
     private async Task AddEntryAsync()
     {
-        DiscardDragReorderPreview();
-        var result = await _entryService.AddEntryAsync(
-            _entries.Select(ToLaunchEntry), _settings, CommandTemplates, GetPresetReferenceCount(""), _utcNow).ConfigureAwait(true);
-        switch (result)
-        {
-            case ServiceSuccess<LaunchEntry> success:
-                var entry = success.Value;
-                var snapshot = CaptureEntryMutationSnapshot();
-                _entries.Add(new LauncherEntryViewModel(entry, this));
-                _settings = _settings with { CustomEntryOrder = _settings.CustomEntryOrder.Add(entry.Id) };
-
-                if (!SaveEntryCollectionChanges(snapshot))
-                    return;
-
-                ApplyStatusText(LauncherEntryStatus.Added(entry.Name));
-                return;
-            case ServiceCanceled<LaunchEntry> canceled:
-                StatusContent = canceled.Status;
-                return;
-            case ServiceFailure<LaunchEntry> failure:
-                StatusContent = failure.Status;
-                return;
-            default:
-                throw new UnreachableException();
-        }
+        await _entryListViewModel.AddEntryAsync();
     }
 
     internal async Task CloneEntryAsync(LauncherEntryViewModel item)
     {
-        DiscardDragReorderPreview();
-        var result = await _entryService.CloneEntryAsync(
-            item, _entries.Select(e => e.Id), _entries.Select(ToLaunchEntry), _settings, CommandTemplates, GetPresetReferenceCount(item.Id), _utcNow).ConfigureAwait(true);
-        switch (result)
-        {
-            case ServiceSuccess<LaunchEntry> success:
-                var entry = success.Value;
-                var snapshot = CaptureEntryMutationSnapshot();
-                _entries.Add(new LauncherEntryViewModel(entry, this));
-                _settings = _settings with { CustomEntryOrder = _settings.CustomEntryOrder.Add(entry.Id) };
-
-                if (!SaveEntryCollectionChanges(snapshot))
-                    return;
-
-                ApplyStatusText($"已复制按钮: {item.Name} → {entry.Name}（已保存）");
-                return;
-            case ServiceCanceled<LaunchEntry> canceled:
-                StatusContent = canceled.Status;
-                return;
-            case ServiceFailure<LaunchEntry> failure:
-                StatusContent = failure.Status;
-                return;
-            default:
-                throw new UnreachableException();
-        }
+        await _entryListViewModel.CloneEntryAsync(item);
     }
 
     internal async Task EditEntryAsync(LauncherEntryViewModel item)
     {
-        DiscardDragReorderPreview();
-        var result = await _entryService.EditEntryAsync(
-            item, _entries.Select(ToLaunchEntry), _presetFile, _settings, CommandTemplates, GetPresetReferenceCount(item.Id), _utcNow).ConfigureAwait(true);
-        switch (result)
-        {
-            case ServiceSuccess<LaunchEntry> success:
-                var updated = success.Value;
-                var oldId = item.Id;
-                var snapshot = CaptureEntryMutationSnapshot();
-                if (!EntryId.Same(oldId, updated.Id))
-                {
-                    try
-                    {
-                        var (updatedPresetFile, updatedOrder, _) = LauncherEntryReferences.RenameEntryId(_presetFile, _settings.CustomEntryOrder, oldId, updated.Id);
-                        _presetFile = updatedPresetFile;
-                        _settings = _settings with { CustomEntryOrder = updatedOrder };
-                    }
-                    catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-                    {
-                        ErrorLog.Write(ex, "EditEntry.RenameReference");
-                        RestoreEntryMutationSnapshot(snapshot);
-                        StatusContent = LauncherEntryStatus.EditDialogFailed(item.Name, ex);
-                        return;
-                    }
-                }
-                item.ReplaceEntryFromOwner(updated, CurrentTimestampUtc());
-
-                if (!SaveEntryCollectionChanges(snapshot))
-                    return;
-
-                ApplyStatusText(LauncherEntryStatus.Updated(item.Name));
-                return;
-            case ServiceCanceled<LaunchEntry> canceled:
-                StatusContent = canceled.Status;
-                return;
-            case ServiceFailure<LaunchEntry> failure:
-                StatusContent = failure.Status;
-                return;
-            default:
-                throw new UnreachableException();
-        }
+        await _entryListViewModel.EditEntryAsync(item);
     }
 
     internal async Task DeleteEntryAsync(LauncherEntryViewModel item)
     {
-        DiscardDragReorderPreview();
-        var result = await _entryService.DeleteEntryAsync(
-            item, _keyboardFocusedEntryId).ConfigureAwait(true);
-        EntryDeleteApproval approval;
-        switch (result)
-        {
-            case ServiceSuccess<EntryDeleteApproval> success:
-                approval = success.Value;
-                break;
-            case ServiceCanceled<EntryDeleteApproval> canceled:
-                StatusContent = canceled.Status;
-                return;
-            case ServiceFailure<EntryDeleteApproval> failure:
-                StatusContent = failure.Status;
-                return;
-            default:
-                throw new UnreachableException();
-        }
-
-        if (approval.ClearKeyboardFocusId is not null)
-            _keyboardFocusedEntryId = null;
-
-        var target = approval.Target;
-        var snapshot = CaptureEntryMutationSnapshot();
-        var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RemoveEntryId(_presetFile, _settings.CustomEntryOrder, target.EntryId);
-        _presetFile = updatedPresetFile;
-        _settings = _settings with { CustomEntryOrder = updatedOrder };
-        _entries.Remove(item);
-        if (!SaveEntryCollectionChanges(snapshot))
-            return;
-
-        ApplyStatusText(LauncherEntryStatus.Deleted(target.EntryName));
+        await _entryListViewModel.DeleteEntryAsync(item);
     }
 
     private bool SaveEntryCollectionChanges(LauncherEntryMutationSnapshot rollbackSnapshot)
