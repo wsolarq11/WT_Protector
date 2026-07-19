@@ -1,0 +1,33 @@
+{
+  "id": "architecture-migration",
+  "name": "architecture-migration",
+  "title": "Feature-Modular Shell 架构迁移",
+  "description": "将神类 MainWindowViewModel 拆分为 Feature Module，消除 7 类根因",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "<USER>",
+  "assignee": "<USER>",
+  "createdAt": "2026-07-19",
+  "completedAt": "2026-07-20",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "07-19-p0-preparation",
+    "07-19-p1-entry-list-vm",
+    "07-19-p2-preset-list-vm",
+    "07-19-p3-message-bus",
+    "07-19-p4-drag-layout",
+    "07-19-p5-cleanup"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}
