@@ -52,11 +52,11 @@
     </Style>
   </Window.Styles>
 
-  <Border Padding="22">
+  <Border Padding="{StaticResource DialogOuterPadding}">
     <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
       <TextBlock Grid.Row="0"
                  Text="命令与模板集中管理"
-                 FontSize="20"
+                 FontSize="{StaticResource DialogTitleFontSize}"
                  FontWeight="SemiBold"
                  Foreground="{StaticResource TextPrimaryBrush}"/>
       <TextBlock Grid.Row="1"
@@ -189,7 +189,7 @@
         </Grid>
       </Border>
 
-      <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+      <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="{StaticResource DialogFooterMargin}">
         <Button Content="关闭" Classes="primary" MinWidth="110" Click="OnCloseClicked"/>
       </StackPanel>
     </Grid>

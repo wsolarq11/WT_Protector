@@ -140,7 +140,7 @@ public sealed class DiscoverAgentsWindow : Window
         _addButton = LauncherDialogButtons.Primary("添加选中", minWidth: 132);
         _addButton.Click += (_, _) => Close(_viewModel.GetResult());
 
-        var footer = LauncherDialogButtons.Footer(18, cancelButton, _addButton);
+        var footer = LauncherDialogButtons.Footer(LauncherDesignTokens.DialogFooterTopMargin, cancelButton, _addButton);
 
         var grid = new Grid
         {
@@ -160,7 +160,7 @@ public sealed class DiscoverAgentsWindow : Window
 
         Content = new Border
         {
-            Padding = new Thickness(22),
+            Padding = new Thickness(LauncherDesignTokens.DialogOuterPadding),
             Child = grid,
         };
 

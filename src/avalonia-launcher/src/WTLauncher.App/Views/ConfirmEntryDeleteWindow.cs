@@ -26,11 +26,11 @@ public sealed class ConfirmEntryDeleteWindow : Window
         var delete = LauncherDialogButtons.Destructive("删除启动按钮", isDefault: false);
         delete.Click += (_, _) => Close(true);
 
-        Opened += (_, _) => delete.Focus();
+        Opened += (_, _) => cancel.Focus();
 
         Content = new Border
         {
-            Padding = new Thickness(24),
+            Padding = new Thickness(LauncherDesignTokens.DialogOuterPadding),
             Child = new StackPanel
             {
                 Spacing = 12,
@@ -38,7 +38,7 @@ public sealed class ConfirmEntryDeleteWindow : Window
                 {
                     LauncherDialogText.Title("确认删除启动按钮？"),
                     LauncherDialogText.Body($"“{target.EntryName}” 会从 config\\launcher.json 删除，并从所有启动组里移除引用。"),
-                    LauncherDialogButtons.Footer(24, cancel, delete),
+                    LauncherDialogButtons.Footer(LauncherDesignTokens.DialogFooterTopMargin, cancel, delete),
                 },
             },
         };

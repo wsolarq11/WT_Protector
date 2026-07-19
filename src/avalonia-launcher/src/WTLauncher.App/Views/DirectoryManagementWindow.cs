@@ -89,7 +89,7 @@ public sealed class DirectoryManagementWindow : Window
 
         var closeButton = LauncherDialogButtons.Primary("关闭", minWidth: 110);
         closeButton.Click += (_, _) => Close(null);
-        var footer = LauncherDialogButtons.Footer(12, closeButton);
+        var footer = LauncherDialogButtons.Footer(LauncherDesignTokens.DialogFooterTopMargin, closeButton);
 
         var rowsBorder = new Border
         {
@@ -115,7 +115,7 @@ public sealed class DirectoryManagementWindow : Window
 
         Content = new Border
         {
-            Padding = new Thickness(22),
+            Padding = new Thickness(LauncherDesignTokens.DialogOuterPadding),
             Child = grid,
         };
 

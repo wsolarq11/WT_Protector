@@ -77,6 +77,9 @@ public sealed partial class App : Application
         Resources["FontSizeSmall"] = LauncherDesignTokens.FontSizeSmall;
         Resources["FontSizeBody"] = LauncherDesignTokens.FontSizeBody;
         Resources["FontSizeEmphasis"] = LauncherDesignTokens.FontSizeEmphasis;
+        Resources["DialogTitleFontSize"] = LauncherDesignTokens.DialogTitleFontSize;
+        Resources["DialogOuterPadding"] = new Thickness(LauncherDesignTokens.DialogOuterPadding);
+        Resources["DialogFooterMargin"] = new Thickness(0, LauncherDesignTokens.DialogFooterTopMargin, 0, 0);
         Resources["DetailsNameColumnWidth"] = new GridLength(LauncherDesignTokens.DetailsNameColumnWeight, GridUnitType.Star);
         Resources["DetailsDirectoryColumnWidth"] = new GridLength(LauncherDesignTokens.DetailsDirectoryColumnWeight, GridUnitType.Star);
         Resources["DetailsCommandColumnWidth"] = new GridLength(LauncherDesignTokens.DetailsCommandColumnWeight, GridUnitType.Star);

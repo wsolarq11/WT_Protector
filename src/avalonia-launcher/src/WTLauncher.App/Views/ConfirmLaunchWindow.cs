@@ -42,7 +42,7 @@ public sealed class ConfirmLaunchWindow : Window
 
         Content = new Grid
         {
-            Margin = new Thickness(24),
+            Margin = new Thickness(LauncherDesignTokens.DialogOuterPadding),
             RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto"),
             RowSpacing = 14,
             Children =

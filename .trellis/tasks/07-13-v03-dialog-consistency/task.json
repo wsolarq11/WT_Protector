@@ -3,7 +3,7 @@
   "name": "v03-dialog-consistency",
   "title": "V03 对话框视觉与语义一致性",
   "description": "统一对话框间距字体按钮默认行为和公共样式",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

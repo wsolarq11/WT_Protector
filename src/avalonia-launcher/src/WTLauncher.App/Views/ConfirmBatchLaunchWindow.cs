@@ -122,11 +122,11 @@ public sealed class ConfirmBatchLaunchWindow : Window
 
         Opened += (_, _) => launch.Focus();
 
-        mainGrid.Children.Add(LauncherDialogButtons.Footer(18, cancel, launch).WithGridRow(footerRow));
+        mainGrid.Children.Add(LauncherDialogButtons.Footer(LauncherDesignTokens.DialogFooterTopMargin, cancel, launch).WithGridRow(footerRow));
 
         Content = new Border
         {
-            Padding = new Thickness(22),
+            Padding = new Thickness(LauncherDesignTokens.DialogOuterPadding),
             Child = mainGrid,
         };
     }

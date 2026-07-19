@@ -14,6 +14,11 @@
 | Confirm Preset Delete | `ConfirmPresetDeleteWindow.cs` | `bool` | Delete preset confirmation |
 | Entry Details | `EntryDetailsWindow.cs` | `EntryDraft?` | Add / edit entry |
 | Preset Details | `PresetDetailsWindow.cs` | `string?` | Save / update preset |
+| Directory Management | `DirectoryManagementWindow.cs` | `null` | Browse/merge directories |
+| Directory Edit | `DirectoryEditDialog.cs` | `string?` | Edit directory path |
+| Command Edit | `CommandEditDialog.cs` | `string?` or `(string, string)` | Edit command or template |
+| Discover Agents | `DiscoverAgentsWindow.cs` | `DiscoveredAgent[]?` | Auto-discover CLI agents |
+| Command Management | `CommandManagementWindow.axaml` | `null` | Manage commands/templates |
 
 ---
 
@@ -92,13 +97,58 @@ public MainWindow(MainWindowViewModel viewModel) : this()
 
 ---
 
-## Design Token Usage in Dialogs
+---
 
-Dialog dimensions use `LauncherDesignTokens`:
+## Dialog Consistency Tokens (V03)
+
+Three tokens unify title font size, outer padding, and footer spacing across all programmatic dialogs:
+
+| Token | Value | Consumed By |
+|-------|-------|-------------|
+| `DialogTitleFontSize` | 20 | `LauncherDialogText.Title()`, `CommandManagementWindow.axaml` via `{StaticResource DialogTitleFontSize}` |
+| `DialogOuterPadding` | 24 | All programmatic dialogs (Border.Padding or Grid.Margin), `CommandManagementWindow.axaml` via `{StaticResource DialogOuterPadding}` |
+| `DialogFooterTopMargin` | 14 | `LauncherDialogButtons.Footer()`, `CommandManagementWindow.axaml` via `{StaticResource DialogFooterMargin}` (Margin: `0,14,0,0`) |
+| `DialogFooterSpacing` | 10 | `LauncherDialogButtons.Footer()` horizontal button spacing |
+
+**Rules:**
+- `LauncherDialogText.Title()` must use `LauncherDesignTokens.DialogTitleFontSize` — no per-dialog FontSize override.
+- All dialog outer containers must use `LauncherDesignTokens.DialogOuterPadding` — no per-dialog literal (20/22/24).
+- `LauncherDialogButtons.Footer()` must receive `LauncherDesignTokens.DialogFooterTopMargin` unless the parent Grid's `RowSpacing=14` already provides spacing (then use `0` to avoid double spacing).
+- `CommandManagementWindow.axaml` must consume `{StaticResource DialogOuterPadding}`, `{StaticResource DialogTitleFontSize}`, and `{StaticResource DialogFooterMargin}` — no XAML literals.
+
+**Source:** `LauncherDesignTokens.cs`
+
+---
+
+## Destructive Dialog Semantics (V03)
+
+Dangerous delete/remove dialogs must bias user input toward safety:
+
+- Cancel button: `IsDefault=true`, `IsCancel=true`, receives initial focus in `Opened`.
+- Delete/destructive button: `IsDefault=false`, styled with `LauncherDialogButtons.Destructive()`.
+
+```csharp
+var cancel = LauncherDialogButtons.Cancel(isDefault: true);
+cancel.Click += (_, _) => Close(false);
+var delete = LauncherDialogButtons.Destructive("删除启动按钮", isDefault: false);
+delete.Click += (_, _) => Close(true);
+Opened += (_, _) => cancel.Focus();
+```
+
+**Affected dialogs:** `ConfirmEntryDeleteWindow`, `ConfirmPresetDeleteWindow`.
+
+Safe/affirmative dialogs (launch, save, confirm) continue using Primary as default with initial focus on the primary action.
+
+---
+
+## Design Token Usage in Dialogs
 
 ```csharp
 public const double DialogMinWidth = 420;
 public const double DialogFooterSpacing = 10;
+public const double DialogTitleFontSize = 20;
+public const double DialogOuterPadding = 24;
+public const double DialogFooterTopMargin = 14;
 ```
 
 **Source:** `LauncherDesignTokens.cs`

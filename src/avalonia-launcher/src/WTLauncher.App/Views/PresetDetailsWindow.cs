@@ -40,11 +40,11 @@ public sealed class PresetDetailsWindow : Window
         var save = LauncherDialogButtons.Primary("保存启动组");
         save.Click += (_, _) => Submit();
 
-        var footer = LauncherDialogButtons.Footer(14, cancel, save);
+        var footer = LauncherDialogButtons.Footer(LauncherDesignTokens.DialogFooterTopMargin, cancel, save);
 
         Content = new Border
         {
-            Padding = new Thickness(24),
+            Padding = new Thickness(LauncherDesignTokens.DialogOuterPadding),
             Child = new Grid
             {
                 RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto,Auto,Auto"),

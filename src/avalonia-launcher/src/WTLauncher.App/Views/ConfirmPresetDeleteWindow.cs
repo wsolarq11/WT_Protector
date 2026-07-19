@@ -26,11 +26,11 @@ public sealed class ConfirmPresetDeleteWindow : Window
         var delete = LauncherDialogButtons.Destructive("删除启动组", isDefault: false);
         delete.Click += (_, _) => Close(true);
 
-        Opened += (_, _) => delete.Focus();
+        Opened += (_, _) => cancel.Focus();
 
         Content = new Border
         {
-            Padding = new Thickness(24),
+            Padding = new Thickness(LauncherDesignTokens.DialogOuterPadding),
             Child = new Grid
             {
                 RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto"),
@@ -40,7 +40,7 @@ public sealed class ConfirmPresetDeleteWindow : Window
                     LauncherDialogText.Title("删除这个启动组？"),
                     LauncherDialogText.Body($"\"{target.PresetName}\" 只会删除命名组，不会删除任何启动项。删除后可重新保存。").WithGridRow(1),
                     LauncherDialogText.Subtle($"包含 {target.EntryCount} 个启动项。").WithGridRow(2),
-                    LauncherDialogButtons.Footer(14, cancel, delete).WithGridRow(3),
+                    LauncherDialogButtons.Footer(LauncherDesignTokens.DialogFooterTopMargin, cancel, delete).WithGridRow(3),
                 },
             },
         };

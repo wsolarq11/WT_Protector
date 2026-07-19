@@ -29,7 +29,6 @@ public sealed class DirectoryEditDialog : Window
         Background = Brush.Parse(LauncherDesignTokens.SurfaceColor);
 
         var titleLabel = LauncherDialogText.Title(title);
-        titleLabel.FontSize = 16;
         titleLabel.Margin = new Thickness(0, 0, 0, 12);
 
         var labelBlock = LauncherDialogText.Label(label);
@@ -90,7 +89,7 @@ public sealed class DirectoryEditDialog : Window
         ok.Click += (_, _) => OnOk();
         var cancel = LauncherDialogButtons.Cancel(minWidth: 96);
         cancel.Click += (_, _) => Close(null);
-        var footer = LauncherDialogButtons.Footer(14, cancel, ok);
+        var footer = LauncherDialogButtons.Footer(LauncherDesignTokens.DialogFooterTopMargin, cancel, ok);
 
         var fieldsStack = new StackPanel { Spacing = 4 };
         fieldsStack.Children.Add(labelBlock);
@@ -108,11 +107,10 @@ public sealed class DirectoryEditDialog : Window
                 footer.WithGridRow(2),
             },
         };
-        footer.Margin = new Thickness(0, 14, 0, 0);
 
         Content = new Border
         {
-            Padding = new Thickness(20),
+            Padding = new Thickness(LauncherDesignTokens.DialogOuterPadding),
             Child = grid,
         };
 

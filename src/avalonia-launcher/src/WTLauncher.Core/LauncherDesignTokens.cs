@@ -58,6 +58,9 @@ public static class LauncherDesignTokens
 
     // ── Dialog ──────────────────────────────────────────────
     public const double DialogFooterSpacing = 10;
+    public const double DialogTitleFontSize = 20;
+    public const double DialogOuterPadding = 24;
+    public const double DialogFooterTopMargin = 14;
 
     // ── Card ────────────────────────────────────────────────
     public const double CardBorderRadius = 13;

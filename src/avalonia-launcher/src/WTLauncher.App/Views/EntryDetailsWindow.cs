@@ -62,7 +62,7 @@ public sealed class EntryDetailsWindow : Window
         var save = LauncherDialogButtons.Primary(isEdit ? "保存按钮" : "新增按钮");
         save.Click += (_, _) => Submit();
 
-        var footer = LauncherDialogButtons.Footer(16, cancel, save);
+        var footer = LauncherDialogButtons.Footer(LauncherDesignTokens.DialogFooterTopMargin, cancel, save);
 
         List<Control> children = [];
         children.Add(LauncherDialogText.Title(isEdit ? "编辑启动按钮" : "新增启动按钮"));
@@ -136,7 +136,7 @@ public sealed class EntryDetailsWindow : Window
 
         Content = new Border
         {
-            Padding = new Thickness(24),
+            Padding = new Thickness(LauncherDesignTokens.DialogOuterPadding),
             Child = new ScrollViewer { Content = content },
         };
 

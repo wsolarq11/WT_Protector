@@ -82,6 +82,14 @@ For visual-token changes, the gate must additionally prove:
 
 For main-window action-hierarchy changes, a structural contract must pin which actions remain directly visible, which existing commands moved into labeled menus, the automation names of menu triggers, and the card-level “launch + more” boundary. Published GUI smoke remains required to catch XAML parsing or resource failures.
 
+For dialog-consistency changes, `DialogConsistencyContractTests` must pin:
+
+- All three dialog tokens (`DialogTitleFontSize`, `DialogOuterPadding`, `DialogFooterTopMargin`) exist in Core and are injected in `App.axaml.cs`.
+- `LauncherDialogText.Title` consumes `LauncherDesignTokens.DialogTitleFontSize`; `CommandManagementWindow.axaml` consumes `{StaticResource DialogTitleFontSize}`, `{StaticResource DialogOuterPadding}`, and `{StaticResource DialogFooterMargin}`.
+- All 10 programmatic dialogs use `LauncherDesignTokens.DialogOuterPadding` for outer padding and `LauncherDesignTokens.DialogFooterTopMargin` for footer top margin — no hardcoded literals (12/14/16/18/24).
+- `ConfirmLaunchWindow` uses `Footer(0, ...)` because its parent Grid `RowSpacing=14` provides the spacing.
+- Destructive dialogs (`ConfirmEntryDeleteWindow`, `ConfirmPresetDeleteWindow`) have `Cancel(isDefault: true)` and initial focus on Cancel; Delete is `Destructive(isDefault: false)` and not focused.
+
 ---
 
 ## Test Count Expectations

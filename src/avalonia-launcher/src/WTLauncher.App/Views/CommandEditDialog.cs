@@ -41,7 +41,6 @@ public sealed class CommandEditDialog : Window
         Background = Brush.Parse(LauncherDesignTokens.SurfaceColor);
 
         var titleLabel = LauncherDialogText.Title(title);
-        titleLabel.FontSize = 16;
         titleLabel.Margin = new Thickness(0, 0, 0, 12);
 
         var label1 = LauncherDialogText.Label(label);
@@ -72,7 +71,7 @@ public sealed class CommandEditDialog : Window
         ok.Click += (_, _) => OnOk();
         var cancel = LauncherDialogButtons.Cancel(minWidth: 96);
         cancel.Click += (_, _) => Close(null);
-        var footer = LauncherDialogButtons.Footer(14, cancel, ok);
+        var footer = LauncherDialogButtons.Footer(LauncherDesignTokens.DialogFooterTopMargin, cancel, ok);
 
         var grid = new Grid
         {
@@ -84,7 +83,6 @@ public sealed class CommandEditDialog : Window
                 footer.WithGridRow(2),
             },
         };
-        footer.Margin = new Thickness(0, 14, 0, 0);
         // _error row sits between fields and footer — append via wrapping grid.
         // ponytail: keep one container; insert _error before footer using StackPanel swap.
         // Simpler: place _error inside the fields stack.
@@ -92,7 +90,7 @@ public sealed class CommandEditDialog : Window
 
         Content = new Border
         {
-            Padding = new Thickness(20),
+            Padding = new Thickness(LauncherDesignTokens.DialogOuterPadding),
             Child = grid,
         };
 

@@ -37,7 +37,7 @@ internal static class LauncherDialogText
         var textBlock = new TextBlock
         {
             Text = text,
-            FontSize = 22,
+            FontSize = LauncherDesignTokens.DialogTitleFontSize,
             FontWeight = FontWeight.SemiBold,
             Foreground = TitleBrush,
         };
@@ -90,7 +90,7 @@ internal static class LauncherDialogText
         return new TextBox
         {
             Text = text,
-            FontSize = 14,
+            FontSize = LauncherDesignTokens.FontSizeBody,
             Padding = new Thickness(10, 8),
         };
     }
