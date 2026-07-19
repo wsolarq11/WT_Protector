@@ -1468,3 +1468,36 @@ Reduced main-window action competition by moving low-frequency selection/refresh
 ### Next Steps
 
 - None - task complete
+
+
+## Session 43: P0-P1-P3 架构迁移：接口提取 + 消息总线定义
+
+**Date**: 2026-07-19
+**Task**: P0-P1-P3 架构迁移：接口提取 + 消息总线定义
+**Branch**: `main`
+
+### Summary
+
+P0: RefreshAllProjections + NotifyPropertyChangedFor dedup, JsonContext注册验证测试(4 tests), ExceptionBoundary辅助类, V03 spec巩固。P1-1: IEntryListViewModel接口+显式shell实现。P1-2: IEntryService清理ObservableCollection参数→IEnumerable。P1-3: IEntryCardHost接口→LauncherEntryViewModel._owner从MainWindowViewModel解耦。P3-1: Core层FeatureMessages(6类消息)+8 tests。P3-2~P3-4: 消息总线布线待feature VM提取时接入。Gate: 653/653 tests, 0 errors, 0 warnings, publish+GUI smoke PASS。
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `393ec6f` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

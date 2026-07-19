@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 42
+- **Total Sessions**: 43
 - **Last Active**: 2026-07-19
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1470 | Active |
+| `journal-1.md` | ~1503 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 43 | 2026-07-19 | P0-P1-P3 架构迁移：接口提取 + 消息总线定义 | `393ec6f` | `main` |
 | 42 | 2026-07-19 | V03 对话框视觉与语义一致性 | `cb86022` | `main` |
 | 41 | 2026-07-14 | V02 main UI declutter | `904b574` | `main` |
 | 40 | 2026-07-14 | V01 visual token convergence | `434e0ca` | `main` |
