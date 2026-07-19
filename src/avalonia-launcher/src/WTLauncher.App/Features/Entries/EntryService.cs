@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
@@ -16,7 +15,7 @@ public sealed class EntryService : IEntryService
     }
 
     public async Task<ServiceResult<LaunchEntry>> AddEntryAsync(
-        ObservableCollection<LauncherEntryViewModel> entries,
+        IEnumerable<LaunchEntry> existingEntries,
         LauncherSettings settings,
         IReadOnlyDictionary<string, string>? commandTemplates,
         int presetReferenceCount,
@@ -36,7 +35,7 @@ public sealed class EntryService : IEntryService
         if (draft is null)
             return new ServiceCanceled<LaunchEntry>(LauncherEntryStatus.AddCanceled);
 
-        var result = CreateEntryFromDraft(draft, originalId: null, previousEntry: null, entries.Select(e => e.SnapshotEntry()));
+        var result = CreateEntryFromDraft(draft, originalId: null, previousEntry: null, existingEntries);
         if (result is not ServiceSuccess<LaunchEntry> success)
             return result;
 
@@ -45,7 +44,8 @@ public sealed class EntryService : IEntryService
 
     public async Task<ServiceResult<LaunchEntry>> CloneEntryAsync(
         LauncherEntryViewModel source,
-        ObservableCollection<LauncherEntryViewModel> entries,
+        IEnumerable<string> existingEntryIds,
+        IEnumerable<LaunchEntry> existingEntries,
         LauncherSettings settings,
         IReadOnlyDictionary<string, string>? commandTemplates,
         int presetReferenceCount,
@@ -54,7 +54,7 @@ public sealed class EntryService : IEntryService
         var sourceEntry = source.SnapshotEntry();
         var cloneSource = new LaunchEntry
         {
-            Id = GenerateUniqueCloneId(sourceEntry.Id, entries.Select(e => e.Id)),
+            Id = GenerateUniqueCloneId(sourceEntry.Id, existingEntryIds),
             Name = sourceEntry.Name + " (副本)",
             Directory = sourceEntry.Directory,
             Command = sourceEntry.Command,
@@ -75,7 +75,7 @@ public sealed class EntryService : IEntryService
         if (draft is null)
             return new ServiceCanceled<LaunchEntry>(LauncherEntryStatus.AddCanceled);
 
-        var result = CreateEntryFromDraft(draft, originalId: null, previousEntry: null, entries.Select(e => e.SnapshotEntry()));
+        var result = CreateEntryFromDraft(draft, originalId: null, previousEntry: null, existingEntries);
         if (result is not ServiceSuccess<LaunchEntry> success)
             return result;
 
@@ -84,7 +84,7 @@ public sealed class EntryService : IEntryService
 
     public async Task<ServiceResult<LaunchEntry>> EditEntryAsync(
         LauncherEntryViewModel item,
-        ObservableCollection<LauncherEntryViewModel> entries,
+        IEnumerable<LaunchEntry> existingEntries,
         LauncherPresetFile presetFile,
         LauncherSettings settings,
         IReadOnlyDictionary<string, string>? commandTemplates,
@@ -106,7 +106,7 @@ public sealed class EntryService : IEntryService
             return new ServiceCanceled<LaunchEntry>(LauncherEntryStatus.EditCanceled(item.Name));
 
         var oldId = item.Id;
-        return CreateEntryFromDraft(draft, oldId, item.SnapshotEntry(), entries.Select(e => e.SnapshotEntry()));
+        return CreateEntryFromDraft(draft, oldId, item.SnapshotEntry(), existingEntries);
     }
 
     public async Task<ServiceResult<EntryDeleteApproval>> DeleteEntryAsync(

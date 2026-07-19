@@ -12,7 +12,7 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
-public sealed partial class MainWindowViewModel : ObservableObject
+public sealed partial class MainWindowViewModel : ObservableObject, IEntryListViewModel
 {
     private readonly string _storePath;
     private LauncherSettings _settings;
@@ -27,6 +27,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly ObservableCollection<LauncherPresetViewModel> _presets = [];
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(StatusText))]
+    [NotifyPropertyChangedFor(nameof(StatusTone))]
+    [NotifyPropertyChangedFor(nameof(StatusIndicator))]
+    [NotifyPropertyChangedFor(nameof(IsStatusNeutral))]
+    [NotifyPropertyChangedFor(nameof(IsStatusSuccess))]
+    [NotifyPropertyChangedFor(nameof(IsStatusWarning))]
+    [NotifyPropertyChangedFor(nameof(IsStatusError))]
     private LauncherStatusContent _statusContent = LauncherMainWindowText.Ready;
 
     public string StatusText => StatusContent.Text;
@@ -36,17 +43,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public bool IsStatusSuccess => StatusTone == LauncherStatusTone.Success;
     public bool IsStatusWarning => StatusTone == LauncherStatusTone.Warning;
     public bool IsStatusError => StatusTone == LauncherStatusTone.Error;
-
-    partial void OnStatusContentChanged(LauncherStatusContent value)
-    {
-        OnPropertyChanged(nameof(StatusText));
-        OnPropertyChanged(nameof(StatusTone));
-        OnPropertyChanged(nameof(StatusIndicator));
-        OnPropertyChanged(nameof(IsStatusNeutral));
-        OnPropertyChanged(nameof(IsStatusSuccess));
-        OnPropertyChanged(nameof(IsStatusWarning));
-        OnPropertyChanged(nameof(IsStatusError));
-    }
 
     [ObservableProperty]
     private string _dryRunText = LauncherMainWindowText.DryRunPlaceholder;
@@ -371,4 +367,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private IEnumerable<string> GetEntryIds() =>
         _entries.Select(entry => entry.Id);
+
+    /// <summary>Refreshes all in-memory projections after a mutation.
+    /// Call at the end of any mutation that changes entry/preset state
+    /// to keep selection state and filter consistent.</summary>
+    private void RefreshAllProjections()
+    {
+        RefreshSelectionState();
+        ApplyFilter();
+    }
 }

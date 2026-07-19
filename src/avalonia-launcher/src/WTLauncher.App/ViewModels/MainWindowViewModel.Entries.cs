@@ -18,7 +18,7 @@ public sealed partial class MainWindowViewModel
     {
         DiscardDragReorderPreview();
         var result = await _entryService.AddEntryAsync(
-            _entries, _settings, CommandTemplates, GetPresetReferenceCount(""), _utcNow).ConfigureAwait(true);
+            _entries.Select(ToLaunchEntry), _settings, CommandTemplates, GetPresetReferenceCount(""), _utcNow).ConfigureAwait(true);
         switch (result)
         {
             case ServiceSuccess<LaunchEntry> success:
@@ -47,7 +47,7 @@ public sealed partial class MainWindowViewModel
     {
         DiscardDragReorderPreview();
         var result = await _entryService.CloneEntryAsync(
-            item, _entries, _settings, CommandTemplates, GetPresetReferenceCount(item.Id), _utcNow).ConfigureAwait(true);
+            item, _entries.Select(e => e.Id), _entries.Select(ToLaunchEntry), _settings, CommandTemplates, GetPresetReferenceCount(item.Id), _utcNow).ConfigureAwait(true);
         switch (result)
         {
             case ServiceSuccess<LaunchEntry> success:
@@ -76,7 +76,7 @@ public sealed partial class MainWindowViewModel
     {
         DiscardDragReorderPreview();
         var result = await _entryService.EditEntryAsync(
-            item, _entries, _presetFile, _settings, CommandTemplates, GetPresetReferenceCount(item.Id), _utcNow).ConfigureAwait(true);
+            item, _entries.Select(ToLaunchEntry), _presetFile, _settings, CommandTemplates, GetPresetReferenceCount(item.Id), _utcNow).ConfigureAwait(true);
         switch (result)
         {
             case ServiceSuccess<LaunchEntry> success:
@@ -169,8 +169,7 @@ public sealed partial class MainWindowViewModel
             return false;
         }
 
-        RefreshSelectionState();
-        ApplyFilter();
+        RefreshAllProjections();
         return true;
     }
 

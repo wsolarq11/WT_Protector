@@ -10,7 +10,7 @@ public interface IEntryService
 {
     /// <summary>Walk the user through adding a new entry.</summary>
     public Task<ServiceResult<LaunchEntry>> AddEntryAsync(
-        ObservableCollection<LauncherEntryViewModel> entries,
+        IEnumerable<LaunchEntry> existingEntries,
         LauncherSettings settings,
         IReadOnlyDictionary<string, string>? commandTemplates,
         int presetReferenceCount,
@@ -19,7 +19,8 @@ public interface IEntryService
     /// <summary>Clone an existing entry with user-modified fields.</summary>
     public Task<ServiceResult<LaunchEntry>> CloneEntryAsync(
         LauncherEntryViewModel source,
-        ObservableCollection<LauncherEntryViewModel> entries,
+        IEnumerable<string> existingEntryIds,
+        IEnumerable<LaunchEntry> existingEntries,
         LauncherSettings settings,
         IReadOnlyDictionary<string, string>? commandTemplates,
         int presetReferenceCount,
@@ -28,7 +29,7 @@ public interface IEntryService
     /// <summary>Edit an existing entry's fields.</summary>
     public Task<ServiceResult<LaunchEntry>> EditEntryAsync(
         LauncherEntryViewModel item,
-        ObservableCollection<LauncherEntryViewModel> entries,
+        IEnumerable<LaunchEntry> existingEntries,
         LauncherPresetFile presetFile,
         LauncherSettings settings,
         IReadOnlyDictionary<string, string>? commandTemplates,

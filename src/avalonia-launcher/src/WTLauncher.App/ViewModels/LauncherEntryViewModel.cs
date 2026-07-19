@@ -1,6 +1,7 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
@@ -8,10 +9,10 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class LauncherEntryViewModel : ObservableObject
 {
-    private readonly MainWindowViewModel _owner;
+    private readonly IEntryCardHost _owner;
     private LaunchEntry _entry;
 
-    public LauncherEntryViewModel(LaunchEntry entry, MainWindowViewModel owner)
+    public LauncherEntryViewModel(LaunchEntry entry, IEntryCardHost owner)
     {
         ArgumentNullException.ThrowIfNull(entry);
         ArgumentNullException.ThrowIfNull(owner);

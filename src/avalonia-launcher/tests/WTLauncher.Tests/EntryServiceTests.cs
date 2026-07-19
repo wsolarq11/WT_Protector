@@ -21,7 +21,7 @@ public sealed class EntryServiceTests
         var service = new EntryService(dialogs);
 
         var result = await service.AddEntryAsync(
-            new ObservableCollection<LauncherEntryViewModel>(),
+            [],
             new LauncherSettings(),
             commandTemplates: null,
             presetReferenceCount: 0,
@@ -37,7 +37,7 @@ public sealed class EntryServiceTests
     {
         var canceledService = new EntryService(new StubDialogService());
         var canceled = await canceledService.AddEntryAsync(
-            new ObservableCollection<LauncherEntryViewModel>(), new LauncherSettings(), null, 0, () => DateTimeOffset.UtcNow);
+            [], new LauncherSettings(), null, 0, () => DateTimeOffset.UtcNow);
         Assert.IsType<ServiceCanceled<LaunchEntry>>(canceled);
 
         var expected = new IOException("dialog failed");
@@ -47,7 +47,7 @@ public sealed class EntryServiceTests
         };
         var failedService = new EntryService(dialogs);
         var failed = await failedService.AddEntryAsync(
-            new ObservableCollection<LauncherEntryViewModel>(), new LauncherSettings(), null, 0, () => DateTimeOffset.UtcNow);
+            [], new LauncherSettings(), null, 0, () => DateTimeOffset.UtcNow);
         Assert.Equal(
             LauncherEntryStatus.AddDialogFailed(expected),
             Assert.IsType<ServiceFailure<LaunchEntry>>(failed).Status);
@@ -103,7 +103,8 @@ public sealed class EntryServiceTests
         };
 
         var result = await service.CloneEntryAsync(
-            source, entries, new LauncherSettings(), null, 0, () => DateTimeOffset.UnixEpoch);
+            source, entries.Select(e => e.Id), entries.Select(e => e.SnapshotEntry()),
+            new LauncherSettings(), null, 0, () => DateTimeOffset.UnixEpoch);
 
         Assert.Equal("one-copy-2", prefill?.Id);
         var clone = Assert.IsType<ServiceSuccess<LaunchEntry>>(result).Value;
@@ -119,7 +120,7 @@ public sealed class EntryServiceTests
         var item = MainWindowEntryCardTestFactory.CreateEntryViewModel(owner, "one");
         var entries = new ObservableCollection<LauncherEntryViewModel> { item };
         var canceled = await new EntryService(new StubDialogService()).EditEntryAsync(
-            item, entries, new LauncherPresetFile(), new LauncherSettings(), null, 0, () => DateTimeOffset.UtcNow);
+            item, entries.Select(e => e.SnapshotEntry()), new LauncherPresetFile(), new LauncherSettings(), null, 0, () => DateTimeOffset.UtcNow);
         Assert.IsType<ServiceCanceled<LaunchEntry>>(canceled);
 
         var expected = new IOException("dialog failed");
@@ -128,7 +129,7 @@ public sealed class EntryServiceTests
             OnRequestEntryDraft = (_, _, _) => Task.FromException<EntryDraft?>(expected),
         };
         var failed = await new EntryService(dialogs).EditEntryAsync(
-            item, entries, new LauncherPresetFile(), new LauncherSettings(), null, 0, () => DateTimeOffset.UtcNow);
+            item, entries.Select(e => e.SnapshotEntry()), new LauncherPresetFile(), new LauncherSettings(), null, 0, () => DateTimeOffset.UtcNow);
         Assert.Equal(
             LauncherEntryStatus.EditDialogFailed(item.Name, expected),
             Assert.IsType<ServiceFailure<LaunchEntry>>(failed).Status);
