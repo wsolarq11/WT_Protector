@@ -1501,3 +1501,36 @@ P0: RefreshAllProjections + NotifyPropertyChangedFor dedup, JsonContext注册验
 ### Next Steps
 
 - None - task complete
+
+
+## Session 44: Feature-Modular Shell 架构迁移 P5 收尾 + 门禁验证 + spec 更新
+
+**Date**: 2026-07-20
+**Task**: Feature-Modular Shell 架构迁移 P5 收尾 + 门禁验证 + spec 更新
+**Branch**: `main`
+
+### Summary
+
+完成 Feature-Modular Shell 架构迁移 P5 收尾：CRUD 委托化、RestoreShellSnapshot 修复、readonly 字段、无用 using 清理。全量门禁 653 测试 PASS。更新 pitfalls.md (快照空桩教训)。归档 07-19-architecture-migration 及全部子任务 (P0-P5)。
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `393ec6f` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
