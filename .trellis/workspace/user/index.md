@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 45
-- **Last Active**: 2026-07-20
+- **Total Sessions**: 46
+- **Last Active**: 2026-07-21
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1569 | Active |
+| `journal-1.md` | ~1603 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 46 | 2026-07-21 | P3 消息总线接线 + Native AOT 验证 + 全步骤连续落地 | `f8b7a35`, `9330cd1` | `main` |
 | 45 | 2026-07-20 | finish-and-archive | `34540af` | `main` |
 | 44 | 2026-07-20 | Feature-Modular Shell 架构迁移 P5 收尾 + 门禁验证 + spec 更新 | `393ec6f` | `main` |
 | 43 | 2026-07-19 | P0-P1-P3 架构迁移：接口提取 + 消息总线定义 | `393ec6f` | `main` |
