@@ -1534,3 +1534,36 @@ P0: RefreshAllProjections + NotifyPropertyChangedFor dedup, JsonContext注册验
 ### Next Steps
 
 - None - task complete
+
+
+## Session 45: finish-and-archive
+
+**Date**: 2026-07-20
+**Task**: finish-and-archive
+**Branch**: `main`
+
+### Summary
+
+Finish and archive V-04, V-06, UX-05; add ReducedMotion API gap to pitfalls.md; run full gate (670/670).
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `34540af` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
