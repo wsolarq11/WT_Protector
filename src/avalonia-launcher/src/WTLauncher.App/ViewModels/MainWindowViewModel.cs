@@ -54,6 +54,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     private string _applyPresetButtonText = LauncherPresetSelectionPreview.DefaultApplyButtonText;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(EmptyStateText))]
     private int _totalCount;
 
     [ObservableProperty]
@@ -398,7 +399,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         OnPropertyChanged(nameof(KeyboardFocusedEntryId));
     }
 
-    public static string EmptyStateText => "没有匹配的启动项";
+    public string EmptyStateText => TotalCount == 0
+        ? "欢迎使用 WT Launcher — 使用上方菜单添加启动项或发现工具"
+        : "没有匹配的启动项";
 
     private void ReplaceEntries(IEnumerable<LaunchEntry> entries)
     {

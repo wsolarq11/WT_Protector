@@ -29,7 +29,9 @@ public static class LauncherMainWindowText
         $"存储: {storePath}";
 
     public static LauncherStatusContent Loaded(int entryCount, int presetCount) =>
-        LauncherStatusContent.Neutral($"已加载 {entryCount} 个启动项、{presetCount} 个启动组；勾选自动保存到 config\\launcher.json");
+        entryCount == 0
+            ? LauncherStatusContent.Neutral("欢迎使用 WT Launcher — 点击上方「管理 → 地址管理」添加项目目录，或使用「发现工具」自动扫描")
+            : LauncherStatusContent.Neutral($"已加载 {entryCount} 个启动项、{presetCount} 个启动组；勾选自动保存到 config\\launcher.json");
 
     public static LauncherStatusContent ConfigLoadFailed(string detail) =>
         LauncherStatusContent.Error($"配置加载失败: {detail}");
