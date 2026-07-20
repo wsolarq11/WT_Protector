@@ -17,12 +17,16 @@ public sealed partial class MainWindowViewModel
 
         WeakReferenceMessenger.Default.Register<EntryDeletedMessage>(this, static (r, m) =>
             ((MainWindowViewModel)r).OnEntryDeleted(m));
+
+        WeakReferenceMessenger.Default.Register<EntryUpdatedMessage>(this, static (r, m) =>
+            ((MainWindowViewModel)r).OnEntryUpdated(m));
     }
 
     private void UnsubscribeFromMessages()
     {
         WeakReferenceMessenger.Default.Unregister<EntryAddedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<EntryDeletedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<EntryUpdatedMessage>(this);
     }
 
     private void OnEntryAdded(EntryAddedMessage message)
@@ -31,6 +35,11 @@ public sealed partial class MainWindowViewModel
     }
 
     private void OnEntryDeleted(EntryDeletedMessage message)
+    {
+        RefreshAllProjections();
+    }
+
+    private void OnEntryUpdated(EntryUpdatedMessage message)
     {
         RefreshAllProjections();
     }
