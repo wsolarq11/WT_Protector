@@ -3,7 +3,7 @@
   "name": "ux05-first-run-empty-state",
   "title": "UX05 首次使用空状态",
   "description": "为空配置提供添加发现配置路径和启动组引导",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -19,7 +19,7 @@
   "pr_url": null,
   "subtasks": [],
   "children": [],
-  "parent": "07-13-production-modernization-program",
+  "parent": null,
   "relatedFiles": [],
   "notes": "",
   "meta": {}

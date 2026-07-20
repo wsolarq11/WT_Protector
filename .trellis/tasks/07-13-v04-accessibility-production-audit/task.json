@@ -3,7 +3,7 @@
   "name": "v04-accessibility-production-audit",
   "title": "V04 无障碍生产审计",
   "description": "验证焦点可访问名对比度高DPI减弱动效与键盘替代",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -19,7 +19,7 @@
   "pr_url": null,
   "subtasks": [],
   "children": [],
-  "parent": "07-13-production-modernization-program",
+  "parent": null,
   "relatedFiles": [],
   "notes": "",
   "meta": {}

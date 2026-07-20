@@ -3,7 +3,7 @@
   "name": "v06-responsive-visual-matrix",
   "title": "V06 响应式视觉验真矩阵",
   "description": "建立窄默认宽高DPI运行与截图验真矩阵",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -19,7 +19,7 @@
   "pr_url": null,
   "subtasks": [],
   "children": [],
-  "parent": "07-13-production-modernization-program",
+  "parent": null,
   "relatedFiles": [],
   "notes": "",
   "meta": {}
