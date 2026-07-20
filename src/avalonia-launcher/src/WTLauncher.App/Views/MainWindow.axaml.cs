@@ -45,6 +45,7 @@ public sealed partial class MainWindow : Window
         : this()
     {
         DataContext = viewModel;
+        ApplyReducedMotion();
         // Dialog interactions are handled by IDialogService — wired in App.axaml.cs.
         // P6: Pointer-capture drag replaces OLE DragDrop.
         // OLE DragDrop runs a nested Win32 message loop that blocks Avalonia's render
@@ -98,6 +99,14 @@ public sealed partial class MainWindow : Window
         EntriesView.EntryMoreClicked += OnEntryMoreClicked;
         EntriesView.EntryRowDoubleTapped += OnEntryRowDoubleTapped;
         EntriesView.EntryDragPointerPressed += OnEntryDragPointerPressed;
+    }
+
+    private static void ApplyReducedMotion()
+    {
+        // R2: Reduced-motion detection not available in Avalonia 12.1.0.
+        // The .reduced-motion XAML style is ready for when the platform API ships.
+        // Activation path: read IPlatformSettings.GetColorValues().ReducedMotion
+        // and add the "reduced-motion" class to the Window.
     }
 
     private void UpdateCardRegionSize(MainWindowViewModel viewModel)

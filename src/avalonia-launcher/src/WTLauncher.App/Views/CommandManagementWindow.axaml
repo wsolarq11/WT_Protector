@@ -71,12 +71,14 @@
                   MinWidth="130"
                   Classes="secondary tab"
                   Classes.active="{Binding IsCommandTabActive}"
-                  Command="{Binding SelectCommandTabCommand}"/>
+                  Command="{Binding SelectCommandTabCommand}"
+                  automation:AutomationProperties.Name="命令引用标签页"/>
           <Button Content="📑 命令模板"
                   MinWidth="130"
                   Classes="secondary tab"
                   Classes.active="{Binding IsTemplateTabActive}"
-                  Command="{Binding SelectTemplateTabCommand}"/>
+                  Command="{Binding SelectTemplateTabCommand}"
+                  automation:AutomationProperties.Name="命令模板标签页"/>
           <TextBlock Margin="12,6,0,0"
                      Text="{Binding StatusMessage}"
                      TextWrapping="Wrap"
@@ -93,12 +95,14 @@
                   Classes="secondary"
                   MinWidth="90"
                   IsEnabled="{Binding HasSelectedCommand}"
-                  Click="OnRenameCommandClicked"/>
+                  Click="OnRenameCommandClicked"
+                  automation:AutomationProperties.Name="编辑或重选命令引用"/>
           <Button Content="🗑 删除"
                   Classes="secondary"
                   MinWidth="90"
                   IsEnabled="{Binding HasSelectedCommand}"
-                  Command="{Binding DeleteCommandCommand}"/>
+                  Command="{Binding DeleteCommandCommand}"
+                  automation:AutomationProperties.Name="删除命令引用"/>
         </StackPanel>
 
         <StackPanel Grid.Row="1"
@@ -106,13 +110,18 @@
                     Spacing="6"
                     Margin="0,6,0,0"
                     IsVisible="{Binding IsTemplateTabActive}">
-          <Button Content="➕ 新模板" Classes="secondary" MinWidth="90" Click="OnAddTemplateClicked"/>
+          <Button Content="➕ 新模板" Classes="secondary" MinWidth="90"
+                  Click="OnAddTemplateClicked"
+                  automation:AutomationProperties.Name="添加新命令模板"/>
           <Button Content="✏ 改 Key" Classes="secondary" MinWidth="90"
-                  IsEnabled="{Binding HasSelectedTemplate}" Click="OnUpdateTemplateKeyClicked"/>
+                  IsEnabled="{Binding HasSelectedTemplate}" Click="OnUpdateTemplateKeyClicked"
+                  automation:AutomationProperties.Name="修改命令模板的键名"/>
           <Button Content="📝 改展开内容" Classes="secondary" MinWidth="110"
-                  IsEnabled="{Binding HasSelectedTemplate}" Click="OnUpdateTemplateValueClicked"/>
+                  IsEnabled="{Binding HasSelectedTemplate}" Click="OnUpdateTemplateValueClicked"
+                  automation:AutomationProperties.Name="修改命令模板的展开内容"/>
           <Button Content="🗑 删除" Classes="secondary" MinWidth="90"
-                  IsEnabled="{Binding HasSelectedTemplate}" Command="{Binding DeleteTemplateCommand}"/>
+                  IsEnabled="{Binding HasSelectedTemplate}" Command="{Binding DeleteTemplateCommand}"
+                  automation:AutomationProperties.Name="删除命令模板"/>
         </StackPanel>
       </Grid>
 
@@ -155,7 +164,8 @@
             <TextBlock IsVisible="{Binding HasNoCommandRows}"
                        Margin="8,12"
                        Text="(无 command — 还没有任何启动按钮)"
-                       Foreground="{StaticResource TextMutedBrush}"/>
+                       Foreground="{StaticResource TextMutedBrush}"
+                       automation:AutomationProperties.Name="无命令引用，还没有任何启动按钮"/>
           </Grid>
 
           <Grid IsVisible="{Binding IsTemplateTabActive}">
@@ -184,13 +194,15 @@
             <TextBlock IsVisible="{Binding HasNoTemplateRows}"
                        Margin="8,12"
                        Text="(无模板 — 添加一个模板来批量定义命令参数)"
-                       Foreground="{StaticResource TextMutedBrush}"/>
+                       Foreground="{StaticResource TextMutedBrush}"
+                       automation:AutomationProperties.Name="无命令模板，添加一个模板来批量定义命令参数"/>
           </Grid>
         </Grid>
       </Border>
 
       <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="{StaticResource DialogFooterMargin}">
-        <Button Content="关闭" Classes="primary" MinWidth="110" Click="OnCloseClicked"/>
+        <Button Content="关闭" Classes="primary" MinWidth="110" Click="OnCloseClicked"
+                automation:AutomationProperties.Name="关闭命令管理窗口"/>
       </StackPanel>
     </Grid>
   </Border>

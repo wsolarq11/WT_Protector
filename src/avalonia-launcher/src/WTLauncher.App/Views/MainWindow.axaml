@@ -61,6 +61,12 @@
         </Transitions>
       </Setter>
     </Style>
+    <!-- R2: Disable transitions when user prefers reduced motion -->
+    <Style Selector=".reduced-motion Border.card">
+      <Setter Property="Transitions">
+        <Transitions/>
+      </Setter>
+    </Style>
     <!-- P2: Disable transitions during drag to avoid layout thrashing -->
     <Style Selector="ItemsControl.suppress-drag-transitions Border.card">
       <Setter Property="Transitions">
@@ -328,6 +334,7 @@
         <TextBlock Classes="status-indicator"
                    Text="{Binding StatusIndicator}"
                    automation:AutomationProperties.Name="状态级别"
+                   automation:AutomationProperties.LiveSetting="Polite"
                    Margin="0,0,8,0"
                    FontSize="{StaticResource FontSizeBody}"
                    FontWeight="Bold"
@@ -335,6 +342,7 @@
         <TextBlock Grid.Column="1"
                    Text="{Binding StatusText}"
                    automation:AutomationProperties.Name="状态信息"
+                   automation:AutomationProperties.LiveSetting="Polite"
                    FontSize="{StaticResource FontSizeBody}"
                    FontWeight="SemiBold"
                    Foreground="{StaticResource TextPrimaryBrush}"/>
