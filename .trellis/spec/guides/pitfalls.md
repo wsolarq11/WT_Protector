@@ -850,3 +850,21 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **Bayesian 应用** | 初始假设：可能是 `LoadWithRecovery` 误恢复（H1, 30%）/ 可能是 mutation snapshot 漏抓字段（H2, 30%）/ 可能是死字段漂移（H3, 40%）。证据：`git diff` 显示 `settings.schemaVersion` 从 2 变为 1 after mutation → 强烈支持 H3，否定 H1/H2。修复后 pin 测试一次性通过，无重试 → 高置信度（95%+）。 |
 | **适用** | 所有经历 schema 合并/迁移的序列化 record 树。本次审计确认 `LaunchEntry`、`LauncherPreset`、`LauncherPresetFile`、`LauncherWindowSettings` 均无类似 dead field。 |
 | **二次发现 (2026-07-09 重执行)** | T7 修复后，`tools/verify.ps1:367-368` 仍断言 `settings.schemaVersion = 2`，导致根门禁失败。**根因扩展**：原预防规则只覆盖 C# 代码 + pin 测试，遗漏了 **PowerShell 门禁脚本**也是 schema 消费者。**新预防规则**：schema 字段移除时，必须 grep 三处：(1) `src/` C# 代码；(2) `tests/` 单元测试；(3) `tools/*.ps1` 门禁脚本（`verify.ps1`、`build-release.ps1`）。修复方式：将 `Assert-OnlyJsonKeys` 的 `schemaVersion` 移除 + 添加负向门禁 `if ($settings.PSObject.Properties['schemaVersion']) { throw ... }` —— 这提升了测试标准（任何未来重引入死字段都会被根门禁拦截）。 |
+
+
+---
+
+## 9. 无障碍生产审计教训 (2026-07-20)
+
+> 来源：任务 `07-13-v04-accessibility-production-audit`
+
+### 9.1 Avalonia 12.1.0 无 ReducedMotion API — 预备 XAML 样式但无法激活
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-07-20 V-04 实现会话，尝试访问 `PlatformSettings.ReducedMotion`、`ReducedMotionState`、`IPlatformSettings.ReducedMotion` 均无法解析。`strings` 搜索 Avalonia 12.1.0 程序集确认无 `ReducedMotion` 字符串 |
+| **根因** | Avalonia 12.1.0 尚未暴露 OS level reduced-motion 偏好 API。`IPlatformSettings` 和 `TopLevel.PlatformSettings` 均缺少相关属性。该 API 可能在后续版本（12.2+）加入 |
+| **当前状态** | (1) XAML 样式 `.reduced-motion Border.card` 已准备为 stub，`transition` 归零；(2) `MainWindow.axaml.cs` 中有 `ApplyReducedMotion()` 空方法体（`static` 避免 CA1822）；(3) 动态检测 deferred 到 Avalonia 升级 |
+| **AC 标记** | PRD AC2 标记为 `[~]`（部分完成 — 静态样式 stub 就位但动态 API 不可用） |
+| **预防** | (1) 引入 Avalonia 版本检查到工具链（`dotnet list package | findstr Avalonia`）；(2) 未来升级时 grep `PlatformSettings` 确认 `ReducedMotion` 是否暴露；(3) 先从 XAML 侧准备样式（反向绑定 `classes="reduced-motion"`），API 就位后只需在 `ApplyReducedMotion()` 中添加平台检测逻辑 |
+| **适用** | 所有依赖 OS-level 可访问性偏好 API 的功能（reduced motion、high contrast、color scheme detection） |
