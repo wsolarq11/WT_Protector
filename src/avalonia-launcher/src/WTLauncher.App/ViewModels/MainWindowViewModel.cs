@@ -26,48 +26,26 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     private readonly ObservableCollection<LauncherEntryViewModel> _visibleEntries = [];
     private readonly ObservableCollection<LauncherPresetViewModel> _presets = [];
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(StatusText))]
-    [NotifyPropertyChangedFor(nameof(StatusTone))]
-    [NotifyPropertyChangedFor(nameof(StatusIndicator))]
-    [NotifyPropertyChangedFor(nameof(IsStatusNeutral))]
-    [NotifyPropertyChangedFor(nameof(IsStatusSuccess))]
-    [NotifyPropertyChangedFor(nameof(IsStatusWarning))]
-    [NotifyPropertyChangedFor(nameof(IsStatusError))]
-    private LauncherStatusContent _statusContent = LauncherMainWindowText.Ready;
+    private readonly StatusPresenter _statusPresenter = new();
 
-    public string StatusText => StatusContent.Text;
-    public LauncherStatusTone StatusTone => StatusContent.Tone;
-    public string StatusIndicator => LauncherStatusPresentation.IndicatorFor(StatusTone);
-    public bool IsStatusNeutral => StatusTone == LauncherStatusTone.Neutral;
-    public bool IsStatusSuccess => StatusTone == LauncherStatusTone.Success;
-    public bool IsStatusWarning => StatusTone == LauncherStatusTone.Warning;
-    public bool IsStatusError => StatusTone == LauncherStatusTone.Error;
-
-    [ObservableProperty]
-    private string _dryRunText = LauncherMainWindowText.DryRunPlaceholder;
-
-    [ObservableProperty]
-    private string _presetSelectionStatusText = LauncherMainWindowText.PresetSelectionPlaceholder;
-
-    [ObservableProperty]
-    private string _applyPresetButtonText = LauncherPresetSelectionPreview.DefaultApplyButtonText;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(EmptyStateText))]
-    private int _totalCount;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsVisibleEmpty))]
-    private int _visibleCount;
-
-    public bool IsVisibleEmpty => VisibleCount == 0;
-
-    [ObservableProperty]
-    private int _selectedCount;
-
-    [ObservableProperty]
-    private int _presetCount;
+    // Status forwarding — reads StatusPresenter, re-fires PropertyChanged via subscription
+    public LauncherStatusContent StatusContent { get => _statusPresenter.StatusContent; set => _statusPresenter.StatusContent = value; }
+    public string StatusText => _statusPresenter.StatusText;
+    public LauncherStatusTone StatusTone => _statusPresenter.StatusTone;
+    public string StatusIndicator => _statusPresenter.StatusIndicator;
+    public bool IsStatusNeutral => _statusPresenter.IsStatusNeutral;
+    public bool IsStatusSuccess => _statusPresenter.IsStatusSuccess;
+    public bool IsStatusWarning => _statusPresenter.IsStatusWarning;
+    public bool IsStatusError => _statusPresenter.IsStatusError;
+    public string DryRunText { get => _statusPresenter.DryRunText; set => _statusPresenter.DryRunText = value; }
+    public string PresetSelectionStatusText { get => _statusPresenter.PresetSelectionStatusText; set => _statusPresenter.PresetSelectionStatusText = value; }
+    public string ApplyPresetButtonText { get => _statusPresenter.ApplyPresetButtonText; set => _statusPresenter.ApplyPresetButtonText = value; }
+    public int TotalCount { get => _statusPresenter.TotalCount; set => _statusPresenter.TotalCount = value; }
+    public int VisibleCount { get => _statusPresenter.VisibleCount; set => _statusPresenter.VisibleCount = value; }
+    public bool IsVisibleEmpty => _statusPresenter.IsVisibleEmpty;
+    public int SelectedCount { get => _statusPresenter.SelectedCount; set => _statusPresenter.SelectedCount = value; }
+    public int PresetCount { get => _statusPresenter.PresetCount; set => _statusPresenter.PresetCount = value; }
+    public string EmptyStateText => _statusPresenter.EmptyStateText;
 
     [ObservableProperty]
     private LauncherPresetViewModel? _selectedPreset;
@@ -107,6 +85,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         SortModes = new ReadOnlyObservableCollection<LauncherSortModeViewModel>(_sortModes);
         DisplayModes = new ReadOnlyObservableCollection<LauncherDisplayModeViewModel>(_displayModes);
         ConfigPathDisplay = LauncherMainWindowText.StorePathDisplay(storePath);
+        _statusPresenter.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName!);
         _filterText = RequireSettingsText(_settings.LastFilterText, "lastFilterText");
         _requireConfirmationForLaunches = _settings.RequireConfirmationForLaunches;
         OnPropertyChanged(nameof(LaunchConfirmationToggleText));
@@ -398,10 +377,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
         OnPropertyChanged(nameof(KeyboardFocusedEntryId));
     }
-
-    public string EmptyStateText => TotalCount == 0
-        ? "欢迎使用 WT Launcher — 使用上方菜单添加启动项或发现工具"
-        : "没有匹配的启动项";
 
     private void ReplaceEntries(IEnumerable<LaunchEntry> entries)
     {
