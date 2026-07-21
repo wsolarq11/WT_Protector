@@ -1632,3 +1632,38 @@ Finish and archive V-04, V-06, UX-05; add ReducedMotion API gap to pitfalls.md; 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 48: Unified Store Phase 3+4 cleanup — snapshot + messenger elimination, spec sync
+
+**Date**: 2026-07-21
+**Task**: Unified Store Phase 3+4 cleanup — snapshot + messenger elimination, spec sync
+**Branch**: `main`
+
+### Summary
+
+Unified Store Phase 3 追加工事：删除快照类 LauncherEntryMutationSnapshot + LauncherSelectionMutationSnapshot（4文件），内联 selection tuple + AppStore 读取回滚。删除死消息 WeakReferenceMessenger.Send + FeatureMessages（3文件，6消息类型）。DiscardDragReorderPreview 内联缺失修复（测试发现）。验证：675→667→667 测试全绿，gate PASS。最后 sync 8 spec + 1 README 以反映删除后的架构。所有 5 个 Unified Store 任务已归档。
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `67827bb` | (see git log) |
+| `7750442` | (see git log) |
+| `466f0d5` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
