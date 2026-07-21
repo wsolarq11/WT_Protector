@@ -21,12 +21,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     private readonly IEntryService _entryService = null!;
     private readonly IPresetService _presetService = null!;
     private readonly Func<DateTimeOffset> _utcNow;
-    private LauncherPresetFile _presetFile = new();
     private readonly ObservableCollection<LauncherEntryViewModel> _entries = [];
     private readonly ObservableCollection<LauncherEntryViewModel> _visibleEntries = [];
-    private readonly ObservableCollection<LauncherPresetViewModel> _presets = [];
 
     private readonly StatusPresenter _statusPresenter = new();
+    internal readonly PresetManager _presetManager = new();
 
     // Status forwarding — reads StatusPresenter, re-fires PropertyChanged via subscription
     public LauncherStatusContent StatusContent { get => _statusPresenter.StatusContent; set => _statusPresenter.StatusContent = value; }
@@ -46,9 +45,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     public int SelectedCount { get => _statusPresenter.SelectedCount; set => _statusPresenter.SelectedCount = value; }
     public int PresetCount { get => _statusPresenter.PresetCount; set => _statusPresenter.PresetCount = value; }
     public string EmptyStateText => _statusPresenter.EmptyStateText;
-
-    [ObservableProperty]
-    private LauncherPresetViewModel? _selectedPreset;
+    public ReadOnlyObservableCollection<LauncherPresetViewModel> Presets => _presetManager.Presets;
+    public LauncherPresetViewModel? SelectedPreset => _presetManager.SelectedPreset;
 
     [ObservableProperty]
     private bool _requireConfirmationForLaunches;
@@ -81,7 +79,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
         Entries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_entries);
         VisibleEntries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_visibleEntries);
-        Presets = new ReadOnlyObservableCollection<LauncherPresetViewModel>(_presets);
         SortModes = new ReadOnlyObservableCollection<LauncherSortModeViewModel>(_sortModes);
         DisplayModes = new ReadOnlyObservableCollection<LauncherDisplayModeViewModel>(_displayModes);
         ConfigPathDisplay = LauncherMainWindowText.StorePathDisplay(storePath);
@@ -108,12 +105,20 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _entryListViewModel = CreateEntryListViewModel();
         // Load entries and presets from the unified store.
         ReplaceEntries(storeFile.Entries);
-        _presetFile = new LauncherPresetFile
+        var presetFile = new LauncherPresetFile
         {
             Presets = storeFile.Presets,
             DefaultPresetId = storeFile.DefaultPresetId,
         };
-        ApplyPresetFileState(_presetFile, preferredPresetId: null);
+        _presetManager.Load(presetFile, preferredPresetId: null);
+        _presetManager.FileChanged += () => PresetCount = _presetManager.PresetCount;
+        _presetManager.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(PresetManager.SelectedPreset)) return;
+            OnPropertyChanged(nameof(SelectedPreset));
+            RefreshSelectionState();
+        };
+        PresetCount = _presetManager.PresetCount;
         // Sync custom entry order with loaded entries so ValidateCustomOrder
         // passes even when the stored CustomEntryOrder is empty or stale.
         _settings = _settings with { CustomEntryOrder = LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds()) };
@@ -134,12 +139,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
             _entryService,
             new EntryListBridge(
                 Settings: () => _settings,
-                PresetFile: () => _presetFile,
+                PresetFile: () => _presetManager.File,
                 CommandTemplates: () => CommandTemplates,
                 GetPresetReferenceCount: GetPresetReferenceCount,
                 GetKeyboardFocusedEntryId: () => _keyboardFocusedEntryId,
                 SetKeyboardFocusedEntryId: value => _keyboardFocusedEntryId = value,
-                CaptureSnapshot: () => new ShellSnapshot(_settings, _presetFile, SelectedPreset?.Id),
+                CaptureSnapshot: () => new ShellSnapshot(_settings, _presetManager.File, _presetManager.SelectedPreset?.Id),
                 RestoreSnapshot: RestoreShellSnapshot,
                 ApplyChanges: ApplyEntryChanges,
                 ApplyStatusText: ApplyStatusText,
@@ -159,7 +164,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     private void RestoreShellSnapshot(ShellSnapshot snap)
     {
         _settings = snap.Settings;
-        _presetFile = snap.PresetFile;
+        _presetManager.Load(snap.PresetFile, null);
         TotalCount = _entries.Count;
     }
 
@@ -169,7 +174,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         LauncherPresetFile presetFile)
     {
         _settings = settings;
-        _presetFile = presetFile;
+        _presetManager.Load(presetFile, null);
         TotalCount = _entries.Count;
         return SaveStoreFile(BuildStoreFile());
     }
@@ -177,8 +182,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     public ReadOnlyObservableCollection<LauncherEntryViewModel> Entries { get; }
 
     public ReadOnlyObservableCollection<LauncherEntryViewModel> VisibleEntries { get; }
-
-    public ReadOnlyObservableCollection<LauncherPresetViewModel> Presets { get; }
 
     /// <summary>Current settings snapshot. Immutable — replaced on every mutation.
     /// Tests should read from this, not from a stale pre-construction reference.</summary>
@@ -255,7 +258,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     private void ValidatePresetEntryReferences()
     {
         var entryIdSet = GetEntryIds().ToHashSet(EntryId.Comparer);
-        foreach (var preset in _presetFile.Presets)
+        foreach (var preset in _presetManager.File.Presets)
         {
             foreach (var entryId in preset.EntryIds)
             {
@@ -300,8 +303,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         {
             Entries = _entries.Select(ToLaunchEntry).ToImmutableList(),
             Settings = _settings,
-            Presets = _presetFile.Presets,
-            DefaultPresetId = _presetFile.DefaultPresetId,
+            Presets = _presetManager.File.Presets,
+            DefaultPresetId = _presetManager.File.DefaultPresetId,
         };
 
     /// <summary>Saves the given store file to disk. Returns null on success,

@@ -125,7 +125,7 @@ public sealed partial class MainWindowViewModel
 
         DiscardDragReorderPreview();
         var target = new LauncherPresetSaveTarget(entryIds);
-        var nameResult = await _presetService.RequestNewPresetAsync(target, _presets.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase)).ConfigureAwait(true);
+        var nameResult = await _presetService.RequestNewPresetAsync(target, _presetManager.Presets.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase)).ConfigureAwait(true);
         if (nameResult is not ServiceSuccess<string> nameSuccess)
         {
             StatusContent = nameResult switch
@@ -138,11 +138,11 @@ public sealed partial class MainWindowViewModel
         }
         var presetName = nameSuccess.Value;
 
-        var snapshot = CapturePresetMutationSnapshot();
-        var addResult = _presetService.AddPreset(_presetFile, presetName, target.EntryIds);
+        var snapshot = _presetManager.CaptureSnapshot();
+        var addResult = _presetService.AddPreset(_presetManager.File, presetName, target.EntryIds);
         if (addResult is not ServiceSuccess<PresetMutation> addSuccess)
         {
-            RestorePresetSnapshotAndReportMissing(snapshot);
+            _presetManager.Load(snapshot.File, snapshot.SelectedPresetId);
             StatusContent = addResult switch
             {
                 ServiceCanceled<PresetMutation> canceled => canceled.Status,
@@ -152,8 +152,7 @@ public sealed partial class MainWindowViewModel
             return;
         }
         var preset = addSuccess.Value.Preset;
-        _presetFile = addSuccess.Value.PresetFile;
-        if (SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset) && savedPreset is not null)
+        if (SavePresetMutationAndApply(snapshot, addSuccess.Value.PresetFile, preset.Id, out var savedPreset) && savedPreset is not null)
             ApplyStatusText(LauncherPresetStatus.Saved(savedPreset.Name, savedPreset.EntryIds.Count));
     }
 

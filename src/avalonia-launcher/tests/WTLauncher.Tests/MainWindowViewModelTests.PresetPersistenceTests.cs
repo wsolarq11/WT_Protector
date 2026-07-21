@@ -60,7 +60,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             dialogService: new StubDialogService { OnRequestNewPreset = (_, _) => Task.FromResult<string?>("Project Pair") });
-        viewModel.SelectedPreset = new LauncherPresetViewModel(Preset("ghost", "Ghost", "one"));
+        viewModel._presetManager.SelectedPreset = new LauncherPresetViewModel(Preset("ghost", "Ghost", "one"));
         // Force save failure by replacing the presets file with a directory
         // so File.Move fails. C6 fix wraps backup in try/catch, so the old
         // .bak-directory trick no longer works — we block the main file instead.

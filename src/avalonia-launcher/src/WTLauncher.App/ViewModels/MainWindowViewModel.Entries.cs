@@ -53,7 +53,7 @@ public sealed partial class MainWindowViewModel
         DiscardDragReorderPreview();
         return LauncherEntryMutationSnapshot.Capture(
             _entries.Select(ToLaunchEntry),
-            _presetFile,
+            _presetManager.File,
             _settings,
             SelectedPreset?.Id);
     }
@@ -62,7 +62,7 @@ public sealed partial class MainWindowViewModel
     {
         ReplaceEntries(snapshot.CloneEntries());
         _settings = snapshot.CloneSettings();
-        ApplyPresetFileState(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
+        _presetManager.Load(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
         RefreshSelectionState();
         ApplyFilter();
         LauncherEntryLayoutPresentation.Refresh(_entries);

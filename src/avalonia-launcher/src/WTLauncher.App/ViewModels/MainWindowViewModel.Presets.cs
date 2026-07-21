@@ -14,7 +14,7 @@ namespace WTLauncher.App.ViewModels;
 public sealed partial class MainWindowViewModel
 {
     public int GetPresetReferenceCount(string entryId) =>
-        _presetService.CountEntryReferences(_presetFile, entryId);
+        _presetManager.GetReferenceCount(entryId, _presetService);
 
     private bool TryGetApplicablePresetSelection(
         [NotNullWhen(true)] out LauncherPresetViewModel? selectedPreset,
@@ -71,7 +71,7 @@ public sealed partial class MainWindowViewModel
     private async Task<string?> RequestPresetNameIfRequiredAsync(LauncherPresetSaveTarget target)
     {
         var result = await _presetService.RequestNewPresetAsync(
-            target, _presets.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase)).ConfigureAwait(true);
+            target, _presetManager.Presets.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase)).ConfigureAwait(true);
         switch (result)
         {
             case ServiceSuccess<string> success:
@@ -90,21 +90,15 @@ public sealed partial class MainWindowViewModel
     private (LauncherPresetFile PresetFile, string? SelectedPresetId) CapturePresetMutationSnapshot()
     {
         DiscardDragReorderPreview();
-        return (_presetFile, SelectedPreset?.Id);
+        return _presetManager.CaptureSnapshot();
     }
 
     private void RestorePresetMutationSnapshot((LauncherPresetFile PresetFile, string? SelectedPresetId) snapshot) =>
-        ApplyPresetFileState(snapshot.PresetFile, snapshot.SelectedPresetId);
+        _presetManager.Load(snapshot.PresetFile, snapshot.SelectedPresetId);
 
     private void RestorePresetSnapshotAndReportMissing((LauncherPresetFile PresetFile, string? SelectedPresetId) snapshot)
     {
-        RestorePresetMutationSnapshot(snapshot);
-        ApplyStatusText(LauncherPresetStatus.CurrentPresetMissing);
-    }
-
-    partial void OnSelectedPresetChanged(LauncherPresetViewModel? value)
-    {
-        RefreshSelectionState();
+        _presetManager.Load(snapshot.PresetFile, snapshot.SelectedPresetId);
     }
 
     /// <summary>
@@ -127,7 +121,7 @@ public sealed partial class MainWindowViewModel
         if (!TryBuildPresetSelectionPreviewForCommand(out var selectedPreset, out var selection))
             return false;
 
-        if (!_presetService.CanUpdatePreset(_presetFile, selectedPreset.Id))
+        if (!_presetManager.CanUpdatePreset(selectedPreset.Id, _presetService))
             return false;
 
         return selection.SelectedIds.Count > 0 && selection.HasChanges;
@@ -135,7 +129,7 @@ public sealed partial class MainWindowViewModel
 
     private bool CanDeleteSelectedPreset() =>
         TryGetSelectedPreset(out var selectedPreset)
-        && _presetService.CanDeletePreset(_presetFile, selectedPreset.Id);
+        && _presetManager.CanDeletePreset(selectedPreset.Id, _presetService);
 
     private LauncherPresetSelectionPreview BuildPresetSelectionPreview(IReadOnlyList<string> selectedEntryIds)
     {
@@ -211,71 +205,29 @@ public sealed partial class MainWindowViewModel
             ErrorLog.Write(ex, "LoadPresetFile");
             storeFile = new LauncherStoreFile();
         }
-        _presetFile = new LauncherPresetFile
+        var presetFile = new LauncherPresetFile
         {
             Presets = storeFile.Presets,
             DefaultPresetId = storeFile.DefaultPresetId,
         };
-        ApplyPresetFileState(_presetFile, preferredPresetId);
-    }
-
-    private void ApplyPresetFileState(LauncherPresetFile presetFile, string? preferredPresetId)
-    {
-        var rawTargetId = preferredPresetId ?? presetFile.DefaultPresetId;
-        var targetPresetId = PresetId.NormalizeReference(rawTargetId);
-        var presetViewModels = presetFile.Presets
-            .Select(preset => new LauncherPresetViewModel(preset))
-            .ToList();
-
-        // F07: If no valid default preset ID but presets exist, fall back to first preset
-        if (targetPresetId.Length == 0 && presetViewModels.Count > 0)
-            targetPresetId = presetViewModels[0].Id;
-
-        var selectedPreset = ResolveSelectedPreset(presetViewModels, targetPresetId);
-
-        _presetFile = presetFile;  // F08: write after validation
-
-        _presets.Clear();
-        foreach (var preset in presetViewModels)
-            _presets.Add(preset);
-
-        SelectedPreset = selectedPreset;
-        PresetCount = _presets.Count;
-    }
-
-    private static LauncherPresetViewModel? ResolveSelectedPreset(
-        IReadOnlyList<LauncherPresetViewModel> presets,
-        string targetPresetId)
-    {
-        if (presets.Count == 0)
-        {
-            if (targetPresetId.Length != 0)
-                throw new InvalidDataException(
-                    $"Launcher selected preset id is invalid without presets: {targetPresetId}.");
-
-            return null;
-        }
-
-        if (targetPresetId.Length == 0)
-            throw new InvalidDataException("Launcher selected preset id is required when presets exist.");
-
-        return presets.FirstOrDefault(preset => PresetId.Same(preset.Id, targetPresetId))
-            ?? throw new InvalidDataException(
-                $"Launcher selected preset id does not match any preset: {targetPresetId}.");
+        _presetManager.Load(presetFile, preferredPresetId);
     }
 
     private bool SavePresetMutationAndApply(
         (LauncherPresetFile PresetFile, string? SelectedPresetId) snapshot,
+        LauncherPresetFile newPresetFile,
         string selectedPresetId,
         out LauncherPresetViewModel? selectedPreset)
     {
-        // When no preset remains (e.g., deleting the last preset), selectedPresetId
-        // is empty and SelectedPreset resolves to null — the dropdown shows nothing.
         selectedPreset = null;
         var saveFailure = LauncherMutationTransaction.Commit(
             snapshot,
-            () => SaveStoreFile(BuildStoreFile()),
-            rollbackSnapshot => ApplyPresetFileState(
+            () =>
+            {
+                _presetManager.ApplyPresetMutation(newPresetFile, selectedPresetId);
+                return SaveStoreFile(BuildStoreFile());
+            },
+            rollbackSnapshot => _presetManager.Load(
                 rollbackSnapshot.PresetFile,
                 rollbackSnapshot.SelectedPresetId));
         if (saveFailure is not null)
@@ -284,15 +236,7 @@ public sealed partial class MainWindowViewModel
             return false;
         }
 
-        if (PresetId.NormalizeReference(selectedPresetId).Length > 0)
-        {
-            ApplyPresetFileState(_presetFile, selectedPresetId);
-            selectedPreset = SelectedPreset;
-        }
-        else
-        {
-            ApplyPresetFileState(_presetFile, null);
-        }
+        selectedPreset = SelectedPreset;
         return true;
     }
 
@@ -381,11 +325,11 @@ public sealed partial class MainWindowViewModel
         if (presetName is null)
             return;
 
-        var snapshot = CapturePresetMutationSnapshot();
-        var addResult = _presetService.AddPreset(_presetFile, presetName, target.EntryIds);
+        var snapshot = _presetManager.CaptureSnapshot();
+        var addResult = _presetService.AddPreset(_presetManager.File, presetName, target.EntryIds);
         if (addResult is not ServiceSuccess<PresetMutation> addSuccess)
         {
-            RestorePresetSnapshotAndReportMissing(snapshot);
+            _presetManager.Load(snapshot.File, snapshot.SelectedPresetId);
             StatusContent = addResult switch
             {
                 ServiceCanceled<PresetMutation> canceled => canceled.Status,
@@ -395,8 +339,7 @@ public sealed partial class MainWindowViewModel
             return;
         }
         var preset = addSuccess.Value.Preset;
-        _presetFile = addSuccess.Value.PresetFile;
-        if (!SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset))
+        if (!SavePresetMutationAndApply(snapshot, addSuccess.Value.PresetFile, preset.Id, out var savedPreset))
             return;
 
         if (savedPreset is null) return;
@@ -410,7 +353,7 @@ public sealed partial class MainWindowViewModel
         if (selectedPreset is null)
             return;
 
-        if (!_presetService.CanUpdatePreset(_presetFile, selectedPreset.Id))
+        if (!_presetManager.CanUpdatePreset(selectedPreset.Id, _presetService))
         {
             StatusContent = LauncherPresetStatus.UpdateBlocked(selectedPreset.Name);
             return;
@@ -435,11 +378,11 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
-        var snapshot = CapturePresetMutationSnapshot();
-        var updateResult = _presetService.UpdatePreset(_presetFile, selectedPreset.Id, selectedPreset.Name, entryIds);
+        var snapshot = _presetManager.CaptureSnapshot();
+        var updateResult = _presetService.UpdatePreset(_presetManager.File, selectedPreset.Id, selectedPreset.Name, entryIds);
         if (updateResult is not ServiceSuccess<PresetMutation> updateSuccess)
         {
-            RestorePresetSnapshotAndReportMissing(snapshot);
+            _presetManager.Load(snapshot.File, snapshot.SelectedPresetId);
             StatusContent = updateResult switch
             {
                 ServiceCanceled<PresetMutation> canceled => canceled.Status,
@@ -449,8 +392,7 @@ public sealed partial class MainWindowViewModel
             return;
         }
         var preset = updateSuccess.Value.Preset;
-        _presetFile = updateSuccess.Value.PresetFile;
-        if (!SavePresetMutationAndApply(snapshot, preset.Id, out var savedPreset))
+        if (!SavePresetMutationAndApply(snapshot, updateSuccess.Value.PresetFile, preset.Id, out var savedPreset))
             return;
 
         if (savedPreset is null) return;
@@ -469,7 +411,7 @@ public sealed partial class MainWindowViewModel
             selectedPreset.Id,
             selectedPreset.Name,
             selectedPreset.EntryIds);
-        if (!_presetService.CanDeletePreset(_presetFile, target.PresetId))
+        if (!_presetManager.CanDeletePreset(target.PresetId, _presetService))
         {
             StatusContent = LauncherPresetStatus.DeleteBlocked(target.PresetName);
             return;
@@ -482,12 +424,12 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
-        var snapshot = CapturePresetMutationSnapshot();
+        var snapshot = _presetManager.CaptureSnapshot();
 
-        var deleteResult = _presetService.DeletePreset(_presetFile, target.PresetId);
+        var deleteResult = _presetService.DeletePreset(_presetManager.File, target.PresetId);
         if (deleteResult is not ServiceSuccess<PresetDeleteMutation> deleteSuccess)
         {
-            RestorePresetSnapshotAndReportMissing(snapshot);
+            _presetManager.Load(snapshot.File, snapshot.SelectedPresetId);
             StatusContent = deleteResult switch
             {
                 ServiceCanceled<PresetDeleteMutation> canceled => canceled.Status,
@@ -496,8 +438,7 @@ public sealed partial class MainWindowViewModel
             };
             return;
         }
-        _presetFile = deleteSuccess.Value.PresetFile;
-        if (!SavePresetMutationAndApply(snapshot, deleteSuccess.Value.FallbackPresetId, out var fallbackPreset))
+        if (!SavePresetMutationAndApply(snapshot, deleteSuccess.Value.PresetFile, deleteSuccess.Value.FallbackPresetId, out var fallbackPreset))
             return;
 
         ApplyStatusText(fallbackPreset is not null

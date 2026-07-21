@@ -59,8 +59,9 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("daily", viewModel.SelectedPreset?.Id);
         Assert.Equal("已删除启动组: Project Pair；当前启动组: Daily", viewModel.StatusText);
 
-        viewModel.SelectedPreset = viewModel.Presets.Single(preset => preset.Id == "blank-manual");
+        viewModel._presetManager.SelectedPreset = viewModel.Presets.Single(preset => preset.Id == "blank-manual");
 
+        Assert.NotNull(viewModel.SelectedPreset);
         Assert.True(viewModel.SelectedPreset.IsLocked);
         Assert.False(viewModel.UpdateSelectedPresetCommand.CanExecute(null));
         Assert.False(viewModel.DeleteSelectedPresetCommand.CanExecute(null));
@@ -91,7 +92,7 @@ public sealed partial class MainWindowViewModelTests
         viewModel.UpdateSelectedPresetCommand.CanExecuteChanged += (_, _) => updateNotifications++;
         viewModel.DeleteSelectedPresetCommand.CanExecuteChanged += (_, _) => deleteNotifications++;
 
-        viewModel.SelectedPreset = viewModel.Presets.Single(preset => preset.Id == "blank-manual");
+        viewModel._presetManager.SelectedPreset = viewModel.Presets.Single(preset => preset.Id == "blank-manual");
 
         Assert.True(applyNotifications > 0);
         Assert.True(previewNotifications > 0);
