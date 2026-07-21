@@ -5,6 +5,10 @@ $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 . (Join-Path $PSScriptRoot 'config-lib.ps1')
 
+# Native AOT needs vswhere.exe to locate VS Build Tools C++ compiler
+$vsInstaller = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer'
+if (Test-Path $vsInstaller) { $env:PATH = "$vsInstaller;$env:PATH" }
+
 $solution = Get-AvaloniaSolutionPath
 $app = Get-AvaloniaAppProjectPath
 $publishDir = Get-AvaloniaPublishDir
@@ -41,18 +45,16 @@ New-Item -ItemType Directory -Force -Path $publishDir | Out-Null
 
 Invoke-NativeStep 'dotnet restore solution win-x64' { dotnet restore $solution -r win-x64 }
 # 07-12-modernization: Native AOT publish (PublishAot=true produces single native exe, no .dll).
-Invoke-NativeStep 'dotnet publish app win-x64 native-aot' { dotnet publish $app -c Release -r win-x64 -p:PublishAot=true --no-restore -o $publishDir -p:Version=$version -p:InformationalVersion=$version }
+Invoke-NativeStep 'dotnet publish app win-x64 native-aot' { dotnet publish $app -c Release -r win-x64 -p:PublishAot=true -o $publishDir -p:Version=$version -p:InformationalVersion=$version }
 
 if (-not (Test-Path -LiteralPath $exe)) { throw "Published exe missing: $exe" }
 
 $receipt = New-ToolReceipt 'release-build' @{
     sourceRoot = Get-AvaloniaRoot
     publishedExe = Resolve-Path -LiteralPath $exe | ForEach-Object { $_.Path }
-    publishedDll = Resolve-Path -LiteralPath $dll | ForEach-Object { $_.Path }
+    publishedDll = $(if (Test-Path -LiteralPath $dll) { Resolve-Path -LiteralPath $dll | ForEach-Object { $_.Path } } else { $null })
     bytes = (Get-Item -LiteralPath $exe).Length
     sha256 = (Get-ShortHash $exe)
-    dllBytes = (Get-Item -LiteralPath $dll).Length
-    dllSha256 = (Get-ShortHash $dll)
     builtAt = (Get-Item -LiteralPath $exe).LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')
 } | ConvertTo-Json -Depth 4 -Compress
 
