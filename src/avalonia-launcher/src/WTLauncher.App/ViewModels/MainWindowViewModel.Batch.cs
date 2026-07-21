@@ -1,7 +1,4 @@
-using System.Collections.Immutable;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
-using WTLauncher.Core.Messaging;
 
 namespace WTLauncher.App.ViewModels;
 
@@ -164,8 +161,6 @@ public sealed partial class MainWindowViewModel
         ApplyPresetButtonText = preview.ApplyButtonText;
         PresetSelectionStatusText = preview.StatusText;
         NotifySelectionCommands();
-        WeakReferenceMessenger.Default.Send(
-            new SelectionChangedMessage(selectedEntryIds.ToImmutableList()));
     }
 
     private void NotifySelectionCommands()
