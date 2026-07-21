@@ -363,65 +363,74 @@ Code-behind OnWindowKeyDown:
 
 ---
 
-## Scenario: Persisted ViewModel mutation transaction
+## Scenario: AppStore mutation with automatic rollback
 
 ### 1. Scope / Trigger
 
-Use this contract when a ViewModel mutation changes in-memory state that must be restored if the unified launcher store cannot commit. It applies to settings, entries, presets, and selection; a save-only operation without a real snapshot must not claim rollback semantics.
+Use this contract when a ViewModel mutation changes in-memory state that must persist to the unified launcher store. Rollback is automatic inside `AppStore.Mutate` — the caller never sees a half-persisted state.
 
 ### 2. Signatures
 
 ```csharp
-internal static string? LauncherMutationTransaction.Commit<TSnapshot>(
-    TSnapshot snapshot,
-    Func<string?> persist,
-    Action<TSnapshot> restore);
+// AppStore handles rollback internally
+public void Mutate(Func<LauncherStoreFile, LauncherStoreFile> transform);
+
+// ViewModel-level sync after AppStore rolls back
+private void RestoreVmStateFromStore();
 ```
 
 ### 3. Contracts
 
-- `snapshot` is captured before the mutation and contains every observable state value owned by that mutation family.
-- `persist` routes through `MainWindowViewModel.SaveStoreFile(BuildStoreFile())`; `LauncherStore` remains the only disk writer.
-- `restore` performs in-memory restoration plus required derived-state refreshes. It must not write to disk.
-- The returned `string?` is the original persistence failure: `null` means committed; non-null means restored.
+- `AppStore.Mutate` captures `before` state before invoking `transform`. If `LauncherStore.Save` throws, `_state` reverts to `before` and subscribers are NOT notified.
+- After a failed `Mutate`, callers that cache local state (e.g., `_settings`, `_list.MutableEntries`) must call `RestoreVmStateFromStore()` to re-sync from AppStore.
+- `RestoreVmStateFromStore` re-reads `_settings`, presets, and entries from AppStore, then calls `EnsureCustomOrderContainsEntries()` and `RefreshAllProjections()`.
 
 ### 4. Validation & Error Matrix
 
 | Condition | Required result |
 | --- | --- |
-| `persist()` returns `null` | Keep mutated state; never call `restore` |
-| `persist()` returns an error | Call `restore(snapshot)` exactly once; return the same error |
-| `persist()` throws a recoverable storage exception | `SaveStoreFile` converts it to the existing persistence status before `Commit` sees it |
-| `restore` exposes stale derived state | Contract violation; include selection/filter/count refresh in the restore callback |
+| `transform` succeeds + `Save` succeeds | AppStore updates `_state`; subscribers notified |
+| `transform` succeeds but `Save` fails (recoverable) | AppStore reverts `_state` to `before`; VM must call `RestoreVmStateFromStore()` |
+| `transform` itself throws | Exception propagates immediately; `_state` and file unchanged |
 
 ### 5. Good/Base/Bad Cases
 
-- Good: entry rollback restores entries, settings, presets, selection, filter projection, counts, and layout presentation.
-- Base: settings rollback restores the immutable `LauncherSettings` snapshot.
-- Bad: wrapping command-management save in `Commit` without first capturing its edited entries/settings would advertise rollback that cannot happen.
+- Good: entry mutation saves → AppStore notifies subscriber → VM re-reads `_settings` and preset state.
+- Base: save failure → AppStore reverts → VM calls `RestoreVmStateFromStore()` → state matches pre-mutation.
+- Bad: mutating AppStore state AND local state independently, forgetting to re-sync on failure.
 
 ### 6. Tests Required
 
-- `LauncherMutationTransactionTests`: success does not restore; failure restores once and returns the same message.
-- Every migrated mutation family keeps a save-failure regression asserting its complete observable state equals the pre-mutation snapshot.
-- Full repository verification must still prove the single-store invariant, publish, and GUI smoke.
+- `AppStoreTests`: success does not revert; failure reverts and rethrows; subscriber called only on success.
+- Every mutation family keeps a save-failure regression asserting `RestoreVmStateFromStore()` restores full state after an AppStore rollback.
 
-### 7. Wrong vs Correct
+### 7. Implementation
 
 ```csharp
-// Wrong: every caller privately owns the failure branch.
-var failure = SaveStoreFile(BuildStoreFile());
-if (failure is not null)
-    Restore(snapshot);
+// AppStore mutation flow (simplified)
+var before = _state;
+try
+{
+    _state = transform(_state);
+    LauncherStore.Save(_state, _storePath);
+    _stateChanged?.Invoke(_state);
+}
+catch when (IsRecoverable(ex))
+{
+    _state = before;
+    throw; // caller runs RestoreVmStateFromStore
+}
 
-// Correct: one control-flow owner; domain restoration stays with the caller.
-var failure = LauncherMutationTransaction.Commit(
-    snapshot,
-    () => SaveStoreFile(BuildStoreFile()),
-    Restore);
+// ViewModel restore
+private void RestoreVmStateFromStore()
+{
+    _settings = _appStore.Select(s => s.Settings);
+    _presetManager.Load(...);
+    _list.ReplaceEntries(_appStore.Select(s => s.Entries));
+    EnsureCustomOrderContainsEntries();
+    RefreshAllProjections();
+}
 ```
-
-Do not replace this narrow helper with a repository, Unit of Work, or event bus: the application commits one local JSON aggregate and has no multi-resource transaction.
 
 ---
 

@@ -195,7 +195,7 @@ Until then, hand-rolled one-shot migration is correct for this codebase.
 
 **Pin gate:** `tools/verify.ps1` check `settings-single-source-buildstorefile` regex-counts the unique hand-assembly signature in `MainWindowViewModel.cs` and asserts exactly 1 match. Regression triggers a verify failure.
 
-**Collaborator working state is NOT dual truth:** `LauncherDragReorderWorkflow._settings` and `LauncherEntryMutationSnapshot._settings` are sometimes mistaken for dual-truth — they are not. Both are **working state for rollback semantics** (workflow mutates during Preview before persist; snapshot captures at mutation start for restore). Main VM syncs via `_settings = _dragReorderWorkflow.Settings` (5 sites in `Drag.cs`) and `_settings = snapshot.CloneSettings()`. This manual sync is the cost of collaborator-boundary design, NOT a bug. Verified by 7 equivalence tests in `MainWindowViewModelTests.DragTests.cs`.
+**Collaborator working state is NOT dual truth:** `LauncherDragReorderWorkflow._settings` and `AppStore._state` are sometimes mistaken for dual-truth — they are not. The workflow mutates `_settings` during Preview before persist; AppStore holds the single source and reverts automatically on save failure. Main VM syncs via `_settings = _dragReorderWorkflow.Settings` (5 sites in `Drag.cs`) and `_settings = _appStore.Select(s => s.Settings)` for store reads. This manual sync is the cost of collaborator-boundary design, NOT a bug. Verified by 7 equivalence tests in `MainWindowViewModelTests.DragTests.cs`.
 
 
 
@@ -368,3 +368,4 @@ The following were removed during the 2026-07 single-file refactoring and ponyta
 | `NormalizeEntries` / `ValidateEntrySelectionFields` pipeline | Normalize pipeline removed in ponytail audit | Value-object `Parse` at use time |
 | Multi-file stage-all-then-commit (config.json + presets.json + settings.json) | Three-file store collapsed into `launcher.json` | Single-file atomic save inside `LauncherJson.Save` |
 | `LauncherPresetMutationSnapshot` (separate type) | Inlined — only one caller | Logic merged into `LauncherEntryMutationSnapshot` / `MainWindowViewModel` |
+| `LauncherEntryMutationSnapshot` / `LauncherSelectionMutationSnapshot` | **Deleted** 2026-07-21 | Rollback via `AppStore.Mutate` internal revert + `RestoreVmStateFromStore()` |

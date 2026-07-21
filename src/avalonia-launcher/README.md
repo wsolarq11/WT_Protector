@@ -59,12 +59,12 @@ The codebase is organized in five logical layers. Each layer depends only on the
 - Entry add/edit/delete command handlers own the short validation → mutate → save sequence.
 - Shared rules stay in narrow helpers such as `LauncherEntryDrafts`; avoid a second ViewModel workflow when there is only one caller.
 
-### Layer 2 — Persistence + rollback (ViewModels)
+### Layer 2 — Persistence + rollback (AppStore + ViewModels)
 
-`src/WTLauncher.App/ViewModels/MainWindowViewModel.cs` + `LauncherEntryMutationSnapshot`
+`src/WTLauncher.App/Infrastructure/AppStore.cs` + `MainWindowViewModel.RestoreVmStateFromStore()`
 
-- Save-then-rollback pattern: snapshot-before → mutate → save all → restore on failure
-- `LauncherEntryMutationSnapshot`, command-local entry replacement
+- `AppStore.Mutate` handles automatic rollback: captures `before`, applies transform, persists via `LauncherStore.Save`, reverts on failure.
+- `RestoreVmStateFromStore()` re-syncs ViewModel state after AppStore rollback.
 - Coordinates `launcher.json` (entries + presets + settings + defaultPresetId) as one atomic unit
 
 ### Layer 3 — ViewModel orchestration

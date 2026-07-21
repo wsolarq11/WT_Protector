@@ -36,9 +36,9 @@ Every new persistence path must test:
 1. **Normal save:** data round-trips correctly through `LauncherStore.Save` → `LauncherStore.Load`.
 2. **Save failure:** `LauncherStore.Save` throws → caller's snapshot restore returns VM state to pre-mutation values (entries + settings + presets + custom order + selection).
 
-Single-file atomic save means there is no partial-failure path — either all of `launcher.json` commits via `File.Replace` or none of it does. The rollback contract lives at the VM layer (`LauncherEntryMutationSnapshot`), not the store layer.
+Single-file atomic save means there is no partial-failure path — either all of `launcher.json` commits via `File.Replace` or none of it does. The rollback is automatic inside `AppStore.Mutate` (reverts `_state` on exception) and at the VM layer via `RestoreVmStateFromStore()`.
 
-**Reference:** `LauncherEntryMutationSnapshotTests.cs`, `LauncherSelectionMutationSnapshotTests.cs`, `LauncherStoreLoadFailureTests.cs`
+**Reference:** `AppStoreTests.cs`, `LauncherStoreLoadFailureTests.cs`
 
 ### ViewModel Command Tests
 

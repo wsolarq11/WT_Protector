@@ -43,7 +43,7 @@ Layer 4 ─ Views/                     XAML + code-behind + drag-drop
 `src/WTLauncher.App/ViewModels/MainWindowViewModel.cs` (2587 lines + 2 partials after Stage 1 split — see Layer 3)
 
 - Entry add/edit/delete command handlers own: **validate → mutate → save**.
-- Shared rules stay in narrow helpers (`LauncherEntryDrafts`, `LauncherEntryReferences`, `LauncherEntryMutationSnapshot`).
+- Shared rules stay in narrow helpers (`LauncherEntryDrafts`, `LauncherEntryReferences`).
 - Don't create a second ViewModel workflow when there's only one caller.
 
 ---
@@ -56,8 +56,8 @@ Layer 4 ─ Views/                     XAML + code-behind + drag-drop
 - The store is a single file (`config/launcher.json`) owning entries + presets + settings + defaultPresetId as one atomic unit.
 - Rollback restores from deep-cloned snapshots (`entry with { }` pattern).
 
-Key file:
-- `LauncherEntryMutationSnapshot.cs` — captures entries + preset file + settings + custom order + selection; exposes `Capture` / `CloneEntries` / `ClonePresetFile` / `CloneSettings`. (Save and rollback are inlined into `MainWindowViewModel` command handlers; this type is now a pure snapshot carrier.)
+Key change (2026-07-21):
+- `LauncherEntryMutationSnapshot.cs` / `LauncherSelectionMutationSnapshot.cs` — **deleted**. Rollback is now automatic inside `AppStore.Mutate` (internal `_state` revert) plus `RestoreVmStateFromStore()` for ViewModel sync. Selection snapshot inlined as `List<(LauncherEntryViewModel, bool)>` in `MainWindowViewModel.Batch.cs`.
 
 ---
 

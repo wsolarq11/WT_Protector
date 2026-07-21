@@ -878,3 +878,29 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **AC 标记** | PRD AC2 标记为 `[~]`（部分完成 — 静态样式 stub 就位但动态 API 不可用） |
 | **预防** | (1) 引入 Avalonia 版本检查到工具链（`dotnet list package | findstr Avalonia`）；(2) 未来升级时 grep `PlatformSettings` 确认 `ReducedMotion` 是否暴露；(3) 先从 XAML 侧准备样式（反向绑定 `classes="reduced-motion"`），API 就位后只需在 `ApplyReducedMotion()` 中添加平台检测逻辑 |
 | **适用** | 所有依赖 OS-level 可访问性偏好 API 的功能（reduced motion、high contrast、color scheme detection） |
+
+---
+
+## 10. Unified Store 架构迁移教训 (2026-07-21)
+
+> 来源：任务 `07-21-unified-store-parent`
+
+### 10.1 RestoreVmStateFromStore 事件链断裂
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-07-21 Unified Store Phase 3 实现会话。`RestoreVmStateFromStore()` 调用 `_list.ReplaceAllEntries()` → 触发 `EntriesChanged` → `OnEntriesChanged` → `RefreshAllProjections` → `ApplyFilter` → `FilterAndSort` → `ValidateCustomOrder` 因 `CustomEntryOrder` 尚未同步而抛出 `missing entry id for projection`。7 个 save-failure 测试一致失败。 |
+| **根因** | `ReplaceAllEntries` 释放 `EntriesChanged` 事件，该事件被 `OnEntriesChanged` 订阅并调用 `RefreshAllProjections()`，而 `RefreshAllProjections()` → `ApplyFilter` → `ValidateCustomOrder` 需要 `_settings.CustomEntryOrder` 包含所有 entry ID。但 `RestoreVmStateFromStore` 在设置时才从 AppStore 读取 `_settings` — 事件在 `_settings` 更新 `CustomEntryOrder` 之前就被触发了。 |
+| **修复** | 替换 `_list.ReplaceAllEntries()` 为 `_list.ReplaceEntries()`（不触发事件），然后显式调用 `EnsureCustomOrderContainsEntries()` 再 `RefreshAllProjections()`。 |
+| **预防** | (1) **`ReplaceAllEntries` vs `ReplaceEntries` 的语义差异必须标注**：前者释放事件（适用于"我已在事件处理前准备好所有状态"），后者不释放（适用于"我还有状态需同步后再刷新"）。(2) **新建 restore/revert 方法时**：先追踪哪些状态依赖关系必须先就位，再触发刷新操作。事件订阅形成隐式 DAG，调用者必须确保 DAG 的上游依赖在触发事件前已满足。(3) **save-failure 回归测试的价值**：7 个依赖 rollback 的测试一次性捕获了这个 bug，否则代码带着逻辑缺陷提交而门禁全绿。 |
+| **适用** | 所有操作 `EntryListViewModel` 且涉及事件订阅的 mutation。 |
+
+### 10.2 Inline 重构丢失副作用（DiscardDragReorderPreview）
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-07-21 Unified Store Phase 3。`SelectionChangeDuringDragPreviewDiscardsPreviewOrder` 测试失败：设置 `IsSelected = true` 应丢弃拖拽预览，但 `Settings.CustomEntryOrder` 仍保持拖拽顺序。 |
+| **根因** | 旧 `CaptureSelectionMutationSnapshot(LauncherEntryViewModel, bool)` 重载内部调用了 `DiscardDragReorderPreview()`。inline 后 `UpdateSelection()` 仅创建 `List<(LauncherEntryViewModel, bool)>` 但没有调用 `DiscardDragReorderPreview()`。另一个重载 `CaptureSelectionMutationSnapshot(IEnumerable<>)` 被 `SetSelection` 调用，inline 时保留了 `DiscardDragReorderPreview()` — 双入口不一致。 |
+| **修复** | `UpdateSelection()` 入口加 `DiscardDragReorderPreview()`。 |
+| **预防** | (1) **方法 inline 时必须审计所有副作用**：不只是返回值，还有内部调用的状态变异方法。(2) **删除一个方法前**：列出其所有调用的外部方法，确认每个调用在新的 inline 站点都有对应。(3) **Inline 后留意双入口不一致**：同一 old 方法的多个重载如果被不同站点调用且行为不同，inline 后必须保持该差异。 |
+| **适用** | 所有 `CaptureXxx` → inline 重构场景。 |

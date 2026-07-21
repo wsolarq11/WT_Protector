@@ -181,7 +181,7 @@ var entries = sourceEntries.Select(e => e.Clone()).ToList();
 var presetClone = LauncherPresetFiles.Clone(presetFile);
 ```
 
-**Source:** `src/avalonia-launcher/src/WTLauncher.App/ViewModels/LauncherEntryMutationSnapshot.cs`
+**Source (historical):** `LauncherEntryMutationSnapshot.cs` was deleted in 2026-07-21 Unified Store Architecture refactoring. Clone semantics moved to `AppStore.Mutate()` internal rollback + `RestoreVmStateFromStore()`.
 
 ---
 

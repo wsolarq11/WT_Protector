@@ -69,7 +69,7 @@
 
 ### 1. Single-File Atomicity
 
-All state lives in one file: `config/launcher.json` (entries + presets + settings + defaultPresetId). `LauncherJson.Save` writes a temp file then `File.Replace` for NTFS-atomic commit — either the whole file commits or none of it does. The rollback contract lives at the VM layer (`LauncherEntryMutationSnapshot` captures pre-mutation state; command handlers restore from it on save failure). Never write JSON files directly outside `LauncherStore`.
+All state lives in one file: `config/launcher.json` (entries + presets + settings + defaultPresetId). `LauncherJson.Save` writes a temp file then `File.Replace` for NTFS-atomic commit — either the whole file commits or none of it does. Rollback is automatic inside `AppStore.Mutate` (internal `_state` revert on exception) and at the VM layer via `RestoreVmStateFromStore()`. Never write JSON files directly outside `LauncherStore`.
 
 ### 2. Design Token Drift
 
