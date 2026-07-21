@@ -557,6 +557,69 @@ private ItemsControl CardsEntriesItemsControl => EntriesView.CardsItems;
 
 ---
 
+## Collaborator Class with Bridge Delegates Pattern
+
+当 MWVM 的一个职责域足够独立（状态 + 操作 + 验证），但依赖 MWVM 的内部方法（如 `SaveConfig`、`ApplyFilter`、`DiscardDragReorderPreview`）时，提取为 **ObservableObject 协作类**，通过 **桥接委托** 与 MWVM 通信。
+
+### 协作类模式
+
+```csharp
+public sealed partial class EntryManager : ObservableObject
+{
+    // MWVM 设置的桥接委托
+    internal Func<LauncherSettings> SettingsGetter = null!;
+    internal Action<LauncherStatusContent> StatusApplier = null!;
+    // ...
+
+    // 协作类自己的事件（一对多通知）
+    internal event Action? EntriesChanged;
+    internal event Action? CountChanged;
+}
+
+public sealed partial class LaunchOrchestrator : ObservableObject
+{
+    [ObservableProperty]
+    private bool _requireConfirmationForLaunches;
+
+    internal Func<bool> SaveConfig = null!;
+    // ...
+}
+```
+
+### 通信方向
+
+| 方向 | 机制 | 例子 |
+|------|------|------|
+| MWVM → 协作类 | `internal Func<>` / `Action<>` 委托 | `SettingsPersister`、`FilterApplier`、`SaveConfig` |
+| 协作类 → MWVM | `PropertyChanged` 事件订阅 | `_launchOrchestrator.PropertyChanged += ...` |
+| 协作类 → 协作类 | `event Action?` 自定义事件 | `EntriesChanged` → MWVM 中转 |
+
+### 构造顺序（防止构造时持久化）
+
+```csharp
+// 1. new 协作类（所有桥接委托为 null）
+_launchOrchestrator = new LaunchOrchestrator(...);
+
+// 2. 设置初始属性值（OnXxxChanged 中 if (Xxx is null) return; 返回）
+_launchOrchestrator.RequireConfirmationForLaunches = _settings.RequireConfirmationForLaunches;
+
+// 3. 赋值桥接委托
+_launchOrchestrator.SettingsPersister = TryPersistSettingsChange;
+_launchOrchestrator.FilterApplier = ApplyFilter;
+
+// 4. 订阅事件
+_launchOrchestrator.PropertyChanged += (_, e) => { OnPropertyChanged(e.PropertyName!); };
+```
+
+**关键规则：** `[ObservableProperty]` 的 `OnXxxChanged` partial 方法中必须用 `null` 守卫跳过构造期——不能在析取后才赋值初始属性。切勿创建绕过生成器的 `SetXxxDirect(bool)` 方法（触发 MVVMTK0034）。
+
+### 检查清单
+
+- [ ] 协作类是否真的需要独立存在？先确认 MWVM 没有膨胀到需要提取（>3 个相关私有字段 + 操作）
+- [ ] 桥接委托是否只暴露 MWVM 已有的方法？不要为协作类创建 MWVM 原本没有的新方法
+- [ ] `[ObservableProperty]` 是否遵循构造顺序规则？初始化在委托赋值前
+- [ ] CA1001 是否因 `CancellationTokenSource` 等字段误报？如果是，用 `#pragma warning disable` + 解释确定性释放
+
 ## Forbidden Patterns
 
 - ❌ **ViewModel creates a `new Window()`** — dialogs always injected via `Func<>`.

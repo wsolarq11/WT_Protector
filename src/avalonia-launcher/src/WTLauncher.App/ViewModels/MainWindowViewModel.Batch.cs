@@ -10,12 +10,8 @@ namespace WTLauncher.App.ViewModels;
 // Selection + batch launch delegation. Split from MainWindowViewModel.cs as part of
 // 07-09-split-mainviewmodel-stage2. Batch launch is delegated to LaunchOrchestrator.
 
-// ponytail: CA1001 wants MainWindowViewModel to be IDisposable because of the
-// _batchCts field below. That CTS is deterministically disposed in StartBatch's
-// finally block (see line ~181); making the ViewModel IDisposable would require
-// wiring a Dispose caller (window close → view model dispose) for no behavioural
-// gain — the field never outlives its enclosing operation.
-#pragma warning disable CA1001
+// _batchCts lives in LaunchOrchestrator (which suppresses CA1001 internally);
+// MainWindowViewModel does not own any disposable field and needs no suppression.
 public sealed partial class MainWindowViewModel
 {
     [RelayCommand(CanExecute = nameof(CanSelectVisible))]

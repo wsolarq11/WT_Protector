@@ -23,8 +23,6 @@ public sealed class EntryManager
     internal ObservableCollection<LauncherEntryViewModel> MutableVisibleEntries => _visibleEntries;
 
     public int VisibleCount => _visibleEntries.Count;
-    internal int SelectedCount { get; set; }
-
     internal string? KeyboardFocusedEntryId { get; set; }
 
     internal EntryListViewModel EntryListViewModel { get; }

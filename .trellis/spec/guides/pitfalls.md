@@ -208,6 +208,16 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **预防** | 任何"跳过 ApplyFilter"的优化（`RefreshEntries=false`、`isDragging` 早退等）必须验证所有派生投影：`VisibleGroups`、`VisibleCount`、`SelectVisibleCommand`、`IsVisibleEmpty`。只检查 `_visibleEntries` 是不够的——卡片视图还依赖 `VisibleGroups`。 |
 | **适用** | 任何 `ApplyFilter()` 的优化/条件跳过。 |
 
+### 2.14 `[ObservableProperty]` 不能有后备字段访问的转发方法
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-07-21 MWVM Stage 5 会话，`MVVMTK0034` 编译错误 |
+| **根因** | CommunityToolkit.Mvvm 的 `[ObservableProperty]` 分析器禁止在包含类内直接访问 `_field` 后备字段（MVVMTK0034），因为源代码生成器接管了字段的所有权。任何"绕过"生成属性直接设置后备字段的方法都会触发此错误。 |
+| **修复** | 删除转发方法，改为在构造器中将桥接委托 `SettingsPersister` 赋值前设置生成属性，利用 `if (SettingsPersister is null) return;` 守卫跳过持久化。 |
+| **预防** | 需要初始值但不触发副作用的正确顺序：(1) new 协作类 → (2) 设置初始属性值（此时桥接委托为 null，`OnXxxChanged` 中的 null 守卫返回）→ (3) 赋值桥接委托 → (4) 订阅 PropertyChanged 事件。切勿创建 `SetXxxDirect(bool value) { _field = value; }` 方法。 |
+| **适用** | 所有使用 `[ObservableProperty]` 的 ObservableObject 类。 |
+
 ---
 
 ### 3.1 不要在文档里硬编码"N 条/N 类"
