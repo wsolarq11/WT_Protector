@@ -83,7 +83,7 @@ public sealed partial class MainWindowViewModel
                     return "新命令与原命令相同,无变更。";
 
                 var matched = 0;
-                foreach (var item in _entryManager.MutableEntries)
+                foreach (var item in _list.MutableEntries)
                 {
                     if (string.Equals(item.Command, oldCmd, StringComparison.OrdinalIgnoreCase))
                     {
@@ -105,7 +105,7 @@ public sealed partial class MainWindowViewModel
                     return "保留方与失效方相同,无法合并。";
 
                 var matched = 0;
-                foreach (var item in _entryManager.MutableEntries)
+                foreach (var item in _list.MutableEntries)
                 {
                     if (string.Equals(item.Command, loser, StringComparison.OrdinalIgnoreCase))
                     {
@@ -136,7 +136,7 @@ public sealed partial class MainWindowViewModel
                 var oldToken = "$" + uk.OldKey;
                 var newToken = "$" + uk.NewKey;
                 var cascaded = 0;
-                foreach (var item in _entryManager.MutableEntries)
+                foreach (var item in _list.MutableEntries)
                 {
                     if (string.Equals(item.Command, oldToken, StringComparison.OrdinalIgnoreCase))
                     {
@@ -182,10 +182,10 @@ public sealed partial class MainWindowViewModel
     }
 
     private IReadOnlyList<CommandRow> GetCommandRowsSnapshot() =>
-        CommandUsageAnalyzer.Analyze(_entryManager.MutableEntries.Select(ToLaunchEntry));
+        CommandUsageAnalyzer.Analyze(_list.MutableEntries.Select(ToLaunchEntry));
 
     private IReadOnlyList<TemplateRow> GetTemplateRowsSnapshot() =>
-        CommandUsageAnalyzer.AnalyzeTemplates(_settings.CommandTemplates, _entryManager.MutableEntries.Select(ToLaunchEntry));
+        CommandUsageAnalyzer.AnalyzeTemplates(_settings.CommandTemplates, _list.MutableEntries.Select(ToLaunchEntry));
 
     private CommandManagementResult SuccessResult(string statusMessage) =>
         new(true, statusMessage, GetCommandRowsSnapshot(), GetTemplateRowsSnapshot());

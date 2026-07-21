@@ -1,0 +1,208 @@
+using System.Collections.Immutable;
+using WTLauncher.App.Infrastructure;
+using WTLauncher.Core;
+
+namespace WTLauncher.Tests;
+
+public sealed class AppStoreTests
+{
+    private static LauncherStoreFile SampleStore() => new()
+    {
+        Entries =
+        [
+            new LaunchEntry { Id = "one", Name = "One", Directory = "D:\\one", Command = "pwsh" },
+            new LaunchEntry { Id = "two", Name = "Two", Directory = "D:\\two", Command = "codex" },
+        ],
+        Settings = new LauncherSettings(),
+        Presets =
+        [
+            new LauncherPreset { Id = "default", Name = "Default", EntryIds = ["one", "two"] },
+        ],
+        DefaultPresetId = "default",
+    };
+
+    [Fact]
+    public void Select_ReturnsProjectedValue()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        LauncherStore.Save(SampleStore(), path);
+        var store = new AppStore(path);
+
+        var ids = store.Select(s => s.Entries.Select(e => e.Id).ToImmutableList());
+
+        Assert.Equal(["one", "two"], ids);
+    }
+
+    [Fact]
+    public void Select_ReturnsSettings()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        LauncherStore.Save(SampleStore(), path);
+        var store = new AppStore(path);
+
+        var settings = store.Select(s => s.Settings);
+
+        Assert.NotNull(settings);
+    }
+
+    [Fact]
+    public void Mutate_PersistsTransformToDisk()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        LauncherStore.Save(SampleStore(), path);
+        var store = new AppStore(path);
+
+        store.Mutate(state => state with
+        {
+            Settings = state.Settings with { SortMode = LauncherEntryQuery.AlphabeticalSortModeId },
+        });
+
+        var reloaded = LauncherStore.Load(path);
+        Assert.Equal(LauncherEntryQuery.AlphabeticalSortModeId, reloaded.Settings.SortMode);
+    }
+
+    [Fact]
+    public void Mutate_UpdatesInMemoryState()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        LauncherStore.Save(SampleStore(), path);
+        var store = new AppStore(path);
+
+        store.Mutate(state => state with
+        {
+            Entries = state.Entries.Add(new LaunchEntry
+                { Id = "three", Name = "Three", Directory = "D:\\three", Command = "pwsh" }),
+        });
+
+        var count = store.Select(s => s.Entries.Count);
+        Assert.Equal(3, count);
+    }
+
+    [Fact]
+    public void Mutate_SkipNoopTransformDoesNotChangeFile()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        LauncherStore.Save(SampleStore(), path);
+        var beforeHash = HashFile(path);
+        var store = new AppStore(path);
+
+        store.Mutate(state => state);
+
+        var afterHash = HashFile(path);
+        Assert.Equal(beforeHash, afterHash);
+    }
+
+    [Fact]
+    public void Mutate_RollsBackOnSaveFailure()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        LauncherStore.Save(SampleStore(), path);
+        // Make file read-only so the next save fails.
+        File.SetAttributes(path, FileAttributes.ReadOnly);
+        var store = new AppStore(path);
+
+        try
+        {
+            Assert.ThrowsAny<Exception>(() =>
+                store.Mutate(state => state with { DefaultPresetId = "x" }));
+        }
+        finally
+        {
+            File.SetAttributes(path, FileAttributes.Normal);
+        }
+
+        Assert.Equal("default", store.Select(s => s.DefaultPresetId));
+    }
+
+    [Fact]
+    public void Subscribe_NotifiedOnMutate()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        LauncherStore.Save(SampleStore(), path);
+        var store = new AppStore(path);
+        var notified = false;
+
+        using (store.Subscribe(_ => notified = true))
+        {
+            store.Mutate(state => state with { DefaultPresetId = "changed" });
+        }
+
+        Assert.True(notified);
+    }
+
+    [Fact]
+    public void Subscribe_NotNotifiedOnFailedMutate()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        LauncherStore.Save(SampleStore(), path);
+        var store = new AppStore(path);
+        var notified = false;
+
+        using (store.Subscribe(_ => notified = true))
+        {
+            Assert.ThrowsAny<Exception>(() =>
+                store.Mutate(_ => throw new InvalidOperationException("boom")));
+        }
+
+        Assert.False(notified);
+    }
+
+    [Fact]
+    public void Subscribe_DisposeStopsNotifications()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        LauncherStore.Save(SampleStore(), path);
+        var store = new AppStore(path);
+        var notified = false;
+
+        var sub = store.Subscribe(_ => notified = true);
+        sub.Dispose();
+        store.Mutate(state => state with { DefaultPresetId = "x" });
+
+        Assert.False(notified);
+    }
+
+    [Fact]
+    public async Task MutateAsync_PersistsAndUpdatesState()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        LauncherStore.Save(SampleStore(), path);
+        var store = new AppStore(path);
+
+        await store.MutateAsync(state => Task.FromResult(state with
+        {
+            Settings = state.Settings with { SortMode = LauncherEntryQuery.AlphabeticalSortModeId },
+        }));
+
+        var reloaded = LauncherStore.Load(path);
+        Assert.Equal(LauncherEntryQuery.AlphabeticalSortModeId, reloaded.Settings.SortMode);
+        Assert.Equal(LauncherEntryQuery.AlphabeticalSortModeId, store.Select(s => s.Settings.SortMode));
+    }
+
+    [Fact]
+    public void StorePath_ReturnsConstructorPath()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        LauncherStore.Save(SampleStore(), path);
+        var store = new AppStore(path);
+
+        Assert.Equal(path, store.StorePath);
+    }
+
+    private static string HashFile(string path)
+    {
+        var bytes = File.ReadAllBytes(path);
+        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes));
+    }
+}

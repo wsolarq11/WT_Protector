@@ -2,182 +2,76 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Messaging;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
-using WTLauncher.Core.Messaging;
 
 namespace WTLauncher.App.Features.Entries;
 
-/// <summary>Owns the entry collection and CRUD operations. Shares the
-/// ObservableCollection references with the shell (passed in constructor)
-/// so existing direct-iteration code continues to work during migration.</summary>
+/// <summary>Single owner of the entry collection (both mutable and read-only
+/// projections), CRUD operations, and UI bridge delegates formerly on
+/// EntryManager. The shell sets the UI delegates directly after construction.</summary>
 public sealed partial class EntryListViewModel : ObservableObject, IEntryListViewModel, IEntryCardHost
 {
-    // -- shared collections —
-    private readonly ObservableCollection<LauncherEntryViewModel> _entries;
-    private readonly ObservableCollection<LauncherEntryViewModel> _visibleEntries;
+    private readonly ObservableCollection<LauncherEntryViewModel> _entries = [];
+    private readonly ObservableCollection<LauncherEntryViewModel> _visibleEntries = [];
     private readonly IEntryService _entryService;
-    private readonly EntryManager _entryManager;
+    private readonly AppStore _appStore;
     private readonly Func<DateTimeOffset> _utcNow;
 
     public ReadOnlyObservableCollection<LauncherEntryViewModel> Entries { get; }
     public ReadOnlyObservableCollection<LauncherEntryViewModel> VisibleEntries { get; }
 
+    /// <summary>Mutable access for MWVM partial files (drag reorder, sync, etc.).</summary>
+    internal ObservableCollection<LauncherEntryViewModel> MutableEntries => _entries;
+    internal ObservableCollection<LauncherEntryViewModel> MutableVisibleEntries => _visibleEntries;
+
+    internal string? KeyboardFocusedEntryId { get; set; }
+
     [ObservableProperty]
     private int _totalCount;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsVisibleEmpty))]
-    private int _visibleCount;
+    public int VisibleCount => _visibleEntries.Count;
 
     public bool IsVisibleEmpty => VisibleCount == 0;
 
+    // ── events ──
+    public event Action? EntriesChanged;
+    public event Action? CountChanged;
+
+    // ── UI bridge delegates (set by MWVM orchestrator) ──
+    internal Action<LauncherStatusContent> StatusApplier = null!;
+    internal Action DragPreviewDiscarder = null!;
+    internal Action<LauncherEntryViewModel, bool> SelectionUpdater = null!;
+    internal Func<bool> DetailedListModeChecker = null!;
+    internal Func<bool> NamesModeChecker = null!;
+    internal Action<LauncherEntryViewModel> DryRunInitiator = null!;
+    internal Func<LauncherEntryViewModel, Task> AsyncLauncher = null!;
+    internal Action<LauncherEntryViewModel> EntryMoverUp = null!;
+    internal Func<LauncherEntryViewModel, bool> EntryMoverUpChecker = null!;
+    internal Action<LauncherEntryViewModel> EntryMoverDown = null!;
+    internal Func<LauncherEntryViewModel, bool> EntryMoverDownChecker = null!;
+
     public EntryListViewModel(
-        ObservableCollection<LauncherEntryViewModel> entries,
-        ObservableCollection<LauncherEntryViewModel> visibleEntries,
         IEntryService entryService,
-        EntryManager entryManager,
-        Func<DateTimeOffset> utcNow)
+        Func<DateTimeOffset> utcNow,
+        AppStore appStore)
     {
-        _entries = entries;
-        _visibleEntries = visibleEntries;
         _entryService = entryService ?? throw new ArgumentNullException(nameof(entryService));
-        _entryManager = entryManager ?? throw new ArgumentNullException(nameof(entryManager));
         _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
+        _appStore = appStore ?? throw new ArgumentNullException(nameof(appStore));
         Entries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_entries);
         VisibleEntries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_visibleEntries);
-        TotalCount = _entries.Count;
     }
 
-    // ── public CRUD (IEntryListViewModel) ──
-
-    public async Task AddEntryAsync()
+    /// <summary>Replace all entries and reset keyboard focus. Fires
+    /// EntriesChanged / CountChanged for MWVM subscription.</summary>
+    public void ReplaceAllEntries(IEnumerable<LaunchEntry> entries)
     {
-        _entryManager.DragPreviewDiscarder();
-        var result = await _entryService.AddEntryAsync(
-            _entries.Select(ToLaunchEntry), _entryManager.SettingsGetter(), _entryManager.CommandTemplatesGetter(),
-            _entryManager.ReferenceCounter(""), _utcNow).ConfigureAwait(true);
-        switch (result)
-        {
-            case ServiceSuccess<LaunchEntry> success:
-                HandleAddOrCloneResult(success.Value, static e => LauncherEntryStatus.Added(e.Name));
-                return;
-            case ServiceCanceled<LaunchEntry> canceled:
-                _entryManager.StatusApplier(canceled.Status);
-                return;
-            case ServiceFailure<LaunchEntry> failure:
-                _entryManager.StatusApplier(failure.Status);
-                return;
-            default:
-                throw new UnreachableException();
-        }
-    }
-
-    public async Task CloneEntryAsync(LauncherEntryViewModel item)
-    {
-        _entryManager.DragPreviewDiscarder();
-        var result = await _entryService.CloneEntryAsync(
-            item, _entries.Select(e => e.Id), _entries.Select(ToLaunchEntry),
-            _entryManager.SettingsGetter(), _entryManager.CommandTemplatesGetter(),
-            _entryManager.ReferenceCounter(item.Id), _utcNow).ConfigureAwait(true);
-        switch (result)
-        {
-            case ServiceSuccess<LaunchEntry> success:
-                HandleAddOrCloneResult(success.Value, static e =>
-                    LauncherEntryStatus.Added(e.Name));
-                return;
-            case ServiceCanceled<LaunchEntry> canceled:
-                _entryManager.StatusApplier(canceled.Status);
-                return;
-            case ServiceFailure<LaunchEntry> failure:
-                _entryManager.StatusApplier(failure.Status);
-                return;
-            default:
-                throw new UnreachableException();
-        }
-    }
-
-    public async Task EditEntryAsync(LauncherEntryViewModel item)
-    {
-        _entryManager.DragPreviewDiscarder();
-        var result = await _entryService.EditEntryAsync(
-            item, _entries.Select(ToLaunchEntry), _entryManager.PresetFileGetter(), _entryManager.SettingsGetter(),
-            _entryManager.CommandTemplatesGetter(), _entryManager.ReferenceCounter(item.Id),
-            _utcNow).ConfigureAwait(true);
-        switch (result)
-        {
-            case ServiceSuccess<LaunchEntry> success:
-                await HandleEditResult(item, success.Value);
-                return;
-            case ServiceCanceled<LaunchEntry> canceled:
-                _entryManager.StatusApplier(canceled.Status);
-                return;
-            case ServiceFailure<LaunchEntry> failure:
-                _entryManager.StatusApplier(failure.Status);
-                return;
-            default:
-                throw new UnreachableException();
-        }
-    }
-
-    public async Task DeleteEntryAsync(LauncherEntryViewModel item)
-    {
-        _entryManager.DragPreviewDiscarder();
-        var result = await _entryService.DeleteEntryAsync(
-            item, _entryManager.KeyboardFocusedEntryId).ConfigureAwait(true);
-        EntryDeleteApproval approval;
-        switch (result)
-        {
-            case ServiceSuccess<EntryDeleteApproval> success:
-                approval = success.Value;
-                break;
-            case ServiceCanceled<EntryDeleteApproval> canceled:
-                _entryManager.StatusApplier(canceled.Status);
-                return;
-            case ServiceFailure<EntryDeleteApproval> failure:
-                _entryManager.StatusApplier(failure.Status);
-                return;
-            default:
-                throw new UnreachableException();
-        }
-
-        if (approval.ClearKeyboardFocusId is not null)
-            _entryManager.KeyboardFocusedEntryId = null;
-
-        var target = approval.Target;
-        var entrySnapshot = _entries.Select(ToLaunchEntry).ToImmutableList();
-        var shellSnapshot = _entryManager.SnapshotCapturer();
-        var settings = _entryManager.SettingsGetter();
-        var presetFile = _entryManager.PresetFileGetter();
-
-        var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RemoveEntryId(
-            presetFile, settings.CustomEntryOrder, target.EntryId);
-        var newSettings = settings with { CustomEntryOrder = updatedOrder };
-
-        _entries.Remove(item);
-
-        var error = _entryManager.ChangesApplier(_entries.Select(ToLaunchEntry), newSettings, updatedPresetFile);
-        if (error is not null)
-        {
-            // Restore entries + shell state
-            ReplaceEntries(entrySnapshot);
-            _entryManager.SnapshotRestorer(shellSnapshot);
-            _entryManager.StatusApplier(LauncherStatusContent.Error(error));
-            return;
-        }
-
-        TotalCount = _entries.Count;
-        _entryManager.StatusApplier(LauncherEntryStatus.Deleted(target.EntryName));
-        WeakReferenceMessenger.Default.Send(new EntryDeletedMessage(target.EntryId));
-    }
-
-    public Task DiscoverAgentsAsync()
-    {
-        // Discovery is orchestrated by shell — delegate via bridge
-        // ponytail: discovery does a separate store reload; kept in shell for now.
-        return Task.CompletedTask;
+        ReplaceEntries(entries);
+        KeyboardFocusedEntryId = null;
+        EntriesChanged?.Invoke();
+        CountChanged?.Invoke();
     }
 
     /// <summary>Replace all entries, creating ViewModels that own this
@@ -190,43 +84,192 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         TotalCount = _entries.Count;
     }
 
+    public void NotifyCountChanged() => CountChanged?.Invoke();
+
+    // ── public CRUD (IEntryListViewModel) ──
+
+    public async Task AddEntryAsync()
+    {
+        DragPreviewDiscarder();
+        var result = await _entryService.AddEntryAsync(
+            _entries.Select(ToLaunchEntry),
+            _appStore.Select(s => s.Settings),
+            _appStore.Select(s => s.Settings.CommandTemplates),
+            presetReferenceCount: 0,
+            _utcNow).ConfigureAwait(true);
+        switch (result)
+        {
+            case ServiceSuccess<LaunchEntry> success:
+                HandleAddOrCloneResult(success.Value, static e => LauncherEntryStatus.Added(e.Name));
+                return;
+            case ServiceCanceled<LaunchEntry> canceled:
+                StatusApplier(canceled.Status);
+                return;
+            case ServiceFailure<LaunchEntry> failure:
+                StatusApplier(failure.Status);
+                return;
+            default:
+                throw new UnreachableException();
+        }
+    }
+
+    public async Task CloneEntryAsync(LauncherEntryViewModel item)
+    {
+        DragPreviewDiscarder();
+        var result = await _entryService.CloneEntryAsync(
+            item, _entries.Select(e => e.Id), _entries.Select(ToLaunchEntry),
+            _appStore.Select(s => s.Settings),
+            _appStore.Select(s => s.Settings.CommandTemplates),
+            _appStore.Select(s => s.Presets.Count(p => p.EntryIds.Any(eid => EntryId.Same(eid, item.Id)))),
+            _utcNow).ConfigureAwait(true);
+        switch (result)
+        {
+            case ServiceSuccess<LaunchEntry> success:
+                HandleAddOrCloneResult(success.Value, static e =>
+                    LauncherEntryStatus.Added(e.Name));
+                return;
+            case ServiceCanceled<LaunchEntry> canceled:
+                StatusApplier(canceled.Status);
+                return;
+            case ServiceFailure<LaunchEntry> failure:
+                StatusApplier(failure.Status);
+                return;
+            default:
+                throw new UnreachableException();
+        }
+    }
+
+    public async Task EditEntryAsync(LauncherEntryViewModel item)
+    {
+        DragPreviewDiscarder();
+        var result = await _entryService.EditEntryAsync(
+            item, _entries.Select(ToLaunchEntry),
+            _appStore.Select(s => new LauncherPresetFile { Presets = s.Presets, DefaultPresetId = s.DefaultPresetId }),
+            _appStore.Select(s => s.Settings),
+            _appStore.Select(s => s.Settings.CommandTemplates),
+            _appStore.Select(s => s.Presets.Count(p => p.EntryIds.Any(eid => EntryId.Same(eid, item.Id)))),
+            _utcNow).ConfigureAwait(true);
+        switch (result)
+        {
+            case ServiceSuccess<LaunchEntry> success:
+                await HandleEditResult(item, success.Value);
+                return;
+            case ServiceCanceled<LaunchEntry> canceled:
+                StatusApplier(canceled.Status);
+                return;
+            case ServiceFailure<LaunchEntry> failure:
+                StatusApplier(failure.Status);
+                return;
+            default:
+                throw new UnreachableException();
+        }
+    }
+
+    public async Task DeleteEntryAsync(LauncherEntryViewModel item)
+    {
+        DragPreviewDiscarder();
+        var result = await _entryService.DeleteEntryAsync(
+            item, KeyboardFocusedEntryId).ConfigureAwait(true);
+        EntryDeleteApproval approval;
+        switch (result)
+        {
+            case ServiceSuccess<EntryDeleteApproval> success:
+                approval = success.Value;
+                break;
+            case ServiceCanceled<EntryDeleteApproval> canceled:
+                StatusApplier(canceled.Status);
+                return;
+            case ServiceFailure<EntryDeleteApproval> failure:
+                StatusApplier(failure.Status);
+                return;
+            default:
+                throw new UnreachableException();
+        }
+
+        if (approval.ClearKeyboardFocusId is not null)
+            KeyboardFocusedEntryId = null;
+
+        var target = approval.Target;
+        var settings = _appStore.Select(s => s.Settings);
+        var presetFile = _appStore.Select(s => new LauncherPresetFile { Presets = s.Presets, DefaultPresetId = s.DefaultPresetId });
+
+        var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RemoveEntryId(
+            presetFile, settings.CustomEntryOrder, target.EntryId);
+        var newSettings = settings with { CustomEntryOrder = updatedOrder };
+
+        // Save to store first (AppStore handles rollback internally)
+        try
+        {
+            _appStore.Mutate(state => state with
+            {
+                Entries = state.Entries.RemoveAll(e => EntryId.Same(e.Id, target.EntryId)),
+                Settings = newSettings,
+                Presets = updatedPresetFile.Presets,
+                DefaultPresetId = updatedPresetFile.DefaultPresetId,
+            });
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "DeleteEntry.Mutate");
+            StatusApplier(LauncherStatusContent.Error(
+                LauncherPersistenceStatus.StoreSaveFailed(ex).Text));
+            return;
+        }
+
+        // Only update UI after successful save
+        _entries.Remove(item);
+        TotalCount = _entries.Count;
+        StatusApplier(LauncherEntryStatus.Deleted(target.EntryName));
+        EntriesChanged?.Invoke();
+    }
+
+    public Task DiscoverAgentsAsync()
+    {
+        // Discovery is orchestrated by shell — delegate via bridge
+        // ponytail: discovery does a separate store reload; kept in shell for now.
+        return Task.CompletedTask;
+    }
+
     // ── internal helpers ──
 
     private void HandleAddOrCloneResult(LaunchEntry entry, Func<LaunchEntry, LauncherStatusContent> statusFactory)
     {
-        var entrySnapshot = _entries.Select(ToLaunchEntry).ToImmutableList();
-        var shellSnapshot = _entryManager.SnapshotCapturer();
-        var settings = _entryManager.SettingsGetter();
-        var presetFile = _entryManager.PresetFileGetter();
-
-        var vm = new LauncherEntryViewModel(entry, this);
-        _entries.Add(vm);
+        var settings = _appStore.Select(s => s.Settings);
         var newSettings = settings with
         {
             CustomEntryOrder = settings.CustomEntryOrder.Add(entry.Id),
         };
 
-        var error = _entryManager.ChangesApplier(_entries.Select(ToLaunchEntry), newSettings, presetFile);
-        if (error is not null)
+        // Save to store first (AppStore handles rollback internally)
+        try
         {
-            _entries.Remove(vm);
-            _entryManager.SnapshotRestorer(shellSnapshot);
-            _entryManager.StatusApplier(LauncherStatusContent.Error(error));
+            _appStore.Mutate(state => state with
+            {
+                Entries = state.Entries.Add(entry),
+                Settings = newSettings,
+            });
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "AddOrClone.Mutate");
+            StatusApplier(LauncherStatusContent.Error(
+                LauncherPersistenceStatus.StoreSaveFailed(ex).Text));
             return;
         }
 
+        // Only update UI after successful save
+        var vm = new LauncherEntryViewModel(entry, this);
+        _entries.Add(vm);
         TotalCount = _entries.Count;
-        _entryManager.StatusApplier(statusFactory(entry));
-        WeakReferenceMessenger.Default.Send(new EntryAddedMessage(entry));
+        StatusApplier(statusFactory(entry));
+        EntriesChanged?.Invoke();
     }
 
     private async Task HandleEditResult(LauncherEntryViewModel item, LaunchEntry updated)
     {
         var oldId = item.Id;
-        var entrySnapshot = _entries.Select(ToLaunchEntry).ToImmutableList();
-        var shellSnapshot = _entryManager.SnapshotCapturer();
-        var settings = _entryManager.SettingsGetter();
-        var presetFile = _entryManager.PresetFileGetter();
+        var settings = _appStore.Select(s => s.Settings);
+        var presetFile = _appStore.Select(s => new LauncherPresetFile { Presets = s.Presets, DefaultPresetId = s.DefaultPresetId });
 
         if (!EntryId.Same(oldId, updated.Id))
         {
@@ -240,25 +283,43 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
             catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
             {
                 ErrorLog.Write(ex, "EditEntry.RenameReference");
-                _entryManager.SnapshotRestorer(shellSnapshot);
-                _entryManager.StatusApplier(LauncherEntryStatus.EditDialogFailed(item.Name, ex));
+                StatusApplier(LauncherEntryStatus.EditDialogFailed(item.Name, ex));
                 return;
             }
         }
 
-        item.ReplaceEntryFromOwner(updated, CurrentTimestampUtc());
+        // Set timestamp before saving so the store has the correct value
+        updated = updated with { UpdatedAtUtc = CurrentTimestampUtc() };
 
-        var error = _entryManager.ChangesApplier(_entries.Select(ToLaunchEntry), settings, presetFile);
-        if (error is not null)
+        // Save to store first — build updated entry list from current store state
+        try
         {
-            ReplaceEntries(entrySnapshot);
-            _entryManager.SnapshotRestorer(shellSnapshot);
-            _entryManager.StatusApplier(LauncherStatusContent.Error(error));
+            _appStore.Mutate(state =>
+            {
+                var updatedEntries = state.Entries
+                    .Select(e => EntryId.Same(e.Id, oldId) ? updated : e)
+                    .ToImmutableList();
+                return state with
+                {
+                    Entries = updatedEntries,
+                    Settings = settings,
+                    Presets = presetFile.Presets,
+                    DefaultPresetId = presetFile.DefaultPresetId,
+                };
+            });
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "EditEntry.Mutate");
+            StatusApplier(LauncherStatusContent.Error(
+                LauncherPersistenceStatus.StoreSaveFailed(ex).Text));
             return;
         }
 
-        _entryManager.StatusApplier(LauncherEntryStatus.Updated(item.Name));
-        WeakReferenceMessenger.Default.Send(new EntryUpdatedMessage(oldId, updated.Id, updated));
+        // Only update VM after successful save
+        item.ReplaceEntryFromOwner(updated, updated.UpdatedAtUtc);
+        StatusApplier(LauncherEntryStatus.Updated(item.Name));
+        EntriesChanged?.Invoke();
     }
 
     private string CurrentTimestampUtc() => _utcNow().ToString("O");
@@ -267,17 +328,17 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
 
     // ── IEntryCardHost ──
 
-    bool IEntryCardHost.IsDetailedListMode => _entryManager.DetailedListModeChecker();
-    bool IEntryCardHost.IsNamesViewMode => _entryManager.NamesModeChecker();
+    bool IEntryCardHost.IsDetailedListMode => DetailedListModeChecker();
+    bool IEntryCardHost.IsNamesViewMode => NamesModeChecker();
 
     void IEntryCardHost.UpdateSelection(LauncherEntryViewModel entry, bool selected) =>
-        _entryManager.SelectionUpdater(entry, selected);
+        SelectionUpdater(entry, selected);
 
     void IEntryCardHost.ShowDryRun(LauncherEntryViewModel entry) =>
-        _entryManager.DryRunInitiator(entry);
+        DryRunInitiator(entry);
 
     Task IEntryCardHost.LaunchAsync(LauncherEntryViewModel entry) =>
-        _entryManager.AsyncLauncher(entry);
+        AsyncLauncher(entry);
 
     Task IEntryCardHost.EditEntryAsync(LauncherEntryViewModel entry) =>
         EditEntryAsync(entry);
@@ -289,14 +350,14 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         CloneEntryAsync(entry);
 
     void IEntryCardHost.MoveEntryUp(LauncherEntryViewModel entry) =>
-        _entryManager.EntryMoverUp(entry);
+        EntryMoverUp(entry);
 
     bool IEntryCardHost.CanMoveEntryUp(LauncherEntryViewModel entry) =>
-        _entryManager.EntryMoverUpChecker(entry);
+        EntryMoverUpChecker(entry);
 
     void IEntryCardHost.MoveEntryDown(LauncherEntryViewModel entry) =>
-        _entryManager.EntryMoverDown(entry);
+        EntryMoverDown(entry);
 
     bool IEntryCardHost.CanMoveEntryDown(LauncherEntryViewModel entry) =>
-        _entryManager.EntryMoverDownChecker(entry);
+        EntryMoverDownChecker(entry);
 }

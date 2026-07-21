@@ -9,12 +9,12 @@ namespace WTLauncher.App.ViewModels;
 public sealed partial class MainWindowViewModel
 {
     public bool CanMoveEntryUp(LauncherEntryViewModel entry) =>
-        IsCustomSortMode && _entryManager.MutableVisibleEntries.IndexOf(entry) > 0;
+        IsCustomSortMode && _list.MutableVisibleEntries.IndexOf(entry) > 0;
 
     public bool CanMoveEntryDown(LauncherEntryViewModel entry)
     {
-        var index = _entryManager.MutableVisibleEntries.IndexOf(entry);
-        return IsCustomSortMode && index >= 0 && index < _entryManager.MutableVisibleEntries.Count - 1;
+        var index = _list.MutableVisibleEntries.IndexOf(entry);
+        return IsCustomSortMode && index >= 0 && index < _list.MutableVisibleEntries.Count - 1;
     }
 
     public void MoveEntryUp(LauncherEntryViewModel entry) =>
@@ -61,21 +61,21 @@ public sealed partial class MainWindowViewModel
         int targetOffset,
         out LauncherEntryViewModel target)
     {
-        var sourceIndex = _entryManager.MutableVisibleEntries.IndexOf(entry);
+        var sourceIndex = _list.MutableVisibleEntries.IndexOf(entry);
         var targetIndex = sourceIndex + targetOffset;
-        if (!IsCustomSortMode || sourceIndex < 0 || targetIndex < 0 || targetIndex >= _entryManager.MutableVisibleEntries.Count)
+        if (!IsCustomSortMode || sourceIndex < 0 || targetIndex < 0 || targetIndex >= _list.MutableVisibleEntries.Count)
         {
             target = entry;
             return false;
         }
 
-        target = _entryManager.MutableVisibleEntries[targetIndex];
+        target = _list.MutableVisibleEntries[targetIndex];
         return true;
     }
 
     private void RefreshReorderCommandState()
     {
-        foreach (var entry in _entryManager.MutableEntries)
+        foreach (var entry in _list.MutableEntries)
             entry.RefreshReorderCommands();
     }
 }

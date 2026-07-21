@@ -1,0 +1,31 @@
+{
+  "id": "unified-store-parent",
+  "name": "unified-store-parent",
+  "title": "Unified Store Architecture 全阶段落地",
+  "description": "Unified Store Architecture implementation: AppStore core, feature switching, delete old infra, add tests",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "<USER>",
+  "assignee": "<USER>",
+  "createdAt": "2026-07-21",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "07-21-unified-store-phase1",
+    "07-21-unified-store-phase2",
+    "07-21-unified-store-phase3",
+    "07-21-unified-store-phase4"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

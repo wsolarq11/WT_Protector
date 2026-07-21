@@ -1,8 +1,6 @@
 using System.Collections.Immutable;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using WTLauncher.App.Infrastructure;
-using WTLauncher.Core;
 using WTLauncher.Core.Messaging;
 
 namespace WTLauncher.App.ViewModels;
@@ -18,11 +16,11 @@ public sealed partial class MainWindowViewModel
     private void SelectVisible()
     {
         DiscardDragReorderPreview();
-        var targets = _entryManager.MutableVisibleEntries.Where(entry => !entry.IsSelected).ToList();
+        var targets = _list.MutableVisibleEntries.Where(entry => !entry.IsSelected).ToList();
         if (targets.Count == 0)
         {
             ApplyStatusText(
-                _entryManager.MutableVisibleEntries.Count == 0
+                _list.MutableVisibleEntries.Count == 0
                     ? LauncherSelectionStatus.NoVisibleEntries
                     : LauncherSelectionStatus.VisibleAlreadySelected);
             return;
@@ -62,7 +60,7 @@ public sealed partial class MainWindowViewModel
     public void ClearVisibleSelection()
     {
         DiscardDragReorderPreview();
-        var targets = _entryManager.MutableVisibleEntries.Where(entry => entry.IsSelected).ToList();
+        var targets = _list.MutableVisibleEntries.Where(entry => entry.IsSelected).ToList();
         if (targets.Count == 0)
         {
             ApplyStatusText(LauncherSelectionStatus.NoSelectedEntriesToClear);
@@ -99,7 +97,7 @@ public sealed partial class MainWindowViewModel
 
     private bool CanOperateOnSelection() => SelectedCount > 0;
 
-    private bool CanSelectVisible() => _entryManager.MutableVisibleEntries.Any(entry => !entry.IsSelected);
+    private bool CanSelectVisible() => _list.MutableVisibleEntries.Any(entry => !entry.IsSelected);
 
     private bool SetSelection(IReadOnlyList<LauncherEntryViewModel> entries, bool selected)
     {
@@ -125,10 +123,10 @@ public sealed partial class MainWindowViewModel
 
     private bool ReplaceSelection(IReadOnlySet<string> selectedIds)
     {
-        var snapshot = CaptureSelectionMutationSnapshot(_entryManager.MutableEntries);
+        var snapshot = CaptureSelectionMutationSnapshot(_list.MutableEntries);
         try
         {
-            foreach (var entry in _entryManager.MutableEntries)
+            foreach (var entry in _list.MutableEntries)
             {
                 entry.SetSelectionFromOwner(selectedIds.Contains(entry.Id));
             }
@@ -164,17 +162,12 @@ public sealed partial class MainWindowViewModel
         LauncherSelectionMutationSnapshot snapshot)
     {
         RefreshSelectionState();
-        var saveFailure = LauncherMutationTransaction.Commit(
-            snapshot,
-            () => SaveStoreFile(BuildStoreFile()),
-            rollbackSnapshot =>
-            {
-                rollbackSnapshot.Restore();
-                RefreshSelectionState();
-            });
+        var saveFailure = SaveStoreFile(BuildStoreFile());
         if (saveFailure is null)
             return true;
 
+        snapshot.Restore();
+        RefreshSelectionState();
         ApplyStatusText(saveFailure);
         return false;
     }
@@ -202,14 +195,14 @@ public sealed partial class MainWindowViewModel
     }
 
     private List<LauncherEntryViewModel> GetSelectedEntries() =>
-        _entryManager.MutableEntries
+        _list.MutableEntries
             .Where(entry => entry.IsSelected)
             .ToList();
 
     private List<string> GetSelectedEntryIds()
     {
-        var ids = new List<string>(_entryManager.MutableEntries.Count);
-        foreach (var entry in _entryManager.MutableEntries)
+        var ids = new List<string>(_list.MutableEntries.Count);
+        foreach (var entry in _list.MutableEntries)
             if (entry.IsSelected) ids.Add(entry.Id);
         return ids;
     }

@@ -6,16 +6,16 @@ namespace WTLauncher.App.ViewModels;
 // EntryListViewModel instead of shell-internal methods.
 public sealed partial class MainWindowViewModel : IEntryListViewModel
 {
-    Task IEntryListViewModel.AddEntryAsync() => _entryManager.EntryListViewModel.AddEntryAsync();
+    Task IEntryListViewModel.AddEntryAsync() => _list.AddEntryAsync();
 
     Task IEntryListViewModel.CloneEntryAsync(LauncherEntryViewModel item) =>
-        _entryManager.EntryListViewModel.CloneEntryAsync(item);
+        _list.CloneEntryAsync(item);
 
     Task IEntryListViewModel.EditEntryAsync(LauncherEntryViewModel item) =>
-        _entryManager.EntryListViewModel.EditEntryAsync(item);
+        _list.EditEntryAsync(item);
 
     Task IEntryListViewModel.DeleteEntryAsync(LauncherEntryViewModel item) =>
-        _entryManager.EntryListViewModel.DeleteEntryAsync(item);
+        _list.DeleteEntryAsync(item);
 
     Task IEntryListViewModel.DiscoverAgentsAsync() => DiscoverAgentsAsync();
 }

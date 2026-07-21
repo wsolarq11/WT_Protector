@@ -156,7 +156,7 @@ public sealed partial class MainWindowViewModel
     {
         selectedPreset = null;
         selection = null;
-        if (!TryGetSelectedPreset(out selectedPreset) || _entryManager.MutableEntries.Count == 0)
+        if (!TryGetSelectedPreset(out selectedPreset) || _list.MutableEntries.Count == 0)
             return false;
 
         selection = BuildPresetSelectionPreview(selectedPreset, GetSelectedEntryIds());
@@ -166,7 +166,7 @@ public sealed partial class MainWindowViewModel
     private List<LauncherEntryViewModel> GetPresetEntries(IEnumerable<string> entryIds)
     {
         var entriesById = new Dictionary<string, LauncherEntryViewModel>(EntryId.Comparer);
-        foreach (var entry in _entryManager.MutableEntries)
+        foreach (var entry in _list.MutableEntries)
         {
             if (!entriesById.ContainsKey(entry.Id))
                 entriesById[entry.Id] = entry;
@@ -177,7 +177,7 @@ public sealed partial class MainWindowViewModel
         foreach (var id in uniqueIds)
         {
             // Use TryGetValue instead of indexer to give a clear error when
-            // a preset references an entry ID that does not exist in _entryManager.MutableEntries.
+            // a preset references an entry ID that does not exist in _list.MutableEntries.
             if (!entriesById.TryGetValue(id, out var entry))
                 throw new InvalidDataException($"Preset entry ID '{id}' does not match any loaded entry.");
 
@@ -220,18 +220,11 @@ public sealed partial class MainWindowViewModel
         out LauncherPresetViewModel? selectedPreset)
     {
         selectedPreset = null;
-        var saveFailure = LauncherMutationTransaction.Commit(
-            snapshot,
-            () =>
-            {
-                _presetManager.ApplyPresetMutation(newPresetFile, selectedPresetId);
-                return SaveStoreFile(BuildStoreFile());
-            },
-            rollbackSnapshot => _presetManager.Load(
-                rollbackSnapshot.PresetFile,
-                rollbackSnapshot.SelectedPresetId));
+        _presetManager.ApplyPresetMutation(newPresetFile, selectedPresetId);
+        var saveFailure = SaveStoreFile(BuildStoreFile());
         if (saveFailure is not null)
         {
+            _presetManager.Load(snapshot.PresetFile, snapshot.SelectedPresetId);
             ApplyStatusText(saveFailure);
             return false;
         }

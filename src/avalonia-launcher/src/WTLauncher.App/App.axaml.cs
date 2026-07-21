@@ -137,19 +137,15 @@ public sealed partial class App : Application
                     }
                 }
 
-                LauncherStoreFile storeFile;
-                try { storeFile = LauncherStore.Load(storePath, (ex, ctx) => ErrorLog.Write(ex, ctx)); }
-                catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-                {
-                    ErrorLog.Write(ex, "Startup.Load");
-                    storeFile = new LauncherStoreFile();
-                }
+                var appStore = new AppStore(storePath, (ex, ctx) => ErrorLog.Write(ex, ctx));
+                var storeFile = appStore.Select(s => s);
                 var launchWorkflow = LauncherLaunchWorkflow.Create();
                 var dialogService = new DialogService();
                 var entryService = new EntryService(dialogService);
                 var presetService = new PresetService(dialogService);
                 var viewModel = new MainWindowViewModel(
                     storePath,
+                    appStore,
                     storeFile,
                     launchWorkflow,
                     dialogService,

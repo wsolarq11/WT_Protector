@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using WTLauncher.App.Features;
 using WTLauncher.App.Features.Entries;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.App.Features.Presets;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
@@ -61,9 +62,11 @@ public sealed class EntryServiceTests
             OnConfirmDeleteEntry = _ => Task.FromResult(true),
         };
         var service = new EntryService(dialogs);
+        var appStore = new AppStore("unused.json", new LauncherStoreFile());
         var owner = new MainWindowViewModel(
             "unused.json",
-            new LauncherStoreFile(),
+            appStore,
+            appStore.Select(s => s),
             new LauncherLaunchWorkflow(_ => { }),
             dialogs,
             service,

@@ -62,7 +62,7 @@ public sealed partial class MainWindowViewModel
             _lastPreviewTick = now;
 
             // P0: Skip full ApplyFilter() during drag preview.
-            // Only reorder the 2 affected entries in _entryManager.MutableVisibleEntries.
+            // Only reorder the 2 affected entries in _list.MutableVisibleEntries.
             // Card sizes, filter text, and visible set do not change during drag.
             if (_dragReorderWorkflow.HasActiveSession)
                 ReorderVisibleEntryForDrag(draggedEntryId, targetEntryId, insertAfter);
@@ -74,7 +74,7 @@ public sealed partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// P0: Directly reorder 2 entries in _entryManager.MutableVisibleEntries during drag.
+    /// P0: Directly reorder 2 entries in _list.MutableVisibleEntries during drag.
     /// Avoids the full FilterAndSort → SyncVisibleEntries → ApplyCardSize chain.
     /// O(n) single pass to find indices, then one Move() call.
     /// </summary>
@@ -89,9 +89,9 @@ public sealed partial class MainWindowViewModel
     private void ReorderVisibleEntryForDrag(string draggedId, string targetId, bool insertAfter)
     {
         int dragIdx = -1, targetIdx = -1;
-        for (int i = 0; i < _entryManager.MutableVisibleEntries.Count; i++)
+        for (int i = 0; i < _list.MutableVisibleEntries.Count; i++)
         {
-            var id = _entryManager.MutableVisibleEntries[i].Id;
+            var id = _list.MutableVisibleEntries[i].Id;
             if (EntryId.Same(id, draggedId)) dragIdx = i;
             if (EntryId.Same(id, targetId)) targetIdx = i;
             if (dragIdx >= 0 && targetIdx >= 0) break;
@@ -104,15 +104,15 @@ public sealed partial class MainWindowViewModel
         else
             newIdx = dragIdx < targetIdx ? targetIdx - 1 : targetIdx;
 
-        newIdx = Math.Max(0, Math.Min(newIdx, _entryManager.MutableVisibleEntries.Count - 1));
+        newIdx = Math.Max(0, Math.Min(newIdx, _list.MutableVisibleEntries.Count - 1));
         if (dragIdx == newIdx) return;
 
-        _entryManager.MutableVisibleEntries.Move(dragIdx, newIdx);
+        _list.MutableVisibleEntries.Move(dragIdx, newIdx);
         // Update position map so SyncVisibleEntries reads correct indices.
         var from = Math.Min(dragIdx, newIdx);
         var to = Math.Max(dragIdx, newIdx);
         for (var j = from; j <= to; j++)
-            _syncPositionByEntry[_entryManager.MutableVisibleEntries[j]] = j;
+            _syncPositionByEntry[_list.MutableVisibleEntries[j]] = j;
     }
 
     public void ClearDragHover()

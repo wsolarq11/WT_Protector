@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Features.Presets;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
 using WTLauncher.App.Views;
 using WTLauncher.Core;
@@ -40,9 +41,11 @@ internal static class MainWindowEntryCardTestFactory
         };
         LauncherStore.Save(storeFile, storePath, backup: true);
         var dialogs = new StubDialogService();
+        var appStore = new AppStore(storePath);
         return new MainWindowViewModel(
             storePath,
-            storeFile,
+            appStore,
+            appStore.Select(s => s),
             CreateLaunchWorkflow(),
             dialogs,
             new EntryService(dialogs),
@@ -76,9 +79,11 @@ internal static class MainWindowEntryCardTestFactory
         };
         LauncherStore.Save(storeFile, storePath, backup: true);
         var dialogs = new StubDialogService();
+        var appStore = new AppStore(storePath);
         return new LauncherEntryViewModel(entry, new MainWindowViewModel(
             storePath,
-            storeFile,
+            appStore,
+            appStore.Select(s => s),
             CreateLaunchWorkflow(),
             dialogs,
             new EntryService(dialogs),
