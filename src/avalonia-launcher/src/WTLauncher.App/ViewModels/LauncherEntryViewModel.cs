@@ -115,7 +115,7 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
     /// <param name="selected">The new selection state (already applied to
     /// <see cref="_isSelected"/> by the caller).</param>
     /// <returns>The previous <c>_entry.Selected</c> value, used by the caller
-    /// to construct a <see cref="LauncherSelectionMutationSnapshot"/>.</returns>
+    /// to roll back selection state on save failure.</returns>
     internal bool ReplaceEntrySelectionFromOwner(bool selected)
     {
         var previousSelected = _entry.Selected;

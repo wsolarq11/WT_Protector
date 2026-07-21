@@ -39,7 +39,6 @@ public sealed partial class MainWindowViewModel
     {
         ArgumentNullException.ThrowIfNull(edit);
 
-        var snapshot = CaptureEntryMutationSnapshot();
         string statusMessage;
         try
         {
@@ -48,7 +47,7 @@ public sealed partial class MainWindowViewModel
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "CommandManagement.Apply");
-            RestoreEntryMutationSnapshot(snapshot);
+            RestoreVmStateFromStore();
             return FailureResult($"应用失败: {ExceptionMessageFormatter.ForUser(ex)}");
         }
 
@@ -60,9 +59,9 @@ public sealed partial class MainWindowViewModel
         var saveFailure = SaveStoreFile(BuildStoreFile());
         if (saveFailure is not null)
         {
-            RestoreEntryMutationSnapshot(snapshot);
+            RestoreVmStateFromStore();
             // restore also reverts _launchWorkflow snapshot — re-sync after rollback.
-            _launchOrchestrator.CommandTemplates = _settings.CommandTemplates;
+            _launchOrchestrator.CommandTemplates = _appStore.Select(s => s.Settings.CommandTemplates);
             return FailureResult(saveFailure);
         }
 

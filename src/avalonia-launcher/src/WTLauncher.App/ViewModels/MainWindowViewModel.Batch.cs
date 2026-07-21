@@ -90,8 +90,9 @@ public sealed partial class MainWindowViewModel
 
     internal void UpdateSelection(LauncherEntryViewModel item, bool selected)
     {
+        DiscardDragReorderPreview();
         var previousSelected = item.ReplaceEntrySelectionFromOwner(selected);
-        var snapshot = CaptureSelectionMutationSnapshot(item, previousSelected);
+        var snapshot = new List<(LauncherEntryViewModel Entry, bool WasSelected)> { (item, previousSelected) };
         SaveSelectionChangeOrRestore(snapshot);
     }
 
@@ -101,13 +102,12 @@ public sealed partial class MainWindowViewModel
 
     private bool SetSelection(IReadOnlyList<LauncherEntryViewModel> entries, bool selected)
     {
-        var snapshot = CaptureSelectionMutationSnapshot(entries);
+        DiscardDragReorderPreview();
+        var snapshot = entries.Select(e => (e, e.IsSelected)).ToList();
         try
         {
             foreach (var entry in entries)
-            {
                 entry.SetSelectionFromOwner(selected);
-            }
 
             return SaveSelectionChangeOrRestore(snapshot);
         }
@@ -116,57 +116,41 @@ public sealed partial class MainWindowViewModel
             // If a PropertyChanged handler throws mid-loop, restore
             // the pre-mutation state so the ViewModel is not left in an
             // inconsistent half-selected condition.
-            snapshot.Restore();
+            foreach (var (entry, wasSelected) in snapshot)
+                entry.SetSelectionFromOwner(wasSelected);
             throw;
         }
     }
 
     private bool ReplaceSelection(IReadOnlySet<string> selectedIds)
     {
-        var snapshot = CaptureSelectionMutationSnapshot(_list.MutableEntries);
+        DiscardDragReorderPreview();
+        var snapshot = _list.MutableEntries.Select(e => (e, e.IsSelected)).ToList();
         try
         {
             foreach (var entry in _list.MutableEntries)
-            {
                 entry.SetSelectionFromOwner(selectedIds.Contains(entry.Id));
-            }
 
             return SaveSelectionChangeOrRestore(snapshot);
         }
         catch
         {
-            // If a PropertyChanged handler throws mid-loop, restore
-            // the pre-mutation state so the ViewModel is not left in an
-            // inconsistent half-selected condition.
-            snapshot.Restore();
+            foreach (var (entry, wasSelected) in snapshot)
+                entry.SetSelectionFromOwner(wasSelected);
             throw;
         }
     }
 
-    private LauncherSelectionMutationSnapshot CaptureSelectionMutationSnapshot(
-        LauncherEntryViewModel item,
-        bool previousSelected)
-    {
-        DiscardDragReorderPreview();
-        return LauncherSelectionMutationSnapshot.Capture(item, previousSelected);
-    }
-
-    private LauncherSelectionMutationSnapshot CaptureSelectionMutationSnapshot(
-        IEnumerable<LauncherEntryViewModel> entries)
-    {
-        DiscardDragReorderPreview();
-        return LauncherSelectionMutationSnapshot.Capture(entries);
-    }
-
     private bool SaveSelectionChangeOrRestore(
-        LauncherSelectionMutationSnapshot snapshot)
+        List<(LauncherEntryViewModel Entry, bool WasSelected)> snapshot)
     {
         RefreshSelectionState();
         var saveFailure = SaveStoreFile(BuildStoreFile());
         if (saveFailure is null)
             return true;
 
-        snapshot.Restore();
+        foreach (var (entry, wasSelected) in snapshot)
+            entry.SetSelectionFromOwner(wasSelected);
         RefreshSelectionState();
         ApplyStatusText(saveFailure);
         return false;

@@ -116,16 +116,15 @@ public sealed partial class MainWindowViewModel
         _isHandlingSettingsChange = true;
         try
         {
-            var snapshot = CaptureEntryMutationSnapshot();
             _settings = _settings with { CardsGroupKey = _layoutManager.CardsGroupKey };
             var saveFailure = SaveStoreFile(BuildStoreFile());
             if (saveFailure is not null)
             {
-                var oldCardsGroupKey = snapshot.CloneSettings().CardsGroupKey;
-                // Restore LayoutManager BEFORE RestoreEntryMutationSnapshot so that
+                var oldCardsGroupKey = _appStore.Select(s => s.Settings.CardsGroupKey);
+                // Restore LayoutManager BEFORE RestoreVmStateFromStore so that
                 // ApplyFilter → RebuildVisibleGroups reads the correct old key.
                 _layoutManager.SetGroupKeyDirect(oldCardsGroupKey);
-                RestoreEntryMutationSnapshot(snapshot);
+                RestoreVmStateFromStore();
                 StatusContent = LauncherStatusContent.Error(saveFailure);
                 return;
             }

@@ -393,6 +393,22 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         return saveFailure;
     }
 
+    /// <summary>Rebuild ViewModel-level state from AppStore after a save failure.
+    /// AppStore already reverted its internal state; this method syncs the
+    /// ViewModel's in-memory copies back to match.</summary>
+    private void RestoreVmStateFromStore()
+    {
+        _settings = _appStore.Select(s => s.Settings);
+        _presetManager.Load(
+            new LauncherPresetFile { Presets = _appStore.Select(s => s.Presets), DefaultPresetId = _appStore.Select(s => s.DefaultPresetId) },
+            SelectedPreset?.Id);
+        // Use ReplaceEntries (no event) then sync CustomEntryOrder before refresh,
+        // so ValidateCustomOrder doesn't fail on inconsistent state.
+        _list.ReplaceEntries(_appStore.Select(s => s.Entries));
+        EnsureCustomOrderContainsEntries();
+        RefreshAllProjections();
+    }
+
     internal void SetKeyboardFocusedEntryId(string? value)
     {
         if (EntryId.Same(_list.KeyboardFocusedEntryId, value))

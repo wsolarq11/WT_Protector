@@ -62,7 +62,6 @@ public sealed partial class MainWindowViewModel
         }
 
         var userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        var snapshot = CaptureEntryMutationSnapshot();
 
         int added = 0;
         var skipped = new List<string>();
@@ -89,7 +88,7 @@ public sealed partial class MainWindowViewModel
             added++;
         }
 
-        if (!SaveEntryCollectionChanges(snapshot))
+        if (!SaveEntryCollectionChanges())
             return;
 
         StatusContent = LauncherDiscoveryStatus.AgentsAdded(added, skipped);
@@ -102,11 +101,10 @@ public sealed partial class MainWindowViewModel
         switch (result)
         {
             case ServiceSuccess<LaunchEntry> success:
-                var snapshot = CaptureEntryMutationSnapshot();
                 var entry = success.Value with { UpdatedAtUtc = CurrentTimestampUtc() };
                 _list.MutableEntries.Add(new LauncherEntryViewModel(entry, this));
                 _settings = _settings with { CustomEntryOrder = _settings.CustomEntryOrder.Add(entry.Id) };
-                if (SaveEntryCollectionChanges(snapshot))
+                if (SaveEntryCollectionChanges())
                     ApplyStatusText(LauncherEntryStatus.Added(entry.Name));
                 return;
             case ServiceCanceled<LaunchEntry> canceled:

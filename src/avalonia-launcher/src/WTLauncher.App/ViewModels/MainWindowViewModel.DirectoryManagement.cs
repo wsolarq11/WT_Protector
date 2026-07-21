@@ -32,7 +32,6 @@ public sealed partial class MainWindowViewModel
     {
         ArgumentNullException.ThrowIfNull(edit);
 
-        var snapshot = CaptureEntryMutationSnapshot();
         string statusMessage;
         try
         {
@@ -41,14 +40,14 @@ public sealed partial class MainWindowViewModel
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "DirectoryManagement.Apply");
-            RestoreEntryMutationSnapshot(snapshot);
+            RestoreVmStateFromStore();
             return DirectoryFailure($"应用失败: {ExceptionMessageFormatter.ForUser(ex)}");
         }
 
         var saveFailure = SaveStoreFile(BuildStoreFile());
         if (saveFailure is not null)
         {
-            RestoreEntryMutationSnapshot(snapshot);
+            RestoreVmStateFromStore();
             return DirectoryFailure(saveFailure);
         }
 
