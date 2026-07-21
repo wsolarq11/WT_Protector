@@ -620,6 +620,26 @@ _launchOrchestrator.PropertyChanged += (_, e) => { OnPropertyChanged(e.PropertyN
 - [ ] `[ObservableProperty]` 是否遵循构造顺序规则？初始化在委托赋值前
 - [ ] CA1001 是否因 `CancellationTokenSource` 等字段误报？如果是，用 `#pragma warning disable` + 解释确定性释放
 
+### Design Decision: Partial Files as Orchestration Layers
+
+**Context**: MWVM 组合重构 (Stages 1-6) 提取了 5 个 Manager 协作类后，MainWindowViewModel 仍有 13 个 partial 文件（约1800 行）包含 RelayCommand、CanExecute、事件处理和接口实现代码。
+
+**Options Considered**:
+1. 合并所有 partial 代码进 MainWindowViewModel.cs - 但会导致主文件从 453 行膨胀回约 2000 行，违背 orchestration 约 500 行的设计目标
+2. 删除 partial 文件、让命令分散在各 Manager 中 - 但 RelayCommand 必须定义在 partial 类上才能被 source generator 识别
+3. **保留 partial 文件** - 按命令域 (Presets/Batch/Layout/Drag/Grouping 等) 分文件，代码仍在 MainWindowViewModel 类上
+
+**Decision**: 保留 partial 文件。理由是：
+- RelayCommand / ObservableProperty 依赖 partial class source generator，代码必须定义在 MainWindowViewModel 类上
+- 按域分文件的 partial 模式提供天然的组织边界，比单文件更易维护
+- 主文件 453 行的核心目标已达成；partial 文件中的编排代码不是残余
+
+**关键区分**：
+- Manager 协作类 = 持有状态 + 业务逻辑 + 事件输出
+- MainWindowViewModel partial 文件 = 编排代码 (命令路由 + CanExecute + 事件处理 + 持久化协调)
+
+**Convention**: partial 文件只应包含编排代码。如果某个 partial 中出现超过 5 行的业务逻辑判断，说明应该将逻辑下移到对应的 Manager 协作类和 Core 层。
+
 ## Forbidden Patterns
 
 - ❌ **ViewModel creates a `new Window()`** — dialogs always injected via `Func<>`.

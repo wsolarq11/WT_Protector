@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 46
+- **Total Sessions**: 47
 - **Last Active**: 2026-07-21
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1603 | Active |
+| `journal-1.md` | ~1634 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 47 | 2026-07-21 | MWVM 重构扫尾 — Partial 评估 + Trellis 归档 + Spec 更新 | - | `main` |
 | 46 | 2026-07-21 | P3 消息总线接线 + Native AOT 验证 + 全步骤连续落地 | `f8b7a35`, `9330cd1` | `main` |
 | 45 | 2026-07-20 | finish-and-archive | `34540af` | `main` |
 | 44 | 2026-07-20 | Feature-Modular Shell 架构迁移 P5 收尾 + 门禁验证 + spec 更新 | `393ec6f` | `main` |

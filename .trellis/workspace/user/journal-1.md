@@ -1601,3 +1601,34 @@ Finish and archive V-04, V-06, UX-05; add ReducedMotion API gap to pitfalls.md; 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 47: MWVM 重构扫尾 — Partial 评估 + Trellis 归档 + Spec 更新
+
+**Date**: 2026-07-21
+**Task**: MWVM 重构扫尾 — Partial 评估 + Trellis 归档 + Spec 更新
+**Branch**: `main`
+
+### Summary
+
+完成 MWVM 组合重构最后清扫：13 个 partial 文件评估为合法编排代码并保留；6 个子任务+父任务 Trellis 归档为 completed (0 活跃)；spec 文档新增 Partial Files as Orchestration Layers 设计决策；门禁验证通过 (670/670, verify PASS)。
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+(No commits - planning session)
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
