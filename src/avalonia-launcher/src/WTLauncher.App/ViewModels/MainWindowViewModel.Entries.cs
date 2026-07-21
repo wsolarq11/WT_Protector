@@ -10,27 +10,27 @@ public sealed partial class MainWindowViewModel
     [RelayCommand]
     private async Task AddEntryAsync()
     {
-        await _entryListViewModel.AddEntryAsync();
+        await _entryManager.EntryListViewModel.AddEntryAsync();
     }
 
     internal async Task CloneEntryAsync(LauncherEntryViewModel item)
     {
-        await _entryListViewModel.CloneEntryAsync(item);
+        await _entryManager.EntryListViewModel.CloneEntryAsync(item);
     }
 
     internal async Task EditEntryAsync(LauncherEntryViewModel item)
     {
-        await _entryListViewModel.EditEntryAsync(item);
+        await _entryManager.EntryListViewModel.EditEntryAsync(item);
     }
 
     internal async Task DeleteEntryAsync(LauncherEntryViewModel item)
     {
-        await _entryListViewModel.DeleteEntryAsync(item);
+        await _entryManager.EntryListViewModel.DeleteEntryAsync(item);
     }
 
     private bool SaveEntryCollectionChanges(LauncherEntryMutationSnapshot rollbackSnapshot)
     {
-        TotalCount = _entries.Count;
+        TotalCount = _entryManager.MutableEntries.Count;
         EnsureCustomOrderContainsEntries();
 
         var saveFailure = LauncherMutationTransaction.Commit(
@@ -52,7 +52,7 @@ public sealed partial class MainWindowViewModel
     {
         DiscardDragReorderPreview();
         return LauncherEntryMutationSnapshot.Capture(
-            _entries.Select(ToLaunchEntry),
+            _entryManager.MutableEntries.Select(ToLaunchEntry),
             _presetManager.File,
             _settings,
             SelectedPreset?.Id);
@@ -65,6 +65,6 @@ public sealed partial class MainWindowViewModel
         _presetManager.Load(snapshot.ClonePresetFile(), snapshot.SelectedPresetId);
         RefreshSelectionState();
         ApplyFilter();
-        LauncherEntryLayoutPresentation.Refresh(_entries);
+        LauncherEntryLayoutPresentation.Refresh(_entryManager.MutableEntries);
     }
 }

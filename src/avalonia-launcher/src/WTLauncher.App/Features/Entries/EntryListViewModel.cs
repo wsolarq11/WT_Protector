@@ -19,7 +19,7 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
     private readonly ObservableCollection<LauncherEntryViewModel> _entries;
     private readonly ObservableCollection<LauncherEntryViewModel> _visibleEntries;
     private readonly IEntryService _entryService;
-    private readonly EntryListBridge _bridge;
+    private readonly EntryManager _entryManager;
     private readonly Func<DateTimeOffset> _utcNow;
 
     public ReadOnlyObservableCollection<LauncherEntryViewModel> Entries { get; }
@@ -38,13 +38,13 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         ObservableCollection<LauncherEntryViewModel> entries,
         ObservableCollection<LauncherEntryViewModel> visibleEntries,
         IEntryService entryService,
-        EntryListBridge bridge,
+        EntryManager entryManager,
         Func<DateTimeOffset> utcNow)
     {
         _entries = entries;
         _visibleEntries = visibleEntries;
         _entryService = entryService ?? throw new ArgumentNullException(nameof(entryService));
-        _bridge = bridge ?? throw new ArgumentNullException(nameof(bridge));
+        _entryManager = entryManager ?? throw new ArgumentNullException(nameof(entryManager));
         _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
         Entries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_entries);
         VisibleEntries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_visibleEntries);
@@ -55,20 +55,20 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
 
     public async Task AddEntryAsync()
     {
-        _bridge.DiscardDragReorderPreview();
+        _entryManager.DragPreviewDiscarder();
         var result = await _entryService.AddEntryAsync(
-            _entries.Select(ToLaunchEntry), _bridge.Settings(), _bridge.CommandTemplates(),
-            _bridge.GetPresetReferenceCount(""), _utcNow).ConfigureAwait(true);
+            _entries.Select(ToLaunchEntry), _entryManager.SettingsGetter(), _entryManager.CommandTemplatesGetter(),
+            _entryManager.ReferenceCounter(""), _utcNow).ConfigureAwait(true);
         switch (result)
         {
             case ServiceSuccess<LaunchEntry> success:
                 HandleAddOrCloneResult(success.Value, static e => LauncherEntryStatus.Added(e.Name));
                 return;
             case ServiceCanceled<LaunchEntry> canceled:
-                _bridge.ApplyStatusText(canceled.Status);
+                _entryManager.StatusApplier(canceled.Status);
                 return;
             case ServiceFailure<LaunchEntry> failure:
-                _bridge.ApplyStatusText(failure.Status);
+                _entryManager.StatusApplier(failure.Status);
                 return;
             default:
                 throw new UnreachableException();
@@ -77,11 +77,11 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
 
     public async Task CloneEntryAsync(LauncherEntryViewModel item)
     {
-        _bridge.DiscardDragReorderPreview();
+        _entryManager.DragPreviewDiscarder();
         var result = await _entryService.CloneEntryAsync(
             item, _entries.Select(e => e.Id), _entries.Select(ToLaunchEntry),
-            _bridge.Settings(), _bridge.CommandTemplates(),
-            _bridge.GetPresetReferenceCount(item.Id), _utcNow).ConfigureAwait(true);
+            _entryManager.SettingsGetter(), _entryManager.CommandTemplatesGetter(),
+            _entryManager.ReferenceCounter(item.Id), _utcNow).ConfigureAwait(true);
         switch (result)
         {
             case ServiceSuccess<LaunchEntry> success:
@@ -89,10 +89,10 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
                     LauncherEntryStatus.Added(e.Name));
                 return;
             case ServiceCanceled<LaunchEntry> canceled:
-                _bridge.ApplyStatusText(canceled.Status);
+                _entryManager.StatusApplier(canceled.Status);
                 return;
             case ServiceFailure<LaunchEntry> failure:
-                _bridge.ApplyStatusText(failure.Status);
+                _entryManager.StatusApplier(failure.Status);
                 return;
             default:
                 throw new UnreachableException();
@@ -101,10 +101,10 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
 
     public async Task EditEntryAsync(LauncherEntryViewModel item)
     {
-        _bridge.DiscardDragReorderPreview();
+        _entryManager.DragPreviewDiscarder();
         var result = await _entryService.EditEntryAsync(
-            item, _entries.Select(ToLaunchEntry), _bridge.PresetFile(), _bridge.Settings(),
-            _bridge.CommandTemplates(), _bridge.GetPresetReferenceCount(item.Id),
+            item, _entries.Select(ToLaunchEntry), _entryManager.PresetFileGetter(), _entryManager.SettingsGetter(),
+            _entryManager.CommandTemplatesGetter(), _entryManager.ReferenceCounter(item.Id),
             _utcNow).ConfigureAwait(true);
         switch (result)
         {
@@ -112,10 +112,10 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
                 await HandleEditResult(item, success.Value);
                 return;
             case ServiceCanceled<LaunchEntry> canceled:
-                _bridge.ApplyStatusText(canceled.Status);
+                _entryManager.StatusApplier(canceled.Status);
                 return;
             case ServiceFailure<LaunchEntry> failure:
-                _bridge.ApplyStatusText(failure.Status);
+                _entryManager.StatusApplier(failure.Status);
                 return;
             default:
                 throw new UnreachableException();
@@ -124,9 +124,9 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
 
     public async Task DeleteEntryAsync(LauncherEntryViewModel item)
     {
-        _bridge.DiscardDragReorderPreview();
+        _entryManager.DragPreviewDiscarder();
         var result = await _entryService.DeleteEntryAsync(
-            item, _bridge.GetKeyboardFocusedEntryId()).ConfigureAwait(true);
+            item, _entryManager.KeyboardFocusedEntryId).ConfigureAwait(true);
         EntryDeleteApproval approval;
         switch (result)
         {
@@ -134,23 +134,23 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
                 approval = success.Value;
                 break;
             case ServiceCanceled<EntryDeleteApproval> canceled:
-                _bridge.ApplyStatusText(canceled.Status);
+                _entryManager.StatusApplier(canceled.Status);
                 return;
             case ServiceFailure<EntryDeleteApproval> failure:
-                _bridge.ApplyStatusText(failure.Status);
+                _entryManager.StatusApplier(failure.Status);
                 return;
             default:
                 throw new UnreachableException();
         }
 
         if (approval.ClearKeyboardFocusId is not null)
-            _bridge.SetKeyboardFocusedEntryId(null);
+            _entryManager.KeyboardFocusedEntryId = null;
 
         var target = approval.Target;
         var entrySnapshot = _entries.Select(ToLaunchEntry).ToImmutableList();
-        var shellSnapshot = _bridge.CaptureSnapshot();
-        var settings = _bridge.Settings();
-        var presetFile = _bridge.PresetFile();
+        var shellSnapshot = _entryManager.SnapshotCapturer();
+        var settings = _entryManager.SettingsGetter();
+        var presetFile = _entryManager.PresetFileGetter();
 
         var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RemoveEntryId(
             presetFile, settings.CustomEntryOrder, target.EntryId);
@@ -158,18 +158,18 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
 
         _entries.Remove(item);
 
-        var error = _bridge.ApplyChanges(_entries.Select(ToLaunchEntry), newSettings, updatedPresetFile);
+        var error = _entryManager.ChangesApplier(_entries.Select(ToLaunchEntry), newSettings, updatedPresetFile);
         if (error is not null)
         {
             // Restore entries + shell state
             ReplaceEntries(entrySnapshot);
-            _bridge.RestoreSnapshot(shellSnapshot);
-            _bridge.ApplyStatusText(LauncherStatusContent.Error(error));
+            _entryManager.SnapshotRestorer(shellSnapshot);
+            _entryManager.StatusApplier(LauncherStatusContent.Error(error));
             return;
         }
 
         TotalCount = _entries.Count;
-        _bridge.ApplyStatusText(LauncherEntryStatus.Deleted(target.EntryName));
+        _entryManager.StatusApplier(LauncherEntryStatus.Deleted(target.EntryName));
         WeakReferenceMessenger.Default.Send(new EntryDeletedMessage(target.EntryId));
     }
 
@@ -195,9 +195,9 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
     private void HandleAddOrCloneResult(LaunchEntry entry, Func<LaunchEntry, LauncherStatusContent> statusFactory)
     {
         var entrySnapshot = _entries.Select(ToLaunchEntry).ToImmutableList();
-        var shellSnapshot = _bridge.CaptureSnapshot();
-        var settings = _bridge.Settings();
-        var presetFile = _bridge.PresetFile();
+        var shellSnapshot = _entryManager.SnapshotCapturer();
+        var settings = _entryManager.SettingsGetter();
+        var presetFile = _entryManager.PresetFileGetter();
 
         var vm = new LauncherEntryViewModel(entry, this);
         _entries.Add(vm);
@@ -206,17 +206,17 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
             CustomEntryOrder = settings.CustomEntryOrder.Add(entry.Id),
         };
 
-        var error = _bridge.ApplyChanges(_entries.Select(ToLaunchEntry), newSettings, presetFile);
+        var error = _entryManager.ChangesApplier(_entries.Select(ToLaunchEntry), newSettings, presetFile);
         if (error is not null)
         {
             _entries.Remove(vm);
-            _bridge.RestoreSnapshot(shellSnapshot);
-            _bridge.ApplyStatusText(LauncherStatusContent.Error(error));
+            _entryManager.SnapshotRestorer(shellSnapshot);
+            _entryManager.StatusApplier(LauncherStatusContent.Error(error));
             return;
         }
 
         TotalCount = _entries.Count;
-        _bridge.ApplyStatusText(statusFactory(entry));
+        _entryManager.StatusApplier(statusFactory(entry));
         WeakReferenceMessenger.Default.Send(new EntryAddedMessage(entry));
     }
 
@@ -224,9 +224,9 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
     {
         var oldId = item.Id;
         var entrySnapshot = _entries.Select(ToLaunchEntry).ToImmutableList();
-        var shellSnapshot = _bridge.CaptureSnapshot();
-        var settings = _bridge.Settings();
-        var presetFile = _bridge.PresetFile();
+        var shellSnapshot = _entryManager.SnapshotCapturer();
+        var settings = _entryManager.SettingsGetter();
+        var presetFile = _entryManager.PresetFileGetter();
 
         if (!EntryId.Same(oldId, updated.Id))
         {
@@ -240,24 +240,24 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
             catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
             {
                 ErrorLog.Write(ex, "EditEntry.RenameReference");
-                _bridge.RestoreSnapshot(shellSnapshot);
-                _bridge.ApplyStatusText(LauncherEntryStatus.EditDialogFailed(item.Name, ex));
+                _entryManager.SnapshotRestorer(shellSnapshot);
+                _entryManager.StatusApplier(LauncherEntryStatus.EditDialogFailed(item.Name, ex));
                 return;
             }
         }
 
         item.ReplaceEntryFromOwner(updated, CurrentTimestampUtc());
 
-        var error = _bridge.ApplyChanges(_entries.Select(ToLaunchEntry), settings, presetFile);
+        var error = _entryManager.ChangesApplier(_entries.Select(ToLaunchEntry), settings, presetFile);
         if (error is not null)
         {
             ReplaceEntries(entrySnapshot);
-            _bridge.RestoreSnapshot(shellSnapshot);
-            _bridge.ApplyStatusText(LauncherStatusContent.Error(error));
+            _entryManager.SnapshotRestorer(shellSnapshot);
+            _entryManager.StatusApplier(LauncherStatusContent.Error(error));
             return;
         }
 
-        _bridge.ApplyStatusText(LauncherEntryStatus.Updated(item.Name));
+        _entryManager.StatusApplier(LauncherEntryStatus.Updated(item.Name));
         WeakReferenceMessenger.Default.Send(new EntryUpdatedMessage(oldId, updated.Id, updated));
     }
 
@@ -267,17 +267,17 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
 
     // ── IEntryCardHost ──
 
-    bool IEntryCardHost.IsDetailedListMode => _bridge.IsDetailedListMode();
-    bool IEntryCardHost.IsNamesViewMode => _bridge.IsNamesViewMode();
+    bool IEntryCardHost.IsDetailedListMode => _entryManager.DetailedListModeChecker();
+    bool IEntryCardHost.IsNamesViewMode => _entryManager.NamesModeChecker();
 
     void IEntryCardHost.UpdateSelection(LauncherEntryViewModel entry, bool selected) =>
-        _bridge.UpdateSelection(entry, selected);
+        _entryManager.SelectionUpdater(entry, selected);
 
     void IEntryCardHost.ShowDryRun(LauncherEntryViewModel entry) =>
-        _bridge.ShowDryRun(entry);
+        _entryManager.DryRunInitiator(entry);
 
     Task IEntryCardHost.LaunchAsync(LauncherEntryViewModel entry) =>
-        _bridge.LaunchAsync(entry);
+        _entryManager.AsyncLauncher(entry);
 
     Task IEntryCardHost.EditEntryAsync(LauncherEntryViewModel entry) =>
         EditEntryAsync(entry);
@@ -289,14 +289,14 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         CloneEntryAsync(entry);
 
     void IEntryCardHost.MoveEntryUp(LauncherEntryViewModel entry) =>
-        _bridge.MoveEntryUp(entry);
+        _entryManager.EntryMoverUp(entry);
 
     bool IEntryCardHost.CanMoveEntryUp(LauncherEntryViewModel entry) =>
-        _bridge.CanMoveEntryUp(entry);
+        _entryManager.EntryMoverUpChecker(entry);
 
     void IEntryCardHost.MoveEntryDown(LauncherEntryViewModel entry) =>
-        _bridge.MoveEntryDown(entry);
+        _entryManager.EntryMoverDown(entry);
 
     bool IEntryCardHost.CanMoveEntryDown(LauncherEntryViewModel entry) =>
-        _bridge.CanMoveEntryDown(entry);
+        _entryManager.EntryMoverDownChecker(entry);
 }

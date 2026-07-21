@@ -7,8 +7,8 @@ using WTLauncher.Core.Messaging;
 
 namespace WTLauncher.App.ViewModels;
 
-// Selection + batch launch. Split from MainWindowViewModel.cs as part of
-// 07-09-split-mainviewmodel-stage2.
+// Selection + batch launch delegation. Split from MainWindowViewModel.cs as part of
+// 07-09-split-mainviewmodel-stage2. Batch launch is delegated to LaunchOrchestrator.
 
 // ponytail: CA1001 wants MainWindowViewModel to be IDisposable because of the
 // _batchCts field below. That CTS is deterministically disposed in StartBatch's
@@ -18,29 +18,15 @@ namespace WTLauncher.App.ViewModels;
 #pragma warning disable CA1001
 public sealed partial class MainWindowViewModel
 {
-    private CancellationTokenSource? _batchCts;
-
-    public bool IsBatchLaunching => _batchCts is not null;
-
-    // ConfirmBatchLaunchAsync is delegated through IDialogService.
-
-    [RelayCommand(CanExecute = nameof(CanCancelBatch))]
-    private void CancelBatch()
-    {
-        _batchCts?.Cancel();
-    }
-
-    private bool CanCancelBatch() => IsBatchLaunching;
-
     [RelayCommand(CanExecute = nameof(CanSelectVisible))]
     private void SelectVisible()
     {
         DiscardDragReorderPreview();
-        var targets = _visibleEntries.Where(entry => !entry.IsSelected).ToList();
+        var targets = _entryManager.MutableVisibleEntries.Where(entry => !entry.IsSelected).ToList();
         if (targets.Count == 0)
         {
             ApplyStatusText(
-                _visibleEntries.Count == 0
+                _entryManager.MutableVisibleEntries.Count == 0
                     ? LauncherSelectionStatus.NoVisibleEntries
                     : LauncherSelectionStatus.VisibleAlreadySelected);
             return;
@@ -80,7 +66,7 @@ public sealed partial class MainWindowViewModel
     public void ClearVisibleSelection()
     {
         DiscardDragReorderPreview();
-        var targets = _visibleEntries.Where(entry => entry.IsSelected).ToList();
+        var targets = _entryManager.MutableVisibleEntries.Where(entry => entry.IsSelected).ToList();
         if (targets.Count == 0)
         {
             ApplyStatusText(LauncherSelectionStatus.NoSelectedEntriesToClear);
@@ -94,7 +80,7 @@ public sealed partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
     private async Task LaunchSelectedAsync()
     {
-        await LaunchBatchAsync(
+        await _launchOrchestrator.LaunchBatchAsync(
             GetSelectedEntries(),
             "已勾选项",
             LauncherSelectionStatus.NoSelectedEntries,
@@ -103,126 +89,10 @@ public sealed partial class MainWindowViewModel
             LauncherSelectionStatus.BatchLaunchCompleted).ConfigureAwait(true);
     }
 
-    private async Task LaunchBatchAsync(
-        IReadOnlyList<LauncherEntryViewModel> entries,
-        string confirmationTargetLabel,
-        LauncherStatusContent emptyStatus,
-        Func<int, LauncherStatusContent> canceledStatus,
-        Func<Exception, LauncherStatusContent> failedStatus,
-        Func<LauncherBatchLaunchReport, LauncherStatusContent> completedStatus)
-    {
-        if (entries.Count == 0)
-        {
-            StatusContent = emptyStatus;
-            return;
-        }
+    [RelayCommand(CanExecute = nameof(CanCancelBatch))]
+    private void CancelBatch() => _launchOrchestrator.CancelBatch();
 
-        if (IsBatchLaunching) return;
-
-        DiscardDragReorderPreview();
-        _batchCts?.Dispose();
-        _batchCts = new CancellationTokenSource();
-        LauncherBatchLaunchPreflight preflight = null!;
-        try
-        {
-            OnPropertyChanged(nameof(IsBatchLaunching));
-            var selectedEntries = entries.Select(ToLaunchEntry).ToList();
-            preflight = _launchWorkflow.PreflightBatch(
-                selectedEntries,
-                RequireConfirmationForLaunches);
-            if (!await ConfirmBatchLaunchIfRequiredAsync(
-                    preflight.Items,
-                    preflight.Report,
-                    confirmationTargetLabel,
-                    canceledStatus,
-                    failedStatus).ConfigureAwait(true))
-                return;
-
-            var report = _launchWorkflow.StartBatch(preflight, _batchCts.Token);
-            var timestamp = CurrentTimestampUtc();
-            var startedCount = report.RequestedCount;
-            var preflightItems = preflight.Items;
-            var entryById = new Dictionary<string, LauncherEntryViewModel>(EntryId.Comparer);
-            foreach (var e in _entries)
-            {
-                if (!entryById.TryAdd(e.Id, e))
-                {
-                    ErrorLog.Write(
-                        new InvalidDataException($"Duplicate entry ID in batch launch dictionary: {e.Id}"),
-                        "LaunchBatch");
-                }
-            }
-            var failureIndexSet = new HashSet<int>(report.FailureIndices);
-            for (var i = 0; i < preflightItems.Count; i++)
-            {
-                if (failureIndexSet.Contains(i))
-                    continue;
-                var preflightItem = preflightItems[i];
-                entryById.TryGetValue(preflightItem.EntryId, out var entryVm);
-                entryVm?.RecordLaunchFromOwner(timestamp);
-            }
-            // Save AFTER timestamps are recorded so launch history is persisted.
-            if (startedCount > 0 && !SaveConfig())
-                return;
-            DryRunText = LauncherBatchLaunchReceiptText.Format(preflight, report);
-            StatusContent = completedStatus(report);
-        }
-        catch (OperationCanceledException)
-        {
-            DryRunText = LauncherBatchLaunchReceiptText.Canceled(preflight?.Items ?? []);
-            StatusContent = LauncherRefreshStatus.CanceledBatch;
-        }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-        {
-            ErrorLog.Write(ex, "BatchLaunch");
-            DryRunText = LauncherBatchLaunchReceiptText.Failed(ex);
-            StatusContent = failedStatus(ex);
-        }
-        finally
-        {
-            _batchCts?.Dispose();
-            _batchCts = null;
-            OnPropertyChanged(nameof(IsBatchLaunching));
-        }
-    }
-
-    private async Task<bool> ConfirmBatchLaunchIfRequiredAsync(
-        IReadOnlyList<LauncherBatchLaunchItem> items,
-        LauncherBatchLaunchReport report,
-        string confirmationTargetLabel,
-        Func<int, LauncherStatusContent> canceledStatus,
-        Func<Exception, LauncherStatusContent> failedStatus)
-    {
-        // Always confirm when preflight reports failures, regardless of RequireConfirmationForLaunches.
-        // Also confirm when any individual item's plan requires confirmation (per-entry override).
-        if (!RequireConfirmationForLaunches && report.FailedCount == 0 && !items.Any(i => i.Plan.RequiresConfirmation))
-            return true;
-
-        bool accepted;
-        var confirmation = new LauncherBatchLaunchConfirmation(
-            items,
-            confirmationTargetLabel,
-            report.FailedCount,
-            report.FailureMessages);
-        try
-        {
-            accepted = await _dialogService.ConfirmBatchLaunchAsync(confirmation).ConfigureAwait(true);
-        }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-        {
-            ErrorLog.Write(ex, "BatchLaunchConfirmation");
-            DryRunText = LauncherBatchLaunchReceiptText.ConfirmationFailed(confirmation.Items, ex);
-            StatusContent = failedStatus(ex);
-            return false;
-        }
-
-        if (accepted)
-            return true;
-
-        DryRunText = LauncherBatchLaunchReceiptText.Canceled(confirmation.Items);
-        StatusContent = canceledStatus(confirmation.Items.Count);
-        return false;
-    }
+    private bool CanCancelBatch() => _launchOrchestrator.IsBatchLaunching;
 
     internal void UpdateSelection(LauncherEntryViewModel item, bool selected)
     {
@@ -233,7 +103,7 @@ public sealed partial class MainWindowViewModel
 
     private bool CanOperateOnSelection() => SelectedCount > 0;
 
-    private bool CanSelectVisible() => _visibleEntries.Any(entry => !entry.IsSelected);
+    private bool CanSelectVisible() => _entryManager.MutableVisibleEntries.Any(entry => !entry.IsSelected);
 
     private bool SetSelection(IReadOnlyList<LauncherEntryViewModel> entries, bool selected)
     {
@@ -259,10 +129,10 @@ public sealed partial class MainWindowViewModel
 
     private bool ReplaceSelection(IReadOnlySet<string> selectedIds)
     {
-        var snapshot = CaptureSelectionMutationSnapshot(_entries);
+        var snapshot = CaptureSelectionMutationSnapshot(_entryManager.MutableEntries);
         try
         {
-            foreach (var entry in _entries)
+            foreach (var entry in _entryManager.MutableEntries)
             {
                 entry.SetSelectionFromOwner(selectedIds.Contains(entry.Id));
             }
@@ -336,14 +206,14 @@ public sealed partial class MainWindowViewModel
     }
 
     private List<LauncherEntryViewModel> GetSelectedEntries() =>
-        _entries
+        _entryManager.MutableEntries
             .Where(entry => entry.IsSelected)
             .ToList();
 
     private List<string> GetSelectedEntryIds()
     {
-        var ids = new List<string>(_entries.Count);
-        foreach (var entry in _entries)
+        var ids = new List<string>(_entryManager.MutableEntries.Count);
+        foreach (var entry in _entryManager.MutableEntries)
             if (entry.IsSelected) ids.Add(entry.Id);
         return ids;
     }

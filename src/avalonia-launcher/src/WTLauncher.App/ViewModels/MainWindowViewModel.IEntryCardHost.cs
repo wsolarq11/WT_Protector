@@ -1,13 +1,24 @@
 using WTLauncher.App.Features.Entries;
+using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
-// Explicit IEntryCardHost implementation — delegates to existing internal
-// methods to keep method accessibility unchanged. The 4 reorder methods
-// (MoveEntryUp/Down, CanMoveEntryUp/Down) are already public on
-// MainWindowViewModel, so no forwarding is needed for those.
+// Explicit IEntryCardHost implementation + launch delegation to
+// LaunchOrchestrator. The 4 reorder methods (MoveEntryUp/Down,
+// CanMoveEntryUp/Down) are already public on MainWindowViewModel,
+// so no forwarding is needed for those.
 public sealed partial class MainWindowViewModel : IEntryCardHost
 {
+    // ── internal launch methods (used by EntryManager bridge delegates) ──
+
+    internal void ShowDryRun(LauncherEntryViewModel item) =>
+        _launchOrchestrator.ShowDryRun(item);
+
+    internal Task LaunchAsync(LauncherEntryViewModel item) =>
+        _launchOrchestrator.LaunchAsync(item);
+
+    // ── IEntryCardHost ──
+
     void IEntryCardHost.UpdateSelection(LauncherEntryViewModel item, bool selected) =>
         UpdateSelection(item, selected);
 

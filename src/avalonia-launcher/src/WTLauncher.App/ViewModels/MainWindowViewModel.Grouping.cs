@@ -20,11 +20,11 @@ public sealed partial class MainWindowViewModel
     /// <summary>从 VisibleEntries 派生 VisibleGroups。每次 ApplyFilter / Refresh / group key 变更后调用。</summary>
     internal void RebuildVisibleGroups()
     {
-        var launchEntries = _visibleEntries.Select(ToLaunchEntry).ToList();
+        var launchEntries = _entryManager.MutableVisibleEntries.Select(ToLaunchEntry).ToList();
         var groups = LauncherEntryGrouper.Group(launchEntries, _layoutManager.CardsGroupKey);
         // ponytail: TryAdd 而非 ToDictionary — 与 LaunchBatchAsync 同模式,_entries 出现重复 ID 时(仅可能由反射注入或 schema 历史损坏)优雅退化,不抛 ArgumentException。
         var entryById = new Dictionary<string, LauncherEntryViewModel>(EntryId.Comparer);
-        foreach (var vm in _visibleEntries)
+        foreach (var vm in _entryManager.MutableVisibleEntries)
             entryById.TryAdd(vm.Id, vm);
 
         VisibleGroups.Clear();
@@ -57,7 +57,7 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
-        await LaunchBatchAsync(
+        await _launchOrchestrator.LaunchBatchAsync(
             entries,
             confirmationTargetLabel: $"分组 \"{entries[0].Command}\"",
             emptyStatus: LauncherRefreshStatus.GroupNoEntries,

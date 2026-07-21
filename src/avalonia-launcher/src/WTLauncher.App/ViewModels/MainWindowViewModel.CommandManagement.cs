@@ -33,7 +33,7 @@ public sealed partial class MainWindowViewModel
 
     /// <summary>
     /// 单次 edit 的 transaction: snapshot → mutate (entries + settings.CommandTemplates) → save → rollback on failure。
-    /// 成功后同步 _launchWorkflow.CommandTemplates,让后续启动吃到新模板。
+    /// 成功后同步 _launchOrchestrator.CommandTemplates,让后续启动吃到新模板。
     /// </summary>
     internal CommandManagementResult ApplyCommandManagementEdit(CommandManagementEdit edit)
     {
@@ -53,16 +53,16 @@ public sealed partial class MainWindowViewModel
         }
 
         // Sync runtime template resolver with new _settings.CommandTemplates.
-        // ponytail: pre-existing latent coupling — _launchWorkflow.CommandTemplates was set once at ctor;
+        // ponytail: pre-existing latent coupling — _launchOrchestrator.CommandTemplates was set once at ctor;
         // command management is the first runtime mutation path, so it must keep this in sync.
-        _launchWorkflow.CommandTemplates = _settings.CommandTemplates;
+        _launchOrchestrator.CommandTemplates = _settings.CommandTemplates;
 
         var saveFailure = SaveStoreFile(BuildStoreFile());
         if (saveFailure is not null)
         {
             RestoreEntryMutationSnapshot(snapshot);
             // restore also reverts _launchWorkflow snapshot — re-sync after rollback.
-            _launchWorkflow.CommandTemplates = _settings.CommandTemplates;
+            _launchOrchestrator.CommandTemplates = _settings.CommandTemplates;
             return FailureResult(saveFailure);
         }
 
@@ -83,7 +83,7 @@ public sealed partial class MainWindowViewModel
                     return "新命令与原命令相同,无变更。";
 
                 var matched = 0;
-                foreach (var item in _entries)
+                foreach (var item in _entryManager.MutableEntries)
                 {
                     if (string.Equals(item.Command, oldCmd, StringComparison.OrdinalIgnoreCase))
                     {
@@ -105,7 +105,7 @@ public sealed partial class MainWindowViewModel
                     return "保留方与失效方相同,无法合并。";
 
                 var matched = 0;
-                foreach (var item in _entries)
+                foreach (var item in _entryManager.MutableEntries)
                 {
                     if (string.Equals(item.Command, loser, StringComparison.OrdinalIgnoreCase))
                     {
@@ -136,7 +136,7 @@ public sealed partial class MainWindowViewModel
                 var oldToken = "$" + uk.OldKey;
                 var newToken = "$" + uk.NewKey;
                 var cascaded = 0;
-                foreach (var item in _entries)
+                foreach (var item in _entryManager.MutableEntries)
                 {
                     if (string.Equals(item.Command, oldToken, StringComparison.OrdinalIgnoreCase))
                     {
@@ -182,10 +182,10 @@ public sealed partial class MainWindowViewModel
     }
 
     private IReadOnlyList<CommandRow> GetCommandRowsSnapshot() =>
-        CommandUsageAnalyzer.Analyze(_entries.Select(ToLaunchEntry));
+        CommandUsageAnalyzer.Analyze(_entryManager.MutableEntries.Select(ToLaunchEntry));
 
     private IReadOnlyList<TemplateRow> GetTemplateRowsSnapshot() =>
-        CommandUsageAnalyzer.AnalyzeTemplates(_settings.CommandTemplates, _entries.Select(ToLaunchEntry));
+        CommandUsageAnalyzer.AnalyzeTemplates(_settings.CommandTemplates, _entryManager.MutableEntries.Select(ToLaunchEntry));
 
     private CommandManagementResult SuccessResult(string statusMessage) =>
         new(true, statusMessage, GetCommandRowsSnapshot(), GetTemplateRowsSnapshot());

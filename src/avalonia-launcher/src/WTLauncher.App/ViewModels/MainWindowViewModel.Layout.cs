@@ -16,9 +16,6 @@ public sealed partial class MainWindowViewModel
     // validation and persistence logic that would make a common abstraction brittle.
     private bool _isHandlingSettingsChange;
 
-    // Prevents double-click double-launch. Set to true at entry, false in finally.
-    private bool _isLaunching;
-
     // P1: Reusable collections for SyncVisibleEntries — Clear() preserves internal
     // bucket array capacity in .NET, eliminating per-call GC allocations (~2-3KB
     // per keystroke for ~200 entries).
@@ -92,7 +89,7 @@ public sealed partial class MainWindowViewModel
             var displayMode = _layoutManager.SelectedDisplayMode;
             displayMode = displayMode ?? throw new InvalidOperationException("Launcher entry view mode selection is required.");
             _layoutManager.NotifyDisplayModeProjectionChanged();
-            LauncherEntryLayoutPresentation.Refresh(_entries);
+            LauncherEntryLayoutPresentation.Refresh(_entryManager.MutableEntries);
 
             if (TryPersistSettingsChange(
                 s => s with { EntryViewMode = displayMode.Id },
@@ -104,7 +101,7 @@ public sealed partial class MainWindowViewModel
             {
                 _layoutManager.SelectedDisplayMode = _layoutManager.ResolveDisplayMode(_settings.EntryViewMode);
                 _layoutManager.NotifyDisplayModeProjectionChanged();
-                LauncherEntryLayoutPresentation.Refresh(_entries);
+                LauncherEntryLayoutPresentation.Refresh(_entryManager.MutableEntries);
             }
         }
         finally
@@ -176,7 +173,7 @@ public sealed partial class MainWindowViewModel
         if (!isDragging)
         {
             var sorted = LauncherEntryQuery.FilterAndSort(
-                _entries,
+                _entryManager.MutableEntries,
                 _layoutManager.FilterText,
                 _layoutManager.SelectedSortMode?.Id ?? LauncherEntryQuery.CustomSortModeId,
                 _settings.CustomEntryOrder,
@@ -184,16 +181,16 @@ public sealed partial class MainWindowViewModel
 
             SyncVisibleEntries(sorted);
 
-            _layoutManager.TryRefreshCardSize(_entries, _visibleEntries);
+            _layoutManager.TryRefreshCardSize(_entryManager.MutableEntries, _entryManager.MutableVisibleEntries);
         }
         else
         {
             // Drag path: still need to sync VisibleCount
-            VisibleCount = _visibleEntries.Count;
+            VisibleCount = _entryManager.MutableVisibleEntries.Count;
             return;
         }
 
-        VisibleCount = _visibleEntries.Count;
+        VisibleCount = _entryManager.MutableVisibleEntries.Count;
         SelectVisibleCommand.NotifyCanExecuteChanged();
         RebuildVisibleGroups();
     }
@@ -230,17 +227,17 @@ public sealed partial class MainWindowViewModel
         _syncSortedSet.Clear();
         foreach (var item in sorted)
             _syncSortedSet.Add(item);
-        for (var i = _visibleEntries.Count - 1; i >= 0; i--)
+        for (var i = _entryManager.MutableVisibleEntries.Count - 1; i >= 0; i--)
         {
-            if (!_syncSortedSet.Contains(_visibleEntries[i]))
-                _visibleEntries.RemoveAt(i);
+            if (!_syncSortedSet.Contains(_entryManager.MutableVisibleEntries[i]))
+                _entryManager.MutableVisibleEntries.RemoveAt(i);
         }
 
         // Build position map for O(1) lookups instead of O(n) IndexOf.
         // P1: Reuse instance field, Clear() preserves internal bucket capacity.
         _syncPositionByEntry.Clear();
-        for (var i = 0; i < _visibleEntries.Count; i++)
-            _syncPositionByEntry[_visibleEntries[i]] = i;
+        for (var i = 0; i < _entryManager.MutableVisibleEntries.Count; i++)
+            _syncPositionByEntry[_entryManager.MutableVisibleEntries[i]] = i;
 
         // Insert new entries and move existing ones to correct positions.
         for (var targetIndex = 0; targetIndex < sorted.Count; targetIndex++)
@@ -250,7 +247,7 @@ public sealed partial class MainWindowViewModel
             {
                 if (currentIndex != targetIndex)
                 {
-                    _visibleEntries.Move(currentIndex, targetIndex);
+                    _entryManager.MutableVisibleEntries.Move(currentIndex, targetIndex);
                     // P5: Update positions incrementally instead of rebuilding the dictionary.
                     // After Move(from, to), entries in [min, max] shift by �1.
                     // NOTE: The rotation interval is [from, to) when moving forward
@@ -262,22 +259,22 @@ public sealed partial class MainWindowViewModel
                     if (from < to)
                     {
                         for (var j = from; j < to; j++)
-                            _syncPositionByEntry[_visibleEntries[j]] = j;
+                            _syncPositionByEntry[_entryManager.MutableVisibleEntries[j]] = j;
                     }
                     else
                     {
                         for (var j = to + 1; j <= from; j++)
-                            _syncPositionByEntry[_visibleEntries[j]] = j;
+                            _syncPositionByEntry[_entryManager.MutableVisibleEntries[j]] = j;
                     }
                     _syncPositionByEntry[entry] = to;
                 }
             }
             else
             {
-                _visibleEntries.Insert(targetIndex, entry);
+                _entryManager.MutableVisibleEntries.Insert(targetIndex, entry);
                 // P5: Shift positions for entries after the insertion point.
-                for (var j = targetIndex + 1; j < _visibleEntries.Count; j++)
-                    _syncPositionByEntry[_visibleEntries[j]] = j;
+                for (var j = targetIndex + 1; j < _entryManager.MutableVisibleEntries.Count; j++)
+                    _syncPositionByEntry[_entryManager.MutableVisibleEntries[j]] = j;
                 _syncPositionByEntry[entry] = targetIndex;
             }
         }
@@ -286,7 +283,7 @@ public sealed partial class MainWindowViewModel
     public void UpdateCardsAvailableSize(Size availableSize)
     {
         _layoutManager.UpdateCardsAvailableSize(availableSize);
-        _layoutManager.TryRefreshCardSize(_entries, _visibleEntries);
+        _layoutManager.TryRefreshCardSize(_entryManager.MutableEntries, _entryManager.MutableVisibleEntries);
         // Track for filter reapply.
     }
 

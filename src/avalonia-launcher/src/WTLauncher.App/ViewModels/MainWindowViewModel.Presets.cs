@@ -156,7 +156,7 @@ public sealed partial class MainWindowViewModel
     {
         selectedPreset = null;
         selection = null;
-        if (!TryGetSelectedPreset(out selectedPreset) || _entries.Count == 0)
+        if (!TryGetSelectedPreset(out selectedPreset) || _entryManager.MutableEntries.Count == 0)
             return false;
 
         selection = BuildPresetSelectionPreview(selectedPreset, GetSelectedEntryIds());
@@ -166,7 +166,7 @@ public sealed partial class MainWindowViewModel
     private List<LauncherEntryViewModel> GetPresetEntries(IEnumerable<string> entryIds)
     {
         var entriesById = new Dictionary<string, LauncherEntryViewModel>(EntryId.Comparer);
-        foreach (var entry in _entries)
+        foreach (var entry in _entryManager.MutableEntries)
         {
             if (!entriesById.ContainsKey(entry.Id))
                 entriesById[entry.Id] = entry;
@@ -177,7 +177,7 @@ public sealed partial class MainWindowViewModel
         foreach (var id in uniqueIds)
         {
             // Use TryGetValue instead of indexer to give a clear error when
-            // a preset references an entry ID that does not exist in _entries.
+            // a preset references an entry ID that does not exist in _entryManager.MutableEntries.
             if (!entriesById.TryGetValue(id, out var entry))
                 throw new InvalidDataException($"Preset entry ID '{id}' does not match any loaded entry.");
 
@@ -264,7 +264,7 @@ public sealed partial class MainWindowViewModel
         if (!TryGetApplicablePresetSelection(out var selectedPreset, out _))
             return;
 
-        await LaunchBatchAsync(
+        await _launchOrchestrator.LaunchBatchAsync(
             GetPresetEntries(selectedPreset.EntryIds),
             $"启动组“{selectedPreset.Name}”条目",
             LauncherPresetStatus.NoPresetEntries(selectedPreset.Name),
@@ -289,9 +289,8 @@ public sealed partial class MainWindowViewModel
         DiscardDragReorderPreview();
         try
         {
-            var preflight = _launchWorkflow.PreflightBatch(
-                entries.Select(ToLaunchEntry),
-                RequireConfirmationForLaunches);
+            var preflight = _launchOrchestrator.PreflightBatch(
+                entries.Select(ToLaunchEntry));
             if (preflight.Report.FailedCount > 0)
             {
                 DryRunText = LauncherBatchLaunchPlanText.FailedPreflight(preflight);

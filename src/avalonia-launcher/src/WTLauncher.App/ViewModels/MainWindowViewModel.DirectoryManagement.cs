@@ -67,7 +67,7 @@ public sealed partial class MainWindowViewModel
                     return "新地址与原地址相同,无变更。";
 
                 var matched = 0;
-                foreach (var item in _entries)
+                foreach (var item in _entryManager.MutableEntries)
                 {
                     if (string.Equals(item.Directory, r.OldDirectory, StringComparison.OrdinalIgnoreCase))
                     {
@@ -87,7 +87,7 @@ public sealed partial class MainWindowViewModel
                     return "保留方与失效方相同,无法合并。";
 
                 var matched = 0;
-                foreach (var item in _entries)
+                foreach (var item in _entryManager.MutableEntries)
                 {
                     if (string.Equals(item.Directory, m.LoserDirectory, StringComparison.OrdinalIgnoreCase))
                     {
@@ -108,7 +108,7 @@ public sealed partial class MainWindowViewModel
     }
 
     private IReadOnlyList<DirectoryRow> GetDirectoryRowsSnapshot() =>
-        DirectoryUsageAnalyzer.Analyze(_entries.Select(ToLaunchEntry));
+        DirectoryUsageAnalyzer.Analyze(_entryManager.MutableEntries.Select(ToLaunchEntry));
 
     private DirectoryManagementResult DirectorySuccess(string statusMessage) =>
         new(true, statusMessage, GetDirectoryRowsSnapshot());

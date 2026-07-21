@@ -577,7 +577,7 @@ public sealed partial class MainWindowViewModelTests
     public void LaunchActionsUseOneTypedWorkflowField()
     {
         Assert.Null(typeof(MainWindowViewModel).GetField("_launcherProcess", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
-        Assert.NotNull(typeof(MainWindowViewModel).GetField("_launchWorkflow", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
+        Assert.NotNull(typeof(MainWindowViewModel).GetField("_launchOrchestrator", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
         Assert.Null(typeof(MainWindowViewModel).GetMethod("BuildLaunchPlan", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance));
         // ponytail: LauncherProcess deleted — ViewModel takes only Action<LaunchPlan>.
     }

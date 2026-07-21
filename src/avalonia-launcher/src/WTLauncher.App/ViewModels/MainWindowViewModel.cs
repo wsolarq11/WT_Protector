@@ -16,14 +16,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 {
     private readonly string _storePath;
     private LauncherSettings _settings;
-    private readonly LauncherLaunchWorkflow _launchWorkflow;
+    internal readonly LaunchOrchestrator _launchOrchestrator;
     private readonly IDialogService _dialogService;
     private readonly IEntryService _entryService = null!;
     private readonly IPresetService _presetService = null!;
     private readonly Func<DateTimeOffset> _utcNow;
-    private readonly ObservableCollection<LauncherEntryViewModel> _entries = [];
-    private readonly ObservableCollection<LauncherEntryViewModel> _visibleEntries = [];
-
     private readonly StatusPresenter _statusPresenter = new();
     internal readonly PresetManager _presetManager = new();
     internal readonly LayoutManager _layoutManager = new();
@@ -61,16 +58,25 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     public LauncherCardsGroupOption? SelectedCardsGroupOption { get => _layoutManager.SelectedCardsGroupOption; set => _layoutManager.SelectedCardsGroupOption = value; }
     public string CardsGroupKey { get => _layoutManager.CardsGroupKey; set => _layoutManager.CardsGroupKey = value; }
 
-    [ObservableProperty]
-    private bool _requireConfirmationForLaunches;
-
-    private string? _keyboardFocusedEntryId;
-
     public string? KeyboardFocusedEntryId
     {
-        get => _keyboardFocusedEntryId;
+        get => _entryManager.KeyboardFocusedEntryId;
         set => SetKeyboardFocusedEntryId(value);
     }
+
+    // ── LaunchOrchestrator 转发属性 ──
+
+    public bool RequireConfirmationForLaunches
+    {
+        get => _launchOrchestrator.RequireConfirmationForLaunches;
+        set => _launchOrchestrator.RequireConfirmationForLaunches = value;
+    }
+
+    public string LaunchConfirmationToggleText => _launchOrchestrator.LaunchConfirmationToggleText;
+
+    public string LaunchConfirmationToggleTip => _launchOrchestrator.LaunchConfirmationToggleTip;
+
+    public bool IsBatchLaunching => _launchOrchestrator.IsBatchLaunching;
 
     public MainWindowViewModel(
         string storePath,
@@ -84,19 +90,64 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         ArgumentNullException.ThrowIfNull(storeFile);
         _storePath = storePath;
         _settings = storeFile.Settings;
-        _launchWorkflow = launchWorkflow ?? throw new ArgumentNullException(nameof(launchWorkflow));
-        _launchWorkflow.CommandTemplates = _settings.CommandTemplates;
         _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
         _entryService = entryService ?? throw new ArgumentNullException(nameof(entryService));
         _presetService = presetService ?? throw new ArgumentNullException(nameof(presetService));
         _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
-        Entries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_entries);
-        VisibleEntries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_visibleEntries);
         ConfigPathDisplay = LauncherMainWindowText.StorePathDisplay(storePath);
         _statusPresenter.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName!);
-        _requireConfirmationForLaunches = _settings.RequireConfirmationForLaunches;
-        OnPropertyChanged(nameof(LaunchConfirmationToggleText));
-        OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
+        // Construct LaunchOrchestrator early so bridge delegates are ready.
+        _launchOrchestrator = new LaunchOrchestrator(launchWorkflow, dialogService);
+        _launchOrchestrator.CommandTemplates = _settings.CommandTemplates;
+        // Init before bridge delegates so the SettingsPersister-null guard
+        // in OnRequireConfirmationForLaunchesChanged skips persistence.
+        _launchOrchestrator.RequireConfirmationForLaunches = _settings.RequireConfirmationForLaunches;
+        _launchOrchestrator.SettingsGetter = () => _settings;
+        _launchOrchestrator.TimestampGetter = () => CurrentTimestampUtc();
+        _launchOrchestrator.DryRunTextSetter = s => DryRunText = s;
+        _launchOrchestrator.StatusApplier = s => StatusContent = s;
+        _launchOrchestrator.FilterApplier = ApplyFilter;
+        _launchOrchestrator.ReorderDiscarder = DiscardDragReorderPreview;
+        _launchOrchestrator.SettingsPersister = TryPersistSettingsChange;
+        // Construct EntryManager early so bridge delegates are ready.
+        _entryManager = new EntryManager(_entryService, _utcNow);
+        _launchOrchestrator.EntryGetter = () => _entryManager.MutableEntries;
+        _launchOrchestrator.SaveConfig = SaveConfig;
+        _launchOrchestrator.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(LaunchOrchestrator.RequireConfirmationForLaunches))
+            {
+                OnPropertyChanged(nameof(RequireConfirmationForLaunches));
+                OnPropertyChanged(nameof(LaunchConfirmationToggleText));
+                OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
+                LauncherEntryLayoutPresentation.Refresh(_entryManager.MutableEntries);
+                ApplyFilter();
+            }
+            else
+            {
+                OnPropertyChanged(e.PropertyName!);
+            }
+        };
+        _entryManager.SettingsGetter = () => _settings;
+        _entryManager.CommandTemplatesGetter = () => CommandTemplates;
+        _entryManager.PresetFileGetter = () => _presetManager.File;
+        _entryManager.ReferenceCounter = id => _presetManager.GetReferenceCount(id, _presetService);
+        _entryManager.SnapshotCapturer = () => new ShellSnapshot(_settings, _presetManager.File, _presetManager.SelectedPreset?.Id);
+        _entryManager.SnapshotRestorer = RestoreShellSnapshot;
+        _entryManager.ChangesApplier = ApplyEntryChanges;
+        _entryManager.StatusApplier = s => StatusContent = s;
+        _entryManager.DragPreviewDiscarder = DiscardDragReorderPreview;
+        _entryManager.SelectionUpdater = UpdateSelection;
+        _entryManager.DetailedListModeChecker = () => IsDetailedListMode;
+        _entryManager.NamesModeChecker = () => IsNamesViewMode;
+        _entryManager.DryRunInitiator = ShowDryRun;
+        _entryManager.AsyncLauncher = e => LaunchAsync(e);
+        _entryManager.EntryMoverUp = MoveEntryUp;
+        _entryManager.EntryMoverUpChecker = CanMoveEntryUp;
+        _entryManager.EntryMoverDown = MoveEntryDown;
+        _entryManager.EntryMoverDownChecker = CanMoveEntryDown;
+        _entryManager.EntriesChanged += OnEntriesChanged;
+        _entryManager.CountChanged += OnEntryCountChanged;
         // Init layout state from settings.
         _ = RequireSettingsText(_settings.LastFilterText, "lastFilterText");
         _layoutManager.LoadSettings(_settings);
@@ -114,13 +165,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         // the normalized values — DiscardDragReorderPreview syncs from it.
         _dragReorderWorkflow = new LauncherDragReorderWorkflow(
             _settings,
-            _entries,
+            _entryManager.MutableEntries,
             SaveSettingsToStore);
-        // Construct entry-list VM early so ReplaceEntries creates cards
-        // that own EntryListViewModel (not MainWindowViewModel) as host.
-        _entryListViewModel = CreateEntryListViewModel();
         // Load entries and presets from the unified store.
-        ReplaceEntries(storeFile.Entries);
+        _entryManager.ReplaceEntries(storeFile.Entries);
         var presetFile = new LauncherPresetFile
         {
             Presets = storeFile.Presets,
@@ -140,48 +188,33 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _settings = _settings with { CustomEntryOrder = LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds()) };
         RefreshSelectionState();
         ApplyFilter();
-        LauncherEntryLayoutPresentation.Refresh(_entries);
+        LauncherEntryLayoutPresentation.Refresh(_entryManager.MutableEntries);
+        // Notify initial UI state for launch confirmation toggle (bypassed direct init).
+        OnPropertyChanged(nameof(RequireConfirmationForLaunches));
+        OnPropertyChanged(nameof(LaunchConfirmationToggleText));
+        OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
         StatusContent = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
         SubscribeToMessages();
     }
 
-    private readonly EntryListViewModel _entryListViewModel;
+    private readonly EntryManager _entryManager;
 
-    private EntryListViewModel CreateEntryListViewModel()
+    private void OnEntriesChanged()
     {
-        return new EntryListViewModel(
-            _entries,
-            _visibleEntries,
-            _entryService,
-            new EntryListBridge(
-                Settings: () => _settings,
-                PresetFile: () => _presetManager.File,
-                CommandTemplates: () => CommandTemplates,
-                GetPresetReferenceCount: GetPresetReferenceCount,
-                GetKeyboardFocusedEntryId: () => _keyboardFocusedEntryId,
-                SetKeyboardFocusedEntryId: value => _keyboardFocusedEntryId = value,
-                CaptureSnapshot: () => new ShellSnapshot(_settings, _presetManager.File, _presetManager.SelectedPreset?.Id),
-                RestoreSnapshot: RestoreShellSnapshot,
-                ApplyChanges: ApplyEntryChanges,
-                ApplyStatusText: ApplyStatusText,
-                DiscardDragReorderPreview: DiscardDragReorderPreview,
-                UpdateSelection: UpdateSelection,
-                IsDetailedListMode: () => IsDetailedListMode,
-                IsNamesViewMode: () => IsNamesViewMode,
-                ShowDryRun: ShowDryRun,
-                LaunchAsync: LaunchAsync,
-                MoveEntryUp: MoveEntryUp,
-                CanMoveEntryUp: CanMoveEntryUp,
-                MoveEntryDown: MoveEntryDown,
-                CanMoveEntryDown: CanMoveEntryDown),
-            _utcNow);
+        // Rebuild projections when entry set changes.
+    }
+
+    private void OnEntryCountChanged()
+    {
+        TotalCount = _entryManager.MutableEntries.Count;
+        VisibleCount = _entryManager.VisibleCount;
     }
 
     private void RestoreShellSnapshot(ShellSnapshot snap)
     {
         _settings = snap.Settings;
         _presetManager.Load(snap.PresetFile, null);
-        TotalCount = _entries.Count;
+        TotalCount = _entryManager.MutableEntries.Count;
     }
 
     private string? ApplyEntryChanges(
@@ -191,19 +224,19 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     {
         _settings = settings;
         _presetManager.Load(presetFile, null);
-        TotalCount = _entries.Count;
+        TotalCount = _entryManager.MutableEntries.Count;
         return SaveStoreFile(BuildStoreFile());
     }
 
-    public ReadOnlyObservableCollection<LauncherEntryViewModel> Entries { get; }
+    public ReadOnlyObservableCollection<LauncherEntryViewModel> Entries => _entryManager.Entries;
 
-    public ReadOnlyObservableCollection<LauncherEntryViewModel> VisibleEntries { get; }
+    public ReadOnlyObservableCollection<LauncherEntryViewModel> VisibleEntries => _entryManager.VisibleEntries;
 
     /// <summary>Current settings snapshot. Immutable — replaced on every mutation.
     /// Tests should read from this, not from a stale pre-construction reference.</summary>
     public LauncherSettings Settings => _settings;
 
-    public IReadOnlyDictionary<string, string>? CommandTemplates => _launchWorkflow.CommandTemplates;
+    public IReadOnlyDictionary<string, string>? CommandTemplates => _launchOrchestrator.CommandTemplates;
 
 
     public string ConfigPathDisplay { get; }
@@ -215,7 +248,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         {
             DiscardDragReorderPreview();
             var storeFile = LauncherStore.Load(_storePath);
-            ReplaceEntries(storeFile.Entries);
+            _entryManager.ReplaceEntries(storeFile.Entries);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
@@ -253,14 +286,14 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
         RefreshSelectionState();
         ApplyFilter();
-        LauncherEntryLayoutPresentation.Refresh(_entries);
+        LauncherEntryLayoutPresentation.Refresh(_entryManager.MutableEntries);
         StatusContent = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
     }
 
     private void ValidateCommandTemplateReferences()
     {
         var missingKeys = LauncherCommandTemplateResolver.ValidateTemplateReferences(
-            _entries.Select(ToLaunchEntry),
+            _entryManager.MutableEntries.Select(ToLaunchEntry),
             _settings.CommandTemplates);
 
         if (missingKeys.Count > 0)
@@ -317,7 +350,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     private LauncherStoreFile BuildStoreFile() =>
         new()
         {
-            Entries = _entries.Select(ToLaunchEntry).ToImmutableList(),
+            Entries = _entryManager.MutableEntries.Select(ToLaunchEntry).ToImmutableList(),
             Settings = _settings,
             Presets = _presetManager.File.Presets,
             DefaultPresetId = _presetManager.File.DefaultPresetId,
@@ -367,26 +400,26 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
     internal void SetKeyboardFocusedEntryId(string? value)
     {
-        if (EntryId.Same(_keyboardFocusedEntryId, value))
+        if (EntryId.Same(_entryManager.KeyboardFocusedEntryId, value))
             return;
 
         // Clear old focus.
-        if (_keyboardFocusedEntryId is not null)
+        if (_entryManager.KeyboardFocusedEntryId is not null)
         {
-            foreach (var e in _entries)
+            foreach (var e in _entryManager.MutableEntries)
             {
                 if (e is null) continue;
-                if (EntryId.Same(e.Id, _keyboardFocusedEntryId))
+                if (EntryId.Same(e.Id, _entryManager.KeyboardFocusedEntryId))
                     e.IsKeyboardFocused = false;
             }
         }
 
-        _keyboardFocusedEntryId = value;
+        _entryManager.KeyboardFocusedEntryId = value;
 
         // Set new focus.
         if (value is not null)
         {
-            foreach (var e in _entries)
+            foreach (var e in _entryManager.MutableEntries)
             {
                 if (e is null) continue;
                 if (EntryId.Same(e.Id, value))
@@ -399,20 +432,15 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
     private void ReplaceEntries(IEnumerable<LaunchEntry> entries)
     {
-        _entryListViewModel.ReplaceEntries(entries);
-        TotalCount = _entries.Count;
-        _keyboardFocusedEntryId = null;
+        _entryManager.ReplaceEntries(entries);
         OnPropertyChanged(nameof(KeyboardFocusedEntryId));
-
-        // Force card-size recalculation on next ApplyFilter — new entry VMs
-        // start with default dimensions and must be measured against current available size.
         _layoutManager.InvalidateCardSizeCache();
     }
 
     private string CurrentTimestampUtc() => _utcNow().ToString("O");
 
     private IEnumerable<string> GetEntryIds() =>
-        _entries.Select(entry => entry.Id);
+        _entryManager.MutableEntries.Select(entry => entry.Id);
 
     /// <summary>Refreshes all in-memory projections after a mutation.
     /// Call at the end of any mutation that changes entry/preset state

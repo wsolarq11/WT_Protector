@@ -27,7 +27,7 @@ public sealed partial class MainWindowViewModel
                     .Select(token => Path.GetFileNameWithoutExtension(token))
                     .Where(name => !string.IsNullOrWhiteSpace(name))
                     .ToHashSet(StringComparer.OrdinalIgnoreCase),
-                DirectoryUsageAnalyzer.Analyze(_entries.Select(ToLaunchEntry)),
+                DirectoryUsageAnalyzer.Analyze(_entryManager.MutableEntries.Select(ToLaunchEntry)),
                 _settings.CommandTemplates)
                 .ConfigureAwait(true);
         }
@@ -69,7 +69,7 @@ public sealed partial class MainWindowViewModel
         foreach (var discovered in selected)
         {
             var draft = AgentRecommendationFactory.ToDraft(discovered, userHome);
-            var result = _entryService.CreateEntryFromDraft(draft, originalId: null, previousEntry: null, _entries.Select(ToLaunchEntry));
+            var result = _entryService.CreateEntryFromDraft(draft, originalId: null, previousEntry: null, _entryManager.MutableEntries.Select(ToLaunchEntry));
             if (result is not ServiceSuccess<LaunchEntry> success)
             {
                 StatusContent = result switch
@@ -84,7 +84,7 @@ public sealed partial class MainWindowViewModel
 
             var entry = success.Value;
             entry = entry with { UpdatedAtUtc = CurrentTimestampUtc() };
-            _entries.Add(new LauncherEntryViewModel(entry, this));
+            _entryManager.MutableEntries.Add(new LauncherEntryViewModel(entry, this));
             _settings = _settings with { CustomEntryOrder = _settings.CustomEntryOrder.Add(entry.Id) };
             added++;
         }
@@ -98,13 +98,13 @@ public sealed partial class MainWindowViewModel
     private void AddExistingDirectoryEntry(EntryDraft draft)
     {
         var result = _entryService.CreateEntryFromDraft(
-            draft, originalId: null, previousEntry: null, _entries.Select(ToLaunchEntry));
+            draft, originalId: null, previousEntry: null, _entryManager.MutableEntries.Select(ToLaunchEntry));
         switch (result)
         {
             case ServiceSuccess<LaunchEntry> success:
                 var snapshot = CaptureEntryMutationSnapshot();
                 var entry = success.Value with { UpdatedAtUtc = CurrentTimestampUtc() };
-                _entries.Add(new LauncherEntryViewModel(entry, this));
+                _entryManager.MutableEntries.Add(new LauncherEntryViewModel(entry, this));
                 _settings = _settings with { CustomEntryOrder = _settings.CustomEntryOrder.Add(entry.Id) };
                 if (SaveEntryCollectionChanges(snapshot))
                     ApplyStatusText(LauncherEntryStatus.Added(entry.Name));

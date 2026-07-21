@@ -157,12 +157,17 @@ public sealed partial class MainWindowViewModelTests
         // Inject a duplicate-entry-ID scenario that bypasses Save/Load validation.
         // The LauncherConfigStore enforces unique IDs on both paths, so the only way
         // to reproduce the ToDictionary crash is via direct collection manipulation.
-        var entriesField = typeof(MainWindowViewModel).GetField(
-            "_entries",
+        var entryManagerField = typeof(MainWindowViewModel).GetField(
+            "_entryManager",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        Assert.NotNull(entriesField);
+        Assert.NotNull(entryManagerField);
+        var entryManager = entryManagerField!.GetValue(viewModel)!;
+        var entriesProp = entryManager.GetType().GetProperty(
+            "MutableEntries",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.NotNull(entriesProp);
         var entries = (System.Collections.ObjectModel.ObservableCollection<LauncherEntryViewModel>)
-            entriesField!.GetValue(viewModel)!;
+            entriesProp!.GetValue(entryManager)!;
         var duplicate = new LauncherEntryViewModel(
             Entry("one", directory: temp.Path, command: "opencode", selected: true),
             viewModel);

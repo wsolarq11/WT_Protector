@@ -557,7 +557,7 @@ Add-Check 'no-stale-three-file-refs' @{ docs = ($activeDocs -join ', ') }
 # dual-path drift that existed pre-2026-07-09 from being reintroduced.
 $vmSourcePath = Get-RepoPath 'src\avalonia-launcher\src\WTLauncher.App\ViewModels\MainWindowViewModel.cs'
 $vmSource = Get-Content -Raw -Encoding UTF8 -LiteralPath $vmSourcePath
-$signatureCount = ([regex]::Matches($vmSource, 'Entries = _entries\.Select\(ToLaunchEntry\)\.ToImmutableList\(\),\s*\r?\n\s+Settings =')).Count
+$signatureCount = ([regex]::Matches($vmSource, 'Entries = _entryManager\.MutableEntries\.Select\(ToLaunchEntry\)\.ToImmutableList\(\),\s*\r?\n\s+Settings =')).Count
 if ($signatureCount -ne 1) {
     throw "MainWindowViewModel.cs should have exactly 1 LauncherStoreFile hand-assembly site (BuildStoreFile); found $signatureCount. SaveSettingsToStore must call BuildStoreFile, not hand-assemble. See task 07-09-settings-single-source R1."
 }
