@@ -1667,3 +1667,36 @@ Unified Store Phase 3 追加工事：删除快照类 LauncherEntryMutationSnapsh
 ### Next Steps
 
 - None - task complete
+
+
+## Session 49: Native AOT build tooling fix + goal close-out
+
+**Date**: 2026-07-21
+**Task**: Native AOT build tooling fix + goal close-out
+**Branch**: `main`
+
+### Summary
+
+build-release.ps1 Native AOT 修复: vswhere PATH 系统注册、移除 --no-restore 阻塞、AOT 收据 DLL 字段可选化。667/667 测试全绿。/goal 7 步依次执行: trellis-check → trellis-break-loop → trellis-update-spec → dream → 禁止降低测试标准 → trellis:finish-work → 提交+push。工作树已清洁。
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `faa7b5a` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

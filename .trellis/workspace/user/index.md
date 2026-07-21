@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 48
+- **Total Sessions**: 49
 - **Last Active**: 2026-07-21
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1669 | Active |
+| `journal-1.md` | ~1702 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 49 | 2026-07-21 | Native AOT build tooling fix + goal close-out | `faa7b5a` | `main` |
 | 48 | 2026-07-21 | Unified Store Phase 3+4 cleanup — snapshot + messenger elimination, spec sync | `67827bb`, `7750442`, `466f0d5` | `main` |
 | 47 | 2026-07-21 | MWVM 重构扫尾 — Partial 评估 + Trellis 归档 + Spec 更新 | - | `main` |
 | 46 | 2026-07-21 | P3 消息总线接线 + Native AOT 验证 + 全步骤连续落地 | `f8b7a35`, `9330cd1` | `main` |
