@@ -26,6 +26,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
     private readonly StatusPresenter _statusPresenter = new();
     internal readonly PresetManager _presetManager = new();
+    internal readonly LayoutManager _layoutManager = new();
 
     // Status forwarding — reads StatusPresenter, re-fires PropertyChanged via subscription
     public LauncherStatusContent StatusContent { get => _statusPresenter.StatusContent; set => _statusPresenter.StatusContent = value; }
@@ -47,6 +48,18 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     public string EmptyStateText => _statusPresenter.EmptyStateText;
     public ReadOnlyObservableCollection<LauncherPresetViewModel> Presets => _presetManager.Presets;
     public LauncherPresetViewModel? SelectedPreset => _presetManager.SelectedPreset;
+    public ReadOnlyObservableCollection<LauncherSortModeViewModel> SortModes => _layoutManager.SortModes;
+    public ReadOnlyObservableCollection<LauncherDisplayModeViewModel> DisplayModes => _layoutManager.DisplayModes;
+    public string FilterText { get => _layoutManager.FilterText; set => _layoutManager.FilterText = value; }
+    public LauncherSortModeViewModel? SelectedSortMode { get => _layoutManager.SelectedSortMode; set => _layoutManager.SelectedSortMode = value; }
+    public LauncherDisplayModeViewModel? SelectedDisplayMode { get => _layoutManager.SelectedDisplayMode; set => _layoutManager.SelectedDisplayMode = value; }
+    public bool IsCustomSortMode => _layoutManager.IsCustomSortMode;
+    public bool IsCardsViewMode => _layoutManager.IsCardsViewMode;
+    public bool IsDetailedListMode => _layoutManager.IsDetailedListMode;
+    public bool IsNamesViewMode => _layoutManager.IsNamesViewMode;
+    public IReadOnlyList<LauncherCardsGroupOption> CardsGroupOptions => _layoutManager.CardsGroupOptions;
+    public LauncherCardsGroupOption? SelectedCardsGroupOption { get => _layoutManager.SelectedCardsGroupOption; set => _layoutManager.SelectedCardsGroupOption = value; }
+    public string CardsGroupKey { get => _layoutManager.CardsGroupKey; set => _layoutManager.CardsGroupKey = value; }
 
     [ObservableProperty]
     private bool _requireConfirmationForLaunches;
@@ -79,21 +92,24 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
         Entries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_entries);
         VisibleEntries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_visibleEntries);
-        SortModes = new ReadOnlyObservableCollection<LauncherSortModeViewModel>(_sortModes);
-        DisplayModes = new ReadOnlyObservableCollection<LauncherDisplayModeViewModel>(_displayModes);
         ConfigPathDisplay = LauncherMainWindowText.StorePathDisplay(storePath);
         _statusPresenter.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName!);
-        _filterText = RequireSettingsText(_settings.LastFilterText, "lastFilterText");
         _requireConfirmationForLaunches = _settings.RequireConfirmationForLaunches;
         OnPropertyChanged(nameof(LaunchConfirmationToggleText));
         OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
-        _selectedSortMode = ResolveSortMode(_settings.SortMode);
-        _settings = _settings with { SortMode = _selectedSortMode.Id };
-        _selectedDisplayMode = ResolveDisplayMode(_settings.EntryViewMode);
-        _settings = _settings with { EntryViewMode = _selectedDisplayMode.Id };
-        _cardsGroupKey = LauncherCardsGroupKeys.Normalize(_settings.CardsGroupKey);
-        _settings = _settings with { CardsGroupKey = _cardsGroupKey };
-        NotifyDisplayModeProjectionChanged();
+        // Init layout state from settings.
+        _ = RequireSettingsText(_settings.LastFilterText, "lastFilterText");
+        _layoutManager.LoadSettings(_settings);
+        _settings = _settings with { SortMode = _layoutManager.SelectedSortMode!.Id };
+        _settings = _settings with { EntryViewMode = _layoutManager.SelectedDisplayMode!.Id };
+        _settings = _settings with { CardsGroupKey = _layoutManager.CardsGroupKey };
+        _layoutManager.NotifyDisplayModeProjectionChanged();
+        // Subscribe to layout events AFTER init so construction doesn't trigger persistence.
+        _layoutManager.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName!);
+        _layoutManager.FilterChanged += OnLayoutFilterChanged;
+        _layoutManager.SortChanged += OnLayoutSortChanged;
+        _layoutManager.ViewModeChanged += OnLayoutViewModeChanged;
+        _layoutManager.GroupKeyChanged += OnLayoutGroupKeyChanged;
         // Construct workflow AFTER settings normalization so it captures
         // the normalized values — DiscardDragReorderPreview syncs from it.
         _dragReorderWorkflow = new LauncherDragReorderWorkflow(
@@ -390,7 +406,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
         // Force card-size recalculation on next ApplyFilter — new entry VMs
         // start with default dimensions and must be measured against current available size.
-        _lastAppliedCardsAvailableSize = new Avalonia.Size(0, 0);
+        _layoutManager.InvalidateCardSizeCache();
     }
 
     private string CurrentTimestampUtc() => _utcNow().ToString("O");

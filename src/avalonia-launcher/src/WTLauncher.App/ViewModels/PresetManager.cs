@@ -76,12 +76,11 @@ public sealed partial class PresetManager : ObservableObject
         if (targetPresetId.Length == 0 && presetViewModels.Count > 0)
             targetPresetId = presetViewModels[0].Id;
 
-        var selectedPreset = ResolveSelectedPreset(presetViewModels, targetPresetId);
-
         _presets.Clear();
         foreach (var preset in presetViewModels)
             _presets.Add(preset);
 
+        var selectedPreset = ResolveSelectedPreset(presetViewModels, targetPresetId);
         SelectedPreset = selectedPreset;
         FileChanged?.Invoke();
     }

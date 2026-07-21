@@ -14,70 +14,21 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
-    private string _cardsGroupKey = LauncherCardsGroupKeys.None;
-
-    /// <summary>ComboBox 选项 — 单次构造,运行时不可变。ponytail: 与 DisplayModes 同模式。</summary>
-    public IReadOnlyList<LauncherCardsGroupOption> CardsGroupOptions { get; } = new[]
-    {
-        new LauncherCardsGroupOption("无分组", LauncherCardsGroupKeys.None),
-        new LauncherCardsGroupOption("按 command", LauncherCardsGroupKeys.Command),
-        new LauncherCardsGroupOption("按 directory", LauncherCardsGroupKeys.Directory),
-    };
-
-    public LauncherCardsGroupOption? SelectedCardsGroupOption
-    {
-        get => CardsGroupOptions.FirstOrDefault(o => string.Equals(o.Value, _cardsGroupKey, StringComparison.Ordinal));
-        set
-        {
-            if (value is not null)
-                SetCardsGroupKey(value.Value);
-        }
-    }
-
-    public string CardsGroupKey
-    {
-        get => _cardsGroupKey;
-        set => SetCardsGroupKey(value);
-    }
-
     /// <summary>Cards 视图渲染源。groupKey=none 时含 1 组(showHeader=false),非 none 时按 key 分组。</summary>
     public ObservableCollection<LauncherCardGroupViewModel> VisibleGroups { get; } = new();
-
-    private void SetCardsGroupKey(string value)
-    {
-        var normalized = LauncherCardsGroupKeys.Normalize(value);
-        if (string.Equals(_cardsGroupKey, normalized, StringComparison.Ordinal))
-            return;
-
-        var snapshot = CaptureEntryMutationSnapshot();
-        _cardsGroupKey = normalized;
-        _settings = _settings with { CardsGroupKey = normalized };
-        var saveFailure = SaveStoreFile(BuildStoreFile());
-        if (saveFailure is not null)
-        {
-            RestoreEntryMutationSnapshot(snapshot);
-            _cardsGroupKey = _settings.CardsGroupKey;
-            StatusContent = LauncherStatusContent.Error(saveFailure);
-            return;
-        }
-
-        OnPropertyChanged(nameof(CardsGroupKey));
-        OnPropertyChanged(nameof(SelectedCardsGroupOption));
-        RebuildVisibleGroups();
-    }
 
     /// <summary>从 VisibleEntries 派生 VisibleGroups。每次 ApplyFilter / Refresh / group key 变更后调用。</summary>
     internal void RebuildVisibleGroups()
     {
         var launchEntries = _visibleEntries.Select(ToLaunchEntry).ToList();
-        var groups = LauncherEntryGrouper.Group(launchEntries, _cardsGroupKey);
+        var groups = LauncherEntryGrouper.Group(launchEntries, _layoutManager.CardsGroupKey);
         // ponytail: TryAdd 而非 ToDictionary — 与 LaunchBatchAsync 同模式,_entries 出现重复 ID 时(仅可能由反射注入或 schema 历史损坏)优雅退化,不抛 ArgumentException。
         var entryById = new Dictionary<string, LauncherEntryViewModel>(EntryId.Comparer);
         foreach (var vm in _visibleEntries)
             entryById.TryAdd(vm.Id, vm);
 
         VisibleGroups.Clear();
-        var showHeader = !string.Equals(_cardsGroupKey, LauncherCardsGroupKeys.None, StringComparison.Ordinal);
+        var showHeader = !string.Equals(_layoutManager.CardsGroupKey, LauncherCardsGroupKeys.None, StringComparison.Ordinal);
         foreach (var g in groups)
         {
             var entriesInGroup = g.Entries

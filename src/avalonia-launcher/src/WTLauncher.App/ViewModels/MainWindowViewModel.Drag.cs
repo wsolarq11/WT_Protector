@@ -41,7 +41,7 @@ public sealed partial class MainWindowViewModel
     private void EnsureDragSortMode()
     {
         if (IsCustomSortMode) return;
-        SelectedSortMode = _sortModes.First(m => m.Id == LauncherEntryQuery.CustomSortModeId);
+        SelectedSortMode = _layoutManager.SortModes.First(m => m.Id == LauncherEntryQuery.CustomSortModeId);
     }
 
     public bool PreviewMoveEntry(string draggedEntryId, string targetEntryId, bool insertAfter)

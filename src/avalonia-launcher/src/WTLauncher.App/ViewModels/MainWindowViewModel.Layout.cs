@@ -1,29 +1,19 @@
-using System.Collections.ObjectModel;
 using Avalonia;
-using CommunityToolkit.Mvvm.ComponentModel;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
-// Filter / sort / view-mode / scroll / cards-available-size.
+// Filter / sort / view-mode / scroll / cards-available-size orchestration.
+// Layout state lives in LayoutManager; this file owns persistence + apply.
 // Split from MainWindowViewModel.cs as part of 07-09-split-mainviewmodel-stage2.
 
 public sealed partial class MainWindowViewModel
 {
-    private Size _cardsAvailableSize = new(900, 420);
-    private Size _lastAppliedCardsAvailableSize;
-    // ponytail: ApplyCardSize also depends on entry count (layout 平分可用空间),
-    // 所以 _lastAppliedVisibleCount 跟踪 count; count 变了即使 size 没变也要重算。
-    // 否则 Add/Clone/DiscoverAgents 添加的新 entry 用默认 CardWidth=300/Height=164,
-    // 其他 entries 用旧 layout → 卡片大小不一致(07-10 button shape bug 根因)。
-    private int _lastAppliedVisibleCount = -1;
-
     // Prevents infinite recursion when a settings save failure triggers
-    // a property rollback that re-enters the OnXxxChanged callback.
-    // NOTE: This guard pattern is intentionally duplicated in OnFilterTextChanged,
-    // OnSelectedSortModeChanged, and OnSelectedDisplayModeChanged rather than
-    // extracted into a shared helper — each callback has distinct validation
-    // and persistence logic that would make a common abstraction brittle.
+    // a property rollback that re-enters the event handler.
+    // NOTE: This guard pattern is intentionally duplicated in each handler
+    // rather than extracted into a shared helper — each callback has distinct
+    // validation and persistence logic that would make a common abstraction brittle.
     private bool _isHandlingSettingsChange;
 
     // Prevents double-click double-launch. Set to true at entry, false in finally.
@@ -35,80 +25,24 @@ public sealed partial class MainWindowViewModel
     private readonly HashSet<LauncherEntryViewModel> _syncSortedSet = new();
     private readonly Dictionary<LauncherEntryViewModel, int> _syncPositionByEntry = new();
 
-    [ObservableProperty]
-    private string _filterText = "";
-
     public IReadOnlyList<string> SearchHistoryItems => _settings.SearchHistory;
 
-    [ObservableProperty]
-    private LauncherSortModeViewModel? _selectedSortMode;
+    // Layout event handlers — persist settings, then apply filter / refresh.
 
-    [ObservableProperty]
-    private LauncherDisplayModeViewModel? _selectedDisplayMode;
-
-    private readonly ObservableCollection<LauncherSortModeViewModel> _sortModes =
-    [
-        new(LauncherEntryQuery.CustomSortModeId, "自定义拖拽"),
-        new(LauncherEntryQuery.RecentSortModeId, "最近启动"),
-        new(LauncherEntryQuery.UpdatedSortModeId, "更新时间"),
-        new(LauncherEntryQuery.AlphabeticalSortModeId, "首字母顺序"),
-        new(LauncherEntryQuery.FrequentSortModeId, "使用频率"),
-    ];
-
-    private readonly ObservableCollection<LauncherDisplayModeViewModel> _displayModes =
-    [
-        new(LauncherEntryViewMode.Cards, "卡片"),
-        new(LauncherEntryViewMode.Details, "详细列表"),
-        new(LauncherEntryViewMode.Names, "名称墙"),
-    ];
-
-    public ReadOnlyObservableCollection<LauncherSortModeViewModel> SortModes { get; }
-
-    public ReadOnlyObservableCollection<LauncherDisplayModeViewModel> DisplayModes { get; }
-
-    private LauncherSortModeViewModel ResolveSortMode(string? sortModeId) =>
-        _sortModes.First(mode => mode.Id == LauncherEntryQuery.NormalizeSortModeId(sortModeId));
-
-    private LauncherDisplayModeViewModel ResolveDisplayMode(string? entryViewMode) =>
-        _displayModes.First(mode => mode.Id == LauncherEntryViewModes.NormalizeId(entryViewMode));
-
-    private LauncherEntryViewMode CurrentEntryViewMode => RequireDisplayModeSelection(SelectedDisplayMode).Mode;
-
-    // ponytail: null-conditional avoids throwing when SelectedSortMode is null
-    // (corrupted settings / deserialization failure). Returns false safely.
-    public bool IsCustomSortMode => SelectedSortMode?.Id == LauncherEntryQuery.CustomSortModeId;
-
-    public bool IsCardsViewMode => CurrentEntryViewMode == LauncherEntryViewMode.Cards;
-
-    public bool IsDetailedListMode => CurrentEntryViewMode == LauncherEntryViewMode.Details;
-
-    public bool IsNamesViewMode => CurrentEntryViewMode == LauncherEntryViewMode.Names;
-
-    partial void OnFilterTextChanging(string value)
+    private void OnLayoutFilterChanged()
     {
-        ArgumentNullException.ThrowIfNull(value);
-    }
-
-    partial void OnFilterTextChanged(string value)
-    {
-        var trimmed = value.Trim();
-        if (trimmed.Length != value.Length)
-        {
-            _filterText = trimmed;
-            OnPropertyChanged(nameof(FilterText));
-        }
         if (_isHandlingSettingsChange) return;
         _isHandlingSettingsChange = true;
         try
         {
-            if (TryPersistSettingsChange(s => s with { LastFilterText = trimmed }))
+            if (TryPersistSettingsChange(s => s with { LastFilterText = _layoutManager.FilterText }))
             {
                 ApplyFilter();
             }
             else
             {
-                _filterText = _settings.LastFilterText;
-                OnPropertyChanged(nameof(FilterText));
+                // Rollback — restore FilterText from _settings.
+                _layoutManager.FilterText = _settings.LastFilterText;
                 ApplyFilter();
             }
         }
@@ -118,23 +52,19 @@ public sealed partial class MainWindowViewModel
         }
     }
 
-    partial void OnSelectedSortModeChanging(LauncherSortModeViewModel? value)
-    {
-        _ = RequireSortModeSelection(value);
-    }
-
-    partial void OnSelectedSortModeChanged(LauncherSortModeViewModel? value)
+    private void OnLayoutSortChanged()
     {
         if (_isHandlingSettingsChange) return;
         _isHandlingSettingsChange = true;
         try
         {
-            value = RequireSortModeSelection(value);
+            var sortMode = _layoutManager.SelectedSortMode;
+            sortMode = sortMode ?? throw new InvalidOperationException("Launcher sort mode selection is required.");
             EnsureCustomOrderContainsEntries();
 
             if (TryPersistSettingsChange(
-                s => s with { SortMode = value.Id },
-                LauncherSettingsStatus.SortModeSaved(value.Label)))
+                s => s with { SortMode = sortMode.Id },
+                LauncherSettingsStatus.SortModeSaved(sortMode.Label)))
             {
                 OnPropertyChanged(nameof(IsCustomSortMode));
                 ApplyFilter();
@@ -142,8 +72,7 @@ public sealed partial class MainWindowViewModel
             }
             else
             {
-                _selectedSortMode = ResolveSortMode(_settings.SortMode);
-                OnPropertyChanged(nameof(SelectedSortMode));
+                _layoutManager.SelectedSortMode = _layoutManager.ResolveSortMode(_settings.SortMode);
                 ApplyFilter();
                 RefreshReorderCommandState();
             }
@@ -154,40 +83,56 @@ public sealed partial class MainWindowViewModel
         }
     }
 
-    private readonly Dictionary<LauncherEntryViewMode, double> _scrollOffsets = new();
-
-    public void SaveScrollOffset(LauncherEntryViewMode mode, double offset) => _scrollOffsets[mode] = offset;
-
-    public double GetScrollOffset(LauncherEntryViewMode mode) => _scrollOffsets.TryGetValue(mode, out var v) ? v : 0;
-
-    partial void OnSelectedDisplayModeChanging(LauncherDisplayModeViewModel? value)
-    {
-        _ = RequireDisplayModeSelection(value);
-    }
-
-    partial void OnSelectedDisplayModeChanged(LauncherDisplayModeViewModel? value)
+    private void OnLayoutViewModeChanged()
     {
         if (_isHandlingSettingsChange) return;
         _isHandlingSettingsChange = true;
         try
         {
-            value = RequireDisplayModeSelection(value);
-            NotifyDisplayModeProjectionChanged();
+            var displayMode = _layoutManager.SelectedDisplayMode;
+            displayMode = displayMode ?? throw new InvalidOperationException("Launcher entry view mode selection is required.");
+            _layoutManager.NotifyDisplayModeProjectionChanged();
             LauncherEntryLayoutPresentation.Refresh(_entries);
 
             if (TryPersistSettingsChange(
-                s => s with { EntryViewMode = value.Id },
-                LauncherSettingsStatus.DisplayModeSaved(value.Label)))
+                s => s with { EntryViewMode = displayMode.Id },
+                LauncherSettingsStatus.DisplayModeSaved(displayMode.Label)))
             {
                 // Success — status already set by helper.
             }
             else
             {
-                _selectedDisplayMode = ResolveDisplayMode(_settings.EntryViewMode);
-                OnPropertyChanged(nameof(SelectedDisplayMode));
-                NotifyDisplayModeProjectionChanged();
+                _layoutManager.SelectedDisplayMode = _layoutManager.ResolveDisplayMode(_settings.EntryViewMode);
+                _layoutManager.NotifyDisplayModeProjectionChanged();
                 LauncherEntryLayoutPresentation.Refresh(_entries);
             }
+        }
+        finally
+        {
+            _isHandlingSettingsChange = false;
+        }
+    }
+
+    private void OnLayoutGroupKeyChanged()
+    {
+        if (_isHandlingSettingsChange) return;
+        _isHandlingSettingsChange = true;
+        try
+        {
+            var snapshot = CaptureEntryMutationSnapshot();
+            _settings = _settings with { CardsGroupKey = _layoutManager.CardsGroupKey };
+            var saveFailure = SaveStoreFile(BuildStoreFile());
+            if (saveFailure is not null)
+            {
+                var oldCardsGroupKey = snapshot.CloneSettings().CardsGroupKey;
+                // Restore LayoutManager BEFORE RestoreEntryMutationSnapshot so that
+                // ApplyFilter → RebuildVisibleGroups reads the correct old key.
+                _layoutManager.SetGroupKeyDirect(oldCardsGroupKey);
+                RestoreEntryMutationSnapshot(snapshot);
+                StatusContent = LauncherStatusContent.Error(saveFailure);
+                return;
+            }
+            RebuildVisibleGroups();
         }
         finally
         {
@@ -223,13 +168,6 @@ public sealed partial class MainWindowViewModel
         return true;
     }
 
-    private void NotifyDisplayModeProjectionChanged()
-    {
-        OnPropertyChanged(nameof(IsCardsViewMode));
-        OnPropertyChanged(nameof(IsDetailedListMode));
-        OnPropertyChanged(nameof(IsNamesViewMode));
-    }
-
     private void ApplyFilter()
     {
         var isDragging = _dragReorderWorkflow.HasActiveSession;
@@ -239,22 +177,14 @@ public sealed partial class MainWindowViewModel
         {
             var sorted = LauncherEntryQuery.FilterAndSort(
                 _entries,
-                FilterText,
-                RequireSortModeSelection(SelectedSortMode).Id,
+                _layoutManager.FilterText,
+                _layoutManager.SelectedSortMode?.Id ?? LauncherEntryQuery.CustomSortModeId,
                 _settings.CustomEntryOrder,
                 ToLaunchEntry);
 
             SyncVisibleEntries(sorted);
 
-            // P1: Recalculate card sizes when available size OR visible count changed.
-            // count 变了 layout 平分会变（ LauncherEntryLayoutCalculator.Calculate 用 count 平分可用空间）。
-            if (_cardsAvailableSize != _lastAppliedCardsAvailableSize
-                || _visibleEntries.Count != _lastAppliedVisibleCount)
-            {
-                LauncherEntryLayoutPresentation.ApplyCardSize(_entries, _visibleEntries, _cardsAvailableSize);
-                _lastAppliedCardsAvailableSize = _cardsAvailableSize;
-                _lastAppliedVisibleCount = _visibleEntries.Count;
-            }
+            _layoutManager.TryRefreshCardSize(_entries, _visibleEntries);
         }
         else
         {
@@ -275,7 +205,7 @@ public sealed partial class MainWindowViewModel
     /// </summary>
     public void RecordSearchTerm()
     {
-        var newHistory = LauncherSearchHistory.Record(_settings.SearchHistory, FilterText);
+        var newHistory = LauncherSearchHistory.Record(_settings.SearchHistory, _layoutManager.FilterText);
         if (ReferenceEquals(newHistory, _settings.SearchHistory))
             return;
 
@@ -322,7 +252,7 @@ public sealed partial class MainWindowViewModel
                 {
                     _visibleEntries.Move(currentIndex, targetIndex);
                     // P5: Update positions incrementally instead of rebuilding the dictionary.
-                    // After Move(from, to), entries in [min, max] shift by ±1.
+                    // After Move(from, to), entries in [min, max] shift by �1.
                     // NOTE: The rotation interval is [from, to) when moving forward
                     // and (to, from] when moving backward — these ranges are correct but
                     // fragile: changing the loop boundaries without adjusting both branches
@@ -355,14 +285,9 @@ public sealed partial class MainWindowViewModel
 
     public void UpdateCardsAvailableSize(Size availableSize)
     {
-        var normalized = LauncherEntryLayoutPresentation.NormalizeAvailableSize(availableSize);
-        if (_cardsAvailableSize == normalized)
-            return; // P1: Skip when size unchanged — avoids redundant PropertyChanged storm.
-
-        _cardsAvailableSize = normalized;
-        LauncherEntryLayoutPresentation.ApplyCardSize(_entries, _visibleEntries, _cardsAvailableSize);
-        _lastAppliedCardsAvailableSize = _cardsAvailableSize;
-        _lastAppliedVisibleCount = _visibleEntries.Count;
+        _layoutManager.UpdateCardsAvailableSize(availableSize);
+        _layoutManager.TryRefreshCardSize(_entries, _visibleEntries);
+        // Track for filter reapply.
     }
 
     public bool TrySaveWindowBounds(double width, double height, double x = 0, double y = 0, string windowState = "Normal")
@@ -400,9 +325,9 @@ public sealed partial class MainWindowViewModel
             _settings = _settings with { CustomEntryOrder = synced };
     }
 
-    private static LauncherSortModeViewModel RequireSortModeSelection(LauncherSortModeViewModel? value) =>
-        value ?? throw new InvalidOperationException("Launcher sort mode selection is required.");
+    public void SaveScrollOffset(LauncherEntryViewMode mode, double offset) =>
+        _layoutManager.SaveScrollOffset(mode, offset);
 
-    private static LauncherDisplayModeViewModel RequireDisplayModeSelection(LauncherDisplayModeViewModel? value) =>
-        value ?? throw new InvalidOperationException("Launcher entry view mode selection is required.");
+    public double GetScrollOffset(LauncherEntryViewMode mode) =>
+        _layoutManager.GetScrollOffset(mode);
 }
