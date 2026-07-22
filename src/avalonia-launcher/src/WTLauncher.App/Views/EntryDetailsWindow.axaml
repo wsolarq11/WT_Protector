@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:automation="clr-namespace:Avalonia.Automation;assembly=Avalonia.Controls"
+        xmlns:core="clr-namespace:WTLauncher.Core;assembly=WTLauncher.Core"
         x:Class="WTLauncher.App.Views.EntryDetailsWindow"
         Width="720"
         Height="560"
@@ -10,7 +11,7 @@
         Background="{StaticResource SurfaceBrush}">
   <Border Padding="{StaticResource DialogOuterPadding}">
     <ScrollViewer>
-      <StackPanel Spacing="10">
+      <StackPanel Spacing="{x:Static core:LauncherDesignTokens.DialogFooterSpacing}">
         <TextBlock x:Name="TitleText"
                    FontSize="{StaticResource DialogTitleFontSize}"
                    FontWeight="SemiBold"
@@ -66,7 +67,7 @@
                    Foreground="{StaticResource DestructiveBrush}"/>
         <StackPanel Orientation="Horizontal"
                     HorizontalAlignment="Right"
-                    Spacing="8"
+                    Spacing="{x:Static core:LauncherDesignTokens.SpacingSmall}"
                     Margin="{StaticResource DialogFooterMargin}">
           <Button Content="取消"
                   Classes="secondary"

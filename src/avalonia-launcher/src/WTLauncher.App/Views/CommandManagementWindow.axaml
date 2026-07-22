@@ -66,7 +66,7 @@
                  Text="Tab 1 列出 command 引用并同步重命名；Tab 2 管理 commandTemplates，Key 与展开内容变更会立即影响引用。"/>
 
       <Grid Grid.Row="2" RowDefinitions="Auto,Auto" Margin="0,0,0,8">
-        <StackPanel Orientation="Horizontal" Spacing="6">
+        <StackPanel Orientation="Horizontal" Spacing="{x:Static core:LauncherDesignTokens.NameTileGap}">
           <Button Content="📋 命令引用"
                   MinWidth="130"
                   Classes="secondary tab"

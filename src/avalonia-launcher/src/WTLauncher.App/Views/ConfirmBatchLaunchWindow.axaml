@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:automation="clr-namespace:Avalonia.Automation;assembly=Avalonia.Controls"
+        xmlns:core="clr-namespace:WTLauncher.Core;assembly=WTLauncher.Core"
         x:Class="WTLauncher.App.Views.ConfirmBatchLaunchWindow"
         Width="760"
         Height="520"
@@ -40,7 +41,7 @@
                   x:Name="FailureSection"
                   IsVisible="False"
                   Margin="0,10,0,0"
-                  Spacing="6">
+                  Spacing="{x:Static core:LauncherDesignTokens.NameTileGap}">
         <TextBlock Text="预演失败项:"
                    FontWeight="Bold"
                    Foreground="{StaticResource TextMutedBrush}"/>
@@ -63,7 +64,7 @@
       <StackPanel Grid.Row="4"
                   Orientation="Horizontal"
                   HorizontalAlignment="Right"
-                  Spacing="8"
+                  Spacing="{x:Static core:LauncherDesignTokens.SpacingSmall}"
                   Margin="{StaticResource DialogFooterMargin}">
         <Button Content="取消"
                 Classes="secondary"

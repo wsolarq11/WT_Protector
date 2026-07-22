@@ -64,7 +64,7 @@
 
       <StackPanel Grid.Row="2"
                   Orientation="Horizontal"
-                  Spacing="6"
+                  Spacing="{x:Static core:LauncherDesignTokens.NameTileGap}"
                   Margin="0,0,0,8">
         <Button Content="编辑/重命名"
                 Classes="secondary"
@@ -110,7 +110,7 @@
                       <ItemsControl ItemsSource="{Binding ReferencingEntryNames}">
                         <ItemsControl.ItemsPanel>
                           <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" Spacing="6"/>
+                            <StackPanel Orientation="Horizontal" Spacing="{x:Static core:LauncherDesignTokens.NameTileGap}"/>
                           </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
