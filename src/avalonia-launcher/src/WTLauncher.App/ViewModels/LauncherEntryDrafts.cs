@@ -39,7 +39,7 @@ public static class LauncherEntryDrafts
         {
             Id = normalized.Id,
             Name = normalized.Name,
-            Directory = normalized.Directory,
+            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)normalized.Directory,
             Command = normalized.Command,
             Selected = normalized.Selected,
             UpdatedAtUtc = previousEntry?.UpdatedAtUtc ?? string.Empty,
@@ -56,7 +56,7 @@ public static class LauncherEntryDrafts
         var requiredFieldError = GetRequiredFieldError(
             entryId,
             entry.Name,
-            entry.Directory,
+            entry.Directory.Value,
             entry.Command);
         if (requiredFieldError is not null)
             return requiredFieldError;

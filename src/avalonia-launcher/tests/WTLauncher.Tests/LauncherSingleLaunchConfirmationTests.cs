@@ -16,7 +16,7 @@ public sealed class LauncherSingleLaunchConfirmationTests
         var plan = Plan("codex --version");
 
         var confirmation = new LauncherSingleLaunchConfirmation(entry, plan);
-        entry = entry with { Id = "broken", Name = "" };
+        entry = entry with { Id = "broken", Name = EntryName.Empty };
 
         Assert.Equal("one", confirmation.EntryId);
         Assert.Equal("One", confirmation.EntryName);
@@ -26,7 +26,7 @@ public sealed class LauncherSingleLaunchConfirmationTests
     [Fact]
     public void ConfirmationRejectsBlankEntryId()
     {
-        var entry = new LaunchEntry { Id = " ", Name = "One" };
+        var entry = new LaunchEntry { Id = EntryId.Empty, Name = "One" };
 
         var exception = Assert.Throws<ArgumentException>(() =>
             new LauncherSingleLaunchConfirmation(entry, Plan("codex --version")));
@@ -38,7 +38,7 @@ public sealed class LauncherSingleLaunchConfirmationTests
     [Fact]
     public void ConfirmationRejectsBlankEntryName()
     {
-        var entry = new LaunchEntry { Id = "one", Name = " " };
+        var entry = new LaunchEntry { Id = "one", Name = EntryName.Empty };
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
             new LauncherSingleLaunchConfirmation(entry, Plan("codex --version")));

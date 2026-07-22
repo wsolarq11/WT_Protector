@@ -12,7 +12,7 @@ internal static class LauncherPersistenceTestFixtures
         {
             Id = id,
             Name = id,
-            Directory = Path.Combine(RootDrive, id),
+            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)Path.Combine(RootDrive, id),
             Command = "pwsh",
         };
 
@@ -46,3 +46,4 @@ internal static class LauncherPersistenceTestFixtures
             EntryIds = [.. entryIds],
         };
 }
+

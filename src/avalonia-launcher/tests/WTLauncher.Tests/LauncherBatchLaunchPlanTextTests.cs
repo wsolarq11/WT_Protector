@@ -12,7 +12,7 @@ public sealed class LauncherBatchLaunchPlanTextTests
         var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
         var entry = Entry("one", temp.Path);
         var preflight = workflow.PreflightBatch([entry], requireConfirmation: true);
-        entry = entry with { Name = " " };
+        entry = entry with { Name = EntryName.Empty };
 
         var text = LauncherBatchLaunchPlanText.Format(preflight.Items);
 
@@ -26,7 +26,8 @@ public sealed class LauncherBatchLaunchPlanTextTests
         {
             Id = id,
             Name = id,
-            Directory = directory,
+            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)directory,
             Command = "pwsh",
         };
 }
+

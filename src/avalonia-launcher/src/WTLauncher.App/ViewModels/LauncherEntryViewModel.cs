@@ -29,7 +29,7 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
 
     public string Name => _entry.Name;
 
-    public string Directory => _entry.Directory;
+    public string Directory => _entry.Directory.Value;
 
     public string Command => _entry.Command;
 

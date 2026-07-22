@@ -22,16 +22,16 @@ public static class DirectoryUsageAnalyzer
         ArgumentNullException.ThrowIfNull(entries);
 
         return entries
-            .GroupBy(e => e.Directory, StringComparer.OrdinalIgnoreCase)
+            .GroupBy(e => e.Directory.Value, StringComparer.OrdinalIgnoreCase)
             .Select(g => new DirectoryRow(
                 Directory: g.Key,
                 ReferenceCount: g.Count(),
-                ReferencingEntryNames: g.Select(e => e.Name).ToImmutableList()))
+                ReferencingEntryNames: g.Select(e => e.Name.Value).ToImmutableList()))
             .OrderByDescending(r => r.ReferenceCount)
             .ThenBy(r => r.Directory, StringComparer.Ordinal)
             .ToImmutableList();
     }
 
     public static bool CanDeleteDirectory(string directory, IEnumerable<LaunchEntry> entries) =>
-        !entries.Any(e => string.Equals(e.Directory, directory, StringComparison.OrdinalIgnoreCase));
+        !entries.Any(e => string.Equals(e.Directory.Value, directory, StringComparison.OrdinalIgnoreCase));
 }

@@ -4,6 +4,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using ErrorOr;
 
 [assembly: InternalsVisibleTo("WTLauncher.App")]
 [assembly: InternalsVisibleTo("WTLauncher.Tests")]
@@ -186,6 +187,28 @@ public static class LauncherJson
         {
             File.Move(tempPath, fullPath);
         }
+    }
+
+    // ---- ErrorOr overloads ----
+
+    /// <summary>Load and deserialize JSON, returning ErrorOr for recoverable failures.</summary>
+    public static ErrorOr<T> LoadErrorOr<T>(string path) where T : notnull
+    {
+        try
+        {
+            var value = Load<T>(path);
+            return value is not null ? value : Error.Failure("Load.Null", "Parsed to null");
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidDataException or FileNotFoundException or DirectoryNotFoundException or IOException)
+        { return LauncherErrors.ConfigLoadFailed(ex.Message); }
+    }
+
+    /// <summary>Serialize and save JSON, returning ErrorOr for recoverable failures.</summary>
+    public static ErrorOr<Success> SaveErrorOr<T>(T value, string path, bool backup)
+    {
+        try { Save(value, path, backup); return Result.Success; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        { return LauncherErrors.ConfigSaveFailed(ex.Message); }
     }
 
     // ponytail: ReplaceLineEndings replaces the hand-rolled \r\n → \n normalizer.

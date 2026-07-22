@@ -2,11 +2,21 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using VogenEntryId = WTLauncher.Core.ValueObjects.EntryId;
 
 namespace WTLauncher.Core;
 
+[JsonConverter(typeof(EntryIdJsonConverter))]
 public readonly record struct EntryId
 {
+    private readonly VogenEntryId _vogen;
+
+    public string Value => _vogen.Value;
+
+    private EntryId(VogenEntryId vogen) => _vogen = vogen;
+
+    public static EntryId Empty => new(VogenEntryId.Empty);
+
     public static readonly StringComparer Comparer = StringComparer.Ordinal;
 
     public static readonly HashSet<string> WindowsReservedNames = new(StringComparer.OrdinalIgnoreCase)
@@ -15,10 +25,6 @@ public readonly record struct EntryId
         "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
         "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
     };
-
-    public string Value { get; }
-
-    private EntryId(string value) => Value = value;
 
     public static EntryId Parse(string? raw)
     {
@@ -47,7 +53,7 @@ public readonly record struct EntryId
         if (trimmed.Contains('\\') || trimmed.Contains('/') || trimmed.Contains(".."))
             throw new FormatException($"ID 包含路径分隔符或 \"..\"。");
 
-        return new EntryId(trimmed);
+        return new EntryId(VogenEntryId.From(trimmed));
     }
 
     public static string Normalize(string? value)
@@ -117,6 +123,8 @@ public readonly record struct EntryId
         catch (FormatException ex) { throw new ArgumentException(ex.Message, paramName); }
     }
 
+    public static implicit operator EntryId(string value) => Parse(value);
+    public static implicit operator string(EntryId id) => id.Value;
     public override string ToString() => Value;
 
     private static string StripUnsafeChars(string value)

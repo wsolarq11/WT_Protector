@@ -1,18 +1,23 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using VogenPresetId = WTLauncher.Core.ValueObjects.PresetId;
 
 namespace WTLauncher.Core;
-
+[JsonConverter(typeof(PresetIdJsonConverter))]
 public readonly record struct PresetId
 {
+    private readonly VogenPresetId _vogen;
+
+    public string Value => _vogen.Value;
+
+    private PresetId(VogenPresetId vogen) => _vogen = vogen;
+
+    public static PresetId Empty => new(VogenPresetId.Empty);
+
     public const int MaxIdLength = 256;
 
     public static readonly StringComparer Comparer = StringComparer.Ordinal;
-
-    public string Value { get; }
-
-    private PresetId(string value) => Value = value;
 
     public static PresetId Parse(string? raw)
     {
@@ -52,7 +57,7 @@ public readonly record struct PresetId
         if (string.IsNullOrWhiteSpace(normalized))
             normalized = "preset";
 
-        return new PresetId(normalized);
+        return new PresetId(VogenPresetId.From(normalized));
     }
 
     public static string Normalize(string? value)
@@ -82,6 +87,7 @@ public readonly record struct PresetId
     }
 
     public static implicit operator string(PresetId id) => id.Value;
+    public static implicit operator PresetId(string value) => Parse(value);
     public override string ToString() => Value;
 }
 

@@ -73,7 +73,7 @@ public sealed class LauncherEntryDraftsTests
 
         Assert.Equal("new-id", entry.Id);
         Assert.Equal("New Name", entry.Name);
-        Assert.Equal("D:\\new", entry.Directory);
+        Assert.Equal("D:\\new", entry.Directory.Value);
         Assert.Equal("codex", entry.Command);
         Assert.True(entry.Selected);
         Assert.Equal(previous.UpdatedAtUtc, entry.UpdatedAtUtc);
@@ -141,9 +141,9 @@ public sealed class LauncherEntryDraftsTests
     {
         return new LaunchEntry
         {
-            Id = id,
-            Name = name,
-            Directory = directory,
+            Id = string.IsNullOrWhiteSpace(id) ? EntryId.Empty : id,
+            Name = string.IsNullOrWhiteSpace(name) ? EntryName.Empty : name,
+            Directory = string.IsNullOrWhiteSpace(directory) ? WTLauncher.Core.ValueObjects.DirectoryPath.Empty : (WTLauncher.Core.ValueObjects.DirectoryPath)directory,
             Command = command,
             Selected = selected,
             UpdatedAtUtc = updatedAtUtc,
@@ -162,3 +162,4 @@ public sealed class LauncherEntryDraftsTests
     public static IEnumerable<object?[]> BlankRequiredFieldCases() =>
         RequiredFieldCases().Where(testCase => testCase[4] is not null);
 }
+

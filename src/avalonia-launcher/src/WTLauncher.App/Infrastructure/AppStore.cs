@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using ErrorOr;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.Infrastructure;
@@ -68,6 +69,26 @@ public sealed class AppStore
             ErrorLog.Write(ex, "AppStore.MutateAsync rolled back");
             _onRecovery?.Invoke(ex, "AppStore.MutateAsync rolled back");
             throw;
+        }
+    }
+
+    /// <summary>Mutate state with ErrorOr return, rolling back on recoverable failures.</summary>
+    public ErrorOr<Success> MutateErrorOr(Func<LauncherStoreFile, LauncherStoreFile> transform)
+    {
+        var before = _state;
+        try
+        {
+            _state = transform(_state);
+            LauncherStore.Save(_state, _storePath, backup: true);
+            _stateChanged?.Invoke(_state);
+            return Result.Success;
+        }
+        catch (Exception ex) when (IsRecoverable(ex))
+        {
+            _state = before;
+            ErrorLog.Write(ex, "AppStore.MutateErrorOr rolled back");
+            _onRecovery?.Invoke(ex, "AppStore.MutateErrorOr rolled back");
+            return LauncherErrors.ConfigSaveFailed(ex.Message);
         }
     }
 

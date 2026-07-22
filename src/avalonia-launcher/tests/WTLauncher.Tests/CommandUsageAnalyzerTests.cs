@@ -13,7 +13,7 @@ public sealed class CommandUsageAnalyzerTests
         {
             Id = id,
             Name = name ?? id,
-            Directory = $@"D:\{id}",
+            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)$@"D:\{id}",
             Command = command,
         };
 
@@ -152,3 +152,4 @@ public sealed class CommandUsageAnalyzerTests
         Assert.False(CommandUsageAnalyzer.CanDeleteTemplate("CODEX", entries));
     }
 }
+

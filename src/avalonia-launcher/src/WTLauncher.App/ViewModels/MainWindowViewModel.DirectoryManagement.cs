@@ -70,7 +70,7 @@ public sealed partial class MainWindowViewModel
                 {
                     if (string.Equals(item.Directory, r.OldDirectory, StringComparison.OrdinalIgnoreCase))
                     {
-                        var updated = item.SnapshotEntry() with { Directory = r.NewDirectory, UpdatedAtUtc = CurrentTimestampUtc() };
+                        var updated = item.SnapshotEntry() with { Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)r.NewDirectory, UpdatedAtUtc = CurrentTimestampUtc() };
                         item.ReplaceEntryFromOwner(updated, updated.UpdatedAtUtc);
                         matched++;
                     }
@@ -90,7 +90,7 @@ public sealed partial class MainWindowViewModel
                 {
                     if (string.Equals(item.Directory, m.LoserDirectory, StringComparison.OrdinalIgnoreCase))
                     {
-                        var updated = item.SnapshotEntry() with { Directory = m.KeeperDirectory, UpdatedAtUtc = CurrentTimestampUtc() };
+                        var updated = item.SnapshotEntry() with { Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)m.KeeperDirectory, UpdatedAtUtc = CurrentTimestampUtc() };
                         item.ReplaceEntryFromOwner(updated, updated.UpdatedAtUtc);
                         matched++;
                     }

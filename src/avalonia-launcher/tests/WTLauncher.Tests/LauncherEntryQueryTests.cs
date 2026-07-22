@@ -462,17 +462,18 @@ public sealed class LauncherEntryQueryTests
     private static LaunchEntry Entry(
         string id,
         string name,
-        string directory = "",
+        string directory = "C:\\default",
         string command = "",
         string? updatedAtUtc = "",
         string? launchedAtUtc = "") =>
         new()
         {
-            Id = id,
-            Name = name,
-            Directory = directory,
+            Id = string.IsNullOrWhiteSpace(id) ? EntryId.Empty : id,
+            Name = string.IsNullOrWhiteSpace(name) ? EntryName.Empty : name,
+            Directory = string.IsNullOrWhiteSpace(directory) ? WTLauncher.Core.ValueObjects.DirectoryPath.Empty : (WTLauncher.Core.ValueObjects.DirectoryPath)directory,
             Command = command,
             UpdatedAtUtc = updatedAtUtc!,
             LaunchedAtUtc = launchedAtUtc!,
         };
 }
+

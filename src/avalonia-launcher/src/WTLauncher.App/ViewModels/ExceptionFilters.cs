@@ -1,26 +1,29 @@
-using System.Linq;
+using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
+/// <summary>
+/// Returns <c>true</c> when the exception indicates the application can continue
+/// running safely. Delegates to <see cref="LauncherErrors.IsRecoverable"/> for the
+/// canonical implementation shared with ErrorOr-based code in WTLauncher.Core.
+/// </summary>
 internal static class ExceptionFilters
 {
-    /// <summary>
-    /// Returns <c>true</c> when the exception indicates the application can continue
-    /// running safely. "Recoverable" means the app survives — it does NOT mean the
-    /// failed operation can be retried successfully. The filter passes through
-    /// <see cref="TypeInitializationException"/> (use <see cref="Exception.InnerException"/>
-    /// to inspect the real cause) and <see cref="AggregateException"/> (use
-    /// <see cref="AggregateException.Flatten"/> to unwrap). Callers should still
-    /// handle these gracefully — a <see cref="TypeInitializationException"/> may
-    /// indicate an unrecoverable static constructor failure that will break
-    /// subsequent use of the type.
-    /// </summary>
     internal static bool IsRecoverable(Exception ex)
     {
-        // Unwrap TypeInitializationException and AggregateException to inspect
-        // the real cause before making the recoverability decision.
-        // Max 16 iterations prevents infinite loops from self-referencing or
-        // null-InnerException wrappers.
+#if DEBUG
+        // In DEBUG builds, rethrow logic errors so they crash the process during development.
+        // Check before delegation so the crash is thrown from the App layer.
+        var unwrapped = UnwrapAggregates(ex);
+        if (unwrapped is NullReferenceException or IndexOutOfRangeException or ArgumentNullException)
+            throw new InvalidOperationException("Logic crash (DEBUG): " + unwrapped.Message, unwrapped);
+#endif
+        return LauncherErrors.IsRecoverable(ex);
+    }
+
+    /// <summary>Unwrap TypeInitializationException and AggregateException wrappers.</summary>
+    private static Exception UnwrapAggregates(Exception ex)
+    {
         for (var i = 0; i < 16 && ex is TypeInitializationException or AggregateException; i++)
         {
             if (ex.InnerException is null) break;
@@ -28,13 +31,6 @@ internal static class ExceptionFilters
             if (ex is AggregateException agg)
                 ex = agg.Flatten().InnerExceptions.FirstOrDefault() ?? ex;
         }
-
-#if DEBUG
-        // In DEBUG builds, rethrow logic errors so they crash the process during development.
-        if (ex is NullReferenceException or IndexOutOfRangeException or ArgumentNullException)
-            throw new InvalidOperationException("Logic crash (DEBUG): " + ex.Message, ex);
-#endif
-        return ex is not (OutOfMemoryException or StackOverflowException
-            or AccessViolationException or System.Runtime.InteropServices.SEHException);
+        return ex;
     }
 }

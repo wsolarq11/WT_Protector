@@ -40,7 +40,7 @@ public static class CommandUsageAnalyzer
             .Select(g => new CommandRow(
                 Command: g.Key,
                 ReferenceCount: g.Count(),
-                ReferencingEntryNames: g.Select(e => e.Name).ToImmutableList()))
+                ReferencingEntryNames: g.Select(e => e.Name.Value).ToImmutableList()))
             .OrderByDescending(r => r.ReferenceCount)
             .ThenBy(r => r.Command, StringComparer.Ordinal)
             .ToImmutableList();

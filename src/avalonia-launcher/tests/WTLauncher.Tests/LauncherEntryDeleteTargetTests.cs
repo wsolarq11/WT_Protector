@@ -24,7 +24,7 @@ public sealed class LauncherEntryDeleteTargetTests
     [Fact]
     public void TargetRejectsBlankEntryId()
     {
-        var entry = new LaunchEntry { Id = " ", Name = "One" };
+        var entry = new LaunchEntry { Id = EntryId.Empty, Name = "One" };
 
         var exception = Assert.Throws<ArgumentException>(() => new LauncherEntryDeleteTarget(entry));
 
@@ -35,7 +35,7 @@ public sealed class LauncherEntryDeleteTargetTests
     [Fact]
     public void TargetRejectsBlankEntryName()
     {
-        var entry = new LaunchEntry { Id = "one", Name = " " };
+        var entry = new LaunchEntry { Id = "one", Name = EntryName.Empty };
 
         var exception = Assert.Throws<InvalidOperationException>(() => new LauncherEntryDeleteTarget(entry));
 

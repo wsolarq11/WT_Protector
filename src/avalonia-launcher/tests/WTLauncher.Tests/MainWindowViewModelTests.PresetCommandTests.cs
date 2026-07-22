@@ -278,7 +278,7 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.DryRunText = "旧启动组预演";
         var snapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
-        snapshot = snapshot with { Name = "" };
+        snapshot = snapshot with { Name = EntryName.Empty };
 
         viewModel.PreviewSelectedPresetCommand.Execute(null);
 

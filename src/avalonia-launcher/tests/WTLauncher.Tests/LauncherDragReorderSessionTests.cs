@@ -56,9 +56,9 @@ public sealed class LauncherDragReorderSessionTests
         var blankSource = new LauncherEntryViewModel(
             new LaunchEntry
             {
-                Id = " ",
+                Id = EntryId.Empty,
                 Name = "Blank",
-                Directory = temp.Path,
+                Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)temp.Path,
                 Command = "pwsh",
             },
             MainWindowEntryCardTestFactory.CreateOwner(temp.Path));
@@ -94,3 +94,4 @@ public sealed class LauncherDragReorderSessionTests
             new LauncherSettings());
     }
 }
+

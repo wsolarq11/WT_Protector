@@ -12,7 +12,7 @@ public sealed class DirectoryUsageAnalyzerTests
         {
             Id = id,
             Name = name ?? id,
-            Directory = directory,
+            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)directory,
             Command = "pwsh",
         };
 
@@ -80,3 +80,4 @@ public sealed class DirectoryUsageAnalyzerTests
         Assert.False(DirectoryUsageAnalyzer.CanDeleteDirectory(@"d:\foo", entries));
     }
 }
+

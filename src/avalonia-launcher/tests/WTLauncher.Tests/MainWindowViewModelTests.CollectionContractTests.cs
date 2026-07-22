@@ -1,4 +1,5 @@
 using WTLauncher.App.ViewModels;
+using WTLauncher.Core;
 
 namespace WTLauncher.Tests;
 
@@ -32,7 +33,7 @@ public sealed partial class MainWindowViewModelTests
         var entry = viewModel.Entries.Single();
 
         var snapshot = entry.SnapshotEntry();
-        snapshot = snapshot with { Id = "broken", Name = "", Command = "bad", Selected = false };
+        snapshot = snapshot with { Id = "broken", Name = EntryName.Empty, Command = "bad", Selected = false };
 
         Assert.Equal("one", entry.Id);
         Assert.Equal("One", entry.Name);

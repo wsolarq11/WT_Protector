@@ -5,4 +5,8 @@
     <WarningsAsErrors>nullable</WarningsAsErrors>
     <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Vogen" />
+    <PackageReference Include="ErrorOr" />
+  </ItemGroup>
 </Project>

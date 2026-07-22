@@ -16,7 +16,7 @@ public sealed class LauncherEntryQueryFrecencyTests
         {
             Id = id,
             Name = name,
-            Directory = "D:\\proj",
+            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)"D:\\proj",
             Command = "pwsh",
             UpdatedAtUtc = "",
             LaunchedAtUtc = launchedAtUtc ?? "",
@@ -186,3 +186,4 @@ public sealed class LauncherEntryQueryFrecencyTests
         Assert.Equal(["aaa", "zzz"], visible.Select(e => e.Id).ToArray());
     }
 }
+

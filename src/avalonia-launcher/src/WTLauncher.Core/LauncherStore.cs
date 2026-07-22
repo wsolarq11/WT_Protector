@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text.Json;
+using ErrorOr;
 
 namespace WTLauncher.Core;
 
@@ -51,6 +52,25 @@ public static class LauncherStore
         ThrowIfStorePathMissing(storePath);
 
         LauncherJson.Save(store, storePath, backup);
+    }
+
+    // ---- ErrorOr overloads ----
+
+    /// <summary>Load the store file, returning ErrorOr for recoverable failures.</summary>
+    public static ErrorOr<LauncherStoreFile> LoadErrorOr(string storePath)
+    {
+        try
+        {
+            return Load(storePath);
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidDataException or FileNotFoundException or DirectoryNotFoundException or IOException)
+        {
+            return LauncherErrors.ConfigLoadFailed(ex.Message);
+        }
+        catch (ArgumentException ex)
+        {
+            return LauncherErrors.ValidationFailed(ex.Message);
+        }
     }
 
     // ---- Path resolution ----

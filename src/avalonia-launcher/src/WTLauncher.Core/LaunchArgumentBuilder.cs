@@ -50,8 +50,8 @@ public static class LaunchArgumentBuilder
         // FormKC normalization, % injection detection, env var expansion, GetFullPath
         // traversal defense, UNC rejection, DOS device rejection. Single source of truth.
         var directory = validateDirectory
-            ? EntryDirectory.ParseAndValidateExists(entry.Directory).Value
-            : EntryDirectory.Parse(entry.Directory).Value;
+            ? EntryDirectory.ParseAndValidateExists(entry.Directory.Value).Value
+            : EntryDirectory.Parse(entry.Directory.Value).Value;
 
         var name = StripUnsafeCharacters(EntryName.Normalize(entry.Name));
         var command = StripUnsafeCharacters(LauncherCommandTemplateResolver.Resolve(EntryName.Normalize(entry.Command), commandTemplates));

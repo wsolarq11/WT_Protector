@@ -10,8 +10,8 @@ public sealed class AppStoreTests
     {
         Entries =
         [
-            new LaunchEntry { Id = "one", Name = "One", Directory = "D:\\one", Command = "pwsh" },
-            new LaunchEntry { Id = "two", Name = "Two", Directory = "D:\\two", Command = "codex" },
+            new LaunchEntry { Id = "one", Name = "One", Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)"D:\\one", Command = "pwsh" },
+            new LaunchEntry { Id = "two", Name = "Two", Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)"D:\\two", Command = "codex" },
         ],
         Settings = new LauncherSettings(),
         Presets =
@@ -75,7 +75,7 @@ public sealed class AppStoreTests
         store.Mutate(state => state with
         {
             Entries = state.Entries.Add(new LaunchEntry
-                { Id = "three", Name = "Three", Directory = "D:\\three", Command = "pwsh" }),
+                { Id = "three", Name = "Three", Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)"D:\\three", Command = "pwsh" }),
         });
 
         var count = store.Select(s => s.Entries.Count);
@@ -206,3 +206,4 @@ public sealed class AppStoreTests
         return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes));
     }
 }
+

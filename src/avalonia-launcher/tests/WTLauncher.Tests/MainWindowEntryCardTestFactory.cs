@@ -97,10 +97,11 @@ internal static class MainWindowEntryCardTestFactory
         {
             Id = id,
             Name = id,
-            Directory = $"D:\\{id}",
+            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)$"D:\\{id}",
             Command = "pwsh",
         };
     }
 
     private static LauncherLaunchWorkflow CreateLaunchWorkflow() => new(_ => { });
 }
+

@@ -120,7 +120,7 @@ public sealed partial class MainWindowViewModelTests
         {
             confirmation = candidate;
             externalSnapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
-            externalSnapshot = externalSnapshot! with { Name = "" };
+            externalSnapshot = externalSnapshot! with { Name = EntryName.Empty };
             throw new InvalidOperationException("dialog unavailable");
         };
 
@@ -189,7 +189,7 @@ public sealed partial class MainWindowViewModelTests
         {
             confirmation = candidate;
             externalSnapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
-            externalSnapshot = externalSnapshot! with { Name = "" };
+            externalSnapshot = externalSnapshot! with { Name = EntryName.Empty };
             return Task.FromResult(true);
         };
 
@@ -292,7 +292,7 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.DryRunText = "旧单项回执";
         var snapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
-        snapshot = snapshot with { Name = "" };
+        snapshot = snapshot with { Name = EntryName.Empty };
 
         await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
 
@@ -340,7 +340,7 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.DryRunText = "旧预演";
         var snapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
-        snapshot = snapshot with { Name = "" };
+        snapshot = snapshot with { Name = EntryName.Empty };
 
         viewModel.Entries.Single(entry => entry.Id == "one").DryRunCommand.Execute(null);
 
@@ -523,7 +523,7 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.DryRunText = "旧回执";
         var snapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
-        snapshot = snapshot with { Name = "" };
+        snapshot = snapshot with { Name = EntryName.Empty };
 
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
 

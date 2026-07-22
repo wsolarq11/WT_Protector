@@ -73,7 +73,7 @@ public sealed class EntryServiceTests
             new PresetService(dialogs),
             () => DateTimeOffset.UtcNow);
         var item = new LauncherEntryViewModel(
-            new LaunchEntry { Id = "one", Name = "One", Directory = "D:\\one", Command = "pwsh" },
+            new LaunchEntry { Id = "one", Name = "One", Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)"D:\\one", Command = "pwsh" },
             owner);
 
         var result = await service.DeleteEntryAsync(item, "one");
@@ -164,7 +164,7 @@ public sealed class EntryServiceTests
     public void CreateEntryFromDraft_ReturnsValidationFailureWithoutPayload()
     {
         var service = new EntryService(new StubDialogService());
-        var existing = new LaunchEntry { Id = "one", Name = "One", Directory = "D:\\one", Command = "pwsh" };
+        var existing = new LaunchEntry { Id = "one", Name = "One", Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)"D:\\one", Command = "pwsh" };
 
         var result = service.CreateEntryFromDraft(
             new EntryDraft("one", "Duplicate", "D:\\duplicate", "pwsh"),
@@ -185,3 +185,4 @@ public sealed class EntryServiceTests
         Assert.Equal("Demo-copy-3", result);
     }
 }
+

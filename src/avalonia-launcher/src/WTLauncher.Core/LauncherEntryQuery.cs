@@ -76,7 +76,7 @@ public static class LauncherEntryQuery
                     var launchEntry = selectEntry(entry);
                     RequireEntryId(launchEntry);
                     timeCache[entry] = ParseLaunchedAt(launchEntry.LaunchedAtUtc);
-                    nameCache[entry] = EntryName.RequireNonEmpty(launchEntry.Name);
+                    nameCache[entry] = EntryName.RequireNonEmpty(launchEntry.Name.Value);
                 }
                 comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Recent, timeCache: timeCache, nameCache: nameCache);
                 break;
@@ -90,7 +90,7 @@ public static class LauncherEntryQuery
                     var launchEntry = selectEntry(entry);
                     RequireEntryId(launchEntry);
                     timeCache[entry] = ParseUpdatedAt(launchEntry.UpdatedAtUtc);
-                    nameCache[entry] = EntryName.RequireNonEmpty(launchEntry.Name);
+                    nameCache[entry] = EntryName.RequireNonEmpty(launchEntry.Name.Value);
                 }
                 comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Updated, timeCache: timeCache, nameCache: nameCache);
                 break;
@@ -98,7 +98,7 @@ public static class LauncherEntryQuery
             case AlphabeticalSortModeId:
                 nameCache = new Dictionary<TEntry, string>(filtered.Count);
                 foreach (var entry in filtered)
-                    nameCache[entry] = EntryName.RequireNonEmpty(selectEntry(entry).Name);
+                    nameCache[entry] = EntryName.RequireNonEmpty(selectEntry(entry).Name.Value);
                 comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Alphabetical, nameCache: nameCache);
                 break;
             case FrequentSortModeId:
@@ -112,7 +112,7 @@ public static class LauncherEntryQuery
                     RequireEntryId(launchEntry);
                     var launchedAt = ParseLaunchedAt(launchEntry.LaunchedAtUtc);
                     scoreCache[entry] = ComputeFrecency(launchEntry.LaunchCount, now - launchedAt);
-                    nameCache[entry] = EntryName.RequireNonEmpty(launchEntry.Name);
+                    nameCache[entry] = EntryName.RequireNonEmpty(launchEntry.Name.Value);
                 }
                 comparison = (a, b) => CompareEntries(a, b, selectEntry, LauncherSortMode.Frequent, scoreCache: scoreCache, nameCache: nameCache);
                 break;
@@ -203,8 +203,8 @@ public static class LauncherEntryQuery
         if (tokens.Length == 0)
             return true;
 
-        var name = entry.Name ?? string.Empty;
-        var directory = entry.Directory ?? string.Empty;
+        var name = entry.Name.Value;
+        var directory = entry.Directory.Value;
         var command = entry.Command ?? string.Empty;
 
         if (tokens.Length == 1)
@@ -247,7 +247,7 @@ public static class LauncherEntryQuery
     }
 
     private static string RequireEntryId(LaunchEntry entry) =>
-        EntryId.RequireEntryId(entry.Id, nameof(LaunchEntry.Id));
+        EntryId.RequireEntryId(entry.Id.Value, nameof(LaunchEntry.Id));
 
     private static DateTimeOffset ParseLaunchedAt(string? value) =>
         ParseTimestamp(value, "launchedAtUtc");

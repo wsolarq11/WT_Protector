@@ -12,7 +12,7 @@ public sealed class LauncherEntryGrouperTests
         {
             Id = id,
             Name = id,
-            Directory = directory ?? $@"D:\{id}",
+            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)(directory ?? $@"D:\{id}"),
             Command = command,
         };
 
@@ -116,3 +116,4 @@ public sealed class LauncherEntryGrouperTests
         Assert.Equal("none", LauncherCardsGroupKeys.Normalize(""));
     }
 }
+

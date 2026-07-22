@@ -28,7 +28,7 @@ public static class LauncherEntryGrouper
 
         Func<LaunchEntry, string> keySelector = normalized == LauncherCardsGroupKeys.Command
             ? e => e.Command
-            : e => e.Directory;
+            : e => e.Directory.Value;
 
         return entryList
             .GroupBy(keySelector, StringComparer.OrdinalIgnoreCase)

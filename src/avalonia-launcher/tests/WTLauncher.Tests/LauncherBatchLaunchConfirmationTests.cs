@@ -52,7 +52,8 @@ public sealed class LauncherBatchLaunchConfirmationTests
         {
             Id = id,
             Name = id,
-            Directory = directory,
+            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)directory,
             Command = "pwsh",
         };
 }
+

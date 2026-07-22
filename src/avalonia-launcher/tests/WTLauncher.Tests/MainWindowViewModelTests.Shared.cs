@@ -37,9 +37,9 @@ public sealed partial class MainWindowViewModelTests
         string updatedAtUtc = "") =>
         new()
         {
-            Id = id,
-            Name = name ?? id,
-            Directory = directory ?? $"D:\\{id}",
+            Id = string.IsNullOrWhiteSpace(id) ? EntryId.Empty : id,
+            Name = string.IsNullOrWhiteSpace(name ?? id) ? EntryName.Empty : name ?? id,
+            Directory = string.IsNullOrWhiteSpace(directory) && string.IsNullOrWhiteSpace(id) ? WTLauncher.Core.ValueObjects.DirectoryPath.Empty : (WTLauncher.Core.ValueObjects.DirectoryPath)(directory ?? $"D:\\{id}"),
             Command = command,
             Selected = selected,
             UpdatedAtUtc = updatedAtUtc,
@@ -62,7 +62,7 @@ public sealed partial class MainWindowViewModelTests
                 {
                     Id = "default",
                     Name = "Default",
-                    EntryIds = entries.Select(e => e.Id).ToImmutableList(),
+                    EntryIds = entries.Select(e => e.Id.Value).ToImmutableList(),
                 },
             ],
             DefaultPresetId = "default",
@@ -139,3 +139,4 @@ public sealed partial class MainWindowViewModelTests
 
     private static DateTimeOffset SystemUtcNow() => DateTimeOffset.UtcNow;
 }
+

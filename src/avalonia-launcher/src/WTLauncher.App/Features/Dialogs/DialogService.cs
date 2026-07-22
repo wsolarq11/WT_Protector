@@ -30,7 +30,7 @@ public sealed class DialogService : IDialogService
     public Task<EntryDraft?> RequestEntryDraftAsync(LaunchEntry? prefill, int presetReferenceCount, IReadOnlyDictionary<string, string>? commandTemplates)
     {
         var prefillData = prefill is not null
-            ? new EntryDetailsWindow.EntryPrefill(prefill.Id, prefill.Name, prefill.Directory, prefill.Command, prefill.Selected)
+            ? new EntryDetailsWindow.EntryPrefill(prefill.Id, prefill.Name, prefill.Directory.Value, prefill.Command, prefill.Selected)
             : null;
         return new EntryDetailsWindow(prefillData, presetReferenceCount, commandTemplates).ShowDialog<EntryDraft?>(Owner);
     }

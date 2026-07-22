@@ -150,7 +150,7 @@ public sealed class LauncherLaunchWorkflowTests
 
         var preflight = workflow.PreflightBatch(
             [
-                new LaunchEntry { Id = "one", Name = " ", Directory = temp.Path, Command = "pwsh" },
+                new LaunchEntry { Id = "one", Name = EntryName.Empty, Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)temp.Path, Command = "pwsh" },
             ],
             requireConfirmation: false);
 
@@ -167,7 +167,7 @@ public sealed class LauncherLaunchWorkflowTests
 
         var preflight = workflow.PreflightBatch(
             [
-                new LaunchEntry { Id = " ", Name = "one", Directory = temp.Path, Command = "pwsh" },
+                new LaunchEntry { Id = EntryId.Empty, Name = "one", Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)temp.Path, Command = "pwsh" },
             ],
             requireConfirmation: false);
 
@@ -203,7 +203,7 @@ public sealed class LauncherLaunchWorkflowTests
         var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("blocked"));
         var entry = Entry("one", temp.Path);
         var preflight = workflow.PreflightBatch([entry], requireConfirmation: false);
-        entry = entry with { Name = " " };
+        entry = entry with { Name = EntryName.Empty };
 
         var report = workflow.StartBatch(preflight, TestContext.Current.CancellationToken);
 
@@ -330,8 +330,9 @@ public sealed class LauncherLaunchWorkflowTests
         {
             Id = id,
             Name = id,
-            Directory = directory,
+            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)directory,
             Command = "pwsh",
         };
     }
 }
+

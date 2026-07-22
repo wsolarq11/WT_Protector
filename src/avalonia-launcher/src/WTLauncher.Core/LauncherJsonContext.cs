@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using WTLauncher.Core.ValueObjects;
 
 namespace WTLauncher.Core;
 
@@ -14,6 +15,9 @@ namespace WTLauncher.Core;
 [JsonSerializable(typeof(LauncherPreset))]
 [JsonSerializable(typeof(List<LaunchEntry>))]
 [JsonSerializable(typeof(List<LauncherPreset>))]
+[JsonSerializable(typeof(EntryName))]
+[JsonSerializable(typeof(EntryId))]
+[JsonSerializable(typeof(DirectoryPath))]
 internal sealed partial class LauncherJsonContext : JsonSerializerContext
 {
 }

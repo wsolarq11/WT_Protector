@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using WTLauncher.Core.ValueObjects;
 
 namespace WTLauncher.Core;
 
@@ -9,15 +10,15 @@ public sealed record LaunchEntry
 {
     [JsonPropertyName("id")]
     [JsonRequired]
-    public string Id { get; init; } = "";
+    public EntryId Id { get; init; } = EntryId.Empty;
 
     [JsonPropertyName("name")]
     [JsonRequired]
-    public string Name { get; init; } = "";
+    public EntryName Name { get; init; } = EntryName.Empty;
 
     [JsonPropertyName("directory")]
     [JsonRequired]
-    public string Directory { get; init; } = "";
+    public DirectoryPath Directory { get; init; } = DirectoryPath.Empty;
 
     [JsonPropertyName("command")]
     [JsonRequired]

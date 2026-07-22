@@ -167,9 +167,10 @@ public sealed class LaunchArgumentBuilderTests
         return new LaunchEntry
         {
             Name = name,
-            Directory = directory,
+            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)directory,
             Command = command,
         };
     }
 
 }
+

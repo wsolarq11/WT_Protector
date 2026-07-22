@@ -110,7 +110,7 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.AddEntryCommand.ExecuteAsync(null);
 
         Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id.Value).ToArray());
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
         Assert.Equal(LauncherEntryStatus.AddCanceled.Text, viewModel.StatusText);
@@ -197,7 +197,7 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.Entries.Single(entry => entry.Id == "one").EditCommand.ExecuteAsync(null);
 
         Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id.Value).ToArray());
         Assert.Equal(["one"], LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
@@ -216,7 +216,7 @@ public sealed partial class MainWindowViewModelTests
         dialogService.OnRequestEntryDraft = (entry, _, _) =>
         {
             dialogEntry = entry;
-            entry = entry! with { Id = "broken", Name = "" };
+            entry = entry! with { Id = "broken", Name = EntryName.Empty };
             dialogEntry = entry;
             return Task.FromResult<EntryDraft?>(null);
         };
@@ -234,7 +234,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("one", viewModel.Entries.Single(entry => entry.Id == "one").Id);
         Assert.Equal("One", viewModel.Entries.Single(entry => entry.Id == "one").Name);
         Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id.Value).ToArray());
         Assert.Equal(["one"], LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(LauncherEntryStatus.EditCanceled("One").Text, viewModel.StatusText);
@@ -250,7 +250,7 @@ public sealed partial class MainWindowViewModelTests
         var dialogService = new StubDialogService();
         dialogService.OnRequestEntryDraft = (entry, _, _) =>
         {
-            entry = entry! with { Id = "broken", Name = "" };
+            entry = entry! with { Id = "broken", Name = EntryName.Empty };
             return Task.FromResult<EntryDraft?>(RenamedOneEntryDraft());
         };
         var viewModel = CreateViewModel(
@@ -313,7 +313,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.DoesNotContain(savedEntries, entry => entry.Id == "one");
         var edited = savedEntries.Single(entry => entry.Id == "one-renamed");
         Assert.Equal("One Renamed", edited.Name);
-        Assert.Equal("D:\\renamed", edited.Directory);
+        Assert.Equal("D:\\renamed", edited.Directory.Value);
         Assert.Equal("opencode", edited.Command);
         Assert.False(edited.Selected);
         Assert.Equal("2026-05-30T04:05:06.0000000+00:00", edited.UpdatedAtUtc);
@@ -353,7 +353,7 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.Entries.Single(entry => entry.Id == "one").DeleteCommand.ExecuteAsync(null);
 
         Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id.Value).ToArray());
         Assert.Equal(["one"], LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);
@@ -375,7 +375,7 @@ public sealed partial class MainWindowViewModelTests
         {
             target = candidate;
             externalSnapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
-            externalSnapshot = externalSnapshot! with { Id = "broken", Name = "" };
+            externalSnapshot = externalSnapshot! with { Id = "broken", Name = EntryName.Empty };
             return Task.FromResult(false);
         };
 
@@ -387,7 +387,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal("broken", externalSnapshot!.Id);
         Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
         Assert.Equal("One", viewModel.Entries.Single(entry => entry.Id == "one").Name);
-        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id.Value).ToArray());
         Assert.Equal(["one"], LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         Assert.Equal(LauncherEntryStatus.DeleteCanceled("One").Text, viewModel.StatusText);
@@ -408,7 +408,7 @@ public sealed partial class MainWindowViewModelTests
         {
             target = candidate;
             externalSnapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
-            externalSnapshot = externalSnapshot! with { Id = "broken", Name = "" };
+            externalSnapshot = externalSnapshot! with { Id = "broken", Name = EntryName.Empty };
             return Task.FromResult(true);
         };
 
@@ -432,7 +432,7 @@ public sealed partial class MainWindowViewModelTests
         MainWindowViewModel viewModel)
     {
         Assert.Equal(DefaultDragOrder(), viewModel.Entries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(DefaultDragOrder(), LauncherStore.Load(config).Entries.Select(entry => entry.Id.Value).ToArray());
         Assert.Equal(["one"], LauncherStore.Load(presets).Presets.Single().EntryIds);
         Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
         AssertNoDragCues(viewModel);

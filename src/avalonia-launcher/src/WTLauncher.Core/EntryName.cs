@@ -1,14 +1,19 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using VogenEntryName = WTLauncher.Core.ValueObjects.EntryName;
 
 namespace WTLauncher.Core;
-
+[JsonConverter(typeof(EntryNameJsonConverter))]
 public readonly record struct EntryName
 {
-    public string Value { get; }
+    private readonly VogenEntryName _vogen;
 
-    private EntryName(string value) => Value = value;
+    public string Value => _vogen.Value;
+
+    private EntryName(VogenEntryName vogen) => _vogen = vogen;
+
+    public static EntryName Empty => new(VogenEntryName.Empty);
 
     public static EntryName Parse(string? raw)
     {
@@ -19,7 +24,7 @@ public readonly record struct EntryName
         if (normalized.Length == 0)
             throw new FormatException("名称不能为空。");
 
-        return new EntryName(normalized);
+        return new EntryName(VogenEntryName.From(normalized));
     }
 
     public static string Normalize(string? value)
@@ -35,6 +40,7 @@ public readonly record struct EntryName
     }
 
     public static implicit operator string(EntryName name) => name.Value;
+    public static implicit operator EntryName(string value) => Parse(value);
     public override string ToString() => Value;
 
     private static string StripUnpairedSurrogates(string value)

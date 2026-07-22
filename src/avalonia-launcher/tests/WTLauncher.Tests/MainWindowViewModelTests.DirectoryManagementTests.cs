@@ -97,7 +97,7 @@ public sealed partial class MainWindowViewModelTests
             new DirectoryManagementEdit.RenameDirectory(@"D:\old", @"D:\new"));
 
         var reloaded = LauncherStore.Load(config);
-        Assert.Equal(@"D:\new", reloaded.Entries[0].Directory);
+        Assert.Equal(@"D:\new", reloaded.Entries[0].Directory.Value);
     }
 
     [Fact]

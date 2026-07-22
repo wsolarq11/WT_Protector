@@ -73,7 +73,7 @@ public sealed class LauncherBatchLaunchReceiptTextTests
         var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("blocked"));
         var entry = Entry("one", temp.Path);
         var preflight = workflow.PreflightBatch([entry], requireConfirmation: false);
-        entry = entry with { Name = " " };
+        entry = entry with { Name = EntryName.Empty };
 
         var report = workflow.StartBatch(preflight, TestContext.Current.CancellationToken);
         var receipt = LauncherBatchLaunchReceiptText.Format(preflight, report);
@@ -145,7 +145,7 @@ public sealed class LauncherBatchLaunchReceiptTextTests
         {
             Id = id,
             Name = id,
-            Directory = directory,
+            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)directory,
             Command = "pwsh",
         };
 
@@ -162,3 +162,4 @@ public sealed class LauncherBatchLaunchReceiptTextTests
         return count;
     }
 }
+
