@@ -1,0 +1,90 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:core="clr-namespace:WTLauncher.Core;assembly=WTLauncher.Core">
+
+  <!--
+    ── Dialog Shared Styles ────────────────────────────────────────
+    Shared class-based styles for all dialog windows, extracted from
+    inline duplicates. References LauncherDesignTokens for consistency.
+    ────────────────────────────────────────────────────────────────
+  -->
+
+  <!-- Destructive button (delete/danger actions) -->
+  <Style Selector="Button.destructive">
+    <Setter Property="Background" Value="{StaticResource DestructiveBrush}"/>
+    <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Padding" Value="14,8"/>
+    <Setter Property="CornerRadius" Value="10"/>
+    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+  </Style>
+
+  <!-- Management list — shared by CommandManagementWindow and DirectoryManagementWindow -->
+  <Style Selector="ListBox.management-list">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="Padding" Value="0"/>
+  </Style>
+
+  <Style Selector="ListBox.management-list ListBoxItem">
+    <Setter Property="Padding" Value="0"/>
+    <Setter Property="Margin" Value="0,0,0,6"/>
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+  </Style>
+
+  <Style Selector="ListBox.management-list ListBoxItem /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent"/>
+  </Style>
+
+  <Style Selector="ListBox.management-list ListBoxItem:selected Border.management-row">
+    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+  </Style>
+
+  <!-- Management row — shared row container -->
+  <Style Selector="Border.management-row">
+    <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="6"/>
+    <Setter Property="Padding" Value="10,6"/>
+  </Style>
+
+  <!-- Mono command text — code-style labels -->
+  <Style Selector="TextBlock.mono-command">
+    <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Courier New, monospace"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="FontSize" Value="{x:Static core:LauncherDesignTokens.FontSizeBody}"/>
+  </Style>
+
+  <!-- Mono directory text — code-style directory paths -->
+  <Style Selector="TextBlock.mono-directory">
+    <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Courier New, monospace"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="FontSize" Value="{x:Static core:LauncherDesignTokens.FontSizeBody}"/>
+    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+  </Style>
+
+  <!-- Muted detail text — subtle reference/status labels -->
+  <Style Selector="TextBlock.muted-detail">
+    <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+    <Setter Property="FontSize" Value="11"/>
+    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+  </Style>
+
+  <!-- Dialog title — unified heading for all dialog windows -->
+  <Style Selector="TextBlock.dialog-title">
+    <Setter Property="FontSize" Value="{x:Static core:LauncherDesignTokens.DialogTitleFontSize}"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+  </Style>
+
+  <!-- Preview text — mono preview blocks -->
+  <Style Selector="TextBlock.mono-preview">
+    <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Courier New, monospace"/>
+    <Setter Property="FontSize" Value="{x:Static core:LauncherDesignTokens.FontSizeSmall}"/>
+    <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+    <Setter Property="TextWrapping" Value="Wrap"/>
+  </Style>
+
+</Styles>

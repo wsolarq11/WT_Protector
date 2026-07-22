@@ -10,18 +10,12 @@
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource SurfaceBrush}">
   <Window.Styles>
-    <Style Selector="Button.destructive">
-      <Setter Property="Background" Value="{StaticResource DestructiveBrush}"/>
-      <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
-      <Setter Property="FontWeight" Value="SemiBold"/>
-    </Style>
+    <StyleInclude Source="/Views/Dialogs/DialogSharedStyles.axaml"/>
   </Window.Styles>
   <Border Padding="{StaticResource DialogOuterPadding}">
     <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="12">
       <TextBlock Grid.Row="0"
-                 FontSize="{StaticResource DialogTitleFontSize}"
-                 FontWeight="SemiBold"
-                 Foreground="{StaticResource TextPrimaryBrush}"
+                 Classes="dialog-title"
                  Text="删除这个启动组？"/>
       <TextBlock Grid.Row="1"
                  x:Name="BodyText"
@@ -34,7 +28,7 @@
                   Orientation="Horizontal"
                   HorizontalAlignment="Right"
                   Spacing="8"
-                  Margin="0,2,0,0">
+                  Margin="{StaticResource DialogFooterMargin}">
         <Button Content="取消"
                 Classes="secondary"
                 MinWidth="90"

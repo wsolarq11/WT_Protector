@@ -9,13 +9,14 @@
         MinHeight="340"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource SurfaceBrush}">
+  <Window.Styles>
+    <StyleInclude Source="/Views/Dialogs/DialogSharedStyles.axaml"/>
+  </Window.Styles>
   <Border Padding="{StaticResource DialogOuterPadding}">
     <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="10">
       <TextBlock Grid.Row="0"
                  x:Name="TitleText"
-                 FontSize="{StaticResource DialogTitleFontSize}"
-                 FontWeight="SemiBold"
-                 Foreground="{StaticResource TextPrimaryBrush}"/>
+                 Classes="dialog-title"/>
       <TextBlock Grid.Row="1"
                  x:Name="MessageText"
                  Margin="0,0,0,4"

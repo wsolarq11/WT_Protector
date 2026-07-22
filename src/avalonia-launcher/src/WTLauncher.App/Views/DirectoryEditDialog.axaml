@@ -7,14 +7,15 @@
         SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource SurfaceBrush}">
+  <Window.Styles>
+    <StyleInclude Source="/Views/Dialogs/DialogSharedStyles.axaml"/>
+  </Window.Styles>
   <Border Padding="{StaticResource DialogOuterPadding}">
     <Grid RowDefinitions="Auto,Auto,Auto">
       <TextBlock Grid.Row="0"
                  x:Name="TitleText"
                  Margin="0,0,0,12"
-                 FontSize="{StaticResource DialogTitleFontSize}"
-                 FontWeight="SemiBold"
-                 Foreground="{StaticResource TextPrimaryBrush}"/>
+                 Classes="dialog-title"/>
       <StackPanel Grid.Row="1" Spacing="4">
         <TextBlock x:Name="LabelText"
                    FontWeight="SemiBold"

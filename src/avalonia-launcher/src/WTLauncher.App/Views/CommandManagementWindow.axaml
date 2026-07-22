@@ -5,7 +5,7 @@
         xmlns:vm="clr-namespace:WTLauncher.App.ViewModels"
         x:Class="WTLauncher.App.Views.CommandManagementWindow"
         x:DataType="vm:CommandManagementViewModel"
-        Title="🛠 命令管理"
+        Title="命令管理"
         Width="820"
         Height="600"
         MinWidth="560"
@@ -13,67 +13,31 @@
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource SurfaceBrush}">
   <Window.Styles>
+    <StyleInclude Source="/Views/Dialogs/DialogSharedStyles.axaml"/>
     <Style Selector="Button.tab.active">
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
     </Style>
-    <Style Selector="ListBox.management-list">
-      <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="BorderThickness" Value="0"/>
-      <Setter Property="Padding" Value="0"/>
-    </Style>
-    <Style Selector="ListBox.management-list ListBoxItem">
-      <Setter Property="Padding" Value="0"/>
-      <Setter Property="Margin" Value="0,0,0,6"/>
-      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-    </Style>
-    <Style Selector="ListBox.management-list ListBoxItem /template/ ContentPresenter">
-      <Setter Property="Background" Value="Transparent"/>
-    </Style>
-    <Style Selector="ListBox.management-list ListBoxItem:selected Border.management-row">
-      <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
-    </Style>
-    <Style Selector="Border.management-row">
-      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
-      <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="CornerRadius" Value="6"/>
-      <Setter Property="Padding" Value="10,6"/>
-    </Style>
-    <Style Selector="TextBlock.mono-command">
-      <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Courier New, monospace"/>
-      <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
-    </Style>
-    <Style Selector="TextBlock.muted-detail">
-      <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
-      <Setter Property="FontSize" Value="11"/>
-      <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-    </Style>
   </Window.Styles>
-
   <Border Padding="{StaticResource DialogOuterPadding}">
     <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
       <TextBlock Grid.Row="0"
                  Text="命令与模板集中管理"
-                 FontSize="{StaticResource DialogTitleFontSize}"
-                 FontWeight="SemiBold"
-                 Foreground="{StaticResource TextPrimaryBrush}"/>
+                 Classes="dialog-title"/>
       <TextBlock Grid.Row="1"
                  Margin="0,4,0,12"
                  TextWrapping="Wrap"
                  Foreground="{StaticResource TextMutedBrush}"
                  Text="Tab 1 列出 command 引用并同步重命名；Tab 2 管理 commandTemplates，Key 与展开内容变更会立即影响引用。"/>
-
       <Grid Grid.Row="2" RowDefinitions="Auto,Auto" Margin="0,0,0,8">
-        <StackPanel Orientation="Horizontal" Spacing="{x:Static core:LauncherDesignTokens.NameTileGap}">
-          <Button Content="📋 命令引用"
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <Button Content="命令引用"
                   MinWidth="130"
                   Classes="secondary tab"
                   Classes.active="{Binding IsCommandTabActive}"
                   Command="{Binding SelectCommandTabCommand}"
                   automation:AutomationProperties.Name="命令引用标签页"/>
-          <Button Content="📑 命令模板"
+          <Button Content="命令模板"
                   MinWidth="130"
                   Classes="secondary tab"
                   Classes.active="{Binding IsTemplateTabActive}"
@@ -85,46 +49,43 @@
                      Foreground="{StaticResource TextMutedBrush}"
                      automation:AutomationProperties.Name="命令管理状态"/>
         </StackPanel>
-
         <StackPanel Grid.Row="1"
                     Orientation="Horizontal"
                     Spacing="6"
                     Margin="0,6,0,0"
                     IsVisible="{Binding IsCommandTabActive}">
-          <Button Content="✏ 编辑/重命名"
+          <Button Content="编辑/重命名"
                   Classes="secondary"
                   MinWidth="90"
                   IsEnabled="{Binding HasSelectedCommand}"
                   Click="OnRenameCommandClicked"
                   automation:AutomationProperties.Name="编辑或重选命令引用"/>
-          <Button Content="🗑 删除"
+          <Button Content="删除"
                   Classes="secondary"
                   MinWidth="90"
                   IsEnabled="{Binding HasSelectedCommand}"
                   Command="{Binding DeleteCommandCommand}"
                   automation:AutomationProperties.Name="删除命令引用"/>
         </StackPanel>
-
         <StackPanel Grid.Row="1"
                     Orientation="Horizontal"
                     Spacing="6"
                     Margin="0,6,0,0"
                     IsVisible="{Binding IsTemplateTabActive}">
-          <Button Content="➕ 新模板" Classes="secondary" MinWidth="90"
+          <Button Content="新模板" Classes="secondary" MinWidth="90"
                   Click="OnAddTemplateClicked"
                   automation:AutomationProperties.Name="添加新命令模板"/>
-          <Button Content="✏ 改 Key" Classes="secondary" MinWidth="90"
+          <Button Content="改 Key" Classes="secondary" MinWidth="90"
                   IsEnabled="{Binding HasSelectedTemplate}" Click="OnUpdateTemplateKeyClicked"
                   automation:AutomationProperties.Name="修改命令模板的键名"/>
-          <Button Content="📝 改展开内容" Classes="secondary" MinWidth="110"
+          <Button Content="改展开内容" Classes="secondary" MinWidth="110"
                   IsEnabled="{Binding HasSelectedTemplate}" Click="OnUpdateTemplateValueClicked"
                   automation:AutomationProperties.Name="修改命令模板的展开内容"/>
-          <Button Content="🗑 删除" Classes="secondary" MinWidth="90"
+          <Button Content="删除" Classes="secondary" MinWidth="90"
                   IsEnabled="{Binding HasSelectedTemplate}" Command="{Binding DeleteTemplateCommand}"
                   automation:AutomationProperties.Name="删除命令模板"/>
         </StackPanel>
       </Grid>
-
       <Border Grid.Row="3"
               BorderThickness="1"
               CornerRadius="10"
@@ -167,7 +128,6 @@
                        Foreground="{StaticResource TextMutedBrush}"
                        automation:AutomationProperties.Name="无命令引用，还没有任何启动按钮"/>
           </Grid>
-
           <Grid IsVisible="{Binding IsTemplateTabActive}">
             <ListBox Classes="management-list"
                      ItemsSource="{Binding TemplateRows}"
@@ -199,7 +159,6 @@
           </Grid>
         </Grid>
       </Border>
-
       <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="{StaticResource DialogFooterMargin}">
         <Button Content="关闭" Classes="primary" MinWidth="110" Click="OnCloseClicked"
                 automation:AutomationProperties.Name="关闭命令管理窗口"/>

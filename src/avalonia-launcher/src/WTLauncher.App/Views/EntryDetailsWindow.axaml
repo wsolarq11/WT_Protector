@@ -9,13 +9,14 @@
         MinHeight="460"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource SurfaceBrush}">
+  <Window.Styles>
+    <StyleInclude Source="/Views/Dialogs/DialogSharedStyles.axaml"/>
+  </Window.Styles>
   <Border Padding="{StaticResource DialogOuterPadding}">
     <ScrollViewer>
       <StackPanel Spacing="{x:Static core:LauncherDesignTokens.DialogFooterSpacing}">
         <TextBlock x:Name="TitleText"
-                   FontSize="{StaticResource DialogTitleFontSize}"
-                   FontWeight="SemiBold"
-                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                   Classes="dialog-title"/>
         <TextBlock FontWeight="SemiBold"
                    Foreground="{StaticResource TextPrimaryBrush}"
                    Text="ID（稳定唯一，不要重复）"/>

@@ -9,12 +9,13 @@
         MinHeight="220"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource SurfaceBrush}">
+  <Window.Styles>
+    <StyleInclude Source="/Views/Dialogs/DialogSharedStyles.axaml"/>
+  </Window.Styles>
   <Border Padding="{StaticResource DialogOuterPadding}">
     <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="12">
       <TextBlock Grid.Row="0"
-                 FontSize="{StaticResource DialogTitleFontSize}"
-                 FontWeight="SemiBold"
-                 Foreground="{StaticResource TextPrimaryBrush}"
+                 Classes="dialog-title"
                  Text="保存当前勾选为新启动组"/>
       <TextBlock Grid.Row="1"
                  x:Name="SummaryText"

@@ -10,17 +10,11 @@
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource SurfaceBrush}">
   <Window.Styles>
-    <Style Selector="Button.destructive">
-      <Setter Property="Background" Value="{StaticResource DestructiveBrush}"/>
-      <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
-      <Setter Property="FontWeight" Value="SemiBold"/>
-    </Style>
+    <StyleInclude Source="/Views/Dialogs/DialogSharedStyles.axaml"/>
   </Window.Styles>
   <Border Padding="{StaticResource DialogOuterPadding}">
     <StackPanel Spacing="12">
-      <TextBlock FontSize="{StaticResource DialogTitleFontSize}"
-                 FontWeight="SemiBold"
-                 Foreground="{StaticResource TextPrimaryBrush}"
+      <TextBlock Classes="dialog-title"
                  Text="确认删除启动按钮？"/>
       <TextBlock x:Name="BodyText"
                  TextWrapping="Wrap"
