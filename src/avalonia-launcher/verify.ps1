@@ -18,8 +18,18 @@ $smokeRoot = Join-Path $sourceRoot 'artifacts\gui-smoke'
 Invoke-NativeStep 'dotnet restore solution win-x64' { dotnet restore $solution -r win-x64 }
 New-Item -ItemType Directory -Path $testResultsDir -Force | Out-Null
 Remove-Item -LiteralPath $testResultsFile -Force -ErrorAction SilentlyContinue
-Invoke-NativeStep 'dotnet test' { dotnet test $tests -c Release --no-restore --verbosity minimal --logger "trx;LogFileName=wtlauncher-tests.trx" --results-directory $testResultsDir }
-Invoke-NativeStep 'dotnet publish app win-x64' { dotnet publish $app -c Release -r win-x64 --self-contained true --no-restore -o $publishDir }
+# ── Performance baseline: record elapsed time for key steps ────────────
+$perfTimings = @{}
+
+$testElapsed = Measure-Command {
+    Invoke-NativeStep 'dotnet test' { dotnet test $tests -c Release --no-restore --verbosity minimal --logger "trx;LogFileName=wtlauncher-tests.trx" --results-directory $testResultsDir }
+}
+$perfTimings.testSeconds = [math]::Round($testElapsed.TotalSeconds, 2)
+
+$publishElapsed = Measure-Command {
+    Invoke-NativeStep 'dotnet publish app win-x64' { dotnet publish $app -c Release -r win-x64 --self-contained true --no-restore -o $publishDir }
+}
+$perfTimings.publishSeconds = [math]::Round($publishElapsed.TotalSeconds, 2)
 
 $exe = Join-Path $publishDir 'WTLauncher.App.exe'
 $dll = Join-Path $publishDir 'WTLauncher.App.dll'
@@ -143,4 +153,5 @@ New-ToolReceipt 'avalonia-mainline-verify' @{
     sha256 = (Get-FileSha256 $exe).Substring(0, 16)
     dllBytes = (Get-Item -LiteralPath $dll).Length
     dllSha256 = (Get-FileSha256 $dll).Substring(0, 16)
+    perf = $perfTimings
 } | ConvertTo-Json -Depth 4 -Compress

@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace WTLauncher.App.ViewModels;
@@ -8,6 +9,9 @@ namespace WTLauncher.App.ViewModels;
 /// </summary>
 public sealed partial class StatusPresenter : ObservableObject
 {
+    /// <summary>Maximum number of receipt history entries to retain (FIFO).</summary>
+    public const int MaxHistorySize = 50;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(StatusText))]
     [NotifyPropertyChangedFor(nameof(StatusTone))]
@@ -17,6 +21,9 @@ public sealed partial class StatusPresenter : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsStatusWarning))]
     [NotifyPropertyChangedFor(nameof(IsStatusError))]
     private LauncherStatusContent _statusContent = LauncherMainWindowText.Ready;
+
+    /// <summary>In-memory bounded history of non-neutral status receipts.</summary>
+    public ObservableCollection<string> ReceiptHistory { get; } = [];
 
     public string StatusText => StatusContent.Text;
     public LauncherStatusTone StatusTone => StatusContent.Tone;
@@ -58,7 +65,10 @@ public sealed partial class StatusPresenter : ObservableObject
     public void SetStatus(LauncherStatusContent? status)
     {
         if (status is not null)
+        {
             StatusContent = status;
+            AddToReceiptHistory(status);
+        }
     }
 
     public void RefreshCount(int total, int visible, int selected, int presets)
@@ -67,5 +77,21 @@ public sealed partial class StatusPresenter : ObservableObject
         VisibleCount = visible;
         SelectedCount = selected;
         PresetCount = presets;
+    }
+
+    /// <summary>
+    /// Records non-neutral status texts into the bounded receipt history.
+    /// Success, Warning, and Error tones are preserved for review.
+    /// </summary>
+    private void AddToReceiptHistory(LauncherStatusContent status)
+    {
+        if (status.Tone == LauncherStatusTone.Neutral)
+            return;
+
+        ReceiptHistory.Add(status.Text);
+        if (ReceiptHistory.Count > MaxHistorySize)
+        {
+            ReceiptHistory.RemoveAt(0);
+        }
     }
 }
