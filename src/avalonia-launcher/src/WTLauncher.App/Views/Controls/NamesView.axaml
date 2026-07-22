@@ -1,0 +1,114 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:WTLauncher.App.Views"
+             xmlns:core="clr-namespace:WTLauncher.Core;assembly=WTLauncher.Core"
+             xmlns:automation="clr-namespace:Avalonia.Automation;assembly=Avalonia.Controls"
+             xmlns:vm="clr-namespace:WTLauncher.App.ViewModels"
+             x:Class="WTLauncher.App.Views.Controls.NamesView"
+             x:DataType="vm:MainWindowViewModel">
+  <ScrollViewer x:Name="NamesScrollViewer"
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto"
+                IsVisible="{Binding IsNamesViewMode}">
+    <Grid>
+      <ItemsControl x:Name="NamesEntriesItemsControl"
+                    ItemsSource="{Binding VisibleEntries}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <views:FastWrapPanel ItemSpacing="{x:Static core:LauncherDesignTokens.NameTileGap}" LineSpacing="{x:Static core:LauncherDesignTokens.NameTileRowGap}"/>
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:LauncherEntryViewModel">
+            <Border Classes="card name-tile"
+                    Classes.drag-target="{Binding IsDragPreviewTarget}"
+                    Classes.drag-source="{Binding IsDragPreviewSource}"
+                    Classes.selected="{Binding IsSelected}"
+                    Classes.keyboard-focused="{Binding IsKeyboardFocused}"
+                    Width="{Binding NameTileWidth}"
+                    Height="{Binding NameTileHeight}"
+                    ClipToBounds="True"
+                    DoubleTapped="OnEntryRowDoubleTapped">
+              <Border.ContextMenu>
+                <ContextMenu>
+                  <MenuItem Header="启动"
+                            AutomationProperties.Name="启动"
+                            Command="{Binding LaunchCommand}"/>
+                  <MenuItem Header="预演"
+                            AutomationProperties.Name="预演"
+                            Command="{Binding DryRunCommand}"/>
+                  <MenuItem Header="上移排序"
+                            AutomationProperties.Name="上移排序"
+                            InputGesture="Ctrl+Up"
+                            Command="{Binding MoveUpCommand}"/>
+                  <MenuItem Header="下移排序"
+                            AutomationProperties.Name="下移排序"
+                            InputGesture="Ctrl+Down"
+                            Command="{Binding MoveDownCommand}"/>
+                  <MenuItem Header="复制"
+                            AutomationProperties.Name="复制"
+                            InputGesture="Ctrl+D"
+                            Command="{Binding CloneCommand}"/>
+                  <MenuItem Header="编辑"
+                            AutomationProperties.Name="编辑"
+                            InputGesture="F2"
+                            Command="{Binding EditCommand}"/>
+                  <MenuItem Header="删除"
+                            AutomationProperties.Name="删除"
+                            InputGesture="Delete"
+                            Command="{Binding DeleteCommand}"/>
+                </ContextMenu>
+              </Border.ContextMenu>
+              <Grid ColumnDefinitions="Auto,*,Auto"
+                    ColumnSpacing="6"
+                    VerticalAlignment="Center">
+                <Border Grid.ColumnSpan="3"
+                        Classes="drag-insert"
+                        ZIndex="10"
+                        Width="3"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Stretch"
+                        IsVisible="{Binding IsDragInsertBefore}"/>
+                <Border Grid.ColumnSpan="3"
+                        Classes="drag-insert"
+                        ZIndex="10"
+                        Width="3"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Stretch"
+                        IsVisible="{Binding IsDragInsertAfter}"/>
+                <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                          VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1"
+                           Classes="name-title"
+                           ToolTip.Tip="{Binding Name}"
+                           MaxLines="1"
+                           VerticalAlignment="Center"
+                           Text="{Binding Name}"/>
+                <Border Grid.Column="2"
+                        Classes="entry-drag-handle"
+                        Cursor="Hand"
+                        ToolTip.Tip="拖拽排序"
+                        AutomationProperties.Name="拖拽排序"
+                        PointerPressed="OnEntryDragPointerPressed">
+                  <TextBlock Text="≡"
+                             Foreground="{StaticResource TextMutedBrush}"
+                             FontSize="11"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"/>
+                </Border>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <TextBlock x:Name="EmptyStateNamesText"
+                 AutomationProperties.Name="无可见按钮"
+                 HorizontalAlignment="Center"
+                 VerticalAlignment="Center"
+                 FontSize="{StaticResource FontSizeEmphasis}"
+                 Foreground="{StaticResource TextMutedBrush}"
+                 Text="{Binding EmptyStateText}"
+                 IsVisible="{Binding IsVisibleEmpty}"/>
+    </Grid>
+  </ScrollViewer>
+</UserControl>
