@@ -1,0 +1,82 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:automation="clr-namespace:Avalonia.Automation;assembly=Avalonia.Controls"
+        x:Class="WTLauncher.App.Views.ConfirmBatchLaunchWindow"
+        Width="760"
+        Height="520"
+        MinWidth="460"
+        MinHeight="340"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource SurfaceBrush}">
+  <Border Padding="{StaticResource DialogOuterPadding}">
+    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="10">
+      <TextBlock Grid.Row="0"
+                 x:Name="TitleText"
+                 FontSize="{StaticResource DialogTitleFontSize}"
+                 FontWeight="SemiBold"
+                 Foreground="{StaticResource TextPrimaryBrush}"/>
+      <TextBlock Grid.Row="1"
+                 x:Name="MessageText"
+                 Margin="0,0,0,4"
+                 TextWrapping="Wrap"
+                 Foreground="{StaticResource TextMutedBrush}"/>
+      <Border Grid.Row="2"
+              BorderThickness="1"
+              CornerRadius="10"
+              BorderBrush="{StaticResource CardBorderBrush}"
+              Padding="12">
+        <ScrollViewer>
+          <TextBox x:Name="PlansText"
+                   IsReadOnly="True"
+                   FontFamily="Cascadia Code, Consolas, Courier New, monospace"
+                   FontSize="{StaticResource FontSizeSmall}"
+                   AcceptsReturn="True"
+                   TextWrapping="Wrap"
+                   MinHeight="220"
+                   BorderThickness="0"/>
+        </ScrollViewer>
+      </Border>
+      <StackPanel Grid.Row="3"
+                  x:Name="FailureSection"
+                  IsVisible="False"
+                  Margin="0,10,0,0"
+                  Spacing="6">
+        <TextBlock Text="预演失败项:"
+                   FontWeight="Bold"
+                   Foreground="{StaticResource TextMutedBrush}"/>
+        <Border BorderThickness="1"
+                CornerRadius="10"
+                BorderBrush="{StaticResource CardBorderBrush}"
+                Padding="12">
+          <ScrollViewer>
+            <TextBox x:Name="FailureText"
+                     IsReadOnly="True"
+                     FontFamily="Cascadia Code, Consolas, Courier New, monospace"
+                     FontSize="{StaticResource FontSizeSmall}"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     MinHeight="60"
+                     BorderThickness="0"/>
+          </ScrollViewer>
+        </Border>
+      </StackPanel>
+      <StackPanel Grid.Row="4"
+                  Orientation="Horizontal"
+                  HorizontalAlignment="Right"
+                  Spacing="8"
+                  Margin="{StaticResource DialogFooterMargin}">
+        <Button Content="取消"
+                Classes="secondary"
+                MinWidth="96"
+                IsCancel="True"
+                Click="OnCancelClicked"
+                automation:AutomationProperties.Name="取消一键启动"/>
+        <Button Content="确认启动"
+                Classes="primary"
+                x:Name="LaunchButton"
+                Click="OnLaunchClicked"
+                automation:AutomationProperties.Name="确认一键启动"/>
+      </StackPanel>
+    </Grid>
+  </Border>
+</Window>

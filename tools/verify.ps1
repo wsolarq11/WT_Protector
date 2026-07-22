@@ -585,6 +585,24 @@ Add-Check 'winget-config-schema-valid' @{
     requiredMarkers = @('schema-0.2', 'configVersion-0.2.0', 'WindowsTerminal', 'PowerShell')
 }
 
+# Views directory lint: no imperative UI control construction in .cs files
+$viewsDir = Get-AvaloniaRoot
+$violations = @()
+$whitelisted = @('FastWrapPanel.cs', 'LauncherDialogText.cs', 'MainWindowEntryCardResolver.cs')
+$pattern = '\bnew\s+(TextBlock|Grid|StackPanel|Border|Button|TextBox|CheckBox|ComboBox|ScrollViewer)\b'
+Get-ChildItem -Path "$viewsDir\src\WTLauncher.App\Views" -Filter '*.cs' -Recurse |
+    Where-Object { $_.Name -notmatch '\.axaml\.cs$' -and $_.Name -notin $whitelisted } |
+    ForEach-Object {
+        $content = Get-Content -Raw -LiteralPath $_.FullName
+        if ($content -match $pattern) {
+            $violations += $_.Name
+        }
+    }
+if ($violations.Count -gt 0) {
+    throw "Imperative UI control construction found in: $($violations -join ', ')"
+}
+Add-Check 'no-imperative-view-ui' @{ viewsScanned = $true; violations = $violations.Count; allowedExceptions = $whitelisted }
+
 New-ToolReceipt 'root-verify' @{
     root = $root
     checks = $checks

@@ -1,0 +1,61 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:automation="clr-namespace:Avalonia.Automation;assembly=Avalonia.Controls"
+        x:Class="WTLauncher.App.Views.CommandEditDialog"
+        Width="540"
+        MinWidth="360"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource SurfaceBrush}">
+  <Border Padding="{StaticResource DialogOuterPadding}">
+    <Grid RowDefinitions="Auto,Auto,Auto">
+      <TextBlock Grid.Row="0"
+                 x:Name="TitleText"
+                 Margin="0,0,0,12"
+                 FontSize="{StaticResource DialogTitleFontSize}"
+                 FontWeight="SemiBold"
+                 Foreground="{StaticResource TextPrimaryBrush}"/>
+      <StackPanel Grid.Row="1" Spacing="8">
+        <TextBlock x:Name="Label1Text"
+                   FontWeight="SemiBold"
+                   Foreground="{StaticResource TextPrimaryBrush}"/>
+        <TextBox x:Name="Input1"
+                 FontFamily="Cascadia Code, Consolas, Courier New, monospace"
+                 FontSize="{StaticResource FontSizeBody}"
+                 Padding="10,8"/>
+        <StackPanel x:Name="SecondFieldPanel" IsVisible="False" Spacing="4">
+          <TextBlock x:Name="Label2Text"
+                     Margin="0,4,0,0"
+                     FontWeight="SemiBold"
+                     Foreground="{StaticResource TextPrimaryBrush}"/>
+          <TextBox x:Name="Input2"
+                   FontFamily="Cascadia Code, Consolas, Courier New, monospace"
+                   FontSize="{StaticResource FontSizeBody}"
+                   Padding="10,8"/>
+        </StackPanel>
+        <TextBlock x:Name="ErrorText"
+                   IsVisible="False"
+                   Margin="0,8,0,0"
+                   TextWrapping="Wrap"
+                   Foreground="{StaticResource DestructiveBrush}"/>
+      </StackPanel>
+      <StackPanel Grid.Row="2"
+                  Orientation="Horizontal"
+                  HorizontalAlignment="Right"
+                  Spacing="8"
+                  Margin="{StaticResource DialogFooterMargin}">
+        <Button Content="取消"
+                Classes="secondary"
+                MinWidth="96"
+                IsCancel="True"
+                Click="OnCancelClicked"
+                automation:AutomationProperties.Name="取消编辑"/>
+        <Button Content="确定"
+                Classes="primary"
+                MinWidth="96"
+                Click="OnOkClicked"
+                automation:AutomationProperties.Name="确认编辑"/>
+      </StackPanel>
+    </Grid>
+  </Border>
+</Window>

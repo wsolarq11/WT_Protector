@@ -30,8 +30,21 @@ public sealed partial class PresetManager : ObservableObject
 
     public void Load(LauncherPresetFile presetFile, string? preferredPresetId)
     {
+        // Transactional: restore _presetFile if ApplyPresetFileState throws.
+        // Prevents ghost state where _presetFile is updated but _presets/SelectedPreset
+        // reflect a different file. ApplyPresetFileState still clears+repopulates
+        // _presets before ResolveSelectedPreset (rollback callers depend on this).
+        var previousFile = _presetFile;
         _presetFile = presetFile;
-        ApplyPresetFileState(preferredPresetId);
+        try
+        {
+            ApplyPresetFileState(preferredPresetId);
+        }
+        catch
+        {
+            _presetFile = previousFile;
+            throw;
+        }
     }
 
     public (LauncherPresetFile File, string? SelectedPresetId) CaptureSnapshot()

@@ -20,7 +20,11 @@ public sealed partial class DirectoryManagementViewModel : ObservableObject
     private string _statusMessage = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSelectedDirectory))]
     private DirectoryRow? _selectedDirectoryRow;
+
+    public bool HasSelectedDirectory => SelectedDirectoryRow is not null;
+    public bool HasNoDirectoryRows => DirectoryRows.Count == 0;
 
     public DirectoryManagementViewModel(
         IReadOnlyList<DirectoryRow> initialRows,

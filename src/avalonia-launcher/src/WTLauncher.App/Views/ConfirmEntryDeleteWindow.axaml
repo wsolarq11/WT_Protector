@@ -1,0 +1,48 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:automation="clr-namespace:Avalonia.Automation;assembly=Avalonia.Controls"
+        x:Class="WTLauncher.App.Views.ConfirmEntryDeleteWindow"
+        Title="删除启动按钮"
+        Width="520"
+        Height="260"
+        MinWidth="480"
+        MinHeight="220"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource SurfaceBrush}">
+  <Window.Styles>
+    <Style Selector="Button.destructive">
+      <Setter Property="Background" Value="{StaticResource DestructiveBrush}"/>
+      <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+  </Window.Styles>
+  <Border Padding="{StaticResource DialogOuterPadding}">
+    <StackPanel Spacing="12">
+      <TextBlock FontSize="{StaticResource DialogTitleFontSize}"
+                 FontWeight="SemiBold"
+                 Foreground="{StaticResource TextPrimaryBrush}"
+                 Text="确认删除启动按钮？"/>
+      <TextBlock x:Name="BodyText"
+                 TextWrapping="Wrap"
+                 Foreground="{StaticResource TextMutedBrush}"/>
+      <StackPanel Orientation="Horizontal"
+                  HorizontalAlignment="Right"
+                  Spacing="8"
+                  Margin="{StaticResource DialogFooterMargin}">
+        <Button Content="取消"
+                Classes="secondary"
+                MinWidth="90"
+                IsDefault="True"
+                IsCancel="True"
+                x:Name="CancelButton"
+                Click="OnCancelClicked"
+                automation:AutomationProperties.Name="取消删除启动按钮"/>
+        <Button Content="删除启动按钮"
+                Classes="destructive"
+                MinWidth="110"
+                Click="OnDeleteClicked"
+                automation:AutomationProperties.Name="确认删除启动按钮"/>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</Window>

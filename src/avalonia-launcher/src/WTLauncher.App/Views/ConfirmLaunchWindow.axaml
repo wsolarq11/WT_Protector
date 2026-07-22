@@ -1,0 +1,51 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:automation="clr-namespace:Avalonia.Automation;assembly=Avalonia.Controls"
+        x:Class="WTLauncher.App.Views.ConfirmLaunchWindow"
+        Title="确认启动"
+        Width="680"
+        Height="360"
+        MinWidth="560"
+        MinHeight="300"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource SurfaceBrush}">
+  <Border Padding="{StaticResource DialogOuterPadding}">
+    <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="14">
+      <TextBlock Grid.Row="0"
+                 x:Name="TitleText"
+                 FontSize="{StaticResource DialogTitleFontSize}"
+                 FontWeight="SemiBold"
+                 Foreground="{StaticResource TextPrimaryBrush}"/>
+      <TextBlock Grid.Row="1"
+                 TextWrapping="Wrap"
+                 Foreground="{StaticResource TextMutedBrush}"
+                 Text="当前已开启启动确认，请确认后继续。"/>
+      <TextBox Grid.Row="2"
+               x:Name="CommandText"
+               IsReadOnly="True"
+               FontFamily="Cascadia Code, Consolas"
+               FontSize="{StaticResource FontSizeSmall}"
+               AcceptsReturn="True"
+               TextWrapping="Wrap"
+               MinHeight="120"/>
+      <StackPanel Grid.Row="3"
+                  Orientation="Horizontal"
+                  HorizontalAlignment="Right"
+                  Spacing="8"
+                  Margin="{StaticResource DialogFooterMargin}">
+        <Button Content="取消"
+                Classes="secondary"
+                MinWidth="90"
+                IsCancel="True"
+                Click="OnCancelClicked"
+                automation:AutomationProperties.Name="取消启动"/>
+        <Button Content="确认启动"
+                Classes="primary"
+                MinWidth="110"
+                x:Name="LaunchButton"
+                Click="OnLaunchClicked"
+                automation:AutomationProperties.Name="确认启动"/>
+      </StackPanel>
+    </Grid>
+  </Border>
+</Window>

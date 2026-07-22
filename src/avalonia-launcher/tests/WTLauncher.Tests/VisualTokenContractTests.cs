@@ -28,7 +28,7 @@ public sealed partial class VisualTokenContractTests
     {
         var tokens = File.ReadAllText(TestRepositoryPaths.CoreSource("LauncherDesignTokens.cs"));
         var app = File.ReadAllText(TestRepositoryPaths.AppCodeBehind);
-        var entryDetails = File.ReadAllText(TestRepositoryPaths.View("EntryDetailsWindow.cs"));
+        var discoverAgents = File.ReadAllText(TestRepositoryPaths.View("DiscoverAgentsWindow.axaml.cs"));
         var drag = File.ReadAllText(TestRepositoryPaths.MainWindowDragCodeBehind);
         var xaml = Directory.EnumerateFiles(TestRepositoryPaths.AppSourceRoot, "*.axaml", SearchOption.AllDirectories)
             .Select(File.ReadAllText)
@@ -38,7 +38,7 @@ public sealed partial class VisualTokenContractTests
             Assert.Contains(token, tokens, StringComparison.Ordinal);
 
         Assert.Contains("LauncherDesignTokens.DragGhostShadowColor", drag, StringComparison.Ordinal);
-        Assert.Contains("LauncherDesignTokens.BadgeInfoForegroundColor", entryDetails, StringComparison.Ordinal);
+        Assert.Contains("LauncherDesignTokens.BadgeInfoForegroundColor", discoverAgents, StringComparison.Ordinal);
         Assert.Contains("Resources[\"NoBoxShadow\"]", app, StringComparison.Ordinal);
 
         foreach (var resource in new[] { "FontSizeSmall", "FontSizeBody", "FontSizeEmphasis" })

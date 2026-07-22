@@ -1,0 +1,54 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:automation="clr-namespace:Avalonia.Automation;assembly=Avalonia.Controls"
+        x:Class="WTLauncher.App.Views.ConfirmPresetDeleteWindow"
+        Title="删除启动组"
+        Width="560"
+        Height="280"
+        MinWidth="460"
+        MinHeight="220"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource SurfaceBrush}">
+  <Window.Styles>
+    <Style Selector="Button.destructive">
+      <Setter Property="Background" Value="{StaticResource DestructiveBrush}"/>
+      <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+  </Window.Styles>
+  <Border Padding="{StaticResource DialogOuterPadding}">
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="12">
+      <TextBlock Grid.Row="0"
+                 FontSize="{StaticResource DialogTitleFontSize}"
+                 FontWeight="SemiBold"
+                 Foreground="{StaticResource TextPrimaryBrush}"
+                 Text="删除这个启动组？"/>
+      <TextBlock Grid.Row="1"
+                 x:Name="BodyText"
+                 TextWrapping="Wrap"
+                 Foreground="{StaticResource TextMutedBrush}"/>
+      <TextBlock Grid.Row="2"
+                 x:Name="SubtleText"
+                 Foreground="{StaticResource TextMutedBrush}"/>
+      <StackPanel Grid.Row="3"
+                  Orientation="Horizontal"
+                  HorizontalAlignment="Right"
+                  Spacing="8"
+                  Margin="0,2,0,0">
+        <Button Content="取消"
+                Classes="secondary"
+                MinWidth="90"
+                IsDefault="True"
+                IsCancel="True"
+                x:Name="CancelButton"
+                Click="OnCancelClicked"
+                automation:AutomationProperties.Name="取消删除启动组"/>
+        <Button Content="删除启动组"
+                Classes="destructive"
+                MinWidth="110"
+                Click="OnDeleteClicked"
+                automation:AutomationProperties.Name="确认删除启动组"/>
+      </StackPanel>
+    </Grid>
+  </Border>
+</Window>

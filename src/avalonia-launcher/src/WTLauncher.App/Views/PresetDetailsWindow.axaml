@@ -1,0 +1,58 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:automation="clr-namespace:Avalonia.Automation;assembly=Avalonia.Controls"
+        x:Class="WTLauncher.App.Views.PresetDetailsWindow"
+        Title="保存为启动组"
+        Width="560"
+        Height="260"
+        MinWidth="480"
+        MinHeight="220"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource SurfaceBrush}">
+  <Border Padding="{StaticResource DialogOuterPadding}">
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="12">
+      <TextBlock Grid.Row="0"
+                 FontSize="{StaticResource DialogTitleFontSize}"
+                 FontWeight="SemiBold"
+                 Foreground="{StaticResource TextPrimaryBrush}"
+                 Text="保存当前勾选为新启动组"/>
+      <TextBlock Grid.Row="1"
+                 x:Name="SummaryText"
+                 TextWrapping="Wrap"
+                 Foreground="{StaticResource TextMutedBrush}"/>
+      <TextBlock Grid.Row="2"
+                 FontWeight="SemiBold"
+                 Foreground="{StaticResource TextPrimaryBrush}"
+                 Text="名称"/>
+      <TextBox Grid.Row="3"
+               x:Name="NameBox"
+               FontFamily="Cascadia Code, Consolas, Courier New, monospace"
+               FontSize="{StaticResource FontSizeBody}"
+               Padding="10,8"/>
+      <TextBlock Grid.Row="4"
+                 x:Name="ErrorText"
+                 IsVisible="False"
+                 TextWrapping="Wrap"
+                 Foreground="{StaticResource DestructiveBrush}"/>
+      <StackPanel Grid.Row="5"
+                  Orientation="Horizontal"
+                  HorizontalAlignment="Right"
+                  Spacing="8"
+                  Margin="{StaticResource DialogFooterMargin}">
+        <Button Content="取消"
+                Classes="secondary"
+                MinWidth="90"
+                IsDefault="True"
+                IsCancel="True"
+                x:Name="CancelButton"
+                Click="OnCancelClicked"
+                automation:AutomationProperties.Name="取消保存启动组"/>
+        <Button Content="保存启动组"
+                Classes="primary"
+                MinWidth="110"
+                Click="OnSaveClicked"
+                automation:AutomationProperties.Name="确认保存启动组"/>
+      </StackPanel>
+    </Grid>
+  </Border>
+</Window>

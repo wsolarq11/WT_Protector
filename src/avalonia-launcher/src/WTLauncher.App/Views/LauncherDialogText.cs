@@ -2,11 +2,17 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Media;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.Views;
 
+/// <summary>
+/// Shared UI utilities for theme-consistent dialog text.
+/// ponytail: retained for SafeParseBrush used by MainWindow.Drag.cs;
+/// dialog-specific factory methods migrated to XAML.
+/// </summary>
 internal static class LauncherDialogText
 {
     /// <summary>
@@ -25,8 +31,6 @@ internal static class LauncherDialogText
         }
     }
 
-    // All dialog text brushes reference LauncherDesignTokens instead of
-    // hardcoded color strings. Fallbacks remain in case a token is malformed.
     private static readonly IBrush TitleBrush = SafeParseBrush(LauncherDesignTokens.TextPrimaryColor, Brushes.Black);
     private static readonly IBrush BodyBrush = SafeParseBrush(LauncherDesignTokens.TextMutedColor, Brushes.Gray);
     private static readonly IBrush LabelBrush = SafeParseBrush(LauncherDesignTokens.DragHandleTextColor, Brushes.DimGray);
