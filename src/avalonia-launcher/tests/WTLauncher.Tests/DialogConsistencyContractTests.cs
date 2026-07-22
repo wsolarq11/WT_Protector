@@ -18,7 +18,7 @@ public sealed class DialogConsistencyContractTests
         Assert.Contains("Resources[\"DialogOuterPadding\"]", app, StringComparison.Ordinal);
         Assert.Contains("Resources[\"DialogFooterMargin\"]", app, StringComparison.Ordinal);
         Assert.Contains("Padding=\"{StaticResource DialogOuterPadding}\"", commandManagement, StringComparison.Ordinal);
-        Assert.Contains("FontSize=\"{StaticResource DialogTitleFontSize}\"", commandManagement, StringComparison.Ordinal);
+        Assert.Contains("Classes=\"dialog-title\"", commandManagement, StringComparison.Ordinal);
         Assert.Contains("Margin=\"{StaticResource DialogFooterMargin}\"", commandManagement, StringComparison.Ordinal);
     }
 

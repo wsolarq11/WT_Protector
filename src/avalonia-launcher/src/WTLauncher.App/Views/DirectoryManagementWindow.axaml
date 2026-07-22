@@ -13,55 +13,18 @@
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource SurfaceBrush}">
   <Window.Styles>
-    <Style Selector="ListBox.management-list">
-      <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="BorderThickness" Value="0"/>
-      <Setter Property="Padding" Value="0"/>
-    </Style>
-    <Style Selector="ListBox.management-list ListBoxItem">
-      <Setter Property="Padding" Value="0"/>
-      <Setter Property="Margin" Value="0,0,0,6"/>
-      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-    </Style>
-    <Style Selector="ListBox.management-list ListBoxItem /template/ ContentPresenter">
-      <Setter Property="Background" Value="Transparent"/>
-    </Style>
-    <Style Selector="ListBox.management-list ListBoxItem:selected Border.management-row">
-      <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
-    </Style>
-    <Style Selector="Border.management-row">
-      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
-      <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="CornerRadius" Value="6"/>
-      <Setter Property="Padding" Value="10,6"/>
-    </Style>
-    <Style Selector="TextBlock.mono-directory">
-      <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Courier New, monospace"/>
-      <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
-      <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-    </Style>
-    <Style Selector="TextBlock.muted-detail">
-      <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
-      <Setter Property="FontSize" Value="11"/>
-      <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-    </Style>
+    <StyleInclude Source="/Views/Dialogs/DialogSharedStyles.axaml"/>
   </Window.Styles>
-
   <Border Padding="{StaticResource DialogOuterPadding}">
     <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
       <TextBlock Grid.Row="0"
                  Text="地址集中管理"
-                 FontSize="{StaticResource DialogTitleFontSize}"
-                 FontWeight="SemiBold"
-                 Foreground="{StaticResource TextPrimaryBrush}"/>
+                 Classes="dialog-title"/>
       <TextBlock Grid.Row="1"
                  Margin="0,4,0,12"
                  TextWrapping="Wrap"
                  Foreground="{StaticResource TextMutedBrush}"
                  Text="列出每个 directory 的引用次数 — 双击改地址(可浏览),自动同步所有引用 entry。&#x0a;合并两个地址: 失效方 entry.directory 全部改成保留方。"/>
-
       <StackPanel Grid.Row="2"
                   Orientation="Horizontal"
                   Spacing="6"
@@ -90,7 +53,6 @@
                    Foreground="{StaticResource TextMutedBrush}"
                    automation:AutomationProperties.Name="地址管理状态"/>
       </StackPanel>
-
       <Border Grid.Row="3"
               BorderThickness="1"
               CornerRadius="10"
@@ -138,7 +100,6 @@
                      automation:AutomationProperties.Name="无地址引用，还没有任何启动按钮"/>
         </Grid>
       </Border>
-
       <StackPanel Grid.Row="4"
                   Orientation="Horizontal"
                   HorizontalAlignment="Right"

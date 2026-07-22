@@ -9,19 +9,12 @@
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource SurfaceBrush}">
   <Window.Styles>
-    <Style Selector="TextBlock.mono-preview">
-      <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Courier New, monospace"/>
-      <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
-      <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
-      <Setter Property="TextWrapping" Value="Wrap"/>
-    </Style>
+    <StyleInclude Source="/Views/Dialogs/DialogSharedStyles.axaml"/>
   </Window.Styles>
   <Border Padding="{StaticResource DialogOuterPadding}">
     <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
       <TextBlock Grid.Row="0"
-                 FontSize="{StaticResource DialogTitleFontSize}"
-                 FontWeight="SemiBold"
-                 Foreground="{StaticResource TextPrimaryBrush}"
+                 Classes="dialog-title"
                  Text="发现并添加 AI Agent CLI 启动项"/>
       <TextBlock Grid.Row="1"
                  x:Name="SubtitleText"
