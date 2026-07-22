@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:WTLauncher.App.Views"
+        xmlns:controls="clr-namespace:WTLauncher.App.Views.Controls"
         xmlns:core="clr-namespace:WTLauncher.Core;assembly=WTLauncher.Core"
         xmlns:automation="clr-namespace:Avalonia.Automation;assembly=Avalonia.Controls"
         xmlns:vm="clr-namespace:WTLauncher.App.ViewModels"
@@ -320,38 +321,6 @@
 
     <views:LauncherEntriesView x:Name="EntriesView" Grid.Row="1"/>
 
-    <Border Grid.Row="2"
-            Classes="status-panel"
-            Classes.status-success="{Binding IsStatusSuccess}"
-            Classes.status-warning="{Binding IsStatusWarning}"
-            Classes.status-error="{Binding IsStatusError}"
-            Background="{StaticResource SurfaceBrush}"
-            CornerRadius="16"
-            BorderBrush="{StaticResource CardBorderBrush}"
-            BorderThickness="1"
-            Padding="16">
-      <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*">
-        <TextBlock Classes="status-indicator"
-                   Text="{Binding StatusIndicator}"
-                   automation:AutomationProperties.Name="状态级别"
-                   automation:AutomationProperties.LiveSetting="Polite"
-                   Margin="0,0,8,0"
-                   FontSize="{StaticResource FontSizeBody}"
-                   FontWeight="Bold"
-                   Foreground="{StaticResource TextMutedBrush}"/>
-        <TextBlock Grid.Column="1"
-                   Text="{Binding StatusText}"
-                   automation:AutomationProperties.Name="状态信息"
-                   automation:AutomationProperties.LiveSetting="Polite"
-                   FontSize="{StaticResource FontSizeBody}"
-                   FontWeight="SemiBold"
-                   Foreground="{StaticResource TextPrimaryBrush}"/>
-        <TextBlock Grid.Row="1"
-                   Grid.ColumnSpan="2"
-                   Margin="0,8,0,0"
-                   Classes="mono"
-                   Text="{Binding DryRunText}"/>
-      </Grid>
-    </Border>
+    <controls:StatusBar Grid.Row="2"/>
   </Grid>
 </Window>

@@ -1,0 +1,170 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:core="clr-namespace:WTLauncher.Core;assembly=WTLauncher.Core"
+             xmlns:automation="clr-namespace:Avalonia.Automation;assembly=Avalonia.Controls"
+             xmlns:vm="clr-namespace:WTLauncher.App.ViewModels"
+             x:Class="WTLauncher.App.Views.Controls.DetailsView"
+             x:DataType="vm:MainWindowViewModel">
+  <Grid IsVisible="{Binding IsDetailedListMode}">
+    <Border Background="{StaticResource SurfaceBrush}"
+            CornerRadius="{StaticResource CardBorderRadius}"
+            BorderBrush="{StaticResource CardBorderBrush}"
+            BorderThickness="1"
+            ClipToBounds="True">
+      <Grid RowDefinitions="Auto,*">
+        <Border Classes="detail-header"
+                CornerRadius="{StaticResource CardBorderRadius}"
+                IsVisible="{Binding !IsVisibleEmpty}">
+          <Grid ColumnSpacing="12"
+                VerticalAlignment="Center">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto"/>
+              <ColumnDefinition Width="{StaticResource DetailsNameColumnWidth}"/>
+              <ColumnDefinition Width="{StaticResource DetailsDirectoryColumnWidth}"/>
+              <ColumnDefinition Width="{StaticResource DetailsCommandColumnWidth}"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <CheckBox IsEnabled="False"
+                      Opacity="0"
+                      IsHitTestVisible="False"
+                      Focusable="False"/>
+            <TextBlock Grid.Column="1"
+                       Classes="detail-header-text"
+                       Text="名称"/>
+            <TextBlock Grid.Column="2"
+                       Classes="detail-header-text"
+                       Text="目录"/>
+            <TextBlock Grid.Column="3"
+                       Classes="detail-header-text"
+                       Text="命令"/>
+          </Grid>
+        </Border>
+        <ListBox x:Name="DetailsEntriesItemsControl"
+                 Grid.Row="1"
+                 Classes="details-list"
+                 ItemsSource="{Binding VisibleEntries}">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:LauncherEntryViewModel">
+              <Border Classes="card detail-row"
+                      Classes.drag-target="{Binding IsDragPreviewTarget}"
+                      Classes.drag-source="{Binding IsDragPreviewSource}"
+                      Classes.selected="{Binding IsSelected}"
+                      Classes.keyboard-focused="{Binding IsKeyboardFocused}"
+                      ClipToBounds="True"
+                      HorizontalAlignment="Stretch"
+                      DoubleTapped="OnEntryRowDoubleTapped">
+                <Border.ContextMenu>
+                  <ContextMenu>
+                    <MenuItem Header="启动"
+                              AutomationProperties.Name="启动"
+                              Command="{Binding LaunchCommand}"/>
+                    <MenuItem Header="预演"
+                              AutomationProperties.Name="预演"
+                              Command="{Binding DryRunCommand}"/>
+                    <MenuItem Header="上移排序"
+                              AutomationProperties.Name="上移排序"
+                              InputGesture="Ctrl+Up"
+                              Command="{Binding MoveUpCommand}"/>
+                    <MenuItem Header="下移排序"
+                              AutomationProperties.Name="下移排序"
+                              InputGesture="Ctrl+Down"
+                              Command="{Binding MoveDownCommand}"/>
+                    <MenuItem Header="复制"
+                              AutomationProperties.Name="复制"
+                              InputGesture="Ctrl+D"
+                              Command="{Binding CloneCommand}"/>
+                    <MenuItem Header="编辑"
+                              AutomationProperties.Name="编辑"
+                              InputGesture="F2"
+                              Command="{Binding EditCommand}"/>
+                    <MenuItem Header="删除"
+                              AutomationProperties.Name="删除"
+                              InputGesture="Delete"
+                              Command="{Binding DeleteCommand}"/>
+                  </ContextMenu>
+                </Border.ContextMenu>
+                <Grid ColumnSpacing="12"
+                      VerticalAlignment="Center">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="{StaticResource DetailsNameColumnWidth}"/>
+                    <ColumnDefinition Width="{StaticResource DetailsDirectoryColumnWidth}"/>
+                    <ColumnDefinition Width="{StaticResource DetailsCommandColumnWidth}"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <Border Grid.ColumnSpan="5"
+                          Classes="drag-insert"
+                          ZIndex="10"
+                          Height="4"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Top"
+                          IsVisible="{Binding IsDragInsertBefore}"/>
+                  <Border Grid.ColumnSpan="5"
+                          Classes="drag-insert"
+                          ZIndex="10"
+                          Height="4"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Bottom"
+                          IsVisible="{Binding IsDragInsertAfter}"/>
+                  <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                            VerticalAlignment="Center"/>
+                  <TextBlock Grid.Column="1"
+                             Classes="card-title"
+                             FontSize="{Binding TitleFontSize}"
+                             MaxLines="1"
+                             ToolTip.Tip="{Binding Name}"
+                             Text="{Binding Name}"/>
+                  <TextBlock Grid.Column="2"
+                             Classes="mono"
+                             MaxLines="1"
+                             TextTrimming="PathSegmentEllipsis"
+                             ToolTip.Tip="{Binding Directory}"
+                             Text="{Binding Directory}"/>
+                  <TextBlock Grid.Column="3"
+                             Classes="mono"
+                             MaxLines="1"
+                             TextTrimming="CharacterEllipsis"
+                             ToolTip.Tip="{Binding Command}"
+                             Text="{Binding Command}"/>
+                  <StackPanel Grid.Column="4"
+                              Orientation="Horizontal"
+                              Spacing="8"
+                              VerticalAlignment="Center">
+                    <Button Classes="primary"
+                            Content="启动"
+                            AutomationProperties.Name="启动"
+                            Command="{Binding LaunchCommand}"/>
+                    <Button Classes="secondary more"
+                            Content="⋯"
+                            ToolTip.Tip="更多操作"
+                            AutomationProperties.Name="更多操作"
+                            Click="OnEntryMoreClicked"/>
+                    <Border Classes="entry-drag-handle"
+                            Cursor="Hand"
+                            ToolTip.Tip="拖拽排序"
+                            AutomationProperties.Name="拖拽排序"
+                            PointerPressed="OnEntryDragPointerPressed">
+                      <TextBlock Text="≡"
+                                 Foreground="{StaticResource TextMutedBrush}"
+                                 FontSize="{StaticResource FontSizeSmall}"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"/>
+                    </Border>
+                  </StackPanel>
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Grid>
+    </Border>
+    <TextBlock x:Name="EmptyStateDetailsText"
+               AutomationProperties.Name="无可见按钮"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center"
+               FontSize="{StaticResource FontSizeEmphasis}"
+               Foreground="{StaticResource TextMutedBrush}"
+               Text="{Binding EmptyStateText}"
+               IsVisible="{Binding IsVisibleEmpty}"/>
+  </Grid>
+</UserControl>
