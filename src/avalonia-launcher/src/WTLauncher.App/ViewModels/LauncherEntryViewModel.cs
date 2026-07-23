@@ -167,12 +167,15 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         RefreshLayoutPresentation();
     }
 
+    // ponytail: kept as empty method — called from RefreshDisplay() where
+    // ShowDirectory/ShowCommand/TitleFontSize don't depend on _entry/fields
+    // changed there. Notifications are handled by [NotifyPropertyChangedFor]
+    // on _layoutDensity when CardWidth/CardHeight change via UpdateLayoutFlags.
+    #pragma warning disable CA1822 // Member does not access instance data
     public void RefreshLayoutPresentation()
     {
-        OnPropertyChanged(nameof(ShowDirectory));
-        OnPropertyChanged(nameof(ShowCommand));
-        OnPropertyChanged(nameof(TitleFontSize));
     }
+    #pragma warning restore CA1822
 
     [RelayCommand]
     private void DryRun() => _owner.ShowDryRun(this);

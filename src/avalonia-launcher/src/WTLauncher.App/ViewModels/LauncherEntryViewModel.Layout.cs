@@ -1,3 +1,5 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace WTLauncher.App.ViewModels;
 
 public sealed partial class LauncherEntryViewModel
@@ -11,11 +13,17 @@ public sealed partial class LauncherEntryViewModel
     public const double CompactTitleFontSize = 16;
     public const double NormalTitleFontSize = 18;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsCompactLayout))]
+    [NotifyPropertyChangedFor(nameof(IsMicroLayout))]
+    [NotifyPropertyChangedFor(nameof(ShowDirectory))]
+    [NotifyPropertyChangedFor(nameof(ShowCommand))]
+    [NotifyPropertyChangedFor(nameof(TitleFontSize))]
     private LauncherEntryLayoutDensity _layoutDensity = LauncherEntryLayoutDensity.Normal;
 
-    public bool IsCompactLayout => _layoutDensity == LauncherEntryLayoutDensity.Compact;
+    public bool IsCompactLayout => LayoutDensity == LauncherEntryLayoutDensity.Compact;
 
-    public bool IsMicroLayout => _layoutDensity is LauncherEntryLayoutDensity.Micro;
+    public bool IsMicroLayout => LayoutDensity is LauncherEntryLayoutDensity.Micro;
 
     public bool ShowDirectory => ShouldShowDetailText(hideWhenCardsShrink: IsMicroLayout);
 
@@ -51,15 +59,7 @@ public sealed partial class LauncherEntryViewModel
 
     private void UpdateLayoutFlags()
     {
-        var density = MeasureLayoutDensity(CardWidth, CardHeight);
-
-        if (density == _layoutDensity)
-            return;
-
-        _layoutDensity = density;
-        OnPropertyChanged(nameof(IsCompactLayout));
-        OnPropertyChanged(nameof(IsMicroLayout));
-        RefreshLayoutPresentation();
+        LayoutDensity = MeasureLayoutDensity(CardWidth, CardHeight);
     }
 
     /// <summary>
@@ -89,7 +89,7 @@ public sealed partial class LauncherEntryViewModel
         => (int)a < (int)b ? a : b;
 }
 
-internal enum LauncherEntryLayoutDensity
+public enum LauncherEntryLayoutDensity
 {
     Normal,
     Compact,
