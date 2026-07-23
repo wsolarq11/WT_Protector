@@ -31,7 +31,9 @@ public sealed partial class MainWindowViewModel
         if (result.IsError)
         {
             _layoutManager.FilterText = _appStore.Select(s => s.Settings.LastFilterText);
+            StatusContent = LauncherStatusContent.Error("存储保存失败: " + result.Errors[0].Description);
         }
+        EnsureCustomOrderContainsEntries();
         ApplyFilter();
     }
 
@@ -47,6 +49,7 @@ public sealed partial class MainWindowViewModel
         {
             _layoutManager.SelectedSortMode = _layoutManager.ResolveSortMode(
                 _appStore.Select(s => s.Settings.SortMode));
+            StatusContent = LauncherStatusContent.Error("存储保存失败: " + result.Errors[0].Description);
         }
         else
         {
@@ -72,6 +75,7 @@ public sealed partial class MainWindowViewModel
                 _appStore.Select(s => s.Settings.EntryViewMode));
             _layoutManager.NotifyDisplayModeProjectionChanged();
             LauncherEntryLayoutPresentation.Refresh(_list.MutableEntries);
+            StatusContent = LauncherStatusContent.Error("存储保存失败: " + result.Errors[0].Description);
         }
         else
         {
@@ -144,7 +148,8 @@ public sealed partial class MainWindowViewModel
         }
         else
         {
-            // Drag path: still need to sync VisibleCount
+            // Drag path: discard preview and sync VisibleCount
+            DiscardDragReorderPreview();
             VisibleCount = _list.MutableVisibleEntries.Count;
             return;
         }
