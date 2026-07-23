@@ -39,11 +39,14 @@ public sealed class AppStore
     public void Mutate(Func<LauncherStoreFile, LauncherStoreFile> transform)
     {
         var before = _state;
+        Action<LauncherStoreFile>? handler = null;
+        LauncherStoreFile snapshot = default!;
         try
         {
             _state = transform(_state);
             LauncherStore.Save(_state, _storePath, backup: true);
-            _stateChanged?.Invoke(_state);
+            handler = _stateChanged;
+            snapshot = _state;
         }
         catch (Exception ex) when (IsRecoverable(ex))
         {
@@ -52,16 +55,20 @@ public sealed class AppStore
             _onRecovery?.Invoke(ex, "AppStore.Mutate rolled back");
             throw;
         }
+        handler?.Invoke(snapshot);
     }
 
     public async Task MutateAsync(Func<LauncherStoreFile, Task<LauncherStoreFile>> transform)
     {
         var before = _state;
+        Action<LauncherStoreFile>? handler = null;
+        LauncherStoreFile snapshot = default!;
         try
         {
             _state = await transform(_state).ConfigureAwait(true);
             LauncherStore.Save(_state, _storePath, backup: true);
-            _stateChanged?.Invoke(_state);
+            handler = _stateChanged;
+            snapshot = _state;
         }
         catch (Exception ex) when (IsRecoverable(ex))
         {
@@ -70,17 +77,21 @@ public sealed class AppStore
             _onRecovery?.Invoke(ex, "AppStore.MutateAsync rolled back");
             throw;
         }
+        handler?.Invoke(snapshot);
     }
 
     /// <summary>Mutate state with ErrorOr return, rolling back on recoverable failures.</summary>
     public ErrorOr<Success> MutateErrorOr(Func<LauncherStoreFile, LauncherStoreFile> transform)
     {
         var before = _state;
+        Action<LauncherStoreFile>? handler = null;
+        LauncherStoreFile snapshot = default!;
         try
         {
             _state = transform(_state);
             LauncherStore.Save(_state, _storePath, backup: true);
-            _stateChanged?.Invoke(_state);
+            handler = _stateChanged;
+            snapshot = _state;
             return Result.Success;
         }
         catch (Exception ex) when (IsRecoverable(ex))
@@ -89,6 +100,10 @@ public sealed class AppStore
             ErrorLog.Write(ex, "AppStore.MutateErrorOr rolled back");
             _onRecovery?.Invoke(ex, "AppStore.MutateErrorOr rolled back");
             return LauncherErrors.ConfigSaveFailed(ex.Message);
+        }
+        finally
+        {
+            handler?.Invoke(snapshot);
         }
     }
 
