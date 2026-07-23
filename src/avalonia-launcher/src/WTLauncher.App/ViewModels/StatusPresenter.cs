@@ -72,14 +72,6 @@ public sealed partial class StatusPresenter : ObservableObject
         }
     }
 
-    public void RefreshCount(int total, int visible, int selected, int presets)
-    {
-        TotalCount = total;
-        VisibleCount = visible;
-        SelectedCount = selected;
-        PresetCount = presets;
-    }
-
     /// <summary>
     /// Records non-neutral status texts into the bounded receipt history.
     /// Success, Warning, and Error tones are preserved for review.

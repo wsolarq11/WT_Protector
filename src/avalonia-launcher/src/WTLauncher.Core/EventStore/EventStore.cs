@@ -2,6 +2,10 @@ using System.Text.Json;
 
 namespace WTLauncher.Core.EventStore;
 
+// ponytail: Dead code - Event Sourcing was evaluated and scoped out as
+// "No-Go" during architecture review (see docs/research/architecture-patterns-survey.md).
+// The complexity cost exceeded the benefit for the current project scale.
+// Keep as reference implementation in case audit requirements emerge later.
 public sealed class EventStore
 {
     private readonly string _eventLogPath;
@@ -24,7 +28,7 @@ public sealed class EventStore
 
     /// <summary>
     /// Rebuilds the store file by replaying all events from the JSONL log
-    /// on top of the initial snapshot. This is a simplified version —
+    /// on top of the initial snapshot. This is a simplified version --
     /// in production, implement incremental snapshots for large logs.
     /// </summary>
     public LauncherStoreFile RebuildStore(LauncherStoreFile initial)

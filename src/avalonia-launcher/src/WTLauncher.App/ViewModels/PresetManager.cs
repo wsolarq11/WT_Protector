@@ -52,11 +52,6 @@ public sealed partial class PresetManager : ObservableObject
         return (_presetFile, SelectedPreset?.Id);
     }
 
-    public void RestoreSnapshot((LauncherPresetFile File, string? SelectedPresetId) snapshot)
-    {
-        Load(snapshot.File, snapshot.SelectedPresetId);
-    }
-
     public void ApplyPresetMutation(LauncherPresetFile updatedFile, string? targetPresetId)
     {
         _presetFile = updatedFile;

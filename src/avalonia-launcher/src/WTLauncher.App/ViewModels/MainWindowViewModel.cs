@@ -18,9 +18,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 {
     internal readonly AppStore _appStore;
     private readonly string _storePath;
-#pragma warning disable IDE0044 // Set during construction; can't be readonly
-    private bool _constructed;
-#pragma warning restore IDE0044
+    private bool _initialized;
     private LauncherSettings _settings;
     internal readonly LaunchOrchestrator _launchOrchestrator;
     private readonly IDialogService _dialogService;
@@ -148,7 +146,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _list.EntryMoverUpChecker = CanMoveEntryUp;
         _list.EntryMoverDown = MoveEntryDown;
         _list.EntryMoverDownChecker = CanMoveEntryDown;
-        _list.EntriesChanged += OnEntriesChanged;
         _list.CountChanged += OnEntryCountChanged;
         // Init layout state from settings.
         _ = RequireSettingsText(_settings.LastFilterText, "lastFilterText");
@@ -206,12 +203,19 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
                 new LauncherPresetFile { Presets = state.Presets, DefaultPresetId = state.DefaultPresetId },
                 _presetManager.SelectedPreset?.Id);
         });
-        _constructed = true;
     }
-
+    
+    /// <summary>Post-construction initialization. Subscribes to entry change
+    /// events that must be suppressed during construction.</summary>
+    internal void InitializeAsync()
+    {
+        _list.EntriesChanged += OnEntriesChanged;
+        _initialized = true;
+    }
+    
     private void OnEntriesChanged()
     {
-        if (!_constructed) return;
+        if (!_initialized) return;
         RefreshAllProjections();
     }
 

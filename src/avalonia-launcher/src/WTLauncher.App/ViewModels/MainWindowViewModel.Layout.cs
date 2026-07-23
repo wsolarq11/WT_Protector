@@ -1,5 +1,6 @@
 using Avalonia;
 using WTLauncher.App.Features;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -10,27 +11,6 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
-    // Prevents infinite recursion when a settings save failure triggers
-    // a property rollback that re-enters the event handler.
-    private bool _isHandlingSettingsChange;
-
-    /// <summary>
-    /// Attempts to begin a settings change scope. Returns false if already
-    /// inside a settings change (re-entrant call), in which case the caller
-    /// should return immediately without proceeding.
-    /// </summary>
-    private bool TryBeginSettingsChange()
-    {
-        if (_isHandlingSettingsChange) return false;
-        _isHandlingSettingsChange = true;
-        return true;
-    }
-
-    /// <summary>
-    /// Ends the settings change scope, allowing re-entrant calls to proceed.
-    /// </summary>
-    private void EndSettingsChange() => _isHandlingSettingsChange = false;
-
     // P1: Reusable collections for SyncVisibleEntries — Clear() preserves internal
     // bucket array capacity in .NET, eliminating per-call GC allocations (~2-3KB
     // per keystroke for ~200 entries).
@@ -43,108 +23,77 @@ public sealed partial class MainWindowViewModel
 
     private void OnLayoutFilterChanged()
     {
-        if (!TryBeginSettingsChange()) return;
-        try
+        // ponytail: Uses DispatchErrorOr for persistence — AppStore handles
+        // snapshot+rollback internally. No re-entrancy guard needed because
+        // DispatchErrorOr is synchronous and rollback doesn't re-trigger this handler.
+        var result = _appStore.DispatchErrorOr(
+            s => StoreReducers.UpdateSettings(s, s.Settings with { LastFilterText = _layoutManager.FilterText }));
+        if (result.IsError)
         {
-            if (TryPersistSettingsChange(s => s with { LastFilterText = _layoutManager.FilterText }))
-            {
-                ApplyFilter();
-            }
-            else
-            {
-                // Rollback — restore FilterText from _settings.
-                _layoutManager.FilterText = _settings.LastFilterText;
-                ApplyFilter();
-            }
+            _layoutManager.FilterText = _appStore.Select(s => s.Settings.LastFilterText);
         }
-        finally
-        {
-            EndSettingsChange();
-        }
+        ApplyFilter();
     }
 
     private void OnLayoutSortChanged()
     {
-        if (!TryBeginSettingsChange()) return;
-        try
-        {
-            var sortMode = _layoutManager.SelectedSortMode;
-            sortMode = sortMode ?? throw new InvalidOperationException("Launcher sort mode selection is required.");
-            EnsureCustomOrderContainsEntries();
+        var sortMode = _layoutManager.SelectedSortMode;
+        sortMode = sortMode ?? throw new InvalidOperationException("Launcher sort mode selection is required.");
+        EnsureCustomOrderContainsEntries();
 
-            if (TryPersistSettingsChange(
-                s => s with { SortMode = sortMode.Id },
-                LauncherSettingsStatus.SortModeSaved(sortMode.Label)))
-            {
-                OnPropertyChanged(nameof(IsCustomSortMode));
-                ApplyFilter();
-                RefreshReorderCommandState();
-            }
-            else
-            {
-                _layoutManager.SelectedSortMode = _layoutManager.ResolveSortMode(_settings.SortMode);
-                ApplyFilter();
-                RefreshReorderCommandState();
-            }
-        }
-        finally
+        var result = _appStore.DispatchErrorOr(
+            s => StoreReducers.SetSortMode(s, sortMode.Id));
+        if (result.IsError)
         {
-            EndSettingsChange();
+            _layoutManager.SelectedSortMode = _layoutManager.ResolveSortMode(
+                _appStore.Select(s => s.Settings.SortMode));
         }
+        else
+        {
+            StatusContent = LauncherSettingsStatus.SortModeSaved(sortMode.Label);
+            OnPropertyChanged(nameof(IsCustomSortMode));
+        }
+        ApplyFilter();
+        RefreshReorderCommandState();
     }
 
     private void OnLayoutViewModeChanged()
     {
-        if (!TryBeginSettingsChange()) return;
-        try
+        var displayMode = _layoutManager.SelectedDisplayMode;
+        displayMode = displayMode ?? throw new InvalidOperationException("Launcher entry view mode selection is required.");
+        _layoutManager.NotifyDisplayModeProjectionChanged();
+        LauncherEntryLayoutPresentation.Refresh(_list.MutableEntries);
+
+        var result = _appStore.DispatchErrorOr(
+            s => StoreReducers.SetViewMode(s, displayMode.Id));
+        if (result.IsError)
         {
-            var displayMode = _layoutManager.SelectedDisplayMode;
-            displayMode = displayMode ?? throw new InvalidOperationException("Launcher entry view mode selection is required.");
+            _layoutManager.SelectedDisplayMode = _layoutManager.ResolveDisplayMode(
+                _appStore.Select(s => s.Settings.EntryViewMode));
             _layoutManager.NotifyDisplayModeProjectionChanged();
             LauncherEntryLayoutPresentation.Refresh(_list.MutableEntries);
-
-            if (TryPersistSettingsChange(
-                s => s with { EntryViewMode = displayMode.Id },
-                LauncherSettingsStatus.DisplayModeSaved(displayMode.Label)))
-            {
-                // Success — status already set by helper.
-            }
-            else
-            {
-                _layoutManager.SelectedDisplayMode = _layoutManager.ResolveDisplayMode(_settings.EntryViewMode);
-                _layoutManager.NotifyDisplayModeProjectionChanged();
-                LauncherEntryLayoutPresentation.Refresh(_list.MutableEntries);
-            }
         }
-        finally
+        else
         {
-            EndSettingsChange();
+            StatusContent = LauncherSettingsStatus.DisplayModeSaved(displayMode.Label);
         }
     }
 
     private void OnLayoutGroupKeyChanged()
     {
-        if (!TryBeginSettingsChange()) return;
-        try
+        var result = _appStore.DispatchErrorOr(
+            s => StoreReducers.UpdateSettings(s, s.Settings with { CardsGroupKey = _layoutManager.CardsGroupKey }));
+        if (result.IsError)
         {
-            _settings = _settings with { CardsGroupKey = _layoutManager.CardsGroupKey };
-            var saveFailure = SaveStoreFile(BuildStoreFile());
-            if (saveFailure is not null)
-            {
-                var oldCardsGroupKey = _appStore.Select(s => s.Settings.CardsGroupKey);
-                // Restore LayoutManager BEFORE RestoreVmStateFromStore so that
-                // ApplyFilter → RebuildVisibleGroups reads the correct old key.
-                _layoutManager.SetGroupKeyDirect(oldCardsGroupKey);
-                RestoreVmStateFromStore();
-                StatusContent = LauncherStatusContent.Error(saveFailure);
-                return;
-            }
-            RebuildVisibleGroups();
+            var oldCardsGroupKey = _appStore.Select(s => s.Settings.CardsGroupKey);
+            // Restore LayoutManager BEFORE RestoreVmStateFromStore so that
+            // ApplyFilter → RebuildVisibleGroups reads the correct old key.
+            _layoutManager.SetGroupKeyDirect(oldCardsGroupKey);
+            RestoreVmStateFromStore();
+            StatusContent = LauncherStatusContent.Error(result.Errors[0].Description);
+            return;
         }
-        finally
-        {
-            EndSettingsChange();
-        }
+        RebuildVisibleGroups();
     }
 
     /// <summary>

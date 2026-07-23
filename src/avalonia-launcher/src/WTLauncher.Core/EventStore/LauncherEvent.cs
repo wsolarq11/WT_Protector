@@ -3,6 +3,8 @@ using WTLauncher.Core;
 
 namespace WTLauncher.Core.EventStore;
 
+// ponytail: Dead code - Event Sourcing was evaluated and scoped out as
+// "No-Go" during architecture review. Keep as reference.
 [JsonDerivedType(typeof(EntryAddedEvent), typeDiscriminator: "entryAdded")]
 [JsonDerivedType(typeof(EntryRemovedEvent), typeDiscriminator: "entryRemoved")]
 [JsonDerivedType(typeof(EntryUpdatedEvent), typeDiscriminator: "entryUpdated")]

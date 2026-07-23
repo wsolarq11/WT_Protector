@@ -2,11 +2,8 @@ using System.Text.Json.Serialization;
 
 namespace WTLauncher.Core.EventStore;
 
-/// <summary>
-/// Source-generated JSON serialization context for EventStore types.
-/// Required for Native AOT compatibility — the reflection-based overloads
-/// (Serialize(object, Type, ...)) trigger IL2026/IL3050 in trimmed builds.
-/// </summary>
+// ponytail: Dead code - Event Sourcing was evaluated and scoped out as
+// "No-Go" during architecture review. Keep as reference.
 [JsonSerializable(typeof(LauncherEvent))]
 [JsonSerializable(typeof(EntryAddedEvent))]
 [JsonSerializable(typeof(EntryRemovedEvent))]
