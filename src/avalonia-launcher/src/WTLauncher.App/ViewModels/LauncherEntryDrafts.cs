@@ -1,7 +1,4 @@
 using WTLauncher.Core;
-// DirectoryPath 仅在 Line 43 的强制转换中使用，为避免 EntryId/EntryName
-// 与 WTLauncher.Core.ValueObjects 的歧义，此处仅导入 DirectoryPath。
-using DirectoryPath = WTLauncher.Core.ValueObjects.DirectoryPath;
 namespace WTLauncher.App.ViewModels;
 
 public sealed record EntryDraft(
@@ -42,7 +39,7 @@ public static class LauncherEntryDrafts
         {
             Id = normalized.Id,
             Name = normalized.Name,
-            Directory = (VO.DirectoryPath)normalized.Directory,
+            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)normalized.Directory,
             Command = normalized.Command,
             Selected = normalized.Selected,
             UpdatedAtUtc = previousEntry?.UpdatedAtUtc ?? string.Empty,
