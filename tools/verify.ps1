@@ -603,6 +603,10 @@ if ($violations.Count -gt 0) {
 }
 Add-Check 'no-imperative-view-ui' @{ viewsScanned = $true; violations = $violations.Count; allowedExceptions = $whitelisted }
 
+# ponytail: Scans for `Path.GetFullPath(` in DirectoryPath.cs only. If the
+# normalization moves to a different class or method (e.g. LaunchEntry.cs
+# ExpandEnvironmentVariables), this gate misses the regression. Upgrade path:
+# add a second scan pattern for the new location.
 # Security audit F1 (2026-07-23): DirectoryPath deserialization must normalize via Path.GetFullPath.
 # Regression gate: the JSON converter Read method must contain "Path.GetFullPath".
 $directoryPathConverterPath = Get-RepoPath 'src\avalonia-launcher\src\WTLauncher.Core\ValueObjects\DirectoryPath.cs'
@@ -616,6 +620,10 @@ Add-Check 'security-audit-f1-path-getfullpath' @{
     pass = $true
 }
 
+# ponytail: Checks that `knownEntryIds` string appears in IPresetService.cs.
+# A rename of the parameter or migration to a different interface (e.g.
+# IPresetValidator) would bypass this gate. Upgrade path: add the new interface
+# name to the scan pattern.
 # Security audit F2 (2026-07-23): IPresetService.AddPreset must validate entryIds against knownEntryIds.
 # Regression gate: IPresetService interface must have a knownEntryIds parameter on AddPreset.
 $presetServiceInterfacePath = Get-RepoPath 'src\avalonia-launcher\src\WTLauncher.App\Features\Presets\IPresetService.cs'
@@ -629,6 +637,10 @@ Add-Check 'security-audit-f2-preset-entryid-validate' @{
     pass = $true
 }
 
+# ponytail: Checks that `LatinScript` appears in EntryId.cs. If the whitelist
+# is renamed (e.g. LatinScriptRanges -> AllowedScriptRanges) or moved to a
+# helper class, this gate misses the regression. Upgrade path: add the new
+# class/member name to the scan pattern.
 # Security audit F3 (2026-07-23): EntryId must enforce Latin script whitelist.
 # Regression gate: EntryId.cs must contain EnsureLatinScript or LatinScriptRanges.
 $entryIdPath = Get-RepoPath 'src\avalonia-launcher\src\WTLauncher.Core\ValueObjects\EntryId.cs'
