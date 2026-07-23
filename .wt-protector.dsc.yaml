@@ -11,7 +11,7 @@
 #
 # Agent CLIs that ship via `irm | iex` (claude, codex) cannot be installed
 # through winget today; install those manually then run the launcher's
-# "🔍 发现" button to import them as launch entries.
+# "发现" (discover) button to import them as launch entries.
 
 properties:
   assertions:
@@ -20,7 +20,7 @@ properties:
         description: Verify Windows 10 1809+ (WinGet minimum requirement)
         allowPrerelease: true
       settings:
-        MinVersion: '10.0.17763'
+        MinVersion: "10.0.17763"
   resources:
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: windowsTerminal
@@ -68,7 +68,7 @@ properties:
     # claude / codex / cursor / antigravity / gemini / qwen-code:
     #   These agents do not currently ship as winget packages. Install
     #   them via the publisher's documented method (typically `irm | iex`
-    #   for npm-based installers), then run the launcher's 🔍 发现 button
+    #   for npm-based installers), then run the launcher's "发现" (discover) button
     #   to import them as launch entries.
 
   configurationVersion: 0.2.0

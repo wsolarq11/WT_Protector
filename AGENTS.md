@@ -23,7 +23,7 @@ WT_Protector/
 │       ├── tests/WTLauncher.Tests/ → 61测试文件, xUnit
 │       ├── run.ps1        → 开发运行
 │       └── verify.ps1     → 主线门禁（restore → test → publish → GUI smoke）
-├── tools/                 → 🧰 脚本工具箱（详见下方）
+├── tools/                 → 脚本工具箱（详见下方）
 ├── docs/                  → 设计审计、基准对标、巨人肩膀库
 │   ├── feature-reality-north-star-audit.md → 22项功能审计 + 声明边界账本
 │   ├── feature-first-class-upgrade-audit.md → 23项功能一等公民改造审计 (2026-06-10)
@@ -35,16 +35,16 @@ WT_Protector/
     └── README.md          → 退役说明
 ```
 
-## 🧰 脚本工具箱 (tools/)
+## 脚本工具箱 (tools/)
 
-| 脚本                                          | 用途                                                                                                                                                                                                     | 何时用                                               |
-| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| 脚本                                          | 用途                                                                                                                                                                                                                                                                                                                                          | 何时用                                               |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
 | `verify.ps1`                                  | **全量门禁**：19 项检查（行尾策略、`.snow/` 忽略状态、退役路径、主线布局、README、功能审计、声明边界、GitHub 快照、launcher.json schema、config-schema、presets-schema、settings-json、settings-single-source、no-stale-three-file-refs、快捷方式退役、WinForms 退役、HTA 归档、winget-config-schema-valid、Avalonia 主线测试+发布+GUI 冒烟） | 每次提交前；声称"完成"前                             |
-| `build-release.ps1`                           | **稳定发布构建**：win-x64 self-contained publish → `src/avalonia-launcher/artifacts/publish/win-x64/`                                                                                                    | 需要产出可分发的 exe 时                              |
-| `apply-machine-config.ps1`                    | **新机配置包装器**：`winget configure --file .wt-protector.dsc.yaml`；`-DryRun` 仅 validate                                                                                                              | 拿到新 Windows 机器、想一键声明式安装前置依赖时      |
-| `config-lib.ps1`                              | **共享 PowerShell 函数库**：被 verify.ps1、build-release.ps1 等引用                                                                                                                                      | 不直接调用；被其他脚本 dot-source                    |
-| `test-launch-args.ps1`                        | **聚焦测试**：仅运行 LaunchArgumentBuilder 测试                                                                                                                                                          | 快速验证启动参数逻辑                                 |
-| `update-github-similar-projects-snapshot.ps1` | **刷新 GitHub 对标快照**：通过 `gh repo view` 拉取 12 个对标项目的最新数据                                                                                                                               | 需要更新市场对标证据时（快照超过 30 天会被门禁拒绝） |
+| `build-release.ps1`                           | **稳定发布构建**：win-x64 self-contained publish → `src/avalonia-launcher/artifacts/publish/win-x64/`                                                                                                                                                                                                                                         | 需要产出可分发的 exe 时                              |
+| `apply-machine-config.ps1`                    | **新机配置包装器**：`winget configure --file .wt-protector.dsc.yaml`；`-DryRun` 仅 validate                                                                                                                                                                                                                                                   | 拿到新 Windows 机器、想一键声明式安装前置依赖时      |
+| `config-lib.ps1`                              | **共享 PowerShell 函数库**：被 verify.ps1、build-release.ps1 等引用                                                                                                                                                                                                                                                                           | 不直接调用；被其他脚本 dot-source                    |
+| `test-launch-args.ps1`                        | **聚焦测试**：仅运行 LaunchArgumentBuilder 测试                                                                                                                                                                                                                                                                                               | 快速验证启动参数逻辑                                 |
+| `update-github-similar-projects-snapshot.ps1` | **刷新 GitHub 对标快照**：通过 `gh repo view` 拉取 12 个对标项目的最新数据                                                                                                                                                                                                                                                                    | 需要更新市场对标证据时（快照超过 30 天会被门禁拒绝） |
 
 ## 藤曼路径 (Vine Trail) — 新会话导航
 
@@ -67,6 +67,7 @@ WT_Protector/
 - 配置文件 `config/launcher.json` 是唯一权威源（entries + presets + settings + defaultPresetId 一体），无 AppData/registry 后备
 
 <!-- TRELLIS:START -->
+
 # Trellis Instructions
 
 These instructions are for AI assistants working in this project.
@@ -81,6 +82,7 @@ This project is managed by Trellis. The working knowledge you need lives under `
 If a Trellis command is available on your platform (e.g. `/trellis:finish-work`, `/trellis:continue`), prefer it over manual steps. Not every platform exposes every command.
 
 If you're using Codex or another agent-capable tool, additional project-scoped helpers may live in:
+
 - `.agents/skills/` — reusable Trellis skills
 - `.codex/agents/` — optional custom subagents
 

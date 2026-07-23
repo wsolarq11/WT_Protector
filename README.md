@@ -159,7 +159,7 @@ WinGet Configuration vs the launcher — different concerns, complementary layer
 - **WinGet Configuration** sets up the _machine_: "what's installed on this Windows host". Run once on a fresh machine.
 - **The launcher** manages the _workspace_: "which project folders open in `wt.exe` with which command". Daily use.
 
-Agent CLIs that ship via `irm | iex` (`claude`, `codex`, `cursor`, `antigravity`, `gemini`, `qwen-code`) are not winget packages today. Install them per the publisher's documented method, then run the launcher's 🔍 发现 button to import them as launch entries — the two layers compose: WinGet/irm installs the binary, the launcher wires it into a workspace button.
+Agent CLIs that ship via `irm | iex` (`claude`, `codex`, `cursor`, `antigravity`, `gemini`, `qwen-code`) are not winget packages today. Install them per the publisher's documented method, then run the launcher's "发现" (discover) button to import them as launch entries — the two layers compose: WinGet/irm installs the binary, the launcher wires it into a workspace button.
 
 ## Build and verification
 
@@ -169,7 +169,7 @@ Run the project gate from the repository root:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
 ```
 
-The verifier currently enforces 22 checks — see the `Add-Check` calls in `tools/verify.ps1` for the canonical list. Summary by category:
+The verifier currently enforces a growing set of checks — see the `Add-Check` calls in `tools/verify.ps1` for the canonical list. Summary by category:
 
 - **repo hygiene**: line-ending policy (LF), `.snow/` ignored local state, retired paths (`WT Launcher.exe`, `src/winforms-launcher/`, `spikes/`) do not return;
 - **mainline layout**: `src/avalonia-launcher/` has the solution, app project, tests project, and mainline verify script;
@@ -250,8 +250,8 @@ The Avalonia mainline supports:
 - a Cards / Details (“详细列表”) / Names (“名称墙”) view mode toggle for readable actions, dense scanning, and overview;
 - header actions for selecting all visible items or clearing the saved selection;
 - add/edit/delete/clone launch buttons inside the app, with every editable field saved back to portable config; right-click "复制副本" creates a deep copy of an entry;
-- 🔍 **AI Agent CLI auto-discovery** ("🔍 发现" button): scans PATH for installed agent CLIs (claude / codex / cursor / antigravity / gemini / opencode / aider / qwen-code), detects versions, and imports selected ones as launcher entries in one click — already-added agents are greyed out and deduped;
-- 🎨 **Per-agent brand badges**: each catalog-known agent shows a small colored badge (approximate brand color + 2-letter glyph) on its card and in the discovery dialog, so Claude / Codex / Cursor / etc. are visually distinguishable at a glance;
+- **AI Agent CLI auto-discovery** ("发现" button): scans PATH for installed agent CLIs (claude / codex / cursor / antigravity / gemini / opencode / aider / qwen-code), detects versions, and imports selected ones as launcher entries in one click — already-added agents are greyed out and deduped;
+- **Per-agent brand badges**: each catalog-known agent shows a small colored badge (approximate brand color + 2-letter glyph) on its card and in the discovery dialog, so Claude / Codex / Cursor / etc. are visually distinguishable at a glance;
 - named launch groups/presets that replace the saved selection through explicit apply;
 - first-class launch group actions: save current selection as a new group, update the current group from current selection, and delete editable groups;
 - direct launch of the current group without rewriting checkbox selection first;
