@@ -5,7 +5,7 @@ public sealed class MainWindowStatusPresentationContractTests
     [Fact]
     public void MainWindow_StatusPanelKeepsAuthoritativeTextAndNonColorCue()
     {
-        var xaml = File.ReadAllText(TestRepositoryPaths.MainWindowXaml);
+        var xaml = File.ReadAllText(TestRepositoryPaths.View(Path.Combine("Controls", "StatusBar.axaml")));
 
         Assert.Contains("Classes=\"status-panel\"", xaml, StringComparison.Ordinal);
         Assert.Contains("Classes.status-success=\"{Binding IsStatusSuccess}\"", xaml, StringComparison.Ordinal);
