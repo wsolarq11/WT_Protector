@@ -12,10 +12,24 @@ public sealed partial class MainWindowViewModel
 {
     // Prevents infinite recursion when a settings save failure triggers
     // a property rollback that re-enters the event handler.
-    // NOTE: This guard pattern is intentionally duplicated in each handler
-    // rather than extracted into a shared helper — each callback has distinct
-    // validation and persistence logic that would make a common abstraction brittle.
     private bool _isHandlingSettingsChange;
+
+    /// <summary>
+    /// Attempts to begin a settings change scope. Returns false if already
+    /// inside a settings change (re-entrant call), in which case the caller
+    /// should return immediately without proceeding.
+    /// </summary>
+    private bool TryBeginSettingsChange()
+    {
+        if (_isHandlingSettingsChange) return false;
+        _isHandlingSettingsChange = true;
+        return true;
+    }
+
+    /// <summary>
+    /// Ends the settings change scope, allowing re-entrant calls to proceed.
+    /// </summary>
+    private void EndSettingsChange() => _isHandlingSettingsChange = false;
 
     // P1: Reusable collections for SyncVisibleEntries — Clear() preserves internal
     // bucket array capacity in .NET, eliminating per-call GC allocations (~2-3KB
@@ -29,8 +43,7 @@ public sealed partial class MainWindowViewModel
 
     private void OnLayoutFilterChanged()
     {
-        if (_isHandlingSettingsChange) return;
-        _isHandlingSettingsChange = true;
+        if (!TryBeginSettingsChange()) return;
         try
         {
             if (TryPersistSettingsChange(s => s with { LastFilterText = _layoutManager.FilterText }))
@@ -46,14 +59,13 @@ public sealed partial class MainWindowViewModel
         }
         finally
         {
-            _isHandlingSettingsChange = false;
+            EndSettingsChange();
         }
     }
 
     private void OnLayoutSortChanged()
     {
-        if (_isHandlingSettingsChange) return;
-        _isHandlingSettingsChange = true;
+        if (!TryBeginSettingsChange()) return;
         try
         {
             var sortMode = _layoutManager.SelectedSortMode;
@@ -77,14 +89,13 @@ public sealed partial class MainWindowViewModel
         }
         finally
         {
-            _isHandlingSettingsChange = false;
+            EndSettingsChange();
         }
     }
 
     private void OnLayoutViewModeChanged()
     {
-        if (_isHandlingSettingsChange) return;
-        _isHandlingSettingsChange = true;
+        if (!TryBeginSettingsChange()) return;
         try
         {
             var displayMode = _layoutManager.SelectedDisplayMode;
@@ -107,14 +118,13 @@ public sealed partial class MainWindowViewModel
         }
         finally
         {
-            _isHandlingSettingsChange = false;
+            EndSettingsChange();
         }
     }
 
     private void OnLayoutGroupKeyChanged()
     {
-        if (_isHandlingSettingsChange) return;
-        _isHandlingSettingsChange = true;
+        if (!TryBeginSettingsChange()) return;
         try
         {
             _settings = _settings with { CardsGroupKey = _layoutManager.CardsGroupKey };
@@ -133,7 +143,7 @@ public sealed partial class MainWindowViewModel
         }
         finally
         {
-            _isHandlingSettingsChange = false;
+            EndSettingsChange();
         }
     }
 
