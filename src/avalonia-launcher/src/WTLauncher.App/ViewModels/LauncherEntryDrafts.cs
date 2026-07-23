@@ -1,5 +1,4 @@
 using WTLauncher.Core;
-using WTLauncher.Core.ValueObjects;
 namespace WTLauncher.App.ViewModels;
 
 public sealed record EntryDraft(
@@ -40,7 +39,7 @@ public static class LauncherEntryDrafts
         {
             Id = normalized.Id,
             Name = normalized.Name,
-            Directory = (DirectoryPath)normalized.Directory,
+            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)normalized.Directory,
             Command = normalized.Command,
             Selected = normalized.Selected,
             UpdatedAtUtc = previousEntry?.UpdatedAtUtc ?? string.Empty,
