@@ -11,12 +11,6 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
-    // P1: Reusable collections for SyncVisibleEntries — Clear() preserves internal
-    // bucket array capacity in .NET, eliminating per-call GC allocations (~2-3KB
-    // per keystroke for ~200 entries).
-    private readonly HashSet<LauncherEntryViewModel> _syncSortedSet = new();
-    private readonly Dictionary<LauncherEntryViewModel, int> _syncPositionByEntry = new();
-
     public IReadOnlyList<string> SearchHistoryItems => _settings.SearchHistory;
 
     // Layout event handlers — persist settings, then apply filter / refresh.
@@ -174,74 +168,11 @@ public sealed partial class MainWindowViewModel
         OnPropertyChanged(nameof(SearchHistoryItems));
     }
 
-    /// <summary>
-    /// P5: O(n) incremental sync using Dictionary for position lookup.
-    /// Removes disappeared entries, inserts new ones, and reorders existing
-    /// ones via Move — preserving Avalonia containers.
-    /// Updates position map incrementally instead of rebuilding after each operation.
-    /// Each RemoveAt / Move / Insert call triggers a CollectionChanged event on the
-    /// ObservableCollection. For current data sizes (typically &lt; 200 entries),
-    /// Avalonia's ItemContainerGenerator virtualization absorbs the notification
-    /// volume efficiently — batching is unnecessary overhead at this scale.
-    /// </summary>
     private void SyncVisibleEntries(IReadOnlyList<LauncherEntryViewModel> sorted)
     {
-        // Remove entries no longer visible (iterate backwards for safe removal).
-        // P1: Reuse instance field, Clear() preserves internal bucket capacity.
-        _syncSortedSet.Clear();
+        _list.MutableVisibleEntries.Clear();
         foreach (var item in sorted)
-            _syncSortedSet.Add(item);
-        for (var i = _list.MutableVisibleEntries.Count - 1; i >= 0; i--)
-        {
-            if (!_syncSortedSet.Contains(_list.MutableVisibleEntries[i]))
-                _list.MutableVisibleEntries.RemoveAt(i);
-        }
-
-        // Build position map for O(1) lookups instead of O(n) IndexOf.
-        // P1: Reuse instance field, Clear() preserves internal bucket capacity.
-        _syncPositionByEntry.Clear();
-        for (var i = 0; i < _list.MutableVisibleEntries.Count; i++)
-            _syncPositionByEntry[_list.MutableVisibleEntries[i]] = i;
-
-        // Insert new entries and move existing ones to correct positions.
-        for (var targetIndex = 0; targetIndex < sorted.Count; targetIndex++)
-        {
-            var entry = sorted[targetIndex];
-            if (_syncPositionByEntry.TryGetValue(entry, out var currentIndex))
-            {
-                if (currentIndex != targetIndex)
-                {
-                    _list.MutableVisibleEntries.Move(currentIndex, targetIndex);
-                    // P5: Update positions incrementally instead of rebuilding the dictionary.
-                    // After Move(from, to), entries in [min, max] shift by �1.
-                    // NOTE: The rotation interval is [from, to) when moving forward
-                    // and (to, from] when moving backward — these ranges are correct but
-                    // fragile: changing the loop boundaries without adjusting both branches
-                    // would cause a persistent off-by-one offset for all subsequent entries.
-                    var from = currentIndex;
-                    var to = targetIndex;
-                    if (from < to)
-                    {
-                        for (var j = from; j < to; j++)
-                            _syncPositionByEntry[_list.MutableVisibleEntries[j]] = j;
-                    }
-                    else
-                    {
-                        for (var j = to + 1; j <= from; j++)
-                            _syncPositionByEntry[_list.MutableVisibleEntries[j]] = j;
-                    }
-                    _syncPositionByEntry[entry] = to;
-                }
-            }
-            else
-            {
-                _list.MutableVisibleEntries.Insert(targetIndex, entry);
-                // P5: Shift positions for entries after the insertion point.
-                for (var j = targetIndex + 1; j < _list.MutableVisibleEntries.Count; j++)
-                    _syncPositionByEntry[_list.MutableVisibleEntries[j]] = j;
-                _syncPositionByEntry[entry] = targetIndex;
-            }
-        }
+            _list.MutableVisibleEntries.Add(item);
     }
 
     public void UpdateCardsAvailableSize(Size availableSize)
