@@ -25,8 +25,9 @@ public sealed record LaunchPlan(
     /// NOT the exact command that gets executed — the actual execution uses
     /// <see cref="ExecutionCommandLine"/> with Base64-encoded -EncodedCommand
     /// to prevent PowerShell metacharacter injection.
+    /// Retained for UI display despite being plaintext — it shows users what
+    /// will launch, while ExecutionCommandLine handles the actual invocation.
     /// </summary>
-    [Obsolete("Use ExecutionCommandLine for logging. CommandLine exposes plaintext commands.")]
     public string CommandLine => $"{Executable} -d \"{WorkingDirectory}\" pwsh -NoExit -Command \"{Command}\"";
 
     /// <summary>

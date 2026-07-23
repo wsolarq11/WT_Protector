@@ -603,6 +603,45 @@ if ($violations.Count -gt 0) {
 }
 Add-Check 'no-imperative-view-ui' @{ viewsScanned = $true; violations = $violations.Count; allowedExceptions = $whitelisted }
 
+# Security audit F1 (2026-07-23): DirectoryPath deserialization must normalize via Path.GetFullPath.
+# Regression gate: the JSON converter Read method must contain "Path.GetFullPath".
+$directoryPathConverterPath = Get-RepoPath 'src\avalonia-launcher\src\WTLauncher.Core\ValueObjects\DirectoryPath.cs'
+$directoryPathConverterSrc = Get-Content -Raw -Encoding UTF8 -LiteralPath $directoryPathConverterPath
+if ($directoryPathConverterSrc -notmatch 'Path\.GetFullPath\(') {
+    throw 'DirectoryPathJsonConverter must call Path.GetFullPath after ExpandEnvironmentVariables (security audit F1)'
+}
+Add-Check 'security-audit-f1-path-getfullpath' @{
+    path = 'src\avalonia-launcher\src\WTLauncher.Core\ValueObjects\DirectoryPath.cs'
+    invariant = 'DirectoryPathJsonConverter.Read normalizes via Path.GetFullPath'
+    pass = $true
+}
+
+# Security audit F2 (2026-07-23): IPresetService.AddPreset must validate entryIds against knownEntryIds.
+# Regression gate: IPresetService interface must have a knownEntryIds parameter on AddPreset.
+$presetServiceInterfacePath = Get-RepoPath 'src\avalonia-launcher\src\WTLauncher.App\Features\Presets\IPresetService.cs'
+$presetServiceInterfaceSrc = Get-Content -Raw -Encoding UTF8 -LiteralPath $presetServiceInterfacePath
+if ($presetServiceInterfaceSrc -notmatch 'knownEntryIds') {
+    throw 'IPresetService.AddPreset/UpdatePreset must accept knownEntryIds parameter (security audit F2)'
+}
+Add-Check 'security-audit-f2-preset-entryid-validate' @{
+    path = 'src\avalonia-launcher\src\WTLauncher.App\Features\Presets\IPresetService.cs'
+    invariant = 'AddPreset/UpdatePreset validate entryIds against knownEntryIds'
+    pass = $true
+}
+
+# Security audit F3 (2026-07-23): EntryId must enforce Latin script whitelist.
+# Regression gate: EntryId.cs must contain EnsureLatinScript or LatinScriptRanges.
+$entryIdPath = Get-RepoPath 'src\avalonia-launcher\src\WTLauncher.Core\ValueObjects\EntryId.cs'
+$entryIdSrc = Get-Content -Raw -Encoding UTF8 -LiteralPath $entryIdPath
+if ($entryIdSrc -notmatch 'LatinScript') {
+    throw 'EntryId must enforce Latin script whitelist (security audit F3)'
+}
+Add-Check 'security-audit-f3-homoglyph-protection' @{
+    path = 'src\avalonia-launcher\src\WTLauncher.Core\ValueObjects\EntryId.cs'
+    invariant = 'EntryId.Parse rejects non-Latin scripts to prevent homoglyph attacks'
+    pass = $true
+}
+
 New-ToolReceipt 'root-verify' @{
     root = $root
     checks = $checks

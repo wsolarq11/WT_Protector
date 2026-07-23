@@ -2,6 +2,7 @@
 // Copyright (c) 2024 WT Launcher Contributors. All rights reserved.
 // </copyright>
 
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Vogen;
@@ -33,8 +34,12 @@ public sealed class DirectoryPathJsonConverter : JsonConverter<DirectoryPath>
         var raw = reader.GetString();
         if (raw is null)
             return DirectoryPath.Empty;
+        // Normalize + canonicalize to match EntryDirectory.Parse() pattern (security audit F1).
+        var normalized = raw.Trim().Normalize(NormalizationForm.FormKC);
+        var expanded = Environment.ExpandEnvironmentVariables(normalized);
+        var fullPath = Path.GetFullPath(expanded);
         // Vogen's From factory calls Validate internally.
-        try { return DirectoryPath.From(raw); }
+        try { return DirectoryPath.From(fullPath); }
         catch { return DirectoryPath.Empty; }
     }
 
