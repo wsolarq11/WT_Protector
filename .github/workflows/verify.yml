@@ -63,6 +63,25 @@ jobs:
       - name: Audit
         run: dotnet nuget audit src/avalonia-launcher/WTLauncher.Avalonia.sln
 
+  aot-verify:
+    name: Native AOT Compile
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore src/avalonia-launcher/WTLauncher.Avalonia.sln
+
+      - name: AOT publish
+        run: dotnet publish src/avalonia-launcher/WTLauncher.Avalonia.sln -c Release -r win-x64 -p:PublishAot=true --no-restore
+
   full-gate:
     name: Full Native Gate (verify.ps1)
     runs-on: windows-latest

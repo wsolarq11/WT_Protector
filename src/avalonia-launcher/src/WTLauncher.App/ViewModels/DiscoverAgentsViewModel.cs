@@ -19,7 +19,7 @@ namespace WTLauncher.App.ViewModels;
 /// </summary>
 public sealed partial class DiscoverAgentsViewModel : ObservableObject
 {
-    private readonly Func<AgentDiscoveryResult> _scanFunc;
+    private readonly Func<CancellationToken, AgentDiscoveryResult> _scanFunc;
     private readonly HashSet<string> _alreadyAddedExecNames;
     private readonly IReadOnlyDictionary<string, string> _commandTemplates;
 
@@ -57,7 +57,7 @@ public sealed partial class DiscoverAgentsViewModel : ObservableObject
     private int _selectedCount;
 
     public DiscoverAgentsViewModel(
-        Func<AgentDiscoveryResult> scanFunc,
+        Func<CancellationToken, AgentDiscoveryResult> scanFunc,
         IEnumerable<string> alreadyAddedExecNames,
         IEnumerable<DirectoryRow>? existingDirectories = null,
         IReadOnlyDictionary<string, string>? commandTemplates = null)
@@ -101,6 +101,7 @@ public sealed partial class DiscoverAgentsViewModel : ObservableObject
         StatusText = LauncherRefreshStatus.DiscoveryScanning.Text;
 
         AgentDiscoveryResult result;
+        using var scanCt = new CancellationTokenSource();
         try
         {
             // Scanner is slow (spawns 8 CLI processes); offload to thread pool.
@@ -109,7 +110,9 @@ public sealed partial class DiscoverAgentsViewModel : ObservableObject
             // CollectionChanged fires synchronously into RenderRows which mutates the
             // visual tree. Pre-fix this was inside Task.Run, threw
             // InvalidOperationException cross-thread, and silently left UI stuck.
-            result = await Task.Run(() => _scanFunc());
+            // CancellationToken propagates to AgentDiscoveryScanner for responsive
+            // cancellation of in-flight agent probes.
+            result = await Task.Run(() => _scanFunc(scanCt.Token));
 
             Rows.Clear();
             foreach (var discovered in result.Found)

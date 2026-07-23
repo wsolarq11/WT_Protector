@@ -23,6 +23,25 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `docs/giants-shoulders/` — "巨人肩膀库": curated external project lessons and source links for future stack/reflection decisions.
   The old root `WT Launcher.exe`, old `src/winforms-launcher/`, and old `spikes/` directory are intentionally retired. The former Avalonia spike is now the source mainline under `src/avalonia-launcher/`.
 
+## Architecture
+
+The project uses a 5-layer architecture under `src/avalonia-launcher/`:
+
+| Layer | Project | Responsibilities |
+|-------|---------|-----------------|
+| Core | `WTLauncher.Core` | Data records, `LaunchArgumentBuilder`, `LauncherJson` (atomic JSON persistence), `LauncherStore` (schema validation), `AgentDiscoveryScanner`, design tokens |
+| Commands | `WTLauncher.App/ViewModels/` | `MainWindowViewModel` + partials handle add/edit/delete/launch via `AppStore` |
+| Persistence | `AppStore` | Single state container, SemaphoreSlim thread safety, rollback on save failure |
+| Orchestration | `MainWindowViewModel` | Single writable owner of UI state, delegates to Core rules and Services |
+| Views | `WTLauncher.App/Views/` | XAML, drag ghost, code-behind windowing only |
+
+Key architecture decisions:
+
+- **State management**: `AppStore` (single state container with `Dispatch`/`DispatchAsync`/`DispatchErrorOr` for mutations and `Select`/`SelectAsync` for reads). CommunityToolkit.Mvvm `[ObservableProperty]`/`[RelayCommand]` for ViewModel bindings. Fluxor was removed 2026-07-23.
+- **Persistence**: Single `config/launcher.json` file. Atomic writes via temp-file + `File.Replace`. Loose Read (unknown keys silently skipped for forward compatibility) + Strict Write (source-gen only writes known fields). AOT-safe via `JsonTypeInfo<T>` source-generated `LauncherJsonContext`.
+- **Exception handling**: `catch when (ExceptionFilters.IsRecoverable(ex))` for recoverable IO/security failures. `ErrorOr<T>` for domain-expected errors (validation, not-found). No bare `catch (Exception)`.
+- **Concurrency**: `AppStore` internal SemaphoreSlim serializes state mutations. `LauncherJson.Save` has defense-in-depth SemaphoreSlim lock. `MemoizedSelector._hasCached` is volatile. `AgentDiscoveryScanner.Scan()` accepts CancellationToken.
+
 ## Configuration schema
 
 The unified store (`config/launcher.json`) uses `LauncherStoreFile` schema:
@@ -63,7 +82,7 @@ Fields:
 
 Active config entries must not contain the obsolete per-entry `confirm` key. Launch confirmation has one authority: `settings.requireConfirmationForLaunches` (nested in `launcher.json`).
 
-All active JSON files must exist, require the documented camelCase keys, and reject missing, null, or blank mode keys. Unknown keys are REJECTED at load time to catch schema drift (JsonUnmappedMemberHandling.Disallow). The UI load path uses the same contract; it does not replace a failed or missing preset list with an empty launch-group model.
+All active JSON files must exist, require the documented camelCase keys, and reject missing, null, or blank mode keys. Unknown JSON keys are silently skipped at load time (Loose Read for forward compatibility). Source-gen serialization writes only known fields (Strict Write), making the C# record the effective schema contract.
 
 Nested `settings.window.width` and `settings.window.height` must be positive numbers; invalid geometry is rejected instead of being carried into the next UI startup.
 

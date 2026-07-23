@@ -47,7 +47,7 @@ public sealed class DialogService : IDialogService
         IReadOnlyDictionary<string, string> commandTemplates)
     {
         var vm = new DiscoverAgentsViewModel(
-            () => AgentDiscoveryScanner.Scan(AgentCatalog.Entries),
+            ct => AgentDiscoveryScanner.Scan(AgentCatalog.Entries, ct: ct),
             alreadyAdded,
             existingDirectories,
             commandTemplates);

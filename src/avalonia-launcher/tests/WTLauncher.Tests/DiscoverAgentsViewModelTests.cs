@@ -6,7 +6,7 @@ namespace WTLauncher.Tests;
 
 public sealed class DiscoverAgentsViewModelTests
 {
-    private static DiscoverAgentsViewModel CreateViewModel(Func<AgentDiscoveryResult> scanFunc) =>
+    private static DiscoverAgentsViewModel CreateViewModel(Func<CancellationToken, AgentDiscoveryResult> scanFunc) =>
         new(scanFunc, alreadyAddedExecNames: Array.Empty<string>());
 
     private static readonly AgentCatalogEntry ClaudeEntry = new()
@@ -34,7 +34,7 @@ public sealed class DiscoverAgentsViewModelTests
     {
         // InvalidOperationException is one of the scanner's own per-agent catch types,
         // so it is representative of an orchestration-level escape here.
-        Func<AgentDiscoveryResult> throws = () => throw new InvalidOperationException("boom");
+        Func<CancellationToken, AgentDiscoveryResult> throws = _ => throw new InvalidOperationException("boom");
         var viewModel = CreateViewModel(throws);
 
         await viewModel.ScanAsync();
@@ -60,7 +60,7 @@ public sealed class DiscoverAgentsViewModelTests
                 ResolvedPath = @"C:\tools\codex.exe",
                 Version = "2.0.0",
             });
-        Func<AgentDiscoveryResult> success = () => new AgentDiscoveryResult
+        Func<CancellationToken, AgentDiscoveryResult> success = _ => new AgentDiscoveryResult
         {
             Found = agents,
             Failures = ImmutableArray<AgentDiscoveryFailure>.Empty,
@@ -80,7 +80,7 @@ public sealed class DiscoverAgentsViewModelTests
     [Fact]
     public async Task ScanAsync_WhenScanReturnsEmpty_ShowsNoAgentMessage()
     {
-        Func<AgentDiscoveryResult> empty = () => AgentDiscoveryResult.Empty;
+        Func<CancellationToken, AgentDiscoveryResult> empty = _ => AgentDiscoveryResult.Empty;
         var viewModel = CreateViewModel(empty);
 
         await viewModel.ScanAsync();

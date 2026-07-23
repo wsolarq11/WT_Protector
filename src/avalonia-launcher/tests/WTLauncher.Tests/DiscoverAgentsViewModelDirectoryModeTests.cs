@@ -6,7 +6,7 @@ namespace WTLauncher.Tests;
 public sealed class DiscoverAgentsViewModelDirectoryModeTests
 {
     private static DiscoverAgentsViewModel CreateViewModel() => new(
-        () => AgentDiscoveryResult.Empty,
+        _ => AgentDiscoveryResult.Empty,
         [],
         [
             new DirectoryRow(@"D:\beta", 1, ["Beta"]),
