@@ -239,7 +239,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         {
             DiscardDragReorderPreview();
             var storeFile = LauncherStore.Load(_storePath);
-            _layoutManager.InvalidateCardSizeCache();
             _list.ReplaceAllEntries(storeFile.Entries);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
@@ -441,13 +440,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         }
 
         OnPropertyChanged(nameof(KeyboardFocusedEntryId));
-    }
-
-    private void ReplaceEntries(IEnumerable<LaunchEntry> entries)
-    {
-        _list.ReplaceEntries(entries);
-        OnPropertyChanged(nameof(KeyboardFocusedEntryId));
-        _layoutManager.InvalidateCardSizeCache();
     }
 
     private string CurrentTimestampUtc() => _utcNow().ToString("O");

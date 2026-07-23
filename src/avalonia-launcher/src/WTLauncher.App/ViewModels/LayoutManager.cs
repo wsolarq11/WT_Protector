@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -13,10 +14,7 @@ namespace WTLauncher.App.ViewModels;
 public sealed partial class LayoutManager : ObservableObject
 {
     private Size _cardsAvailableSize = new(900, 420);
-    private Size _lastAppliedCardsAvailableSize;
-    // ponytail: ApplyCardSize also depends on entry count (layout 平分可用空间),
-    // 所以 _lastAppliedVisibleCount 跟踪 count; count 变了即使 size 没变也要重算。
-    private int _lastAppliedVisibleCount = -1;
+    private readonly MemoizedSelector<(Size availableSize, int visibleCount), bool> _cardSizeSelector = new();
 
     private readonly Dictionary<LauncherEntryViewMode, double> _scrollOffsets = new();
 
@@ -158,20 +156,11 @@ public sealed partial class LayoutManager : ObservableObject
     public bool TryRefreshCardSize(ICollection<LauncherEntryViewModel> entries,
         ICollection<LauncherEntryViewModel> visibleEntries)
     {
-        if (_cardsAvailableSize == _lastAppliedCardsAvailableSize
-            && visibleEntries.Count == _lastAppliedVisibleCount)
-            return false;
-
-        LauncherEntryLayoutPresentation.ApplyCardSize(entries, visibleEntries, _cardsAvailableSize);
-        _lastAppliedCardsAvailableSize = _cardsAvailableSize;
-        _lastAppliedVisibleCount = visibleEntries.Count;
-        return true;
-    }
-
-    public void InvalidateCardSizeCache()
-    {
-        _lastAppliedCardsAvailableSize = default;
-        _lastAppliedVisibleCount = -1;
+        return _cardSizeSelector.Get(input =>
+        {
+            LauncherEntryLayoutPresentation.ApplyCardSize(entries, visibleEntries, input.availableSize);
+            return true;
+        }, (_cardsAvailableSize, visibleEntries.Count));
     }
 
     public void UpdateCardsAvailableSize(Size availableSize)
