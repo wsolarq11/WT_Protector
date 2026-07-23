@@ -239,6 +239,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         {
             DiscardDragReorderPreview();
             var storeFile = LauncherStore.Load(_storePath);
+            _layoutManager.InvalidateCardSizeCache();
             _list.ReplaceAllEntries(storeFile.Entries);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
