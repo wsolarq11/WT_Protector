@@ -64,16 +64,6 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         VisibleEntries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_visibleEntries);
     }
 
-    /// <summary>Replace all entries and reset keyboard focus. Fires
-    /// EntriesChanged / CountChanged for MWVM subscription.</summary>
-    public void ReplaceAllEntries(IEnumerable<LaunchEntry> entries)
-    {
-        ReplaceEntries(entries);
-        KeyboardFocusedEntryId = null;
-        EntriesChanged?.Invoke();
-        CountChanged?.Invoke();
-    }
-
     /// <summary>Replace all entries, creating ViewModels that own this
     /// EntryListViewModel as their <see cref="IEntryCardHost"/>.</summary>
     public void ReplaceEntries(IEnumerable<LaunchEntry> entries)

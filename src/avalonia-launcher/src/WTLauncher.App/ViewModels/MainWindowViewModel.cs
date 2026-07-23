@@ -170,7 +170,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
             _list.MutableEntries,
             SaveSettingsToStore);
         // Load entries and presets from the unified store.
-        _list.ReplaceAllEntries(storeFile.Entries);
+        _list.ReplaceEntries(storeFile.Entries);
+        TotalCount = _list.MutableEntries.Count;
+        VisibleCount = _list.VisibleCount;
         var presetFile = new LauncherPresetFile
         {
             Presets = storeFile.Presets,
@@ -239,7 +241,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         {
             DiscardDragReorderPreview();
             var storeFile = LauncherStore.Load(_storePath);
-            _list.ReplaceAllEntries(storeFile.Entries);
+            _list.ReplaceEntries(storeFile.Entries);
+            _list.KeyboardFocusedEntryId = null;
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
