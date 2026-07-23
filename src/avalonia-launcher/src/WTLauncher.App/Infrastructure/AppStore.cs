@@ -46,9 +46,24 @@ public sealed class AppStore : IDisposable
     /// <summary>Project a read-only view of the current state (async-safe).</summary>
     public async Task<T> SelectAsync<T>(Func<LauncherStoreFile, T> selector)
     {
-        await _lock.WaitAsync().ConfigureAwait(false);
-        try { return selector(_state); }
-        finally { _lock.Release(); }
+        var before = _state;
+        Action<LauncherStoreFile>? handler = null;
+        LauncherStoreFile snapshot = default!;
+        try
+        {
+            _state = transform(_state);
+            LauncherStore.Save(_state, _storePath, backup: true);
+            handler = _stateChanged;
+            snapshot = _state;
+        }
+        catch (Exception ex) when (IsRecoverable(ex))
+        {
+            _state = before;
+            ErrorLog.Write(ex, "AppStore.Mutate rolled back");
+            _onRecovery?.Invoke(ex, "AppStore.Mutate rolled back");
+            throw;
+        }
+        handler?.Invoke(snapshot);
     }
 
     // ── Dispatch (Reducer pattern) ────────────────────────────────
@@ -62,11 +77,12 @@ public sealed class AppStore : IDisposable
 
         _lock.Wait();
         var before = _state;
+        Action<LauncherStoreFile>? handler = null;
+        LauncherStoreFile snapshot = default!;
         try
         {
-            var after = reducer(_state);
-            LauncherStore.Save(after, _storePath, backup: true);
-            _state = after;
+            _state = await transform(_state).ConfigureAwait(true);
+            LauncherStore.Save(_state, _storePath, backup: true);
             handler = _stateChanged;
             snapshot = _state;
         }
@@ -78,9 +94,6 @@ public sealed class AppStore : IDisposable
             _onRecovery?.Invoke(ex, "AppStore.Dispatch rolled back");
             throw;
         }
-        finally { _lock.Release(); }
-
-        // Notify outside lock to prevent deadlock if subscriber calls Dispatch
         handler?.Invoke(snapshot);
     }
 
@@ -92,13 +105,15 @@ public sealed class AppStore : IDisposable
 
         await _lock.WaitAsync().ConfigureAwait(false);
         var before = _state;
+        Action<LauncherStoreFile>? handler = null;
+        LauncherStoreFile snapshot = default!;
         try
         {
-            var after = await reducer(_state).ConfigureAwait(false);
-            LauncherStore.Save(after, _storePath, backup: true);
-            _state = after;
+            _state = transform(_state);
+            LauncherStore.Save(_state, _storePath, backup: true);
             handler = _stateChanged;
             snapshot = _state;
+            return Result.Success;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
             or InvalidDataException or JsonException)
@@ -139,11 +154,10 @@ public sealed class AppStore : IDisposable
             _onRecovery?.Invoke(ex, "AppStore.DispatchErrorOr rolled back");
             return LauncherErrors.ConfigSaveFailed(ex.Message);
         }
-        finally { _lock.Release(); }
-
-        // Only reached on success; notify outside lock to prevent deadlock
-        handler?.Invoke(snapshot);
-        return Result.Success;
+        finally
+        {
+            handler?.Invoke(snapshot);
+        }
     }
 
     // ── Legacy Mutate (backward compatible) ────────────────────────
