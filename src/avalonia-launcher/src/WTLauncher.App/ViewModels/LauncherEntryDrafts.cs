@@ -1,5 +1,7 @@
 using WTLauncher.Core;
-using VO = WTLauncher.Core.ValueObjects;
+// DirectoryPath 仅在 Line 43 的强制转换中使用，为避免 EntryId/EntryName
+// 与 WTLauncher.Core.ValueObjects 的歧义，此处仅导入 DirectoryPath。
+using DirectoryPath = WTLauncher.Core.ValueObjects.DirectoryPath;
 namespace WTLauncher.App.ViewModels;
 
 public sealed record EntryDraft(

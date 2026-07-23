@@ -18,6 +18,7 @@ public sealed record LaunchEntry
 
     [JsonPropertyName("directory")]
     [JsonRequired]
+    [JsonConverter(typeof(WTLauncher.Core.ValueObjects.DirectoryPathJsonConverter))]
     public DirectoryPath Directory { get; init; } = DirectoryPath.Empty;
 
     [JsonPropertyName("command")]
