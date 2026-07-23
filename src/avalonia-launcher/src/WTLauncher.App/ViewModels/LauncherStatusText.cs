@@ -205,6 +205,12 @@ public static class LauncherPresetStatus
 
     public static LauncherStatusContent CurrentPresetMissing => LauncherStatusContent.Error("当前启动组已不存在，请重新加载");
 
+    public static LauncherStatusContent AddFailedInvalidEntryIds(IReadOnlyList<string> invalidIds) =>
+        LauncherStatusContent.Error($"启动项 ID 不存在: {string.Join(", ", invalidIds)}");
+
+    public static LauncherStatusContent UpdateFailedInvalidEntryIds(IReadOnlyList<string> invalidIds) =>
+        LauncherStatusContent.Error($"启动项 ID 不存在: {string.Join(", ", invalidIds)}");
+
     public static LauncherStatusContent MissingEntryReferences(IEnumerable<string> entryIds) =>
         LauncherStatusContent.Error($"启动组引用了不存在的启动项: {string.Join(", ", entryIds)}");
 

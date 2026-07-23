@@ -27,13 +27,15 @@ public interface IPresetService
     public Task<ServiceResult<LauncherPresetDeleteTarget>> ConfirmDeletePresetAsync(
         LauncherPresetDeleteTarget target);
 
-    /// <summary>Add a preset to the file. Returns the updated file and the new preset, or an error status.</summary>
+    /// <summary>Add a preset to the file. Returns the updated file and the new preset, or an error status.
+    /// Validates that all entryIds exist in the knownEntryIds collection.</summary>
     public ServiceResult<PresetMutation> AddPreset(
-        LauncherPresetFile presetFile, string name, IReadOnlyList<string> entryIds);
+        LauncherPresetFile presetFile, string name, IReadOnlyList<string> entryIds, IEnumerable<string> knownEntryIds);
 
-    /// <summary>Update a preset in the file. Returns the updated file and preset, or null with status.</summary>
+    /// <summary>Update a preset in the file. Returns the updated file and preset, or null with status.
+    /// Validates that all entryIds exist in the knownEntryIds collection.</summary>
     public ServiceResult<PresetMutation> UpdatePreset(
-        LauncherPresetFile presetFile, string presetId, string name, IReadOnlyList<string> entryIds);
+        LauncherPresetFile presetFile, string presetId, string name, IReadOnlyList<string> entryIds, IEnumerable<string> knownEntryIds);
 
     /// <summary>Delete a preset from the file. Returns the updated file and deleted preset, or null with status.</summary>
     public ServiceResult<PresetDeleteMutation> DeletePreset(

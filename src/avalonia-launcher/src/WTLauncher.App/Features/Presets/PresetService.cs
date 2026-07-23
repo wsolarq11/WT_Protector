@@ -86,8 +86,12 @@ public sealed class PresetService : IPresetService
     }
 
     public ServiceResult<PresetMutation> AddPreset(
-        LauncherPresetFile presetFile, string name, IReadOnlyList<string> entryIds)
+        LauncherPresetFile presetFile, string name, IReadOnlyList<string> entryIds, IEnumerable<string> knownEntryIds)
     {
+        var invalidEntryIds = FindInvalidEntryIds(entryIds, knownEntryIds);
+        if (invalidEntryIds.Count > 0)
+            return new ServiceFailure<PresetMutation>(LauncherPresetStatus.AddFailedInvalidEntryIds(invalidEntryIds));
+
         try
         {
             var mutable = presetFile;
@@ -102,8 +106,12 @@ public sealed class PresetService : IPresetService
     }
 
     public ServiceResult<PresetMutation> UpdatePreset(
-        LauncherPresetFile presetFile, string presetId, string name, IReadOnlyList<string> entryIds)
+        LauncherPresetFile presetFile, string presetId, string name, IReadOnlyList<string> entryIds, IEnumerable<string> knownEntryIds)
     {
+        var invalidEntryIds = FindInvalidEntryIds(entryIds, knownEntryIds);
+        if (invalidEntryIds.Count > 0)
+            return new ServiceFailure<PresetMutation>(LauncherPresetStatus.UpdateFailedInvalidEntryIds(invalidEntryIds));
+
         try
         {
             var mutable = presetFile;
@@ -117,6 +125,13 @@ public sealed class PresetService : IPresetService
             ErrorLog.Write(ex, "UpdatePreset");
             return new ServiceFailure<PresetMutation>(LauncherPresetStatus.UpdateFailed(name, ex));
         }
+    }
+
+    private static IReadOnlyList<string> FindInvalidEntryIds(
+        IReadOnlyList<string> entryIds, IEnumerable<string> knownEntryIds)
+    {
+        var knownSet = knownEntryIds.ToHashSet(EntryId.Comparer);
+        return entryIds.Where(id => !knownSet.Contains(id)).ToList();
     }
 
     public ServiceResult<PresetDeleteMutation> DeletePreset(

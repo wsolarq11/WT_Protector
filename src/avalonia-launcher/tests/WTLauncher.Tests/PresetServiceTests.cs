@@ -79,7 +79,7 @@ public sealed class PresetServiceTests
         var service = new PresetService(new StubDialogService());
         var original = new LauncherPresetFile();
 
-        var result = service.AddPreset(original, "Daily", ["one"]);
+        var result = service.AddPreset(original, "Daily", ["one"], knownEntryIds: ["one"]);
 
         Assert.Empty(original.Presets);
         var success = Assert.IsType<ServiceSuccess<PresetMutation>>(result);
@@ -154,8 +154,8 @@ public sealed class PresetServiceTests
             DefaultPresetId = "daily",
         };
 
-        var add = service.AddPreset(original, " ", ["one"]);
-        var update = service.UpdatePreset(original, "missing", "Missing", ["one"]);
+        var add = service.AddPreset(original, " ", ["one"], knownEntryIds: ["one"]);
+        var update = service.UpdatePreset(original, "missing", "Missing", ["one"], knownEntryIds: ["one"]);
         var delete = service.DeletePreset(original, "missing");
 
         Assert.IsType<ServiceFailure<PresetMutation>>(add);
@@ -175,7 +175,7 @@ public sealed class PresetServiceTests
             DefaultPresetId = "daily",
         };
 
-        var result = service.UpdatePreset(original, "daily", "Updated", ["two"]);
+        var result = service.UpdatePreset(original, "daily", "Updated", ["two"], knownEntryIds: ["one", "two"]);
 
         var success = Assert.IsType<ServiceSuccess<PresetMutation>>(result).Value;
         Assert.Equal("Updated", success.Preset.Name);
@@ -247,5 +247,59 @@ public sealed class PresetServiceTests
         Assert.Equal(1, preview.MissingCount);
         Assert.Equal(1, preview.ExtraCount);
         Assert.True(preview.HasChanges);
+    }
+
+    [Fact]
+    public void AddPreset_WithInvalidEntryIds_ReturnsFailure()
+    {
+        var service = new PresetService(new StubDialogService());
+        var original = new LauncherPresetFile();
+
+        var result = service.AddPreset(original, "Daily", ["unknown"], knownEntryIds: ["one", "two"]);
+
+        var failure = Assert.IsType<ServiceFailure<PresetMutation>>(result);
+        Assert.Equal(LauncherPresetStatus.AddFailedInvalidEntryIds(["unknown"]), failure.Status);
+    }
+
+    [Fact]
+    public void AddPreset_WithMultipleInvalidEntryIds_ReportsAll()
+    {
+        var service = new PresetService(new StubDialogService());
+        var original = new LauncherPresetFile();
+
+        var result = service.AddPreset(original, "Daily", ["invalid1", "valid", "invalid2"], knownEntryIds: ["valid"]);
+
+        var failure = Assert.IsType<ServiceFailure<PresetMutation>>(result);
+        var text = ((LauncherStatusContent)failure.Status).Text;
+        Assert.Contains("invalid1", text);
+        Assert.Contains("invalid2", text);
+    }
+
+    [Fact]
+    public void UpdatePreset_WithInvalidEntryIds_ReturnsFailure()
+    {
+        var service = new PresetService(new StubDialogService());
+        var original = new LauncherPresetFile
+        {
+            Presets = [new LauncherPreset { Id = "daily", Name = "Daily", EntryIds = ["one"] }],
+            DefaultPresetId = "daily",
+        };
+
+        var result = service.UpdatePreset(original, "daily", "Updated", ["unknown"], knownEntryIds: ["one"]);
+
+        var failure = Assert.IsType<ServiceFailure<PresetMutation>>(result);
+        Assert.Equal(LauncherPresetStatus.UpdateFailedInvalidEntryIds(["unknown"]), failure.Status);
+    }
+
+    [Fact]
+    public void AddPreset_WithEmptyKnownEntryIds_RejectsNonExistentIds()
+    {
+        var service = new PresetService(new StubDialogService());
+        var original = new LauncherPresetFile();
+
+        var result = service.AddPreset(original, "Daily", ["one"], knownEntryIds: []);
+
+        var failure = Assert.IsType<ServiceFailure<PresetMutation>>(result);
+        Assert.Equal(LauncherPresetStatus.AddFailedInvalidEntryIds(["one"]), failure.Status);
     }
 }

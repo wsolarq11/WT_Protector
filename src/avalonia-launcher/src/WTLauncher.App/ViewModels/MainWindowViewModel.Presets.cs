@@ -176,10 +176,13 @@ public sealed partial class MainWindowViewModel
         var result = new List<LauncherEntryViewModel>(uniqueIds.Count);
         foreach (var id in uniqueIds)
         {
-            // Use TryGetValue instead of indexer to give a clear error when
-            // a preset references an entry ID that does not exist in _list.MutableEntries.
+            // Gracefully skip missing entry IDs — manual edits to launcher.json
+            // can introduce stale references; log a warning instead of crashing.
             if (!entriesById.TryGetValue(id, out var entry))
-                throw new InvalidDataException($"Preset entry ID '{id}' does not match any loaded entry.");
+            {
+                ErrorLog.Write(new InvalidDataException($"Preset entry ID '{id}' does not match any loaded entry."), "GetPresetEntries");
+                continue;
+            }
 
             result.Add(entry);
         }
@@ -318,7 +321,7 @@ public sealed partial class MainWindowViewModel
             return;
 
         var snapshot = _presetManager.CaptureSnapshot();
-        var addResult = _presetService.AddPreset(_presetManager.File, presetName, target.EntryIds);
+        var addResult = _presetService.AddPreset(_presetManager.File, presetName, target.EntryIds, GetEntryIds());
         if (addResult is not ServiceSuccess<PresetMutation> addSuccess)
         {
             _presetManager.Load(snapshot.File, snapshot.SelectedPresetId);
@@ -371,7 +374,7 @@ public sealed partial class MainWindowViewModel
         }
 
         var snapshot = _presetManager.CaptureSnapshot();
-        var updateResult = _presetService.UpdatePreset(_presetManager.File, selectedPreset.Id, selectedPreset.Name, entryIds);
+        var updateResult = _presetService.UpdatePreset(_presetManager.File, selectedPreset.Id, selectedPreset.Name, entryIds, GetEntryIds());
         if (updateResult is not ServiceSuccess<PresetMutation> updateSuccess)
         {
             _presetManager.Load(snapshot.File, snapshot.SelectedPresetId);

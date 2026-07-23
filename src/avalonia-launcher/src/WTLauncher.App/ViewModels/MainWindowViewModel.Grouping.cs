@@ -90,7 +90,7 @@ public sealed partial class MainWindowViewModel
         var presetName = nameSuccess.Value;
 
         var snapshot = _presetManager.CaptureSnapshot();
-        var addResult = _presetService.AddPreset(_presetManager.File, presetName, target.EntryIds);
+        var addResult = _presetService.AddPreset(_presetManager.File, presetName, target.EntryIds, GetEntryIds());
         if (addResult is not ServiceSuccess<PresetMutation> addSuccess)
         {
             _presetManager.Load(snapshot.File, snapshot.SelectedPresetId);
