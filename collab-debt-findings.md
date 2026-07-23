@@ -1,4 +1,4 @@
-# 协作模式与技术债务管理审查报告
+﻿# 协作模式与技术债务管理审查报告
 
 审查时间: 2026-07-23
 审查范围: 最近 500 个提交 (实际跨度: 约 274 个提交自 2026-07-01)
@@ -50,7 +50,7 @@
 - **描述**: 新增 CardsView, DetailsView, FilterToolbar, NamesView, StatusBar 共 5 组 .axaml + .axaml.cs 文件，修改 MainWindow.axaml 集成新视图。总计 +710 行。
 - **位置**: `src/WTLauncher.App/Views/Controls/*.axaml` 和 `*.axaml.cs`
 - **证据**: 11 个文件修改，710 行插入，33 行删除。
-- **评估**: XAML 结构良好，使用了正确的 DataType 绑定和样式引用。但 CardsView.axaml 中的按钮内容使用了 emoji 字符 ("▶ 启所有" 和 "💾 存为启动组")。这与项目风格指南中"禁止使用 emoji"的约束不一致。此外，新视图与 MainWindow.axaml 的集成方式是通过条件绑定 (IsVisible=绑定) 而非导航框架，这在小型应用中是可接受的。
+- **评估**: XAML 结构良好，使用了正确的 DataType 绑定和样式引用。但 CardsView.axaml 中的按钮内容使用了 emoji 字符 ("启动所有" 和 "存为启动组")。这与项目风格指南中"禁止使用 emoji"的约束不一致。此外，新视图与 MainWindow.axaml 的集成方式是通过条件绑定 (IsVisible=绑定) 而非导航框架，这在小型应用中是可接受的。
 
 ### 4.4 Merge 策略评估
 

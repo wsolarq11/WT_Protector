@@ -54,7 +54,7 @@
                 </Border>
                 <Button Grid.Column="4"
                         Classes="secondary"
-                        Content="▶ 启所有"
+                        Content="启动所有"
                         Command="{Binding LaunchAllCommand}"
                         Padding="8,2"
                         ToolTip.Tip="启动组内所有 entry"/>

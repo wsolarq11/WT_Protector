@@ -1,17 +1,20 @@
 # Design
 
 ## Source of truth
+
 - Status: Active
-- Last refreshed: 2026-06-24
+- Last refreshed: 2026-07-23
 - Primary product surfaces: `src/avalonia-launcher/src/WTLauncher.App/Views/MainWindow.axaml` + code-behind + `src/avalonia-launcher/src/WTLauncher.App/ViewModels/*`
 - Evidence reviewed: `README.md`, `src/avalonia-launcher/README.md`, `docs/design-benchmark-digest.md`, current Avalonia mainline implementation, `tools/verify.ps1`, `tools/build-release.ps1`, Microsoft Windows controls guidance for ToggleSwitch / ListView / GridView / Win32 List-View details modes, Microsoft Fluent 2 layout guidance, Apple HIG layout guidance, Material Design layout guidance
 
 ## Brand
+
 - Personality: 清晰、克制、可信、偏工具型，强调“快速找到、快速勾选、快速启动”
 - Trust signals: 可见的配置路径、可验证的发布物、统一的启动确认策略、可回滚的本地配置文件
 - Avoid: 花哨装饰、不可读的缩放、按钮堆叠导致的功能隐藏、拖拽时无反馈的黑盒感
 
 ## Product goals
+
 - Goals:
   - 让用户在 Windows 桌面上快速启动保存的工作空间/命令
   - 让按钮卡片在不同窗口尺寸下仍尽量直接展示全部常用动作
@@ -32,6 +35,7 @@
   - 搜索框、排序框、视图框、启动组框在任何窗口形变下共享同一上下边线，并完整落在 UI 内
 
 ## Personas and jobs
+
 - Primary personas: 频繁切换本地工作区/命令的 Windows 用户
 - User jobs:
   - 搜索、勾选并批量启动
@@ -41,6 +45,7 @@
 - Key contexts of use: 桌面窗口、鼠标操作优先、短时高频、需要视觉回执
 
 ## Information architecture
+
 - Primary navigation: 顶部四框行（搜索框、排序模式框、视图模式框、启动组框）+ 独立动作行（全局启动确认开关、启动组操作、批量操作）；中部三视图列表/网格；底部状态栏
 - Core routes/screens:
   - 主窗口列表
@@ -54,6 +59,7 @@
   - 非目标层：更新时间不再出现在主列表/详细列表视图；如未来需要，应放在详情弹窗或 Tooltip，而不是占用扫描列
 
 ## Design principles
+
 - Principle 1: 先保可读，再保密度；信息收敛优先于硬塞全部字段
 - Principle 2: 交互要有即时回执；拖拽必须“跟得上手、看得见结果”
 - Principle 3: 轮廓要稳定，变化要可预期；布局变化尽量通过预演和轻动画弱化突变
@@ -63,6 +69,7 @@
 - Tradeoffs: 在极窄窗口下允许启用滚轮兜底，而不是继续缩小到不可读
 
 ## Visual language
+
 - Color:
   - 主按钮使用蓝色强调
   - 启动确认开关使用中性色 + 状态文案表达，不使用危险色块
@@ -85,6 +92,7 @@
   - 次级动作可收进 “⋯” 或上下文菜单，减少主界面噪音
 
 ## Components
+
 - Existing components to reuse:
   - `Border.card`
   - 各类确认对话框
@@ -119,6 +127,7 @@
   - View 负责拖拽 ghost、插入指示、轻动画
 
 ## Accessibility
+
 - Target standard: 保持桌面工具可读、可点、可理解，避免过度依赖颜色
 - Keyboard/focus behavior: 主操作仍应可通过按钮和菜单完成；“⋯”更多操作是标准 Button，键盘聚焦后可用 Space/Enter 打开同一 ContextMenu；拖拽是加速路径，不是唯一入口
 - Contrast/readability: 路径/命令截断前保证最小可读性；小卡片不再强塞所有字段
@@ -127,6 +136,7 @@
 - Reduced motion and sensory considerations: 仅使用短过渡，避免明显眩晕或噪声式动画
 
 ## Responsive behavior
+
 - Supported breakpoints/devices: 桌面窗口宽高变化、宽扁/窄高/小窗口都要能工作
 - Layout adaptations:
   - 先收敛信息，再压缩字号/间距
@@ -138,6 +148,7 @@
 - Touch/hover differences: 当前以鼠标为主；拖拽 ghost 和插入提示需要在指针悬停/拖拽时才出现
 
 ## Interaction states
+
 - Loading: 以现有加载状态/状态栏文本呈现
 - Empty: 没有可见条目时保持空列表可解释
 - Error: 使用状态栏和对话框反馈，不让错误吞掉主界面
@@ -146,6 +157,7 @@
 - Offline/slow network, if applicable: 目前不属于主问题域
 
 ## Content voice
+
 - Tone: 简洁、明确、少废话
 - Terminology:
   - “按钮”即启动项卡片
@@ -158,6 +170,7 @@
   - 保留可验证信息（路径、配置、状态）而不是空泛描述
 
 ## Implementation constraints
+
 - Framework/styling system: Avalonia 12 + existing code-behind / MVVM / XAML
 - Design-token constraints: 不新增独立设计系统；沿用现有样式和可控的少量局部 token
 - Performance constraints: DragOver 预演要避免无差别重排；仅在目标或方向变化时更新
@@ -166,4 +179,5 @@
   - 发布 / verify receipt 至少记录 `WTLauncher.App.dll` 的 hash；`WTLauncher.App.exe` 只作为 apphost 外壳，不能单独作为“最新代码已发布”的唯一证据
 
 ## Open questions
+
 - None currently.
