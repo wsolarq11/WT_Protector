@@ -17,11 +17,11 @@ public sealed class LauncherStoreLoadFailureTests
     }
 
     [Fact]
-    public void UnknownJsonKey_Load_RejectedByStrictSchema()
+    public void UnknownJsonKey_Load_LooseReadSkipsUnknownKey()
     {
-        // UnmappedMemberHandling=Disallow makes the C# record type the single
-        // schema contract. Any JSON key not declared as [JsonPropertyName] on
-        // the corresponding record fails loudly at load time.
+        // Loose Read: unknown JSON keys are silently skipped for forward compat.
+        // Write-time source-gen guarantees only known fields are serialized,
+        // catching developer mistakes at write time, not at read time.
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "store.json");
         File.WriteAllText(path,
@@ -32,7 +32,9 @@ public sealed class LauncherStoreLoadFailureTests
             "\"entries\":[],\"presets\":[],\"defaultPresetId\":\"\"," +
             "\"unknownTopLevelKey\":42}");
 
-        Assert.Throws<JsonException>(() => LauncherJson.Load<LauncherStoreFile>(path));
+        var store = LauncherJson.Load<LauncherStoreFile>(path);
+        Assert.NotNull(store);
+        Assert.Equal(2, store.SchemaVersion);
     }
 
     [Fact]
@@ -132,12 +134,11 @@ public sealed class LauncherStoreLoadFailureTests
     }
 
     [Fact]
-    public void LauncherSettings_LegacySchemaVersionInJson_IsRejectedByStrictSchema()
+    public void LauncherSettings_LegacySchemaVersionInJson_LooseReadSkipsUnknownKey()
     {
-        // T7 (2026-07-09) removed settings.schemaVersion — single source is top-level
-        // LauncherStoreFile.SchemaVersion. UnmappedMemberHandling=Disallow makes
-        // any lingering settings.schemaVersion fail loudly at load time rather than
-        // silently drifting. This is the contract verify.ps1 already enforces.
+        // Loose Read: deprecated settings.schemaVersion is silently skipped.
+        // Single source of truth is LauncherStoreFile.SchemaVersion.
+        // Write-time source-gen removes stale keys on next save.
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "settings.json");
         File.WriteAllText(path,
@@ -146,7 +147,7 @@ public sealed class LauncherStoreLoadFailureTests
             "\"customEntryOrder\":[],\"commandTemplates\":{},\"searchHistory\":[]," +
             "\"window\":{\"width\":1180,\"height\":760}}");
 
-        Assert.Throws<System.Text.Json.JsonException>(() =>
-            LauncherJson.LoadRequired<LauncherSettings>(path, "legacy settings"));
+        var settings = LauncherJson.LoadRequired<LauncherSettings>(path, "legacy settings");
+        Assert.Equal("legacy", settings.LastFilterText);
     }
 }

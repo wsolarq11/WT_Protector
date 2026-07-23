@@ -21,7 +21,9 @@
   "children": [
     "07-23-ci-premerge",
     "07-23-fluxor-migration",
-    "07-23-declarative-props"
+    "07-23-declarative-props",
+    "07-23-arch-deep-research",
+    "07-23-scheme-b-landing"
   ],
   "parent": null,
   "relatedFiles": [],

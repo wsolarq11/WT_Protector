@@ -1,0 +1,30 @@
+{
+  "id": "scheme-b-landing",
+  "name": "scheme-b-landing",
+  "title": "架构方案B实施方案：状态统一+全Phase落地",
+  "description": "",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "<USER>",
+  "assignee": "<USER>",
+  "createdAt": "2026-07-23",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "07-23-p1-cleanup-serialization",
+    "07-23-p2-state-exception-async",
+    "07-23-p3-gate-ci"
+  ],
+  "parent": "07-23-arch-depth-landing",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

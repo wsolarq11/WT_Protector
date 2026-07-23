@@ -65,13 +65,19 @@ For Native AOT publishing (`-p:PublishAot=true`), `System.Text.Json` uses a **so
 ```csharp
 [JsonSourceGenerationOptions(
     WriteIndented = false,
-    UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
+    ReadCommentHandling = JsonCommentHandling.Skip,
+    AllowTrailingCommas = true,
+    MaxDepth = 64)]
 [JsonSerializable(typeof(LauncherStoreFile))]
 [JsonSerializable(typeof(LauncherSettings))]
 [JsonSerializable(typeof(LaunchEntry))]
 [JsonSerializable(typeof(LauncherPreset))]
 [JsonSerializable(typeof(List<LaunchEntry>))]
 [JsonSerializable(typeof(List<LauncherPreset>))]
+[JsonSerializable(typeof(EntryName))]
+[JsonSerializable(typeof(EntryId))]
+[JsonSerializable(typeof(DirectoryPath))]
+[JsonSerializable(typeof(LauncherStore.LegacyPresetDocument))]
 internal sealed partial class LauncherJsonContext : JsonSerializerContext
 {
 }
@@ -80,59 +86,42 @@ internal sealed partial class LauncherJsonContext : JsonSerializerContext
 **Key rules:**
 1. `[JsonSourceGenerationOptions]` on the context class --- NOT on `JsonSerializerOptions`. At runtime, source gen only reads options from the attribute, not from the options object.
 2. All generic types used (e.g., `List<LaunchEntry>`) must have explicit `[JsonSerializable]` attributes --- `JsonSerializerContext` does not auto-generate for generic type arguments.
-3. **new type -> add attribute** --- every new `LauncherJson.Load<T>` / `Save<T>` call with a type not yet registered will throw `InvalidOperationException` at runtime via `GetRequiredTypeInfo<T>()`.
+3. **new type -> add attribute** --- every new `LauncherJson.Load<T>` / `Save<T>` call with a type not yet registered will throw at runtime via `GetTypeInfo(typeof(T))` returning null.
 
 **Loading pattern** (uses `JsonTypeInfo<T>` for AOT safety):
 ```csharp
-private static JsonTypeInfo<T> GetRequiredTypeInfo<T>()
-{
-    var info = LauncherJsonContext.Default.GetTypeInfo(typeof(T));
-    return info is JsonTypeInfo<T> typed
-        ? typed
-        : throw new InvalidOperationException(
-            $"Type {typeof(T)} is not registered in LauncherJsonContext.");
-}
+var typeInfo = (JsonTypeInfo<T>)LauncherJsonContext.Default.GetTypeInfo(typeof(T))!;
+return JsonSerializer.Deserialize(stream, typeInfo);
 ```
 
-**Source-gen resolver wiring**:
+**Saving pattern** (AOT-safe `JsonSerializer.Serialize<T>(T, JsonTypeInfo<T>)`):
 ```csharp
-internal static readonly JsonSerializerOptions Options = new()
-{
-    TypeInfoResolver = LauncherJsonContext.Default,
-    // ...
-};
+var typeInfo = (JsonTypeInfo<T>)LauncherJsonContext.Default.GetTypeInfo(typeof(T))!;
+var json = NormalizeLineEndings(JsonSerializer.Serialize(value, typeInfo));
 ```
 
 ### Serializer Options
 
-```csharp
-internal static readonly JsonSerializerOptions Options = new()
-{
-    ReadCommentHandling = JsonCommentHandling.Skip,
-    AllowTrailingCommas = true,
-    UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-    WriteIndented = false,
-    MaxDepth = 64,
-    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-};
-```
+Serialization options are set via `[JsonSourceGenerationOptions]` on `LauncherJsonContext`. Read options are lenient (forward-compatible), write options are strict via source-gen (only known fields written):
 
-**Key decisions:**
+- `ReadCommentHandling = JsonCommentHandling.Skip` → silent forward-compat for newer config keys.
 - `AllowTrailingCommas = true` → user-friendly config editing.
-- `UnmappedMemberHandling = Disallow` → **schema-first**: the C# record IS the schema contract. Any JSON key not declared as `[JsonPropertyName]` on the corresponding record fails loudly at load time. Updated 2026-07-10 (task 07-10-schema-first-persistence-strict-mode) — see "Schema-First Enforcement" below.
-- `UnsafeRelaxedJsonEscaping` → Chinese characters stay readable in JSON.
+- `UnmappedMemberHandling` not set → defaults to `Skip` for reading, irrelevant for source-gen writes.
+- `MaxDepth = 64` → nested structure limit.
+- Source-gen overloads (`JsonSerializer.Deserialize(stream, jsonTypeInfo)` / `Serialize(value, jsonTypeInfo)`) are used instead of `JsonSerializerOptions`-based overloads for Native AOT safety.
 
-### Schema-First Enforcement: `Disallow` (2026-07-10, task 07-10-schema-first-persistence-strict-mode)
+### Loose Read / Strict Write (2026-07-23, Phase 1 Scheme B)
 
-`UnmappedMemberHandling = Disallow` (.NET 9+ native) makes the C# record the **single source of truth** for JSON structure. Before this change, `Skip` silently dropped unknown keys, which meant:
+The serialization strategy uses **Loose Read + Strict Write**:
 
-- Renaming a `[JsonPropertyName]` left orphan JSON keys that loaded as defaults silently.
-- Removing a field from a record didn't flag stale data still on disk.
-- `settings.schemaVersion` (legacy dual-versioning, removed 2026-07-09) would have silently drifted forever.
+- **Read:** Unknown JSON keys are silently skipped. This enables forward compatibility — an older app version can load a config written by a newer version that added fields.
+- **Write:** Source-gen only writes properties declared on the C# record. Unknown properties cannot be written, making the C# record the effective schema.
 
-With `Disallow`, every unmapped key throws `JsonException` at load time. This is correct for app-internal sole-author sole-reader persistence: the same binary writes and reads, so any drift is a real bug to surface, not a compatibility scenario to paper over.
+**Trade-off:** Silent forward-compatibility is preferred over fail-loud at load time. Developer mistakes (e.g., adding a record field without `[JsonPropertyName]`) are caught at write time, not read time. For the older approach (fail-loud on read), see "Schema-First Enforcement" in the history below.
 
-**Trade-off accepted:** no silent forward-compatibility. If a future binary writes a field an older binary doesn't know, the older binary fails loudly. That's the right default for a self-contained local launcher (no rolling upgrades across nodes, no mixed-version fleets). For API contracts or externally-authored config, use Corvus.JsonSchema instead.
+### Historical: Schema-First `Disallow` (2026-07-10 — 2026-07-23)
+
+Before Phase 1, `UnmappedMemberHandling = Disallow` was used, making the C# record the **single source of truth** for JSON structure — unknown keys threw `JsonException`. This was replaced with Loose Read for forward compatibility (Scheme B architecture decision).
 
 ---
 
@@ -166,7 +155,7 @@ The store is a **single file** `config/launcher.json` owning five sections toget
 
 **Why single source:** The whole file is one atomic unit (single-file persistence). Versioning the settings section separately from entries/presets has no meaning — they all migrate together. The previous `LauncherSettings.SchemaVersion = 1` was a dead field never validated, and 4 mutation sites reset it on every save — confusing and bug-prone.
 
-**Forward compatibility:** Rejected in favor of fail-loud (2026-07-10). With `UnmappedMemberHandling = Disallow`, any `launcher.json` file still carrying the legacy `settings.schemaVersion` key now throws `JsonException` at load time rather than silently dropping it. This is the intended behavior: the legacy field was removed specifically to eliminate dual-source drift, and silent acceptance would re-introduce that drift. Pinned by `LauncherStoreLoadFailureTests.LauncherSettings_LegacySchemaVersionInJson_IsRejectedByStrictSchema`.
+**Forward compatibility:** Loose Read (2026-07-23, Phase 1). Unknown JSON keys are silently skipped at load time. The legacy `settings.schemaVersion` key is no longer rejected — it is silently dropped and naturally removed on the next save (since source-gen writes only known fields). Pinned by `LauncherStoreLoadFailureTests.LauncherSettings_LegacySchemaVersionInJson_LooseReadSkipsUnknownKey`.
 
 **Decision:** Schema-First migration (Corvus.JsonSchema source generator) was rejected — C# records ARE the schema for app-internal persistence. Adding a JSON Schema file would create a second source of truth and increase drift risk, not decrease it. Corvus is correct for API contracts / externally-authored config, not for sole-author sole-reader app persistence.
 
@@ -307,6 +296,18 @@ After migration, the legacy files are preserved as `.bak` and never read again.
 
 `File.Move(temp, target, overwrite: true)` is **NOT atomic** on Windows — it decomposes into delete+rename — and is not used.
 
+## Concurrency: Save Lock (2026-07-23, Phase 2)
+
+`LauncherJson.Save` is protected by a `private static SemaphoreSlim(1, 1)` to serialize concurrent writes:
+
+```csharp
+SaveLock.Wait();
+try { /* temp file, backup rotation, atomic replace */ }
+finally { SaveLock.Release(); }
+```
+
+**Why:** AppStore already serializes per-instance access via its own `SemaphoreSlim`. The Save lock is defense-in-depth against cross-instance or direct `LauncherStore.Save` calls from multiple threads.
+
 ## Stale Temp Cleanup
 
 **Source:** `LauncherJson.CleanupStaleTempFiles(configDir)`
@@ -368,4 +369,7 @@ The following were removed during the 2026-07 single-file refactoring and ponyta
 | `NormalizeEntries` / `ValidateEntrySelectionFields` pipeline | Normalize pipeline removed in ponytail audit | Value-object `Parse` at use time |
 | Multi-file stage-all-then-commit (config.json + presets.json + settings.json) | Three-file store collapsed into `launcher.json` | Single-file atomic save inside `LauncherJson.Save` |
 | `LauncherPresetMutationSnapshot` (separate type) | Inlined — only one caller | Logic merged into `LauncherEntryMutationSnapshot` / `MainWindowViewModel` |
-| `LauncherEntryMutationSnapshot` / `LauncherSelectionMutationSnapshot` | **Deleted** 2026-07-21 | Rollback via `AppStore.Mutate` internal revert + `RestoreVmStateFromStore()` |
+| `LauncherEntryMutationSnapshot` / `LauncherSelectionMutationSnapshot` | **Deleted** 2026-07-21 | Rollback via `AppStore.Dispatch` internal revert + `RestoreVmStateFromStore()` |
+| `AppStore.Mutate` / `MutateAsync` / `MutateErrorOr` | **Deleted** 2026-07-23 (Phase 2) | Callers use `Dispatch` / `DispatchAsync` / `DispatchErrorOr` directly |
+| `LooseOptions` / `StrictOptions` (JsonSerializerOptions fields) | **Deleted** 2026-07-23 (Phase 1) | `JsonTypeInfo<T>` from `LauncherJsonContext.Default` — AOT-safe overloads |
+| `ExceptionFilters.UnwrapAggregates` | **Deleted** 2026-07-23 (Phase 2) | Inline unwrap in DEBUG guard; Core `IsRecoverable` handles production unwrap |

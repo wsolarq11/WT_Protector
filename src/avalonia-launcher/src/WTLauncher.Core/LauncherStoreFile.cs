@@ -1,13 +1,11 @@
 using System.Collections.Immutable;
 using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 
 namespace WTLauncher.Core;
 
 /// <summary>Single-file store container replacing the three separate
 /// config.json / settings.json / presets.json files. All properties are
 /// init-only — mutations produce a new instance via <c>with { }</c>.</summary>
-[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record LauncherStoreFile
 {
     [JsonPropertyName("schemaVersion")]

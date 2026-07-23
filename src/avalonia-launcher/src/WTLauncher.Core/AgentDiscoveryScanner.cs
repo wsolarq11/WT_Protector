@@ -54,7 +54,8 @@ public static class AgentDiscoveryScanner
     /// </summary>
     public static AgentDiscoveryResult Scan(
         IEnumerable<AgentCatalogEntry> catalog,
-        string? pathOverride = null)
+        string? pathOverride = null,
+        CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(catalog);
 
@@ -73,9 +74,13 @@ public static class AgentDiscoveryScanner
 
         var entries = catalog as IReadOnlyList<AgentCatalogEntry> ?? catalog.ToList();
 
+        // CancellationToken is passed through to Parallel.ForEachAsync so that
+        // if the caller cancels mid-scan, in-flight agent probes are allowed to
+        // complete but no new ones start. Full propagation from ViewModel (e.g.
+        // linking to page navigation CTS) is a future enhancement.
         Parallel.ForEachAsync(
             entries,
-            new ParallelOptions { MaxDegreeOfParallelism = 4 },
+            new ParallelOptions { MaxDegreeOfParallelism = 4, CancellationToken = ct },
             (entry, _) =>
             {
                 try

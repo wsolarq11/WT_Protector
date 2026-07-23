@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Threading;
 using ErrorOr;
 using WTLauncher.Core;
 
@@ -147,17 +146,6 @@ public sealed class AppStore : IDisposable
         _stateChanged?.Invoke(snapshot);
         return Result.Success;
     }
-
-    // ── Legacy Mutate (backward compatible) ────────────────────────
-
-    public void Mutate(Func<LauncherStoreFile, LauncherStoreFile> transform) =>
-        Dispatch(transform);
-
-    public async Task MutateAsync(Func<LauncherStoreFile, Task<LauncherStoreFile>> transform) =>
-        await DispatchAsync(transform).ConfigureAwait(false);
-
-    public ErrorOr<Success> MutateErrorOr(Func<LauncherStoreFile, LauncherStoreFile> transform) =>
-        DispatchErrorOr(transform);
 
     // ── Subscription ──────────────────────────────────────────────
 

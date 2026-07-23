@@ -17,7 +17,5 @@
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="Vogen" Version="8.0.7" />
     <PackageVersion Include="ErrorOr" Version="2.1.1" />
-    <PackageVersion Include="Fluxor" Version="6.10.0" />
-    <PackageVersion Include="Fluxor.Blazor.Web" Version="6.10.0" />
   </ItemGroup>
 </Project>

@@ -54,7 +54,7 @@ public sealed class AgentDiscoveryScannerTests
     [Fact]
     public async Task Scan_WithEmptyPathOverride_ReturnsEmptyResult()
     {
-        var result = AgentDiscoveryScanner.Scan(AgentCatalog.Entries, pathOverride: "");
+        var result = AgentDiscoveryScanner.Scan(AgentCatalog.Entries, pathOverride: "", ct: TestContext.Current.CancellationToken);
         Assert.Empty(result.Found);
         Assert.Empty(result.Failures);
         await Task.CompletedTask;
@@ -79,7 +79,7 @@ public sealed class AgentDiscoveryScannerTests
             BrandColorHex = "#D97757",
         };
 
-        var result = AgentDiscoveryScanner.Scan(new[] { catalogEntry }, pathOverride: temp.Path);
+        var result = AgentDiscoveryScanner.Scan(new[] { catalogEntry }, pathOverride: temp.Path, ct: TestContext.Current.CancellationToken);
         var found = Assert.Single(result.Found);
         Assert.Equal("1.0.14", found.Version);
         Assert.EndsWith("fake-claude.cmd", found.ResolvedPath);
@@ -93,7 +93,8 @@ public sealed class AgentDiscoveryScannerTests
         // reserved for I/O / process errors during probing.
         var result = AgentDiscoveryScanner.Scan(
             new[] { AgentCatalog.Entries.First(e => e.ExecName == "claude") },
-            pathOverride: "");
+            pathOverride: "",
+            ct: TestContext.Current.CancellationToken);
         Assert.Empty(result.Found);
         Assert.Empty(result.Failures);
     }
@@ -135,7 +136,7 @@ public sealed class AgentDiscoveryScannerTests
             },
         };
 
-        var result = AgentDiscoveryScanner.Scan(catalog, pathOverride: temp.Path);
+        var result = AgentDiscoveryScanner.Scan(catalog, pathOverride: temp.Path, ct: TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Found.Length);
         Assert.Empty(result.Failures);

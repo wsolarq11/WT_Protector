@@ -3,9 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
-using Fluxor;
-using Microsoft.Extensions.DependencyInjection;
-using WTLauncher.App.Features;
 using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Features.Presets;
@@ -145,25 +142,6 @@ public sealed partial class App : Application
                 var dialogService = new DialogService();
                 var entryService = new EntryService(dialogService);
                 var presetService = new PresetService(dialogService);
-
-                // ── Fluxor ────────────────────────────────────
-                var fluxorServices = new ServiceCollection();
-                fluxorServices.AddFluxor(c => c.ScanAssemblies(typeof(LayoutState).Assembly));
-                using var fluxorProvider = fluxorServices.BuildServiceProvider();
-                var fluxorStore = fluxorProvider.GetRequiredService<IStore>();
-                fluxorStore.InitializeAsync().GetAwaiter().GetResult();
-                var fluxorDispatcher = fluxorProvider.GetRequiredService<Fluxor.IDispatcher>();
-
-                // Sync initial AppStore state → LayoutState
-                fluxorDispatcher.Dispatch(new SetEntriesAction(storeFile.Entries));
-                fluxorDispatcher.Dispatch(new SetFilterAction(storeFile.Settings.LastFilterText));
-                fluxorDispatcher.Dispatch(new SetViewModeAction(storeFile.Settings.EntryViewMode));
-                fluxorDispatcher.Dispatch(new SetSortModeAction(storeFile.Settings.SortMode,
-                    storeFile.Settings.CustomEntryOrder));
-                fluxorDispatcher.Dispatch(new SetGroupKeyAction(storeFile.Settings.CardsGroupKey));
-                fluxorDispatcher.Dispatch(new SetPresetsAction(
-                    storeFile.Presets,
-                    storeFile.DefaultPresetId));
 
                 var viewModel = new MainWindowViewModel(
                     storePath,

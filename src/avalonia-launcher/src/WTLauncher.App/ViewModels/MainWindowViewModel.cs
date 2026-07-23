@@ -361,7 +361,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     /// their own ObservableCollection state after a failure.</summary>
     private string? SaveStoreFile(LauncherStoreFile storeFile)
     {
-        try { _appStore.Mutate(_ => storeFile); return null; }
+        try { _appStore.Dispatch(_ => storeFile); return null; }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "SaveStoreFile");

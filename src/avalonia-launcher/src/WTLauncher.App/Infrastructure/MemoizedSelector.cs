@@ -8,7 +8,7 @@ public class MemoizedSelector<TInput, TOutput> where TInput : notnull
 {
     private TInput _lastInput = default!;
     private TOutput _lastOutput = default!;
-    private bool _hasCached;
+    private volatile bool _hasCached;
 
     public TOutput Get(Func<TInput, TOutput> compute, TInput input)
     {

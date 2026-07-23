@@ -55,7 +55,7 @@ public sealed class AppStoreTests
         LauncherStore.Save(SampleStore(), path);
         var store = new AppStore(path);
 
-        store.Mutate(state => state with
+        store.Dispatch(state => state with
         {
             Settings = state.Settings with { SortMode = LauncherEntryQuery.AlphabeticalSortModeId },
         });
@@ -72,7 +72,7 @@ public sealed class AppStoreTests
         LauncherStore.Save(SampleStore(), path);
         var store = new AppStore(path);
 
-        store.Mutate(state => state with
+        store.Dispatch(state => state with
         {
             Entries = state.Entries.Add(new LaunchEntry
                 { Id = "three", Name = "Three", Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)"D:\\three", Command = "pwsh" }),
@@ -91,7 +91,7 @@ public sealed class AppStoreTests
         var beforeHash = HashFile(path);
         var store = new AppStore(path);
 
-        store.Mutate(state => state);
+        store.Dispatch(state => state);
 
         var afterHash = HashFile(path);
         Assert.Equal(beforeHash, afterHash);
@@ -110,7 +110,7 @@ public sealed class AppStoreTests
         try
         {
             Assert.ThrowsAny<Exception>(() =>
-                store.Mutate(state => state with { DefaultPresetId = "x" }));
+                store.Dispatch(state => state with { DefaultPresetId = "x" }));
         }
         finally
         {
@@ -131,7 +131,7 @@ public sealed class AppStoreTests
 
         using (store.Subscribe(_ => notified = true))
         {
-            store.Mutate(state => state with { DefaultPresetId = "changed" });
+            store.Dispatch(state => state with { DefaultPresetId = "changed" });
         }
 
         Assert.True(notified);
@@ -149,7 +149,7 @@ public sealed class AppStoreTests
         using (store.Subscribe(_ => notified = true))
         {
             Assert.ThrowsAny<Exception>(() =>
-                store.Mutate(_ => throw new InvalidOperationException("boom")));
+                store.Dispatch(_ => throw new InvalidOperationException("boom")));
         }
 
         Assert.False(notified);
@@ -166,7 +166,7 @@ public sealed class AppStoreTests
 
         var sub = store.Subscribe(_ => notified = true);
         sub.Dispose();
-        store.Mutate(state => state with { DefaultPresetId = "x" });
+        store.Dispatch(state => state with { DefaultPresetId = "x" });
 
         Assert.False(notified);
     }
@@ -179,7 +179,7 @@ public sealed class AppStoreTests
         LauncherStore.Save(SampleStore(), path);
         var store = new AppStore(path);
 
-        await store.MutateAsync(state => Task.FromResult(state with
+        await store.DispatchAsync(state => Task.FromResult(state with
         {
             Settings = state.Settings with { SortMode = LauncherEntryQuery.AlphabeticalSortModeId },
         }));

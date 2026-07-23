@@ -1,8 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using ErrorOr;
 
@@ -16,35 +14,18 @@ public static class LauncherJson
     private const string RepositoryLineEnding = "\n";
     private const int DefaultMaxBackups = 3;
 
+    /// <summary>Source-generated JSON serializer options used internally by Load/Save.
+    /// Exposed for test round-trip verification.</summary>
+    internal static JsonSerializerOptions Options => LauncherJsonContext.Default.Options;
 
-    /// <summary>Source-generated JSON serialization context for Native AOT.
-    /// All types must be registered in <see cref="LauncherJsonContext"/>.</summary>
-    internal static readonly JsonSerializerOptions Options = new()
-    {
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-        // C# record types ARE the schema contract: [JsonRequired] for required
-        // fields, [JsonPropertyName] for names, property types for value types.
-        // Disallow makes "unknown JSON key" a load-time error rather than a
-        // silent skip — catches schema drift (e.g. reintroducing the obsolete
-        // settings.schemaVersion) immediately. schemaVersion at the top level
-        // remains the cross-version guard for newer-file formats.
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-        WriteIndented = false,
-        MaxDepth = 64,
-        // UnsafeRelaxedJsonEscaping does not escape HTML-sensitive characters
-        // (< > &). This is acceptable because config/settings JSON is never
-        // rendered in a browser — it is consumed exclusively by System.Text.Json.
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        // Source-generated resolver for Native AOT compatibility.
-        // Without this, JsonSerializer calls require dynamic code generation.
-        TypeInfoResolver = LauncherJsonContext.Default,
-    };
-
+    /// <summary>Defense-in-depth: serializes concurrent calls to Save.
+    /// AppStore already serializes per-instance; this protects against cross-instance
+    /// or direct LauncherStore.Save calls from multiple threads.</summary>
+    private static readonly SemaphoreSlim SaveLock = new(1, 1);
     public static T? Load<T>(string path) where T : notnull
     {
         using var stream = File.OpenRead(path);
-        var typeInfo = GetRequiredTypeInfo<T>();
+        var typeInfo = (JsonTypeInfo<T>)LauncherJsonContext.Default.GetTypeInfo(typeof(T))!;
         return JsonSerializer.Deserialize(stream, typeInfo);
     }
 
@@ -132,60 +113,68 @@ public static class LauncherJson
 
     public static void Save<T>(T value, string path, bool backup)
     {
-        var fullPath = Path.GetFullPath(path);
-        var directory = Path.GetDirectoryName(fullPath);
-        if (!string.IsNullOrWhiteSpace(directory))
-            // Directory.CreateDirectory inherits the parent directory's ACL.
-            // No explicit permission set is needed — the OS default is correct.
-            Directory.CreateDirectory(directory);
-
-        var typeInfo = GetRequiredTypeInfo<T>();
-        var json = NormalizeLineEndings(JsonSerializer.Serialize(value, typeInfo));
-        var tempPath = fullPath + $".tmp-{Guid.NewGuid():N}";
-
-        File.WriteAllText(tempPath, json + RepositoryLineEnding);
-
-        // Backup rotation is best-effort — if it fails, the new data
-        // still gets committed. The old backup-on-failure blocking bug
-        // is fixed by the try/catch, not by reordering.
-        if (backup && File.Exists(fullPath))
+        SaveLock.Wait();
+        try
         {
-            var bakTempPath = fullPath + $".bak-tmp-{Guid.NewGuid():N}";
-            try
+            var fullPath = Path.GetFullPath(path);
+            var directory = Path.GetDirectoryName(fullPath);
+            if (!string.IsNullOrWhiteSpace(directory))
+                // Directory.CreateDirectory inherits the parent directory's ACL.
+                // No explicit permission set is needed — the OS default is correct.
+                Directory.CreateDirectory(directory);
+
+            var typeInfo = (JsonTypeInfo<T>)LauncherJsonContext.Default.GetTypeInfo(typeof(T))!;
+            var json = NormalizeLineEndings(JsonSerializer.Serialize(value, typeInfo));
+            var tempPath = fullPath + $".tmp-{Guid.NewGuid():N}";
+
+            File.WriteAllText(tempPath, json + RepositoryLineEnding);
+
+            // Backup rotation is best-effort — if it fails, the new data
+            // still gets committed. The old backup-on-failure blocking bug
+            // is fixed by the try/catch, not by reordering.
+            if (backup && File.Exists(fullPath))
             {
-                // ponytail: copy current to temp BEFORE rotating old backups.
-                // If crash occurs after rotation, bakTempPath already holds
-                // the safe copy — no window where .bak is missing.
-                File.Copy(fullPath, bakTempPath, overwrite: true);
-                RotateBackups(fullPath);
-                File.Move(bakTempPath, fullPath + ".bak", overwrite: true);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
-            {
-                try { File.Delete(bakTempPath); }
-                catch (Exception deleteEx) when (deleteEx is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
+                var bakTempPath = fullPath + $".bak-tmp-{Guid.NewGuid():N}";
+                try
                 {
-                    Debug.WriteLine($"[LauncherJson] Stale bak-tmp cleanup failed: {deleteEx.Message}");
+                    // ponytail: copy current to temp BEFORE rotating old backups.
+                    // If crash occurs after rotation, bakTempPath already holds
+                    // the safe copy — no window where .bak is missing.
+                    File.Copy(fullPath, bakTempPath, overwrite: true);
+                    RotateBackups(fullPath);
+                    File.Move(bakTempPath, fullPath + ".bak", overwrite: true);
                 }
-                var msg = $"[LauncherJson] Backup rotation failed: {ex.Message}";
-                Debug.WriteLine(msg);
-                Trace.WriteLine(msg);
-                // Non-fatal — the target file has not been modified yet.
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
+                {
+                    try { File.Delete(bakTempPath); }
+                    catch (Exception deleteEx) when (deleteEx is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
+                    {
+                        Debug.WriteLine($"[LauncherJson] Stale bak-tmp cleanup failed: {deleteEx.Message}");
+                    }
+                    var msg = $"[LauncherJson] Backup rotation failed: {ex.Message}";
+                    Debug.WriteLine(msg);
+                    Trace.WriteLine(msg);
+                    // Non-fatal — the target file has not been modified yet.
+                }
+            }
+
+            // Commit: writes are idempotent (full overwrite). If this throws,
+            // tempPath remains for recovery — CleanupStaleTempFiles handles it.
+            if (File.Exists(fullPath))
+            {
+                // Atomic on NTFS: MoveFileEx with MOVEFILE_REPLACE_EXISTING.
+                // The replacement file is moved onto the target atomically —
+                // no window where the target is deleted without replacement.
+                File.Replace(tempPath, fullPath, null);
+            }
+            else
+            {
+                File.Move(tempPath, fullPath);
             }
         }
-
-        // Commit: writes are idempotent (full overwrite). If this throws,
-        // tempPath remains for recovery — CleanupStaleTempFiles handles it.
-        if (File.Exists(fullPath))
+        finally
         {
-            // Atomic on NTFS: MoveFileEx with MOVEFILE_REPLACE_EXISTING.
-            // The replacement file is moved onto the target atomically —
-            // no window where the target is deleted without replacement.
-            File.Replace(tempPath, fullPath, null);
-        }
-        else
-        {
-            File.Move(tempPath, fullPath);
+            SaveLock.Release();
         }
     }
 
@@ -214,19 +203,6 @@ public static class LauncherJson
     // ponytail: ReplaceLineEndings replaces the hand-rolled \r\n → \n normalizer.
     private static string NormalizeLineEndings(string text) =>
         text.ReplaceLineEndings(RepositoryLineEnding);
-
-    /// <summary>Returns the source-generated JsonTypeInfo for <typeparamref name="T"/>,
-    /// throwing if the type isn't registered in <see cref="LauncherJsonContext"/>.
-    /// Required for Native AOT — no fallback to reflection-based serialization.</summary>
-    private static JsonTypeInfo<T> GetRequiredTypeInfo<T>()
-    {
-        var info = LauncherJsonContext.Default.GetTypeInfo(typeof(T));
-        return info is JsonTypeInfo<T> typed
-            ? typed
-            : throw new InvalidOperationException(
-                $"Type {typeof(T)} is not registered in LauncherJsonContext. " +
-                "Add a [JsonSerializable] attribute to LauncherJsonContext.");
-    }
 
     /// <summary>Delete all <c>*.tmp-*</c>, <c>*.stage-*</c>, <c>*.bak-tmp-*</c>, and
     /// <c>*.recovery-*</c> files left behind by crashed Save() or recovery

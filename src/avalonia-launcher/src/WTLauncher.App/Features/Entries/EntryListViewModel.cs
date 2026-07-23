@@ -190,7 +190,7 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         // Save to store first (AppStore handles rollback internally)
         try
         {
-            _appStore.Mutate(state => state with
+            _appStore.Dispatch(state => state with
             {
                 Entries = state.Entries.RemoveAll(e => EntryId.Same(e.Id, target.EntryId)),
                 Settings = newSettings,
@@ -233,7 +233,7 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         // Save to store first (AppStore handles rollback internally)
         try
         {
-            _appStore.Mutate(state => state with
+            _appStore.Dispatch(state => state with
             {
                 Entries = state.Entries.Add(entry),
                 Settings = newSettings,
@@ -284,7 +284,7 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         // Save to store first — build updated entry list from current store state
         try
         {
-            _appStore.Mutate(state =>
+            _appStore.Dispatch(state =>
             {
                 var updatedEntries = state.Entries
                     .Select(e => EntryId.Same(e.Id, oldId) ? updated : e)

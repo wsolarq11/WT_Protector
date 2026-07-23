@@ -4,11 +4,11 @@ using WTLauncher.Core.ValueObjects;
 
 namespace WTLauncher.Core;
 
-/// <summary>System.Text.Json source-generated serialization context for Native AOT.
-/// All types that pass through LauncherJson.Save/Load must be registered here.</summary>
 [JsonSourceGenerationOptions(
     WriteIndented = false,
-    UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
+    ReadCommentHandling = JsonCommentHandling.Skip,
+    AllowTrailingCommas = true,
+    MaxDepth = 64)]
 [JsonSerializable(typeof(LauncherStoreFile))]
 [JsonSerializable(typeof(LauncherSettings))]
 [JsonSerializable(typeof(LaunchEntry))]
@@ -18,6 +18,7 @@ namespace WTLauncher.Core;
 [JsonSerializable(typeof(EntryName))]
 [JsonSerializable(typeof(EntryId))]
 [JsonSerializable(typeof(DirectoryPath))]
+[JsonSerializable(typeof(LauncherStore.LegacyPresetDocument))]
 internal sealed partial class LauncherJsonContext : JsonSerializerContext
 {
 }

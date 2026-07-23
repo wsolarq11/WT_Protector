@@ -11,6 +11,7 @@ public static class LauncherStore
     public const string StoreFileName = "launcher.json";
     public const string RepositoryMarkerFileName = "README.md";
     public const int ExpectedStoreSchemaVersion = 2;
+    public const int MinimumSupportedSchemaVersion = 1;
 
     // ---- Load / Save ----
 
@@ -38,6 +39,11 @@ public static class LauncherStore
             if (store.SchemaVersion > ExpectedStoreSchemaVersion)
                 throw new InvalidDataException(
                     $"Launcher store schema version {store.SchemaVersion} is from a newer version of the app. Please upgrade WT Launcher.");
+
+            if (store.SchemaVersion < MinimumSupportedSchemaVersion)
+                throw new InvalidDataException(
+                    $"Launcher store schema version {store.SchemaVersion} is too old. " +
+                    $"Minimum supported version is {MinimumSupportedSchemaVersion}. Regenerate config or use an older app version.");
 
             return store;
         }
@@ -125,7 +131,7 @@ public static class LauncherStore
     }
 
     // F06: Temporary type for legacy preset file deserialization (presets.json format)
-    private sealed record LegacyPresetDocument
+    internal sealed record LegacyPresetDocument
     {
         public int SchemaVersion { get; init; }
         public string? DefaultPresetId { get; init; }

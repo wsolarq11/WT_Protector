@@ -13,24 +13,14 @@ internal static class ExceptionFilters
     {
 #if DEBUG
         // In DEBUG builds, rethrow logic errors so they crash the process during development.
-        // Check before delegation so the crash is thrown from the App layer.
-        var unwrapped = UnwrapAggregates(ex);
-        if (unwrapped is NullReferenceException or IndexOutOfRangeException or ArgumentNullException)
-            throw new InvalidOperationException("Logic crash (DEBUG): " + unwrapped.Message, unwrapped);
+        // Unwrap aggregates to find the real cause; LauncherErrors.IsRecoverable handles
+        // unwrapping for production behavior.
+        var inner = ex;
+        while (inner is TypeInitializationException or AggregateException)
+            inner = inner.InnerException ?? inner;
+        if (inner is NullReferenceException or IndexOutOfRangeException or ArgumentNullException)
+            throw new InvalidOperationException("Logic crash (DEBUG): " + inner.Message, inner);
 #endif
         return LauncherErrors.IsRecoverable(ex);
-    }
-
-    /// <summary>Unwrap TypeInitializationException and AggregateException wrappers.</summary>
-    private static Exception UnwrapAggregates(Exception ex)
-    {
-        for (var i = 0; i < 16 && ex is TypeInitializationException or AggregateException; i++)
-        {
-            if (ex.InnerException is null) break;
-            ex = ex.InnerException;
-            if (ex is AggregateException agg)
-                ex = agg.Flatten().InnerExceptions.FirstOrDefault() ?? ex;
-        }
-        return ex;
     }
 }
