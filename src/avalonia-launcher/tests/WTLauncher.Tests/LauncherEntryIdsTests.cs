@@ -102,17 +102,64 @@ public sealed class LauncherEntryIdsTests
     [Fact]
     public void Normalize_257CharsWithTrailingHighSurrogate_PreservesSurrogatePair()
     {
-        // 255 Z chars + high surrogate (U+D800) + low surrogate (U+DC00) = 257 chars.
-        // The high surrogate at index 255 falls at the 256-char boundary.
-        // Normalize should extend past the boundary to prevent splitting the pair.
+        // 255 Z chars + Latin Extended-F character U+10780 (via surrogate pair
+        // U+D801+U+DF80) = 257 chars. The high surrogate at index 255 falls at the
+        // 256-char boundary. Normalize should extend past the boundary to prevent
+        // splitting the pair.
         var regular = new string('Z', 255);
-        var highSurrogate = '\uD800';
-        var lowSurrogate = '\uDC00';
+        var highSurrogate = '\uD801'; // High surrogate for U+10780 (Latin Extended-F)
+        var lowSurrogate = '\uDF80';  // Low surrogate for U+10780 (0xDC00 + 0x380)
         var id = regular + highSurrogate + lowSurrogate;
 
         var result = EntryId.Normalize(id);
 
         Assert.Equal(257, result.Length);
-        Assert.EndsWith("\uD800\uDC00", result);
+        Assert.EndsWith("\uD801\uDF80", result);
+    }
+
+    [Fact]
+    public void Parse_RejectsCyrillicHomoglyph()
+    {
+        // Cyrillic 'а' (U+0430) is visually identical to Latin 'a' (U+0061)
+        // but belongs to a different script — must be rejected.
+        var cyrillicA = "\u0430"; // Cyrillic small letter a
+
+        var exception = Assert.Throws<FormatException>(() => EntryId.Parse(cyrillicA));
+        Assert.Contains("非 Latin", exception.Message);
+    }
+
+    [Fact]
+    public void Parse_AcceptsExtendedLatinCharacters()
+    {
+        // Accented Latin characters used in European languages must be accepted.
+        var id = EntryId.Parse("cafe\u0301"); // café with combining acute accent
+        Assert.NotNull(id.Value);
+        Assert.Equal("caf\u00e9", id.Value); // FormC composes to U+00E9
+
+        // Also accept pre-composed form directly
+        var id2 = EntryId.Parse("Jos\u00e9"); // José with pre-composed é
+        Assert.Equal("Jos\u00e9", id2.Value);
+    }
+
+    [Fact]
+    public void Parse_RejectsGreekScript()
+    {
+        // Greek letters should be rejected as non-Latin script.
+        var greekAlpha = "\u03B1"; // Greek small letter alpha
+
+        var exception = Assert.Throws<FormatException>(() => EntryId.Parse(greekAlpha));
+        Assert.Contains("非 Latin", exception.Message);
+    }
+
+    [Fact]
+    public void Same_DistinguishesLatinFromCyrillicHomoglyph()
+    {
+        // Latin 'a' (U+0061) and Cyrillic 'а' (U+0430) must NOT be Same.
+        Assert.True(EntryId.Same("a", "a")); // Latin vs Latin
+        Assert.False(EntryId.Same("a", "\u0430")); // Latin vs Cyrillic
+
+        // SameNormalized should also distinguish them
+        Assert.True(EntryId.SameNormalized(" a ", "a"));
+        Assert.False(EntryId.SameNormalized("\u0430", "a")); // Cyrillic normalizes but doesn't match Latin
     }
 }
