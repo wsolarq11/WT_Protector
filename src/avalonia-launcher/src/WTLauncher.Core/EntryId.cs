@@ -26,6 +26,23 @@ public readonly record struct EntryId
         "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
     };
 
+    // Unicode Latin script code-point ranges. Only characters from Latin or
+    // Common/Inherited scripts are allowed in EntryId, preventing homoglyph-based
+    // UI spoofing (e.g. Cyrillic 'а' U+0430 vs Latin 'a' U+0061).
+    private static readonly (int Start, int End)[] LatinScriptRanges =
+    [
+        (0x0020, 0x007E), // Basic Latin (space through tilde)
+        (0x00A0, 0x00FF), // Latin-1 Supplement (accented letters + symbols)
+        (0x0100, 0x024F), // Latin Extended-A, Latin Extended-B
+        (0x0250, 0x02AF), // IPA Extensions (script=Latin)
+        (0x0300, 0x036F), // Combining Diacritical Marks (Inherited, used with Latin)
+        (0x1E00, 0x1EFF), // Latin Extended Additional
+        (0x2C60, 0x2C7F), // Latin Extended-C
+        (0xA720, 0xA7FF), // Latin Extended-D
+        (0xAB30, 0xAB6F), // Latin Extended-E
+        (0x10780, 0x107BF), // Latin Extended-F (above U+FFFF, via surrogate pairs)
+    ];
+
     public static EntryId Parse(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw))
@@ -46,6 +63,8 @@ public readonly record struct EntryId
 
         if (trimmed.Length == 0)
             throw new FormatException("ID 仅包含无效字符。");
+
+        EnsureLatinScript(trimmed);
 
         if (WindowsReservedNames.Contains(trimmed))
             throw new FormatException($"ID \"{trimmed}\" 是 Windows 保留名称。");
@@ -126,6 +145,26 @@ public readonly record struct EntryId
     public static implicit operator EntryId(string value) => Parse(value);
     public static implicit operator string(EntryId id) => id.Value;
     public override string ToString() => Value;
+
+    private static void EnsureLatinScript(string value)
+    {
+        foreach (var rune in value.EnumerateRunes())
+        {
+            var cp = rune.Value;
+            var allowed = false;
+            foreach (var (start, end) in LatinScriptRanges)
+            {
+                if (cp >= start && cp <= end)
+                {
+                    allowed = true;
+                    break;
+                }
+            }
+            if (!allowed)
+                throw new FormatException(
+                    $"ID 包含非 Latin 字符: U+{cp:X4}。");
+        }
+    }
 
     private static string StripUnsafeChars(string value)
     {
