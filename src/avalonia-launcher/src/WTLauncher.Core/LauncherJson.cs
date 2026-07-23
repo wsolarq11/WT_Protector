@@ -144,10 +144,10 @@ public static class LauncherJson
                     RotateBackups(fullPath);
                     File.Move(bakTempPath, fullPath + ".bak", overwrite: true);
                 }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
                     try { File.Delete(bakTempPath); }
-                    catch (Exception deleteEx) when (deleteEx is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
+                    catch (Exception deleteEx) when (deleteEx is IOException or UnauthorizedAccessException)
                     {
                         Debug.WriteLine($"[LauncherJson] Stale bak-tmp cleanup failed: {deleteEx.Message}");
                     }

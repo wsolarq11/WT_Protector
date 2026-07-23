@@ -142,7 +142,7 @@ internal static class Program
             if (!string.IsNullOrWhiteSpace(storeDir) && Directory.Exists(storeDir))
                 LauncherJson.CleanupStaleTempFiles(storeDir);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             // Best-effort at startup: no config directory yet, nothing to clean.
             Debug.WriteLine($"[WTLauncher] Stale temp cleanup failed at startup: {ex.Message}");

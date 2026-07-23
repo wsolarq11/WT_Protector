@@ -51,6 +51,31 @@ dotnet publish src/avalonia-launcher/WTLauncher.Avalonia.sln -c Release -r win-x
 
 `-warnaserror` is real — CI (`/.github/workflows/verify.yml`) builds with it, and so does the gate. Treat warnings as failures from the start.
 
+## Scheme B architecture decisions (2026-07-23, 3 phases landed)
+
+All dead code removal, serialization, exception, and concurrency changes from the
+deep architecture research (`07-23-arch-deep-research/`) are committed. Key facts:
+
+- **Fluxor is gone.** 7 Fluxor files + ExceptionBoundary + LauncherIcons deleted.
+  State management: `AppStore` (single container, SemaphoreSlim, Dispatch/DispatchErrorOr
+  for mutations). CommunityToolkit.Mvvm for VM bindings.
+- **AOT-safe serialization.** `JsonSerializer.Deserialize(stream, jsonTypeInfo)` /
+  `Serialize(value, jsonTypeInfo)` — NO `JsonSerializerOptions`-based overloads,
+  which have `[RequiresUnreferencedCode]`. Options are set via `[JsonSourceGenerationOptions]`
+  on `LauncherJsonContext`.
+- **Loose Read + Strict Write.** Unknown JSON keys are silently skipped at load time
+  (forward compat). Source-gen only writes known fields. No `UnmappedMemberHandling.Disallow`.
+- **AppStore.Mutate removed.** All callers use `Dispatch` / `DispatchAsync` / `DispatchErrorOr`.
+- **ExceptionFilters.IsRecoverable** is the single catch-filter entry point. DEBUG guard
+  rethrows logic errors. Delegates to `LauncherErrors.IsRecoverable` (Core) for production.
+  No more duplicate `UnwrapAggregates`.
+- **LauncherJson.Save** has `private static SemaphoreSlim(1,1)` — defense-in-depth.
+- **MemoizedSelector._hasCached** is `volatile`.
+- **AgentDiscoveryScanner.Scan()** accepts `CancellationToken ct = default`.
+- **DiscoverAgentsViewModel** propagates CancellationToken through `_scanFunc`.
+- **CI:** AOT publish job (informational), `dotnet nuget audit` (was no-op restore),
+  Dependabot (NuGet + GitHub Actions), `.editorconfig`.
+
 `.snow/`, `.claude/`, `.agents/`, `artifacts/`, `*.bak*`, `*.log`, `*.tmp` are git-ignored local/runtime state — never gate or commit on them.
 
 ## The 5-layer architecture (this is the part that needs multiple files to see)

@@ -60,7 +60,7 @@ internal static class ErrorLog
             var entry = $"{DateTimeOffset.UtcNow:O} [{context}] {exception}{Environment.NewLine}";
             File.AppendAllText(logPath, entry);
         }
-        catch (Exception writeEx) when (writeEx is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
+        catch (Exception writeEx) when (writeEx is IOException or UnauthorizedAccessException)
         {
             try
             {
