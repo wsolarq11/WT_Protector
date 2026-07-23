@@ -32,6 +32,8 @@ internal static class TestRepositoryPaths
 
     public static string MainWindowCodeBehind => View("MainWindow.axaml.cs");
 
+    public static string StatusBarXaml => View("Controls\\StatusBar.axaml");
+
     public static string MainWindowDragCodeBehind => View("MainWindow.Drag.cs");
 
     public static string AppCodeBehind => Path.Combine(
