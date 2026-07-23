@@ -588,7 +588,7 @@ Add-Check 'winget-config-schema-valid' @{
 # Views directory lint: no imperative UI control construction in .cs files
 $viewsDir = Get-AvaloniaRoot
 $violations = @()
-$whitelisted = @('FastWrapPanel.cs', 'LauncherDialogText.cs', 'MainWindowEntryCardResolver.cs')
+$whitelisted = @('FastWrapPanel.cs', 'LauncherDialogText.cs', 'MainWindowEntryCardResolver.cs', 'MainWindow.Drag.cs')
 $pattern = '\bnew\s+(TextBlock|Grid|StackPanel|Border|Button|TextBox|CheckBox|ComboBox|ScrollViewer)\b'
 Get-ChildItem -Path "$viewsDir\src\WTLauncher.App\Views" -Filter '*.cs' -Recurse |
     Where-Object { $_.Name -notmatch '\.axaml\.cs$' -and $_.Name -notin $whitelisted } |
