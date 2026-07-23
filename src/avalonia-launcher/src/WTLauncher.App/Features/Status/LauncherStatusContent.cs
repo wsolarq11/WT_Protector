@@ -1,4 +1,4 @@
-namespace WTLauncher.App.ViewModels;
+namespace WTLauncher.App.Features;
 
 public sealed record LauncherStatusContent
 {
@@ -10,14 +10,10 @@ public sealed record LauncherStatusContent
     }
 
     public string Text { get; }
-
     public LauncherStatusTone Tone { get; }
 
     public static LauncherStatusContent Neutral(string text) => new(text, LauncherStatusTone.Neutral);
-
     public static LauncherStatusContent Success(string text) => new(text, LauncherStatusTone.Success);
-
     public static LauncherStatusContent Warning(string text) => new(text, LauncherStatusTone.Warning);
-
     public static LauncherStatusContent Error(string text) => new(text, LauncherStatusTone.Error);
 }

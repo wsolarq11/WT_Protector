@@ -60,7 +60,7 @@
                         ToolTip.Tip="启动组内所有 entry"/>
                 <Button Grid.Column="5"
                         Classes="secondary"
-                        Content="💾 存为启动组"
+                        Content="存为启动组"
                         Command="{Binding SaveAsPresetCommand}"
                         Padding="8,2"
                         ToolTip.Tip="把组内所有 entry 保存为 preset"/>

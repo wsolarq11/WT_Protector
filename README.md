@@ -41,8 +41,12 @@ The unified store (`config/launcher.json`) uses `LauncherStoreFile` schema:
       "launchedAtUtc": ""
     }
   ],
-  "settings": { /* ... */ },
-  "presets": [ /* ... */ ],
+  "settings": {
+    /* ... */
+  },
+  "presets": [
+    /* ... */
+  ],
   "defaultPresetId": "core-projects"
 }
 ```
@@ -59,7 +63,7 @@ Fields:
 
 Active config entries must not contain the obsolete per-entry `confirm` key. Launch confirmation has one authority: `settings.requireConfirmationForLaunches` (nested in `launcher.json`).
 
-All active JSON files must exist, require the documented camelCase keys, and reject missing, null, or blank mode keys. Unknown keys are silently skipped for forward compatibility. The UI load path uses the same contract; it does not replace a failed or missing preset list with an empty launch-group model.
+All active JSON files must exist, require the documented camelCase keys, and reject missing, null, or blank mode keys. Unknown keys are REJECTED at load time to catch schema drift (JsonUnmappedMemberHandling.Disallow). The UI load path uses the same contract; it does not replace a failed or missing preset list with an empty launch-group model.
 
 Nested `settings.window.width` and `settings.window.height` must be positive numbers; invalid geometry is rejected instead of being carried into the next UI startup.
 
@@ -152,8 +156,8 @@ What the configuration does:
 
 WinGet Configuration vs the launcher — different concerns, complementary layers:
 
-- **WinGet Configuration** sets up the *machine*: "what's installed on this Windows host". Run once on a fresh machine.
-- **The launcher** manages the *workspace*: "which project folders open in `wt.exe` with which command". Daily use.
+- **WinGet Configuration** sets up the _machine_: "what's installed on this Windows host". Run once on a fresh machine.
+- **The launcher** manages the _workspace_: "which project folders open in `wt.exe` with which command". Daily use.
 
 Agent CLIs that ship via `irm | iex` (`claude`, `codex`, `cursor`, `antigravity`, `gemini`, `qwen-code`) are not winget packages today. Install them per the publisher's documented method, then run the launcher's 🔍 发现 button to import them as launch entries — the two layers compose: WinGet/irm installs the binary, the launcher wires it into a workspace button.
 
@@ -165,7 +169,7 @@ Run the project gate from the repository root:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
 ```
 
-The verifier currently enforces 19 checks — see the `Add-Check` calls in `tools/verify.ps1` for the canonical list. Summary by category:
+The verifier currently enforces 22 checks — see the `Add-Check` calls in `tools/verify.ps1` for the canonical list. Summary by category:
 
 - **repo hygiene**: line-ending policy (LF), `.snow/` ignored local state, retired paths (`WT Launcher.exe`, `src/winforms-launcher/`, `spikes/`) do not return;
 - **mainline layout**: `src/avalonia-launcher/` has the solution, app project, tests project, and mainline verify script;

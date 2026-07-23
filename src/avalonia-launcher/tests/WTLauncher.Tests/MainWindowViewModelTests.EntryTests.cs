@@ -1,3 +1,4 @@
+using WTLauncher.App.Features;
 using WTLauncher.App.Features.Entries;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;

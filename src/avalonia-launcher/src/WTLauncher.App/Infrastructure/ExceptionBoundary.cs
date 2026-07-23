@@ -1,5 +1,5 @@
 using WTLauncher.App.Features;
-using WTLauncher.App.ViewModels;
+using WTLauncher.Core;
 
 namespace WTLauncher.App.Infrastructure;
 
@@ -15,7 +15,7 @@ internal static class ExceptionBoundary
         string context) where T : notnull
     {
         try { return operation(); }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        catch (Exception ex) when (LauncherErrors.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, context);
             return new ServiceFailure<T>(LauncherStatusContent.Error($"操作失败: {context}"));
@@ -30,7 +30,7 @@ internal static class ExceptionBoundary
         string context) where T : notnull
     {
         try { return await operation().ConfigureAwait(false); }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        catch (Exception ex) when (LauncherErrors.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, context);
             return new ServiceFailure<T>(LauncherStatusContent.Error($"操作失败: {context}"));
@@ -44,7 +44,7 @@ internal static class ExceptionBoundary
         string context)
     {
         try { operation(); return null; }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        catch (Exception ex) when (LauncherErrors.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, context);
             return $"操作失败: {context}";
@@ -58,7 +58,7 @@ internal static class ExceptionBoundary
         string context)
     {
         try { await operation().ConfigureAwait(false); return null; }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        catch (Exception ex) when (LauncherErrors.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, context);
             return $"操作失败: {context}";

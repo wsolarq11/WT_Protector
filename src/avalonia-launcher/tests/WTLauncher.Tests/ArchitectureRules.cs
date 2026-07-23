@@ -171,4 +171,32 @@ public sealed class ArchitectureRules
             .Because("entry services must use the single LauncherStore persistence boundary rather than direct file access.");
         rule.Check(Architecture);
     }
+
+    // ── R11: Infrastructure must not depend on ViewModels ──────────────
+    //
+    // Infrastructure (AppStore, ErrorLog, ExceptionBoundary) is the
+    // persistence/error-handling foundation. Referencing ViewModel types
+    // from Infrastructure creates a cycle that breaks layer architecture.
+    [Fact]
+    public void R11_Infrastructure_MustNotDependOn_ViewModels()
+    {
+        IArchRule rule = Types().That().ResideInNamespace("WTLauncher.App.Infrastructure")
+            .Should().NotDependOnAnyTypesThat().ResideInNamespace("WTLauncher.App.ViewModels")
+            .Because("Infrastructure is the persistence/error-handling foundation below ViewModels.");
+        rule.Check(Architecture);
+    }
+
+    // ── R12: Features.Dialogs must not reference Views ────────────────
+    //
+    // DialogService in Features.Dialogs directly creates Window instances
+    // (ConfirmLaunchWindow, EntryDetailsWindow, etc.). Moving View creation
+    // to the View layer keeps Features layer-pure.
+    [Fact]
+    public void R12_FeaturesDialogs_MustNotReference_Views()
+    {
+        IArchRule rule = Types().That().ResideInNamespace("WTLauncher.App.Features.Dialogs")
+            .Should().NotDependOnAnyTypesThat().ResideInNamespace("WTLauncher.App.Views")
+            .Because("Dialog interface should be resolved through injection, not by directly constructing View types.");
+        rule.Check(Architecture);
+    }
 }

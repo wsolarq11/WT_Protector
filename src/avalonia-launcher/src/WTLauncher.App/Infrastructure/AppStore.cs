@@ -1,20 +1,24 @@
-using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Threading;
 using ErrorOr;
 using WTLauncher.Core;
+
+// ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
 
 namespace WTLauncher.App.Infrastructure;
 
 /// <summary>Single source of truth for launcher state. Exposes read-only
-/// projections via <see cref="Select{T}"/>, mutations via <see cref="Mutate"/>
-/// / <see cref="MutateAsync"/>, and notifies subscribers on every committed
-/// change. Rollback on failure is automatic inside Mutate — the caller never
-/// sees a half-persisted state.</summary>
-public sealed class AppStore
+/// projections via <see cref="Select{T}"/>, mutations via <see cref="Dispatch"/>
+/// or the legacy <see cref="Mutate"/>/<see cref="MutateAsync"/> methods.
+/// Thread-safe: all state mutations are protected by a SemaphoreSlim.
+/// Rollback on failure is automatic — the caller never sees a half-persisted state.</summary>
+public sealed class AppStore : IDisposable
 {
     private readonly string _storePath;
     private LauncherStoreFile _state;
     private readonly Action<Exception, string>? _onRecovery;
     private event Action<LauncherStoreFile>? _stateChanged;
+    private readonly SemaphoreSlim _lock = new(1, 1);
 
     public AppStore(string storePath, Action<Exception, string>? onRecovery = null)
     {
@@ -34,63 +38,126 @@ public sealed class AppStore
 
     public string StorePath => _storePath;
 
+    // ── Read ──────────────────────────────────────────────────────
+
+    /// <summary>Project a read-only view of the current state.</summary>
     public T Select<T>(Func<LauncherStoreFile, T> selector) => selector(_state);
 
-    public void Mutate(Func<LauncherStoreFile, LauncherStoreFile> transform)
+    /// <summary>Project a read-only view of the current state (async-safe).</summary>
+    public async Task<T> SelectAsync<T>(Func<LauncherStoreFile, T> selector)
     {
-        var before = _state;
-        try
-        {
-            _state = transform(_state);
-            LauncherStore.Save(_state, _storePath, backup: true);
-            _stateChanged?.Invoke(_state);
-        }
-        catch (Exception ex) when (IsRecoverable(ex))
-        {
-            _state = before;
-            ErrorLog.Write(ex, "AppStore.Mutate rolled back");
-            _onRecovery?.Invoke(ex, "AppStore.Mutate rolled back");
-            throw;
-        }
+        await _lock.WaitAsync().ConfigureAwait(false);
+        try { return selector(_state); }
+        finally { _lock.Release(); }
     }
 
-    public async Task MutateAsync(Func<LauncherStoreFile, Task<LauncherStoreFile>> transform)
+    // ── Dispatch (Reducer pattern) ────────────────────────────────
+
+    /// <summary>Apply a pure reducer function to the state, persist, and notify.
+    /// Rollback on failure: the store is reverted to the pre-mutation state.</summary>
+    public void Dispatch(Func<LauncherStoreFile, LauncherStoreFile> reducer)
     {
+        Action<LauncherStoreFile>? handler = null;
+        LauncherStoreFile snapshot = default!;
+
+        _lock.Wait();
         var before = _state;
         try
         {
-            _state = await transform(_state).ConfigureAwait(true);
-            LauncherStore.Save(_state, _storePath, backup: true);
-            _stateChanged?.Invoke(_state);
+            var after = reducer(_state);
+            LauncherStore.Save(after, _storePath, backup: true);
+            _state = after;
+            handler = _stateChanged;
+            snapshot = _state;
         }
-        catch (Exception ex) when (IsRecoverable(ex))
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+            or InvalidDataException or JsonException)
         {
             _state = before;
-            ErrorLog.Write(ex, "AppStore.MutateAsync rolled back");
-            _onRecovery?.Invoke(ex, "AppStore.MutateAsync rolled back");
+            ErrorLog.Write(ex, "AppStore.Dispatch rolled back");
+            _onRecovery?.Invoke(ex, "AppStore.Dispatch rolled back");
             throw;
         }
+        finally { _lock.Release(); }
+
+        // Notify outside lock to prevent deadlock if subscriber calls Dispatch
+        handler?.Invoke(snapshot);
     }
 
-    /// <summary>Mutate state with ErrorOr return, rolling back on recoverable failures.</summary>
-    public ErrorOr<Success> MutateErrorOr(Func<LauncherStoreFile, LauncherStoreFile> transform)
+    /// <summary>Async variant of Dispatch for reducers that need async operations.</summary>
+    public async Task DispatchAsync(Func<LauncherStoreFile, Task<LauncherStoreFile>> reducer)
     {
+        Action<LauncherStoreFile>? handler = null;
+        LauncherStoreFile snapshot = default!;
+
+        await _lock.WaitAsync().ConfigureAwait(false);
         var before = _state;
         try
         {
-            _state = transform(_state);
-            LauncherStore.Save(_state, _storePath, backup: true);
-            _stateChanged?.Invoke(_state);
-            return Result.Success;
+            var after = await reducer(_state).ConfigureAwait(false);
+            LauncherStore.Save(after, _storePath, backup: true);
+            _state = after;
+            handler = _stateChanged;
+            snapshot = _state;
         }
-        catch (Exception ex) when (IsRecoverable(ex))
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+            or InvalidDataException or JsonException)
         {
             _state = before;
-            ErrorLog.Write(ex, "AppStore.MutateErrorOr rolled back");
-            _onRecovery?.Invoke(ex, "AppStore.MutateErrorOr rolled back");
+            ErrorLog.Write(ex, "AppStore.DispatchAsync rolled back");
+            _onRecovery?.Invoke(ex, "AppStore.DispatchAsync rolled back");
+            throw;
+        }
+        finally { _lock.Release(); }
+
+        // Notify outside lock to prevent deadlock if subscriber calls Dispatch
+        handler?.Invoke(snapshot);
+    }
+
+    /// <summary>Dispatch with ErrorOr return — allows the caller to handle
+    /// persistence failures without try/catch.</summary>
+    public ErrorOr<Success> DispatchErrorOr(Func<LauncherStoreFile, LauncherStoreFile> reducer)
+    {
+        Action<LauncherStoreFile>? handler = null;
+        LauncherStoreFile snapshot = default!;
+
+        _lock.Wait();
+        var before = _state;
+        try
+        {
+            var after = reducer(_state);
+            LauncherStore.Save(after, _storePath, backup: true);
+            _state = after;
+            handler = _stateChanged;
+            snapshot = _state;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+            or InvalidDataException or JsonException)
+        {
+            _state = before;
+            ErrorLog.Write(ex, "AppStore.DispatchErrorOr rolled back");
+            _onRecovery?.Invoke(ex, "AppStore.DispatchErrorOr rolled back");
             return LauncherErrors.ConfigSaveFailed(ex.Message);
         }
+        finally { _lock.Release(); }
+
+        // Only reached on success; notify outside lock to prevent deadlock
+        handler?.Invoke(snapshot);
+        return Result.Success;
     }
+
+    // ── Legacy Mutate (backward compatible) ────────────────────────
+
+    public void Mutate(Func<LauncherStoreFile, LauncherStoreFile> transform) =>
+        Dispatch(transform);
+
+    public async Task MutateAsync(Func<LauncherStoreFile, Task<LauncherStoreFile>> transform) =>
+        await DispatchAsync(transform).ConfigureAwait(false);
+
+    public ErrorOr<Success> MutateErrorOr(Func<LauncherStoreFile, LauncherStoreFile> transform) =>
+        DispatchErrorOr(transform);
+
+    // ── Subscription ──────────────────────────────────────────────
 
     public IDisposable Subscribe(Action<LauncherStoreFile> onChanged)
     {
@@ -98,22 +165,7 @@ public sealed class AppStore
         return new Subscription(() => _stateChanged -= onChanged);
     }
 
-    /// <summary>ponytail: inlined recoverability check — matches
-    /// ExceptionFilters.IsRecoverable without the cross-layer dependency.
-    /// Upgrade to the shared utility if it moves to Infrastructure.</summary>
-    private static bool IsRecoverable(Exception ex)
-    {
-        // Unwrap TypeInitializationException and AggregateException
-        for (var i = 0; i < 16 && ex is TypeInitializationException or AggregateException; i++)
-        {
-            if (ex.InnerException is null) break;
-            ex = ex.InnerException;
-            if (ex is AggregateException agg)
-                ex = agg.Flatten().InnerExceptions.FirstOrDefault() ?? ex;
-        }
-        return ex is not (OutOfMemoryException or StackOverflowException
-            or AccessViolationException or SEHException);
-    }
+    public void Dispose() => _lock.Dispose();
 
     private sealed class Subscription(Action unsubscribe) : IDisposable
     {

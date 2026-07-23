@@ -1,10 +1,13 @@
 using Avalonia.Controls;
+using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.ViewModels;
-using WTLauncher.App.Views;
 using WTLauncher.Core;
 
-namespace WTLauncher.App.Features.Dialogs;
+namespace WTLauncher.App.Views;
 
+/// <summary>View-layer implementation of IDialogService.
+/// Lives in the Views layer because it directly creates Window instances —
+/// Features layer should only depend on the interface.</summary>
 public sealed class DialogService : IDialogService
 {
     private Window? _owner;

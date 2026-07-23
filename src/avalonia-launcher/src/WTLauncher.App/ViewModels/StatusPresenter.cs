@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using WTLauncher.App.Features;
 
 namespace WTLauncher.App.ViewModels;
 

@@ -1,3 +1,4 @@
+using WTLauncher.App.Features;
 using WTLauncher.App.ViewModels;
 
 namespace WTLauncher.Tests;

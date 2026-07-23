@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using WTLauncher.App.Features;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 

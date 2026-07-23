@@ -1,12 +1,6 @@
-namespace WTLauncher.App.ViewModels;
+using WTLauncher.App.Features;
 
-public enum LauncherStatusTone
-{
-    Neutral,
-    Success,
-    Warning,
-    Error,
-}
+namespace WTLauncher.App.ViewModels;
 
 public static class LauncherStatusPresentation
 {

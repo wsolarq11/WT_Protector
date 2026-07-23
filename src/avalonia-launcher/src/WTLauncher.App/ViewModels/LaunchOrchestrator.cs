@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using WTLauncher.App.Features;
 using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;

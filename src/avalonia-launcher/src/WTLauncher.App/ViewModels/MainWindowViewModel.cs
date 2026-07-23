@@ -4,6 +4,7 @@ using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Diagnostics.CodeAnalysis;
+using WTLauncher.App.Features;
 using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Features.Presets;

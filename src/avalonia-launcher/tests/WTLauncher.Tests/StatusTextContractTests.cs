@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using WTLauncher.App.Features;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 using Xunit;
