@@ -643,7 +643,7 @@ Add-Check 'security-audit-f2-preset-entryid-validate' @{
 # class/member name to the scan pattern.
 # Security audit F3 (2026-07-23): EntryId must enforce Latin script whitelist.
 # Regression gate: EntryId.cs must contain EnsureLatinScript or LatinScriptRanges.
-$entryIdPath = Get-RepoPath 'src\avalonia-launcher\src\WTLauncher.Core\ValueObjects\EntryId.cs'
+$entryIdPath = Get-RepoPath 'src\avalonia-launcher\src\WTLauncher.Core\EntryId.cs'
 $entryIdSrc = Get-Content -Raw -Encoding UTF8 -LiteralPath $entryIdPath
 if ($entryIdSrc -notmatch 'LatinScript') {
     throw 'EntryId must enforce Latin script whitelist (security audit F3)'

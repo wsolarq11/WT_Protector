@@ -106,7 +106,7 @@
 
 ### 5.2 安全审计项跟踪状态
 
-**发现 5.2-A — F1 (MEDIUM): Path.GetFullPath — 未修复** [High]
+**发现 5.2-A — F1 (MEDIUM): Path.GetFullPath — 已修复** [High]
 
 - **描述**: SEC-AUDIT 建议在 ExpandEnvironmentVariables 后添加 Path.GetFullPath() 调用作为防御深度。当前 LaunchEntry.cs 中未发现 Path.GetFullPath 调用。
 - **位置**: `src/avalonia-launcher/src/WTLauncher.Core/LaunchEntry.cs:57`
@@ -116,7 +116,7 @@
 
 > **[2026-07-23 更新]** 已在提交 `4aebd24` 中修复。`DirectoryPath.cs` 的 `JsonConverter.Read` 方法中添加了 `Path.GetFullPath` 调用，确保路径在反序列化时已被规范化。
 
-**发现 5.2-B — F2 (MEDIUM): preset entryId 交叉验证 — 部分解决** [Medium]
+**发现 5.2-B — F2 (MEDIUM): preset entryId 交叉验证 — 已解决** [Medium]
 
 - **描述**: SEC-AUDIT 建议运行时交叉验证 preset 引用 entryId 是否存在于 config entries 中。verify.ps1 gate 已做静态检查 (presets-schema 检查确保 referenced entry IDs 有效)，但运行时验证未完整实现。
 - **位置**: 运行时: `LauncherPresetWorkflow` (推测)
@@ -127,7 +127,7 @@
 
 > **[2026-07-23 更新]** 已在提交 `4aebd24` 中修复。`IPresetService.AddPreset`/`UpdatePreset` 方法中添加了 `knownEntryIds` 参数验证，运行时确保 preset 引用的 entryId 在配置中已存在。
 
-**发现 5.2-C — F3 (MEDIUM): 同形字保护 — 未修复** [Medium]
+**发现 5.2-C — F3 (MEDIUM): 同形字保护 — 已修复** [Medium]
 
 - **描述**: SEC-AUDIT 建议跨脚本同形字检测 (Latin 'a' U+0061 vs Cyrillic 'а' U+0430)。EntryId 使用 FormKC 规范化但不处理跨脚本同形字。
 - **证据**: git log 中无同形字/同形词相关提交。notebook 确认 F3 状态为待处理。
@@ -220,11 +220,11 @@
 2. ~~[High] 为安全审计发现添加 verify.ps1 gate 防止回归~~ — **[2026-07-23]** 已完成 (4aebd24)
 3. ~~[Medium] 完成 F2: 运行时 preset entryId 交叉引用验证~~ — **[2026-07-23]** 已完成 (4aebd24)
 4. ~~[Medium] 完成 F3: 评估并决定同形字保护方案~~ — **[2026-07-23]** 已完成 (4aebd24)
-5. **[Low]** 审查 phase-c-arch 中 emoji 使用，替换为纯文本
+5. ~~[Low] 审查 phase-c-arch 中 emoji 使用，替换为纯文本~~ — **[2026-07-23]** 已完成
 
 ### 正面评价
 
-- 项目的 verify.ps1 gate 设计优秀，22 项检查覆盖全面且有明确动机文档
+- 项目的 verify.ps1 gate 设计优秀，25 项检查覆盖全面且有明确动机文档
 - 系统化的死代码清理习惯——15+ 专门的重构/清理提交
 - 3 波现代化全部完成并归档
 - Agent 协作模式健康 (11.8% Agent 比例)，开发者主导方向
