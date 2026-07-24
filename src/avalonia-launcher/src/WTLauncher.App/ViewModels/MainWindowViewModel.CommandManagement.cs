@@ -61,7 +61,7 @@ public sealed partial class MainWindowViewModel
         {
             RestoreVmStateFromStore();
             // restore also reverts _launchWorkflow snapshot — re-sync after rollback.
-            _launchOrchestrator.CommandTemplates = _appStore.Select(s => s.Settings.CommandTemplates);
+            _launchOrchestrator.CommandTemplates = _storeGrain.Select(s => s.Settings.CommandTemplates);
             return FailureResult(saveFailure);
         }
 

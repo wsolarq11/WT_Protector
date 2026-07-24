@@ -8,5 +8,7 @@
   <ItemGroup>
     <PackageReference Include="Vogen" />
     <PackageReference Include="ErrorOr" />
+    <PackageReference Include="OneOf" />
+    <PackageReference Include="Immutype" PrivateAssets="all" />
   </ItemGroup>
 </Project>

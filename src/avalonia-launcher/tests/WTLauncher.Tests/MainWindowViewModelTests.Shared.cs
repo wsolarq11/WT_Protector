@@ -118,7 +118,7 @@ public sealed partial class MainWindowViewModelTests
         var storeFile = LauncherStore.Load(config);
         var dialogs = dialogService ?? new StubDialogService();
         var effectiveStoreFile = launcherSettings is not null ? storeFile with { Settings = launcherSettings } : storeFile;
-        var appStore = new AppStore(config, effectiveStoreFile);
+        var appStore = new StoreGrain(config, effectiveStoreFile);
         var viewModel = new MainWindowViewModel(
             config,
             appStore,

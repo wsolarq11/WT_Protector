@@ -123,7 +123,7 @@ public sealed class CsCheckPropertyTests
             });
     }
 
-    // Test 4: AppStore.Dispatch maintains state consistency after random mutation sequences
+    // Test 4: StoreGrain.Dispatch maintains state consistency after random mutation sequences
     [Fact]
     public void Dispatch_MaintainsConsistentState()
     {
@@ -136,7 +136,7 @@ public sealed class CsCheckPropertyTests
             Presets = [],
             DefaultPresetId = "",
         }, path);
-        using var appStore = new AppStore(path);
+        using var appStore = new StoreGrain(path);
 
         Gen.Int[0, 2].Array[0, 10]
             .Sample(assert: operations =>

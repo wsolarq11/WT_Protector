@@ -16,7 +16,7 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
     private readonly ObservableCollection<LauncherEntryViewModel> _entries = [];
     private readonly ObservableCollection<LauncherEntryViewModel> _visibleEntries = [];
     private readonly IEntryService _entryService;
-    private readonly AppStore _appStore;
+    private readonly StoreGrain _storeGrain;
     private readonly Func<DateTimeOffset> _utcNow;
 
     public ReadOnlyObservableCollection<LauncherEntryViewModel> Entries { get; }
@@ -55,11 +55,11 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
     public EntryListViewModel(
         IEntryService entryService,
         Func<DateTimeOffset> utcNow,
-        AppStore appStore)
+        StoreGrain storeGrain)
     {
         _entryService = entryService ?? throw new ArgumentNullException(nameof(entryService));
         _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
-        _appStore = appStore ?? throw new ArgumentNullException(nameof(appStore));
+        _storeGrain = storeGrain ?? throw new ArgumentNullException(nameof(storeGrain));
         Entries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_entries);
         VisibleEntries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_visibleEntries);
     }
@@ -83,8 +83,8 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         DragPreviewDiscarder();
         var result = await _entryService.AddEntryAsync(
             _entries.Select(ToLaunchEntry),
-            _appStore.Select(s => s.Settings),
-            _appStore.Select(s => s.Settings.CommandTemplates),
+            _storeGrain.Select(s => s.Settings),
+            _storeGrain.Select(s => s.Settings.CommandTemplates),
             presetReferenceCount: 0,
             _utcNow).ConfigureAwait(true);
         switch (result)
@@ -108,9 +108,9 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         DragPreviewDiscarder();
         var result = await _entryService.CloneEntryAsync(
             item, _entries.Select(e => e.Id), _entries.Select(ToLaunchEntry),
-            _appStore.Select(s => s.Settings),
-            _appStore.Select(s => s.Settings.CommandTemplates),
-            _appStore.Select(s => s.Presets.Count(p => p.EntryIds.Any(eid => EntryId.Same(eid, item.Id)))),
+            _storeGrain.Select(s => s.Settings),
+            _storeGrain.Select(s => s.Settings.CommandTemplates),
+            _storeGrain.Select(s => s.Presets.Count(p => p.EntryIds.Any(eid => EntryId.Same(eid, item.Id)))),
             _utcNow).ConfigureAwait(true);
         switch (result)
         {
@@ -134,10 +134,10 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         DragPreviewDiscarder();
         var result = await _entryService.EditEntryAsync(
             item, _entries.Select(ToLaunchEntry),
-            _appStore.Select(s => new LauncherPresetFile { Presets = s.Presets, DefaultPresetId = s.DefaultPresetId }),
-            _appStore.Select(s => s.Settings),
-            _appStore.Select(s => s.Settings.CommandTemplates),
-            _appStore.Select(s => s.Presets.Count(p => p.EntryIds.Any(eid => EntryId.Same(eid, item.Id)))),
+            _storeGrain.Select(s => new LauncherPresetFile { Presets = s.Presets, DefaultPresetId = s.DefaultPresetId }),
+            _storeGrain.Select(s => s.Settings),
+            _storeGrain.Select(s => s.Settings.CommandTemplates),
+            _storeGrain.Select(s => s.Presets.Count(p => p.EntryIds.Any(eid => EntryId.Same(eid, item.Id)))),
             _utcNow).ConfigureAwait(true);
         switch (result)
         {
@@ -180,8 +180,8 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
             KeyboardFocusedEntryId = null;
 
         var target = approval.Target;
-        var settings = _appStore.Select(s => s.Settings);
-        var presetFile = _appStore.Select(s => new LauncherPresetFile { Presets = s.Presets, DefaultPresetId = s.DefaultPresetId });
+        var settings = _storeGrain.Select(s => s.Settings);
+        var presetFile = _storeGrain.Select(s => new LauncherPresetFile { Presets = s.Presets, DefaultPresetId = s.DefaultPresetId });
 
         var (updatedPresetFile, updatedOrder) = LauncherEntryReferences.RemoveEntryId(
             presetFile, settings.CustomEntryOrder, target.EntryId);
@@ -190,7 +190,7 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         // Save to store first (AppStore handles rollback internally)
         try
         {
-            _appStore.Dispatch(state => state with
+            _storeGrain.Dispatch(state => state with
             {
                 Entries = state.Entries.RemoveAll(e => EntryId.Same(e.Id, target.EntryId)),
                 Settings = newSettings,
@@ -224,7 +224,7 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
 
     private void HandleAddOrCloneResult(LaunchEntry entry, Func<LaunchEntry, LauncherStatusContent> statusFactory)
     {
-        var settings = _appStore.Select(s => s.Settings);
+        var settings = _storeGrain.Select(s => s.Settings);
         var newSettings = settings with
         {
             CustomEntryOrder = settings.CustomEntryOrder.Add(entry.Id),
@@ -233,7 +233,7 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         // Save to store first (AppStore handles rollback internally)
         try
         {
-            _appStore.Dispatch(state => state with
+            _storeGrain.Dispatch(state => state with
             {
                 Entries = state.Entries.Add(entry),
                 Settings = newSettings,
@@ -258,8 +258,8 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
     private async Task HandleEditResult(LauncherEntryViewModel item, LaunchEntry updated)
     {
         var oldId = item.Id;
-        var settings = _appStore.Select(s => s.Settings);
-        var presetFile = _appStore.Select(s => new LauncherPresetFile { Presets = s.Presets, DefaultPresetId = s.DefaultPresetId });
+        var settings = _storeGrain.Select(s => s.Settings);
+        var presetFile = _storeGrain.Select(s => new LauncherPresetFile { Presets = s.Presets, DefaultPresetId = s.DefaultPresetId });
 
         if (!EntryId.Same(oldId, updated.Id))
         {
@@ -284,7 +284,7 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         // Save to store first — build updated entry list from current store state
         try
         {
-            _appStore.Dispatch(state =>
+            _storeGrain.Dispatch(state =>
             {
                 var updatedEntries = state.Entries
                     .Select(e => EntryId.Same(e.Id, oldId) ? updated : e)

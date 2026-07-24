@@ -140,8 +140,14 @@ public sealed partial class App : Application
                     }
                 }
 
-                var appStore = new AppStore(storePath, (ex, ctx) => ErrorLog.Write(ex, ctx));
-                var storeFile = appStore.Select(s => s);
+                var storeGrain = new StoreGrain(storePath);
+                _ = storeGrain.InitializeAsync().ContinueWith(t =>
+                {
+                    if (t.IsFaulted)
+                        ErrorLog.Write(t.Exception!.InnerException ?? t.Exception, "StoreGrain.Init");
+                }, TaskContinuationOptions.OnlyOnFaulted);
+                var storeFile = storeGrain.Select(s => s);
+
                 var launchWorkflow = LauncherLaunchWorkflow.Create();
                 var dialogService = new DialogService();
                 var entryService = new EntryService(dialogService);
@@ -149,7 +155,7 @@ public sealed partial class App : Application
 
                 var viewModel = new MainWindowViewModel(
                     storePath,
-                    appStore,
+                    storeGrain,
                     storeFile,
                     launchWorkflow,
                     dialogService,

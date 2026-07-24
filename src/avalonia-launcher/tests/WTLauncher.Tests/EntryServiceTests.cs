@@ -62,7 +62,7 @@ public sealed class EntryServiceTests
             OnConfirmDeleteEntry = _ => Task.FromResult(true),
         };
         var service = new EntryService(dialogs);
-        var appStore = new AppStore("unused.json", new LauncherStoreFile());
+        var appStore = new StoreGrain("unused.json", new LauncherStoreFile());
         var owner = new MainWindowViewModel(
             "unused.json",
             appStore,

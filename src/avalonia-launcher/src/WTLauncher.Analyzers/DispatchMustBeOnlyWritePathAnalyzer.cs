@@ -14,7 +14,7 @@ public class DispatchMustBeOnlyWritePathAnalyzer : DiagnosticAnalyzer
     private static readonly DiagnosticDescriptor Rule = new(
         DiagnosticId,
         title: "Dispatch must be the only write path",
-        messageFormat: "Direct call to 'LauncherStore.Save' outside of 'AppStore.Dispatch' is not allowed. Route all writes through AppStore.",
+        messageFormat: "Direct call to LauncherStore.Save outside of StoreGrain.Dispatch is not allowed",
         category: "Architecture",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -47,13 +47,17 @@ public class DispatchMustBeOnlyWritePathAnalyzer : DiagnosticAnalyzer
                 var containingType = method.ContainingType?.ToString();
                 if (containingType != "WTLauncher.Core.LauncherStore") return;
 
-                // Check if we're inside AppStore.Dispatch, DispatchAsync, or DispatchErrorOr
+                // Check if we're inside StoreGrain.Dispatch, DispatchErrorOr, or LazyInit
                 var enclosingMethod = invocation.FirstAncestorOrSelf<MethodDeclarationSyntax>();
                 if (enclosingMethod != null)
                 {
                     var methodName2 = enclosingMethod.Identifier.Text;
-                    if (methodName2 is "Dispatch" or "DispatchAsync" or "DispatchErrorOr")
-                        return; // allowed
+                    if (methodName2 is "Dispatch" or "DispatchErrorOr" or "LazyInit")
+                    {
+                        var parentType = enclosingMethod.FirstAncestorOrSelf<ClassDeclarationSyntax>();
+                        if (parentType?.Identifier.Text is "StoreGrain")
+                            return; // allowed
+                    }
                 }
 
                 // Also check if we're inside LauncherStore.Save itself (call to LauncherJson.Save)

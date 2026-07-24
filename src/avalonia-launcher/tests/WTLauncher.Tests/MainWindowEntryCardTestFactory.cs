@@ -41,11 +41,11 @@ internal static class MainWindowEntryCardTestFactory
         };
         LauncherStore.Save(storeFile, storePath, backup: true);
         var dialogs = new StubDialogService();
-        var appStore = new AppStore(storePath);
+        var storeGrain = new StoreGrain(storePath);
         return new MainWindowViewModel(
             storePath,
-            appStore,
-            appStore.Select(s => s),
+            storeGrain,
+            storeGrain.Select(s => s),
             CreateLaunchWorkflow(),
             dialogs,
             new EntryService(dialogs),
@@ -79,7 +79,7 @@ internal static class MainWindowEntryCardTestFactory
         };
         LauncherStore.Save(storeFile, storePath, backup: true);
         var dialogs = new StubDialogService();
-        var appStore = new AppStore(storePath);
+        var appStore = new StoreGrain(storePath);
         return new LauncherEntryViewModel(entry, new MainWindowViewModel(
             storePath,
             appStore,

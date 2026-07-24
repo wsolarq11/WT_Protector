@@ -16,7 +16,7 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel : ObservableObject, IEntryListViewModel
 {
-    internal readonly AppStore _appStore;
+    internal readonly StoreGrain _storeGrain;
     private readonly string _storePath;
     private bool _initialized;
     /// <summary>Single source of settings state — always reads from AppStore.
@@ -24,7 +24,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     private LauncherSettings _settings;
     /// <summary>Read-only settings snapshot from AppStore. Replaces direct _settings field reads.
     /// Phase 1: state single-sourcing (07-24-triple-cut-arch).</summary>
-    internal LauncherSettings CurrentSettings => _appStore.Select(s => s.Settings);
+    internal LauncherSettings CurrentSettings => _storeGrain.Select(s => s.Settings);
     internal readonly LaunchOrchestrator _launchOrchestrator;
     private readonly IDialogService _dialogService;
     private readonly IEntryService _entryService = null!;
@@ -89,7 +89,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
     public MainWindowViewModel(
         string storePath,
-        AppStore appStore,
+        StoreGrain storeGrain,
         LauncherStoreFile storeFile,
         LauncherLaunchWorkflow launchWorkflow,
         IDialogService dialogService,
@@ -98,7 +98,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         Func<DateTimeOffset> utcNow)
     {
         ArgumentNullException.ThrowIfNull(storeFile);
-        _appStore = appStore ?? throw new ArgumentNullException(nameof(appStore));
+        _storeGrain = storeGrain ?? throw new ArgumentNullException(nameof(storeGrain));
         _storePath = storePath;
         _settings = storeFile.Settings;
         _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
@@ -119,7 +119,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _launchOrchestrator.ReorderDiscarder = DiscardDragReorderPreview;
         _launchOrchestrator.SettingsPersister = TryPersistSettingsChange;
         // Construct EntryListViewModel early so bridge delegates are ready.
-        _list = new EntryListViewModel(_entryService, _utcNow, _appStore);
+        _list = new EntryListViewModel(_entryService, _utcNow, _storeGrain);
         _launchOrchestrator.EntryGetter = () => _list.MutableEntries;
         _launchOrchestrator.SaveConfig = SaveConfig;
         _launchOrchestrator.PropertyChanged += (_, e) =>
@@ -202,7 +202,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         // Phase 1: State single-sourcing (07-24-triple-cut-arch).
         // _settings field is being eliminated. State reads use CurrentSettings (AppStore.Select).
         // Preset sync still needs to update _presetManager on external state changes.
-        _appStore.Subscribe(state =>
+        _storeGrain.Subscribe(state =>
         {
             _settings = state.Settings; // Phase 1: ponytail — kept for transition
             _presetManager.Load(
@@ -367,7 +367,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     /// their own ObservableCollection state after a failure.</summary>
     private string? SaveStoreFile(LauncherStoreFile storeFile)
     {
-        try { _appStore.Dispatch(_ => storeFile); return null; }
+        try { _storeGrain.Dispatch(_ => storeFile); return null; }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "SaveStoreFile");
@@ -412,13 +412,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     /// ViewModel's in-memory copies back to match.</summary>
     private void RestoreVmStateFromStore()
     {
-        _settings = _appStore.Select(s => s.Settings);
+        _settings = _storeGrain.Select(s => s.Settings);
         _presetManager.Load(
-            new LauncherPresetFile { Presets = _appStore.Select(s => s.Presets), DefaultPresetId = _appStore.Select(s => s.DefaultPresetId) },
+            new LauncherPresetFile { Presets = _storeGrain.Select(s => s.Presets), DefaultPresetId = _storeGrain.Select(s => s.DefaultPresetId) },
             SelectedPreset?.Id);
         // Use ReplaceEntries (no event) then sync CustomEntryOrder before refresh,
         // so ValidateCustomOrder doesn't fail on inconsistent state.
-        _list.ReplaceEntries(_appStore.Select(s => s.Entries));
+        _list.ReplaceEntries(_storeGrain.Select(s => s.Entries));
         EnsureCustomOrderContainsEntries();
         RefreshAllProjections();
     }

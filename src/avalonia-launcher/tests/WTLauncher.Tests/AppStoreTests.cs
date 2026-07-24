@@ -4,7 +4,7 @@ using WTLauncher.Core;
 
 namespace WTLauncher.Tests;
 
-public sealed class AppStoreTests
+public sealed class StoreGrainTests
 {
     private static LauncherStoreFile SampleStore() => new()
     {
@@ -27,7 +27,7 @@ public sealed class AppStoreTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new AppStore(path);
+        var store = new StoreGrain(path);
 
         var ids = store.Select(s => s.Entries.Select(e => e.Id).ToImmutableList());
 
@@ -40,7 +40,7 @@ public sealed class AppStoreTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new AppStore(path);
+        var store = new StoreGrain(path);
 
         var settings = store.Select(s => s.Settings);
 
@@ -53,7 +53,7 @@ public sealed class AppStoreTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new AppStore(path);
+        var store = new StoreGrain(path);
 
         store.Dispatch(state => state with
         {
@@ -70,7 +70,7 @@ public sealed class AppStoreTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new AppStore(path);
+        var store = new StoreGrain(path);
 
         store.Dispatch(state => state with
         {
@@ -89,7 +89,7 @@ public sealed class AppStoreTests
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
         var beforeHash = HashFile(path);
-        var store = new AppStore(path);
+        var store = new StoreGrain(path);
 
         store.Dispatch(state => state);
 
@@ -105,7 +105,7 @@ public sealed class AppStoreTests
         LauncherStore.Save(SampleStore(), path);
         // Make file read-only so the next save fails.
         File.SetAttributes(path, FileAttributes.ReadOnly);
-        var store = new AppStore(path);
+        var store = new StoreGrain(path);
 
         try
         {
@@ -126,7 +126,7 @@ public sealed class AppStoreTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new AppStore(path);
+        var store = new StoreGrain(path);
         var notified = false;
 
         using (store.Subscribe(_ => notified = true))
@@ -143,7 +143,7 @@ public sealed class AppStoreTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new AppStore(path);
+        var store = new StoreGrain(path);
         var notified = false;
 
         using (store.Subscribe(_ => notified = true))
@@ -161,7 +161,7 @@ public sealed class AppStoreTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new AppStore(path);
+        var store = new StoreGrain(path);
         var notified = false;
 
         var sub = store.Subscribe(_ => notified = true);
@@ -177,12 +177,12 @@ public sealed class AppStoreTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new AppStore(path);
+        var store = new StoreGrain(path);
 
-        await store.DispatchAsync(state => Task.FromResult(state with
+        store.Dispatch(state => state with
         {
             Settings = state.Settings with { SortMode = LauncherEntryQuery.AlphabeticalSortModeId },
-        }));
+        });
 
         var reloaded = LauncherStore.Load(path);
         Assert.Equal(LauncherEntryQuery.AlphabeticalSortModeId, reloaded.Settings.SortMode);
@@ -195,7 +195,7 @@ public sealed class AppStoreTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new AppStore(path);
+        var store = new StoreGrain(path);
 
         Assert.Equal(path, store.StorePath);
     }

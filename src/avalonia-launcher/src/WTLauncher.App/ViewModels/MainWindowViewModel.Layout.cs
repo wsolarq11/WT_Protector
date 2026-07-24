@@ -20,11 +20,11 @@ public sealed partial class MainWindowViewModel
         // ponytail: Uses DispatchErrorOr for persistence — AppStore handles
         // snapshot+rollback internally. No re-entrancy guard needed because
         // DispatchErrorOr is synchronous and rollback doesn't re-trigger this handler.
-        var result = _appStore.DispatchErrorOr(
-            s => StoreReducers.UpdateSettings(s, s.Settings with { LastFilterText = _layoutManager.FilterText }));
+        var result = _storeGrain.DispatchErrorOr(
+            s => s with { Settings = s.Settings with { LastFilterText = _layoutManager.FilterText } });
         if (result.IsError)
         {
-            _layoutManager.FilterText = _appStore.Select(s => s.Settings.LastFilterText);
+            _layoutManager.FilterText = _storeGrain.Select(s => s.Settings.LastFilterText);
             StatusContent = LauncherStatusContent.Error("存储保存失败: " + result.Errors[0].Description);
         }
         EnsureCustomOrderContainsEntries();
@@ -37,12 +37,12 @@ public sealed partial class MainWindowViewModel
         sortMode = sortMode ?? throw new InvalidOperationException("Launcher sort mode selection is required.");
         EnsureCustomOrderContainsEntries();
 
-        var result = _appStore.DispatchErrorOr(
-            s => StoreReducers.SetSortMode(s, sortMode.Id));
+        var result = _storeGrain.DispatchErrorOr(
+            s => s with { Settings = s.Settings with { SortMode = sortMode.Id } });
         if (result.IsError)
         {
             _layoutManager.SelectedSortMode = _layoutManager.ResolveSortMode(
-                _appStore.Select(s => s.Settings.SortMode));
+                _storeGrain.Select(s => s.Settings.SortMode));
             StatusContent = LauncherStatusContent.Error("存储保存失败: " + result.Errors[0].Description);
         }
         else
@@ -61,12 +61,12 @@ public sealed partial class MainWindowViewModel
         _layoutManager.NotifyDisplayModeProjectionChanged();
         LauncherEntryLayoutPresentation.Refresh(_list.MutableEntries);
 
-        var result = _appStore.DispatchErrorOr(
-            s => StoreReducers.SetViewMode(s, displayMode.Id));
+        var result = _storeGrain.DispatchErrorOr(
+            s => s with { Settings = s.Settings with { EntryViewMode = displayMode.Id } });
         if (result.IsError)
         {
             _layoutManager.SelectedDisplayMode = _layoutManager.ResolveDisplayMode(
-                _appStore.Select(s => s.Settings.EntryViewMode));
+                _storeGrain.Select(s => s.Settings.EntryViewMode));
             _layoutManager.NotifyDisplayModeProjectionChanged();
             LauncherEntryLayoutPresentation.Refresh(_list.MutableEntries);
             StatusContent = LauncherStatusContent.Error("存储保存失败: " + result.Errors[0].Description);
@@ -79,11 +79,11 @@ public sealed partial class MainWindowViewModel
 
     private void OnLayoutGroupKeyChanged()
     {
-        var result = _appStore.DispatchErrorOr(
-            s => StoreReducers.UpdateSettings(s, s.Settings with { CardsGroupKey = _layoutManager.CardsGroupKey }));
+        var result = _storeGrain.DispatchErrorOr(
+            s => s with { Settings = s.Settings with { CardsGroupKey = _layoutManager.CardsGroupKey } });
         if (result.IsError)
         {
-            var oldCardsGroupKey = _appStore.Select(s => s.Settings.CardsGroupKey);
+            var oldCardsGroupKey = _storeGrain.Select(s => s.Settings.CardsGroupKey);
             // Restore LayoutManager BEFORE RestoreVmStateFromStore so that
             // ApplyFilter → RebuildVisibleGroups reads the correct old key.
             _layoutManager.SetGroupKeyDirect(oldCardsGroupKey);
@@ -182,22 +182,24 @@ public sealed partial class MainWindowViewModel
         DiscardDragReorderPreview();
         try
         {
-            _appStore.Dispatch(state =>
+            _storeGrain.Dispatch(state =>
             {
-                var nextSettings = state.Settings with
+                var nextWindow = state.Settings.Window with
                 {
-                    Window = new LauncherWindowSettings
-                    {
-                        Width = width, Height = height, X = x, Y = y, WindowState = windowState
-                    }
+                    Width = width,
+                    Height = height,
+                    X = x,
+                    Y = y,
+                    WindowState = windowState,
                 };
-                return state with { Settings = nextSettings };
+                return state with { Settings = state.Settings with { Window = nextWindow } };
             });
             return true;
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             StatusContent = LauncherSettingsStatus.WindowBoundsSaveFailed;
+            ErrorLog.Write(ex, "TrySaveWindowBounds");
             return false;
         }
     }
