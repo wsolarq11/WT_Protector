@@ -43,6 +43,9 @@ public sealed record LauncherSettings
     [JsonPropertyName("searchHistory")]
     public ImmutableList<string> SearchHistory { get; init; } = ImmutableList<string>.Empty;
 
+    [JsonPropertyName("backgroundMode")]
+    public string BackgroundMode { get; init; } = "solid";
+
     [JsonPropertyName("window")]
     public LauncherWindowSettings Window { get; init; } = new();
 }

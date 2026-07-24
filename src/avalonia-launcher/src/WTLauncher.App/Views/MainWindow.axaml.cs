@@ -3,11 +3,13 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using System.Diagnostics;
 using WTLauncher.Core;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Platform;
 using WTLauncher.App.ViewModels;
 
 namespace WTLauncher.App.Views;
@@ -69,6 +71,7 @@ public sealed partial class MainWindow : Window
         _onOpenedHandler = (_, _) =>
         {
             UpdateCardRegionSize(viewModel);
+            ApplyBackgroundMode(viewModel.Settings.BackgroundMode);
             // Restore saved window position and state.
             var w = viewModel.Settings.Window;
             if (!double.IsNaN(w.X) && !double.IsNaN(w.Y))
@@ -117,6 +120,27 @@ public sealed partial class MainWindow : Window
         // The .reduced-motion XAML style is ready for when the platform API ships.
         // Activation path: read IPlatformSettings.GetColorValues().ReducedMotion
         // and add the "reduced-motion" class to the Window.
+    }
+
+    /// <summary>
+    /// Apply the background mode from settings: solid (default) or acrylic.
+    /// Acrylic mode uses Win32 SetWindowCompositionAttribute for Windows 10 1803+.
+    /// </summary>
+    private void ApplyBackgroundMode(string mode)
+    {
+        if (mode == "acrylic")
+        {
+            Background = Brushes.Transparent;
+
+#if WINDOWS
+            var handle = TryGetPlatformHandle();
+            if (handle is not null)
+            {
+                Win32Acrylic.EnableAcrylic(handle.Handle);
+            }
+#endif
+        }
+        // else "solid" — XAML default Background="{StaticResource BackgroundBrush}" stays active
     }
 
     private void UpdateCardRegionSize(MainWindowViewModel viewModel)
