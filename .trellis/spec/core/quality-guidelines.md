@@ -65,6 +65,18 @@ Total counts evolve with the codebase — run `ls tests/WTLauncher.Tests/*.cs | 
 
 ---
 
+## Compile-Time Enforcement (2026-07-24)
+
+Custom Roslyn analyzers (`WTLauncher.Analyzers`) enforce invariants at build time:
+
+| Rule | ID | Scope |
+|------|----|-------|
+| Core must not reference `App.ViewModels`/`App.Views` | WT1001 | `WTLauncher.Core` only |
+| `LauncherStore.Save` only in `AppStore.Dispatch` | WT1003 | Production code (tests excluded) |
+| `catch (Exception)` must have `when` filter | WT1004 | All source (analyzer project excluded) |
+
+Added via `Directory.Build.props` so every project gets them.
+
 ## Forbidden Patterns
 
 - ❌ **`dynamic` or `Dictionary<string, object>`** — always define typed records.

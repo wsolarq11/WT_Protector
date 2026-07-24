@@ -176,6 +176,43 @@ Until then, hand-rolled one-shot migration is correct for this codebase.
 
 `LauncherStoreFile` is a `sealed record` with init-only properties — mutations produce a new instance via `with { }`.
 
+### Backup Rotation and Recovery (2026-07-24, Phase 3 triple-cut-arch)
+
+**Source:** `src/avalonia-launcher/src/WTLauncher.Core/LauncherJson.cs`
+
+`RotateBackups` uses copy-then-rotate order to avoid crash windows:
+1. Copy current file to `bak-temp-{Guid}`
+2. Rotate chain: `.bak` → `.bak.1`, `.bak.1` → `.bak.2`, delete oldest
+3. Move `bak-temp-{Guid}` → `.bak`
+
+**Recovery chain:** `LoadWithRecovery` searches `.bak` → `.bak.1` → `.bak.2` in order (up to `DefaultMaxBackups`), returning the first valid backup found.
+
+**Crash safety:** `CleanupStaleTempFiles` acquires `SaveLock` so it cannot delete an in-progress save's temp file. The static `SaveLock` serializes all saves across all AppStore instances.
+
+**Invariants:**
+- `RotateBackups` never creates more than `maxBackups` managed backup files
+- `CleanupStaleTempFiles` only deletes files matching `\.(tmp|stage|bak-tmp|recovery)-[0-9a-f]{32}$` — never unrelated files
+
+### Compile-Time Write Path Enforcement (2026-07-24, Phase 2 triple-cut-arch)
+
+**Source:** `WTLauncher.Analyzers/DispatchMustBeOnlyWritePathAnalyzer.cs`
+
+Rule WT1003 (compile-time error): `LauncherStore.Save` must only be called from `AppStore.Dispatch`, `DispatchAsync`, or `DispatchErrorOr`. Any direct call in production code is rejected.
+
+**Why:** `TrySaveWindowBounds` (H2 bug) was writing directly to disk via `LauncherStore.Save`, bypassing AppStore. This caused persistent state desync: AppStore._state never saw the window bounds change, so the next Dispatch overwrote them. Test infrastructure (test fixture setup) suppresses this rule via `NoWarn`.
+
+### Read-Side State Single-Sourcing (2026-07-24, Phase 1 triple-cut-arch)
+
+**Source:** `MainWindowViewModel.cs`
+
+`CurrentSettings` property reads directly from `AppStore.Select(s => s.Settings)`, eliminating `_settings` field drift:
+
+```csharp
+internal LauncherSettings CurrentSettings => _appStore.Select(s => s.Settings);
+```
+
+**Transition:** `_settings` field retained as working copy during construction and DragWorkflow sync. Future elimination requires DragWorkflow to read/write through AppStore directly.
+
 ### Single Canonical Assembler: BuildStoreFile (2026-07-09, task 07-09-settings-single-source)
 
 `MainWindowViewModel.BuildStoreFile()` is the **only** method that hand-assembles a `LauncherStoreFile` for persistence. Every save path must route through it.

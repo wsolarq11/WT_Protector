@@ -70,7 +70,7 @@ Add-Check 'retired-paths-removed' @{ paths = @('spikes', 'src\winforms-launcher'
 # bug fixed in 266aa6f. Filtered catches (`catch (Exception ex) when (...)`) are allowed.
 $srcRootForCatchCheck = Join-Path $root 'src/avalonia-launcher/src'
 $csFilesForCatchCheck = Get-ChildItem -LiteralPath $srcRootForCatchCheck -Recurse -Filter '*.cs' |
-    Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' }
+    Where-Object { $_.FullName -notmatch '\\(obj|bin|WTLauncher.Analyzers)\\' }
 $bareCatchViolations = @()
 foreach ($file in $csFilesForCatchCheck) {
     $lineNum = 0

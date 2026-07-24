@@ -6,7 +6,8 @@
     <WarningsAsErrors>nullable</WarningsAsErrors>
     <!-- CS0618: tests deliberately exercise the [Obsolete] LaunchPlan.CommandLine
          plaintext API for backward-compat verification (see LaunchPlan.cs:29). -->
-    <NoWarn>CS0618</NoWarn>
+    <!-- WT1003: test fixture setup legitimately uses LauncherStore.Save for test infrastructure -->
+    <NoWarn>$(NoWarn);CS0618;WT1003</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
@@ -21,6 +22,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="CsCheck" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\WTLauncher.App\WTLauncher.App.csproj" />

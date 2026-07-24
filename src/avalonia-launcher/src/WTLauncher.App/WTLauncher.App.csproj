@@ -19,6 +19,7 @@
     <PackageReference Include="Avalonia.Fonts.Inter" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Stateless" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WTLauncher.Core\WTLauncher.Core.csproj" />

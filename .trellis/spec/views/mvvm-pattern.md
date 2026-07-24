@@ -649,10 +649,50 @@ _launchOrchestrator.PropertyChanged += (_, e) => { OnPropertyChanged(e.PropertyN
 
 **Convention**: partial 文件只应包含编排代码。如果某个 partial 中出现超过 5 行的业务逻辑判断，说明应该将逻辑下移到对应的 Manager 协作类和 Core 层。
 
+## State Single-Sourcing Pattern (2026-07-24, Phase 1 triple-cut-arch)
+
+ViewModel 不得持有 `AppStore` 状态的副本。所有状态读取通过 `AppStore.Select`，所有写入通过 `AppStore.Dispatch`:
+
+```csharp
+// ✅ Correct: projection from single store
+internal LauncherSettings CurrentSettings => _appStore.Select(s => s.Settings);
+
+// ❌ Wrong: local field duplicates store state
+private LauncherSettings _settings;
+```
+
+**Transition state:** `_settings` field temporarily retained as working copy during construction. Full elimination requires DragWorkflow refactor (reads/writes through AppStore).
+
+**Compile-time enforcement:** Rule WT1002/1003 in `WTLauncher.Analyzers` reject direct `LauncherStore.Save` calls outside `AppStore.Dispatch`.
+
+## Drag Workflow as Finite State Machine (2026-07-24, Phase 4)
+
+拖拽工作流使用 `Stateless` 库建模为形式化状态机：
+
+```
+Idle → Dragging → Committing → Idle
+            ↕ (Preview re-entry)
+       → Idle (Cancel)
+```
+
+非法转换（如 Idle 状态下 Commit）由 FSM 禁止。状态机守卫调用现有的 `LauncherDragReorderSession` 逻辑。
+
+```csharp
+// State machine configuration in constructor:
+_machine.Configure(DragState.Idle).Permit(DragTrigger.Begin, DragState.Dragging);
+_machine.Configure(DragState.Dragging)
+    .PermitReentry(DragTrigger.Preview)
+    .Permit(DragTrigger.Commit, DragState.Committing)
+    .Permit(DragTrigger.Cancel, DragState.Idle);
+_machine.Configure(DragState.Committing).Permit(DragTrigger.Done, DragState.Idle);
+```
+
 ## Forbidden Patterns
 
 - ❌ **ViewModel creates a `new Window()`** — dialogs always injected via `Func<>`.
 - ❌ **XAML contains hardcoded colors/sizes** — use `{StaticResource}` from design tokens.
 - ❌ **Code-behind contains business `if/else`** — delegate to ViewModel.
 - ❌ **View references Core types as data contracts** — Views only bind to ViewModel properties.
-- ❌ **在 SearchTextBox 上调用 `SelectAll()`** — AutoCompleteBox 无此方法。仅用 `Focus()`。
+- ❌ **在 SearchTextBox 上调用 `SelectAll()`** — AutoCompleteBox 无此方法。仅用 `Focus()`.
+- ❌ **ViewModel 持有 `_settings` 字段** — 使用 `CurrentSettings` 从 AppStore 读取。
+- ❌ **手写状态机守卫** — 使用 `Stateless` `StateMachine<TState,TTrigger>` 形式化建模。
