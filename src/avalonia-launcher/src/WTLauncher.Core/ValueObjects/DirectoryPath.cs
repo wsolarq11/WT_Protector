@@ -40,7 +40,7 @@ public sealed class DirectoryPathJsonConverter : JsonConverter<DirectoryPath>
         var fullPath = Path.GetFullPath(expanded);
         // Vogen's From factory calls Validate internally.
         try { return DirectoryPath.From(fullPath); }
-        catch { return DirectoryPath.Empty; }
+        catch (ArgumentException) { return DirectoryPath.Empty; }
     }
 
     public override void Write(Utf8JsonWriter writer, DirectoryPath value, JsonSerializerOptions options)

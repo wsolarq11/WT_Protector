@@ -200,7 +200,7 @@ public static class AgentDiscoveryScanner
         // whole scan if any cli failed to emit a first line.
         if (!process.WaitForExit((int)VersionTimeout.TotalMilliseconds))
         {
-            try { process.Kill(entireProcessTree: true); } catch { /* narrow ignore */ }
+            try { process.Kill(entireProcessTree: true); } catch (InvalidOperationException) { /* process already exited */ }
             return null;
         }
 

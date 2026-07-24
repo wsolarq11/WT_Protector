@@ -108,7 +108,7 @@ public sealed partial class MainWindowViewModel
 
             return SaveSelectionChangeOrRestore(snapshot);
         }
-        catch
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             // If a PropertyChanged handler throws mid-loop, restore
             // the pre-mutation state so the ViewModel is not left in an
@@ -130,7 +130,7 @@ public sealed partial class MainWindowViewModel
 
             return SaveSelectionChangeOrRestore(snapshot);
         }
-        catch
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             foreach (var (entry, wasSelected) in snapshot)
                 entry.SetSelectionFromOwner(wasSelected);

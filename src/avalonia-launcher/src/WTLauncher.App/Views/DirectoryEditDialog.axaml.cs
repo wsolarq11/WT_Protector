@@ -1,6 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using WTLauncher.App.Infrastructure;
+using WTLauncher.App.ViewModels;
 
 namespace WTLauncher.App.Views;
 
@@ -33,17 +35,24 @@ public sealed partial class DirectoryEditDialog : Window
 
     private async void OnBrowseClicked(object? sender, RoutedEventArgs e)
     {
-        var startDir = !string.IsNullOrEmpty(Input.Text)
-            ? await StorageProvider.TryGetFolderFromPathAsync(Input.Text)
-            : null;
-        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        try
         {
-            Title = "选择目录",
-            AllowMultiple = false,
-            SuggestedStartLocation = startDir,
-        });
-        if (folders.Count > 0 && folders[0].TryGetLocalPath() is { } localPath)
-            Input.Text = localPath;
+            var startDir = !string.IsNullOrEmpty(Input.Text)
+                ? await StorageProvider.TryGetFolderFromPathAsync(Input.Text)
+                : null;
+            var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = "选择目录",
+                AllowMultiple = false,
+                SuggestedStartLocation = startDir,
+            });
+            if (folders.Count > 0 && folders[0].TryGetLocalPath() is { } localPath)
+                Input.Text = localPath;
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "DirectoryEdit.Browse");
+        }
     }
 
     private void OnOkClicked(object? sender, RoutedEventArgs e)

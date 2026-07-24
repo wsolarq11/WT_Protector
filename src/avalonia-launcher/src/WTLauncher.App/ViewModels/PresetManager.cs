@@ -40,7 +40,7 @@ public sealed partial class PresetManager : ObservableObject
         {
             ApplyPresetFileState(preferredPresetId);
         }
-        catch
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             _presetFile = previousFile;
             throw;

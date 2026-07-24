@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -27,22 +28,43 @@ public sealed partial class DirectoryManagementWindow : Window
 
     private async void OnRenameClicked(object? sender, RoutedEventArgs e)
     {
-        if (_viewModel.SelectedDirectoryRow is { } row)
-            await OpenRenameDialog(row);
+        try
+        {
+            if (_viewModel.SelectedDirectoryRow is { } row)
+                await OpenRenameDialog(row);
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "DirectoryManagement.Rename");
+        }
     }
 
     private async void OnMergeClicked(object? sender, RoutedEventArgs e)
     {
-        if (_viewModel.SelectedDirectoryRow is { } row)
-            await OpenMergeDialog(row);
+        try
+        {
+            if (_viewModel.SelectedDirectoryRow is { } row)
+                await OpenMergeDialog(row);
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "DirectoryManagement.Merge");
+        }
     }
 
     private async void OnRowDoubleTapped(object? sender, TappedEventArgs e)
     {
-        if (sender is Control { DataContext: DirectoryRow row })
+        try
         {
-            _viewModel.SelectedDirectoryRow = row;
-            await OpenRenameDialog(row);
+            if (sender is Control { DataContext: DirectoryRow row })
+            {
+                _viewModel.SelectedDirectoryRow = row;
+                await OpenRenameDialog(row);
+            }
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "DirectoryManagement.DoubleTap");
         }
     }
 

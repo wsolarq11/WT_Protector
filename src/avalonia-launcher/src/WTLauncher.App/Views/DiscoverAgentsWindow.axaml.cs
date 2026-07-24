@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -91,8 +92,14 @@ public sealed partial class DiscoverAgentsWindow : Window
             _viewModel.Mode = DiscoveryMode.ExistingDirectory;
     }
 
-    private async void OnScanClicked(object? sender, RoutedEventArgs e) =>
-        await _viewModel.ScanAsync();
+    private async void OnScanClicked(object? sender, RoutedEventArgs e)
+    {
+        try { await _viewModel.ScanAsync(); }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "DiscoverAgents.Scan");
+        }
+    }
 
     private void OnCancelClicked(object? sender, RoutedEventArgs e) => Close(null);
 

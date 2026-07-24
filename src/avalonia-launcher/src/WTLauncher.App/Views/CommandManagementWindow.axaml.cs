@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -27,40 +28,81 @@ public sealed partial class CommandManagementWindow : Window
 
     private async void OnRenameCommandClicked(object? sender, RoutedEventArgs e)
     {
-        if (_viewModel.SelectedCommandRow is { } row)
-            await OpenRenameCommandDialog(row);
+        try
+        {
+            if (_viewModel.SelectedCommandRow is { } row)
+                await OpenRenameCommandDialog(row);
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "CommandManagement.RenameCommand");
+        }
     }
 
-    private async void OnAddTemplateClicked(object? sender, RoutedEventArgs e) =>
-        await OpenAddTemplateDialog();
+    private async void OnAddTemplateClicked(object? sender, RoutedEventArgs e)
+    {
+        try { await OpenAddTemplateDialog(); }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "CommandManagement.AddTemplate");
+        }
+    }
 
     private async void OnUpdateTemplateKeyClicked(object? sender, RoutedEventArgs e)
     {
-        if (_viewModel.SelectedTemplateRow is { } row)
-            await OpenUpdateTemplateKeyDialog(row);
+        try
+        {
+            if (_viewModel.SelectedTemplateRow is { } row)
+                await OpenUpdateTemplateKeyDialog(row);
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "CommandManagement.UpdateKey");
+        }
     }
 
     private async void OnUpdateTemplateValueClicked(object? sender, RoutedEventArgs e)
     {
-        if (_viewModel.SelectedTemplateRow is { } row)
-            await OpenUpdateTemplateValueDialog(row);
+        try
+        {
+            if (_viewModel.SelectedTemplateRow is { } row)
+                await OpenUpdateTemplateValueDialog(row);
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "CommandManagement.UpdateValue");
+        }
     }
 
     private async void OnCommandRowDoubleTapped(object? sender, TappedEventArgs e)
     {
-        if (sender is Control { DataContext: CommandRow row })
+        try
         {
-            _viewModel.SelectedCommandRow = row;
-            await OpenRenameCommandDialog(row);
+            if (sender is Control { DataContext: CommandRow row })
+            {
+                _viewModel.SelectedCommandRow = row;
+                await OpenRenameCommandDialog(row);
+            }
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "CommandManagement.CommandRowDoubleTap");
         }
     }
 
     private async void OnTemplateRowDoubleTapped(object? sender, TappedEventArgs e)
     {
-        if (sender is Control { DataContext: TemplateRow row })
+        try
         {
-            _viewModel.SelectedTemplateRow = row;
-            await OpenUpdateTemplateValueDialog(row);
+            if (sender is Control { DataContext: TemplateRow row })
+            {
+                _viewModel.SelectedTemplateRow = row;
+                await OpenUpdateTemplateValueDialog(row);
+            }
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "CommandManagement.TemplateRowDoubleTap");
         }
     }
 
