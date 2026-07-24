@@ -160,6 +160,34 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **正确做法** | AOT 安全：`JsonSerializer.Deserialize(stream, jsonTypeInfo)` 和 `Serialize(value, jsonTypeInfo)`。需要从 `LauncherJsonContext.Default.GetTypeInfo(typeof(T))` 获取 `JsonTypeInfo<T>` |
 | **预防** | 任何新 `LauncherJson.Load<T>` / `Save<T>` 必须使用 `JsonTypeInfo<T>` 重载。不传 `JsonSerializerOptions`。新类型必须加 `[JsonSerializable]` 到 `LauncherJsonContext`。 |
 
+### 2.5.5 StoreGrain Dispatch 后必须 SetState
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 07-24-vtuner-killer-impl session, AppStore→StoreGrain 迁移 (2026-07-24) |
+| **根因** | `StoreGrain.Dispatch` 将 reducer 结果写入磁盘（`LauncherStore.Save`）但未写入 `Grain<T>` 基类的私有 `_state` 字段。后续 `Select` 读到的是旧状态，造成 35 个测试失败。 |
+| **正确做法** | `Dispatch` 中 `SetState(after)` 必须在 `LauncherStore.Save` 之后调用，确保内存和磁盘一致。 |
+| **预防** | 所有 Grain 子类的 `Dispatch`/`DispatchErrorOr` legacy-compat 方法末尾必须调用 `SetState(after)`。 |
+
+### 2.5.6 `async void` 事件处理必须用 ExceptionFilters 保护
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 07-24-vtuner-killer-impl session, 4 个 dialog 文件共 11 处 (2026-07-24) |
+| **根因** | Avalonia 对话框使用 `async void` 作为事件签名（Click、DoubleTapped 等），抛出未处理异常会崩溃进程。依赖 `Dispatcher.UIThread.UnhandledException` 不够可靠。 |
+| **模板** | 
+```csharp
+private async void OnXxxClicked(object? sender, RoutedEventArgs e)
+{
+    try { await DoSomethingAsync(); }
+    catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+    {
+        ErrorLog.Write(ex, "XxxContext");
+    }
+}
+``` |
+| **预防** | 所有 `async void` 事件处理必须包裹 `try-catch(ExceptionFilters.IsRecoverable)` 并记录 ErrorLog。 |
+
 ### 2.6 OLE DragDrop 嵌套消息循环是性能杀手
 
 | 属性 | 值 |
