@@ -41,7 +41,14 @@ public class CatchExceptionMustHaveWhenAnalyzer : DiagnosticAnalyzer
 
         // Check if this catch clause catches "Exception"
         var declaration = catchClause.Declaration;
-        if (declaration == null) return; // catch { } without type
+
+        // Case 1: bare `catch { }` or `catch` without type declaration
+        if (declaration == null)
+        {
+            // Bare catch without any type — also not allowed (same reasoning)
+            context.ReportDiagnostic(Diagnostic.Create(Rule, catchClause.GetLocation()));
+            return;
+        }
 
         var caughtType = context.SemanticModel.GetTypeInfo(declaration.Type).Type;
         var exceptionType = context.Compilation.GetTypeByMetadataName("System.Exception");
