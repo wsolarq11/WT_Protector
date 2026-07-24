@@ -10,4 +10,11 @@
     <NuGetAudit>true</NuGetAudit>
     <NuGetAuditMode>all</NuGetAuditMode>
   </PropertyGroup>
+
+  <!-- Phase 2: Custom Roslyn analyzers (WT1001-WT1006) for compile-time architecture enforcement -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' != 'WTLauncher.Analyzers'">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)src\WTLauncher.Analyzers\WTLauncher.Analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
 </Project>
