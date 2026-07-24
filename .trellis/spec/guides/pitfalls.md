@@ -125,7 +125,42 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **根因** | XAML 中写死 `#2563EB`，当 `LauncherDesignTokens.PrimaryColor` 变更时不会同步 |
 | **预防** | XAML 只用 `{StaticResource PrimaryBrush}`。`grep -r` 搜索硬编码颜色/数值后再新增常量。 |
 
-### 2.5 OLE DragDrop 嵌套消息循环是性能杀手
+### 2.5 Scheme B 实施踩坑 (2026-07-23)
+
+#### 2.5.1 `DirectoryNotFoundException` 在 `or` 模式中冗余于 `IOException`
+
+| 属性 | 值 |
+|---|---|
+| **证据** | Phase 2 实施，`.trellis/spec/guides/index.md §5` |
+| **根因** | `DirectoryNotFoundException` 继承自 `IOException`。`catch when (ex is IOException or ... or DirectoryNotFoundException)` 中 `DirectoryNotFoundException` 永远无法匹配 |
+| **预防** | `catch when` 里 `IOException` 是最后一层就够了。不需要 `IOException or ... or DirectoryNotFoundException` — 去掉 `or DirectoryNotFoundException`。 |
+
+#### 2.5.2 删除 AppStore 外观方法时测试代码是最大风险
+
+| 属性 | 值 |
+|---|---|
+| **证据** | Phase 2, `AppStore.Mutate` → `Dispatch` 迁移 |
+| **根因** | 删除 `AppStore.Mutate` 后，8 处测试代码和 4 处生产代码同时报错。测试代码常被 grep 漏掉 |
+| **预防** | 删除非私有方法 → 先 `grep -rn "\.MethodName\("` 全仓库（含 tests）确认所有调用点。一起修改，一起验证。 |
+
+#### 2.5.3 CancellationToken 参数传播需要全链修改
+
+| 属性 | 值 |
+|---|---|
+| **证据** | Phase 2, `AgentDiscoveryScanner.Scan` + `CancellationToken` 参数 |
+| **根因** | 加 `CancellationToken ct = default` 可选参数 → xUnit1051 分析器要求测试传递 `TestContext.Current.CancellationToken` → 委托签名变化需要同时改调用方和所有测试工厂方法 |
+| **预防** | 给 public 方法加可选参数时做三件事：(1) 检查 xUnit 分析器效果；(2) 更新所有 `Func<>` 委托签名；(3) 测试工厂方法 + 所有调用点一起改，一起验证。 |
+
+#### 2.5.4 AOT 安全的 JsonSerializer 重载选择
+
+| 属性 | 值 |
+|---|---|
+| **证据** | Phase 1, `LauncherJson` 序列化修复, IL2026/IL3050 |
+| **根因** | `JsonSerializer.Deserialize<T>(stream, options)` 和 `Serialize(value, typeof(T), options)` 都有 `[RequiresUnreferencedCode]` 和 `[RequiresDynamicCode]` |
+| **正确做法** | AOT 安全：`JsonSerializer.Deserialize(stream, jsonTypeInfo)` 和 `Serialize(value, jsonTypeInfo)`。需要从 `LauncherJsonContext.Default.GetTypeInfo(typeof(T))` 获取 `JsonTypeInfo<T>` |
+| **预防** | 任何新 `LauncherJson.Load<T>` / `Save<T>` 必须使用 `JsonTypeInfo<T>` 重载。不传 `JsonSerializerOptions`。新类型必须加 `[JsonSerializable]` 到 `LauncherJsonContext`。 |
+
+### 2.6 OLE DragDrop 嵌套消息循环是性能杀手
 
 | 属性 | 值 |
 |---|---|
