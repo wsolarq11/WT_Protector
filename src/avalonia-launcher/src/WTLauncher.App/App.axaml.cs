@@ -90,6 +90,10 @@ public sealed partial class App : Application
         // ── BoxShadow ───────────────────────────────────────
         Resources["CardBoxShadow"] = BoxShadows.Parse($"0 8 24 0 {LauncherDesignTokens.BoxShadowColor}");
         Resources["NoBoxShadow"] = BoxShadows.Parse("0 0 0 0 Transparent");
+
+        // ── Acrylic material colors ──────────────────────
+        Resources["AcrylicTintColor"] = Color.Parse(LauncherDesignTokens.BackgroundColor);
+        Resources["AcrylicFallbackColor"] = Color.Parse(LauncherDesignTokens.BackgroundColor);
     }
 
     public override void OnFrameworkInitializationCompleted()

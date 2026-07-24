@@ -939,3 +939,23 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **修复** | `UpdateSelection()` 入口加 `DiscardDragReorderPreview()`。 |
 | **预防** | (1) **方法 inline 时必须审计所有副作用**：不只是返回值，还有内部调用的状态变异方法。(2) **删除一个方法前**：列出其所有调用的外部方法，确认每个调用在新的 inline 站点都有对应。(3) **Inline 后留意双入口不一致**：同一 old 方法的多个重载如果被不同站点调用且行为不同，inline 后必须保持该差异。 |
 | **适用** | 所有 `CaptureXxx` → inline 重构场景。 |
+
+### 10.3 Avalonia TransformParser 不接收 translateY 无单位非零值
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-07-24 Mode 2 acrylic 调试会话。`translateY(-1.5)` 和 `translateY(-2)` 均抛出 FormatException |
+| **根因** | Avalonia TransformParser 不接受不带 px 后缀的非零值。0 可无单位，但非零值必须带 px。 |
+| **修复** | `translateY(-1.5)` → `translateY(-2px)` |
+| **预防** | Avalonia RenderTransform CSS 式字符串值，非零值必须带 px 后缀。编译检查不捕获此问题，必须运行时验证。 |
+| **适用** | 所有 Avalonia RenderTransform CSS 字符串赋值。 |
+
+### 10.4 ExperimentalAcrylicMaterial 颜色不匹配
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-07-24 Mode 2 acrylic 实现。FallbackColor 渲染为灰色而非预期颜色。 |
+| **根因** | Win10 <19628 不支持 AcrylicBlur，MaterialOpacity/TintOpacity 在无亚克力时仍然参与颜色计算，FallbackColor 不是纯色兜底而是叠加层。 |
+| **修复** | 回退到纯色 BackgroundBrush。 |
+| **预防** | Win10 亚克力优先用 SetWindowCompositionAttribute，ExperimentalAcrylicBorder 仅作为兜底。 |
+| **适用** | 所有 Avalonia 窗口背景特效。 |

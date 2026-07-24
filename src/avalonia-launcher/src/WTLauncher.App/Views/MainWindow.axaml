@@ -12,7 +12,7 @@
         Height="{StaticResource WindowDefaultHeight}"
         MinWidth="{StaticResource WindowMinWidth}"
         MinHeight="{StaticResource WindowMinHeight}"
-        Background="Transparent">
+        Background="{StaticResource BackgroundBrush}">
   <Window.Resources>
     <!-- Lucide icon geometries (ISC license, https://lucide.dev) -->
     <StreamGeometry x:Key="IconGripVertical">M 9,4 A 1,1 0 1,1 9,6 A 1,1 0 1,1 9,4 M 9,11 A 1,1 0 1,1 9,13 A 1,1 0 1,1 9,11 M 9,18 A 1,1 0 1,1 9,20 A 1,1 0 1,1 9,18 M 15,4 A 1,1 0 1,1 15,6 A 1,1 0 1,1 15,4 M 15,11 A 1,1 0 1,1 15,13 A 1,1 0 1,1 15,11 M 15,18 A 1,1 0 1,1 15,20 A 1,1 0 1,1 15,18</StreamGeometry>
@@ -66,7 +66,7 @@
       </Setter>
     </Style>
     <Style Selector="Border.card:pointerover">
-      <Setter Property="RenderTransform" Value="translateY(-1.5)"/>
+      <Setter Property="RenderTransform" Value="translateY(-2px)"/>
     </Style>
     <!-- Suppress hover lift during drag preview to avoid visual conflict -->
     <Style Selector="Border.card.drag-source:pointerover">
