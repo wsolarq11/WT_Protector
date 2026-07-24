@@ -1769,3 +1769,29 @@ Added BackgroundMode setting to LauncherSettings, created Win32Acrylic interop c
 ### Next Steps
 
 - None - task complete
+
+
+## Session 52: arch-depth-landing ponytail 归档关闭
+
+**Date**: 2026-07-24
+**Task**: arch-depth-landing ponytail 归档
+**Branch**: `main`
+
+### Summary
+
+将 arch-depth-landing 父任务的最后两个 ponytail 子项（fluxor-migration、declarative-props）正式归档关闭。父任务标记为 completed。更新 pitfalls.md §10.5 新增 ponytail 归档预防规则。至此所有 5 个 arch-depth-landing 子项全部关闭，141 个归档任务。
+
+### Main Changes
+
+- **归档**: fluxor-migration (planning → archived)、declarative-props (planning → archived)、arch-depth-landing (in_progress → completed → archived)
+- **文档**: parent result.md 更新完整 ponytail 决策记录（理由 + 恢复条件）
+- **Spec**: pitfalls.md 新增 §10.5 ponytail 归档预防规则
+- **门禁**: 696/696 测试通过，25/25 PASS
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - all ponytail items resolved

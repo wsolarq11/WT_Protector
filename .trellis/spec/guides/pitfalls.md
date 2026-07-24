@@ -959,3 +959,13 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **修复** | 回退到纯色 BackgroundBrush。 |
 | **预防** | Win10 亚克力优先用 SetWindowCompositionAttribute，ExperimentalAcrylicBorder 仅作为兜底。 |
 | **适用** | 所有 Avalonia 窗口背景特效。 |
+
+### 10.5 Ponytail 决策必须正式归档 — 不应留下"planning"死任务
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-07-24 arch-depth-landing 归档。fluxor-migration 和 declarative-props 两个子任务在 parent 的 3/5 子项完成后停留在 "planning" 状态，导致父任务无法完成。原始结果文档已标记 ponytail（完整 VM 接线 YAGNI/零边际收益，声明式替换纯抛光无功能增益），但未执行归档操作。 |
+| **根因** | 结果文档写"不做了"和任务状态设为"planning"是矛盾的——planning 暗示未来会做，ponytail 是"已评估、决定不做"。不归档的 ponytail 任务会无限期占用任务列表、在 `task list --mine` 中持续显示、被自动继续系统反复拉回。同时 dirty parent 也无法完成。 |
+| **修复** | (1) 更新 parent task.json `status: completed` + `completedAt`；(2) 归档两个子任务；(3) 更新 parent result.md 记录完整的 ponytail 决策理由、恢复条件；(4) 归档 parent；(5) 更新 pitfalls.md 记录此坑。 |
+| **预防** | (1) **Ponytail 是"已评估、决定不做"，不是"planning"**。写 `result.md` 时同步归档子任务——不要留 planning 死任务。(2) 归档前确认 result.md 包含完整 ponytail 文档（决策理由 + 恢复条件 + 当前状态），方便未来重新评估时不丢上下文。(3) `task list --mine` 显示 `in_progress` + `planning` 的任务，定期清理让列表真实反映活跃工作。 |
+| **适用** | 所有 ponytail/跳过决策。 |
