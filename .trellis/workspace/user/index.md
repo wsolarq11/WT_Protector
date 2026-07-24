@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 51
+- **Total Sessions**: 52
 - **Last Active**: 2026-07-24
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1771 | Active |
+| `journal-1.md` | ~1830 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 52 | 2026-07-24 | trellis-check / break-loop / update-spec / dream / finish-work | `d8b6d82` | `main` |
 | 51 | 2026-07-24 | Mode 2 Win32 acrylic + spec update + trellis finish steps | `c64d846` | `main` |
 | 50 | 2026-07-24 | Scheme B: all remaining phases completed + pushed | `68a0186`, `38f0dd8`, `956ed4f`, `4fc3065` | `main` |
 | 49 | 2026-07-21 | Native AOT build tooling fix + goal close-out | `faa7b5a` | `main` |
