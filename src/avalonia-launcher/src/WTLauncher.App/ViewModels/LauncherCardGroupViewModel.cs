@@ -24,7 +24,6 @@ public sealed partial class LauncherCardGroupViewModel : ObservableObject
     [ObservableProperty]
     private bool _isExpanded = true;
 
-    public string ExpandIcon => IsExpanded ? "▼" : "▶";
     public string CountLabel => $"{Count} 个";
 
     public LauncherCardGroupViewModel(
@@ -46,8 +45,6 @@ public sealed partial class LauncherCardGroupViewModel : ObservableObject
         ShowHeader = showHeader;
         Entries = new ObservableCollection<LauncherEntryViewModel>(entries);
     }
-
-    partial void OnIsExpandedChanged(bool value) => OnPropertyChanged(nameof(ExpandIcon));
 
     [RelayCommand]
     private void ToggleExpanded() => IsExpanded = !IsExpanded;

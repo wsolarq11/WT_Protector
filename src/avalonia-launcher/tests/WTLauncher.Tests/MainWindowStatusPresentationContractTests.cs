@@ -18,7 +18,11 @@ public sealed class MainWindowStatusPresentationContractTests
         Assert.Contains("Classes.status-success=\"{Binding IsStatusSuccess}\"", statusBarXaml, StringComparison.Ordinal);
         Assert.Contains("Classes.status-warning=\"{Binding IsStatusWarning}\"", statusBarXaml, StringComparison.Ordinal);
         Assert.Contains("Classes.status-error=\"{Binding IsStatusError}\"", statusBarXaml, StringComparison.Ordinal);
-        Assert.Contains("Text=\"{Binding StatusIndicator}\"", statusBarXaml, StringComparison.Ordinal);
+        // Lucide icon paths for each status tone
+        Assert.Contains("IconStatusCheck", statusBarXaml, StringComparison.Ordinal);
+        Assert.Contains("IconStatusAlert", statusBarXaml, StringComparison.Ordinal);
+        Assert.Contains("IconStatusX", statusBarXaml, StringComparison.Ordinal);
+        Assert.Contains("IconStatusCircle", statusBarXaml, StringComparison.Ordinal);
         Assert.Contains("Text=\"{Binding StatusText}\"", statusBarXaml, StringComparison.Ordinal);
         Assert.Contains("AutomationProperties.Name=\"状态信息\"", statusBarXaml, StringComparison.Ordinal);
     }

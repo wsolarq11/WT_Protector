@@ -16,7 +16,6 @@ public sealed partial class StatusPresenter : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(StatusText))]
     [NotifyPropertyChangedFor(nameof(StatusTone))]
-    [NotifyPropertyChangedFor(nameof(StatusIndicator))]
     [NotifyPropertyChangedFor(nameof(IsStatusNeutral))]
     [NotifyPropertyChangedFor(nameof(IsStatusSuccess))]
     [NotifyPropertyChangedFor(nameof(IsStatusWarning))]
@@ -28,7 +27,6 @@ public sealed partial class StatusPresenter : ObservableObject
 
     public string StatusText => StatusContent.Text;
     public LauncherStatusTone StatusTone => StatusContent.Tone;
-    public string StatusIndicator => LauncherStatusPresentation.IndicatorFor(StatusTone);
     public bool IsStatusNeutral => StatusTone == LauncherStatusTone.Neutral;
     public bool IsStatusSuccess => StatusTone == LauncherStatusTone.Success;
     public bool IsStatusWarning => StatusTone == LauncherStatusTone.Warning;

@@ -12,7 +12,18 @@
         Height="{StaticResource WindowDefaultHeight}"
         MinWidth="{StaticResource WindowMinWidth}"
         MinHeight="{StaticResource WindowMinHeight}"
-        Background="{StaticResource BackgroundBrush}">
+        Background="Transparent">
+  <Window.Resources>
+    <!-- Lucide icon geometries (ISC license, https://lucide.dev) -->
+    <StreamGeometry x:Key="IconGripVertical">M 9,4 A 1,1 0 1,1 9,6 A 1,1 0 1,1 9,4 M 9,11 A 1,1 0 1,1 9,13 A 1,1 0 1,1 9,11 M 9,18 A 1,1 0 1,1 9,20 A 1,1 0 1,1 9,18 M 15,4 A 1,1 0 1,1 15,6 A 1,1 0 1,1 15,4 M 15,11 A 1,1 0 1,1 15,13 A 1,1 0 1,1 15,11 M 15,18 A 1,1 0 1,1 15,20 A 1,1 0 1,1 15,18</StreamGeometry>
+    <StreamGeometry x:Key="IconMoreVertical">M 12,4 A 1,1 0 1,1 12,6 A 1,1 0 1,1 12,4 M 12,11 A 1,1 0 1,1 12,13 A 1,1 0 1,1 12,11 M 12,18 A 1,1 0 1,1 12,20 A 1,1 0 1,1 12,18</StreamGeometry>
+    <StreamGeometry x:Key="IconChevronDown">M 6 9 L 12 15 L 18 9</StreamGeometry>
+    <StreamGeometry x:Key="IconChevronRight">M 9 6 L 15 12 L 9 18</StreamGeometry>
+    <StreamGeometry x:Key="IconStatusCheck">M 20 6 L 9 17 L 5 12</StreamGeometry>
+    <StreamGeometry x:Key="IconStatusX">M 18 6 L 6 18 M 6 6 L 18 18</StreamGeometry>
+    <StreamGeometry x:Key="IconStatusCircle">M 12 2 A 10 10 0 1 1 12 22 A 10 10 0 1 1 12 2</StreamGeometry>
+    <StreamGeometry x:Key="IconStatusAlert">M 12 2 L 22 21 L 2 21 Z M 12 9 L 12 14 M 12 17 L 12 17.5</StreamGeometry>
+  </Window.Resources>
   <Window.Styles>
     <Style Selector="TextBlock.h1">
       <Setter Property="FontSize" Value="28"/>
@@ -36,15 +47,6 @@
     <Style Selector="Border.status-panel.status-error">
       <Setter Property="BorderBrush" Value="{StaticResource ErrorBrush}"/>
     </Style>
-    <Style Selector="Border.status-panel.status-success TextBlock.status-indicator">
-      <Setter Property="Foreground" Value="{StaticResource BadgeSuccessForegroundBrush}"/>
-    </Style>
-    <Style Selector="Border.status-panel.status-warning TextBlock.status-indicator">
-      <Setter Property="Foreground" Value="{StaticResource BadgeInfoForegroundBrush}"/>
-    </Style>
-    <Style Selector="Border.status-panel.status-error TextBlock.status-indicator">
-      <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
-    </Style>
     <Style Selector="Border.card">
       <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
       <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
@@ -53,6 +55,7 @@
       <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="BoxShadow" Value="{StaticResource CardBoxShadow}"/>
+      <Setter Property="RenderTransform" Value="translateY(0)"/>
       <Setter Property="Transitions">
         <Transitions>
           <DoubleTransition Property="Opacity" Duration="0:0:0.12"/>
@@ -61,6 +64,13 @@
           <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12"/>
         </Transitions>
       </Setter>
+    </Style>
+    <Style Selector="Border.card:pointerover">
+      <Setter Property="RenderTransform" Value="translateY(-1.5)"/>
+    </Style>
+    <!-- Suppress hover lift during drag preview to avoid visual conflict -->
+    <Style Selector="Border.card.drag-source:pointerover">
+      <Setter Property="RenderTransform" Value="translateY(0)"/>
     </Style>
     <!-- R2: Disable transitions when user prefers reduced motion -->
     <Style Selector=".reduced-motion Border.card">

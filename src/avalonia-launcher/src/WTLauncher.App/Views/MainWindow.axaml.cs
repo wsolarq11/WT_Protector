@@ -39,6 +39,16 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+#if WINDOWS
+        // Enable Windows 11 Mica material for immersive background effect.
+        // Falls back to AcrylicBlur on Windows 10.
+        TransparencyLevelHint = new[]
+        {
+            WindowTransparencyLevel.Mica,
+            WindowTransparencyLevel.AcrylicBlur,
+            WindowTransparencyLevel.Blur,
+        };
+#endif
     }
 
     public MainWindow(MainWindowViewModel viewModel)

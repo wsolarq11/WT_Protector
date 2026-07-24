@@ -34,7 +34,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     public LauncherStatusContent StatusContent { get => _statusPresenter.StatusContent; set => _statusPresenter.StatusContent = value; }
     public string StatusText => _statusPresenter.StatusText;
     public LauncherStatusTone StatusTone => _statusPresenter.StatusTone;
-    public string StatusIndicator => _statusPresenter.StatusIndicator;
     public bool IsStatusNeutral => _statusPresenter.IsStatusNeutral;
     public bool IsStatusSuccess => _statusPresenter.IsStatusSuccess;
     public bool IsStatusWarning => _statusPresenter.IsStatusWarning;

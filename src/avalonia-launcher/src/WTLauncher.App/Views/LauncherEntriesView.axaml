@@ -34,11 +34,29 @@
                     VerticalAlignment="Center">
                 <Button Grid.Column="0"
                         Classes="secondary"
-                        Content="{Binding ExpandIcon}"
                         Command="{Binding ToggleExpandedCommand}"
                         Padding="8,2"
                         MinWidth="32"
-                        ToolTip.Tip="折叠/展开"/>
+                        ToolTip.Tip="折叠/展开">
+                  <Grid>
+                    <Path Data="{StaticResource IconChevronDown}"
+                          Stroke="{StaticResource SecondaryButtonForegroundBrush}"
+                          StrokeThickness="2"
+                          Fill="Transparent"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          Width="16" Height="16"
+                          IsVisible="{Binding IsExpanded}"/>
+                    <Path Data="{StaticResource IconChevronRight}"
+                          Stroke="{StaticResource SecondaryButtonForegroundBrush}"
+                          StrokeThickness="2"
+                          Fill="Transparent"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          Width="16" Height="16"
+                          IsVisible="{Binding !IsExpanded}"/>
+                  </Grid>
+                </Button>
                 <TextBlock Grid.Column="1"
                            Classes="mono"
                            Text="{Binding DisplayName}"
@@ -178,11 +196,18 @@
                                 Command="{Binding LaunchCommand}"/>
                         <Button Grid.Column="1"
                                 Classes="secondary more"
-                                Content="⋯"
                                 Margin="8,0,0,0"
                                 ToolTip.Tip="更多操作"
                                 AutomationProperties.Name="更多操作"
-                                Click="OnEntryMoreClicked"/>
+                                Click="OnEntryMoreClicked">
+                          <Path Data="{StaticResource IconMoreVertical}"
+                                Stroke="{StaticResource SecondaryButtonForegroundBrush}"
+                                StrokeThickness="2"
+                                Fill="Transparent"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Width="16" Height="16"/>
+                        </Button>
                       </Grid>
                       <Grid Grid.Row="3"
                             Classes="entry-footer">
@@ -192,11 +217,13 @@
                                 ToolTip.Tip="拖拽排序"
                                 AutomationProperties.Name="拖拽排序"
                                 PointerPressed="OnEntryDragPointerPressed">
-                          <TextBlock Text="≡"
-                                     Foreground="{StaticResource DragHandleTextBrush}"
-                                     FontSize="{StaticResource FontSizeSmall}"
-                                     HorizontalAlignment="Center"
-                                     VerticalAlignment="Center"/>
+                          <Path Data="{StaticResource IconGripVertical}"
+                                Stroke="{StaticResource DragHandleTextBrush}"
+                                StrokeThickness="2"
+                                Fill="Transparent"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Width="16" Height="16"/>
                         </Border>
                       </Grid>
                     </Grid>
@@ -363,20 +390,29 @@
                             AutomationProperties.Name="启动"
                             Command="{Binding LaunchCommand}"/>
                     <Button Classes="secondary more"
-                            Content="⋯"
                             ToolTip.Tip="更多操作"
                             AutomationProperties.Name="更多操作"
-                            Click="OnEntryMoreClicked"/>
+                            Click="OnEntryMoreClicked">
+                      <Path Data="{StaticResource IconMoreVertical}"
+                            Stroke="{StaticResource SecondaryButtonForegroundBrush}"
+                            StrokeThickness="2"
+                            Fill="Transparent"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Width="16" Height="16"/>
+                    </Button>
                     <Border Classes="entry-drag-handle"
                             Cursor="Hand"
                             ToolTip.Tip="拖拽排序"
                             AutomationProperties.Name="拖拽排序"
                             PointerPressed="OnEntryDragPointerPressed">
-                      <TextBlock Text="≡"
-                                 Foreground="{StaticResource DragHandleTextBrush}"
-                                 FontSize="{StaticResource FontSizeSmall}"
-                                 HorizontalAlignment="Center"
-                                 VerticalAlignment="Center"/>
+                      <Path Data="{StaticResource IconGripVertical}"
+                            Stroke="{StaticResource DragHandleTextBrush}"
+                            StrokeThickness="2"
+                            Fill="Transparent"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Width="16" Height="16"/>
                     </Border>
                   </StackPanel>
                 </Grid>
@@ -481,11 +517,13 @@
                       ToolTip.Tip="拖拽排序"
                       AutomationProperties.Name="拖拽排序"
                       PointerPressed="OnEntryDragPointerPressed">
-                <TextBlock Text="≡"
-                           Foreground="{StaticResource TextMutedBrush}"
-                           FontSize="11"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"/>
+                <Path Data="{StaticResource IconGripVertical}"
+                      Stroke="{StaticResource TextMutedBrush}"
+                      StrokeThickness="2"
+                      Fill="Transparent"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
+                      Width="14" Height="14"/>
               </Border>
             </Grid>
           </Border>

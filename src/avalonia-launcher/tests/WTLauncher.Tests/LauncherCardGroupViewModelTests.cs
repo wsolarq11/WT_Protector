@@ -23,7 +23,6 @@ public sealed class LauncherCardGroupViewModelTests
         Assert.Equal("1 个", group.CountLabel);
         Assert.True(group.ShowHeader);
         Assert.Single(group.Entries);
-        Assert.Equal("▼", group.ExpandIcon);
     }
 
     [Fact]
@@ -36,9 +35,7 @@ public sealed class LauncherCardGroupViewModelTests
         group.ToggleExpandedCommand.Execute(null);
 
         Assert.False(group.IsExpanded);
-        Assert.Equal("▶", group.ExpandIcon);
         Assert.Contains(nameof(group.IsExpanded), changed);
-        Assert.Contains(nameof(group.ExpandIcon), changed);
     }
 
     [Fact]

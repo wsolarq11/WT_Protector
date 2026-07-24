@@ -21,11 +21,9 @@ public sealed partial class MainWindowViewModelTests
         viewModel.StatusContent = LauncherStatusContent.Error("存储保存失败: access denied");
 
         Assert.Equal(LauncherStatusTone.Error, viewModel.StatusTone);
-        Assert.Equal("×", viewModel.StatusIndicator);
         Assert.True(viewModel.IsStatusError, "error status should activate the non-neutral projection");
         Assert.Contains(nameof(MainWindowViewModel.StatusText), changed);
         Assert.Contains(nameof(MainWindowViewModel.StatusTone), changed);
-        Assert.Contains(nameof(MainWindowViewModel.StatusIndicator), changed);
         Assert.Contains(nameof(MainWindowViewModel.IsStatusNeutral), changed);
         Assert.Contains(nameof(MainWindowViewModel.IsStatusSuccess), changed);
         Assert.Contains(nameof(MainWindowViewModel.IsStatusWarning), changed);

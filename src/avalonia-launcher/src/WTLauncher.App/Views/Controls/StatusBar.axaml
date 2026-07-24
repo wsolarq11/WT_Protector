@@ -15,14 +15,48 @@
           BorderThickness="1"
           Padding="16">
     <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*">
-      <TextBlock Classes="status-indicator"
-                 Text="{Binding StatusIndicator}"
-                 automation:AutomationProperties.Name="状态级别"
-                 automation:AutomationProperties.LiveSetting="Polite"
-                 Margin="0,0,8,0"
-                 FontSize="{StaticResource FontSizeBody}"
-                 FontWeight="Bold"
-                 Foreground="{StaticResource TextMutedBrush}"/>
+      <Grid Width="20" Height="20" Margin="0,0,8,0">
+        <!-- Neutral: circle -->
+        <Path Data="{StaticResource IconStatusCircle}"
+              Stroke="{StaticResource TextMutedBrush}"
+              StrokeThickness="2"
+              Fill="Transparent"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Width="14" Height="14"
+              IsVisible="{Binding IsStatusNeutral}"
+              automation:AutomationProperties.Name="状态级别"/>
+        <!-- Success: check -->
+        <Path Data="{StaticResource IconStatusCheck}"
+              Stroke="{StaticResource BadgeSuccessForegroundBrush}"
+              StrokeThickness="2"
+              Fill="Transparent"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Width="16" Height="16"
+              IsVisible="{Binding IsStatusSuccess}"
+              automation:AutomationProperties.Name="状态级别"/>
+        <!-- Warning: alert triangle -->
+        <Path Data="{StaticResource IconStatusAlert}"
+              Stroke="{StaticResource BadgeInfoForegroundBrush}"
+              StrokeThickness="2"
+              Fill="Transparent"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Width="16" Height="16"
+              IsVisible="{Binding IsStatusWarning}"
+              automation:AutomationProperties.Name="状态级别"/>
+        <!-- Error: x -->
+        <Path Data="{StaticResource IconStatusX}"
+              Stroke="{StaticResource ErrorBrush}"
+              StrokeThickness="2"
+              Fill="Transparent"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Width="16" Height="16"
+              IsVisible="{Binding IsStatusError}"
+              automation:AutomationProperties.Name="状态级别"/>
+      </Grid>
       <TextBlock Grid.Column="1"
                  Text="{Binding StatusText}"
                  automation:AutomationProperties.Name="状态信息"
