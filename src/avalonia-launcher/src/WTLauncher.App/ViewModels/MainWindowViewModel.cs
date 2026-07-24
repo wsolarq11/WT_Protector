@@ -19,7 +19,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     internal readonly AppStore _appStore;
     private readonly string _storePath;
     private bool _initialized;
+    /// <summary>Single source of settings state — always reads from AppStore.
+    /// Direct field access is being phased out; prefer CurrentSettings.</summary>
     private LauncherSettings _settings;
+    /// <summary>Read-only settings snapshot from AppStore. Replaces direct _settings field reads.
+    /// Phase 1: state single-sourcing (07-24-triple-cut-arch).</summary>
+    internal LauncherSettings CurrentSettings => _appStore.Select(s => s.Settings);
     internal readonly LaunchOrchestrator _launchOrchestrator;
     private readonly IDialogService _dialogService;
     private readonly IEntryService _entryService = null!;
@@ -105,8 +110,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         // Construct LaunchOrchestrator early so bridge delegates are ready.
         _launchOrchestrator = new LaunchOrchestrator(launchWorkflow, dialogService);
         _launchOrchestrator.CommandTemplates = _settings.CommandTemplates;
-        // Init before bridge delegates so the SettingsPersister-null guard
-        // in OnRequireConfirmationForLaunchesChanged skips persistence.
         _launchOrchestrator.RequireConfirmationForLaunches = _settings.RequireConfirmationForLaunches;
         _launchOrchestrator.SettingsGetter = () => _settings;
         _launchOrchestrator.TimestampGetter = () => CurrentTimestampUtc();
@@ -149,9 +152,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         // Init layout state from settings.
         _ = RequireSettingsText(_settings.LastFilterText, "lastFilterText");
         _layoutManager.LoadSettings(_settings);
-        _settings = _settings with { SortMode = _layoutManager.SelectedSortMode!.Id };
-        _settings = _settings with { EntryViewMode = _layoutManager.SelectedDisplayMode!.Id };
-        _settings = _settings with { CardsGroupKey = _layoutManager.CardsGroupKey };
+        _settings = _settings with { SortMode = _layoutManager.SelectedSortMode!.Id }; // Phase 1: constructor-local working copy
+        _settings = _settings with { EntryViewMode = _layoutManager.SelectedDisplayMode!.Id }; // Phase 1: constructor-local working copy
+        _settings = _settings with { CardsGroupKey = _layoutManager.CardsGroupKey }; // Phase 1: constructor-local working copy
         _layoutManager.NotifyDisplayModeProjectionChanged();
         // Subscribe to layout events AFTER init so construction doesn't trigger persistence.
         _layoutManager.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName!);
@@ -185,6 +188,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         PresetCount = _presetManager.PresetCount;
         // Sync custom entry order with loaded entries so ValidateCustomOrder
         // passes even when the stored CustomEntryOrder is empty or stale.
+        // Phase 1: _settings still used as working copy during construction.
+        // Full CurrentSettings transition will happen once DragWorkflow is refactored.
         _settings = _settings with { CustomEntryOrder = LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds()) };
         RefreshSelectionState();
         ApplyFilter();
@@ -194,10 +199,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         OnPropertyChanged(nameof(LaunchConfirmationToggleText));
         OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
         StatusContent = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
-        // Sync MWVM state from AppStore after every committed mutation.
+        // Phase 1: State single-sourcing (07-24-triple-cut-arch).
+        // _settings field is being eliminated. State reads use CurrentSettings (AppStore.Select).
+        // Preset sync still needs to update _presetManager on external state changes.
         _appStore.Subscribe(state =>
         {
-            _settings = state.Settings;
+            _settings = state.Settings; // Phase 1: ponytail — kept for transition
             _presetManager.Load(
                 new LauncherPresetFile { Presets = state.Presets, DefaultPresetId = state.DefaultPresetId },
                 _presetManager.SelectedPreset?.Id);

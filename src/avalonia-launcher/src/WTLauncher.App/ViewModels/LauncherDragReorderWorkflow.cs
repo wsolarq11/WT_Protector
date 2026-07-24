@@ -1,11 +1,30 @@
+using Stateless;
 using WTLauncher.App.Features;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
+public enum DragState
+{
+    Idle,
+    Dragging,
+    Committing
+}
+
+public enum DragTrigger
+{
+    Begin,
+    Preview,
+    Commit,
+    Cancel,
+    Done
+}
+
 public sealed class LauncherDragReorderWorkflow
 {
+    private readonly StateMachine<DragState, DragTrigger> _machine;
+
     // ponytail: this field is working state for drag reorder, NOT a duplicate of
     // MainWindowViewModel._settings. Workflow mutates during Preview (before persist),
     // rolls back via session.Snapshot on Cancel/commit-failure. Main VM syncs back
@@ -38,6 +57,19 @@ public sealed class LauncherDragReorderWorkflow
         _settings = settings;
         _entries = entries;
         _saveSettings = saveSettings;
+
+        _machine = new StateMachine<DragState, DragTrigger>(DragState.Idle);
+
+        _machine.Configure(DragState.Idle)
+            .Permit(DragTrigger.Begin, DragState.Dragging);
+
+        _machine.Configure(DragState.Dragging)
+            .PermitReentry(DragTrigger.Preview)
+            .Permit(DragTrigger.Commit, DragState.Committing)
+            .Permit(DragTrigger.Cancel, DragState.Idle);
+
+        _machine.Configure(DragState.Committing)
+            .Permit(DragTrigger.Done, DragState.Idle);
     }
 
     /// <summary>
@@ -59,9 +91,11 @@ public sealed class LauncherDragReorderWorkflow
         if (source is null)
             return refreshEntries;
 
-        _session = LauncherDragReorderSession.Start(
-            source,
-            _settings);
+        _session = LauncherDragReorderSession.Start(source, _settings);
+
+        if (_machine.State == DragState.Idle)
+            _machine.Fire(DragTrigger.Begin);
+
         return refreshEntries;
     }
 
@@ -94,6 +128,10 @@ public sealed class LauncherDragReorderWorkflow
         }
         if (session is null)
             return (false, refreshEntries);
+
+        if (_machine.State == DragState.Dragging)
+            _machine.Fire(DragTrigger.Preview);
+
         if (EntryId.SameNormalized(draggedEntryId, targetEntryId))
             return (false, refreshEntries);
 
@@ -137,12 +175,20 @@ public sealed class LauncherDragReorderWorkflow
 
     public (LauncherStatusContent? Status, bool RefreshEntries) Commit(bool isCustomSortMode)
     {
-        if (!isCustomSortMode)
+        if (_machine.State != DragState.Dragging)
             return (null, false);
-        if (_session is null)
+
+        // Business logic early returns — FSM state is unaffected.
+        if (!isCustomSortMode)
             return (null, false);
 
         var session = _session;
+        if (session is null)
+            return (null, false);
+
+        // Conceptual transition: Dragging → Committing
+        _machine.Fire(DragTrigger.Commit);
+
         try
         {
             var saveFailure = _saveSettings(_settings);
@@ -164,11 +210,17 @@ public sealed class LauncherDragReorderWorkflow
         finally
         {
             ClearPreviewState();
+            _machine.Fire(DragTrigger.Done);
         }
     }
 
     public (LauncherStatusContent? Status, bool RefreshEntries) Cancel()
     {
+        if (_machine.State != DragState.Dragging)
+            return (null, false);
+
+        _machine.Fire(DragTrigger.Cancel);
+
         if (!TryRestorePreviewState())
             return (null, false);
 

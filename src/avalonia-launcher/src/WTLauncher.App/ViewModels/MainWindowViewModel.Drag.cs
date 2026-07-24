@@ -28,7 +28,7 @@ public sealed partial class MainWindowViewModel
         EnsureDragSortMode();
         if (_dragReorderWorkflow.Begin(IsCustomSortMode, draggedEntryId))
         {
-            _settings = _dragReorderWorkflow.Settings;
+            _settings = _dragReorderWorkflow.Settings; // Phase 1: ponytail — drag workflow modifies CustomEntryOrder, sync needed
             ApplyFilter();
         }
     }
@@ -47,7 +47,7 @@ public sealed partial class MainWindowViewModel
     public bool PreviewMoveEntry(string draggedEntryId, string targetEntryId, bool insertAfter)
     {
         var result = _dragReorderWorkflow.Preview(IsCustomSortMode, draggedEntryId, targetEntryId, insertAfter);
-        _settings = _dragReorderWorkflow.Settings;
+        _settings = _dragReorderWorkflow.Settings; // Phase 1: ponytail — DragWorkflow owns CustomEntryOrder during drag
         if (result.RefreshEntries)
         {
             // Debounce: skip redundant reorder with same drag params within 16ms.
@@ -125,7 +125,7 @@ public sealed partial class MainWindowViewModel
     public void CommitDragReorder()
     {
         var result = _dragReorderWorkflow.Commit(IsCustomSortMode);
-        _settings = _dragReorderWorkflow.Settings;
+        _settings = _dragReorderWorkflow.Settings; // Phase 1: ponytail — DragWorkflow owns CustomEntryOrder during drag
         ApplyFilter();
         ApplyStatusText(result.Status);
         _lastPreviewParams = null;
@@ -139,7 +139,7 @@ public sealed partial class MainWindowViewModel
     public void CancelDragReorder()
     {
         var result = _dragReorderWorkflow.Cancel();
-        _settings = _dragReorderWorkflow.Settings;
+        _settings = _dragReorderWorkflow.Settings; // Phase 1: ponytail — DragWorkflow owns CustomEntryOrder during drag
         if (result.RefreshEntries)
             ApplyFilter();
         ApplyStatusText(result.Status);
@@ -151,7 +151,7 @@ public sealed partial class MainWindowViewModel
         var result = _dragReorderWorkflow.Cancel();
         if (result.RefreshEntries)
         {
-            _settings = _dragReorderWorkflow.Settings;
+            _settings = _dragReorderWorkflow.Settings; // Phase 1: ponytail — DragWorkflow owns CustomEntryOrder during drag
             ApplyFilter();
         }
     }

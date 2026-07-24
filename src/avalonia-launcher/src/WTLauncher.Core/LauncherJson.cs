@@ -87,24 +87,26 @@ public static class LauncherJson
             }
         }
 
-        // File missing — try backup or return default.
-        var backupPathForMissing = path + ".bak";
-        if (File.Exists(backupPathForMissing))
+        // File missing — try backup chain (.bak, .bak.1, .bak.2, ...) or return default.
+        for (var bakIndex = 0; bakIndex < DefaultMaxBackups; bakIndex++)
         {
+            var backupPathForMissing = bakIndex == 0 ? path + ".bak" : path + $".bak.{bakIndex}";
+            if (!File.Exists(backupPathForMissing))
+                continue;
+
             try
             {
                 var recoveryTempPath = path + $".recovery-{Guid.NewGuid():N}";
                 File.Copy(backupPathForMissing, recoveryTempPath, overwrite: true);
-                // Primary doesn't exist — simple rename. Atomicity isn't critical
-                // here since the destination is empty.
                 File.Move(recoveryTempPath, path);
                 var recovered = loadAndValidate(path);
-                onRecovery?.Invoke(new InvalidDataException("Config file was missing and recovered from backup."), recoveryContext);
+                onRecovery?.Invoke(new InvalidDataException($"Config file was missing and recovered from backup chain ({backupPathForMissing})."), recoveryContext);
                 return recovered;
             }
             catch (Exception recoveryEx) when (recoveryEx is IOException or UnauthorizedAccessException)
             {
-                // Recovery failed — fall through to return default.
+                // Recovery failed — try next backup in chain.
+                continue;
             }
         }
 
@@ -206,7 +208,8 @@ public static class LauncherJson
 
     /// <summary>Delete all <c>*.tmp-*</c>, <c>*.stage-*</c>, <c>*.bak-tmp-*</c>, and
     /// <c>*.recovery-*</c> files left behind by crashed Save() or recovery
-    /// operations. Safe to call at startup — failures are silently ignored.</summary>
+    /// operations. Safe to call at startup — failures are silently ignored.
+    /// Acquires <see cref="SaveLock"/> to avoid racing with a concurrent Save().</summary>
     public static void CleanupStaleTempFiles(string configDir)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(configDir);
@@ -214,26 +217,31 @@ public static class LauncherJson
         if (!Directory.Exists(configDir))
             return;
 
-        foreach (var pattern in new[] { "*.tmp-*", "*.stage-*", "*.bak-tmp-*", "*.recovery-*" })
+        SaveLock.Wait();
+        try
         {
-            foreach (var tmp in Directory.EnumerateFiles(configDir, pattern, SearchOption.TopDirectoryOnly))
+            foreach (var pattern in new[] { "*.tmp-*", "*.stage-*", "*.bak-tmp-*", "*.recovery-*" })
             {
-                var fileName = Path.GetFileName(tmp);
-                // Only clean up temp files matching the app's naming convention:
-                // *.{tmp|stage|bak-tmp|recovery}-{Guid:N} (32+ lowercase hex characters).
-                // This avoids matching unrelated files from other applications.
-                if (!System.Text.RegularExpressions.Regex.IsMatch(fileName, @"\.(tmp|stage|bak-tmp|recovery)-[0-9a-f]{32}$"))
-                    continue;
-                try
+                foreach (var tmp in Directory.EnumerateFiles(configDir, pattern, SearchOption.TopDirectoryOnly))
                 {
-                    File.Delete(tmp);
-                }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-                {
-                    Debug.WriteLine($"[LauncherJson] Stale temp cleanup failed: {ex.Message}");
-                    Trace.WriteLine($"[LauncherJson] Stale temp cleanup failed: {ex.Message}");
+                    var fileName = Path.GetFileName(tmp);
+                    if (!System.Text.RegularExpressions.Regex.IsMatch(fileName, @"\.(tmp|stage|bak-tmp|recovery)-[0-9a-f]{32}$"))
+                        continue;
+                    try
+                    {
+                        File.Delete(tmp);
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                    {
+                        Debug.WriteLine($"[LauncherJson] Stale temp cleanup failed: {ex.Message}");
+                        Trace.WriteLine($"[LauncherJson] Stale temp cleanup failed: {ex.Message}");
+                    }
                 }
             }
+        }
+        finally
+        {
+            SaveLock.Release();
         }
     }
 

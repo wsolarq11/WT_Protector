@@ -95,13 +95,8 @@ public sealed partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Encapsulates the CaptureSettingsMutationSnapshot → mutate _settings →
-    /// SaveSettingsChange → rollback-on-failure boilerplate repeated across settings
-    /// mutation callbacks.
-    /// On success, sets <see cref="StatusText"/> to <paramref name="successStatus"/>
-    /// (when non-null) and returns true.
-    /// On failure, restores _settings from the snapshot, applies the save failure
-    /// status, and returns false — callers must then re-sync their own UI properties.
+    /// Encapsulates settings mutation via AppStore.Dispatch with save + rollback.
+    /// Phase 1: snapshot via CurrentSettings, mutation through Dispatch, rollback through Dispatch.
     /// </summary>
     private bool TryPersistSettingsChange(
         Func<LauncherSettings, LauncherSettings> mutator,
@@ -185,24 +180,22 @@ public sealed partial class MainWindowViewModel
     public bool TrySaveWindowBounds(double width, double height, double x = 0, double y = 0, string windowState = "Normal")
     {
         DiscardDragReorderPreview();
-        var storeFile = BuildStoreFile();
-        var nextSettings = storeFile.Settings with
-        {
-            Window = storeFile.Settings.Window with
-            {
-                Width = width, Height = height, X = x, Y = y, WindowState = windowState
-            }
-        };
-        var nextStore = storeFile with { Settings = nextSettings };
-
         try
         {
-            LauncherStore.Save(nextStore, _storePath);
-            _settings = nextSettings;
+            _appStore.Dispatch(state =>
+            {
+                var nextSettings = state.Settings with
+                {
+                    Window = new LauncherWindowSettings
+                    {
+                        Width = width, Height = height, X = x, Y = y, WindowState = windowState
+                    }
+                };
+                return state with { Settings = nextSettings };
+            });
             return true;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
-            or PathTooLongException or DirectoryNotFoundException or System.Security.SecurityException)
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             StatusContent = LauncherSettingsStatus.WindowBoundsSaveFailed;
             return false;

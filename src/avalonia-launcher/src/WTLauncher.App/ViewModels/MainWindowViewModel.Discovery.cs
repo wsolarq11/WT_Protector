@@ -28,7 +28,7 @@ public sealed partial class MainWindowViewModel
                     .Where(name => !string.IsNullOrWhiteSpace(name))
                     .ToHashSet(StringComparer.OrdinalIgnoreCase),
                 DirectoryUsageAnalyzer.Analyze(_list.MutableEntries.Select(ToLaunchEntry)),
-                _settings.CommandTemplates)
+                CurrentSettings.CommandTemplates) // Phase 1
                 .ConfigureAwait(true);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
