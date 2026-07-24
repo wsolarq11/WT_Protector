@@ -1736,3 +1736,36 @@ Completed all remaining Scheme B follow-up items: redundant catch filter cleanup
 ### Next Steps
 
 - None - task complete
+
+
+## Session 51: Mode 2 Win32 acrylic + spec update + trellis finish steps
+
+**Date**: 2026-07-24
+**Task**: Mode 2 Win32 acrylic + spec update + trellis finish steps
+**Branch**: `main`
+
+### Summary
+
+Added BackgroundMode setting to LauncherSettings, created Win32Acrylic interop class with SetWindowCompositionAttribute P/Invoke, wired ApplyBackgroundMode into MainWindow OnOpened. Updated pitfalls.md with 10.3 (Avalonia TransformParser unitless non-zero) and 10.4 (ExperimentalAcrylicMaterial FallbackColor). Dream memory consolidated. Gate: 696 tests PASS, verify all checks PASS.
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c64d846` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
