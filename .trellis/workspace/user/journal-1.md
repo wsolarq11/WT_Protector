@@ -1700,3 +1700,39 @@ build-release.ps1 Native AOT 修复: vswhere PATH 系统注册、移除 --no-res
 ### Next Steps
 
 - None - task complete
+
+
+## Session 50: Scheme B: all remaining phases completed + pushed
+
+**Date**: 2026-07-24
+**Task**: Scheme B: all remaining phases completed + pushed
+**Branch**: `main`
+
+### Summary
+
+Completed all remaining Scheme B follow-up items: redundant catch filter cleanup (5x DirectoryNotFoundException), CLAUDE.md architecture section, AOT CI job, CancellationToken propagation chain (DialogService→VM→Scanner), dream memory consolidation, spec pitfalls updated with 4 new entries. All pushed. 5 completed Trellis tasks archived.
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `68a0186` | (see git log) |
+| `38f0dd8` | (see git log) |
+| `956ed4f` | (see git log) |
+| `4fc3065` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
