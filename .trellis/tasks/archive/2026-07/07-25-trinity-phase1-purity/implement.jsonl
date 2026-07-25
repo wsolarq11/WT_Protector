@@ -1,0 +1,10 @@
+{"file": "src/avalonia-launcher/src/WTLauncher.Core/LauncherJson.cs", "reason": "目标文件：需要拆分为纯序列化器 + IO 接口"}
+{"file": "src/avalonia-launcher/src/WTLauncher.Core/LauncherStore.cs", "reason": "目标文件：需要拆分为纯验证器 + 存储接口"}
+{"file": "src/avalonia-launcher/src/WTLauncher.Core/LauncherJsonContext.cs", "reason": "序列化 context，新组件需要引用"}
+{"file": "src/avalonia-launcher/src/WTLauncher.Core/LauncherStoreFile.cs", "reason": "数据记录定义，validator 需要引用"}
+{"file": "src/avalonia-launcher/src/WTLauncher.Core/Errors/AppError.cs", "reason": "ErrorOr 错误类型"}
+{"file": "docs/architectures/trinity-endgame-architecture.md", "reason": "Trinity 架构设计参考"}
+{"file": ".trellis/spec/core/index.md", "reason": "Core 层编码规范"}
+{"file": ".trellis/spec/tests/index.md", "reason": "测试层编码规范"}
+{"file": "src/avalonia-launcher/tests/WTLauncher.Tests/LauncherPersistenceTestFixtures.cs", "reason": "现有测试夹具参考"}
+{"file": "src/avalonia-launcher/tests/WTLauncher.Tests/CsCheckPropertyTests.cs", "reason": "现有 CsCheck PBT 参考"}
