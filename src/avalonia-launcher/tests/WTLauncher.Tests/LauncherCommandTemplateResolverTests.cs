@@ -86,9 +86,9 @@ public sealed class LauncherCommandTemplateResolverTests
     {
         var entries = new[]
         {
-            new LaunchEntry { Id = "one", Name = "One", Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)"C:\\tmp", Command = "$pwsh" },
-            new LaunchEntry { Id = "two", Name = "Two", Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)"C:\\tmp", Command = "cmd.exe" },
-            new LaunchEntry { Id = "three", Name = "Three", Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)"C:\\tmp", Command = "$codex" },
+            new LaunchEntry { Id = "one", Name = "One", Directory = (WTLauncher.Core.DirectoryPath)"C:\\tmp", Command = "$pwsh" },
+            new LaunchEntry { Id = "two", Name = "Two", Directory = (WTLauncher.Core.DirectoryPath)"C:\\tmp", Command = "cmd.exe" },
+            new LaunchEntry { Id = "three", Name = "Three", Directory = (WTLauncher.Core.DirectoryPath)"C:\\tmp", Command = "$codex" },
         };
         var templates = new Dictionary<string, string>(); // empty, not null
 
@@ -104,7 +104,7 @@ public sealed class LauncherCommandTemplateResolverTests
     {
         var entries = new[]
         {
-            new LaunchEntry { Id = "one", Name = "One", Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)"C:\\tmp", Command = "$pwsh" },
+            new LaunchEntry { Id = "one", Name = "One", Directory = (WTLauncher.Core.DirectoryPath)"C:\\tmp", Command = "$pwsh" },
         };
 
         var missingKeys = LauncherCommandTemplateResolver.ValidateTemplateReferences(entries, null);
@@ -118,8 +118,8 @@ public sealed class LauncherCommandTemplateResolverTests
     {
         var entries = new[]
         {
-            new LaunchEntry { Id = "one", Name = "One", Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)"C:\\tmp", Command = "$pwsh" },
-            new LaunchEntry { Id = "two", Name = "Two", Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)"C:\\tmp", Command = "$codex" },
+            new LaunchEntry { Id = "one", Name = "One", Directory = (WTLauncher.Core.DirectoryPath)"C:\\tmp", Command = "$pwsh" },
+            new LaunchEntry { Id = "two", Name = "Two", Directory = (WTLauncher.Core.DirectoryPath)"C:\\tmp", Command = "$codex" },
         };
         var templates = new Dictionary<string, string>
         {

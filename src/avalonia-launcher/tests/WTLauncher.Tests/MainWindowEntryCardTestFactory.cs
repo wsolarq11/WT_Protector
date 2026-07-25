@@ -41,7 +41,7 @@ internal static class MainWindowEntryCardTestFactory
         };
         LauncherStore.Save(storeFile, storePath, backup: true);
         var dialogs = new StubDialogService();
-        var storeGrain = new StoreGrain(storePath);
+        var storeGrain = new StoreGrain(storePath, new FileStorePersistence());
         return new MainWindowViewModel(
             storePath,
             storeGrain,
@@ -79,7 +79,7 @@ internal static class MainWindowEntryCardTestFactory
         };
         LauncherStore.Save(storeFile, storePath, backup: true);
         var dialogs = new StubDialogService();
-        var appStore = new StoreGrain(storePath);
+        var appStore = new StoreGrain(storePath, new FileStorePersistence());
         return new LauncherEntryViewModel(entry, new MainWindowViewModel(
             storePath,
             appStore,
@@ -97,7 +97,7 @@ internal static class MainWindowEntryCardTestFactory
         {
             Id = id,
             Name = id,
-            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)$"D:\\{id}",
+            Directory = (WTLauncher.Core.DirectoryPath)$"D:\\{id}",
             Command = "pwsh",
         };
     }

@@ -1,4 +1,4 @@
-using System.Text.Json;
+using System.Diagnostics;
 using ErrorOr;
 using WTLauncher.Core;
 
@@ -14,6 +14,7 @@ namespace WTLauncher.App.Infrastructure;
 public sealed class StoreGrain : Grain<LauncherStoreFile>, IDisposable
 {
     private readonly string _storePath;
+    private readonly IStorePersistence _persistence;
 
     /// <summary>Fires when state changes.</summary>
     public event Action<LauncherStoreFile>? StateChanged;
@@ -21,40 +22,59 @@ public sealed class StoreGrain : Grain<LauncherStoreFile>, IDisposable
     public string StorePath => _storePath;
 
     /// <summary>Create a store grain backed by the given path.
-    /// State is loaded synchronously from disk.</summary>
-    public StoreGrain(string storePath)
-        : base(LoadInitialState(storePath))
+    /// State is loaded synchronously from disk via <paramref name="persistence"/>.</summary>
+    public StoreGrain(string storePath, IStorePersistence persistence)
+        : base(LoadInitialState(storePath, persistence))
     {
         _storePath = storePath;
+        _persistence = persistence;
     }
 
     /// <summary>Test-only: creates a store with the given initial state.
-    /// No file I/O — state starts from <paramref name="initialState"/>.</summary>
-    internal StoreGrain(string storePath, LauncherStoreFile initialState)
+    /// No file I/O — state starts from <paramref name="initialState"/>.
+    /// Falls back to <see cref="FileStorePersistence"/> when <paramref name="persistence"/> is null.</summary>
+    internal StoreGrain(string storePath, LauncherStoreFile initialState, IStorePersistence? persistence = null)
         : base(initialState)
     {
         _storePath = storePath;
+        _persistence = persistence ?? new FileStorePersistence();
     }
 
     /// <summary>Read a projection from current state (thread-safe).</summary>
     public T Select<T>(Func<LauncherStoreFile, T> selector) => ReadState(selector);
 
-    /// <summary>Apply a reducer and persist. On save failure, state is unchanged.</summary>
-    public void Dispatch(Func<LauncherStoreFile, LauncherStoreFile> reducer)
+    /// <summary>Apply a reducer and persist. On save failure, state is unchanged.
+    /// Reads, applies reducer, saves, and updates memory atomically inside
+    /// Grain.Mutate lock — eliminates the TOCTOU window.
+    /// Subscriber exceptions are caught and logged to prevent Dispatch failure cascades.</summary>
+    /// <summary>Reload state from disk via persistence. Does not notify subscribers.
+    /// Used by <see cref="MainWindowViewModel.Refresh"/> to synchronize with external changes.</summary>
+    public void ReloadFromDisk()
     {
-        var current = ReadState(s => s);
-        var after = reducer(current);
-        LauncherStore.Save(after, _storePath, backup: true);
-        SetState(after);
-        StateChanged?.Invoke(after);
+        var fresh = _persistence.Load(_storePath);
+        SetState(fresh);
     }
 
-    /// <summary>Dispatch with ErrorOr return. Catches recoverable save failures.</summary>
+    public void Dispatch(Func<LauncherStoreFile, LauncherStoreFile> reducer)
+    {
+        var after = Mutate(state =>
+        {
+            var newState = reducer(state);
+            _persistence.Save(newState, _storePath, backup: true);
+            return newState;
+        });
+        try { StateChanged?.Invoke(after); }
+        catch (Exception ex) when (LauncherErrors.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "StoreGrain.StateChanged");
+        }
+    }
+
+    /// <summary>Dispatch with ErrorOr return. Catches all recoverable save failures.</summary>
     public ErrorOr<Success> DispatchErrorOr(Func<LauncherStoreFile, LauncherStoreFile> reducer)
     {
         try { Dispatch(reducer); return Result.Success; }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
-            or InvalidDataException or JsonException)
+        catch (Exception ex) when (LauncherErrors.IsRecoverable(ex))
         { return LauncherErrors.ConfigSaveFailed(ex.Message); }
     }
 
@@ -67,16 +87,24 @@ public sealed class StoreGrain : Grain<LauncherStoreFile>, IDisposable
 
     public void Dispose() { }
 
-    private static LauncherStoreFile LoadInitialState(string storePath)
+    private static LauncherStoreFile LoadInitialState(string storePath, IStorePersistence persistence)
     {
         try
         {
             return File.Exists(storePath)
-                ? LauncherStore.Load(storePath)
+                ? persistence.Load(storePath)
                 : new LauncherStoreFile();
         }
-        catch (IOException)
+        catch (IOException ex) when (ex is not FileNotFoundException)
         {
+            // Config exists but can't be read — log and return empty for graceful fallback.
+            Debug.WriteLine($"[StoreGrain] LoadInitialState IO error: {ex.Message}");
+            Trace.WriteLine($"[StoreGrain] LoadInitialState IO error: {ex.Message}");
+            return new LauncherStoreFile();
+        }
+        catch (FileNotFoundException)
+        {
+            // Fresh install — no config file yet; return empty state silently.
             return new LauncherStoreFile();
         }
     }

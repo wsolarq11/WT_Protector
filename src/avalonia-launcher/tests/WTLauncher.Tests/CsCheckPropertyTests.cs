@@ -2,7 +2,6 @@ using CsCheck;
 using WTLauncher.Core;
 using WTLauncher.App.Infrastructure;
 using System.Collections.Immutable;
-using WTLauncher.Core.ValueObjects;
 
 namespace WTLauncher.Tests;
 
@@ -136,7 +135,7 @@ public sealed class CsCheckPropertyTests
             Presets = [],
             DefaultPresetId = "",
         }, path);
-        using var appStore = new StoreGrain(path);
+        using var appStore = new StoreGrain(path, new FileStorePersistence());
 
         Gen.Int[0, 2].Array[0, 10]
             .Sample(assert: operations =>

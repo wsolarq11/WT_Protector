@@ -150,7 +150,7 @@ public sealed class LauncherLaunchWorkflowTests
 
         var preflight = workflow.PreflightBatch(
             [
-                new LaunchEntry { Id = "one", Name = EntryName.Empty, Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)temp.Path, Command = "pwsh" },
+                new LaunchEntry { Id = "one", Name = EntryName.Empty, Directory = (WTLauncher.Core.DirectoryPath)temp.Path, Command = "pwsh" },
             ],
             requireConfirmation: false);
 
@@ -167,7 +167,7 @@ public sealed class LauncherLaunchWorkflowTests
 
         var preflight = workflow.PreflightBatch(
             [
-                new LaunchEntry { Id = EntryId.Empty, Name = "one", Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)temp.Path, Command = "pwsh" },
+                new LaunchEntry { Id = EntryId.Empty, Name = "one", Directory = (WTLauncher.Core.DirectoryPath)temp.Path, Command = "pwsh" },
             ],
             requireConfirmation: false);
 
@@ -330,7 +330,7 @@ public sealed class LauncherLaunchWorkflowTests
         {
             Id = id,
             Name = id,
-            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)directory,
+            Directory = (WTLauncher.Core.DirectoryPath)directory,
             Command = "pwsh",
         };
     }

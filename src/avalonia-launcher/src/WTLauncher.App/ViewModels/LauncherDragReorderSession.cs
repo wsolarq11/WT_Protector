@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -10,7 +11,7 @@ public sealed class LauncherDragReorderSession
 
     private LauncherDragReorderSession(
         string draggedEntryId,
-        LauncherSettings snapshot,
+        ImmutableList<string> snapshot,
         LauncherEntryViewModel source)
     {
         DraggedEntryId = draggedEntryId;
@@ -20,11 +21,11 @@ public sealed class LauncherDragReorderSession
 
     public string DraggedEntryId { get; }
 
-    internal LauncherSettings Snapshot { get; }
+    internal ImmutableList<string> Snapshot { get; }
 
     public static LauncherDragReorderSession Start(
         LauncherEntryViewModel source,
-        LauncherSettings snapshot)
+        ImmutableList<string> snapshot)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(snapshot);

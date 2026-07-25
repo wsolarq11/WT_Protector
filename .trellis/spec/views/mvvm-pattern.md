@@ -136,6 +136,61 @@ MainWindow.axaml bindings: {StaticResource PrimaryBrush}
 
 ---
 
+## ViewModelBase + 确定性生命周期 (CFA Step 3)
+
+### Convention
+
+Every ViewModel **must** inherit `ViewModelBase` (not raw `ObservableObject`) to enable deterministic cleanup:
+
+```csharp
+public sealed partial class LauncherEntryViewModel : ViewModelBase  // ✅
+public sealed partial class SomeViewModel : ObservableObject        // ❌
+```
+
+### 订阅管理
+
+所有事件/IObservable 订阅必须通过 `AddDisposable` 注册，在 ViewModel 被 Dispose 时自动取消：
+
+```csharp
+// ✅ Good: 通过 AddDisposable 管理生命周期
+PropertyChangedEventHandler handler = OnCardLayoutPropertyChanged;
+_owner.CardLayout.PropertyChanged += handler;
+AddDisposable(new DisposableAction(() => _owner.CardLayout.PropertyChanged -= handler));
+
+// ❌ Bad: 匿名 lambda 永不取消
+_owner.CardLayout.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName!);
+```
+
+### 集合替换
+
+替换 ObservableCollection 中的 ViewModel 条目时，必须 Dispose 旧条目：
+
+```csharp
+// ✅ Good: Dispose 旧 VM 释放事件订阅
+foreach (var vm in _entries) vm.Dispose();
+_entries.Clear();
+
+// ❌ Bad: 旧 VM 仍被事件源引用，GC 无法回收
+_entries.Clear();
+```
+
+### 单源状态 (CFA Step 1)
+
+ViewModel **禁止**持有与 `StoreGrain.Select()` 重复的状态副本：
+
+```csharp
+// ✅ Good: 只读投影从 StoreGrain 派生
+public LauncherSettings Settings => CurrentSettings;
+private void ApplyFilter() { ... CurrentSettings.CustomEntryOrder ... }
+
+// ❌ Bad: _settings 字段复制 StoreGrain 状态 → 双源漂移
+private LauncherSettings _settings;
+```
+
+**Source:** `ViewModelBase.cs`, `DisposableAction.cs`
+
+---
+
 ## ViewModel ↔ View Binding
 
 ### One-way: ViewModel → View

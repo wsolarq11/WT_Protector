@@ -1026,3 +1026,12 @@ private async void OnXxxClicked(object? sender, RoutedEventArgs e)
 | **修复** | (1) 更新 parent task.json `status: completed` + `completedAt`；(2) 归档两个子任务；(3) 更新 parent result.md 记录完整的 ponytail 决策理由、恢复条件；(4) 归档 parent；(5) 更新 pitfalls.md 记录此坑。 |
 | **预防** | (1) **Ponytail 是"已评估、决定不做"，不是"planning"**。写 `result.md` 时同步归档子任务——不要留 planning 死任务。(2) 归档前确认 result.md 包含完整 ponytail 文档（决策理由 + 恢复条件 + 当前状态），方便未来重新评估时不丢上下文。(3) `task list --mine` 显示 `in_progress` + `planning` 的任务，定期清理让列表真实反映活跃工作。 |
 | **适用** | 所有 ponytail/跳过决策。 |
+
+### 10.6 ViewModel 事件订阅永不取消导致内存泄漏
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-07-25 ultrareview C3/H5，LauncherEntryViewModel.SubscribeToLayoutProvider |
+| **根因** | ViewModel 订阅长生命周期对象的 PropertyChanged 事件，但从不取消订阅。VM 被 Remove/ReplaceEntries 移除后，事件源仍持有强引用 |
+| **后果** | 每次 Refresh() 泄漏 N 个 LauncherEntryViewModel 实例 |
+| **预防** | (1) ViewModel 继承 ViewModelBase；(2) 事件订阅通过 AddDisposable(new DisposableAction(...)) 注册；(3) ReplaceEntries/Remove 前调用旧 VM 的 Dispose() |

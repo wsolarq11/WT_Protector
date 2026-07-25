@@ -1,5 +1,21 @@
 # WT Protector 架构改造提案
 
+> **⚠️ 本文档已过期 (2026-07-25)**
+> 
+> 本提案提出的 Fluxor 状态集中化路线 **从未被实施**。2026-07-24 落地了 VTuber-Killer 架构
+> (Event Sourcing + Grain + CQRS)，以更彻底的方式实现了提案中识别的所有 5 类脆弱点的消除。
+>
+> | 原提案变革 | 原计划方案 | 实际落地方案 | 状态 |
+> |---|---|---|---|
+> | 变革一: 派生数据优先 | MemoizedSelector | MemoizedSelector + Grain 投影 | ✅ 超额完成 |
+> | 变革二: 状态集中化 | Fluxor + 不可变 State | StoreGrain + Event Sourcing | ✅ 以不同方案实现 |
+> | 变革三: 声明式属性 | [NotifyPropertyChangedFor] | UiStateProjection 自动同步 | ✅ 以不同方案实现 |
+>
+> 当前架构文档位置:
+> - `docs/completion-overview.md` — 项目完成度总览
+> - `.trellis/spec/core/` — 核心层规范，含 Event Sourcing 设计决策
+> - `src/avalonia-launcher/src/WTLauncher.Core/` — Grain 基类、EventJournal、ErrorSupervisor
+
 > 基于深度代码调研 + 行业架构调研的综合方案
 > 目标：从根源消除整类问题，而非逐个修复 bug
 

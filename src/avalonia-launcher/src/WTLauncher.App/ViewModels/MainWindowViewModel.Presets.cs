@@ -202,7 +202,7 @@ public sealed partial class MainWindowViewModel
     private void LoadPresetFile(string? preferredPresetId)
     {
         LauncherStoreFile storeFile;
-        try { storeFile = LauncherStore.Load(_storePath); }
+        try { storeFile = _storeGrain.Select(s => s); }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "LoadPresetFile");

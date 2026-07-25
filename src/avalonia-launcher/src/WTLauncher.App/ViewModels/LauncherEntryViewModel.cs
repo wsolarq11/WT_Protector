@@ -7,7 +7,7 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
-public sealed partial class LauncherEntryViewModel : ObservableObject
+public sealed partial class LauncherEntryViewModel : ViewModelBase
 {
     private readonly IEntryCardHost _owner;
     private LaunchEntry _entry;

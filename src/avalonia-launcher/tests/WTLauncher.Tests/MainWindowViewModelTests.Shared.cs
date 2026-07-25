@@ -39,7 +39,7 @@ public sealed partial class MainWindowViewModelTests
         {
             Id = string.IsNullOrWhiteSpace(id) ? EntryId.Empty : id,
             Name = string.IsNullOrWhiteSpace(name ?? id) ? EntryName.Empty : name ?? id,
-            Directory = string.IsNullOrWhiteSpace(directory) && string.IsNullOrWhiteSpace(id) ? WTLauncher.Core.ValueObjects.DirectoryPath.Empty : (WTLauncher.Core.ValueObjects.DirectoryPath)(directory ?? $"D:\\{id}"),
+            Directory = string.IsNullOrWhiteSpace(directory) && string.IsNullOrWhiteSpace(id) ? WTLauncher.Core.DirectoryPath.Empty : (WTLauncher.Core.DirectoryPath)(directory ?? $"D:\\{id}"),
             Command = command,
             Selected = selected,
             UpdatedAtUtc = updatedAtUtc,

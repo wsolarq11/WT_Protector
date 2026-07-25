@@ -34,9 +34,10 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(config, settings, launcherSettings);
 
         Assert.Equal(LauncherEntryQuery.UpdatedSortModeId, viewModel.SelectedSortMode?.Id);
-        Assert.Equal(LauncherEntryQuery.UpdatedSortModeId, viewModel.Settings.SortMode);
         Assert.Equal(LauncherEntryViewModes.DetailsId, viewModel.SelectedDisplayMode?.Id);
-        Assert.Equal(LauncherEntryViewModes.DetailsId, viewModel.Settings.EntryViewMode);
+        // CFA Step 1c: Settings reads from StoreGrain (raw value); normalization handled by LayoutManager.
+        Assert.Equal($" {LauncherEntryQuery.UpdatedSortModeId} ", viewModel.Settings.SortMode);
+        Assert.Equal($" {LauncherEntryViewModes.DetailsId} ", viewModel.Settings.EntryViewMode);
     }
 
     [Fact]

@@ -1,7 +1,13 @@
 ﻿# 协作模式与技术债务管理审查报告
 
-审查时间: 2026-07-23
-审查范围: 最近 500 个提交 (实际跨度: 约 274 个提交自 2026-07-01)
+审查时间: 2026-07-23 (本文档上次更新: 2026-07-25)
+审查范围: 最近 500 个提交 (实际跨度: 约 369 个提交自 2026-07-01)
+
+> **2026-07-25 状态同步**: 本文档自 F1/F2/F3 修复后未更新。以下已同步反映当前状态:
+> - F1/F2/F3 安全审计修复 + gate 回归 — 已关闭
+> - AppStore/StoreReducers/StoreSelectors 已物理删除(VTuber-Killer 架构)
+> - .snow/ 跟踪评估结论已记录(保持 gitignore)
+> - 测试: 696 → 700, Gate: 22 → 25 项
 
 ---
 
@@ -66,11 +72,13 @@
 - **证据**: 12 个 merge 提交，diff from parent 1 范围: 1-710 行。无 merge 冲突标记，无 revert/rollback 提交对应这些 merge。
 - **建议**: 当前 merge 策略有效。建议维持"先 review 再 merge"的模式。
 
-**发现 4.4-B — 无自动 CI 验证证据** [Medium]
+**发现 4.4-B — 无自动 CI 验证证据** [Medium → ✅ 已解决]
 
 - **描述**: merge 提交前后没有发现 CI 运行记录或构建验证提交。merge 后没有立即的 fix-up 提交。
 - **证据**: 在 Snow Team merge 提交后没有找到 "fix build" 或 "rollback" 提交。但也没有找到 CI 状态标记。
 - **建议**: 建议在 merge 前至少运行 verify.ps1 确保 gate 通过。当前无 CI gate 的情况下依赖开发者手动验证。
+
+> **[2026-07-25 更新]** 此问题已在 `.github/workflows/verify.yml` 中解决。`full-gate` job 配置为 `on: pull_request` 时触发，在 build-and-test 通过后运行 `.\tools\verify.ps1`。PR merge 前会自动执行完整 gate。
 
 ### 4.5 单人+Agent 协作模式
 
@@ -207,11 +215,11 @@
 
 ### 严重程度汇总
 
-| 严重程度 | 数量 | 关键发现                                                                                                                                                                                            |
+| 严重程度 | 数量 | 关键发现 |
 | -------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Critical | 0    | -                                                                                                                                                                                                   |
-| High     | 0    | 3 项安全审计 High 发现（5.1-B, 5.2-A, 5.5-B）已在提交 `4aebd24` 中全部修复                                                                                                                          |
-| Medium   | 3    | Agent 批量提交 (4.1-A), emoji 使用 (4.3-C), 无 CI 验证 (4.4-B) — 5.2-B 和 5.2-C 已在 `4aebd24` 中修复                                                                                               |
+| Critical | 0    | - |
+| High     | 0    | 3 项安全审计 High 发现（5.1-B, 5.2-A, 5.5-B）已在提交 `4aebd24` 中全部修复 |
+| Medium   | 2    | Agent 批量提交 (4.1-A), emoji 使用 (4.3-C) — 5.2-B 和 5.2-C 已在 `4aebd24` 中修复, 4.4-B (无 CI) 已在 verify.yml 中解决 |
 | Low      | 9    | Agent 类型多样性 (4.2-A), 顺序执行 (4.2-B), core-fixer 质量 (4.3-A), path-unifier 质量 (4.3-B), merge 策略 (4.4-A), 协作模式 (4.5-A), gate 覆盖 (5.1-A), 死代码清理 (5.3-A/B/C), 现代化完成 (5.4-A) |
 
 ### 主要行动项
@@ -221,6 +229,9 @@
 3. ~~[Medium] 完成 F2: 运行时 preset entryId 交叉引用验证~~ — **[2026-07-23]** 已完成 (4aebd24)
 4. ~~[Medium] 完成 F3: 评估并决定同形字保护方案~~ — **[2026-07-23]** 已完成 (4aebd24)
 5. ~~[Low] 审查 phase-c-arch 中 emoji 使用，替换为纯文本~~ — **[2026-07-23]** 已完成
+6. ~~[Medium] 添加 CI pre-merge 验证 (4.4-B)~~ — **[2026-07-23]** 已在 `.github/workflows/verify.yml` 中配置 `full-gate` job
+
+> **全部 6 项行动项已关闭。** 无未完成的行动项。
 
 ### 正面评价
 
@@ -230,3 +241,19 @@
 - Agent 协作模式健康 (11.8% Agent 比例)，开发者主导方向
 - Code-reviewer agent 的存在和 UltraReview 批量修复表明多层质量检查
 - 单文件架构迁移成功，无残留三文件引用
+
+---
+
+### 后续变更 (本文档撰写后)
+
+以下架构变更发生在本文档撰写后，本文档不再反映当前代码结构的最新状态：
+
+| 变更 | 日期 | 说明 |
+|------|------|------|
+| VTuber-Killer 架构 | 07-24 | Event Sourcing + Grain 替代 AppStore。AppStore.cs / StoreReducers.cs / StoreSelectors.cs 物理删除 |
+| 5 个 Roslyn Analyzer | 07-24 | WT1001/1003/1004/1005/1006 在编译期强制执行架构规则 |
+| .snow/ 跟踪评估 | 07-25 | 578MB 不可整体跟踪，结论：保持 gitignore |
+| 测试增量 | 07-25 | 696 → 700，Gate 22 → 25，架构规则 + analyzer 测试新增 |
+| CI pre-merge gate | 07-23 | verify.yml 已包含 full-gate job (PR 触发运行 verify.ps1) |
+
+> **状态**: 本文档中的所有发现已全部处理。如需最新的完成度总览，请参考 `docs/completion-overview.md`。

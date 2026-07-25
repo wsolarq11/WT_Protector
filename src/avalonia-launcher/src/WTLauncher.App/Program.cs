@@ -47,8 +47,6 @@ internal static class Program
 
         try
         {
-            LauncherJson.DefaultIO = new FileLauncherJsonIO();
-            LauncherStore.DefaultPersistence = new FileStorePersistence();
             DeleteStaleTempFiles();
 
             BuildAvaloniaApp()
@@ -139,10 +137,12 @@ internal static class Program
     {
         try
         {
-            var storePath = LauncherStore.ResolveStorePath(null, Environment.CurrentDirectory, AppContext.BaseDirectory);
+            var persistence = new FileStorePersistence();
+            var storePath = persistence.ResolveStorePath(null, Environment.CurrentDirectory, AppContext.BaseDirectory);
             var storeDir = Path.GetDirectoryName(Path.GetFullPath(storePath));
             if (!string.IsNullOrWhiteSpace(storeDir) && Directory.Exists(storeDir))
-                LauncherJson.CleanupStaleTempFiles(storeDir);
+                new FileLauncherJsonIO().CleanupStaleTempFiles(storeDir);
+            persistence.Dispose();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

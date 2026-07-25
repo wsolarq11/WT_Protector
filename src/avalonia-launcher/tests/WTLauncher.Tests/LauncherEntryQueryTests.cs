@@ -470,7 +470,7 @@ public sealed class LauncherEntryQueryTests
         {
             Id = string.IsNullOrWhiteSpace(id) ? EntryId.Empty : id,
             Name = string.IsNullOrWhiteSpace(name) ? EntryName.Empty : name,
-            Directory = string.IsNullOrWhiteSpace(directory) ? WTLauncher.Core.ValueObjects.DirectoryPath.Empty : (WTLauncher.Core.ValueObjects.DirectoryPath)directory,
+            Directory = string.IsNullOrWhiteSpace(directory) ? WTLauncher.Core.DirectoryPath.Empty : (WTLauncher.Core.DirectoryPath)directory,
             Command = command,
             UpdatedAtUtc = updatedAtUtc!,
             LaunchedAtUtc = launchedAtUtc!,

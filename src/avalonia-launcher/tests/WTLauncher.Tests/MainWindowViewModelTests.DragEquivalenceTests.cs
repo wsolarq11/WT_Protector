@@ -113,13 +113,13 @@ public sealed partial class MainWindowViewModelTests
 
         // Drag "a" before "e" (insertAfter=false).
         // Fast path: within [a,c,e], move a(idx=0) before e(idx=2) → [c,a,e]
-        // Ground truth: MoveRelative removes "a", inserts before "e" in full order,
-        //   yielding ["b","c","a","d","e"]. Then FilterAndSort with "Red":
-        //   b=no-match, c=yes, a=yes, d=no-match, e=yes → [c,a,e]
+        // Ground truth: MoveRelative(["a","b","c","d","e"], "a", "e", false)
+        //   yields ["b","c","d","a","e"]. Then FilterAndSort with "Red":
+        //   b=no-match, c=yes, d=no-match, a=yes, e=yes → [c,a,e]
         viewModel.BeginDragReorder("a");
         Assert.True(viewModel.PreviewMoveEntry("a", "e", insertAfter: false));
 
-        AssertFilteredReorderEquivalence(viewModel, "Red", ["c", "a", "e"]);
+        AssertFilteredReorderEquivalence(viewModel, "Red", ["c", "a", "e"], ["b", "c", "d", "a", "e"]);
     }
 
     [Fact]
@@ -134,13 +134,13 @@ public sealed partial class MainWindowViewModelTests
 
         // Drag "e" after "a" (insertAfter=true).
         // Fast path: within [a,c,e], move e(idx=2) after a(idx=0) → [a,e,c]
-        // Ground truth: MoveRelative removes "e", inserts after "a" in full order,
-        //   yielding ["a","e","b","c","d"]. Then FilterAndSort with "Red":
+        // Ground truth: MoveRelative(["a","b","c","d","e"], "e", "a", true)
+        //   yields ["a","e","b","c","d"]. Then FilterAndSort with "Red":
         //   a=yes, e=yes, b=no, c=yes, d=no → [a,e,c]
         viewModel.BeginDragReorder("e");
         Assert.True(viewModel.PreviewMoveEntry("e", "a", insertAfter: true));
 
-        AssertFilteredReorderEquivalence(viewModel, "Red", ["a", "e", "c"]);
+        AssertFilteredReorderEquivalence(viewModel, "Red", ["a", "e", "c"], ["a", "e", "b", "c", "d"]);
     }
 
     // -----------------------------------------------------------------------
@@ -166,7 +166,7 @@ public sealed partial class MainWindowViewModelTests
             viewModel.Entries,
             viewModel.FilterText,
             LauncherEntryQuery.CustomSortModeId,
-            viewModel.Settings.CustomEntryOrder,
+            expectedOrder, // CFA Step 1c: expectedOrder IS the ground truth; CurrentSettings holds pre-drag state
             e => e.SnapshotEntry());
 
         var groundTruth = expected.Select(e => e.Id).ToArray();
@@ -176,24 +176,27 @@ public sealed partial class MainWindowViewModelTests
 
     /// <summary>
     /// Same as <see cref="AssertReorderEquivalence"/> but accepts an explicit
-    /// filterText for the ground-truth computation (the ViewModel's FilterText
-    /// property is already correct, but this documents the intent).
+    /// filterText and the full post-drag custom entry order for the ground-truth
+    /// computation. <paramref name="expectedFullOrder"/> must contain ALL entry IDs
+    /// (not just the filtered subset) so that <see cref="LauncherEntryQuery.FilterAndSort"/>
+    /// can validate the custom order against all entries.
     /// </summary>
     private static void AssertFilteredReorderEquivalence(
         MainWindowViewModel viewModel,
         string filterText,
-        string[] expectedOrder)
+        string[] expectedOrder,
+        string[] expectedFullOrder)
     {
         var fastPath = viewModel.VisibleEntries.Select(e => e.Id).ToArray();
 
-        var expected = LauncherEntryQuery.FilterAndSort(
+        var groundTruth = LauncherEntryQuery.FilterAndSort(
             viewModel.Entries,
             filterText,
             LauncherEntryQuery.CustomSortModeId,
-            viewModel.Settings.CustomEntryOrder,
-            e => e.SnapshotEntry());
-
-        var groundTruth = expected.Select(e => e.Id).ToArray();
+            expectedFullOrder, // CFA Step 1c: Settings reads from StoreGrain; full order passed explicitly.
+            e => e.SnapshotEntry())
+            .Select(e => e.Id)
+            .ToArray();
         Assert.Equal(expectedOrder, fastPath);
         Assert.Equal(groundTruth, fastPath);
     }
@@ -213,7 +216,7 @@ public sealed partial class MainWindowViewModelTests
             viewModel.Entries,
             viewModel.FilterText,
             LauncherEntryQuery.CustomSortModeId,
-            viewModel.Settings.CustomEntryOrder,
+            expectedOrder, // CFA Step 1c: expectedOrder IS the ground truth; CurrentSettings holds pre-drag state
             e => e.SnapshotEntry())
             .Select(e => e.Id)
             .ToArray();

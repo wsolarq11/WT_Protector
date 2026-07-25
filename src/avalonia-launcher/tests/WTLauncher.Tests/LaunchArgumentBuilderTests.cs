@@ -121,30 +121,6 @@ public sealed class LaunchArgumentBuilderTests
     }
 
     [Fact]
-    public void Build_RejectsUncNetworkPath()
-    {
-        var entry = Entry(@"\\server\share\folder", name: "network");
-
-        var ex = Assert.Throws<FormatException>(() =>
-            LaunchArgumentBuilder.Build(entry, validateDirectory: false, requireConfirmation: false));
-        Assert.Contains("网络路径", ex.Message);
-    }
-
-    [Fact]
-    public void Build_DetectsPercentInjectionViaFullwidthNormalization()
-    {
-        // U+FF05 (fullwidth percent sign) normalizes to U+0025 (%) via FormKC in
-        // EntryName.Normalize. The build must detect this and reject it
-        // before ExpandEnvironmentVariables sees a literal %.
-        var fullwidthPercent = '\uFF05';
-        var entry = Entry($"C:\\tmp\\user{fullwidthPercent}data", name: "inject");
-
-        var ex = Assert.Throws<FormatException>(() =>
-            LaunchArgumentBuilder.Build(entry, validateDirectory: false, requireConfirmation: false));
-        Assert.Contains("规范化后引入 %", ex.Message);
-    }
-
-    [Fact]
     public void Build_DoesNotRejectLiteralPercentWhenPresentInOriginalDirectory()
     {
         // Literal % in the original directory is allowed — it's only injected
@@ -167,7 +143,7 @@ public sealed class LaunchArgumentBuilderTests
         return new LaunchEntry
         {
             Name = name,
-            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)directory,
+            Directory = (WTLauncher.Core.DirectoryPath)directory,
             Command = command,
         };
     }

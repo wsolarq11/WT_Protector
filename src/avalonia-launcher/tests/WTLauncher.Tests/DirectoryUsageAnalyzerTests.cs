@@ -12,7 +12,7 @@ public sealed class DirectoryUsageAnalyzerTests
         {
             Id = id,
             Name = name ?? id,
-            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)directory,
+            Directory = (WTLauncher.Core.DirectoryPath)directory,
             Command = "pwsh",
         };
 

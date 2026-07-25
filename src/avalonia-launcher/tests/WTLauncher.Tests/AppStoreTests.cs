@@ -10,8 +10,8 @@ public sealed class StoreGrainTests
     {
         Entries =
         [
-            new LaunchEntry { Id = "one", Name = "One", Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)"D:\\one", Command = "pwsh" },
-            new LaunchEntry { Id = "two", Name = "Two", Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)"D:\\two", Command = "codex" },
+            new LaunchEntry { Id = "one", Name = "One", Directory = (WTLauncher.Core.DirectoryPath)"D:\\one", Command = "pwsh" },
+            new LaunchEntry { Id = "two", Name = "Two", Directory = (WTLauncher.Core.DirectoryPath)"D:\\two", Command = "codex" },
         ],
         Settings = new LauncherSettings(),
         Presets =
@@ -27,7 +27,7 @@ public sealed class StoreGrainTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new StoreGrain(path);
+        var store = new StoreGrain(path, new FileStorePersistence());
 
         var ids = store.Select(s => s.Entries.Select(e => e.Id).ToImmutableList());
 
@@ -40,7 +40,7 @@ public sealed class StoreGrainTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new StoreGrain(path);
+        var store = new StoreGrain(path, new FileStorePersistence());
 
         var settings = store.Select(s => s.Settings);
 
@@ -53,7 +53,7 @@ public sealed class StoreGrainTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new StoreGrain(path);
+        var store = new StoreGrain(path, new FileStorePersistence());
 
         store.Dispatch(state => state with
         {
@@ -70,12 +70,12 @@ public sealed class StoreGrainTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new StoreGrain(path);
+        var store = new StoreGrain(path, new FileStorePersistence());
 
         store.Dispatch(state => state with
         {
             Entries = state.Entries.Add(new LaunchEntry
-                { Id = "three", Name = "Three", Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)"D:\\three", Command = "pwsh" }),
+                { Id = "three", Name = "Three", Directory = (WTLauncher.Core.DirectoryPath)"D:\\three", Command = "pwsh" }),
         });
 
         var count = store.Select(s => s.Entries.Count);
@@ -89,7 +89,7 @@ public sealed class StoreGrainTests
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
         var beforeHash = HashFile(path);
-        var store = new StoreGrain(path);
+        var store = new StoreGrain(path, new FileStorePersistence());
 
         store.Dispatch(state => state);
 
@@ -105,7 +105,7 @@ public sealed class StoreGrainTests
         LauncherStore.Save(SampleStore(), path);
         // Make file read-only so the next save fails.
         File.SetAttributes(path, FileAttributes.ReadOnly);
-        var store = new StoreGrain(path);
+        var store = new StoreGrain(path, new FileStorePersistence());
 
         try
         {
@@ -126,7 +126,7 @@ public sealed class StoreGrainTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new StoreGrain(path);
+        var store = new StoreGrain(path, new FileStorePersistence());
         var notified = false;
 
         using (store.Subscribe(_ => notified = true))
@@ -143,7 +143,7 @@ public sealed class StoreGrainTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new StoreGrain(path);
+        var store = new StoreGrain(path, new FileStorePersistence());
         var notified = false;
 
         using (store.Subscribe(_ => notified = true))
@@ -161,7 +161,7 @@ public sealed class StoreGrainTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new StoreGrain(path);
+        var store = new StoreGrain(path, new FileStorePersistence());
         var notified = false;
 
         var sub = store.Subscribe(_ => notified = true);
@@ -177,7 +177,7 @@ public sealed class StoreGrainTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new StoreGrain(path);
+        var store = new StoreGrain(path, new FileStorePersistence());
 
         store.Dispatch(state => state with
         {
@@ -195,7 +195,7 @@ public sealed class StoreGrainTests
         using var temp = new TempDirectory();
         var path = Path.Combine(temp.Path, "launcher.json");
         LauncherStore.Save(SampleStore(), path);
-        var store = new StoreGrain(path);
+        var store = new StoreGrain(path, new FileStorePersistence());
 
         Assert.Equal(path, store.StorePath);
     }

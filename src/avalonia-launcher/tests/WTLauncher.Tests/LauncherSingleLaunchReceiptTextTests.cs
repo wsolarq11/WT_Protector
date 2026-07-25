@@ -14,7 +14,7 @@ public sealed class LauncherSingleLaunchReceiptTextTests
             {
                 Id = "one",
                 Name = "one",
-                Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)temp.Path,
+                Directory = (WTLauncher.Core.DirectoryPath)temp.Path,
                 Command = "codex --version",
             },
             validateDirectory: true,
@@ -138,7 +138,7 @@ public sealed class LauncherSingleLaunchReceiptTextTests
             {
                 Id = "one",
                 Name = "one",
-                Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)directory,
+                Directory = (WTLauncher.Core.DirectoryPath)directory,
                 Command = command,
             },
             validateDirectory: true,

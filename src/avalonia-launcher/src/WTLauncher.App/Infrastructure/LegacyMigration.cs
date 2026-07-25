@@ -11,6 +11,8 @@ namespace WTLauncher.App.Infrastructure;
 /// </summary>
 internal static class LegacyMigration
 {
+    private static readonly FileLauncherJsonIO _io = new();
+
     /// <summary>Detects old config.json/presets.json/settings.json and migrates to launcher.json.</summary>
     public static LauncherStoreFile? MigrateFromLegacyFiles(string configDirectory)
     {
@@ -24,13 +26,13 @@ internal static class LegacyMigration
         if (!File.Exists(configPath))
             return null;
 
-        var configItems = LauncherJson.Load<List<LaunchEntry>>(configPath)
+        var configItems = _io.Load<List<LaunchEntry>>(configPath)
             ?? throw new InvalidDataException("Failed to load legacy config.json");
 
         var settings = new LauncherSettings();
         if (File.Exists(settingsPath))
         {
-            try { settings = LauncherJson.LoadRequired<LauncherSettings>(settingsPath, "legacy settings"); }
+            try { settings = _io.LoadRequired<LauncherSettings>(settingsPath, "legacy settings"); }
             catch (Exception ex) when (ex is JsonException or IOException or FileNotFoundException)
             {
                 Trace.WriteLine($"[LauncherStore] Legacy settings.json unreadable, using defaults: {ex.Message}");
@@ -43,7 +45,7 @@ internal static class LegacyMigration
         {
             try
             {
-                var legacy = LauncherJson.Load<WTLauncher.Core.LegacyPresetDocument>(presetsPath);
+                var legacy = _io.Load<WTLauncher.Core.LegacyPresetDocument>(presetsPath);
                 if (legacy is not null)
                 {
                     presets = legacy.Presets;
@@ -64,7 +66,7 @@ internal static class LegacyMigration
             DefaultPresetId = defaultPresetId,
         };
 
-        LauncherJson.Save(storeFile, storePath, backup: true);
+        _io.Save(storeFile, storePath, backup: true);
 
         TryMoveToBak(configPath);
         TryMoveToBak(presetsPath);

@@ -84,10 +84,11 @@ public sealed partial class MainWindowViewModel
             var entry = success.Value;
             entry = entry with { UpdatedAtUtc = CurrentTimestampUtc() };
             _list.MutableEntries.Add(new LauncherEntryViewModel(entry, this));
-            _settings = _settings with { CustomEntryOrder = _settings.CustomEntryOrder.Add(entry.Id) };
+            // CustomEntryOrder is synced via EnsureCustomOrderContainsEntries during apply
             added++;
         }
 
+        EnsureCustomOrderContainsEntries();
         if (!SaveEntryCollectionChanges())
             return;
 
@@ -103,7 +104,8 @@ public sealed partial class MainWindowViewModel
             case ServiceSuccess<LaunchEntry> success:
                 var entry = success.Value with { UpdatedAtUtc = CurrentTimestampUtc() };
                 _list.MutableEntries.Add(new LauncherEntryViewModel(entry, this));
-                _settings = _settings with { CustomEntryOrder = _settings.CustomEntryOrder.Add(entry.Id) };
+                // CustomEntryOrder is synced via EnsureCustomOrderContainsEntries during apply
+                EnsureCustomOrderContainsEntries();
                 if (SaveEntryCollectionChanges())
                     ApplyStatusText(LauncherEntryStatus.Added(entry.Name));
                 return;

@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.Input;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
-using WTLauncher.Core.ValueObjects;
 
 namespace WTLauncher.App.ViewModels;
 

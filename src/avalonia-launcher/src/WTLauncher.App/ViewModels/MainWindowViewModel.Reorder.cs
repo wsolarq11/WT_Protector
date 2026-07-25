@@ -29,9 +29,8 @@ public sealed partial class MainWindowViewModel
 
     private void MoveEntryRelative(LauncherEntryViewModel entry, int targetOffset, bool insertAfter)
     {
-        // Sync entries first so the snapshot includes any newly-added IDs.
+        // Sync entries first so the custom order includes newly-added IDs.
         EnsureCustomOrderContainsEntries();
-        var snapshot = CaptureSettingsMutationSnapshot();
 
         if (!TryResolveVisibleMoveTarget(entry, targetOffset, out var target))
         {
@@ -39,7 +38,7 @@ public sealed partial class MainWindowViewModel
             RefreshReorderCommandState();
             return;
         }
-        var (changed, updatedOrder) = LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, entry.Id, target.Id, insertAfter);
+        var (changed, updatedOrder) = LauncherEntryOrder.MoveRelative(CurrentSettings.CustomEntryOrder, entry.Id, target.Id, insertAfter);
         if (!changed)
         {
             // Re-sync rather than restoring the snapshot: EnsureCustomOrderContainsEntries
@@ -50,9 +49,9 @@ public sealed partial class MainWindowViewModel
             StatusContent = LauncherDragReorderStatus.MoveUnavailable;
             return;
         }
-        _settings = _settings with { CustomEntryOrder = updatedOrder };
 
-        var saveFailure = SaveSettingsChange(snapshot);
+        var storeFile = BuildStoreFile() with { Settings = CurrentSettings with { CustomEntryOrder = updatedOrder } };
+        var saveFailure = SaveStoreFile(storeFile);
         ApplyFilter();
         ApplyStatusText(
             saveFailure is null

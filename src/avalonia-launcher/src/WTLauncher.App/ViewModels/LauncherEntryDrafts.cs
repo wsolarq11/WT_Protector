@@ -39,7 +39,7 @@ public static class LauncherEntryDrafts
         {
             Id = normalized.Id,
             Name = normalized.Name,
-            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)normalized.Directory,
+            Directory = (global::WTLauncher.Core.DirectoryPath)normalized.Directory,
             Command = normalized.Command,
             Selected = normalized.Selected,
             UpdatedAtUtc = previousEntry?.UpdatedAtUtc ?? string.Empty,

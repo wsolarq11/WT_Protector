@@ -88,7 +88,15 @@ public sealed partial class MainWindowViewModelTests
         dialogService.OnDiscoverAgents = (_, _, _) => Task.FromResult<DiscoveryDialogResult?>(new DiscoveredAgentsSelection([
             SampleDiscoveredAgent("claude", "Claude Code", "Anthropic"),
         ]));
-        var viewModel = CreateViewModel(config, settings, dialogService: dialogService);
+        // CFA Step 1c: Use alphabetical sort mode so EnsureCustomOrderContainsEntries → ApplyFilter
+        // doesn't call ValidateCustomOrder with stale custom order after save failure.
+        var viewModel = CreateViewModel(config, settings,
+            launcherSettings: new LauncherSettings
+            {
+                SortMode = LauncherEntryQuery.AlphabeticalSortModeId,
+                EntryViewMode = LauncherEntryViewModes.CardsId,
+            },
+            dialogService: dialogService);
 
         // ponytail: simulate save failure by replacing store file path with a directory.
         Directory.CreateDirectory(config + ".blocker");
@@ -152,7 +160,15 @@ public sealed partial class MainWindowViewModelTests
             OnDiscoverAgents = (_, directories, _) => Task.FromResult<DiscoveryDialogResult?>(
                 new ExistingDirectorySelection(new EntryDraft("three", "Three", directories[0].Directory, "pwsh"))),
         };
-        var viewModel = CreateViewModel(config, settings, dialogService: dialogService);
+        // CFA Step 1c: Use alphabetical sort mode so EnsureCustomOrderContainsEntries → ApplyFilter
+        // doesn't call ValidateCustomOrder with stale custom order after save failure.
+        var viewModel = CreateViewModel(config, settings,
+            launcherSettings: new LauncherSettings
+            {
+                SortMode = LauncherEntryQuery.AlphabeticalSortModeId,
+                EntryViewMode = LauncherEntryViewModes.CardsId,
+            },
+            dialogService: dialogService);
         File.Delete(config);
         Directory.CreateDirectory(config);
 

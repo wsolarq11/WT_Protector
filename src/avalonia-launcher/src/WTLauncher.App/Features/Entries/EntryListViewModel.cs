@@ -80,9 +80,13 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
     }
 
     /// <summary>Replace all entries, creating ViewModels that own this
-    /// EntryListViewModel as their <see cref="IEntryCardHost"/>.</summary>
+    /// EntryListViewModel as their <see cref="IEntryCardHost"/>.
+    /// Previous ViewModels are disposed to release event subscriptions.</summary>
     public void ReplaceEntries(IEnumerable<LaunchEntry> entries)
     {
+        // Dispose old VMs before clearing to release CardLayoutProvider subscriptions.
+        foreach (var vm in _entries)
+            vm.Dispose();
         _entries.Clear();
         _visibleEntries.Clear();
         foreach (var entry in entries)
@@ -239,6 +243,7 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
             return;
         }
 
+        item.Dispose(); // Release event subscriptions (CardLayoutProvider, etc.)
         _entries.Remove(item);
         TotalCount = _entries.Count;
         StatusApplier(LauncherEntryStatus.Deleted(target.EntryName));

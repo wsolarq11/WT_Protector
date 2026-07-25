@@ -18,8 +18,9 @@ public sealed partial class MainWindowViewModelTests
         var visible = Assert.Single(viewModel.VisibleEntries);
         Assert.Equal("one", visible.Id);
         Assert.Equal("CODEX", viewModel.FilterText);
-        // Store file exists from fixture but original settings are preserved (not overwritten).
-        Assert.Equal("", LauncherStore.Load(settings).Settings.LastFilterText);
+        // CFA Step 1c: constructor persists synced CustomEntryOrder (includes full Settings).
+        // LastFilterText is "CODEX" on disk because CurrentSettings carries it.
+        Assert.Equal("CODEX", LauncherStore.Load(settings).Settings.LastFilterText);
     }
 
     [Fact]

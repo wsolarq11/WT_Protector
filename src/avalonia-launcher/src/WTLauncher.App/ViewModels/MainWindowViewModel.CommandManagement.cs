@@ -54,7 +54,7 @@ public sealed partial class MainWindowViewModel
         // Sync runtime template resolver with new _settings.CommandTemplates.
         // ponytail: pre-existing latent coupling — _launchOrchestrator.CommandTemplates was set once at ctor;
         // command management is the first runtime mutation path, so it must keep this in sync.
-        _launchOrchestrator.CommandTemplates = _settings.CommandTemplates; // Phase 1
+        _launchOrchestrator.CommandTemplates = CurrentSettings.CommandTemplates;
 
         var saveFailure = SaveStoreFile(BuildStoreFile());
         if (saveFailure is not null)
@@ -124,10 +124,10 @@ public sealed partial class MainWindowViewModel
                 if (string.Equals(uk.OldKey, uk.NewKey, StringComparison.OrdinalIgnoreCase))
                     return "新 Key 与原 Key 相同,无变更。";
 
-                if (_settings.CommandTemplates.ContainsKey(uk.NewKey)) // Phase 1
+                if (CurrentSettings.CommandTemplates.ContainsKey(uk.NewKey))
                     throw new InvalidOperationException($"Key '{uk.NewKey}' 已存在。");
 
-                var newTemplates = _settings.CommandTemplates // Phase 1
+                var newTemplates = CurrentSettings.CommandTemplates
                     .Remove(uk.OldKey)
                     .Add(uk.NewKey, uk.ExpandedValue);
 
@@ -144,34 +144,38 @@ public sealed partial class MainWindowViewModel
                         cascaded++;
                     }
                 }
-                _settings = _settings with { CommandTemplates = newTemplates };
+                var storeFile = BuildStoreFile() with { Settings = CurrentSettings with { CommandTemplates = newTemplates } };
+                SaveStoreFile(storeFile);
                 return $"模板 Key '{uk.OldKey}' → '{uk.NewKey}',自动同步 {cascaded} 个 entry 引用。";
             }
 
             case CommandManagementEdit.UpdateTemplateValue uv:
             {
-                if (!_settings.CommandTemplates.ContainsKey(uv.Key)) // Phase 1
+                if (!CurrentSettings.CommandTemplates.ContainsKey(uv.Key))
                     throw new InvalidOperationException($"模板 Key '{uv.Key}' 不存在。");
-                var newTemplates = _settings.CommandTemplates.SetItem(uv.Key, uv.NewExpandedValue); // Phase 1
-                _settings = _settings with { CommandTemplates = newTemplates };
+                var newTemplates = CurrentSettings.CommandTemplates.SetItem(uv.Key, uv.NewExpandedValue);
+                var storeFile = BuildStoreFile() with { Settings = CurrentSettings with { CommandTemplates = newTemplates } };
+                SaveStoreFile(storeFile);
                 return $"模板 '{uv.Key}' 展开内容已更新。";
             }
 
             case CommandManagementEdit.AddTemplate a:
             {
-                if (_settings.CommandTemplates.ContainsKey(a.Key)) // Phase 1
+                if (CurrentSettings.CommandTemplates.ContainsKey(a.Key))
                     throw new InvalidOperationException($"Key '{a.Key}' 已存在。");
-                var newTemplates = _settings.CommandTemplates.Add(a.Key, a.ExpandedValue); // Phase 1
-                _settings = _settings with { CommandTemplates = newTemplates };
+                var newTemplates = CurrentSettings.CommandTemplates.Add(a.Key, a.ExpandedValue);
+                var storeFile = BuildStoreFile() with { Settings = CurrentSettings with { CommandTemplates = newTemplates } };
+                SaveStoreFile(storeFile);
                 return $"已添加模板 '{a.Key}'。";
             }
 
             case CommandManagementEdit.DeleteTemplate d:
             {
-                if (!_settings.CommandTemplates.ContainsKey(d.Key)) // Phase 1
+                if (!CurrentSettings.CommandTemplates.ContainsKey(d.Key))
                     throw new InvalidOperationException($"模板 Key '{d.Key}' 不存在。");
-                var newTemplates = _settings.CommandTemplates.Remove(d.Key); // Phase 1
-                _settings = _settings with { CommandTemplates = newTemplates };
+                var newTemplates = CurrentSettings.CommandTemplates.Remove(d.Key);
+                var storeFile = BuildStoreFile() with { Settings = CurrentSettings with { CommandTemplates = newTemplates } };
+                SaveStoreFile(storeFile);
                 return $"已删除模板 '{d.Key}'。";
             }
 
@@ -184,7 +188,7 @@ public sealed partial class MainWindowViewModel
         CommandUsageAnalyzer.Analyze(_list.MutableEntries.Select(ToLaunchEntry));
 
     private IReadOnlyList<TemplateRow> GetTemplateRowsSnapshot() =>
-        CommandUsageAnalyzer.AnalyzeTemplates(_settings.CommandTemplates, _list.MutableEntries.Select(ToLaunchEntry)); // Phase 1
+        CommandUsageAnalyzer.AnalyzeTemplates(CurrentSettings.CommandTemplates, _list.MutableEntries.Select(ToLaunchEntry));
 
     private CommandManagementResult SuccessResult(string statusMessage) =>
         new(true, statusMessage, GetCommandRowsSnapshot(), GetTemplateRowsSnapshot());

@@ -44,7 +44,7 @@ public sealed class LauncherJsonContextRegistrationTests
                 Id = "test-entry",
                 Name = "Test",
                 Command = "cmd.exe",
-                Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)Environment.SystemDirectory,
+                Directory = (WTLauncher.Core.DirectoryPath)Environment.SystemDirectory,
                 UpdatedAtUtc = DateTime.UtcNow.ToString("O"),
             }],
             Presets = [new LauncherPreset

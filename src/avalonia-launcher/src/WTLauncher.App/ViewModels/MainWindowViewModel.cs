@@ -19,11 +19,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     internal readonly StoreGrain _storeGrain;
     private readonly string _storePath;
     private bool _initialized;
-    /// <summary>Single source of settings state — always reads from AppStore.
-    /// Direct field access is being phased out; prefer CurrentSettings.</summary>
-    private LauncherSettings _settings;
-    /// <summary>Read-only settings snapshot from AppStore. Replaces direct _settings field reads.
-    /// Phase 1: state single-sourcing (07-24-triple-cut-arch).</summary>
+    /// <summary>Read-only settings snapshot from AppStore. Eliminates the old dual-source _settings field.
+    /// Phase 1c: Closed Flux Architecture (07-25).</summary>
     internal LauncherSettings CurrentSettings => _storeGrain.Select(s => s.Settings);
     internal readonly LaunchOrchestrator _launchOrchestrator;
     private readonly IDialogService _dialogService;
@@ -100,7 +97,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         ArgumentNullException.ThrowIfNull(storeFile);
         _storeGrain = storeGrain ?? throw new ArgumentNullException(nameof(storeGrain));
         _storePath = storePath;
-        _settings = storeFile.Settings;
         _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
         _entryService = entryService ?? throw new ArgumentNullException(nameof(entryService));
         _presetService = presetService ?? throw new ArgumentNullException(nameof(presetService));
@@ -109,9 +105,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _statusPresenter.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName!);
         // Construct LaunchOrchestrator early so bridge delegates are ready.
         _launchOrchestrator = new LaunchOrchestrator(launchWorkflow, dialogService);
-        _launchOrchestrator.CommandTemplates = _settings.CommandTemplates;
-        _launchOrchestrator.RequireConfirmationForLaunches = _settings.RequireConfirmationForLaunches;
-        _launchOrchestrator.SettingsGetter = () => _settings;
+        _launchOrchestrator.CommandTemplates = CurrentSettings.CommandTemplates;
+        _launchOrchestrator.RequireConfirmationForLaunches = CurrentSettings.RequireConfirmationForLaunches;
+        _launchOrchestrator.SettingsGetter = () => CurrentSettings;
         _launchOrchestrator.TimestampGetter = () => CurrentTimestampUtc();
         _launchOrchestrator.DryRunTextSetter = s => DryRunText = s;
         _launchOrchestrator.StatusApplier = s => StatusContent = s;
@@ -149,11 +145,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _list.EntryMoverDownChecker = CanMoveEntryDown;
         _list.CountChanged += OnEntryCountChanged;
         // Init layout state from settings.
-        _ = RequireSettingsText(_settings.LastFilterText, "lastFilterText");
-        _layoutManager.LoadSettings(_settings);
-        _settings = _settings with { SortMode = _layoutManager.SelectedSortMode!.Id }; // Phase 1: constructor-local working copy
-        _settings = _settings with { EntryViewMode = _layoutManager.SelectedDisplayMode!.Id }; // Phase 1: constructor-local working copy
-        _settings = _settings with { CardsGroupKey = _layoutManager.CardsGroupKey }; // Phase 1: constructor-local working copy
+        _ = RequireSettingsText(CurrentSettings.LastFilterText, "lastFilterText");
+        _layoutManager.LoadSettings(CurrentSettings);
         _layoutManager.NotifyDisplayModeProjectionChanged();
         // Subscribe to layout events AFTER init so construction doesn't trigger persistence.
         _layoutManager.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName!);
@@ -164,9 +157,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         // Construct workflow AFTER settings normalization so it captures
         // the normalized values — DiscardDragReorderPreview syncs from it.
         _dragReorderWorkflow = new LauncherDragReorderWorkflow(
-            _settings,
+            CurrentSettings.CustomEntryOrder,
             _list.MutableEntries,
-            SaveSettingsToStore);
+            SaveDragCustomEntryOrder);
         // Load entries and presets from the unified store.
         _list.ReplaceEntries(storeFile.Entries);
         TotalCount = _list.MutableEntries.Count;
@@ -185,11 +178,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
             RefreshSelectionState();
         };
         PresetCount = _presetManager.PresetCount;
-        // Sync custom entry order with loaded entries so ValidateCustomOrder
-        // passes even when the stored CustomEntryOrder is empty or stale.
-        // Phase 1: _settings still used as working copy during construction.
-        // Full CurrentSettings transition will happen once DragWorkflow is refactored.
-        _settings = _settings with { CustomEntryOrder = LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds()) };
+        // ValidateCustomOrder requires every entry ID in CustomEntryOrder.
+        // Sync via dispatch if order is empty or stale.
+        EnsureCustomOrderContainsEntries();
         RefreshSelectionState();
         ApplyFilter();
         // Notify initial UI state for launch confirmation toggle (bypassed direct init).
@@ -197,12 +188,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         OnPropertyChanged(nameof(LaunchConfirmationToggleText));
         OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
         StatusContent = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
-        // Phase 1: State single-sourcing (07-24-triple-cut-arch).
-        // _settings field is being eliminated. State reads use CurrentSettings (AppStore.Select).
+        // Phase 1c: Closed Flux Architecture (07-25).
+        // _settings field eliminated. All state reads use CurrentSettings (AppStore.Select).
         // Preset sync still needs to update _presetManager on external state changes.
         _storeGrain.Subscribe(state =>
         {
-            _settings = state.Settings; // Phase 1: ponytail — kept for transition
             _presetManager.Load(
                 new LauncherPresetFile { Presets = state.Presets, DefaultPresetId = state.DefaultPresetId },
                 _presetManager.SelectedPreset?.Id);
@@ -233,9 +223,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
     public ReadOnlyObservableCollection<LauncherEntryViewModel> VisibleEntries => _list.VisibleEntries;
 
-    /// <summary>Current settings snapshot. Immutable — replaced on every mutation.
+    /// <summary>Current settings snapshot — reads from AppStore (CurrentSettings).
     /// Tests should read from this, not from a stale pre-construction reference.</summary>
-    public LauncherSettings Settings => _settings;
+    public LauncherSettings Settings => CurrentSettings;
 
     public IReadOnlyDictionary<string, string>? CommandTemplates => _launchOrchestrator.CommandTemplates;
 
@@ -248,7 +238,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         try
         {
             DiscardDragReorderPreview();
-            var storeFile = LauncherStore.Load(_storePath);
+            _storeGrain.ReloadFromDisk();
+            var storeFile = _storeGrain.Select(s => s);
             _list.ReplaceEntries(storeFile.Entries);
             _list.KeyboardFocusedEntryId = null;
         }
@@ -261,7 +252,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
         try
         {
-            _settings = _settings with { CustomEntryOrder = LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds()) };
+            EnsureCustomOrderContainsEntries();
 
             // Cross-validate $key command references against commandTemplates.
             ValidateCommandTemplateReferences();
@@ -295,7 +286,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     {
         var missingKeys = LauncherCommandTemplateResolver.ValidateTemplateReferences(
             _list.MutableEntries.Select(ToLaunchEntry),
-            _settings.CommandTemplates);
+            CurrentSettings.CommandTemplates);
 
         if (missingKeys.Count > 0)
             StatusContent = LauncherMainWindowText.UndefinedCommandTemplateKeys(string.Join(", ", missingKeys));
@@ -352,7 +343,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         new()
         {
             Entries = _list.MutableEntries.Select(ToLaunchEntry).ToImmutableList(),
-            Settings = _settings,
+            Settings = CurrentSettings,
             Presets = _presetManager.File.Presets,
             DefaultPresetId = _presetManager.File.DefaultPresetId,
         };
@@ -374,21 +365,25 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
     /// <summary>Saves settings to the unified store. Used as callback by
     /// LauncherDragReorderWorkflow during drag commit.</summary>
-    // ponytail: mutate _settings first, then route through BuildStoreFile —
-    // eliminates the hand-assembly dual path that existed here pre-2026-07-09
-    // (task 07-09-settings-single-source). The 5 `_settings = _dragReorderWorkflow.Settings`
-    // sites in Drag.cs remain (workflow still owns working/rollback state for
-    // non-commit paths) but become no-ops in the commit-success case.
+    // CFA Step 1c: uses BuildStoreFile() with { Settings = settings } to persist
+    // the workflow's committed CustomEntryOrder into the store via Dispatch.
     private string? SaveSettingsToStore(LauncherSettings settings)
     {
-        _settings = settings;
-        return SaveStoreFile(BuildStoreFile());
+        return SaveStoreFile(BuildStoreFile() with { Settings = settings });
+    }
+
+    /// <summary>Callback for LauncherDragReorderWorkflow (CFA Step 1d).
+    /// Constructs full settings from CurrentSettings with the committed order,
+    /// then persists atomically.</summary>
+    private string? SaveDragCustomEntryOrder(System.Collections.Immutable.ImmutableList<string> order)
+    {
+        return SaveStoreFile(BuildStoreFile() with { Settings = CurrentSettings with { CustomEntryOrder = order } });
     }
 
     private LauncherSettings CaptureSettingsMutationSnapshot()
     {
         DiscardDragReorderPreview();
-        return _settings;
+        return CurrentSettings;
     }
 
     private static LaunchEntry ToLaunchEntry(LauncherEntryViewModel entry) => entry.SnapshotEntry();
@@ -399,8 +394,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     private string? SaveSettingsChange(LauncherSettings snapshot)
     {
         var saveFailure = SaveStoreFile(BuildStoreFile());
-        if (saveFailure is not null)
-            _settings = snapshot;
         return saveFailure;
     }
 
@@ -409,7 +402,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     /// ViewModel's in-memory copies back to match.</summary>
     private void RestoreVmStateFromStore()
     {
-        _settings = _storeGrain.Select(s => s.Settings);
         _presetManager.Load(
             new LauncherPresetFile { Presets = _storeGrain.Select(s => s.Presets), DefaultPresetId = _storeGrain.Select(s => s.DefaultPresetId) },
             SelectedPreset?.Id);

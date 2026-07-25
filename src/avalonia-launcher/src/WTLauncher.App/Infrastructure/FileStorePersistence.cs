@@ -7,12 +7,14 @@ namespace WTLauncher.App.Infrastructure;
 
 /// <summary>
 /// Zone 1: File-based launcher store persistence.
-/// Delegates JSON I/O to <see cref="LauncherJson"/> (which in turn uses
-/// <see cref="FileLauncherJsonIO"/>) and schema validation to
-/// <see cref="LauncherStoreValidator"/> (Zone 0 pure function).
+/// Directly wraps <see cref="FileLauncherJsonIO"/> for JSON I/O and
+/// delegates schema validation to <see cref="LauncherStoreValidator"/>.
+/// No static LauncherJson facade dependencies.
 /// </summary>
-public sealed class FileStorePersistence : IStorePersistence
+public sealed class FileStorePersistence : IStorePersistence, IDisposable
 {
+    private readonly FileLauncherJsonIO _io = new();
+
     // ---- Load / Save ----
 
     public LauncherStoreFile Load(string storePath, Action<Exception, string>? onRecovery = null)
@@ -33,12 +35,12 @@ public sealed class FileStorePersistence : IStorePersistence
             if (fileInfo.Length > 50 * 1024 * 1024)
                 throw new InvalidDataException("Launcher store file exceeds 50 MB size limit.");
 
-            var store = LauncherJson.LoadRequired<LauncherStoreFile>(path, "Launcher store");
+            var store = _io.LoadRequired<LauncherStoreFile>(path, "Launcher store");
             LauncherStoreValidator.ThrowIfInvalid(store);
             return store;
         }
 
-        return LauncherJson.LoadWithRecovery(storePath, LoadAndValidate, "StoreLoad.RecoveredFromBackup",
+        return _io.LoadWithRecovery(storePath, LoadAndValidate, "StoreLoad.RecoveredFromBackup",
             new LauncherStoreFile(), onRecovery);
     }
 
@@ -46,7 +48,7 @@ public sealed class FileStorePersistence : IStorePersistence
     {
         ArgumentNullException.ThrowIfNull(store);
         ThrowIfStorePathMissing(storePath);
-        LauncherJson.Save(store, storePath, backup);
+        _io.Save(store, storePath, backup);
     }
 
     // ---- ErrorOr overloads ----
@@ -59,6 +61,8 @@ public sealed class FileStorePersistence : IStorePersistence
         catch (ArgumentException ex)
         { return LauncherErrors.ValidationFailed(ex.Message); }
     }
+
+    public void Dispose() => _io.Dispose();
 
     // ---- Path resolution ----
 

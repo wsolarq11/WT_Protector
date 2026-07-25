@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using Stateless;
 using WTLauncher.App.Features;
 using WTLauncher.App.Infrastructure;
@@ -21,42 +22,39 @@ public enum DragTrigger
     Done
 }
 
+/// <summary>
+/// Drag-reorder state machine with working-copy CustomEntryOrder.
+/// CFA Step 1d: no longer holds LauncherSettings — only the order list.
+/// Commits order via save callback; Cancel restores from session snapshot.
+/// </summary>
 public sealed class LauncherDragReorderWorkflow
 {
     private readonly StateMachine<DragState, DragTrigger> _machine;
 
-    // ponytail: this field is working state for drag reorder, NOT a duplicate of
-    // MainWindowViewModel._settings. Workflow mutates during Preview (before persist),
-    // rolls back via session.Snapshot on Cancel/commit-failure. Main VM syncs back
-    // via `_settings = _dragReorderWorkflow.Settings` (5 sites in Drag.cs) — this is
-    // the cost of collaborator-boundary design, NOT a dual-truth bug. Verified by 7
-    // equivalence tests in MainWindowViewModelTests.DragTests.cs.
-    // (2026-07-09 task 07-09-settings-single-source: R2 evaluated, mirror retained.)
-    private LauncherSettings _settings;
-    private readonly Func<LauncherSettings, string?> _saveSettings;
+    private ImmutableList<string> _customEntryOrder;
+    private readonly Func<ImmutableList<string>, string?> _saveOrder;
     private readonly IReadOnlyList<LauncherEntryViewModel> _entries;
     private LauncherDragReorderSession? _session;
 
     public bool HasActiveSession => _session is not null;
 
-    /// <summary>The current settings. May be replaced during restore operations —
-    /// callers should sync their reference after Cancel/Discard.</summary>
-    public LauncherSettings Settings => _settings;
+    /// <summary>Current working CustomEntryOrder (for test assertions).</summary>
+    internal System.Collections.Immutable.ImmutableList<string> CurrentOrder => _customEntryOrder;
 
-    /// <param name="saveSettings">Callback that persists the given settings and
+    /// <param name="saveOrder">Callback that persists the given CustomEntryOrder and
     /// returns null on success or an error message on failure.</param>
     public LauncherDragReorderWorkflow(
-        LauncherSettings settings,
+        ImmutableList<string> customEntryOrder,
         IReadOnlyList<LauncherEntryViewModel> entries,
-        Func<LauncherSettings, string?> saveSettings)
+        Func<ImmutableList<string>, string?> saveOrder)
     {
-        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(customEntryOrder);
         ArgumentNullException.ThrowIfNull(entries);
-        ArgumentNullException.ThrowIfNull(saveSettings);
+        ArgumentNullException.ThrowIfNull(saveOrder);
 
-        _settings = settings;
+        _customEntryOrder = customEntryOrder;
         _entries = entries;
-        _saveSettings = saveSettings;
+        _saveOrder = saveOrder;
 
         _machine = new StateMachine<DragState, DragTrigger>(DragState.Idle);
 
@@ -74,9 +72,7 @@ public sealed class LauncherDragReorderWorkflow
 
     /// <summary>
     /// Begins a drag reorder operation. Returns <c>true</c> when the caller should
-    /// refresh visible entries (e.g. because a stale preview state was restored)
-    /// — NOT an indicator of whether a session was successfully created.
-    /// Use <see cref="HasActiveSession"/> to determine whether a session exists.
+    /// refresh visible entries — NOT an indicator of whether a session was created.
     /// </summary>
     public bool Begin(bool isCustomSortMode, string draggedEntryId)
     {
@@ -85,13 +81,13 @@ public sealed class LauncherDragReorderWorkflow
         if (!isCustomSortMode)
             return refreshEntries;
 
-        EnsureCustomOrderContainsEntries();
+        SyncCustomOrder();
 
         var source = FindEntry(draggedEntryId);
         if (source is null)
             return refreshEntries;
 
-        _session = LauncherDragReorderSession.Start(source, _settings);
+        _session = LauncherDragReorderSession.Start(source, _customEntryOrder);
 
         if (_machine.State == DragState.Idle)
             _machine.Fire(DragTrigger.Begin);
@@ -109,7 +105,7 @@ public sealed class LauncherDragReorderWorkflow
 
         var session = _session;
         if (session is null || !session.IsFor(draggedEntryId))
-            return true; // new session or different source — will change
+            return true;
 
         return !session.WouldSkip(targetEntryId, insertAfter);
     }
@@ -145,11 +141,11 @@ public sealed class LauncherDragReorderWorkflow
         if (!session.TryRecordPreview(targetEntryId, insertAfter))
             return (false, refreshEntries);
 
-        EnsureCustomOrderContainsEntries();
-        var (changed, updatedOrder) = LauncherEntryOrder.MoveRelative(_settings.CustomEntryOrder, draggedEntryId, targetEntryId, insertAfter);
+        SyncCustomOrder();
+        var (changed, updatedOrder) = LauncherEntryOrder.MoveRelative(_customEntryOrder, draggedEntryId, targetEntryId, insertAfter);
         if (!changed)
             return (false, refreshEntries);
-        _settings = _settings with { CustomEntryOrder = updatedOrder };
+        _customEntryOrder = updatedOrder;
 
         session.SetTarget(target, insertAfter);
         return (true, true);
@@ -163,9 +159,9 @@ public sealed class LauncherDragReorderWorkflow
         return null;
     }
 
-    private void EnsureCustomOrderContainsEntries()
+    private void SyncCustomOrder()
     {
-        _settings = _settings with { CustomEntryOrder = LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, _entries.Select(entry => entry.Id)) };
+        _customEntryOrder = LauncherEntryOrder.SyncWithEntries(_customEntryOrder, _entries.Select(entry => entry.Id));
     }
 
     public void ClearHover()
@@ -178,7 +174,6 @@ public sealed class LauncherDragReorderWorkflow
         if (_machine.State != DragState.Dragging)
             return (null, false);
 
-        // Business logic early returns — FSM state is unaffected.
         if (!isCustomSortMode)
             return (null, false);
 
@@ -186,16 +181,14 @@ public sealed class LauncherDragReorderWorkflow
         if (session is null)
             return (null, false);
 
-        // Conceptual transition: Dragging → Committing
         _machine.Fire(DragTrigger.Commit);
 
         try
         {
-            var saveFailure = _saveSettings(_settings);
+            var saveFailure = _saveOrder(_customEntryOrder);
             if (saveFailure is not null)
             {
-                // Rollback settings on save failure so the caller sees the pre-commit order.
-                _settings = _settings with { CustomEntryOrder = session.Snapshot.CustomEntryOrder };
+                _customEntryOrder = session.Snapshot;
                 return (LauncherStatusContent.Error(saveFailure), true);
             }
 
@@ -203,8 +196,7 @@ public sealed class LauncherDragReorderWorkflow
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
-            // Rollback settings on any unexpected commit failure.
-            _settings = _settings with { CustomEntryOrder = session.Snapshot.CustomEntryOrder };
+            _customEntryOrder = session.Snapshot;
             return (LauncherRefreshStatus.SaveFailed(ex), true);
         }
         finally
@@ -233,7 +225,7 @@ public sealed class LauncherDragReorderWorkflow
         if (session is null)
             return false;
 
-        _settings = _settings with { CustomEntryOrder = session.Snapshot.CustomEntryOrder };
+        _customEntryOrder = session.Snapshot;
         ClearPreviewState();
         return true;
     }

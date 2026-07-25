@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using WTLauncher.Core.ValueObjects;
 
 namespace WTLauncher.Core;
 

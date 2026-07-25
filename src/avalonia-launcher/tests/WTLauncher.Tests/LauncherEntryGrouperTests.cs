@@ -12,7 +12,7 @@ public sealed class LauncherEntryGrouperTests
         {
             Id = id,
             Name = id,
-            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)(directory ?? $@"D:\{id}"),
+            Directory = (WTLauncher.Core.DirectoryPath)(directory ?? $@"D:\{id}"),
             Command = command,
         };
 

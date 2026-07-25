@@ -199,4 +199,34 @@ public sealed class ArchitectureRules
             .Because("Dialog interface should be resolved through injection, not by directly constructing View types.");
         rule.Check(Architecture);
     }
+
+    // ── R13: Core must not reference System.IO.File ───────────────────
+    //
+    // Path/Environment are acceptable in Core; File.WriteAllText etc. are not.
+    // LaunchArgumentBuilder (wt.exe path probe) and AgentDiscoveryScanner
+    // (PATH probe for AI CLI) are exempted for read-only File.Exists calls.
+
+    [Fact]
+    public void R13_Core_MustNotReference_SystemIoFile()
+    {
+        IArchRule rule = Types().That().Are(CoreLayer)
+            .And().DoNotHaveFullName("WTLauncher.Core.LaunchArgumentBuilder")
+            .And().DoNotHaveFullName("WTLauncher.Core.AgentDiscoveryScanner")
+            .Should().NotDependOnAnyTypesThat().HaveFullName("System.IO.File")
+            .Because("Core (Zone 0) must not directly read/write files; LaunchArgumentBuilder and AgentDiscoveryScanner are exempted for File.Exists probes.");
+        rule.Check(Architecture);
+    }
+
+    // ── R14: StoreGrain must not call LauncherStore directly ──────────
+    //
+    // CFA Step 2: StoreGrain uses IStorePersistence injected boundary.
+
+    [Fact]
+    public void R14_StoreGrain_MustNotCall_LauncherStore()
+    {
+        IArchRule rule = Types().That().HaveFullName("WTLauncher.App.Infrastructure.StoreGrain")
+            .Should().NotDependOnAnyTypesThat().HaveFullName("WTLauncher.Core.LauncherStore")
+            .Because("StoreGrain uses IStorePersistence (injected) instead of LauncherStore statics (CFA Step 2).");
+        rule.Check(Architecture);
+    }
 }

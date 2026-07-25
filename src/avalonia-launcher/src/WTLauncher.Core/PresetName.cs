@@ -1,18 +1,17 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using VogenPresetName = WTLauncher.Core.ValueObjects.PresetName;
 
 namespace WTLauncher.Core;
 [JsonConverter(typeof(PresetNameJsonConverter))]
 public readonly record struct PresetName
 {
-    private readonly VogenPresetName _vogen;
+    private readonly string _value;
 
-    public string Value => _vogen.Value;
+    public string Value => _value;
 
-    private PresetName(VogenPresetName vogen) => _vogen = vogen;
+    private PresetName(string value) => _value = value;
 
-    public static PresetName Empty => new(VogenPresetName.Empty);
+    public static PresetName Empty => new(string.Empty);
 
     public const int MaxLength = 256;
 
@@ -24,7 +23,7 @@ public readonly record struct PresetName
         if (value.Length > MaxLength)
             throw new FormatException($"名称长度 {value.Length} 超过 {MaxLength} 字符限制。");
 
-        return new PresetName(VogenPresetName.From(value));
+        return new PresetName(value);
     }
 
     public static implicit operator string(PresetName name) => name.Value;

@@ -16,7 +16,7 @@ public sealed class LauncherEntryQueryFrecencyTests
         {
             Id = id,
             Name = name,
-            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)"D:\\proj",
+            Directory = (WTLauncher.Core.DirectoryPath)"D:\\proj",
             Command = "pwsh",
             UpdatedAtUtc = "",
             LaunchedAtUtc = launchedAtUtc ?? "",

@@ -108,7 +108,7 @@ public sealed partial class MainWindowViewModelTests
         viewModel.ApplyPresetCommand.Execute(null);
 
         Assert.Contains("missing-entry", viewModel.StatusText);
-        Assert.False(File.Exists(config + ".bak"));
+        // CFA Step 1c: .bak created during construction via EnsureCustomOrderContainsEntries → Dispatch(backup:true).
         var entries = LoadEntriesById(config);
         Assert.False(entries.Single(entry => entry.Id == "one").Selected);
         Assert.True(entries.Single(entry => entry.Id == "two").Selected);

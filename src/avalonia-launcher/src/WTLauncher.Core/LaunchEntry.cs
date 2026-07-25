@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using WTLauncher.Core.ValueObjects;
 
 namespace WTLauncher.Core;
 
@@ -18,7 +17,7 @@ public sealed record LaunchEntry
 
     [JsonPropertyName("directory")]
     [JsonRequired]
-    [JsonConverter(typeof(WTLauncher.Core.ValueObjects.DirectoryPathJsonConverter))]
+    [JsonConverter(typeof(DirectoryPathJsonConverter))]
     public DirectoryPath Directory { get; init; } = DirectoryPath.Empty;
 
     [JsonPropertyName("command")]

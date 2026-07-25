@@ -46,12 +46,12 @@ public static class LaunchArgumentBuilder
     {
         ArgumentNullException.ThrowIfNull(entry);
 
-        // Directory trust-boundary validation is centralized in EntryDirectory.Parse:
+        // Directory trust-boundary validation is centralized in DirectoryPath.Parse:
         // FormKC normalization, % injection detection, env var expansion, GetFullPath
         // traversal defense, UNC rejection, DOS device rejection. Single source of truth.
         var directory = validateDirectory
-            ? EntryDirectory.ParseAndValidateExists(entry.Directory.Value).Value
-            : EntryDirectory.Parse(entry.Directory.Value).Value;
+            ? DirectoryPath.ParseAndValidateExists(entry.Directory.Value).Value
+            : DirectoryPath.Parse(entry.Directory.Value).Value;
 
         var name = StripUnsafeCharacters(EntryName.Normalize(entry.Name));
         var command = StripUnsafeCharacters(LauncherCommandTemplateResolver.Resolve(EntryName.Normalize(entry.Command), commandTemplates));

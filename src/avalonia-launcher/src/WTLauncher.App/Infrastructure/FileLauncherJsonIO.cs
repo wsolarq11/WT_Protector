@@ -70,6 +70,9 @@ public sealed class FileLauncherJsonIO : ILauncherJsonIO, IDisposable
                     }
                     catch (Exception recoveryEx) when (recoveryEx is IOException or UnauthorizedAccessException)
                     {
+                        // Backup recovery failed — log and fall through to throw original loadException.
+                        Debug.WriteLine($"[LauncherJson] Backup recovery failed: {recoveryEx.Message}");
+                        Trace.WriteLine($"[LauncherJson] Backup recovery failed: {recoveryEx.Message}");
                     }
                 }
                 throw loadException;
@@ -93,6 +96,9 @@ public sealed class FileLauncherJsonIO : ILauncherJsonIO, IDisposable
             }
             catch (Exception recoveryEx) when (recoveryEx is IOException or UnauthorizedAccessException)
             {
+                // Backup chain entry failed — try the next backup generation.
+                Debug.WriteLine($"[LauncherJson] Backup chain recovery failed: {recoveryEx.Message}");
+                Trace.WriteLine($"[LauncherJson] Backup chain recovery failed: {recoveryEx.Message}");
                 continue;
             }
         }
@@ -208,8 +214,8 @@ public sealed class FileLauncherJsonIO : ILauncherJsonIO, IDisposable
                 else
                     File.Move(oldPath, newPath, overwrite: true);
             }
-            catch (FileNotFoundException) { }
-            catch (DirectoryNotFoundException) { }
+            catch (FileNotFoundException) { /* Expected: backup generation doesn't exist yet — no diagnostic needed. */ }
+            catch (DirectoryNotFoundException) { /* Expected: backup directory may not exist — no diagnostic needed. */ }
         }
     }
 

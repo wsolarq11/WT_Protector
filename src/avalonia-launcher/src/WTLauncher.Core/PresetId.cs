@@ -1,19 +1,18 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using VogenPresetId = WTLauncher.Core.ValueObjects.PresetId;
 
 namespace WTLauncher.Core;
 [JsonConverter(typeof(PresetIdJsonConverter))]
 public readonly record struct PresetId
 {
-    private readonly VogenPresetId _vogen;
+    private readonly string _value;
 
-    public string Value => _vogen.Value;
+    public string Value => _value;
 
-    private PresetId(VogenPresetId vogen) => _vogen = vogen;
+    private PresetId(string value) => _value = value;
 
-    public static PresetId Empty => new(VogenPresetId.Empty);
+    public static PresetId Empty => new(string.Empty);
 
     public const int MaxIdLength = 256;
 
@@ -57,7 +56,7 @@ public readonly record struct PresetId
         if (string.IsNullOrWhiteSpace(normalized))
             normalized = "preset";
 
-        return new PresetId(VogenPresetId.From(normalized));
+        return new PresetId(normalized);
     }
 
     public static string Normalize(string? value)

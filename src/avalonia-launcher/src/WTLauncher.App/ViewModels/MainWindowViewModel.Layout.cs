@@ -11,7 +11,7 @@ namespace WTLauncher.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
-    public IReadOnlyList<string> SearchHistoryItems => _settings.SearchHistory;
+    public IReadOnlyList<string> SearchHistoryItems => CurrentSettings.SearchHistory;
 
     // Layout event handlers — persist settings, then apply filter / refresh.
 
@@ -93,16 +93,17 @@ public sealed partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Encapsulates settings mutation via AppStore.Dispatch with save + rollback.
-    /// Phase 1: snapshot via CurrentSettings, mutation through Dispatch, rollback through Dispatch.
+    /// Mutates settings via CurrentSettings (AppStore.Select), builds a new store
+    /// file with the result, and saves atomically. No local _settings field needed
+    /// — failure is reported but there is no stale local state to restore.
     /// </summary>
     private bool TryPersistSettingsChange(
         Func<LauncherSettings, LauncherSettings> mutator,
         LauncherStatusContent? successStatus = null)
     {
-        var snapshot = CaptureSettingsMutationSnapshot();
-        _settings = mutator(_settings);
-        var saveFailure = SaveSettingsChange(snapshot);
+        var newSettings = mutator(CurrentSettings);
+        var storeFile = BuildStoreFile() with { Settings = newSettings };
+        var saveFailure = SaveStoreFile(storeFile);
         if (saveFailure is not null)
         {
             ApplyStatusText(saveFailure);
@@ -126,7 +127,7 @@ public sealed partial class MainWindowViewModel
                 _list.MutableEntries,
                 _layoutManager.FilterText,
                 _layoutManager.SelectedSortMode?.Id ?? LauncherEntryQuery.CustomSortModeId,
-                _settings.CustomEntryOrder,
+                CurrentSettings.CustomEntryOrder,
                 ToLaunchEntry);
 
             SyncVisibleEntries(sorted);
@@ -154,8 +155,8 @@ public sealed partial class MainWindowViewModel
     /// </summary>
     public void RecordSearchTerm()
     {
-        var newHistory = LauncherSearchHistory.Record(_settings.SearchHistory, _layoutManager.FilterText);
-        if (ReferenceEquals(newHistory, _settings.SearchHistory))
+        var newHistory = LauncherSearchHistory.Record(CurrentSettings.SearchHistory, _layoutManager.FilterText);
+        if (ReferenceEquals(newHistory, CurrentSettings.SearchHistory))
             return;
 
         TryPersistSettingsChange(s => s with { SearchHistory = newHistory });
@@ -207,9 +208,14 @@ public sealed partial class MainWindowViewModel
     private void EnsureCustomOrderContainsEntries()
     {
         var currentIds = GetEntryIds();
-        var synced = LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, currentIds);
-        if (!_settings.CustomEntryOrder.SequenceEqual(synced))
-            _settings = _settings with { CustomEntryOrder = synced };
+        var synced = LauncherEntryOrder.SyncWithEntries(CurrentSettings.CustomEntryOrder, currentIds);
+        if (!CurrentSettings.CustomEntryOrder.SequenceEqual(synced))
+        {
+            var store = BuildStoreFile();
+            store = store with { Settings = store.Settings with { CustomEntryOrder = synced } };
+            SaveStoreFile(store);
+            ApplyFilter();
+        }
     }
 
     public void SaveScrollOffset(LauncherEntryViewMode mode, double offset) =>

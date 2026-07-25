@@ -2,20 +2,19 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using VogenEntryId = WTLauncher.Core.ValueObjects.EntryId;
 
 namespace WTLauncher.Core;
 
 [JsonConverter(typeof(EntryIdJsonConverter))]
 public readonly record struct EntryId
 {
-    private readonly VogenEntryId _vogen;
+    private readonly string _value;
 
-    public string Value => _vogen.Value;
+    public string Value => _value;
 
-    private EntryId(VogenEntryId vogen) => _vogen = vogen;
+    private EntryId(string value) => _value = value;
 
-    public static EntryId Empty => new(VogenEntryId.Empty);
+    public static EntryId Empty => new(string.Empty);
 
     public static readonly StringComparer Comparer = StringComparer.Ordinal;
 
@@ -72,7 +71,7 @@ public readonly record struct EntryId
         if (trimmed.Contains('\\') || trimmed.Contains('/') || trimmed.Contains(".."))
             throw new FormatException($"ID 包含路径分隔符或 \"..\"。");
 
-        return new EntryId(VogenEntryId.From(trimmed));
+        return new EntryId(trimmed);
     }
 
     public static string Normalize(string? value)

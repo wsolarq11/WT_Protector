@@ -28,7 +28,8 @@ public sealed partial class MainWindowViewModel
         EnsureDragSortMode();
         if (_dragReorderWorkflow.Begin(IsCustomSortMode, draggedEntryId))
         {
-            _settings = _dragReorderWorkflow.Settings; // Phase 1: ponytail — drag workflow modifies CustomEntryOrder, sync needed
+            // CFA Step 1c: Workflow owns CustomEntryOrder during drag;
+            // persisted on commit (Task 1d eliminates workflow _settings entirely).
             ApplyFilter();
         }
     }
@@ -47,7 +48,7 @@ public sealed partial class MainWindowViewModel
     public bool PreviewMoveEntry(string draggedEntryId, string targetEntryId, bool insertAfter)
     {
         var result = _dragReorderWorkflow.Preview(IsCustomSortMode, draggedEntryId, targetEntryId, insertAfter);
-        _settings = _dragReorderWorkflow.Settings; // Phase 1: ponytail — DragWorkflow owns CustomEntryOrder during drag
+        // CFA Step 1c: Workflow owns CustomEntryOrder during drag; persisted on commit.
         if (result.RefreshEntries)
         {
             // Debounce: skip redundant reorder with same drag params within 16ms.
@@ -125,7 +126,8 @@ public sealed partial class MainWindowViewModel
     public void CommitDragReorder()
     {
         var result = _dragReorderWorkflow.Commit(IsCustomSortMode);
-        _settings = _dragReorderWorkflow.Settings; // Phase 1: ponytail — DragWorkflow owns CustomEntryOrder during drag
+        // CFA Step 1c: _settings field eliminated — SaveSettingsToStore callback
+        // inside the workflow persists the committed settings (including CustomEntryOrder).
         ApplyFilter();
         ApplyStatusText(result.Status);
         _lastPreviewParams = null;
@@ -139,7 +141,8 @@ public sealed partial class MainWindowViewModel
     public void CancelDragReorder()
     {
         var result = _dragReorderWorkflow.Cancel();
-        _settings = _dragReorderWorkflow.Settings; // Phase 1: ponytail — DragWorkflow owns CustomEntryOrder during drag
+        // CFA Step 1c: _settings field eliminated — CurrentSettings reads from store grain.
+        // Workflow Cancel restores pre-drag state internally; no store mutation needed.
         if (result.RefreshEntries)
             ApplyFilter();
         ApplyStatusText(result.Status);
@@ -151,7 +154,8 @@ public sealed partial class MainWindowViewModel
         var result = _dragReorderWorkflow.Cancel();
         if (result.RefreshEntries)
         {
-            _settings = _dragReorderWorkflow.Settings; // Phase 1: ponytail — DragWorkflow owns CustomEntryOrder during drag
+            // CFA Step 1c: _settings field eliminated — CurrentSettings reads from store grain.
+            // Workflow Cancel restores pre-drag state internally; no store mutation needed.
             ApplyFilter();
         }
     }

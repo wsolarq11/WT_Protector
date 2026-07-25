@@ -15,9 +15,9 @@ public sealed class LauncherDragReorderWorkflowTests
         Assert.Throws<ArgumentNullException>(() =>
             new LauncherDragReorderWorkflow(null!, [entry], static _ => null));
         Assert.Throws<ArgumentNullException>(() =>
-            new LauncherDragReorderWorkflow(new LauncherSettings(), [entry], null!));
+            new LauncherDragReorderWorkflow(System.Collections.Immutable.ImmutableList<string>.Empty, [entry], null!));
         Assert.Throws<ArgumentNullException>(() =>
-            new LauncherDragReorderWorkflow(new LauncherSettings(), null!, static _ => null));
+            new LauncherDragReorderWorkflow(System.Collections.Immutable.ImmutableList<string>.Empty, null!, static _ => null));
     }
 
     [Fact]
@@ -25,7 +25,7 @@ public sealed class LauncherDragReorderWorkflowTests
     {
         using var temp = new TempDirectory();
         var (settings, entries) = CreateWorkflowFixture(temp);
-        var workflow = new LauncherDragReorderWorkflow(settings, entries, SaveNoop);
+        var workflow = new LauncherDragReorderWorkflow(settings.CustomEntryOrder, entries, SaveNoop);
 
         var result = workflow.Begin(isCustomSortMode: true, draggedEntryId: "three");
 
@@ -38,7 +38,7 @@ public sealed class LauncherDragReorderWorkflowTests
     {
         using var temp = new TempDirectory();
         var (settings, entries) = CreateWorkflowFixture(temp);
-        var workflow = new LauncherDragReorderWorkflow(settings, entries, SaveNoop);
+        var workflow = new LauncherDragReorderWorkflow(settings.CustomEntryOrder, entries, SaveNoop);
 
         var result = workflow.Begin(isCustomSortMode: false, draggedEntryId: "three");
 
@@ -51,7 +51,7 @@ public sealed class LauncherDragReorderWorkflowTests
     {
         using var temp = new TempDirectory();
         var (settings, entries) = CreateWorkflowFixture(temp);
-        var workflow = new LauncherDragReorderWorkflow(settings, entries, SaveNoop);
+        var workflow = new LauncherDragReorderWorkflow(settings.CustomEntryOrder, entries, SaveNoop);
 
         var result = workflow.Begin(isCustomSortMode: true, draggedEntryId: "missing");
 
@@ -64,12 +64,11 @@ public sealed class LauncherDragReorderWorkflowTests
     {
         using var temp = new TempDirectory();
         var (settings, entries) = CreateWorkflowFixture(temp);
-        var storePath = Path.Combine(temp.Path, "store.json");
-        var capturedSettings = settings;
+        System.Collections.Immutable.ImmutableList<string>? capturedOrder = null;
 
-        var workflow = new LauncherDragReorderWorkflow(settings, entries, s =>
+        var workflow = new LauncherDragReorderWorkflow(settings.CustomEntryOrder, entries, order =>
         {
-            capturedSettings = s;
+            capturedOrder = order;
             return null; // simulate successful save
         });
         var beginResult = workflow.Begin(isCustomSortMode: true, draggedEntryId: "three");
@@ -82,14 +81,14 @@ public sealed class LauncherDragReorderWorkflowTests
             insertAfter: false);
         Assert.True(accepted);
         Assert.True(refreshEntries);
-        Assert.Equal(["three", "one", "two"], workflow.Settings.CustomEntryOrder!);
+        Assert.Equal(["three", "one", "two"], workflow.CurrentOrder);
 
         var (status, commitRefresh) = workflow.Commit(isCustomSortMode: true);
         Assert.Equal(LauncherDragReorderStatus.Saved, status);
         Assert.False(commitRefresh);
         Assert.False(workflow.HasActiveSession);
 
-        Assert.Equal(["three", "one", "two"], capturedSettings.CustomEntryOrder);
+        Assert.Equal(["three", "one", "two"], capturedOrder);
     }
 
     [Fact]
@@ -98,7 +97,7 @@ public sealed class LauncherDragReorderWorkflowTests
         using var temp = new TempDirectory();
         var (settings, entries) = CreateWorkflowFixture(temp);
 
-        var workflow = new LauncherDragReorderWorkflow(settings, entries, SaveNoop);
+        var workflow = new LauncherDragReorderWorkflow(settings.CustomEntryOrder, entries, SaveNoop);
         workflow.Begin(isCustomSortMode: true, draggedEntryId: "three");
 
         var (accepted, refreshEntries) = workflow.Preview(
@@ -108,13 +107,13 @@ public sealed class LauncherDragReorderWorkflowTests
             insertAfter: false);
         Assert.True(accepted);
         Assert.True(refreshEntries);
-        Assert.Equal(["three", "one", "two"], workflow.Settings.CustomEntryOrder!);
+        Assert.Equal(["three", "one", "two"], workflow.CurrentOrder);
 
         var (status, cancelRefresh) = workflow.Cancel();
         Assert.Equal(LauncherDragReorderStatus.Canceled, status);
         Assert.True(cancelRefresh);
         Assert.False(workflow.HasActiveSession);
-        Assert.Equal(["one", "two", "three"], workflow.Settings.CustomEntryOrder);
+        Assert.Equal(["one", "two", "three"], workflow.CurrentOrder);
     }
 
     [Fact]
@@ -123,7 +122,7 @@ public sealed class LauncherDragReorderWorkflowTests
         using var temp = new TempDirectory();
         var (settings, entries) = CreateWorkflowFixture(temp);
 
-        var workflow = new LauncherDragReorderWorkflow(settings, entries, SaveNoop);
+        var workflow = new LauncherDragReorderWorkflow(settings.CustomEntryOrder, entries, SaveNoop);
 
         var (status, refreshEntries) = workflow.Cancel();
 
@@ -137,7 +136,7 @@ public sealed class LauncherDragReorderWorkflowTests
         using var temp = new TempDirectory();
         var (settings, entries) = CreateWorkflowFixture(temp);
 
-        var workflow = new LauncherDragReorderWorkflow(settings, entries, SaveNoop);
+        var workflow = new LauncherDragReorderWorkflow(settings.CustomEntryOrder, entries, SaveNoop);
 
         var (status, refreshEntries) = workflow.Commit(isCustomSortMode: true);
 
@@ -150,7 +149,7 @@ public sealed class LauncherDragReorderWorkflowTests
     {
         using var temp = new TempDirectory();
         var (settings, entries) = CreateWorkflowFixture(temp);
-        var workflow = new LauncherDragReorderWorkflow(settings, entries, SaveNoop);
+        var workflow = new LauncherDragReorderWorkflow(settings.CustomEntryOrder, entries, SaveNoop);
         workflow.Begin(isCustomSortMode: true, draggedEntryId: "three");
 
         var (status, refreshEntries) = workflow.Commit(isCustomSortMode: false);
@@ -160,7 +159,7 @@ public sealed class LauncherDragReorderWorkflowTests
         Assert.False(refreshEntries);
     }
 
-    private static string? SaveNoop(LauncherSettings settings) => null;
+    private static string? SaveNoop(System.Collections.Immutable.ImmutableList<string> settings) => null;
 
     private static (LauncherSettings Settings, IReadOnlyList<LauncherEntryViewModel> Entries) CreateWorkflowFixture(TempDirectory temp)
     {

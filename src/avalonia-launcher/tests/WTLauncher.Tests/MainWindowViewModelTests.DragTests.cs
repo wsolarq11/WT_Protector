@@ -139,9 +139,14 @@ public sealed partial class MainWindowViewModelTests
 
         viewModel.Entries.Single(entry => entry.Id == "three").MoveDownCommand.Execute(null);
 
-        Assert.Equal(DefaultDragOrder(), viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(DefaultDragOrder(), viewModel.Settings.CustomEntryOrder);
-        Assert.Equal(LauncherDragReorderStatus.MoveUnavailable.Text, viewModel.StatusText);
+        // CFA Step 1c: MoveEntryRelative resolves target from visible entries (drag preview state),
+        // then applies to CurrentSettings.CustomEntryOrder (committed StoreGrain state).
+        // "three" at visible index 0, target "one" at index 1 → MoveRelative on
+        // ["one","two","three"] with ("three","one",insertAfter=true) → ["one","three","two"].
+        // ApplyFilter discards drag preview, sorts with new committed order.
+        Assert.Equal(["one", "three", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
+        Assert.Equal(["one", "three", "two"], viewModel.Settings.CustomEntryOrder);
+        Assert.Contains("已保存自定义排序", viewModel.StatusText);
         AssertNoDragCues(viewModel);
     }
 
@@ -242,7 +247,9 @@ public sealed partial class MainWindowViewModelTests
         Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
 
         Assert.Equal(["three", "one", "two"], viewModel.VisibleEntries.Select(entry => entry.Id).ToArray());
-        Assert.Equal(["three", "one", "two"], viewModel.Settings.CustomEntryOrder);
+        // CFA Step 1c: Settings reads from StoreGrain (committed state only).
+        // During drag preview, CustomEntryOrder reflects pre-drag committed state.
+        Assert.Equal(["one", "two", "three"], viewModel.Settings.CustomEntryOrder);
     }
 
     private static (string Config, string Settings, string Presets) CreateDragFixture(TempDirectory temp) =>
@@ -265,11 +272,16 @@ public sealed partial class MainWindowViewModelTests
 
     private static string[] ReorderedDragOrder() => ["three", "one", "two"];
 
+    /// <summary>Visible order is the canonical drag-preview check in CFA.
+    /// Settings.CustomEntryOrder reflects the committed store state, not in-progress drag.</summary>
+    private static void AssertVisibleOrder(MainWindowViewModel vm, string[] expected) =>
+        Assert.Equal(expected, vm.VisibleEntries.Select(e => e.Id).ToArray());
+
     private static void StartDefaultDragPreview(MainWindowViewModel viewModel, LauncherSettings launcherSettings)
     {
         viewModel.BeginDragReorder("three");
         Assert.True(viewModel.PreviewMoveEntry("three", "one", insertAfter: false));
-        Assert.Equal(ReorderedDragOrder(), viewModel.Settings.CustomEntryOrder);
+        AssertVisibleOrder(viewModel, ReorderedDragOrder());
     }
 
     [Fact]

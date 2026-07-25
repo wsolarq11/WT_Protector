@@ -116,7 +116,7 @@ public sealed partial class App : Application
             {
                 desktopLifetime = desktop;
                 var (explicitStorePath, unknownArgs) = LauncherStartupArguments.ReadConfigPath(desktop.Args);
-                var storePath = LauncherStore.ResolveStorePath(
+                var storePath = new FileStorePersistence().ResolveStorePath(
                     explicitStorePath,
                     Environment.CurrentDirectory,
                     AppContext.BaseDirectory);
@@ -140,7 +140,8 @@ public sealed partial class App : Application
                     }
                 }
 
-                var storeGrain = new StoreGrain(storePath);
+                var storePersistence = new FileStorePersistence();
+                var storeGrain = new StoreGrain(storePath, storePersistence);
                 var storeFile = storeGrain.Select(s => s);
 
                 var launchWorkflow = LauncherLaunchWorkflow.Create();

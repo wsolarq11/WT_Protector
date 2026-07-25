@@ -46,7 +46,7 @@ public sealed class LauncherDragReorderSessionTests
     {
         using var temp = new TempDirectory();
         var source = MainWindowEntryCardTestFactory.CreateEntryViewModel(temp.Path, "one");
-        var snapshot = new LauncherSettings();
+        System.Collections.Immutable.ImmutableList<string> snapshot = [];
 
         Assert.Throws<ArgumentNullException>(() =>
             LauncherDragReorderSession.Start(null!, snapshot));
@@ -58,7 +58,7 @@ public sealed class LauncherDragReorderSessionTests
             {
                 Id = EntryId.Empty,
                 Name = "Blank",
-                Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)temp.Path,
+                Directory = (WTLauncher.Core.DirectoryPath)temp.Path,
                 Command = "pwsh",
             },
             MainWindowEntryCardTestFactory.CreateOwner(temp.Path));
@@ -91,7 +91,7 @@ public sealed class LauncherDragReorderSessionTests
     {
         return LauncherDragReorderSession.Start(
             MainWindowEntryCardTestFactory.CreateEntryViewModel(temp.Path, draggedEntryId),
-            new LauncherSettings());
+            System.Collections.Immutable.ImmutableList<string>.Empty);
     }
 }
 

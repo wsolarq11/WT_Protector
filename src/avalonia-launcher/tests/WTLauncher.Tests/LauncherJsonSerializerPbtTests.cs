@@ -1,6 +1,5 @@
 using CsCheck;
 using WTLauncher.Core;
-using WTLauncher.Core.ValueObjects;
 
 namespace WTLauncher.Tests;
 

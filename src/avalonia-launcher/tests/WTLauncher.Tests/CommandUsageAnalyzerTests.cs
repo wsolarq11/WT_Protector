@@ -13,7 +13,7 @@ public sealed class CommandUsageAnalyzerTests
         {
             Id = id,
             Name = name ?? id,
-            Directory = (WTLauncher.Core.ValueObjects.DirectoryPath)$@"D:\{id}",
+            Directory = (WTLauncher.Core.DirectoryPath)$@"D:\{id}",
             Command = command,
         };
 
