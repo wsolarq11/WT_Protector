@@ -1,0 +1,33 @@
+{
+  "id": "vtuner-killer-impl",
+  "name": "vtuner-killer-impl",
+  "title": "Architecture: VTuber-Killer Implementation",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "<USER>",
+  "assignee": "<USER>",
+  "createdAt": "2026-07-24",
+  "completedAt": "2026-07-25",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "07-24-phase0-infra",
+    "07-24-phase1-moat",
+    "07-24-phase2-eventsourcing",
+    "07-24-phase3-cqrs",
+    "07-24-migration-tail",
+    "07-24-finalize-store"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

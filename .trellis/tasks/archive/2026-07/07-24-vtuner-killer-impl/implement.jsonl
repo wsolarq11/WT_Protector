@@ -1,0 +1,10 @@
+{"file": ".trellis/spec/guides/pitfalls.md", "reason": "§2.5.5 StoreGrain Dispatch 后必须 SetState; §2.5.6 async void handler 保护模式"}
+{"file": ".trellis/spec/core/index.md", "reason": "Core 层 EventJournal/LauncherEvent/LauncherStoreProjector/AppError 契约"}
+{"file": "src/avalonia-launcher/src/WTLauncher.Core/Events/EventJournal.cs", "reason": "crash-safe append-only 事件日志实现"}
+{"file": "src/avalonia-launcher/src/WTLauncher.Core/Events/LauncherEvent.cs", "reason": "14 个事件类型 ADT"}
+{"file": "src/avalonia-launcher/src/WTLauncher.Core/Events/LauncherStoreProjector.cs", "reason": "纯函数 event→state 投影"}
+{"file": "src/avalonia-launcher/src/WTLauncher.App/Infrastructure/Grain.cs", "reason": "轻量级 actor 基类"}
+{"file": "src/avalonia-launcher/src/WTLauncher.App/Infrastructure/StoreGrain.cs", "reason": "事件驱动 store,替代 AppStore"}
+{"file": "src/avalonia-launcher/src/WTLauncher.App/Infrastructure/UiStateProjection.cs", "reason": "UI 线程自动 dispatch"}
+{"file": "src/avalonia-launcher/src/WTLauncher.App/Infrastructure/ErrorSupervisor.cs", "reason": "断路器模式"}
+{"file": "src/avalonia-launcher/src/WTLauncher.Core/Errors/AppError.cs", "reason": "OneOf-based 错误 ADT"}
