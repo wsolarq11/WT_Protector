@@ -26,3 +26,24 @@ CardLayoutProvider架构 替换 MemoizedSelector+per-VM默认值; 新增 spec �
 ### Status
 
 [OK] **Completed**
+
+
+## Session 59: CFA 5-step migration — root-cause-elimination
+
+**Date**: 2026-07-25
+**Task**: CFA 5-step migration — root-cause-elimination
+**Branch**: `main`
+
+### Summary
+
+Completed Closed Flux Architecture migration across all 5 steps: AppState unified state tree, StoreGrain TOCTOU fix, _settings elimination, DI injection, ViewModelBase lifecycle management, Vogen removal, ArchUnitNET guards. 716 tests passing, verify.ps1 PASS.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `954f8e8` | (see git log) |
+
+### Status
+
+[OK] **Completed**
