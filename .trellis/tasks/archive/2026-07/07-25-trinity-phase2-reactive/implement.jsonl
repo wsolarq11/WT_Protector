@@ -1,0 +1,3 @@
+{"file": "src/avalonia-launcher/src/WTLauncher.App/Features/Entries/EntryListViewModel.cs", "reason": "目标：用 DynamicData SourceCache 替代手工集合"}
+{"file": "src/avalonia-launcher/Directory.Packages.props", "reason": "添加 DynamicData 包版本"}
+{"file": "docs/architectures/trinity-endgame-architecture.md", "reason": "Trinity 架构参考"}
