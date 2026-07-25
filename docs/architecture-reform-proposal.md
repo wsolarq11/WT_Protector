@@ -3,18 +3,20 @@
 > **⚠️ 本文档已过期 (2026-07-25)**
 > 
 > 本提案提出的 Fluxor 状态集中化路线 **从未被实施**。2026-07-24 落地了 VTuber-Killer 架构
-> (Event Sourcing + Grain + CQRS)，以更彻底的方式实现了提案中识别的所有 5 类脆弱点的消除。
+> (Event Sourcing + Grain + CQRS)，后于 2026-07-25 进一步迁移至 **Closed Flux Architecture (CFA)** 
+> (AppState 单源 + StoreGrain Dispatch + ViewModelBase)，以更彻底的方式实现了所有 5 类脆弱点的消除。
 >
 > | 原提案变革 | 原计划方案 | 实际落地方案 | 状态 |
 > |---|---|---|---|
-> | 变革一: 派生数据优先 | MemoizedSelector | MemoizedSelector + Grain 投影 | ✅ 超额完成 |
-> | 变革二: 状态集中化 | Fluxor + 不可变 State | StoreGrain + Event Sourcing | ✅ 以不同方案实现 |
-> | 变革三: 声明式属性 | [NotifyPropertyChangedFor] | UiStateProjection 自动同步 | ✅ 以不同方案实现 |
+> | 变革一: 派生数据优先 | MemoizedSelector | StoreGrain.Select + ViewModelBase | ✅ CFA 完成 |
+> | 变革二: 状态集中化 | Fluxor + 不可变 State | AppState 单源 + Grain.Mutate 锁内原子化 | ✅ CFA 完成 |
+> | 变革三: 声明式属性 | [NotifyPropertyChangedFor] | [ObservableProperty] + ViewModelBase | ✅ CFA 完成 |
 >
-> 当前架构文档位置:
-> - `docs/completion-overview.md` — 项目完成度总览
-> - `.trellis/spec/core/` — 核心层规范，含 Event Sourcing 设计决策
-> - `src/avalonia-launcher/src/WTLauncher.Core/` — Grain 基类、EventJournal、ErrorSupervisor
+> 当前架构参考:
+> - `.trellis/tasks/07-25-closed-flux-arch/` — CFA 迁移完整设计文档 (PRD + design + implement)
+> - `.trellis/spec/views/mvvm-pattern.md` — ViewModelBase 模式规范
+> - `src/avalonia-launcher/src/WTLauncher.Core/AppState.cs` — 单源状态树
+> - `src/avalonia-launcher/src/WTLauncher.App/ViewModels/ViewModelBase.cs` — 生命周期管理
 
 > 基于深度代码调研 + 行业架构调研的综合方案
 > 目标：从根源消除整类问题，而非逐个修复 bug

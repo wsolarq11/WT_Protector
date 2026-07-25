@@ -3,11 +3,13 @@
 审查时间: 2026-07-23 (本文档上次更新: 2026-07-25)
 审查范围: 最近 500 个提交 (实际跨度: 约 369 个提交自 2026-07-01)
 
-> **2026-07-25 状态同步**: 本文档自 F1/F2/F3 修复后未更新。以下已同步反映当前状态:
+> **2026-07-25 状态同步 (final)**: 本文档所有 High 严重级别项目已清零。
 > - F1/F2/F3 安全审计修复 + gate 回归 — 已关闭
-> - AppStore/StoreReducers/StoreSelectors 已物理删除(VTuber-Killer 架构)
+> - AppStore/StoreReducers/StoreSelectors 已物理删除(VTuber-Killer 架构 → CFA 架构)
 > - .snow/ 跟踪评估结论已记录(保持 gitignore)
-> - 测试: 696 → 700, Gate: 22 → 25 项
+> - 测试: 696 → 716, Gate: verify.ps1 PASS (含 GUI smoke)
+> - Vogen 值对象已全部迁移为 Core 原生 `record struct` (ValueObjects/ 目录已删除)
+> - CFA (Closed Flux Architecture) 5 步迁移已完成 — 参见 `.trellis/tasks/archive/2026-07/07-25-closed-flux-arch/`
 
 ---
 
@@ -100,7 +102,7 @@
 - **证据**: 检查清单: line-ending-policy, snow-ignored-local-state, retired-paths-removed, no-bare-catch-exception, app-raw-hex-zero, mainline-layout, readme, feature-objective-boundary, claim-boundary-ledger, github-similar-projects-snapshot, json, config-schema, presets-schema, settings-json, shortcut-backup-retirement, winforms-retired-design, hta-retired-config, avalonia-mainline-verify, no-stale-three-file-refs, settings-single-source-buildstorefile, winget-config-schema-valid, no-imperative-view-ui。
 - **建议**: 各检查项职责清晰，加上文档化的 ponytail 注释说明设计决策和局限性。
 
-**发现 5.1-B — 安全审计发现缺乏对应 Gate** [High]
+**发现 5.1-B — 安全审计发现缺乏对应 Gate** [Closed ✅ — verify.ps1 已包含 gate]
 
 - **描述**: SEC-AUDIT 的 3 个 MEDIUM 发现 (Path.GetFullPath、preset entryId 交叉验证、同形字保护) 均未在 verify.ps1 中设置 gate。当前无门禁阻止这些问题的回归。
 - **位置**: tools/verify.ps1
@@ -114,7 +116,7 @@
 
 ### 5.2 安全审计项跟踪状态
 
-**发现 5.2-A — F1 (MEDIUM): Path.GetFullPath — 已修复** [High]
+**发现 5.2-A — F1 (MEDIUM): Path.GetFullPath — 已修复** [Closed ✅ — 2026-07-23 修复]
 
 - **描述**: SEC-AUDIT 建议在 ExpandEnvironmentVariables 后添加 Path.GetFullPath() 调用作为防御深度。当前 LaunchEntry.cs 中未发现 Path.GetFullPath 调用。
 - **位置**: `src/avalonia-launcher/src/WTLauncher.Core/LaunchEntry.cs:57`
@@ -192,7 +194,7 @@
 - **证据**: verify.ps1 中各检查的 `ponytail:` 注释明确引用了对应的 task/bug fix。
 - **建议**: 这是良好的实践——每个 gate 都有明确的动机和升级路径。
 
-**发现 5.5-B — 安全审计复发模式无门禁** [High]
+**发现 5.5-B — 安全审计复发模式无门禁** [Closed ✅ — verify.ps1 已包含 security-audit-f1/f2/f3 gate]
 
 - **描述**: 3 个 MEDIUM 安全发现对应的复发模式无门禁保护。如果修复后出现回归，verify.ps1 无法捕获。
 - **证据**: verify.ps1 中无 Path.GetFullPath 检查、无同形字检查、无运行时 entryId 交叉引用 gate。

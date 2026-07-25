@@ -159,15 +159,20 @@
 - **CI 验证** (发现 4.4-B): merge 前自动运行 verify.ps1
 - **方法级别死代码门禁** (发现 5.5-C): 目前无自动化检查
 
-### 3.3 架构改革路线已变更
+### 3.3 架构改革路线已变更 (2026-07-25 更新)
 
-**重要说明**: 上次总览 (07-23) 记录的"架构改革第 2 步 — Fluxor State 迁移 (未开始)" **已被取代**。VTuber-Killer 架构 (Event Sourcing + Grain) 在 07-24 落地,实现了比 Fluxor 路线更彻底的状态管理改革。原来的 `docs/architecture-reform-proposal.md` 已过时。相关状态:
+**重要说明**: 架构经历了三次跃迁:
+1. ⏭️ Fluxor State 迁移 (提案路线,从未实施)
+2. ✅ VTuber-Killer (Event Sourcing + Grain) 在 07-24 落地
+3. ✅ **Closed Flux Architecture (CFA)** 在 07-25 完成 5 步跃迁
 
-| 原提案步骤 | 原状态 | 当前状态 |
-|------------|--------|----------|
-| 变革一: 派生数据 + 记忆化 Selector | 部分完成 | ✅ 由 MemoizedSelector + Grain 投影完成 |
-| 变革二: 状态集中化 + Fluxor | 初始完成 | ✅ 由 StoreGrain + Event Sourcing 替代 |
-| 变革三: 声明式属性依赖 | 部分完成 | ✅ 由 UiStateProjection 自动同步完成 |
+CFA 在 VTuber-Killer 基础上进一步消除了 `_settings` 双源、Vogen 依赖、事件泄漏和 TOCTOU 竞态。`docs/architecture-reform-proposal.md` 已更新过期声明指向 CFA。
+
+| 原提案步骤 | VTuber-Killer 状态 | CFA 状态 |
+|------------|-------------------|----------|
+| 变革一: 派生数据 + 记忆化 Selector | ✅ MemoizedSelector + Grain 投影 | ✅ StoreGrain.Select + ViewModelBase |
+| 变革二: 状态集中化 + Fluxor | ✅ StoreGrain + Event Sourcing | ✅ AppState 单源 + Grain.Mutate 锁内原子化 |
+| 变革三: 声明式属性依赖 | ✅ UiStateProjection 自动同步 | ✅ ViewModelBase + [ObservableProperty] |
 
 ---
 
