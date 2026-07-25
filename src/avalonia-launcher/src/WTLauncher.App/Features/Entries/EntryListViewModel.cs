@@ -24,25 +24,25 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
     private readonly IEntryService _entryService;
     private readonly StoreGrain _storeGrain;
     private readonly Func<DateTimeOffset> _utcNow;
+    private readonly CardLayoutProvider _cardLayout;
 
     public ReadOnlyObservableCollection<LauncherEntryViewModel> Entries { get; }
 
-    /// <summary>Visible entries. Phase 2: backed by DynamicData projection.
-    /// Phase 3 target: remove _visibleEntries and use only the projection.</summary>
+    /// <summary>Visible entries. Phase 2: backed by DynamicData projection.</summary>
     public ReadOnlyObservableCollection<LauncherEntryViewModel> VisibleEntries { get; }
 
-    /// <summary>Mutable access for MWVM partial files (drag reorder, sync, etc.).
-    /// --- Phase 3 target: replace with SourceCache operations. ---</summary>
+    /// <summary>Mutable access for MWVM partial files (drag reorder, sync, etc.).</summary>
     internal ObservableCollection<LauncherEntryViewModel> MutableEntries => _entries;
 
-    /// <summary>Backward-compat visible collection for Drag/Layout systems.
-    /// --- Phase 3 target: remove, use VisibleEntries directly. ---</summary>
+    /// <summary>Backward-compat visible collection for Drag/Layout systems.</summary>
     internal ObservableCollection<LauncherEntryViewModel> MutableVisibleEntries => _visibleEntries;
 
     internal string? KeyboardFocusedEntryId { get; set; }
 
     [ObservableProperty]
     private int _totalCount;
+
+    CardLayoutProvider IEntryCardHost.CardLayout => _cardLayout;
 
     public int VisibleCount => _projection.VisibleEntries.Count;
     public bool IsVisibleEmpty => VisibleCount == 0;
@@ -67,11 +67,13 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
     public EntryListViewModel(
         IEntryService entryService,
         Func<DateTimeOffset> utcNow,
-        StoreGrain storeGrain)
+        StoreGrain storeGrain,
+        CardLayoutProvider cardLayout)
     {
         _entryService = entryService ?? throw new ArgumentNullException(nameof(entryService));
         _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
         _storeGrain = storeGrain ?? throw new ArgumentNullException(nameof(storeGrain));
+        _cardLayout = cardLayout ?? throw new ArgumentNullException(nameof(cardLayout));
         _projection = new EntryProjection();
         Entries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_entries);
         VisibleEntries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_visibleEntries);

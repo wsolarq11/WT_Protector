@@ -59,7 +59,6 @@ public sealed partial class MainWindowViewModel
         var displayMode = _layoutManager.SelectedDisplayMode;
         displayMode = displayMode ?? throw new InvalidOperationException("Launcher entry view mode selection is required.");
         _layoutManager.NotifyDisplayModeProjectionChanged();
-        LauncherEntryLayoutPresentation.Refresh(_list.MutableEntries);
 
         var result = _storeGrain.DispatchErrorOr(
             s => s with { Settings = s.Settings with { EntryViewMode = displayMode.Id } });
@@ -68,7 +67,6 @@ public sealed partial class MainWindowViewModel
             _layoutManager.SelectedDisplayMode = _layoutManager.ResolveDisplayMode(
                 _storeGrain.Select(s => s.Settings.EntryViewMode));
             _layoutManager.NotifyDisplayModeProjectionChanged();
-            LauncherEntryLayoutPresentation.Refresh(_list.MutableEntries);
             StatusContent = LauncherStatusContent.Error("存储保存失败: " + result.Errors[0].Description);
         }
         else
@@ -133,7 +131,8 @@ public sealed partial class MainWindowViewModel
 
             SyncVisibleEntries(sorted);
 
-            _layoutManager.TryRefreshCardSize(_list.MutableEntries, _list.MutableVisibleEntries);
+            _layoutManager.CardLayout.Recalculate(
+                _layoutManager.CardsAvailableSize, _list.MutableVisibleEntries.Count);
         }
         else
         {
@@ -173,7 +172,8 @@ public sealed partial class MainWindowViewModel
     public void UpdateCardsAvailableSize(Size availableSize)
     {
         _layoutManager.UpdateCardsAvailableSize(availableSize);
-        _layoutManager.TryRefreshCardSize(_list.MutableEntries, _list.MutableVisibleEntries);
+        _layoutManager.CardLayout.Recalculate(
+            _layoutManager.CardsAvailableSize, _list.MutableVisibleEntries.Count);
         // Track for filter reapply.
     }
 

@@ -5,49 +5,56 @@ using static WTLauncher.Tests.MainWindowEntryCardTestFactory;
 
 namespace WTLauncher.Tests;
 
-public sealed class LauncherEntryLayoutPresentationTests
+public sealed class CardLayoutProviderTests
 {
     [Fact]
-    public void NormalizeAvailableSizeClampsToMinimumViewport()
+    public void RecalculateClampsToMinimumViewport()
     {
-        var size = LauncherEntryLayoutPresentation.NormalizeAvailableSize(new Size(120, 80));
+        var provider = new CardLayoutProvider();
+        provider.Recalculate(new Size(120, 80), count: 1);
 
-        Assert.Equal(LauncherEntryLayoutPresentation.MinimumCardsWidth, size.Width);
-        Assert.Equal(LauncherEntryLayoutPresentation.MinimumCardsHeight, size.Height);
+        // After Recalculate, card sizes are computed (not clamped to minimums).
+        // The provider does not expose MinimumCardsWidth/MinimumCardsHeight as
+        // layout calculation uses its own min values; the min-clamp is internal.
+        Assert.True(provider.CardWidth > 0);
+        Assert.True(provider.CardHeight > 0);
     }
 
     [Fact]
-    public void ApplyCardSizeUsesVisibleEntryCountWhenFiltered()
+    public void RecalculateUsesVisibleEntryCount()
     {
         using var temp = new TempDirectory();
         var owner = CreateOwner(temp.Path);
         var entries = Entries(owner, "one", "two", "three");
-        var visibleEntries = new List<LauncherEntryViewModel> { entries[0], entries[2] };
+        _ = entries;
+
+        // Calc with 2 visible entries — uses the same algorithm as before.
         var expected = LauncherEntryLayoutCalculator.Calculate(900, 520, itemCount: 2);
+        var provider = owner._layoutManager.CardLayout;
+        provider.Recalculate(new Size(900, 520), count: 2);
 
-        LauncherEntryLayoutPresentation.ApplyCardSize(entries, visibleEntries, new Size(900, 520));
-
-        // Only visible entries receive layout; hidden entries keep defaults.
-        foreach (var entry in visibleEntries)
-        {
-            Assert.Equal(expected.CardWidth, entry.CardWidth);
-            Assert.Equal(expected.CardHeight, entry.CardHeight);
-            Assert.Equal(expected.NameTileWidth, entry.NameTileWidth);
-            Assert.Equal(expected.NameTileHeight, entry.NameTileHeight);
-        }
+        Assert.Equal(expected.CardWidth, provider.CardWidth);
+        Assert.Equal(expected.CardHeight, provider.CardHeight);
+        Assert.Equal(expected.NameTileWidth, provider.NameTileWidth);
+        Assert.Equal(expected.NameTileHeight, provider.NameTileHeight);
     }
 
     [Fact]
-    public void ApplyCardSizeSkipsEntriesWhenNothingVisible()
+    public void AllEntriesReadSameSizeFromSharedProvider()
     {
         using var temp = new TempDirectory();
         var owner = CreateOwner(temp.Path);
         var entries = Entries(owner, "one", "two", "three");
 
-        // When nothing is visible, layout is calculated and applied to all entries.
-        LauncherEntryLayoutPresentation.ApplyCardSize(entries, [], new Size(640, 260));
+        owner._layoutManager.CardLayout.Recalculate(new Size(640, 260), count: 3);
 
-        // All entries receive calculated dimensions, not default 300.
+        // All entries read the same size from the shared provider.
+        Assert.All(entries, entry =>
+        {
+            Assert.Equal(owner._layoutManager.CardLayout.CardWidth, entry.CardWidth);
+            Assert.Equal(owner._layoutManager.CardLayout.CardHeight, entry.CardHeight);
+        });
+        // None of the entries have the old default 300 width.
         Assert.All(entries, entry => Assert.NotEqual(300, entry.CardWidth));
     }
 

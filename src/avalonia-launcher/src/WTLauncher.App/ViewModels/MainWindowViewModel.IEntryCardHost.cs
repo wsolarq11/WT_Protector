@@ -9,6 +9,8 @@ namespace WTLauncher.App.ViewModels;
 // so no forwarding is needed for those.
 public sealed partial class MainWindowViewModel : IEntryCardHost
 {
+    CardLayoutProvider IEntryCardHost.CardLayout => _layoutManager.CardLayout;
+
     // ── internal launch methods (used by EntryManager bridge delegates) ──
 
     internal void ShowDryRun(LauncherEntryViewModel item) =>

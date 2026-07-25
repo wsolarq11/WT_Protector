@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace WTLauncher.App.ViewModels;
@@ -31,9 +32,36 @@ public sealed partial class LauncherEntryViewModel
 
     public double TitleFontSize => MeasureTitleFontSize();
 
-    partial void OnCardWidthChanged(double value) => UpdateLayoutFlags();
+    /// <summary>
+    /// 订阅 CardLayoutProvider 的 PropertyChanged，将卡片尺寸变更转发到本 VM，
+    /// 取代以前由 [ObservableProperty] 生成的 OnCardWidthChanged/OnCardHeightChanged。
+    /// 这样就算 ReplaceEntries 创建了新 VM，新 VM 也会自动从 provider 读取最新值。
+    /// </summary>
+    private void SubscribeToLayoutProvider()
+    {
+        _owner.CardLayout.PropertyChanged += OnCardLayoutPropertyChanged;
+    }
 
-    partial void OnCardHeightChanged(double value) => UpdateLayoutFlags();
+    private void OnCardLayoutPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        switch (e.PropertyName)
+        {
+            case nameof(CardLayoutProvider.CardWidth):
+                OnPropertyChanged(nameof(CardWidth));
+                UpdateLayoutFlags();
+                break;
+            case nameof(CardLayoutProvider.CardHeight):
+                OnPropertyChanged(nameof(CardHeight));
+                UpdateLayoutFlags();
+                break;
+            case nameof(CardLayoutProvider.NameTileWidth):
+                OnPropertyChanged(nameof(NameTileWidth));
+                break;
+            case nameof(CardLayoutProvider.NameTileHeight):
+                OnPropertyChanged(nameof(NameTileHeight));
+                break;
+        }
+    }
 
     private double MeasureTitleFontSize()
     {

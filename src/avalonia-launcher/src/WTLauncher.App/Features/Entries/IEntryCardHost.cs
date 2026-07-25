@@ -7,6 +7,9 @@ namespace WTLauncher.App.Features.Entries;
 /// </summary>
 public interface IEntryCardHost
 {
+    /// <summary>单一卡片尺寸事实源。所有 VM 读取此 provider 而不是本地存可变状态。</summary>
+    public ViewModels.CardLayoutProvider CardLayout { get; }
+
     // Layout presentation — consumed by LauncherEntryViewModel.Layout.cs
     public bool IsDetailedListMode { get; }
     public bool IsNamesViewMode { get; }

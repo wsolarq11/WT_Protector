@@ -20,6 +20,7 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         _owner = owner;
         _isSelected = entry.Selected;
         RefreshBrand();
+        SubscribeToLayoutProvider();
     }
 
     /// <remarks>Callers must ensure _isSelected and _entry.Selected are in sync before calling this method during selection mutations.</remarks>
@@ -69,17 +70,13 @@ public sealed partial class LauncherEntryViewModel : ObservableObject
         }
     }
 
-    [ObservableProperty]
-    private double _cardWidth = 300;
-
-    [ObservableProperty]
-    private double _cardHeight = 164;
-
-    [ObservableProperty]
-    private double _nameTileWidth = 180;
-
-    [ObservableProperty]
-    private double _nameTileHeight = 24;
+    // Card sizes delegated to CardLayoutProvider (single source of truth via IEntryCardHost).
+    // No [ObservableProperty], no defaults — always reads from the shared provider.
+    // PropertyChanged is forwarded from provider's PropertyChanged in SubscribeToLayoutProvider().
+    public double CardWidth => _owner.CardLayout.CardWidth;
+    public double CardHeight => _owner.CardLayout.CardHeight;
+    public double NameTileWidth => _owner.CardLayout.NameTileWidth;
+    public double NameTileHeight => _owner.CardLayout.NameTileHeight;
 
     [ObservableProperty]
     private bool _isKeyboardFocused;

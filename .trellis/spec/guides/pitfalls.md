@@ -301,6 +301,15 @@ private async void OnXxxClicked(object? sender, RoutedEventArgs e)
 | **预防** | 需要初始值但不触发副作用的正确顺序：(1) new 协作类 → (2) 设置初始属性值（此时桥接委托为 null，`OnXxxChanged` 中的 null 守卫返回）→ (3) 赋值桥接委托 → (4) 订阅 PropertyChanged 事件。切勿创建 `SetXxxDirect(bool value) { _field = value; }` 方法。 |
 | **适用** | 所有使用 `[ObservableProperty]` 的 ObservableObject 类。 |
 
+### 2.17 MemoizedSelector 缓存键不完备 — 替换 VM 后返回旧值
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-07-25 卡片布局错乱 bug，`LayoutManager.TryRefreshCardSize` |
+| **根因** | `MemoizedSelector` 的缓存键 `(availableSize, visibleCount)` 不包含对象身份。`Refresh()` → `ReplaceEntries()` 创建全新的 `LauncherEntryViewModel` 对象，但缓存命中跳过 `ApplyCardSize` 计算，新 VM 保持错误的默认尺寸 300x164 |
+| **修复** | **架构重构**为 `CardLayoutProvider` 单一事实源：所有 VM 通过 `IEntryCardHost.CardLayout` 只读委托到共享 provider。移除 `MemoizedSelector`、移除 `[ObservableProperty]` 默认值、删除 `LauncherEntryLayoutPresentation.cs` |
+| **预防** | 从窗口几何/条目数派生的尺寸永远不要作为 `[ObservableProperty]` 存储在 VM 上。使用共享 `CardLayoutProvider`，VM 只读读取。`memoizedSelector` 模式在本仓库已删除——计算廉价（<1μs）不需要缓存。 |
+
 ---
 
 ### 3.1 不要在文档里硬编码"N 条/N 类"

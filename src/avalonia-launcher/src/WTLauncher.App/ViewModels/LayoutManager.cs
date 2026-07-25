@@ -1,20 +1,21 @@
 using System.Collections.ObjectModel;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
-using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
 /// <summary>
-/// 排序/过滤/视图模式/分组/卡片尺寸 — 布局状态管理。
+/// 排序/过滤/视图模式/分组 — 布局状态管理。
+/// 卡片尺寸由 <see cref="CardLayout"/> (CardLayoutProvider) 单一管理。
 /// 不持有 entry 数据。输出排序/过滤参数。
 /// 失败半径: Medium — 无效参数抛 InvalidOperationException。
 /// </summary>
 public sealed partial class LayoutManager : ObservableObject
 {
+    public CardLayoutProvider CardLayout { get; } = new();
+
     private Size _cardsAvailableSize = new(900, 420);
-    private readonly MemoizedSelector<(Size availableSize, int visibleCount), bool> _cardSizeSelector = new();
 
     private readonly Dictionary<LauncherEntryViewMode, double> _scrollOffsets = new();
 
@@ -151,25 +152,17 @@ public sealed partial class LayoutManager : ObservableObject
     public double GetScrollOffset(LauncherEntryViewMode mode) =>
         _scrollOffsets.TryGetValue(mode, out var v) ? v : 0;
 
-    // Recalculate card sizes when available size OR visible count changed.
-    // count 变了 layout 平分会变（ LauncherEntryLayoutCalculator.Calculate 用 count 平分可用空间）。
-    public bool TryRefreshCardSize(ICollection<LauncherEntryViewModel> entries,
-        ICollection<LauncherEntryViewModel> visibleEntries)
-    {
-        return _cardSizeSelector.Get(input =>
-        {
-            LauncherEntryLayoutPresentation.ApplyCardSize(entries, visibleEntries, input.availableSize);
-            return true;
-        }, (_cardsAvailableSize, visibleEntries.Count));
-    }
-
     public void UpdateCardsAvailableSize(Size availableSize)
     {
-        var normalized = LauncherEntryLayoutPresentation.NormalizeAvailableSize(availableSize);
+        var normalized = NormalizeAvailableSize(availableSize);
         if (_cardsAvailableSize == normalized)
             return; // Skip when size unchanged — avoids redundant PropertyChanged storm.
         _cardsAvailableSize = normalized;
     }
+
+    private static Size NormalizeAvailableSize(Size availableSize) => new(
+        double.IsFinite(availableSize.Width) ? Math.Max(CardLayoutProvider.MinimumCardsWidth, availableSize.Width) : CardLayoutProvider.MinimumCardsWidth,
+        double.IsFinite(availableSize.Height) ? Math.Max(CardLayoutProvider.MinimumCardsHeight, availableSize.Height) : CardLayoutProvider.MinimumCardsHeight);
 
     internal void SetGroupKeyDirect(string normalized)
     {

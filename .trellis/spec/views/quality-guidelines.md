@@ -143,8 +143,15 @@ Card sizing is cheap integer math in Core, not measure/arrange passes:
 
 ```csharp
 // LauncherEntryLayoutCalculator computes rows/columns in O(n)
-// Results cached until available size changes
+// Sizes are delegated to CardLayoutProvider — single source of truth,
+// no per-VM mutable state, no memoization needed (calculation is trivially fast).
 ```
+
+**Key invariants:**
+- `CardWidth`/`CardHeight`/`NameTileWidth`/`NameTileHeight` are **read-only properties** on `LauncherEntryViewModel` that delegate to `CardLayoutProvider`
+- `CardLayoutProvider` is owned by `LayoutManager` and exposed via `IEntryCardHost.CardLayout`
+- `CardLayoutProvider.Recalculate(availableSize, count)` is the only mutation path — called from `ApplyFilter()` and `UpdateCardsAvailableSize()`
+- Never store ephemeral View-derived dimensions as `[ObservableProperty]` with defaults on ViewModels — this creates staleness risk (see `LauncherEntryLayoutPresentation.cs` removal in git history)
 
 ---
 

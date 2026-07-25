@@ -14,26 +14,33 @@ public sealed partial class MainWindowViewModelTests
 
         var viewModel = CreateViewModel(config, settings);
         var entry = Assert.Single(viewModel.Entries);
+        var provider = viewModel._layoutManager.CardLayout;
 
         // L36: 5px hysteresis — must be below threshold by 5px to trigger denser layout.
-        entry.CardWidth = LauncherEntryViewModel.MicroLayoutMaxWidth - 5;
-        entry.CardHeight = LauncherEntryViewModel.MicroLayoutMaxHeight - 5;
+        provider.SetCardSizesForTest(
+            LauncherEntryViewModel.MicroLayoutMaxWidth - 5,
+            LauncherEntryViewModel.MicroLayoutMaxHeight - 5,
+            nameTileWidth: 180, nameTileHeight: 24);
         Assert.True(entry.IsMicroLayout);
         Assert.False(entry.IsCompactLayout);
         Assert.False(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
         Assert.Equal(LauncherEntryViewModel.MicroTitleFontSize, entry.TitleFontSize);
 
-        entry.CardWidth = LauncherEntryViewModel.CompactLayoutMaxWidth - 5;
-        entry.CardHeight = LauncherEntryViewModel.CompactLayoutMaxHeight - 5;
+        provider.SetCardSizesForTest(
+            LauncherEntryViewModel.CompactLayoutMaxWidth - 5,
+            LauncherEntryViewModel.CompactLayoutMaxHeight - 5,
+            nameTileWidth: 180, nameTileHeight: 24);
         Assert.False(entry.IsMicroLayout);
         Assert.True(entry.IsCompactLayout);
         Assert.True(entry.ShowDirectory);
         Assert.False(entry.ShowCommand);
         Assert.Equal(LauncherEntryViewModel.CompactTitleFontSize, entry.TitleFontSize);
 
-        entry.CardWidth = LauncherEntryViewModel.CompactLayoutMaxWidth + 1;
-        entry.CardHeight = LauncherEntryViewModel.CompactLayoutMaxHeight + 1;
+        provider.SetCardSizesForTest(
+            LauncherEntryViewModel.CompactLayoutMaxWidth + 1,
+            LauncherEntryViewModel.CompactLayoutMaxHeight + 1,
+            nameTileWidth: 180, nameTileHeight: 24);
         Assert.False(entry.IsMicroLayout);
         Assert.False(entry.IsCompactLayout);
         Assert.True(entry.ShowDirectory);

@@ -119,7 +119,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _launchOrchestrator.ReorderDiscarder = DiscardDragReorderPreview;
         _launchOrchestrator.SettingsPersister = TryPersistSettingsChange;
         // Construct EntryListViewModel early so bridge delegates are ready.
-        _list = new EntryListViewModel(_entryService, _utcNow, _storeGrain);
+        _list = new EntryListViewModel(_entryService, _utcNow, _storeGrain, _layoutManager.CardLayout);
         _launchOrchestrator.EntryGetter = () => _list.MutableEntries;
         _launchOrchestrator.SaveConfig = SaveConfig;
         _launchOrchestrator.PropertyChanged += (_, e) =>
@@ -129,7 +129,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
                 OnPropertyChanged(nameof(RequireConfirmationForLaunches));
                 OnPropertyChanged(nameof(LaunchConfirmationToggleText));
                 OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
-                LauncherEntryLayoutPresentation.Refresh(_list.MutableEntries);
                 ApplyFilter();
             }
             else
@@ -193,7 +192,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _settings = _settings with { CustomEntryOrder = LauncherEntryOrder.SyncWithEntries(_settings.CustomEntryOrder, GetEntryIds()) };
         RefreshSelectionState();
         ApplyFilter();
-        LauncherEntryLayoutPresentation.Refresh(_list.MutableEntries);
         // Notify initial UI state for launch confirmation toggle (bypassed direct init).
         OnPropertyChanged(nameof(RequireConfirmationForLaunches));
         OnPropertyChanged(nameof(LaunchConfirmationToggleText));
@@ -290,7 +288,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
         RefreshSelectionState();
         ApplyFilter();
-        LauncherEntryLayoutPresentation.Refresh(_list.MutableEntries);
         StatusContent = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
     }
 

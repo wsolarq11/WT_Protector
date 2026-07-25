@@ -27,6 +27,7 @@ Per `DESIGN.md` token ownership rules:
 |-------|-------------|---------------------|
 | View mode | `_selectedDisplayMode` | `IsCardsViewMode` / `IsDetailedListMode` / `IsNamesViewMode` |
 | Sort mode | `_selectedSortMode` | `IsCustomSortMode` |
+| Card dimensions | `LayoutManager.CardLayout` (CardLayoutProvider) | `LauncherEntryViewModel.CardWidth` / `.CardHeight` / `.NameTileWidth` / `.NameTileHeight` |
 | Card density | `LauncherEntryLayoutDensity` | `IsCompactLayout` / `IsMicroLayout` |
 | Drag cues | `DragCueState` | `IsDragPreviewTarget` / `IsDragPreviewSource` / `IsDragInsertBefore` / `IsDragInsertAfter` |
 | Drag session | `DragReorderSession?` | no loose fields allowed |
@@ -78,6 +79,8 @@ Custom Roslyn analyzers (`WTLauncher.Analyzers`) enforce invariants at build tim
 Added via `Directory.Build.props` so every project gets them.
 
 ## Forbidden Patterns
+
+- ❌ **`[ObservableProperty]` for ephemeral View-derived dimensions on ViewModels** — card sizes (`CardWidth`, `CardHeight`) are derived from window geometry, not persistent state. Storing them as per-VM mutable properties with defaults creates staleness risk when VMs are replaced. Use a shared `CardLayoutProvider` that is the single source of truth; VMs delegate to it via read-only properties. (Added 2026-07-25 CardLayoutProvider architecture — removed `LauncherEntryLayoutPresentation.cs`)
 
 - ❌ **`dynamic` or `Dictionary<string, object>`** — always define typed records.
 - ❌ **`#pragma warning disable`** without a comment explaining why.
