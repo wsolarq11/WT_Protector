@@ -8,22 +8,35 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.Features.Entries;
 
-/// <summary>Single owner of the entry collection (both mutable and read-only
-/// projections), CRUD operations, and UI bridge delegates formerly on
-/// EntryManager. The shell sets the UI delegates directly after construction.</summary>
+/// <summary>Single owner of the entry collection (both full and visible
+/// projections), CRUD operations, and UI bridge delegates.
+/// Uses <see cref="EntryProjection"/> for the visible projection.
+///
+/// Migration note: MutableEntries/MutableVisibleEntries remain as internal
+/// backward-compat for Drag/Layout partials (Phase 3 migrates them).</summary>
+#pragma warning disable CA1001 // EntryProjection lifecycle matches this VM
 public sealed partial class EntryListViewModel : ObservableObject, IEntryListViewModel, IEntryCardHost
+#pragma warning restore CA1001
 {
     private readonly ObservableCollection<LauncherEntryViewModel> _entries = [];
     private readonly ObservableCollection<LauncherEntryViewModel> _visibleEntries = [];
+    private readonly EntryProjection _projection;
     private readonly IEntryService _entryService;
     private readonly StoreGrain _storeGrain;
     private readonly Func<DateTimeOffset> _utcNow;
 
     public ReadOnlyObservableCollection<LauncherEntryViewModel> Entries { get; }
+
+    /// <summary>Visible entries. Phase 2: backed by DynamicData projection.
+    /// Phase 3 target: remove _visibleEntries and use only the projection.</summary>
     public ReadOnlyObservableCollection<LauncherEntryViewModel> VisibleEntries { get; }
 
-    /// <summary>Mutable access for MWVM partial files (drag reorder, sync, etc.).</summary>
+    /// <summary>Mutable access for MWVM partial files (drag reorder, sync, etc.).
+    /// --- Phase 3 target: replace with SourceCache operations. ---</summary>
     internal ObservableCollection<LauncherEntryViewModel> MutableEntries => _entries;
+
+    /// <summary>Backward-compat visible collection for Drag/Layout systems.
+    /// --- Phase 3 target: remove, use VisibleEntries directly. ---</summary>
     internal ObservableCollection<LauncherEntryViewModel> MutableVisibleEntries => _visibleEntries;
 
     internal string? KeyboardFocusedEntryId { get; set; }
@@ -31,11 +44,10 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
     [ObservableProperty]
     private int _totalCount;
 
-    public int VisibleCount => _visibleEntries.Count;
-
+    public int VisibleCount => _projection.VisibleEntries.Count;
     public bool IsVisibleEmpty => VisibleCount == 0;
 
-    // ── events ──
+    // ── events (kept for MWVM backward compat; Phase 3 removes these) ──
     public event Action? EntriesChanged;
     public event Action? CountChanged;
 
@@ -60,6 +72,7 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         _entryService = entryService ?? throw new ArgumentNullException(nameof(entryService));
         _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
         _storeGrain = storeGrain ?? throw new ArgumentNullException(nameof(storeGrain));
+        _projection = new EntryProjection();
         Entries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_entries);
         VisibleEntries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_visibleEntries);
     }
@@ -69,12 +82,31 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
     public void ReplaceEntries(IEnumerable<LaunchEntry> entries)
     {
         _entries.Clear();
+        _visibleEntries.Clear();
         foreach (var entry in entries)
-            _entries.Add(new LauncherEntryViewModel(entry, this));
+        {
+            var vm = new LauncherEntryViewModel(entry, this);
+            _entries.Add(vm);
+            _visibleEntries.Add(vm);
+        }
         TotalCount = _entries.Count;
+        _projection.LoadEntries(entries, this);
+        EntriesChanged?.Invoke();
     }
 
-    public void NotifyCountChanged() => CountChanged?.Invoke();
+    internal void NotifyCountChanged() => CountChanged?.Invoke();
+
+    /// <summary>Sync the projection after entries change (add/edit/delete/clone).</summary>
+    internal void SyncProjection()
+    {
+        _projection.LoadEntries(_entries.Select(e => e.SnapshotEntry()), this);
+    }
+
+    /// <summary>Set search filter — propagates automatically via DynamicData.</summary>
+    internal void SetSearchFilter(string text) => _projection.SetFilter(text);
+
+    /// <summary>Set sort mode — propagates automatically via DynamicData.</summary>
+    internal void SetSortMode(string mode) => _projection.SetSortMode(mode);
 
     // ── public CRUD (IEntryListViewModel) ──
 
@@ -187,7 +219,6 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
             presetFile, settings.CustomEntryOrder, target.EntryId);
         var newSettings = settings with { CustomEntryOrder = updatedOrder };
 
-        // Save to store first (AppStore handles rollback internally)
         try
         {
             _storeGrain.Dispatch(state => state with
@@ -206,17 +237,15 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
             return;
         }
 
-        // Only update UI after successful save
         _entries.Remove(item);
         TotalCount = _entries.Count;
         StatusApplier(LauncherEntryStatus.Deleted(target.EntryName));
+        SyncProjection();
         EntriesChanged?.Invoke();
     }
 
     public Task DiscoverAgentsAsync()
     {
-        // Discovery is orchestrated by shell — delegate via bridge
-        // ponytail: discovery does a separate store reload; kept in shell for now.
         return Task.CompletedTask;
     }
 
@@ -230,7 +259,6 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
             CustomEntryOrder = settings.CustomEntryOrder.Add(entry.Id),
         };
 
-        // Save to store first (AppStore handles rollback internally)
         try
         {
             _storeGrain.Dispatch(state => state with
@@ -247,11 +275,11 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
             return;
         }
 
-        // Only update UI after successful save
         var vm = new LauncherEntryViewModel(entry, this);
         _entries.Add(vm);
         TotalCount = _entries.Count;
         StatusApplier(statusFactory(entry));
+        SyncProjection();
         EntriesChanged?.Invoke();
     }
 
@@ -278,10 +306,8 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
             }
         }
 
-        // Set timestamp before saving so the store has the correct value
         updated = updated with { UpdatedAtUtc = CurrentTimestampUtc() };
 
-        // Save to store first — build updated entry list from current store state
         try
         {
             _storeGrain.Dispatch(state =>
@@ -306,48 +332,37 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
             return;
         }
 
-        // Only update VM after successful save
         item.ReplaceEntryFromOwner(updated, updated.UpdatedAtUtc);
         StatusApplier(LauncherEntryStatus.Updated(item.Name));
+        SyncProjection();
         EntriesChanged?.Invoke();
     }
 
     private string CurrentTimestampUtc() => _utcNow().ToString("O");
-
     private static LaunchEntry ToLaunchEntry(LauncherEntryViewModel e) => e.SnapshotEntry();
 
     // ── IEntryCardHost ──
 
     bool IEntryCardHost.IsDetailedListMode => DetailedListModeChecker();
     bool IEntryCardHost.IsNamesViewMode => NamesModeChecker();
-
     void IEntryCardHost.UpdateSelection(LauncherEntryViewModel entry, bool selected) =>
         SelectionUpdater(entry, selected);
-
     void IEntryCardHost.ShowDryRun(LauncherEntryViewModel entry) =>
         DryRunInitiator(entry);
-
     Task IEntryCardHost.LaunchAsync(LauncherEntryViewModel entry) =>
         AsyncLauncher(entry);
-
     Task IEntryCardHost.EditEntryAsync(LauncherEntryViewModel entry) =>
         EditEntryAsync(entry);
-
     Task IEntryCardHost.DeleteEntryAsync(LauncherEntryViewModel entry) =>
         DeleteEntryAsync(entry);
-
     Task IEntryCardHost.CloneEntryAsync(LauncherEntryViewModel entry) =>
         CloneEntryAsync(entry);
-
     void IEntryCardHost.MoveEntryUp(LauncherEntryViewModel entry) =>
         EntryMoverUp(entry);
-
     bool IEntryCardHost.CanMoveEntryUp(LauncherEntryViewModel entry) =>
         EntryMoverUpChecker(entry);
-
     void IEntryCardHost.MoveEntryDown(LauncherEntryViewModel entry) =>
         EntryMoverDown(entry);
-
     bool IEntryCardHost.CanMoveEntryDown(LauncherEntryViewModel entry) =>
         EntryMoverDownChecker(entry);
 }

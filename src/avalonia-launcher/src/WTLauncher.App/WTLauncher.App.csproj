@@ -20,6 +20,7 @@
     <PackageReference Include="Avalonia.Themes.Fluent" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="Stateless" />
+    <PackageReference Include="DynamicData" />
     <PackageReference Include="OneOf" />
   </ItemGroup>
   <ItemGroup>

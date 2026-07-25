@@ -10,7 +10,11 @@ The Core layer (`src/avalonia-launcher/src/WTLauncher.Core/`) is the foundation 
 
 **Reference files:**
 - `src/avalonia-launcher/src/WTLauncher.Core/LaunchEntry.cs` — canonical data record shape
-- `src/avalonia-launcher/src/WTLauncher.Core/LauncherJson.cs` — JSON persistence engine
+- `src/avalonia-launcher/src/WTLauncher.Core/LauncherJson.cs` — JSON persistence facade (delegates to LauncherJsonSerializer + FileLauncherJsonIO)
+- `src/avalonia-launcher/src/WTLauncher.Core/LauncherJsonSerializer.cs` — Zone 0 pure JSON serializer (no I/O)
+- `src/avalonia-launcher/src/WTLauncher.Core/LauncherStoreValidator.cs` — Zone 0 pure schema validator
+- `src/avalonia-launcher/src/WTLauncher.Core/ILauncherJsonIO.cs` — Zone 0 boundary port for JSON I/O
+- `src/avalonia-launcher/src/WTLauncher.Core/IStorePersistence.cs` — Zone 0 boundary port for store I/O
 - `src/avalonia-launcher/src/WTLauncher.Core/LauncherDesignTokens.cs` — single source of design constants
 
 ---

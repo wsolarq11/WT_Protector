@@ -1,129 +1,55 @@
 using System.Text.Json;
 using ErrorOr;
 using WTLauncher.Core;
-using WTLauncher.Core.Errors;
-using WTLauncher.Core.Events;
 
 namespace WTLauncher.App.Infrastructure;
 
 /// <summary>
-/// Event-sourced store grain that replaces AppStore.
+/// Thread-safe store grain. Backed by <see cref="LauncherStore"/> for persistence.
 ///
-/// All mutations are recorded as events in the EventJournal.
-/// State is derived by replaying events through the pure projector.
-///
-/// Legacy-compat: methods like <see cref="Dispatch"/> and <see cref="DispatchErrorOr"/>
-/// mirror the old AppStore API so callers can migrate incrementally.
+/// All mutations go through <see cref="Dispatch"/> (pure reducer), which saves
+/// to disk before applying to in-memory state. On save failure, the in-memory
+/// state is NOT updated — the caller sees the exception.
 /// </summary>
 public sealed class StoreGrain : Grain<LauncherStoreFile>, IDisposable
 {
     private readonly string _storePath;
-    private readonly string _journalDir;
-
-    /// <summary>Test-only: creates a store with the given initial state.
-    /// State mutation works (Dispatch, Select), but journal I/O is skipped
-    /// because the journal directory does not exist. Tests that verify
-    /// persistence should use the real file-backed path.</summary>
-    internal StoreGrain(string storePath, LauncherStoreFile initialState)
-        : base(Path.Combine(Path.GetTempPath(), "wtlauncher-test-journal", Guid.NewGuid().ToString("N")))
-    {
-        _storePath = storePath;
-        _journalDir = Path.Combine(Path.GetTempPath(), "wtlauncher-test-journal", Guid.NewGuid().ToString("N"));
-        // Use synchronous init since test constructors can't be async.
-        // The journal dir doesn't exist, so ReadAll returns empty immediately.
-        InitializeAsync(() => initialState).GetAwaiter().GetResult();
-    }
 
     /// <summary>Fires when state changes.</summary>
     public event Action<LauncherStoreFile>? StateChanged;
 
-    public StoreGrain(string storePath)
-        : base(Path.Combine(Path.GetDirectoryName(storePath) ?? ".", "journal"))
-    {
-        _storePath = storePath;
-        _journalDir = Path.Combine(Path.GetDirectoryName(storePath) ?? ".", "journal");
-    }
-
-    /// <summary>Initialize from journal, with optional legacy migration.</summary>
-    public async Task InitializeAsync()
-    {
-        await InitializeAsync(() => new LauncherStoreFile());
-
-        if (File.Exists(_storePath))
-        {
-            try
-            {
-                var legacy = LauncherStore.Load(_storePath);
-                await PersistEventCoreAsync(new Core.Events.SettingsUpdatedEvent { Settings = legacy.Settings });
-                foreach (var entry in legacy.Entries)
-                    await PersistEventCoreAsync(new Core.Events.EntryAddedEvent { Entry = entry });
-            }
-            catch (IOException) { }
-        }
-    }
-
-    /// <summary>Read a projection from current state (thread-safe).
-    /// Auto-initializes lazily if needed.</summary>
-    public T Select<T>(Func<LauncherStoreFile, T> selector)
-    {
-        if (!IsInitialized) LazyInit();
-        return ReadState(selector);
-    }
-
-    /// <summary>Dispatch a strongly-typed event with persistence.</summary>
-    public async Task<Core.Errors.AppError?> DispatchEventAsync(Core.Events.LauncherEvent @event)
-    {
-        try
-        {
-            await PersistEventCoreAsync(@event);
-            StateChanged?.Invoke(ReadState(s => s));
-            return null;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            return new Core.Errors.AppError.ConfigSaveFailed(_storePath, ex.Message);
-        }
-    }
-
     public string StorePath => _storePath;
 
-#pragma warning disable CA1822
-    public void Dispose() { /* IDisposable interface requirement */ }
-#pragma warning restore CA1822
-
-    /// <summary>Lazy initialization for test compat. Idempotent.</summary>
-    private void LazyInit()
+    /// <summary>Create a store grain backed by the given path.
+    /// State is loaded synchronously from disk.</summary>
+    public StoreGrain(string storePath)
+        : base(LoadInitialState(storePath))
     {
-        try
-        {
-            var legacy = File.Exists(_storePath)
-                ? LauncherStore.Load(_storePath)
-                : new LauncherStoreFile();
-            InitializeAsync(() => legacy).GetAwaiter().GetResult();
-        }
-        catch (IOException)
-        {
-            InitializeAsync(() => new LauncherStoreFile()).GetAwaiter().GetResult();
-        }
+        _storePath = storePath;
     }
 
-    // ── Legacy AppStore-compat methods ─────────────────────────
+    /// <summary>Test-only: creates a store with the given initial state.
+    /// No file I/O — state starts from <paramref name="initialState"/>.</summary>
+    internal StoreGrain(string storePath, LauncherStoreFile initialState)
+        : base(initialState)
+    {
+        _storePath = storePath;
+    }
 
-    /// <summary>Legacy-compat: applies a reducer and persists via LauncherStore.Save.</summary>
+    /// <summary>Read a projection from current state (thread-safe).</summary>
+    public T Select<T>(Func<LauncherStoreFile, T> selector) => ReadState(selector);
+
+    /// <summary>Apply a reducer and persist. On save failure, state is unchanged.</summary>
     public void Dispatch(Func<LauncherStoreFile, LauncherStoreFile> reducer)
     {
-        // Lazy auto-init (test compat: StoreGrain may not have been initialized)
-        if (!IsInitialized)
-        {
-            LazyInit();
-        }
-        var after = reducer(ReadState(s => s));
+        var current = ReadState(s => s);
+        var after = reducer(current);
         LauncherStore.Save(after, _storePath, backup: true);
         SetState(after);
         StateChanged?.Invoke(after);
     }
 
-    /// <summary>Legacy-compat: Dispatch with ErrorOr return.</summary>
+    /// <summary>Dispatch with ErrorOr return. Catches recoverable save failures.</summary>
     public ErrorOr<Success> DispatchErrorOr(Func<LauncherStoreFile, LauncherStoreFile> reducer)
     {
         try { Dispatch(reducer); return Result.Success; }
@@ -132,16 +58,27 @@ public sealed class StoreGrain : Grain<LauncherStoreFile>, IDisposable
         { return LauncherErrors.ConfigSaveFailed(ex.Message); }
     }
 
-    /// <summary>Legacy-compat: subscribe to state changes.</summary>
+    /// <summary>Subscribe to state changes.</summary>
     public IDisposable Subscribe(Action<LauncherStoreFile> onChanged)
     {
         StateChanged += onChanged;
         return new Subscription(() => StateChanged -= onChanged);
     }
 
-    protected override LauncherStoreFile ApplyEvent(Core.Events.LauncherEvent @event, LauncherStoreFile currentState)
+    public void Dispose() { }
+
+    private static LauncherStoreFile LoadInitialState(string storePath)
     {
-        return LauncherStoreProjector.Project(currentState, @event);
+        try
+        {
+            return File.Exists(storePath)
+                ? LauncherStore.Load(storePath)
+                : new LauncherStoreFile();
+        }
+        catch (IOException)
+        {
+            return new LauncherStoreFile();
+        }
     }
 
     private sealed class Subscription(Action unsubscribe) : IDisposable

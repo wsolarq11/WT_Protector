@@ -273,6 +273,26 @@ private async void OnXxxClicked(object? sender, RoutedEventArgs e)
 
 ### 2.14 `[ObservableProperty]` 不能有后备字段访问的转发方法
 
+---
+
+### 2.15 DynamicData ObserveOn 在测试中因 SynchronizationContext==null 崩溃
+
+| 属性 | 值 |
+|---|---|
+| **证据** | Trinity Phase 2 会话，EntryProjection 在 MainWindowViewModelTests 中崩溃 |
+| **根因** | DynamicData 的 `.ObserveOn(SynchronizationContext.Current)` 在 xUnit 测试中接收 null——测试线程没有同步上下文 |
+| **修复** | 将 ObserveOn 设置为条件执行：`syncCtx is not null ? pipeline.ObserveOn(syncCtx) : pipeline` |
+| **预防** | 在创建 Observable 管道的任何 Zone 1 组件中，必须处理 `SynchronizationContext.Current == null` 的情况（测试环境）。模式：`if (syncCtx is not null) chain = chain.ObserveOn(syncCtx)` |
+
+### 2.16 CsCheck 随机字符串生成器产生路径分隔符
+
+| 属性 | 值 |
+|---|---|
+| **证据** | Trinity Phase 4 会话，`LauncherEntryOrder.SyncWithEntries` PBT 测试报 `ID contains path separator` |
+| **根因** | `Gen.String` 可能生成包含 `/`、`\`、`..` 的字符串，被 `EntryId.ToRequiredUniqueList` 拒绝 |
+| **修复** | 使用 `Gen.Int[0,N].Select(i => $"id{i}")` 替代 `Gen.String` 生成 ID |
+| **预防** | EntryId 验证规则严格（拒绝路径分隔符），PBT 必须使用符合 ID 格式的生成器。通用规则：`Gen.String` 不会产生符合业务约束的数据——总是用业务特定的生成器 |
+
 | 属性 | 值 |
 |---|---|
 | **证据** | 2026-07-21 MWVM Stage 5 会话，`MVVMTK0034` 编译错误 |

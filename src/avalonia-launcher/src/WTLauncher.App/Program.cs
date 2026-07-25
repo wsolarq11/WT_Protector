@@ -47,6 +47,8 @@ internal static class Program
 
         try
         {
+            LauncherJson.DefaultIO = new FileLauncherJsonIO();
+            LauncherStore.DefaultPersistence = new FileStorePersistence();
             DeleteStaleTempFiles();
 
             BuildAvaloniaApp()

@@ -48,7 +48,7 @@ public sealed class LauncherStoreLoadFailureTests
         var result = LauncherStore.Load(path);
 
         Assert.NotNull(result);
-        Assert.Equal(LauncherStore.ExpectedStoreSchemaVersion, result.SchemaVersion);
+        Assert.Equal(LauncherStoreValidator.ExpectedSchemaVersion, result.SchemaVersion);
         Assert.Empty(result.Entries);
         Assert.Empty(result.Presets);
     }

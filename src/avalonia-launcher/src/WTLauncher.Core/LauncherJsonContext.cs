@@ -18,7 +18,7 @@ namespace WTLauncher.Core;
 [JsonSerializable(typeof(EntryName))]
 [JsonSerializable(typeof(EntryId))]
 [JsonSerializable(typeof(DirectoryPath))]
-[JsonSerializable(typeof(LauncherStore.LegacyPresetDocument))]
+[JsonSerializable(typeof(LegacyPresetDocument))]
 internal sealed partial class LauncherJsonContext : JsonSerializerContext
 {
 }

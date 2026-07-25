@@ -654,6 +654,108 @@ Add-Check 'security-audit-f3-homoglyph-protection' @{
     pass = $true
 }
 
+# --- Method-level dead-code gate: thin wrapper delegation ---
+# ponytail: Regex-based — catches `public T M(a) { Other(a); }` where the ENTIRE
+# body is a single delegation to a same-class method (body starts and ends with
+# the call). Does NOT catch `_service.Method()` (legitimate encapsulation),
+# expression-bodied members (`=>`), multi-statement methods, or methods with
+# control flow. Catches the ReplaceAllEntries → ReplaceEntries pattern.
+# Upgrade path: replace with a Roslyn analyzer (e.g. WT1007) for semantic detection.
+$thinWrapperPath = Get-RepoPath 'src\avalonia-launcher\src'
+$thinWrapperRegex = [regex]'(?m)^\s*public\s+\w+\s+(?<wrapMethod>\w+)\s*\([^)]*\)\s*\{\s*(?:return\s+(?:this\.)?)?(?<wrapTarget>\w+)\s*\([^)]*\)\s*;\s*\}'
+$thinWrapperFiles = [System.Collections.ArrayList]@()
+foreach ($file in (Get-ChildItem -Recurse -LiteralPath $thinWrapperPath -Filter '*.cs')) {
+    $lines = Get-Content -Raw -Encoding UTF8 -LiteralPath $file.FullName
+    $m = $thinWrapperRegex.Match($lines)
+    if (-not $m.Success) { continue }
+    # Exempt method overloads (same name, different params) — convenience overload, not dead code.
+    if ($m.Groups['wrapMethod'].Value -eq $m.Groups['wrapTarget'].Value) { continue }
+    $null = $thinWrapperFiles.Add($file)
+}
+if ($thinWrapperFiles.Count -gt 0) {
+    $names = ($thinWrapperFiles | ForEach-Object { $_.Name }) -join ', '
+    throw "Thin wrapper delegations detected (potential dead code): $names"
+}
+Add-Check 'no-thin-wrapper-delegation' @{
+    violations = $thinWrapperFiles.Count
+    invariant = 'Public methods must not be single-delegation wrappers to same-class methods'
+}
+
+# --- VTuber-Killer architecture integrity gate ---
+# ponytail: Scans file existence only. Does not check that the types are actually
+# referenced or used. A rename or move that preserves the file path bypasses this gate.
+# Upgrade path: add content-based scanning (e.g. check class name in file).
+# Trinity Phase 2: EventJournal and UiStateProjection were intentionally removed
+# (VTuber-Killer simplification). Only StoreGrain + ErrorSupervisor retained.
+$vtkComponents = @(
+    @{ Name = 'StoreGrain'; Path = 'WTLauncher.App\Infrastructure\StoreGrain.cs' }
+    @{ Name = 'ErrorSupervisor'; Path = 'WTLauncher.App\Infrastructure\ErrorSupervisor.cs' }
+)
+$vtkMissing = @()
+foreach ($component in $vtkComponents) {
+    $fullPath = Get-RepoPath "src\avalonia-launcher\src\$($component.Path)"
+    if (-not (Test-Path -LiteralPath $fullPath)) {
+        $vtkMissing += $component.Name
+    }
+}
+if ($vtkMissing.Count -gt 0) {
+    throw "VTuber-Killer architecture components missing: $($vtkMissing -join ', ')"
+}
+Add-Check 'vtk-architecture-integrity' @{
+    components = ($vtkComponents.Name -join ', ')
+    missing = $vtkMissing
+    pass = ($vtkMissing.Count -eq 0)
+}
+
+# --- Trinity architecture component gate ---
+$triComponents = @(
+    @{ Name = 'LauncherJsonSerializer'; Path = 'WTLauncher.Core\LauncherJsonSerializer.cs' }
+    @{ Name = 'LauncherStoreValidator'; Path = 'WTLauncher.Core\LauncherStoreValidator.cs' }
+    @{ Name = 'ILauncherJsonIO'; Path = 'WTLauncher.Core\ILauncherJsonIO.cs' }
+    @{ Name = 'IStorePersistence'; Path = 'WTLauncher.Core\IStorePersistence.cs' }
+    @{ Name = 'EntryProjection'; Path = 'WTLauncher.App\Features\Entries\EntryProjection.cs' }
+    @{ Name = 'AppStateMachine'; Path = 'WTLauncher.App\ViewModels\AppStateMachine.cs' }
+)
+$triMissing = @()
+foreach ($component in $triComponents) {
+    $fullPath = Get-RepoPath "src\avalonia-launcher\src\$($component.Path)"
+    if (-not (Test-Path -LiteralPath $fullPath)) {
+        $triMissing += $component.Name
+    }
+}
+if ($triMissing.Count -gt 0) {
+    throw "Trinity architecture components missing: $($triMissing -join ', ')"
+}
+Add-Check 'trinity-architecture-integrity' @{
+    components = ($triComponents.Name -join ', ')
+    missing = $triMissing
+    pass = ($triMissing.Count -eq 0)
+}
+
+# --- AppStore dead-code regression gate ---
+# ponytail: Scans for AppStore references OUTSIDE comments (// or /// lines).
+# An AppStore mention in a doc comment or migration note is legitimate;
+# an AppStore mention in active code is a regression.
+# Upgrade path: add Roslyn analyzer for semantic reference detection.
+$appStoreRefs = [System.Collections.ArrayList]@()
+foreach ($file in (Get-ChildItem -Recurse -LiteralPath $thinWrapperPath -Filter '*.cs')) {
+    $lines = Get-Content -Encoding UTF8 -LiteralPath $file.FullName
+    foreach ($line in $lines) {
+        if ($line -match '\bAppStore\b' -and $line -notmatch '^\s*//') {
+            $null = $appStoreRefs.Add($file)
+            break
+        }
+    }
+}
+if ($appStoreRefs.Count -gt 0) {
+    $files = ($appStoreRefs | ForEach-Object { $_.FullName.Replace($root, '') }) -join ', '
+    throw "AppStore references found in active code: $files (was deleted by VTuber-Killer)"
+}
+Add-Check 'vtk-no-appstore-residue' @{
+    violations = $appStoreRefs.Count
+    invariant = 'AppStore was deleted by VTuber-Killer migration; zero references allowed in src/'
+}
+
 New-ToolReceipt 'root-verify' @{
     root = $root
     checks = $checks

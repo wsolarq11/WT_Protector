@@ -1,261 +1,39 @@
-using System.Collections.Immutable;
-using System.Diagnostics;
-using System.Text.Json;
 using ErrorOr;
 
 namespace WTLauncher.Core;
 
+/// <summary>
+/// Facade for launcher store persistence. Delegates schema validation to
+/// <see cref="LauncherStoreValidator"/> (Zone 0 pure function) and I/O to
+/// <see cref="IStorePersistence"/> (Zone 1 file operations).
+///
+/// All public API signatures are preserved for backward compatibility.
+/// In tests, replace <see cref="DefaultPersistence"/> with a stub to avoid file I/O.
+/// </summary>
 public static class LauncherStore
 {
     public const string ConfigDirectoryName = "config";
     public const string StoreFileName = "launcher.json";
     public const string RepositoryMarkerFileName = "README.md";
-    public const int ExpectedStoreSchemaVersion = 2;
-    public const int MinimumSupportedSchemaVersion = 1;
 
-    // ---- Load / Save ----
+    /// <summary>The persistence implementation used by all static methods.
+    /// Must be set in the App entry point before any Load/Save call.</summary>
+    internal static IStorePersistence DefaultPersistence { get; set; } = null!;
+
+    private static IStorePersistence Persistence => DefaultPersistence
+        ?? throw new InvalidOperationException(
+            "LauncherStore.DefaultPersistence must be set before any Load/Save call.");
 
     public static LauncherStoreFile Load(string storePath, Action<Exception, string>? onRecovery = null)
-    {
-        ThrowIfStorePathMissing(storePath);
-
-        // F06: One-time migration from legacy three-file config
-        var configDir = Path.GetDirectoryName(Path.GetFullPath(storePath));
-        if (configDir is not null)
-        {
-            var migrated = MigrateFromLegacyFiles(configDir);
-            if (migrated is not null)
-                return migrated;
-        }
-
-        LauncherStoreFile LoadAndValidate(string path)
-        {
-            var fileInfo = new FileInfo(path);
-            if (fileInfo.Length > 50 * 1024 * 1024)
-                throw new InvalidDataException("Launcher store file exceeds 50 MB size limit.");
-
-            var store = LauncherJson.LoadRequired<LauncherStoreFile>(path, "Launcher store");
-
-            if (store.SchemaVersion > ExpectedStoreSchemaVersion)
-                throw new InvalidDataException(
-                    $"Launcher store schema version {store.SchemaVersion} is from a newer version of the app. Please upgrade WT Launcher.");
-
-            if (store.SchemaVersion < MinimumSupportedSchemaVersion)
-                throw new InvalidDataException(
-                    $"Launcher store schema version {store.SchemaVersion} is too old. " +
-                    $"Minimum supported version is {MinimumSupportedSchemaVersion}. Regenerate config or use an older app version.");
-
-            return store;
-        }
-
-        return LauncherJson.LoadWithRecovery(storePath, LoadAndValidate, "StoreLoad.RecoveredFromBackup",
-            new LauncherStoreFile(), onRecovery);
-    }
+        => Persistence.Load(storePath, onRecovery);
 
     public static void Save(LauncherStoreFile store, string storePath, bool backup = true)
-    {
-        ArgumentNullException.ThrowIfNull(store);
-        ThrowIfStorePathMissing(storePath);
+        => Persistence.Save(store, storePath, backup);
 
-        LauncherJson.Save(store, storePath, backup);
-    }
-
-    // ---- ErrorOr overloads ----
-
-    /// <summary>Load the store file, returning ErrorOr for recoverable failures.</summary>
     public static ErrorOr<LauncherStoreFile> LoadErrorOr(string storePath)
-    {
-        try
-        {
-            return Load(storePath);
-        }
-        catch (Exception ex) when (ex is JsonException or InvalidDataException or FileNotFoundException or DirectoryNotFoundException or IOException)
-        {
-            return LauncherErrors.ConfigLoadFailed(ex.Message);
-        }
-        catch (ArgumentException ex)
-        {
-            return LauncherErrors.ValidationFailed(ex.Message);
-        }
-    }
+        => Persistence.LoadErrorOr(storePath);
 
-    // ---- Path resolution ----
-
-    /// <summary>
-    /// Resolves the path to config/launcher.json (the unified store file).
-    /// </summary>
-    public static string ResolveStorePath(string? explicitPath, string? currentDirectory = null,
-        string? appBaseDirectory = null)
-    {
-        if (explicitPath is not null)
-        {
-            var trimmedExplicitPath = explicitPath.Trim();
-            if (trimmedExplicitPath.Length == 0)
-                throw new ArgumentException("Explicit store path is required.", nameof(explicitPath));
-
-            var fullPath = Path.GetFullPath(trimmedExplicitPath);
-            if (File.Exists(fullPath))
-            {
-                var fileName = Path.GetFileName(fullPath);
-                var dirName = Path.GetFileName(Path.GetDirectoryName(fullPath));
-                if (string.Equals(fileName, StoreFileName, StringComparison.OrdinalIgnoreCase)
-                    && string.Equals(dirName, ConfigDirectoryName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return fullPath;
-                }
-            }
-            // ponytail: explicit path missing or invalid → fall through to auto-discovery.
-            // This handles cases where --config is a relative path and the working directory
-            // is not the repo root (e.g. launching from src/avalonia-launcher/).
-        }
-
-        string?[] candidateRoots = [currentDirectory, appBaseDirectory];
-        foreach (var candidateRoot in candidateRoots)
-        {
-            var found = FindUpward(candidateRoot);
-            if (found is not null)
-                return found;
-        }
-
-        foreach (var candidateRoot in candidateRoots)
-        {
-            if (string.IsNullOrWhiteSpace(candidateRoot))
-                continue;
-
-            var store = BuildStorePath(candidateRoot);
-            if (File.Exists(store))
-                return store;
-        }
-
-        return BuildStorePath(RequireSearchRoot(candidateRoots));
-    }
-
-    // F06: Temporary type for legacy preset file deserialization (presets.json format)
-    internal sealed record LegacyPresetDocument
-    {
-        public int SchemaVersion { get; init; }
-        public string? DefaultPresetId { get; init; }
-        public ImmutableList<LauncherPreset>? Presets { get; init; }
-    }
-
-    // F06: One-time migration from legacy three-file format to unified launcher.json
-
-    /// <summary>Detects old config.json/presets.json/settings.json and migrates to launcher.json.</summary>
-    public static LauncherStoreFile? MigrateFromLegacyFiles(string configDirectory)
-    {
-        var configPath = Path.Combine(configDirectory, "config.json");
-        var presetsPath = Path.Combine(configDirectory, "presets.json");
-        var settingsPath = Path.Combine(configDirectory, "settings.json");
-        var storePath = Path.Combine(configDirectory, StoreFileName);
-
-        // Only migrate if unified store doesn't exist but legacy files do
-        if (File.Exists(storePath))
-            return null;
-        if (!File.Exists(configPath))
-            return null;
-
-        // Read legacy config (flat array of LaunchEntry)
-        var configItems = LauncherJson.Load<List<LaunchEntry>>(configPath)
-            ?? throw new InvalidDataException("Failed to load legacy config.json");
-
-        // Read legacy settings (optional — may not exist)
-        var settings = new LauncherSettings();
-        if (File.Exists(settingsPath))
-        {
-            try { settings = LauncherJson.LoadRequired<LauncherSettings>(settingsPath, "legacy settings"); }
-            catch (Exception ex) when (ex is JsonException or IOException or FileNotFoundException)
-            {
-                Trace.WriteLine($"[LauncherStore] Legacy settings.json unreadable, using defaults: {ex.Message}");
-            }
-        }
-
-        // Read legacy presets (optional — may not exist)
-        ImmutableList<LauncherPreset>? presets = null;
-        var defaultPresetId = "";
-        if (File.Exists(presetsPath))
-        {
-            try
-            {
-                var legacy = LauncherJson.Load<LegacyPresetDocument>(presetsPath);
-                if (legacy is not null)
-                {
-                    presets = legacy.Presets;
-                    defaultPresetId = legacy.DefaultPresetId ?? "";
-                }
-            }
-            catch (Exception ex) when (ex is JsonException or IOException or FileNotFoundException)
-            {
-                Trace.WriteLine($"[LauncherStore] Legacy presets.json unreadable, using empty presets: {ex.Message}");
-            }
-        }
-
-        var storeFile = new LauncherStoreFile
-        {
-            Entries = (configItems ?? []).ToImmutableList(),
-            Settings = settings,
-            Presets = presets ?? ImmutableList<LauncherPreset>.Empty,
-            DefaultPresetId = defaultPresetId,
-        };
-
-        // Write unified store
-        LauncherJson.Save(storeFile, storePath, backup: true);
-
-        // Rename legacy files to .bak
-        TryMoveToBak(configPath);
-        TryMoveToBak(presetsPath);
-        TryMoveToBak(settingsPath);
-
-        return storeFile;
-    }
-
-    private static void TryMoveToBak(string path)
-    {
-        try { File.Move(path, path + ".bak", overwrite: true); }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FileNotFoundException)
-        {
-            Trace.WriteLine($"[LauncherStore] Legacy file rename to .bak failed for {path}: {ex.Message}");
-        }
-    }
-
-    // ---- Path resolution helpers ----
-
-    private static void ThrowIfStorePathMissing(string? storePath)
-    {
-        if (string.IsNullOrWhiteSpace(storePath))
-            throw new ArgumentException("Store path is required.", nameof(storePath));
-    }
-
-    private static string? FindUpward(string? start)
-    {
-        if (string.IsNullOrWhiteSpace(start))
-            return null;
-
-        for (var dir = new DirectoryInfo(Path.GetFullPath(start)); dir is not null; dir = dir.Parent)
-        {
-            var store = BuildStorePath(dir.FullName);
-            if (File.Exists(store) && File.Exists(BuildRepositoryMarkerPath(dir.FullName)))
-                return store;
-        }
-
-        return null;
-    }
-
-    private static string RequireSearchRoot(IEnumerable<string?> candidateRoots)
-    {
-        foreach (var candidateRoot in candidateRoots)
-        {
-            if (!string.IsNullOrWhiteSpace(candidateRoot))
-                return candidateRoot;
-        }
-
-        throw new ArgumentException(
-            "Cannot resolve store path: no explicit path was provided and both currentDirectory and appBaseDirectory are null or empty.",
-            nameof(candidateRoots));
-    }
-
-    private static string BuildStorePath(string root) =>
-        Path.Combine(Path.GetFullPath(root), ConfigDirectoryName, StoreFileName);
-
-    private static string BuildRepositoryMarkerPath(string root) =>
-        Path.Combine(Path.GetFullPath(root), RepositoryMarkerFileName);
+    public static string ResolveStorePath(string? explicitPath,
+        string? currentDirectory = null, string? appBaseDirectory = null)
+        => Persistence.ResolveStorePath(explicitPath, currentDirectory, appBaseDirectory);
 }

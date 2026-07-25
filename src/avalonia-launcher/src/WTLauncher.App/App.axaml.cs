@@ -141,11 +141,6 @@ public sealed partial class App : Application
                 }
 
                 var storeGrain = new StoreGrain(storePath);
-                _ = storeGrain.InitializeAsync().ContinueWith(t =>
-                {
-                    if (t.IsFaulted)
-                        ErrorLog.Write(t.Exception!.InnerException ?? t.Exception, "StoreGrain.Init");
-                }, TaskContinuationOptions.OnlyOnFaulted);
                 var storeFile = storeGrain.Select(s => s);
 
                 var launchWorkflow = LauncherLaunchWorkflow.Create();
