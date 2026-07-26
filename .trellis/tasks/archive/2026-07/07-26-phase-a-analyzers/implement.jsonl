@@ -1,0 +1,8 @@
+{"file": ".trellis/spec/core/quality-guidelines.md", "reason": "Guidelines for analyzer implementation patterns"}
+{"file": "src/WTLauncher.Analyzers/CatchExceptionMustHaveWhenAnalyzer.cs", "reason": "Reference pattern for existing analyzer implementation"}
+{"file": "src/WTLauncher.Analyzers/DispatchMustBeOnlyWritePathAnalyzer.cs", "reason": "Needs IStorePersistence.Save check added"}
+{"file": "src/WTLauncher.Analyzers/LayerViolationAnalyzer.cs", "reason": "Needs QualifiedNameSyntax registration for fully-qualified refs"}
+{"file": "src/WTLauncher.Analyzers/ResourceKeyAnalyzer.cs", "reason": "Needs CollectXamlKeys implementation"}
+{"file": "src/WTLauncher.Analyzers/JsonRegistrationAnalyzer.cs", "reason": "Needs TypeOfExpressionSyntax registration"}
+{"file": "src/WTLauncher.Core/WTLauncher.Core.csproj", "reason": "Add Analyzer ProjectReference"}
+{"file": "src/WTLauncher.App/WTLauncher.App.csproj", "reason": "Add Analyzer ProjectReference"}
