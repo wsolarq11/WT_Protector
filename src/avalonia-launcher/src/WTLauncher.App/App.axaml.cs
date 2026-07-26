@@ -38,6 +38,7 @@ public sealed partial class App : Application
         Resources["TextPrimaryBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.TextPrimaryColor));
         Resources["TextMutedBrush"]   = new SolidColorBrush(Color.Parse(LauncherDesignTokens.TextMutedColor));
         Resources["CardBorderBrush"]  = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BorderColor));
+        Resources["BorderBrush"]      = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BorderColor));
         Resources["SurfaceBrush"]     = new SolidColorBrush(Color.Parse(LauncherDesignTokens.SurfaceColor));
 
         // ── Semantic state colors ──────────────────────────

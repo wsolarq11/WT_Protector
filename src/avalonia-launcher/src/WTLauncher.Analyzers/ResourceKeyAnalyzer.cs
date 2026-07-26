@@ -1,9 +1,10 @@
-// WT1005: StaticResource key must be defined in InjectDesignTokens
+// WT1005: StaticResource key must be defined in InjectDesignTokens or inline XAML
 // Reports diagnostic at the end of compilation when a XAML StaticResource
 // key reference has no matching Resources["Key"] assignment in
-// App.axaml.cs::InjectDesignTokens().
+// App.axaml.cs::InjectDesignTokens() or inline x:Key definition in .axaml.
 
 using System.Collections.Immutable;
+using System.Text.RegularExpressions;
 
 namespace WTLauncher.Analyzers;
 
@@ -14,13 +15,23 @@ public class ResourceKeyAnalyzer : DiagnosticAnalyzer
 
     private static readonly DiagnosticDescriptor Rule = new(
         DiagnosticId,
-        title: "StaticResource key must be defined in InjectDesignTokens",
-        messageFormat: "StaticResource key '{0}' is not assigned in InjectDesignTokens",
+        title: "StaticResource key must be defined in InjectDesignTokens or inline XAML",
+        messageFormat: "StaticResource key '{0}' is used in XAML but not defined in InjectDesignTokens or via x:Key in any .axaml file",
         category: "Correctness",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "Every StaticResource key used in XAML must have a matching Resources[key] assignment.",
+        description: "Every StaticResource key used in XAML must have a matching Resources[key] assignment or inline x:Key definition.",
         customTags: ["CompilationEnd"]);
+
+    /// <summary>Regex to extract StaticResource key references from XAML.</summary>
+    private static readonly Regex StaticResourceRegex = new(
+        @"\{StaticResource\s+(\w+)\}",
+        RegexOptions.Compiled);
+
+    /// <summary>Regex to extract inline x:Key definitions from XAML.</summary>
+    private static readonly Regex XamlKeyRegex = new(
+        @"\bx:Key\s*=\s*""([^""]+)""",
+        RegexOptions.Compiled);
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [Rule];
 
@@ -32,10 +43,15 @@ public class ResourceKeyAnalyzer : DiagnosticAnalyzer
         // Use RegisterCompilationAction for full-compilation cross-check
         context.RegisterCompilationAction(compilationContext =>
         {
+            // Collect all defined resource keys: C# Resources["Key"] + XAML x:Key="Key"
             var definedKeys = CollectDefinedKeys(compilationContext.Compilation);
-            var xamlKeys = CollectXamlKeys(compilationContext.Compilation);
+            foreach (var key in CollectXamlDefinedKeys(compilationContext))
+                definedKeys.Add(key);
 
-            foreach (var key in xamlKeys)
+            // Collect all StaticResource references from XAML
+            var referencedKeys = CollectXamlReferences(compilationContext);
+
+            foreach (var key in referencedKeys)
             {
                 if (!definedKeys.Contains(key))
                 {
@@ -69,11 +85,53 @@ public class ResourceKeyAnalyzer : DiagnosticAnalyzer
         return keys;
     }
 
-    private static HashSet<string> CollectXamlKeys(Compilation compilation)
+    /// <summary>
+    /// Collects StaticResource key references from .axaml AdditionalTexts
+    /// (e.g., <c>{StaticResource PrimaryBrush}</c>).
+    /// </summary>
+    private static HashSet<string> CollectXamlReferences(CompilationAnalysisContext compilationContext)
     {
-        // Phase 1: scaffolding — returns empty set.
-        // Full implementation reads .axaml AdditionalTexts and extracts
-        // {StaticResource KeyName} references via regex.
-        return [];
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var additionalText in compilationContext.Options.AdditionalFiles)
+        {
+            if (!additionalText.Path.EndsWith(".axaml", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var sourceText = additionalText.GetText(default);
+            if (sourceText == null) continue;
+
+            foreach (Match match in StaticResourceRegex.Matches(sourceText.ToString()))
+            {
+                keys.Add(match.Groups[1].Value);
+            }
+        }
+
+        return keys;
+    }
+
+    /// <summary>
+    /// Collects inline-defined resource keys from .axaml AdditionalTexts
+    /// (e.g., <c>&lt;StreamGeometry x:Key="IconChevronDown"&gt;...&lt;/StreamGeometry&gt;</c>).
+    /// </summary>
+    private static HashSet<string> CollectXamlDefinedKeys(CompilationAnalysisContext compilationContext)
+    {
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var additionalText in compilationContext.Options.AdditionalFiles)
+        {
+            if (!additionalText.Path.EndsWith(".axaml", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var sourceText = additionalText.GetText(default);
+            if (sourceText == null) continue;
+
+            foreach (Match match in XamlKeyRegex.Matches(sourceText.ToString()))
+            {
+                keys.Add(match.Groups[1].Value);
+            }
+        }
+
+        return keys;
     }
 }

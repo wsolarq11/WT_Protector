@@ -14,7 +14,8 @@ public class DispatchMustBeOnlyWritePathAnalyzer : DiagnosticAnalyzer
     private static readonly DiagnosticDescriptor Rule = new(
         DiagnosticId,
         title: "Dispatch must be the only write path",
-        messageFormat: "Direct call to LauncherStore.Save outside of StoreGrain.Dispatch is not allowed",
+        messageFormat: "Direct call to Save outside of StoreGrain.Dispatch is not allowed. " +
+                       "Use StoreGrain.Dispatch instead of calling LauncherStore.Save or IStorePersistence.Save directly.",
         category: "Architecture",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -35,7 +36,7 @@ public class DispatchMustBeOnlyWritePathAnalyzer : DiagnosticAnalyzer
     {
         var invocation = (InvocationExpressionSyntax)context.Node;
 
-        // Check if this calls LauncherStore.Save
+        // Check if this calls Save on LauncherStore or IStorePersistence
         if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
         {
             var methodName = memberAccess.Name.Identifier.Text;
@@ -45,27 +46,25 @@ public class DispatchMustBeOnlyWritePathAnalyzer : DiagnosticAnalyzer
             if (symbolInfo.Symbol is IMethodSymbol method)
             {
                 var containingType = method.ContainingType?.ToString();
-                if (containingType != "WTLauncher.Core.LauncherStore") return;
+                if (containingType is not ("WTLauncher.Core.LauncherStore" or "WTLauncher.Core.IStorePersistence"))
+                    return;
 
-                // Check if we're inside StoreGrain.Dispatch, DispatchErrorOr, or LazyInit
+                // Check if we're inside an allowed calling context
                 var enclosingMethod = invocation.FirstAncestorOrSelf<MethodDeclarationSyntax>();
                 if (enclosingMethod != null)
                 {
-                    var methodName2 = enclosingMethod.Identifier.Text;
-                    if (methodName2 is "Dispatch" or "DispatchErrorOr" or "LazyInit")
-                    {
-                        var parentType = enclosingMethod.FirstAncestorOrSelf<ClassDeclarationSyntax>();
-                        if (parentType?.Identifier.Text is "StoreGrain")
-                            return; // allowed
-                    }
-                }
-
-                // Also check if we're inside LauncherStore.Save itself (call to LauncherJson.Save)
-                if (enclosingMethod != null && containingType == "WTLauncher.Core.LauncherStore" && methodName == "Save")
-                {
-                    // LauncherStore.Save calling LauncherJson.Save is allowed
+                    var enclosingMethodName = enclosingMethod.Identifier.Text;
                     var parentType = enclosingMethod.FirstAncestorOrSelf<ClassDeclarationSyntax>();
-                    if (parentType?.Identifier.Text == "LauncherStore") return;
+                    var parentTypeName = parentType?.Identifier.Text;
+
+                    // StoreGrain.Dispatch, DispatchErrorOr, or LazyInit — the designated write path
+                    if (parentTypeName is "StoreGrain" &&
+                        enclosingMethodName is "Dispatch" or "DispatchErrorOr" or "LazyInit")
+                        return;
+
+                    // LauncherStore.Save — the static public API facade that delegates to IStorePersistence
+                    if (parentTypeName is "LauncherStore" && enclosingMethodName is "Save")
+                        return;
                 }
 
                 context.ReportDiagnostic(Diagnostic.Create(Rule, invocation.GetLocation()));

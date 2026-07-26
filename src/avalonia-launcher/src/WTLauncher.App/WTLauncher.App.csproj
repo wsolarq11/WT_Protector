@@ -22,6 +22,10 @@
     <PackageReference Include="Stateless" />
     <PackageReference Include="DynamicData" />
     <PackageReference Include="OneOf" />
+    <PackageReference Include="MSBuild.CompilerCache" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="**/*.axaml" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WTLauncher.Core\WTLauncher.Core.csproj" />

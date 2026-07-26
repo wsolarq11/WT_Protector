@@ -1,10 +1,25 @@
 // WT1006: JsonSerializable type must be registered in LauncherJsonContext.
-// Uses RegisterSyntaxNodeAction (not GetSemanticModel) to comply with RS1030.
+//
+// OBSOLETE — This analyzer was a Phase-1 scaffolding placeholder and is not
+// fully implemented. The planned approach (RegisterSyntaxNodeAction on
+// TypeOfExpressionSyntax) would need to cross-reference against source-generated
+// [JsonSerializable] attributes on LauncherJsonContext, which requires reading
+// generated files from the obj/ directory — a fragile design.
+//
+// Alternative verification:
+//   The gate (verify.ps1) ensures GetTypeInfo() null-safety at runtime.
+//   AOT compilation catches missing [JsonSerializable] at publish time
+//   (IL linker throws for unregistered types).
+//   If static analysis is still desired, implement a separate tool that
+//   inspects the compiled assembly's System.Text.Json.JsonSerializerOptions
+//   metadata instead of a Roslyn analyzer.
 
 using System.Collections.Immutable;
 
 namespace WTLauncher.Analyzers;
 
+[Obsolete("WT1006 is a scaffolding analyzer. " +
+    "Use runtime null-safety checks and AOT compilation validation instead.")]
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class JsonRegistrationAnalyzer : DiagnosticAnalyzer
 {
@@ -25,13 +40,7 @@ public class JsonRegistrationAnalyzer : DiagnosticAnalyzer
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
-
-        // Phase 1: Intentionally disabled to avoid RS1030 violation.
-        // Full implementation requires either:
-        //   a) RegisterSyntaxNodeAction on TypeOfExpressionSyntax (collects Attribute types)
-        //   b) Reading the LauncherJsonContext source-generated file
-        //
-        // For now, gate in verify.ps1 ensures GetTypeInfo() null-safety.
-        // WT1006 is a scaffolding analyzer for Phase 2 of the VTuber-Killer architecture.
+        // OBSOLETE — intentionally disabled. No syntax/compilation actions registered.
+        // See file header for alternative verification methods.
     }
 }

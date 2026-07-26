@@ -23,6 +23,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="CsCheck" />
+    <PackageReference Include="MSBuild.CompilerCache" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\WTLauncher.App\WTLauncher.App.csproj" />

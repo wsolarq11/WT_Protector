@@ -7,11 +7,12 @@ public class LayerViolationAnalyzer : DiagnosticAnalyzer
 {
     public const string DiagnosticId = "WT1001";
 
-    // Layer 0 (Core) must not reference ViewModels namespace
+    // Layer 0 (Core) must not reference ViewModels or Views namespace
     private static readonly DiagnosticDescriptor CoreToViewModelsRule = new(
         DiagnosticId,
-        title: "Core must not reference App.ViewModels",
-        messageFormat: "Core layer ('WTLauncher.Core') must not reference 'WTLauncher.App.ViewModels'. Move the referenced type to Core or remove the using.",
+        title: "Core must not reference App.ViewModels or App.Views",
+        messageFormat: "Core layer ('WTLauncher.Core') must not reference 'WTLauncher.App.ViewModels' or 'WTLauncher.App.Views'. " +
+                       "Move the referenced type to Core or remove the reference.",
         category: "Architecture",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -28,7 +29,11 @@ public class LayerViolationAnalyzer : DiagnosticAnalyzer
             if (!compilationContext.Compilation.AssemblyName?.StartsWith("WTLauncher.Core", StringComparison.Ordinal) == true)
                 return;
 
+            // Catch using directives that import forbidden namespaces
             compilationContext.RegisterSyntaxNodeAction(AnalyzeUsing, SyntaxKind.UsingDirective);
+
+            // Catch inline fully-qualified type references (e.g., var x = new WTLauncher.App.ViewModels.Foo())
+            compilationContext.RegisterSyntaxNodeAction(AnalyzeQualifiedName, SyntaxKind.QualifiedName);
         });
     }
 
@@ -40,6 +45,21 @@ public class LayerViolationAnalyzer : DiagnosticAnalyzer
         if (name != null && (name.Contains("WTLauncher.App.ViewModels") || name.Contains("WTLauncher.App.Views")))
         {
             context.ReportDiagnostic(Diagnostic.Create(CoreToViewModelsRule, usingDirective.GetLocation()));
+        }
+    }
+
+    /// <summary>
+    /// Catches fully-qualified type references like
+    /// <c>WTLauncher.App.ViewModels.SomeViewModel</c> that bypass using directives.
+    /// </summary>
+    private static void AnalyzeQualifiedName(SyntaxNodeAnalysisContext context)
+    {
+        var qualifiedName = (QualifiedNameSyntax)context.Node;
+        var name = qualifiedName.ToString();
+
+        if (name.Contains("WTLauncher.App.ViewModels") || name.Contains("WTLauncher.App.Views"))
+        {
+            context.ReportDiagnostic(Diagnostic.Create(CoreToViewModelsRule, qualifiedName.GetLocation()));
         }
     }
 }
