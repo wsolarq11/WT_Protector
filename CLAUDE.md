@@ -22,7 +22,7 @@ Active mainline: `src/avalonia-launcher/`. Everything under `retired/` is archiv
 Run everything from the **repository root**. PowerShell on Windows.
 
 ```powershell
-# Full native gate — 16 checks, must be green before any "done" claim
+# Full native gate — 31 checks (growing), must be green before any "done" claim
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
 
 # Stable release publish → src/avalonia-launcher/artifacts/publish/win-x64/WTLauncher.App.exe
@@ -57,7 +57,7 @@ All dead code removal, serialization, exception, and concurrency changes from th
 deep architecture research (`07-23-arch-deep-research/`) are committed. Key facts:
 
 - **Fluxor is gone.** 7 Fluxor files + ExceptionBoundary + LauncherIcons deleted.
-  State management: `AppStore` (single container, SemaphoreSlim, Dispatch/DispatchErrorOr
+  State management: `StoreGrain` (single container, SemaphoreSlim, Dispatch/DispatchErrorOr
   for mutations). CommunityToolkit.Mvvm for VM bindings.
 - **AOT-safe serialization.** `JsonSerializer.Deserialize(stream, jsonTypeInfo)` /
   `Serialize(value, jsonTypeInfo)` — NO `JsonSerializerOptions`-based overloads,
@@ -65,11 +65,11 @@ deep architecture research (`07-23-arch-deep-research/`) are committed. Key fact
   on `LauncherJsonContext`.
 - **Loose Read + Strict Write.** Unknown JSON keys are silently skipped at load time
   (forward compat). Source-gen only writes known fields. No `UnmappedMemberHandling.Disallow`.
-- **AppStore.Mutate removed.** All callers use `Dispatch` / `DispatchAsync` / `DispatchErrorOr`.
+- **StoreGrain.Mutate removed.** All callers use `Dispatch` / `DispatchAsync` / `DispatchErrorOr`.
 - **ExceptionFilters.IsRecoverable** is the single catch-filter entry point. DEBUG guard
   rethrows logic errors. Delegates to `LauncherErrors.IsRecoverable` (Core) for production.
   No more duplicate `UnwrapAggregates`.
-- **LauncherJson.Save** has `private static SemaphoreSlim(1,1)` — defense-in-depth.
+- **FileLauncherJsonIO** has an instance-level `SemaphoreSlim(1,1)` on `Save` — defense-in-depth. (`LauncherJson.Save` is a static facade that delegates to `ILauncherJsonIO`.)
 - **MemoizedSelector._hasCached** is `volatile`.
 - **AgentDiscoveryScanner.Scan()** accepts `CancellationToken ct = default`.
 - **DiscoverAgentsViewModel** propagates CancellationToken through `_scanFunc`.
@@ -125,7 +125,7 @@ Trellis tasks are **not** required for small fixes; `init`-style documentation, 
 - `README.md` — full feature list, safety notes, schema, current implementation status. Read this before any user-facing change.
 - `DESIGN.md` — brand, principles, the four-box header alignment rule, three-view-mode contract, single-source token/component ownership table. Read before any visual/UX change.
 - `AGENTS.md` — repo map and the "vine trail" navigation. The `<!-- TRELLIS:START -->…:END -->` block is managed by `trellis update`; don't edit inside it.
-- `docs/feature-reality-north-star-audit.md` — 21-feature north-star audit + claim-boundary ledger (what narrow claims are allowed vs. forbidden broad/unimprovable/universal claims). The gate validates this file's structure.
+- `docs/feature-reality-north-star-audit.md` — 22-feature north-star audit + claim-boundary ledger (what narrow claims are allowed vs. forbidden broad/unimprovable/universal claims). The gate validates this file's structure.
 - `docs/giants-shoulders/` — external project lessons (CodexSwitch + Avalonia + Native AOT, etc.) for stack decisions.
 
 ## Common ways to break the gate

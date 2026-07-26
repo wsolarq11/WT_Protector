@@ -1035,3 +1035,43 @@ private async void OnXxxClicked(object? sender, RoutedEventArgs e)
 | **根因** | ViewModel 订阅长生命周期对象的 PropertyChanged 事件，但从不取消订阅。VM 被 Remove/ReplaceEntries 移除后，事件源仍持有强引用 |
 | **后果** | 每次 Refresh() 泄漏 N 个 LauncherEntryViewModel 实例 |
 | **预防** | (1) ViewModel 继承 ViewModelBase；(2) 事件订阅通过 AddDisposable(new DisposableAction(...)) 注册；(3) ReplaceEntries/Remove 前调用旧 VM 的 Dispose() |
+
+### 10.7 Roslyn 分析器加入 Solution 但未接入消费项目
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-07-26 ultrareview CR#1/#9，WTLauncher.Analyzers 的 5 个分析器（WT1001-WT1006）编译但从未被加载 |
+| **根因** | Analyzer 项目加入了 `.sln` 并被编译，但消费项目的 `.csproj` 缺少 `OutputItemType="Analyzer" ReferenceOutputAssembly="false"`。编译器不自动加载同 Solution 的分析器项目 |
+| **后果** | 全架构防御失效：层违规、裸 catch、错误写路径、XAML 资源丢失全部不报错 |
+| **预防** | (1) 统一在 `Directory.Build.props` 中配置 Analyzer 引用，所有项目自动继承；(2) verify.ps1 添加分析器接线门禁——构建日志中验证分析器实际加载；(3) 分析器仅 CI 全量运行（`$(CI)=='true'`），本地 Debug 零开销 |
+| **适用** | 所有 Roslyn 分析器接入。 |
+
+### 10.8 `when` 子句中 `throw` 被运行时吞掉
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-07-26 ultrareview CR-1，`ExceptionFilters.IsRecoverable` DEBUG 保护无效 |
+| **根因** | C# 的 `catch when (filter())` 子句中如果 filter 内部 `throw`，.NET 运行时将其视为 filter 返回 `false`，且异常不会传播 |
+| **后果** | DEBUG 构建中 NullReferenceException 等本该崩溃的逻辑错误被静默吞掉，文档声称的 "DEBUG guard rethrows logic errors" 不成立 |
+| **修复** | 用 `Environment.FailFast()` 替代 `throw`——FailFast 不受 filter 语义限制 |
+| **适用** | 所有 `catch when` 异常过滤器的 DEBUG 保护。 |
+
+### 10.9 `--config <path>` 静默忽略
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-07-26 ultrareview CR-2，`FileStorePersistence.ResolveStorePath` |
+| **根因** | `ResolveStorePath` 用窄门检查（文件名必须 `launcher.json` + 目录必须 `config`），不满足时 fallthrough 到 repo-root 搜索逻辑 |
+| **后果** | 用户通过 `--config C:\custom\my-config.json` 指定的配置被静默放弃，加载的是搜索逻辑找到的任意文件 |
+| **修复** | 移除窄门——用户指定路径存在即信任，不存在则直接 `FileNotFoundException`，绝不 fallthrough |
+| **适用** | 所有 `--config` 或可配置路径的处理。 |
+
+### 10.10 `try` 块外取消导致批量启动回执丢失
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-07-26 ultrareview BS-1，`LauncherLaunchWorkflow.cs` |
+| **根因** | `ThrowIfCancellationRequested()` 在 `try-finally` 块外执行。取消发生时相关变量（`report`）未初始化或无值，回执在 finally 块外被跳过 |
+| **后果** | 已启动进程的时间戳丢失，回执显示"0 项" |
+| **修复** | 用 `try-finally` 保证回执始终生成——即使是取消/异常路径 |
+| **适用** | 所有包含清理逻辑的循环。 |

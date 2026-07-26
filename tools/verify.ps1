@@ -526,6 +526,23 @@ Add-Check 'avalonia-mainline-verify' @{
     dllSha256 = $mainline.dllSha256
 }
 
+# --- Architecture rule check ---
+# ponytail: Runs architecture tests (ArchUnitNET / NetArchTest) as a fast pre-check.
+# If they fail, run `dotnet test --filter "FullyQualifiedName~ArchitectureRules"` locally.
+# The --no-build flag is safe because the mainline verify above already compiled everything.
+$archTestResult = & dotnet test src/avalonia-launcher/WTLauncher.Avalonia.sln -c Release --filter "FullyQualifiedName~ArchitectureRules" --no-build 2>&1
+if ($LASTEXITCODE -ne 0) {
+    throw "Architecture rule violations detected. Run dotnet test locally to see details."
+}
+Add-Check 'architecture-rule-check' @{ pass = $true }
+
+# --- Analyzer wiring verification ---
+# Phase A regression gate: verifies that code analyzers are wired and active.
+# Build with -warnaserror to catch any analyzer-generated diagnostics.
+$buildLog = dotnet build src/avalonia-launcher/WTLauncher.Avalonia.sln --no-restore -warnaserror 2>&1
+if ($LASTEXITCODE -ne 0) { throw "Build failed (warnings as errors)" }
+Add-Check 'analyzer-wiring' @{ pass = $true }
+
 # ponytail: Negative gate — active docs must not reference the abandoned three-file architecture.
 # Catches `config/(config|presets|settings).json` not preceded by retired/. Does NOT catch
 # Windows Terminal's own settings.json (lives in docs/research/, not in $activeDocs).
@@ -609,13 +626,13 @@ Add-Check 'no-imperative-view-ui' @{ viewsScanned = $true; violations = $violati
 # add a second scan pattern for the new location.
 # Security audit F1 (2026-07-23): DirectoryPath deserialization must normalize via Path.GetFullPath.
 # Regression gate: the JSON converter Read method must contain "Path.GetFullPath".
-$directoryPathConverterPath = Get-RepoPath 'src\avalonia-launcher\src\WTLauncher.Core\ValueObjects\DirectoryPath.cs'
+$directoryPathConverterPath = Get-RepoPath 'src\avalonia-launcher\src\WTLauncher.Core\DirectoryPath.cs'
 $directoryPathConverterSrc = Get-Content -Raw -Encoding UTF8 -LiteralPath $directoryPathConverterPath
 if ($directoryPathConverterSrc -notmatch 'Path\.GetFullPath\(') {
     throw 'DirectoryPathJsonConverter must call Path.GetFullPath after ExpandEnvironmentVariables (security audit F1)'
 }
 Add-Check 'security-audit-f1-path-getfullpath' @{
-    path = 'src\avalonia-launcher\src\WTLauncher.Core\ValueObjects\DirectoryPath.cs'
+    path = 'src\avalonia-launcher\src\WTLauncher.Core\DirectoryPath.cs'
     invariant = 'DirectoryPathJsonConverter.Read normalizes via Path.GetFullPath'
     pass = $true
 }
@@ -649,7 +666,7 @@ if ($entryIdSrc -notmatch 'LatinScript') {
     throw 'EntryId must enforce Latin script whitelist (security audit F3)'
 }
 Add-Check 'security-audit-f3-homoglyph-protection' @{
-    path = 'src\avalonia-launcher\src\WTLauncher.Core\ValueObjects\EntryId.cs'
+    path = 'src\avalonia-launcher\src\WTLauncher.Core\EntryId.cs'
     invariant = 'EntryId.Parse rejects non-Latin scripts to prevent homoglyph attacks'
     pass = $true
 }
@@ -686,10 +703,9 @@ Add-Check 'no-thin-wrapper-delegation' @{
 # referenced or used. A rename or move that preserves the file path bypasses this gate.
 # Upgrade path: add content-based scanning (e.g. check class name in file).
 # Trinity Phase 2: EventJournal and UiStateProjection were intentionally removed
-# (VTuber-Killer simplification). Only StoreGrain + ErrorSupervisor retained.
+# (VTuber-Killer simplification). ErrorSupervisor deleted by Phase C dead-code cleanup (07-26-arch-cut-root-causes).
 $vtkComponents = @(
     @{ Name = 'StoreGrain'; Path = 'WTLauncher.App\Infrastructure\StoreGrain.cs' }
-    @{ Name = 'ErrorSupervisor'; Path = 'WTLauncher.App\Infrastructure\ErrorSupervisor.cs' }
 )
 $vtkMissing = @()
 foreach ($component in $vtkComponents) {

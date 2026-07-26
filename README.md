@@ -30,17 +30,17 @@ The project uses a 5-layer architecture under `src/avalonia-launcher/`:
 | Layer | Project | Responsibilities |
 |-------|---------|-----------------|
 | Core | `WTLauncher.Core` | Data records, `LaunchArgumentBuilder`, `LauncherJson` (atomic JSON persistence), `LauncherStore` (schema validation), `AgentDiscoveryScanner`, design tokens |
-| Commands | `WTLauncher.App/ViewModels/` | `MainWindowViewModel` + partials handle add/edit/delete/launch via `AppStore` |
-| Persistence | `AppStore` | Single state container, SemaphoreSlim thread safety, rollback on save failure |
+| Commands | `WTLauncher.App/ViewModels/` | `MainWindowViewModel` + partials handle add/edit/delete/launch via `StoreGrain` |
+| Persistence | `StoreGrain` | Single state container, SemaphoreSlim thread safety, rollback on save failure |
 | Orchestration | `MainWindowViewModel` | Single writable owner of UI state, delegates to Core rules and Services |
 | Views | `WTLauncher.App/Views/` | XAML, drag ghost, code-behind windowing only |
 
 Key architecture decisions:
 
-- **State management**: `AppStore` (single state container with `Dispatch`/`DispatchAsync`/`DispatchErrorOr` for mutations and `Select`/`SelectAsync` for reads). CommunityToolkit.Mvvm `[ObservableProperty]`/`[RelayCommand]` for ViewModel bindings. Fluxor was removed 2026-07-23.
+- **State management**: `StoreGrain` (single state container with `Dispatch`/`DispatchAsync`/`DispatchErrorOr` for mutations and `Select`/`SelectAsync` for reads). CommunityToolkit.Mvvm `[ObservableProperty]`/`[RelayCommand]` for ViewModel bindings. Fluxor was removed 2026-07-23.
 - **Persistence**: Single `config/launcher.json` file. Atomic writes via temp-file + `File.Replace`. Loose Read (unknown keys silently skipped for forward compatibility) + Strict Write (source-gen only writes known fields). AOT-safe via `JsonTypeInfo<T>` source-generated `LauncherJsonContext`.
 - **Exception handling**: `catch when (ExceptionFilters.IsRecoverable(ex))` for recoverable IO/security failures. `ErrorOr<T>` for domain-expected errors (validation, not-found). No bare `catch (Exception)`.
-- **Concurrency**: `AppStore` internal SemaphoreSlim serializes state mutations. `LauncherJson.Save` has defense-in-depth SemaphoreSlim lock. `MemoizedSelector._hasCached` is volatile. `AgentDiscoveryScanner.Scan()` accepts CancellationToken.
+- **Concurrency**: `StoreGrain` internal SemaphoreSlim serializes state mutations. `FileLauncherJsonIO` has an instance-level SemaphoreSlim on `Save` for defense-in-depth. `MemoizedSelector._hasCached` is volatile. `AgentDiscoveryScanner.Scan()` accepts CancellationToken.
 
 ## Configuration schema
 
@@ -84,7 +84,7 @@ Active config entries must not contain the obsolete per-entry `confirm` key. Lau
 
 All active JSON files must exist, require the documented camelCase keys, and reject missing, null, or blank mode keys. Unknown JSON keys are silently skipped at load time (Loose Read for forward compatibility). Source-gen serialization writes only known fields (Strict Write), making the C# record the effective schema contract.
 
-Nested `settings.window.width` and `settings.window.height` must be positive numbers; invalid geometry is rejected instead of being carried into the next UI startup.
+Nested `settings.window.width` and `settings.window.height` must be positive numbers; the gate (verify.ps1) rejects non-positive geometry. At runtime, invalid values clamp to minimums via Math.Max.
 
 Named launch groups live inside the store under the `presets` array:
 

@@ -66,17 +66,32 @@ Total counts evolve with the codebase — run `ls tests/WTLauncher.Tests/*.cs | 
 
 ---
 
-## Compile-Time Enforcement (2026-07-24)
+## Compile-Time Enforcement (2026-07-24, updated 2026-07-26)
 
 Custom Roslyn analyzers (`WTLauncher.Analyzers`) enforce invariants at build time:
 
-| Rule | ID | Scope |
-|------|----|-------|
-| Core must not reference `App.ViewModels`/`App.Views` | WT1001 | `WTLauncher.Core` only |
-| `LauncherStore.Save` only in `AppStore.Dispatch` | WT1003 | Production code (tests excluded) |
-| `catch (Exception)` must have `when` filter | WT1004 | All source (analyzer project excluded) |
+| Rule | ID | Scope | Status |
+|------|----|-------|--------|
+| Core must not reference `App.ViewModels`/`App.Views` | WT1001 | `WTLauncher.Core` only — catches `using` AND fully-qualified refs | ✅ Active |
+| `IStorePersistence.Save` / `LauncherStore.Save` only in `StoreGrain.Dispatch` | WT1003 | Production code (tests excluded) — checks both old and new write paths | ✅ Active |
+| `catch (Exception)` must have `when` filter | WT1004 | All source (analyzer project excluded) | ✅ Active |
+| `{StaticResource Key}` must be defined in `InjectDesignTokens` or XAML `x:Key` | WT1005 | All `.axaml` files via `AdditionalFiles` | ✅ Active |
+| `LauncherJson.Save/Load<T>` type must be `[JsonSerializable]` registered | WT1006 | App + Core source | ⚠️ [Obsolete] cross-reference |
 
-Added via `Directory.Build.props` so every project gets them.
+Added via `Directory.Build.props`: each non-analyzer project gets `OutputItemType="Analyzer"` with `ReferenceOutputAssembly="false"`. Analyzers run only in CI (`$(CI)=='true'`) or with `-p:ForceAnalysis=true` — local Debug builds skip analyzers for speed.
+
+### Analyzer wiring — critical invariant
+
+Adding a new Roslyn analyzer project to the solution is NOT enough. The consuming `.csproj` MUST include:
+```xml
+<ProjectReference Include="..\WTLauncher.Analyzers\WTLauncher.Analyzers.csproj"
+                  OutputItemType="Analyzer"
+                  ReferenceOutputAssembly="false" />
+```
+Without `OutputItemType="Analyzer"`, the analyzer DLL compiles but the compiler NEVER loads it — zero enforcement.
+
+Best practice: place this in `Directory.Build.props` (or `Directory.Build.targets`) for blanket coverage.
+Self-reference guard: include the condition `$(MSBuildProjectName) != 'WTLauncher.Analyzers'` to prevent the analyzer project from referencing itself.
 
 ## Forbidden Patterns
 
