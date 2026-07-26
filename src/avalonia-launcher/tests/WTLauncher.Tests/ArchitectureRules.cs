@@ -136,37 +136,65 @@ public sealed class ArchitectureRules
         rule.Check(Architecture);
     }
 
+    // ── R7: PresetServices must not reference Views ──────────────────────
+    //
+    // Source: layer-separation invariant (Features cannot see pixels).
+    // Assembly-based with non-empty guard: if Presets assembly contains no types
+    // (e.g. namespace was renamed), the rule fails rather than silently passing.
+
     [Fact]
     public void R7_PresetServices_MustNotReference_Views()
     {
-        IArchRule rule = Types().That().ResideInNamespace("WTLauncher.App.Features.Presets")
+        var presetTypes = Types().That().ResideInAssembly(typeof(WTLauncher.App.Features.Presets.PresetService).Assembly)
+            .And().ResideInNamespace("WTLauncher.App.Features.Presets");
+        Assert.NotEmpty(presetTypes.GetObjects(Architecture));
+
+        IArchRule rule = presetTypes
             .Should().NotDependOnAnyTypesThat().ResideInNamespace("WTLauncher.App.Views")
             .Because("preset services own workflows and contracts, while Views own pixels and window lifecycle only.");
         rule.Check(Architecture);
     }
 
+    // ── R8: EntryServices must not reference Views ───────────────────────
+
     [Fact]
     public void R8_EntryServices_MustNotReference_Views()
     {
-        IArchRule rule = Types().That().ResideInNamespace("WTLauncher.App.Features.Entries")
+        var entryTypes = Types().That().ResideInAssembly(typeof(WTLauncher.App.Features.Entries.EntryService).Assembly)
+            .And().ResideInNamespace("WTLauncher.App.Features.Entries");
+        Assert.NotEmpty(entryTypes.GetObjects(Architecture));
+
+        IArchRule rule = entryTypes
             .Should().NotDependOnAnyTypesThat().ResideInNamespace("WTLauncher.App.Views")
             .Because("entry services own workflows and contracts, while Views own pixels and window lifecycle only.");
         rule.Check(Architecture);
     }
 
+    // ── R9: PresetServices must not depend on System.IO.File ─────────────
+
     [Fact]
     public void R9_PresetServices_MustNot_DependOn_SystemIoFile()
     {
-        IArchRule rule = Types().That().ResideInNamespace("WTLauncher.App.Features.Presets")
+        var presetTypes = Types().That().ResideInAssembly(typeof(WTLauncher.App.Features.Presets.PresetService).Assembly)
+            .And().ResideInNamespace("WTLauncher.App.Features.Presets");
+        Assert.NotEmpty(presetTypes.GetObjects(Architecture));
+
+        IArchRule rule = presetTypes
             .Should().NotDependOnAnyTypesThat().HaveFullName("System.IO.File")
             .Because("preset services must use the single LauncherStore persistence boundary rather than direct file access.");
         rule.Check(Architecture);
     }
 
+    // ── R10: EntryServices must not depend on System.IO.File ────────────
+
     [Fact]
     public void R10_EntryServices_MustNot_DependOn_SystemIoFile()
     {
-        IArchRule rule = Types().That().ResideInNamespace("WTLauncher.App.Features.Entries")
+        var entryTypes = Types().That().ResideInAssembly(typeof(WTLauncher.App.Features.Entries.EntryService).Assembly)
+            .And().ResideInNamespace("WTLauncher.App.Features.Entries");
+        Assert.NotEmpty(entryTypes.GetObjects(Architecture));
+
+        IArchRule rule = entryTypes
             .Should().NotDependOnAnyTypesThat().HaveFullName("System.IO.File")
             .Because("entry services must use the single LauncherStore persistence boundary rather than direct file access.");
         rule.Check(Architecture);

@@ -440,7 +440,16 @@ private async void OnXxxClicked(object? sender, RoutedEventArgs e)
 | **预防** | 快照恢复方法必须有回归测试证明其真实执行回滚。如果恢复方法看起来像空桩（空方法体或 `static` 无副作用签名），在 code review 中被标记为可疑。对 `Bridge` 中暴露的 `RestoreSnapshot` 回调，写一个测试在 save-failure 后验证 `_settings.CustomEntryOrder` 和 `_presetFile` 回滚到快照值。 |
 | **WT_Protector 适用** | `MainWindowViewModel` 中所有 `Restore*` 方法和 ELVM `EntryListBridge` 的 `RestoreSnapshot` 回调必须有对应回归测试。空桩 stub = 未完成，不是因为"暂时不实现"就安全。 |
 
----
+### 3.14 PBT 假属性测试 — 生成器值被丢弃，断言永远测试同一数据
+
+| 属性 | 值 |
+|---|---|
+| **证据** | wt-protector 2026-07-26 ultrareview |
+| **问题** | `LauncherJsonSerializerPbtTests.SerializeDeserializeRoundtrip` 使用 `Gen.Int[0, 5].SelectMany(count => Gen.Int[0, 3], (e, p) => (e, p))` 生成随机 `(entries, presets)` 计数，但 `Sample` 内部的 assert 总是创建硬编码的 1 entry / 0 presets。生成的随机输入被**完全丢弃**——数据通过 `_` 传入但字段未使用。同一个模式还出现在 `LauncherStoreValidatorPbtTests.cs:14-24`。 |
+| **后果** | CsCheck 运行 100 次迭代但每次都用相同数据，PBT 的"发现意外输入"特性完全失效。维护者看到"有 PBT"会误以为这些边界已被覆盖。 |
+| **修复** | 将生成器的值实际用于构造测试数据：`Enumerable.Range(0, entryCount).Select(i => new LaunchEntry { ... })`。加 `Classify()` / `Collect()` 统计输入分布。 |
+| **预防** | PBT 的 `Sample` / `SampleParallel` 回调中的 `assert` 参数必须被**实际使用**。审查 PBT 时检查：断言中是否有来自输入的变量引用？如果没有，则 PBT 极可能是假的。建议在 CI 中添加自动化检查：确保每个 `.Sample(assert: ...)` 回调中的 `assert` 参数至少被读取一次。 |
+| **WT_Protector 适用** | `CsCheckPropertyTests.cs`、`LauncherJsonSerializerPbtTests.cs`、`LauncherLayoutPbtTests.cs`、`LauncherEntryOrderPbtTests.cs` 中所有 `.Sample(assert: ...)` 回调。 |
 
 ## 4. 元教训
 

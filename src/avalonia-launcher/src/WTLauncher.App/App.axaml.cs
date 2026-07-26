@@ -117,7 +117,8 @@ public sealed partial class App : Application
             {
                 desktopLifetime = desktop;
                 var (explicitStorePath, unknownArgs) = LauncherStartupArguments.ReadConfigPath(desktop.Args);
-                var storePath = new FileStorePersistence().ResolveStorePath(
+                using var tempPersistence = new FileStorePersistence();
+                var storePath = tempPersistence.ResolveStorePath(
                     explicitStorePath,
                     Environment.CurrentDirectory,
                     AppContext.BaseDirectory);
@@ -141,8 +142,12 @@ public sealed partial class App : Application
                     }
                 }
 
+                // CA2000: storePersistence 和 storeGrain 在应用生命周期内保持活跃，
+                // 进程退出时由 OS 清理。MainWindowViewModel.Dispose 释放 StoreGrain 订阅。
+#pragma warning disable CA2000
                 var storePersistence = new FileStorePersistence();
                 var storeGrain = new StoreGrain(storePath, storePersistence);
+#pragma warning restore CA2000
                 var storeFile = storeGrain.Select(s => s);
 
                 var launchWorkflow = LauncherLaunchWorkflow.Create();

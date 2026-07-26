@@ -14,9 +14,7 @@ namespace WTLauncher.App.Features.Entries;
 ///
 /// Migration note: MutableEntries/MutableVisibleEntries remain as internal
 /// backward-compat for Drag/Layout partials (Phase 3 migrates them).</summary>
-#pragma warning disable CA1001 // EntryProjection lifecycle matches this VM
-public sealed partial class EntryListViewModel : ObservableObject, IEntryListViewModel, IEntryCardHost
-#pragma warning restore CA1001
+public sealed partial class EntryListViewModel : ObservableObject, IEntryListViewModel, IEntryCardHost, IDisposable
 {
     private readonly ObservableCollection<LauncherEntryViewModel> _entries = [];
     private readonly ObservableCollection<LauncherEntryViewModel> _visibleEntries = [];
@@ -372,4 +370,10 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         EntryMoverDown(entry);
     bool IEntryCardHost.CanMoveEntryDown(LauncherEntryViewModel entry) =>
         EntryMoverDownChecker(entry);
+
+    /// <summary>释放 EntryProjection（Rx 订阅和 DynamicData 缓存）。</summary>
+    public void Dispose()
+    {
+        _projection.Dispose();
+    }
 }

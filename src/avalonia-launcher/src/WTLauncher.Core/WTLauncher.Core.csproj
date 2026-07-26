@@ -8,7 +8,6 @@
   <ItemGroup>
     <PackageReference Include="ErrorOr" />
     <PackageReference Include="OneOf" />
-    <PackageReference Include="Immutype" PrivateAssets="all" />
     <PackageReference Include="MSBuild.CompilerCache" PrivateAssets="all" />
   </ItemGroup>
 </Project>

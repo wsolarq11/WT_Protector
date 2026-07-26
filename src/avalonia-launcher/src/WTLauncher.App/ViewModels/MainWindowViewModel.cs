@@ -14,7 +14,7 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
-public sealed partial class MainWindowViewModel : ObservableObject, IEntryListViewModel
+public sealed partial class MainWindowViewModel : ObservableObject, IEntryListViewModel, IDisposable
 {
     internal readonly StoreGrain _storeGrain;
     private readonly string _storePath;
@@ -457,5 +457,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     {
         RefreshSelectionState();
         ApplyFilter();
+    }
+
+    /// <summary>释放 StoreGrain 订阅和其他托管资源。</summary>
+    public void Dispose()
+    {
+        _storeSubscription?.Dispose();
+        _list.Dispose();
+        _launchOrchestrator.Dispose();
     }
 }

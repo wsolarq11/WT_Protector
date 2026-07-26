@@ -141,7 +141,10 @@ internal static class Program
             var storePath = persistence.ResolveStorePath(null, Environment.CurrentDirectory, AppContext.BaseDirectory);
             var storeDir = Path.GetDirectoryName(Path.GetFullPath(storePath));
             if (!string.IsNullOrWhiteSpace(storeDir) && Directory.Exists(storeDir))
-                new FileLauncherJsonIO().CleanupStaleTempFiles(storeDir);
+            {
+                using var cleanupIo = new FileLauncherJsonIO();
+                cleanupIo.CleanupStaleTempFiles(storeDir);
+            }
             persistence.Dispose();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

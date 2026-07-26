@@ -28,16 +28,25 @@ public abstract class ViewModelBase : ObservableObject, IDisposable
     /// <summary>Dispose all registered resources in reverse order.</summary>
     public void Dispose()
     {
-        List<IDisposable> toDispose;
-        lock (_lock)
-        {
-            if (_disposed) return;
-            _disposed = true;
-            toDispose = _disposables;
-            _disposables = [];
-        }
-        for (var i = toDispose.Count - 1; i >= 0; i--)
-            toDispose[i].Dispose();
+        Dispose(true);
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>Standard Dispose(bool) pattern for unsealed classes.</summary>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+        if (disposing)
+        {
+            List<IDisposable> toDispose;
+            lock (_lock)
+            {
+                toDispose = _disposables;
+                _disposables = [];
+                _disposed = true;
+            }
+            for (var i = toDispose.Count - 1; i >= 0; i--)
+                toDispose[i].Dispose();
+        }
     }
 }

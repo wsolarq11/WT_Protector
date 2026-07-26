@@ -8,7 +8,6 @@
     <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.1.0" />
     <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.0" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageVersion Include="TngTech.ArchUnitNET" Version="0.13.3" />
     <PackageVersion Include="TngTech.ArchUnitNET.xUnitV3" Version="0.13.3" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
@@ -17,14 +16,11 @@
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" />
-    <PackageVersion Include="Vogen" Version="8.0.7" />
     <PackageVersion Include="ErrorOr" Version="2.1.1" />
     <PackageVersion Include="DynamicData" Version="9.4.33" />
     <PackageVersion Include="CsCheck" Version="4.2.0" />
     <PackageVersion Include="Stateless" Version="5.20.0" />
     <PackageVersion Include="OneOf" Version="3.0.271" />
-    <PackageVersion Include="OneOf.SourceGenerator" Version="3.0.271" />
-    <PackageVersion Include="Immutype" Version="1.0.16" />
     <PackageVersion Include="MSBuild.CompilerCache" Version="0.13.7" />
   </ItemGroup>
 </Project>

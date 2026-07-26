@@ -223,6 +223,26 @@ catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
 - **Recoverable-path test** — inject a recoverable exception through the seam (Func / mock / test hook), assert status text + state-cleared contract. Reference: `DiscoverAgentsViewModelTests.ScanAsync_WhenScanFuncThrowsRecoverable_SurfacesErrorAndClearsScanning` (`InvalidOperationException` injection → `StatusText == "扫描过程中发生错误"` + `IsScanning == false`).
 - **Unrecoverable-path test** — NOT REQUIRED. C# language semantics of `when (false)` guarantee the catch is skipped; `ExceptionFilters.IsRecoverable` predicate behavior is independently verified. Adding a test that throws a reserved runtime exception (`OutOfMemoryException` / `SEHException` / `AccessViolationException`) triggers `CA2201`, enforced as error via `-warnaserror` — analyzer theater for a behavior the language already guarantees.
 
+**Gotcha: AggregateException with null InnerException**
+
+> `AggregateException` can be constructed with zero inner exceptions (`new AggregateException()`). In this case, `InnerException` is null. Any unwrap loop that does `inner = inner.InnerException ?? inner` will infinite-loop because the null-coalescing operator returns the same reference, and the type check (`inner is AggregateException`) stays true.
+>
+> **Always use a bounded unwrap with `for i<16` guard AND a `break` when `InnerException is null`:**
+> ```csharp
+> // CORRECT — bounded guard + break on null
+> for (var i = 0; i < 16 && ex is TypeInitializationException or AggregateException; i++)
+> {
+>     if (ex.InnerException is null) break;
+>     ex = ex.InnerException;
+>     if (ex is AggregateException agg)
+>         ex = agg.Flatten().InnerExceptions.FirstOrDefault() ?? ex;
+> }
+> ```
+>
+> **ExceptionFilters.IsRecoverable (App layer) must NOT duplicate the unwrap logic.** It delegates to `LauncherErrors.IsRecoverable (Core)` which has the bounded guard. The DEBUG-only FailFast check in ExceptionFilters uses the same bounded `for i<16` pattern.
+>
+> **Reference bug**: `ExceptionFilters.cs:19-20` (fixed 2026-07-26 ultrareview) — independent unbounded while loop with `inner.InnerException ?? inner` could hang the thread forever.
+
 **Wrong vs Correct:**
 
 ```csharp

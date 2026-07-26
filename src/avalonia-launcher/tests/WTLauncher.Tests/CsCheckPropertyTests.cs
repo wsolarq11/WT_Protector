@@ -53,12 +53,13 @@ public sealed class CsCheckPropertyTests
     }
 
     // Test 2: LaunchArgumentBuilder produces a valid LaunchPlan for any well-formed entry
+    // Uses broad character range: printable ASCII + extended Latin + common unicode
     [Fact]
     public void Build_ProducesValidPlanForAnyValidEntry()
     {
-        Gen.Char['a', 'z'].Array[1, 20].Select(chars => new string(chars))
+        Gen.Char[' ', '~'].Array[1, 20].Select(c => new string(c))
             .SelectMany(
-                name => Gen.Char['a', 'z'].Array[1, 20].Select(cmdChars => new string(cmdChars)),
+                name => Gen.Char[' ', '\u02FF'].Array[1, 20].Select(c => new string(c)),
                 (name, cmd) => new { Name = name, Command = cmd })
             .Sample(assert: input =>
             {
@@ -78,6 +79,25 @@ public sealed class CsCheckPropertyTests
                 Assert.False(string.IsNullOrWhiteSpace(plan.Arguments));
                 Assert.False(string.IsNullOrWhiteSpace(plan.CommandLine));
             });
+    }
+
+    // Test 2b: LaunchArgumentBuilder rejects command lines exceeding 32767 chars
+    [Fact]
+    public void Build_RejectsCommandLineExceeding32767()
+    {
+        var dir = (DirectoryPath)@"C:\";
+
+        // 18000 chars → ~48200 total >> 32767
+        Assert.Throws<InvalidDataException>(() =>
+            LaunchArgumentBuilder.Build(
+                new LaunchEntry { Id = "overflow", Name = "overflow", Directory = dir, Command = new string('x', 18000) },
+                false, false));
+
+        // Short command — always succeeds
+        var plan = LaunchArgumentBuilder.Build(
+            new LaunchEntry { Id = "ok", Name = "ok", Directory = dir, Command = "pwsh -c echo hello" },
+            false, false);
+        Assert.NotNull(plan);
     }
 
     // Test 3: LauncherJson round-trip -- Save then Load preserves all data

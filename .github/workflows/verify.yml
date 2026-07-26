@@ -10,6 +10,8 @@ jobs:
   build-and-test:
     name: Build & Test
     runs-on: windows-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,6 +53,8 @@ jobs:
   nuget-audit:
     name: NuGet Security Audit
     runs-on: windows-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -67,6 +71,8 @@ jobs:
     name: Native AOT Compile
     runs-on: windows-latest
     continue-on-error: true
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -85,8 +91,10 @@ jobs:
   full-gate:
     name: Full Native Gate (verify.ps1)
     runs-on: windows-latest
-    needs: build-and-test
+    needs: [build-and-test, nuget-audit, aot-verify]
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -9,7 +9,8 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <NuGetAudit>true</NuGetAudit>
     <NuGetAuditMode>all</NuGetAuditMode>
-    <RunAnalyzersDuringBuild Condition="'$(CI)' == 'true' Or '$(ForceAnalysis)' == 'true'">true</RunAnalyzersDuringBuild>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
   </PropertyGroup>
 
   <!-- Phase 2: Custom Roslyn analyzers (WT1001-WT1006) for compile-time architecture enforcement -->

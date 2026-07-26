@@ -142,3 +142,13 @@ dotnet_diagnostic.IDE0062.severity = suggestion
 # architecture contracts; call sites are low-frequency (config/preset/validation
 # paths). Forcing concrete types would leak implementation details.
 dotnet_diagnostic.CA1859.severity = suggestion
+
+# ── Ultrareview: strict enforcement rules ──
+# CA1063: IDisposable 必须正确实现
+dotnet_diagnostic.CA1063.severity = warning
+# CA2000: 对象使用后必须 Dispose
+dotnet_diagnostic.CA2000.severity = warning
+# CA2213: 可实现 IDisposable 的字段应 Dispose
+dotnet_diagnostic.CA2213.severity = warning
+# CA1031: 禁止裸 catch(Exception) 类型（无 when）
+dotnet_diagnostic.CA1031.severity = warning

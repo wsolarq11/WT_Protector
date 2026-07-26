@@ -11,10 +11,7 @@ namespace WTLauncher.App.ViewModels;
 /// RequireConfirmationForLaunches toggle. Bridge delegates set by MWVM.
 /// 失败半径: Medium — 启动失败不影响存储状态。
 /// </summary>
-// ponytail: CA1001 wants IDisposable because of _batchCts.
-// _batchCts is deterministically disposed in LaunchBatchAsync's finally block.
-#pragma warning disable CA1001
-public sealed partial class LaunchOrchestrator : ObservableObject
+public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
 {
     private readonly LauncherLaunchWorkflow _launchWorkflow;
     private readonly IDialogService _dialogService;
@@ -316,5 +313,12 @@ public sealed partial class LaunchOrchestrator : ObservableObject
         OnPropertyChanged(nameof(LaunchConfirmationToggleText));
         OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
         FilterApplier();
+    }
+
+    /// <summary>释放 _batchCts 防止 Timer 泄漏。</summary>
+    public void Dispose()
+    {
+        _batchCts?.Dispose();
+        _batchCts = null;
     }
 }

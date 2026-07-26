@@ -1,8 +1,13 @@
-// TODO: Wire this into PresetManager.Load after Phase A is complete
-
 using System.Collections.Immutable;
 
 namespace WTLauncher.Core;
+
+/// <summary>
+/// Ultrareview: LauncherPresetValidator 已完成完整实现和测试，但至今未接入 PresetManager.Load。
+/// 标记为过时。如需启用，接入 PresetManager.Load 并移除此属性。
+/// See: .trellis/spec/presets-validation.md
+/// </summary>
+[Obsolete("LauncherPresetValidator 未接入生产代码。如需启用，接入 PresetManager.Load 后移除此属性。")]
 
 public static class LauncherPresetValidator
 {

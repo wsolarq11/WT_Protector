@@ -13,11 +13,16 @@ internal static class ExceptionFilters
     {
 #if DEBUG
         // In DEBUG builds, rethrow logic errors so they crash the process during development.
-        // Unwrap aggregates to find the real cause; LauncherErrors.IsRecoverable handles
-        // unwrapping for production behavior.
+        // LauncherErrors.IsRecoverable (Core) has a bounded for-i<16 unwrap guard.
+        // For the DEBUG FailFast check, we use the same bounded unwrap pattern.
         var inner = ex;
-        while (inner is TypeInitializationException or AggregateException)
-            inner = inner.InnerException ?? inner;
+        for (var i = 0; i < 16 && inner is TypeInitializationException or AggregateException; i++)
+        {
+            if (inner.InnerException is null) break;
+            inner = inner.InnerException;
+            if (inner is AggregateException agg)
+                inner = agg.Flatten().InnerExceptions.FirstOrDefault() ?? inner;
+        }
         if (inner is NullReferenceException or IndexOutOfRangeException or ArgumentNullException)
             Environment.FailFast("Logic crash (DEBUG): " + inner.Message, inner);
 #endif

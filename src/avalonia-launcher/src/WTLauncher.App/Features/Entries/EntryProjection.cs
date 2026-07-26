@@ -93,5 +93,11 @@ public sealed class EntryProjection : IDisposable
     public void AddOrUpdate(LauncherEntryViewModel vm) => _cache.AddOrUpdate(vm);
     public void Remove(string id) => _cache.Remove(id);
     public IReadOnlyList<LauncherEntryViewModel> GetAllEntries() => _cache.Items.ToList();
-    public void Dispose() => _cleanup.Dispose();
+    public void Dispose()
+    {
+        _cleanup.Dispose();
+        _cache.Dispose();
+        _filterSubject.Dispose();
+        _sortModeSubject.Dispose();
+    }
 }
