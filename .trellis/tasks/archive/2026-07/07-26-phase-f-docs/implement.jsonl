@@ -1,0 +1,5 @@
+{"file": "CLAUDE.md", "reason": "F1/F2/F3/F4: fix AppStore, semaphore, count, checks"}
+{"file": "AGENTS.md", "reason": "F1/F4: fix AppStore ref, check count"}
+{"file": "README.md", "reason": "F1/F5: fix AppStore ref, window geometry desc"}
+{"file": "src/WTLauncher.App/ViewModels/MainWindowViewModel.cs", "reason": "F1: fix AppStore comments"}
+{"file": "src/WTLauncher.App/ViewModels/MainWindowViewModel.Layout.cs", "reason": "F1: fix AppStore comments"}
