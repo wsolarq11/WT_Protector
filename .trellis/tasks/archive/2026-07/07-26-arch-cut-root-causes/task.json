@@ -1,0 +1,33 @@
+{
+  "id": "arch-cut-root-causes",
+  "name": "arch-cut-root-causes",
+  "title": "架构方案实施：剪除 73 项缺陷种子",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "<USER>",
+  "assignee": "<USER>",
+  "createdAt": "2026-07-26",
+  "completedAt": "2026-07-26",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "07-26-phase-a-analyzers",
+    "07-26-phase-b-bugs",
+    "07-26-phase-c-deadcode",
+    "07-26-phase-d-buildcache",
+    "07-26-phase-e-archtest",
+    "07-26-phase-f-docs"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}
