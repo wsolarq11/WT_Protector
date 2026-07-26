@@ -1,3 +1,5 @@
+// TODO: Wire this into PresetManager.Load after Phase A is complete
+
 using System.Collections.Immutable;
 
 namespace WTLauncher.Core;

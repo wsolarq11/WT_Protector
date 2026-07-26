@@ -86,9 +86,6 @@ public static class LauncherRefreshStatus
 
     public static LauncherStatusContent DiscoveryFailed => LauncherStatusContent.Error("扫描过程中发生错误");
 
-    public static LauncherStatusContent ProcessLaunchFailed(string execName, string detail) =>
-        LauncherStatusContent.Error($"进程启动失败: {detail}");
-
     public static LauncherStatusContent GroupNoEntries => LauncherStatusContent.Warning("组内无 entry。");
 
     public static LauncherStatusContent GroupNoEntriesCannotSave => LauncherStatusContent.Warning("组内无 entry,无法保存为启动组。");

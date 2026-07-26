@@ -77,15 +77,8 @@ public sealed class FileStorePersistence : IStorePersistence, IDisposable
 
             var fullPath = Path.GetFullPath(trimmedExplicitPath);
             if (File.Exists(fullPath))
-            {
-                var fileName = Path.GetFileName(fullPath);
-                var dirName = Path.GetFileName(Path.GetDirectoryName(fullPath));
-                if (string.Equals(fileName, LauncherStore.StoreFileName, StringComparison.OrdinalIgnoreCase)
-                    && string.Equals(dirName, LauncherStore.ConfigDirectoryName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return fullPath;
-                }
-            }
+                return fullPath;
+            throw new FileNotFoundException($"Store file not found: {fullPath}", fullPath);
         }
 
         string?[] candidateRoots = [currentDirectory, appBaseDirectory];

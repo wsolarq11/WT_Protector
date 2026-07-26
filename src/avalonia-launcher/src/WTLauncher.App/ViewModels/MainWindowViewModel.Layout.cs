@@ -17,7 +17,7 @@ public sealed partial class MainWindowViewModel
 
     private void OnLayoutFilterChanged()
     {
-        // ponytail: Uses DispatchErrorOr for persistence — AppStore handles
+        // ponytail: Uses DispatchErrorOr for persistence — StoreGrain handles
         // snapshot+rollback internally. No re-entrancy guard needed because
         // DispatchErrorOr is synchronous and rollback doesn't re-trigger this handler.
         var result = _storeGrain.DispatchErrorOr(
@@ -93,7 +93,7 @@ public sealed partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Mutates settings via CurrentSettings (AppStore.Select), builds a new store
+    /// Mutates settings via CurrentSettings (StoreGrain.Select), builds a new store
     /// file with the result, and saves atomically. No local _settings field needed
     /// — failure is reported but there is no stale local state to restore.
     /// </summary>

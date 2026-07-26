@@ -79,10 +79,10 @@ public sealed class LauncherLaunchWorkflow
 
         for (var index = 0; index < items.Count; index++)
         {
-            cancellationToken.ThrowIfCancellationRequested();
             var item = items[index];
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 report.RecordPlan(item.Plan);
                 Start(item.Plan);
                 report.RecordRequested();

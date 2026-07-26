@@ -85,7 +85,10 @@ public sealed class StoreGrain : Grain<LauncherStoreFile>, IDisposable
         return new Subscription(() => StateChanged -= onChanged);
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+        if (_persistence is IDisposable disposable) disposable.Dispose();
+    }
 
     private static LauncherStoreFile LoadInitialState(string storePath, IStorePersistence persistence)
     {

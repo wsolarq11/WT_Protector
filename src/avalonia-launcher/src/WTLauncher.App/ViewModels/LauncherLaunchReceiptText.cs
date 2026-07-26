@@ -294,7 +294,7 @@ public static class LauncherBatchLaunchReceiptText
 
         // All non-failure items up through (RequestedCount + FailedCount - 1) are "已请求".
         // Items past that range are "未启动" (only happens when items are skipped).
-        return index < report.RequestedCount + report.FailedCount ? "已请求" : "未启动";
+        return index < report.RequestedCount + report.FailureIndices.Count ? "已请求" : "未启动";
     }
 
     private static void AppendFailureLines(List<string> lines, IReadOnlyList<string> failures)

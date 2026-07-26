@@ -19,7 +19,7 @@ internal static class ExceptionFilters
         while (inner is TypeInitializationException or AggregateException)
             inner = inner.InnerException ?? inner;
         if (inner is NullReferenceException or IndexOutOfRangeException or ArgumentNullException)
-            throw new InvalidOperationException("Logic crash (DEBUG): " + inner.Message, inner);
+            Environment.FailFast("Logic crash (DEBUG): " + inner.Message, inner);
 #endif
         return LauncherErrors.IsRecoverable(ex);
     }

@@ -223,9 +223,9 @@ public sealed partial class LaunchOrchestrator : ObservableObject
                 entryVm?.RecordLaunchFromOwner(timestamp);
             }
             // Save AFTER timestamps are recorded so launch history is persisted.
+            DryRunTextSetter(LauncherBatchLaunchReceiptText.Format(preflight, report));
             if (startedCount > 0 && !SaveConfig())
                 return;
-            DryRunTextSetter(LauncherBatchLaunchReceiptText.Format(preflight, report));
             StatusApplier(completedStatus(report));
         }
         catch (OperationCanceledException)

@@ -19,7 +19,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     internal readonly StoreGrain _storeGrain;
     private readonly string _storePath;
     private bool _initialized;
-    /// <summary>Read-only settings snapshot from AppStore. Eliminates the old dual-source _settings field.
+    private readonly IDisposable? _storeSubscription;
+    /// <summary>Read-only settings snapshot from StoreGrain. Eliminates the old dual-source _settings field.
     /// Phase 1c: Closed Flux Architecture (07-25).</summary>
     internal LauncherSettings CurrentSettings => _storeGrain.Select(s => s.Settings);
     internal readonly LaunchOrchestrator _launchOrchestrator;
@@ -189,9 +190,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
         StatusContent = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
         // Phase 1c: Closed Flux Architecture (07-25).
-        // _settings field eliminated. All state reads use CurrentSettings (AppStore.Select).
+        // _settings field eliminated. All state reads use CurrentSettings (StoreGrain.Select).
         // Preset sync still needs to update _presetManager on external state changes.
-        _storeGrain.Subscribe(state =>
+        _storeSubscription = _storeGrain.Subscribe(state =>
         {
             _presetManager.Load(
                 new LauncherPresetFile { Presets = state.Presets, DefaultPresetId = state.DefaultPresetId },
@@ -223,7 +224,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
     public ReadOnlyObservableCollection<LauncherEntryViewModel> VisibleEntries => _list.VisibleEntries;
 
-    /// <summary>Current settings snapshot — reads from AppStore (CurrentSettings).
+    /// <summary>Current settings snapshot — reads from StoreGrain (CurrentSettings).
     /// Tests should read from this, not from a stale pre-construction reference.</summary>
     public LauncherSettings Settings => CurrentSettings;
 
@@ -348,8 +349,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
             DefaultPresetId = _presetManager.File.DefaultPresetId,
         };
 
-    /// <summary>Saves the given store file to disk via AppStore. Returns null on
-    /// success, or an error message on failure. Routes through AppStore.Mutate so
+    /// <summary>Saves the given store file to disk via StoreGrain. Returns null on
+    /// success, or an error message on failure. Routes through StoreGrain.Dispatch so
     /// the store's internal state stays in sync and subscribers are notified.
     /// Callers that use snapshot-based rollback are still responsible for restoring
     /// their own ObservableCollection state after a failure.</summary>
@@ -397,8 +398,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         return saveFailure;
     }
 
-    /// <summary>Rebuild ViewModel-level state from AppStore after a save failure.
-    /// AppStore already reverted its internal state; this method syncs the
+    /// <summary>Rebuild ViewModel-level state from StoreGrain after a save failure.
+    /// StoreGrain already reverted its internal state; this method syncs the
     /// ViewModel's in-memory copies back to match.</summary>
     private void RestoreVmStateFromStore()
     {
