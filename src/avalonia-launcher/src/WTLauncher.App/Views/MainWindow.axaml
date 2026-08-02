@@ -8,6 +8,7 @@
         x:Class="WTLauncher.App.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="WT Launcher"
+        Icon="avares://WTLauncher.App/Assets/app.ico"
         Width="{StaticResource WindowDefaultWidth}"
         Height="{StaticResource WindowDefaultHeight}"
         MinWidth="{StaticResource WindowMinWidth}"

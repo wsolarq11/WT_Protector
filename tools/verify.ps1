@@ -465,6 +465,33 @@ foreach ($item in $configItems) {
     }
 }
 
+# R8 (friend-handoff): the shipped example store must stay machine-agnostic —
+# zero entries, locked blank-manual preset, no absolute paths. The canonical
+# config/launcher.json is git-ignored (desensitized); friends start from this file.
+$examplePath = 'config\launcher.example.json'
+if (-not (Test-Path -LiteralPath $examplePath)) { throw "Missing example launcher store: $examplePath" }
+$example = Get-Content -Raw -Encoding UTF8 -LiteralPath $examplePath | ConvertFrom-Json
+if ($null -eq $example) { throw "Example launcher store parsed to null: $examplePath" }
+if ([int]$example.schemaVersion -ne 2) { throw "Example launcher store schemaVersion != 2: $examplePath" }
+if (@($example.entries).Count -ne 0) { throw "Example launcher store must ship with zero entries: $examplePath" }
+if ([string]::IsNullOrWhiteSpace([string]$example.defaultPresetId)) { throw 'Example launcher store defaultPresetId is required' }
+foreach ($examplePreset in @($example.presets)) {
+    if (($examplePreset.id -eq 'blank-manual') -and ($examplePreset.locked -ne $true)) {
+        throw 'Example launcher store blank-manual preset must stay locked'
+    }
+}
+$exampleText = Get-Content -Raw -Encoding UTF8 -LiteralPath $examplePath
+if ($exampleText -match '([A-Za-z]:\\)|(/Users/)') {
+    throw "Example launcher store must not contain absolute machine paths: $examplePath"
+}
+Add-Check 'config-example-schema' @{
+    path = $examplePath
+    schemaVersion = [int]$example.schemaVersion
+    entries = @($example.entries).Count
+    defaultPresetId = [string]$example.defaultPresetId
+    noAbsolutePaths = $true
+}
+
 $manifestPath = Get-ShortcutBackupManifestPath
 if (-not (Test-Path -LiteralPath $manifestPath)) { throw "Missing shortcut backup manifest: $manifestPath" }
 $manifest = Get-Content -Raw -Encoding UTF8 -LiteralPath $manifestPath | ConvertFrom-Json

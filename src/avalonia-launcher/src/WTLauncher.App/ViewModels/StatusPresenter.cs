@@ -42,11 +42,13 @@ public sealed partial class StatusPresenter : ObservableObject
     private string _applyPresetButtonText = LauncherPresetSelectionPreview.DefaultApplyButtonText;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(EmptyStateText))]
+    [NotifyPropertyChangedFor(nameof(IsEmptyEntries))]
+    [NotifyPropertyChangedFor(nameof(IsFilteredEmpty))]
     private int _totalCount;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsVisibleEmpty))]
+    [NotifyPropertyChangedFor(nameof(IsFilteredEmpty))]
     private int _visibleCount;
 
     [ObservableProperty]
@@ -57,9 +59,11 @@ public sealed partial class StatusPresenter : ObservableObject
 
     public bool IsVisibleEmpty => VisibleCount == 0;
 
-    public string EmptyStateText => TotalCount == 0
-        ? "欢迎使用 WT Launcher — 使用上方菜单添加启动项或发现工具"
-        : "没有匹配的启动项";
+    /// <summary>True when the store has zero entries at all (first-run welcome).</summary>
+    public bool IsEmptyEntries => TotalCount == 0;
+
+    /// <summary>True when entries exist but none match the current filter.</summary>
+    public bool IsFilteredEmpty => IsVisibleEmpty && !IsEmptyEntries;
 
     public void SetStatus(LauncherStatusContent? status)
     {

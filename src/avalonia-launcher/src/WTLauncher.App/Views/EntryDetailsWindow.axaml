@@ -37,10 +37,18 @@
         <TextBlock FontWeight="SemiBold"
                    Foreground="{StaticResource TextPrimaryBrush}"
                    Text="目录"/>
-        <TextBox x:Name="DirectoryBox"
-                 FontFamily="Cascadia Code, Consolas, Courier New, monospace"
-                 FontSize="{StaticResource FontSizeBody}"
-                 Padding="10,8"/>
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+          <TextBox x:Name="DirectoryBox"
+                   FontFamily="Cascadia Code, Consolas, Courier New, monospace"
+                   FontSize="{StaticResource FontSizeBody}"
+                   Padding="10,8"/>
+          <Button x:Name="BrowseDirectoryButton"
+                  Grid.Column="1"
+                  Content="浏览..."
+                  VerticalAlignment="Center"
+                  Click="OnBrowseDirectoryClicked"
+                  automation:AutomationProperties.Name="浏览选择目录"/>
+        </Grid>
         <TextBlock FontWeight="SemiBold"
                    Foreground="{StaticResource TextPrimaryBrush}"
                    Text="命令"/>

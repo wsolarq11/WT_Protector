@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 2,
+  "settings": {
+    "lastFilterText": "",
+    "sortMode": "custom",
+    "entryViewMode": "cards",
+    "cardsGroupKey": "none",
+    "requireConfirmationForLaunches": false,
+    "customEntryOrder": [],
+    "commandTemplates": {},
+    "searchHistory": [],
+    "backgroundMode": "solid",
+    "window": {
+      "width": 1180,
+      "height": 760
+    }
+  },
+  "entries": [],
+  "presets": [
+    {
+      "id": "blank-manual",
+      "name": "清空勾选 / 手动模式",
+      "entryIds": [],
+      "locked": true
+    }
+  ],
+  "defaultPresetId": "blank-manual"
+}

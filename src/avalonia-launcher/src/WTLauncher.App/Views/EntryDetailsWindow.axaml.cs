@@ -2,7 +2,9 @@ using System.IO;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -46,6 +48,15 @@ public sealed partial class EntryDetailsWindow : Window
         DirectoryBox.MaxLength = 4096;
         CommandBox.Text = RequireInitialEntryText(prefill, static item => item.Command, "command");
         CommandBox.MaxLength = 4096;
+
+        // R5 (friend-handoff): in add mode, lower the barrier — ID may stay blank
+        // (auto-derived from the name on save), the command defaults to pwsh, and
+        // the directory is browsable. Edit mode keeps the existing behavior.
+        if (!_isEdit)
+        {
+            IdBox.PlaceholderText = "留空自动生成";
+            CommandBox.Text = "pwsh";
+        }
 
         SelectedBox.IsChecked = prefill?.Selected ?? false;
 
@@ -118,12 +129,34 @@ public sealed partial class EntryDetailsWindow : Window
 
     private void OnSaveClicked(object? sender, RoutedEventArgs e) => Submit();
 
+    private async void OnBrowseDirectoryClicked(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var startDir = !string.IsNullOrEmpty(DirectoryBox.Text)
+                ? await StorageProvider.TryGetFolderFromPathAsync(DirectoryBox.Text)
+                : null;
+            var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = "选择目录",
+                AllowMultiple = false,
+                SuggestedStartLocation = startDir,
+            });
+            if (folders.Count > 0 && folders[0].TryGetLocalPath() is { } localPath)
+                DirectoryBox.Text = localPath;
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "EntryDetails.BrowseDirectory");
+        }
+    }
+
     private void Submit()
     {
         try
         {
             var rawDraft = new EntryDraft(
-                RequireSubmittedText(IdBox, "id"),
+                ResolveSubmittedId(),
                 RequireSubmittedText(NameBox, "name"),
                 RequireSubmittedText(DirectoryBox, "directory"),
                 RequireSubmittedText(CommandBox, "command"),
@@ -143,6 +176,32 @@ public sealed partial class EntryDetailsWindow : Window
             ErrorText.Text = ExceptionMessageFormatter.ForUser(ex);
             ErrorText.IsVisible = true;
         }
+    }
+
+    /// <summary>
+    /// Add-mode ID derivation: <see cref="EntryId.Normalize"/> of the name,
+    /// with a timestamp fallback for names that cannot form an ID
+    /// (e.g. non-Latin). Uniqueness stays enforced by the service layer.
+    /// </summary>
+    public static string ResolveAutoId(string? name, DateTime now)
+    {
+        var derived = EntryId.Normalize(name);
+        return derived.Length > 0
+            ? derived
+            : $"entry-{now:yyyyMMddHHmmss}";
+    }
+
+    /// <summary>
+    /// Add-mode ID resolution: blank ID is auto-derived from the name.
+    /// Edit mode always uses the submitted value.
+    /// </summary>
+    private string ResolveSubmittedId()
+    {
+        var submitted = RequireSubmittedText(IdBox, "id");
+        if (_isEdit || submitted.Length > 0)
+            return submitted;
+
+        return ResolveAutoId(RequireSubmittedText(NameBox, "name"), DateTime.Now);
     }
 
     private static string RequireInitialEntryId(EntryPrefill? prefill)

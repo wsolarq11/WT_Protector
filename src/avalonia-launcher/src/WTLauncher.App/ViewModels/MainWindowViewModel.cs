@@ -47,9 +47,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     public int TotalCount { get => _statusPresenter.TotalCount; set => _statusPresenter.TotalCount = value; }
     public int VisibleCount { get => _statusPresenter.VisibleCount; set => _statusPresenter.VisibleCount = value; }
     public bool IsVisibleEmpty => _statusPresenter.IsVisibleEmpty;
+    public bool IsEmptyEntries => _statusPresenter.IsEmptyEntries;
+    public bool IsFilteredEmpty => _statusPresenter.IsFilteredEmpty;
     public int SelectedCount { get => _statusPresenter.SelectedCount; set => _statusPresenter.SelectedCount = value; }
     public int PresetCount { get => _statusPresenter.PresetCount; set => _statusPresenter.PresetCount = value; }
-    public string EmptyStateText => _statusPresenter.EmptyStateText;
     public ReadOnlyObservableCollection<LauncherPresetViewModel> Presets => _presetManager.Presets;
     public LauncherPresetViewModel? SelectedPreset => _presetManager.SelectedPreset;
     public ReadOnlyObservableCollection<LauncherSortModeViewModel> SortModes => _layoutManager.SortModes;

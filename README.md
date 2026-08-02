@@ -5,7 +5,8 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 ## What this project contains
 
 - `src/avalonia-launcher/` — active mainline Avalonia/.NET launcher source, tests, run script, and publish gate.
-- `config/launcher.json` — canonical unified launcher store (`LauncherStoreFile`, schemaVersion=2) with entries, named presets, nested UI settings (filter text, sort/view/confirmation state, custom order, window), and the default preset id.
+- `config/launcher.example.json` — machine-agnostic template of the unified launcher store (zero entries, locked blank-manual preset). The live `config/launcher.json` is git-ignored runtime state (desensitized 2026-08-02: it carries local absolute paths); friends and fresh clones start from the example.
+- `docs/使用说明.txt` — friend-facing quick start (zero jargon, three steps to first launch); packaged into the friend zip.
 - `retired/WT Launcher.hta` — retired legacy HTA snapshot kept only for archive/reference.
 - `retired/config/config.json` — retired HTA-local config used only when manually opening the archived HTA.
 - `retired/design/winforms-launcher.md` — retired WinForms executable/source design lessons and receipts.
@@ -133,6 +134,17 @@ Additional settings fields:
 - `customEntryOrder` — stable entry-id order used by the "自定义拖拽" mode and persisted after drag-drop reorder.
 - `commandTemplates` — optional dictionary of reusable command templates. When a config entry's `command` starts with `$` followed by a key (e.g. `$codex`), the launcher resolves it to the template value from this map. Missing template keys cause a launch validation error.
 - `searchHistory` — optional deduplicated list of recent filter-text terms. Maintained as a JSON array of strings; the launcher validates the array must not be null. Search history is exposed in the UI via an AutoCompleteBox dropdown on the search input.
+
+## Friend handoff (2026-08-02)
+
+A ready-to-share zip is built with two commands (repo root, PowerShell):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build-release.ps1     # AOT single exe → artifacts/publish/win-x64/
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\package-friend.ps1    # friend zip → artifacts/friend/WTLauncher-<version>.zip
+```
+
+The zip contains the AOT exe, `使用说明.txt` (three-step quick start, SmartScreen bypass included), and `config/launcher.example.json`. A friend unzips to any folder and double-clicks the exe; the app boots with an empty store and the first-run welcome panel guides adding the first workspace. The exe is unsigned — the quick start documents "更多信息 → 仍要运行". No installer, no registry, no AppData (see Safety notes).
 
 ## Run the mainline app
 
