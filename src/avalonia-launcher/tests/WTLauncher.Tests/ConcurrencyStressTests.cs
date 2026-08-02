@@ -1,4 +1,5 @@
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
 namespace WTLauncher.Tests;
@@ -63,7 +64,7 @@ public sealed class ConcurrencyStressTests
             {
                 ErrorLog.Write(new InvalidOperationException($"thread-{i}"), "Stress", logDir, logPath);
             }
-            catch (Exception ex) when (ex is not null)
+            catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
             {
                 lock (exceptions) { exceptions.Add(ex); }
             }

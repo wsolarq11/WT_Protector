@@ -4,10 +4,18 @@
     <TargetFramework>net10.0</TargetFramework>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <Nullable>enable</Nullable>
+    <!-- R1: 应用身份 — 图标(Assets/app.ico,由 tools/generate-icon.ps1 生成)与版本信息。
+         版本号由 build-release.ps1 通过 -p:Version 注入。 -->
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <Product>WT Launcher</Product>
+    <AssemblyTitle>WT Launcher</AssemblyTitle>
     <!-- 07-12-modernization: Compiled bindings for compile-time type safety. -->
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    <!-- 07-12-modernization: AOT-compatible build; PublishAot is enabled via command-line
-         during release publish (build-release.ps1 passes -p:PublishAot=true). -->
+    <!-- 07-12-modernization: AOT-compatible build; PublishAot is scoped to this project
+         only. build-release.ps1 passes -p:EnableNativeAot=true; a command-line
+         -p:PublishAot=true would propagate as a global property to the netstandard
+         analyzer project via Directory.Build.props and fail with NETSDK1207. -->
+    <PublishAot Condition="'$(EnableNativeAot)' == 'true'">true</PublishAot>
     <IsAotCompatible>true</IsAotCompatible>
     <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
     <!-- CS0618: LaunchPlan.CommandLine is [Obsolete] for logging but still used for UI display (DryRun). -->
@@ -26,6 +34,10 @@
   </ItemGroup>
   <ItemGroup>
     <AdditionalFiles Include="**/*.axaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- R1: runtime window icon (title bar/taskbar) via avares://WTLauncher.App/Assets/app.ico -->
+    <AvaloniaResource Include="Assets\app.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WTLauncher.Core\WTLauncher.Core.csproj" />

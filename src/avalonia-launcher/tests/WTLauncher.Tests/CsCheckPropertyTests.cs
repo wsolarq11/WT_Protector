@@ -57,9 +57,21 @@ public sealed class CsCheckPropertyTests
     [Fact]
     public void Build_ProducesValidPlanForAnyValidEntry()
     {
-        Gen.Char[' ', '~'].Array[1, 20].Select(c => new string(c))
+        // Precondition: "well-formed" means the entry survives normalization —
+        // whitespace-only or control-only names/commands become empty after
+        // EntryName.Normalize + LaunchArgumentBuilder.StripUnsafeCharacters
+        // and are rejected (throws). The generator must not produce those.
+        // The command range spans C1 control chars (U+0080-U+009F), which are
+        // not whitespace but are stripped — filter by Unicode category.
+        Gen.Char[' ', '~'].Array[1, 20]
+            .Select(c => new string(c))
+            .Where(name => name.Trim().Length > 0)
             .SelectMany(
-                name => Gen.Char[' ', '\u02FF'].Array[1, 20].Select(c => new string(c)),
+                name => Gen.Char[' ', '\u02FF'].Array[1, 20]
+                    .Select(c => new string(c))
+                    .Where(cmd => cmd.Any(ch => char.GetUnicodeCategory(ch) is not
+                        (System.Globalization.UnicodeCategory.Control or
+                         System.Globalization.UnicodeCategory.Format))),
                 (name, cmd) => new { Name = name, Command = cmd })
             .Sample(assert: input =>
             {

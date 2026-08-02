@@ -1,8 +1,11 @@
-// WT1004: catch (Exception) must have a when filter
-// Reports diagnostic on any catch clause that catches Exception without a when clause.
+// WT1004: catch (Exception) must have the approved when filter
+// Reports diagnostic on any catch clause that catches Exception without the
+// approved recoverability filter.
 // Good: catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+//       catch (Exception ex) when (LauncherErrors.IsRecoverable(ex))
 // Bad:  catch (Exception ex) { ... }
 // Bad:  catch (Exception) { ... }
+// Bad:  catch (Exception ex) when (true) { ... }   (filter present but not approved)
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -55,10 +58,65 @@ public class CatchExceptionMustHaveWhenAnalyzer : DiagnosticAnalyzer
         if (caughtType == null || exceptionType == null) return;
         if (!SymbolEqualityComparer.Default.Equals(caughtType, exceptionType)) return;
 
-        // If it has a when filter, it's allowed
-        if (catchClause.Filter != null) return;
+        // Approved filters: when (ExceptionFilters.IsRecoverable(x)) /
+        // when (LauncherErrors.IsRecoverable(x)). Any other filter still
+        // swallows fatal exceptions, so it is reported too.
+        if (catchClause.Filter is { FilterExpression: { } filter } &&
+            IsApprovedRecoverabilityFilter(context, filter))
+            return;
 
-        // Report diagnostic
         context.ReportDiagnostic(Diagnostic.Create(Rule, catchClause.GetLocation()));
     }
+
+    private static bool IsApprovedRecoverabilityFilter(
+        SyntaxNodeAnalysisContext context, ExpressionSyntax filterExpression)
+    {
+        // Form 1: when (ExceptionFilters.IsRecoverable(ex)) / LauncherErrors.IsRecoverable(ex)
+        if (filterExpression is InvocationExpressionSyntax invocation &&
+            IsRecoverabilityInvocation(context, invocation))
+            return true;
+
+        // Form 2: narrow type filter — when (ex is IOException or UnauthorizedAccessException).
+        // The rule message advertises "or narrow to specific exception types"; constant
+        // filters like `when (true)` are not narrowing and stay reported.
+        return filterExpression is IsPatternExpressionSyntax isPattern &&
+               ContainsOnlyTypePatterns(context, isPattern.Pattern);
+    }
+
+    private static bool IsRecoverabilityInvocation(
+        SyntaxNodeAnalysisContext context, InvocationExpressionSyntax invocation)
+    {
+        if (context.SemanticModel.GetSymbolInfo(invocation).Symbol is not IMethodSymbol method)
+            return false;
+        if (method.Name != "IsRecoverable")
+            return false;
+
+        var containingType = method.ContainingType;
+        if (containingType is null)
+            return false;
+        if (containingType.Name is not ("ExceptionFilters" or "LauncherErrors"))
+            return false;
+
+        var ns = containingType.ContainingNamespace?.ToDisplayString();
+        return ns is "WTLauncher.App.ViewModels" or "WTLauncher.Core";
+    }
+
+    /// <summary>True when the pattern tree narrows by type only (type patterns,
+    /// or/and/parenthesized combinations). Unary `not` patterns and constants
+    /// that are not types (e.g. `is not null`) are not type narrowing and are
+    /// rejected. Roslyn parses a plain type name in `x is T` as a constant
+    /// pattern — the binder resolves it; only symbols that ARE named types count.</summary>
+    private static bool ContainsOnlyTypePatterns(SyntaxNodeAnalysisContext context, PatternSyntax pattern) =>
+        pattern switch
+        {
+            TypePatternSyntax => true,
+            BinaryPatternSyntax binary =>
+                ContainsOnlyTypePatterns(context, binary.Left) &&
+                ContainsOnlyTypePatterns(context, binary.Right),
+            ParenthesizedPatternSyntax parenthesized =>
+                ContainsOnlyTypePatterns(context, parenthesized.Pattern),
+            ConstantPatternSyntax constant =>
+                context.SemanticModel.GetSymbolInfo(constant.Expression).Symbol is INamedTypeSymbol,
+            _ => false,
+        };
 }

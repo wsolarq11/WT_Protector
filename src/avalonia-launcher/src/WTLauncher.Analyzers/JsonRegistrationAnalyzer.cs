@@ -1,25 +1,20 @@
-// WT1006: JsonSerializable type must be registered in LauncherJsonContext.
+// WT1006: types used with LauncherJson.Save<T>/Load<T> must be registered with
+// [JsonSerializable] on LauncherJsonContext.
 //
-// OBSOLETE — This analyzer was a Phase-1 scaffolding placeholder and is not
-// fully implemented. The planned approach (RegisterSyntaxNodeAction on
-// TypeOfExpressionSyntax) would need to cross-reference against source-generated
-// [JsonSerializable] attributes on LauncherJsonContext, which requires reading
-// generated files from the obj/ directory — a fragile design.
-//
-// Alternative verification:
-//   The gate (verify.ps1) ensures GetTypeInfo() null-safety at runtime.
-//   AOT compilation catches missing [JsonSerializable] at publish time
-//   (IL linker throws for unregistered types).
-//   If static analysis is still desired, implement a separate tool that
-//   inspects the compiled assembly's System.Text.Json.JsonSerializerOptions
-//   metadata instead of a Roslyn analyzer.
+// Implementation note: registration types are resolved semantically from the
+// compilation — LauncherJsonContext's [JsonSerializable(typeof(T))] attributes
+// are read via GetAttributes(). In the real App build, Core's compiled
+// LauncherJsonContext (source-generated partial) carries those attributes as
+// assembly metadata, so no generated-file reading is required.
 
 using System.Collections.Immutable;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace WTLauncher.Analyzers;
 
-[Obsolete("WT1006 is a scaffolding analyzer. " +
-    "Use runtime null-safety checks and AOT compilation validation instead.")]
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class JsonRegistrationAnalyzer : DiagnosticAnalyzer
 {
@@ -40,7 +35,59 @@ public class JsonRegistrationAnalyzer : DiagnosticAnalyzer
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
-        // OBSOLETE — intentionally disabled. No syntax/compilation actions registered.
-        // See file header for alternative verification methods.
+        context.RegisterCompilationStartAction(compilationContext =>
+        {
+            // Scope guard: the registration contract applies to App-layer callers.
+            if (!compilationContext.Compilation.AssemblyName?.StartsWith("WTLauncher.App", StringComparison.Ordinal) == true)
+                return;
+
+            var contextType = compilationContext.Compilation
+                .GetTypeByMetadataName("WTLauncher.Core.LauncherJsonContext");
+            if (contextType is null)
+                return;
+
+            var registered = CollectRegisteredTypes(contextType);
+            if (registered.Count == 0)
+                return;
+
+            compilationContext.RegisterSyntaxNodeAction(
+                ctx => AnalyzeInvocation(ctx, registered),
+                SyntaxKind.InvocationExpression);
+        });
+    }
+
+    private static HashSet<ISymbol> CollectRegisteredTypes(INamedTypeSymbol contextType)
+    {
+        var set = new HashSet<ISymbol>(SymbolEqualityComparer.Default);
+        foreach (var attribute in contextType.GetAttributes())
+        {
+            if (attribute.AttributeClass?.ToDisplayString() != "System.Text.Json.Serialization.JsonSerializableAttribute")
+                continue;
+            if (attribute.ConstructorArguments.Length != 1)
+                continue;
+            if (attribute.ConstructorArguments[0].Value is INamedTypeSymbol type)
+                set.Add(type);
+        }
+        return set;
+    }
+
+    private static void AnalyzeInvocation(SyntaxNodeAnalysisContext context, HashSet<ISymbol> registered)
+    {
+        if (context.Node is not InvocationExpressionSyntax invocation)
+            return;
+        if (context.SemanticModel.GetSymbolInfo(invocation).Symbol is not IMethodSymbol method)
+            return;
+        if (method.Name is not ("Save" or "Load" or "LoadRequired"))
+            return;
+        if (method.ContainingType?.ToString() != "WTLauncher.Core.LauncherJson")
+            return;
+        if (method.TypeArguments.Length != 1)
+            return;
+
+        var typeArgument = method.TypeArguments[0];
+        if (registered.Contains(typeArgument))
+            return;
+
+        context.ReportDiagnostic(Diagnostic.Create(Rule, invocation.GetLocation(), typeArgument.Name));
     }
 }

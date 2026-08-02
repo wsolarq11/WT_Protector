@@ -51,10 +51,21 @@ public class LayerViolationAnalyzer : DiagnosticAnalyzer
     /// <summary>
     /// Catches fully-qualified type references like
     /// <c>WTLauncher.App.ViewModels.SomeViewModel</c> that bypass using directives.
+    /// Qualified names that belong to a using directive are skipped — the
+    /// using-directive check already reports those, and reporting twice would
+    /// duplicate diagnostics on a single line.
     /// </summary>
     private static void AnalyzeQualifiedName(SyntaxNodeAnalysisContext context)
     {
         var qualifiedName = (QualifiedNameSyntax)context.Node;
+        if (qualifiedName.FirstAncestorOrSelf<UsingDirectiveSyntax>() is not null)
+            return;
+
+        // Nested qualified names (A.B.C contains A.B) all match the string check;
+        // report only the outermost node so a single reference yields one diagnostic.
+        if (qualifiedName.Parent is QualifiedNameSyntax)
+            return;
+
         var name = qualifiedName.ToString();
 
         if (name.Contains("WTLauncher.App.ViewModels") || name.Contains("WTLauncher.App.Views"))

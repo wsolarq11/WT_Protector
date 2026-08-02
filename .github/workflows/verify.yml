@@ -86,7 +86,7 @@ jobs:
         run: dotnet restore src/avalonia-launcher/WTLauncher.Avalonia.sln
 
       - name: AOT publish
-        run: dotnet publish src/avalonia-launcher/WTLauncher.Avalonia.sln -c Release -r win-x64 -p:PublishAot=true --no-restore
+        run: dotnet publish src/avalonia-launcher/src/WTLauncher.App/WTLauncher.App.csproj -c Release -r win-x64 -p:EnableNativeAot=true --no-restore
 
   full-gate:
     name: Full Native Gate (verify.ps1)

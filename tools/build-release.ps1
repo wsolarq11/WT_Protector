@@ -44,10 +44,25 @@ $version = & {
 New-Item -ItemType Directory -Force -Path $publishDir | Out-Null
 
 Invoke-NativeStep 'dotnet restore solution win-x64' { dotnet restore $solution -r win-x64 }
-# 07-12-modernization: Native AOT publish (PublishAot=true produces single native exe, no .dll).
-Invoke-NativeStep 'dotnet publish app win-x64 native-aot' { dotnet publish $app -c Release -r win-x64 -p:PublishAot=true -o $publishDir -p:Version=$version -p:InformationalVersion=$version }
+# 07-12-modernization: Native AOT publish (EnableNativeAot marker enables the
+# project-scoped PublishAot in WTLauncher.App.csproj; passing PublishAot on the
+# command line would propagate globally to the analyzer project → NETSDK1207).
+Invoke-NativeStep 'dotnet publish app win-x64 native-aot' { dotnet publish $app -c Release -r win-x64 -p:EnableNativeAot=true -o $publishDir -p:Version=$version -p:InformationalVersion=$version }
 
 if (-not (Test-Path -LiteralPath $exe)) { throw "Published exe missing: $exe" }
+
+# R2: keep the publish directory as a clean distributable — remove debug symbols
+# (*.pdb) and the stale config/ copy from older publishes. IMPORTANT: *.dll files
+# (libSkiaSharp.dll, libHarfBuzzSharp.dll, av_libglesv2.dll) are REQUIRED native
+# runtime dependencies of the AOT exe — AOT does not default to single-file —
+# and their old timestamps reflect nuget-package asset dates, not staleness.
+# Deleting them broke exe startup (DllNotFoundException for libSkiaSharp,
+# 2026-08-02) — keep them.
+Get-ChildItem -LiteralPath $publishDir -File -Recurse |
+    Where-Object { $_.Extension -eq '.pdb' } |
+    Remove-Item -Force
+$staleConfigDir = Join-Path $publishDir 'config'
+if (Test-Path -LiteralPath $staleConfigDir) { Remove-Item -LiteralPath $staleConfigDir -Recurse -Force }
 
 $receipt = New-ToolReceipt 'release-build' @{
     sourceRoot = Get-AvaloniaRoot

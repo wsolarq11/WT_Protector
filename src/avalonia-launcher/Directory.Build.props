@@ -13,10 +13,23 @@
     <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
   </PropertyGroup>
 
-  <!-- Phase 2: Custom Roslyn analyzers (WT1001-WT1006) for compile-time architecture enforcement -->
-  <ItemGroup Condition="'$(MSBuildProjectName)' != 'WTLauncher.Analyzers'">
+  <!-- Phase 2: Custom Roslyn analyzers (WT1001-WT1006) for compile-time architecture enforcement.
+       WTLauncher.Tests manages its own dual-role reference (analyzer + runtime types for the
+       in-process analyzer test suite); a second ReferenceOutputAssembly=false entry here would
+       collide with it and break the reference copy in the test output folder. -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' != 'WTLauncher.Analyzers' and '$(MSBuildProjectName)' != 'WTLauncher.Tests'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)src\WTLauncher.Analyzers\WTLauncher.Analyzers.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
   </ItemGroup>
+
+  <!-- 2026-08-02: MSBuild.CompilerCache is disabled — it does not include @(Analyzer)
+       in its CoreCompile cache key, so custom-analyzer results drift across builds and
+       analyzer dll copies in consumer output folders go stale (observed: WT1004 error
+       sets changed between identical builds; 11 bare-catch violations went unnoticed
+       after the cache landed; test bin carried a pre-upgrade analyzer dll). The
+       analyzers ARE the architecture gate — they must run on every build. -->
+  <PropertyGroup>
+    <ForceDisableCompilationCache>true</ForceDisableCompilationCache>
+  </PropertyGroup>
 </Project>

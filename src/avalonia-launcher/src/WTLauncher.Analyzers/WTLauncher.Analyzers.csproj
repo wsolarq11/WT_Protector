@@ -7,7 +7,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <IsRoslynComponent>true</IsRoslynComponent>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
-    <NoWarn>$(NoWarn);RS2008</NoWarn>
+    <!-- RS1038: 本程序集同时承载命令行分析器与 IDE-only CodeFixProvider(标准单项目模板形态)。
+         CodeFix 仅在 IDE 注册,命令行 csc 加载本程序集时依赖 Microsoft.CodeAnalysis.Workspaces.Common.dll
+         与程序集同目录可解析;分析器在命令行构建中的实际加载由 verify 门禁验证。 -->
+    <NoWarn>$(NoWarn);RS2008;RS1038</NoWarn>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <DevelopmentDependency>true</DevelopmentDependency>
@@ -15,7 +18,9 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Pack="false" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Pack="false" />
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Pack="false" />
+    <PackageReference Include="System.Composition" Pack="false" />
   </ItemGroup>
 
 </Project>

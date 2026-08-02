@@ -28,6 +28,11 @@ public class DispatchMustBeOnlyWritePathAnalyzer : DiagnosticAnalyzer
         context.EnableConcurrentExecution();
         context.RegisterCompilationStartAction(compilationContext =>
         {
+            // Scope guard: the write-path contract applies to the App layer only.
+            // Core persistence types may call Save freely within their own layer.
+            if (!compilationContext.Compilation.AssemblyName?.StartsWith("WTLauncher.App", StringComparison.Ordinal) == true)
+                return;
+
             compilationContext.RegisterSyntaxNodeAction(AnalyzeInvocation, SyntaxKind.InvocationExpression);
         });
     }

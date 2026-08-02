@@ -28,10 +28,26 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\WTLauncher.App\WTLauncher.App.csproj" />
+    <!-- Dual role for the analyzer project: OutputItemType=Analyzer makes the
+         custom analyzers run on test code (WT1001-WT1006 enforcement), while the
+         plain reference below gives the in-process analyzer test suite the
+         assembly. Both entries are required — MSBuild keeps them as distinct
+         items (different OutputItemType), and the test output must carry the dll. -->
+    <ProjectReference Include="..\..\src\WTLauncher.Analyzers\WTLauncher.Analyzers.csproj" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\..\src\WTLauncher.Analyzers\WTLauncher.Analyzers.csproj" />
     <ProjectReference Include="..\..\src\WTLauncher.Core\WTLauncher.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
+  <!-- The analyzer project reference is not reliably copied to the test output
+       folder by incremental builds (ProjectReference + OutputItemType=Analyzer
+       interplay). The in-process analyzer test suite needs the dll at runtime,
+       so copy it explicitly after every build of the tests project. -->
+  <Target Name="CopyAnalyzerAssemblyToTestOutput" AfterTargets="Build">
+    <Copy SourceFiles="..\..\src\WTLauncher.Analyzers\bin\$(Configuration)\netstandard2.0\WTLauncher.Analyzers.dll"
+          DestinationFolder="$(OutputPath)"
+          SkipUnchangedFiles="true" />
+  </Target>
 </Project>
 
