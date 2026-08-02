@@ -1084,3 +1084,63 @@ private async void OnXxxClicked(object? sender, RoutedEventArgs e)
 | **后果** | 已启动进程的时间戳丢失，回执显示"0 项" |
 | **修复** | 用 `try-finally` 保证回执始终生成——即使是取消/异常路径 |
 | **适用** | 所有包含清理逻辑的循环。 |
+
+### 10.11 MSBuild.CompilerCache 缓存键不含 `@(Analyzer)` — 分析器结果跨构建漂移
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-08-02 friend-handoff session；`Cached.CoreCompile.*.targets` Inputs 列表（`MSBuild.CompilerCache` 0.13.7） |
+| **根因** | 缓存的 `CoreCompile` Inputs 只有 `@(Compile)`/引用/资源等，**没有 `@(Analyzer)`**。自定义分析器 DLL 内容变化不使消费项目缓存失效 → 消费项目沿用旧编译结果（旧分析器行为），且测试输出目录中的分析器 DLL 拷贝不刷新 |
+| **后果** | ① 自 2026-07-26 缓存接入后，11 处裸 `catch (Exception)` 违规（本应被 WT1004 拦截）一直未被发现，门禁保持绿色；② 两次完全相同构建产出不同错误集（11 vs 20 处）；③ 测试 bin 里的分析器 DLL 停留在升级前版本，20 个分析器测试全挂 |
+| **修复** | `Directory.Build.props` 全局 `<ForceDisableCompilationCache>true</ForceDisableCompilationCache>`。分析器就是架构门禁，每次构建必须真跑。尝试过把 `@(Analyzer)` 塞进 `CustomAdditionalCompileInputs`（它确实在缓存键里），仍不能保证消费项目重新编译与 DLL 拷贝刷新 |
+| **适用** | 任何依赖自定义 Roslyn 分析器执行的仓库；引入构建缓存前先确认缓存键覆盖分析器输入 |
+
+### 10.12 AOT 发布默认**不是**单文件 — 原生 DLL 是必需运行时依赖
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-08-02 friend-handoff session；`-p:PublishAot=true` 输出目录含 `libSkiaSharp.dll`/`libHarfBuzzSharp.dll`/`av_libglesv2.dll` |
+| **根因** | Native AOT 只消除了托管程序集（无 `WTLauncher.App.dll`），SkiaSharp 等原生库仍以独立 DLL 拷贝在输出目录；这些文件保留 nuget 包资产的时间戳（2026-02/04/05），容易被误判为"陈旧残留" |
+| **后果** | 把三个 DLL 当残留删除后，exe 启动即崩：`TypeInitializationException → DllNotFoundException: libSkiaSharp`。门禁 GUI 冒烟用的是非 AOT 的 verify-publish，完全没抓到 |
+| **修复** | 发布目录清理只删 `*.pdb` 与陈旧 `config/`，**保留一切 `*.dll`**；验证以"全新目录解压 + 实际启动"为准，不要只看目录清单 |
+| **适用** | 所有 AOT/SingleFile 打包脚本；"老时间戳 = 陈旧"是危险推断，静态资产时间戳不代表构建时刻 |
+
+### 10.13 Roslyn `x is T` 裸类型名解析为 ConstantPatternSyntax，不是 TypePatternSyntax
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-08-02 friend-handoff session；探针 dump `ex is IOException or UnauthorizedAccessException` 的模式树 |
+| **根因** | `when (ex is IOException or UnauthorizedAccessException)` 中裸类型名在语法层是 `ConstantPatternSyntax`（IdentifierName），**只有语义绑定后才知道它是类型**。只匹配 `TypePatternSyntax` 的窄类型过滤器全漏（20 处 App 代码被误报 WT1004） |
+| **后果** | 分析器把项目里大量合法的精确类型过滤（`when (ex is IOException or ...)`）误报为违规，构建全红 |
+| **修复** | 对 `ConstantPatternSyntax` 用 `SemanticModel.GetSymbolInfo(expr).Symbol is INamedTypeSymbol` 判断是否类型窄化；`null`/`true` 等常量模式自然排除 |
+| **适用** | 任何解析 `is` 模式的分析器；模式语法 ≠ 语义含义，裸标识符要过语义模型 |
+
+### 10.14 同一项目双重 ProjectReference(分析器 + 普通引用) → 测试输出拷贝不可靠
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-08-02 friend-handoff session；`WTLauncher.Tests.csproj` |
+| **根因** | 测试项目需要分析器 DLL 双重角色：编译期作为 analyzer 运行 + 运行期作为普通引用被进程内测试加载。Directory.Build.props 注入的 `OutputItemType="Analyzer" ReferenceOutputAssembly="false"` 引用与显式普通引用并存时，增量构建不保证把 DLL 拷贝进测试输出目录（删除后重建不恢复） |
+| **后果** | 测试进程 `FileNotFoundException: WTLauncher.Analyzers`，20 个分析器测试瞬间全挂；明明分析器项目已重新编译 |
+| **修复** | 测试项目加显式 `AfterTargets="Build"` 拷贝目标：`<Copy SourceFiles="..\..\src\WTLauncher.Analyzers\bin\$(Configuration)\netstandard2.0\WTLauncher.Analyzers.dll" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />`，确定性保证 |
+| **适用** | 需要"既是分析器又是被测程序集"的测试项目；不要依赖 MSBuild 对双引用项目输出的隐式拷贝 |
+
+### 10.15 PowerShell 5.1 把无 BOM 的 UTF-8 脚本按 ANSI(GBK) 读取 — 中文面量乱码
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-08-02 friend-handoff session；`tools/package-friend.ps1` 中 `docs\使用说明.txt` 变成 `浣跨敤璇存槑.txt` |
+| **根因** | Windows PowerShell 5.1 对无 BOM 的 .ps1 默认按系统 ANSI 代码页（中文系统 = GBK）解码；AI 工具写入的文件是无 BOM UTF-8 |
+| **后果** | 脚本内中文文件名/字符串字面量全部乱码，`Test-Path` 找不到文件 |
+| **修复** | 脚本内**不要写非 ASCII 字面量**：文件名用 `Get-ChildItem -Filter` 解析或全英文命名；必须写中文时用 Unicode 转义。生成的数据文件（.txt/.json）无 BOM 的 UTF-8 在 Win10 1903+ 记事本自动识别，可接受 |
+| **适用** | 所有会被 Windows PowerShell 5.1 执行的工具脚本；写入前想好字符编码 |
+
+### 10.16 随机属性测试的生成器前置条件必须镜像被测函数的规范化
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-08-02 friend-handoff session；`CsCheckPropertyTests`，种子 `2FJUQdA7oYHh` 复现 `Command = '\u0091'` |
+| **根因** | 生成器用 `Trim().Length > 0` 过滤"空白"输入，但被测函数（`EntryName.Normalize` + `StripUnsafeCharacters`）还会剥掉**控制字符**（C1 区 U+0080-U+009F 不是空白但被剥掉），单一控制字符的 command 规范化后为空 → `LaunchArgumentBuilder.Build` 抛异常 |
+| **后果** | 属性测试间歇性失败（随机种子偶发），失败信息只给种子不给输入，排查慢 |
+| **修复** | 生成器前置条件用与生产代码相同的规范化规则：`char.GetUnicodeCategory(ch) is not (Control or Format)`；用复现种子 + 打印失败输入快速定位 |
+| **适用** | 任何对"规范化后非空"有要求的随机属性测试；前置条件必须镜像生产规范化，不能想当然 |

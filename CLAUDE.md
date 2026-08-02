@@ -22,7 +22,7 @@ Active mainline: `src/avalonia-launcher/`. Everything under `retired/` is archiv
 Run everything from the **repository root**. PowerShell on Windows.
 
 ```powershell
-# Full native gate — 31 checks (growing), must be green before any "done" claim
+# Full native gate — 32 checks (growing), must be green before any "done" claim
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
 
 # Stable release publish → src/avalonia-launcher/artifacts/publish/win-x64/WTLauncher.App.exe
@@ -90,7 +90,7 @@ Source under `src/avalonia-launcher/src/`. Layers depend only on lower layers.
 | 3 — Orchestration | `MainWindowViewModel` (the single writable owner of UI state) | delegates reusable rules to Core, injects dialog `Func<>`s through `MainWindow` ctor | Keep a second copy of state that drifts from the single owner |
 | 4 — Views | `WTLauncher.App/Views/` (single `MainWindow.axaml` with 3 view modes: Cards / Details / Names) | XAML, drag ghost + insert indicators, code-behind = windowing only (drag hit-test, dialog injection, keyboard nav) | Business decisions / `if` statements about launch logic |
 
-Tests: `src/avalonia-launcher/tests/WTLauncher.Tests/` — xUnit, ~410 `[Fact]`/`[Theory]` across all layers. These are the mainline gate.
+Tests: `src/avalonia-launcher/tests/WTLauncher.Tests/` — xUnit, 716 `[Fact]`/`[Theory]` across all layers (incl. Roslyn analyzer suite). These are the mainline gate.
 
 ## Non-negotiable invariants (these bite when broken)
 
