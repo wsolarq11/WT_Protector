@@ -119,6 +119,9 @@ Portable UI settings live inside the store under the `settings` object:
     "codex": "codex --enable goals --dangerously-bypass-approvals-and-sandbox"
   },
   "searchHistory": ["w", "wt"],
+  "quickLaunchHotkey": "Ctrl+Alt+Space",
+  "runInTray": true,
+  "updateManifestUrl": "",
   "window": {
     "width": 1180,
     "height": 760
@@ -134,6 +137,9 @@ Additional settings fields:
 - `customEntryOrder` — stable entry-id order used by the "自定义拖拽" mode and persisted after drag-drop reorder.
 - `commandTemplates` — optional dictionary of reusable command templates. When a config entry's `command` starts with `$` followed by a key (e.g. `$codex`), the launcher resolves it to the template value from this map. Missing template keys cause a launch validation error.
 - `searchHistory` — optional deduplicated list of recent filter-text terms. Maintained as a JSON array of strings; the launcher validates the array must not be null. Search history is exposed in the UI via an AutoCompleteBox dropdown on the search input.
+- `quickLaunchHotkey` — optional global hotkey text such as `Ctrl+Alt+Space`; `Ctrl`, `Alt`, `Shift`, `Win` plus `Space`/`A-Z`/`0-9` are accepted.
+- `runInTray` — optional boolean; when true, closing the main window hides it to the tray and the tray menu is the explicit quit path.
+- `updateManifestUrl` — optional HTTP(S) or local file URL to an `update-manifest.json`; the management menu's `检查更新` reads it and never rewrites `config/launcher.json`.
 
 ## Friend handoff (2026-08-02)
 
@@ -236,6 +242,26 @@ src/avalonia-launcher/artifacts/publish/win-x64/WTLauncher.App.exe
 
 If that stable executable is already running, `tools/build-release.ps1` stops before publishing and reports the blocking PID(s); keep using `tools/verify.ps1` for routine gates, or close the running app before a stable release publish.
 
+## Testing
+
+Tests live in one `WTLauncher.Tests` project with physical layers under `src/avalonia-launcher/tests/WTLauncher.Tests/` and `[Trait("Category", ...)]` markers. The canonical map is `docs/test-structure.md`.
+
+```powershell
+# Fast lane: CoreUnit + PropertyTest + Architecture + Analyzer
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\test-fast.ps1
+
+# Critical-path coverage gate
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\test-coverage.ps1
+
+# Temp-config critical-journey smoke (published exe)
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\smoke-critical-journey.ps1 -Exe .\src\avalonia-launcher\artifacts\verify-publish\win-x64\WTLauncher.App.exe
+
+# Complete native gate
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
+```
+
+CI uses `build-and-test` for build + fast lane and `full-gate` for the single complete verify/publish pass.
+
 ## WinForms retirement
 
 The former WinForms mainline has been retired into documentation instead of kept as a second source tree:
@@ -290,6 +316,13 @@ The Avalonia mainline supports:
 - four persisted sort modes: `自定义拖拽`, `最近启动`, `更新时间`, and `首字母顺序`;
 - command templates from `launcher.json` `settings.commandTemplates` for repeated shell commands, with unknown template keys rejected at launch-plan build time;
 - global launch confirmation;
+- global quick-launch hotkey with a dedicated overlay window (type-to-filter, Enter launch, Esc dismiss);
+- system tray icon with Open/Quit actions and close-to-tray behavior;
+- config export/import from the management menu: export all or currently selected entries as readable unified-store JSON, then import on another machine with explicit path mapping and add/replace conflict handling;
+- persistent recent-run history from the management menu with requested/failed/skipped/canceled status (100-entry cap, no terminal health claims);
+- explicit update checks through the management menu against a versioned `update-manifest.json` (local or `settings.updateManifestUrl`), with no automatic overwrite of portable config;
+- a portable installer script that creates Start Menu/optional Desktop shortcuts, writes an uninstaller, and preserves user `config` on uninstall;
+
 - JSON persistence with temporary-file writes, `.bak` backup for normal config/preset saves, and rollback compensation for failed multi-file entry edits;
 - persistent selected checkbox state for one-click/batch launch;
 - portable UI preferences in `launcher.json` `settings` object without AppData or registry writes;

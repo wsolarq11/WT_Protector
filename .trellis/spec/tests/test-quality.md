@@ -8,7 +8,22 @@
 
 **Test the contracts, not the implementation.** A test should break when behavior changes, not when you refactor.
 
-Two kinds of tests in this project:
+Test files live in one `WTLauncher.Tests` project, physically layered by category:
+
+| Layer | Directory | Purpose |
+|-------|-----------|---------|
+| `CoreUnit` | `CoreUnit/` | Pure Core rules, no filesystem/VM |
+| `Persistence` | `Persistence/` | Temp-file save/load/recovery |
+| `ViewModelBehavior` | `ViewModelBehavior/` | VM commands, state, dialog boundaries |
+| `Analyzer` | `Analyzer/` | Roslyn analyzer rules |
+| `Architecture` | `Architecture/` | ArchUnitNET invariants |
+| `UiContract` | `UiContract/` | Semantic XAML/UI contracts |
+| `PropertyTest` | `PropertyTest/` | CsCheck property tests |
+| `Support` | `Support/` | Shared fixtures/helpers, not tests |
+
+Every test class carries `[Trait("Category", TestCategories.<Layer>)]` so CI can run the fast lane without guessing from filenames.
+
+Two kinds of behavior dominate the suite:
 1. **Logic tests:** Pure functions with clear input → output (Core layer).
 2. **Behavior tests:** ViewModel commands produce correct side effects + status text.
 
@@ -38,7 +53,7 @@ Every new persistence path must test:
 
 Single-file atomic save means there is no partial-failure path — either all of `launcher.json` commits via `File.Replace` or none of it does. The rollback is automatic inside `AppStore.Mutate` (reverts `_state` on exception) and at the VM layer via `RestoreVmStateFromStore()`.
 
-**Reference:** `AppStoreTests.cs`, `LauncherStoreLoadFailureTests.cs`
+**Reference:** `Persistence/AppStoreTests.cs`, `Persistence/LauncherStoreLoadFailureTests.cs`
 
 ### ViewModel Command Tests
 
@@ -48,7 +63,7 @@ Every command (Add/Edit/Delete/Launch/Reorder) must test:
 3. **Dialog error:** dialog throws → status text reflects failure.
 4. **Validation failure:** invalid input → status text reflects validation error.
 
-**Reference:** `MainWindowViewModelTests.EntryTests.cs`, `MainWindowViewModelTests.DialogBoundaryTests.cs`
+**Reference:** `ViewModelBehavior/MainWindowViewModelTests.EntryTests.cs`, `ViewModelBehavior/MainWindowViewModelTests.DialogBoundaryTests.cs`
 
 ---
 
@@ -63,7 +78,10 @@ All persisted JSON uses LF (`\n`). `LauncherJson.NormalizeLineEndings` enforces 
 ### Local Gate (before commit)
 
 ```powershell
-dotnet test -c Release
+dotnet build src/avalonia-launcher/WTLauncher.Avalonia.sln -c Release --no-restore -warnaserror
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\test-fast.ps1
+dotnet test src/avalonia-launcher/WTLauncher.Avalonia.sln -c Release --no-restore
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\test-coverage.ps1
 ```
 
 ### Full Gate (before claiming "done")
@@ -72,7 +90,11 @@ dotnet test -c Release
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
 ```
 
-This runs: restore → test → publish → GUI smoke (Windows only).
+This runs: restore → full test → publish → temp-config critical-journey smoke → coverage gate → architecture/analyzer checks. Published GUI smoke runs on Windows.
+
+CI runs `tools/test-fast.ps1` (`CoreUnit` + `PropertyTest` + `Architecture` + `Analyzer`) in `build-and-test`; `full-gate` runs `tools/verify.ps1` as the only complete test/publish pass.
+
+The E2E layer is intentionally capped: `tools/smoke-critical-journey.ps1` asserts only process boot into the main window and the `WT Launcher` window title, always against a temp `--config`.
 
 For visual-token changes, the gate must additionally prove:
 
