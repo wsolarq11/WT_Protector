@@ -39,7 +39,7 @@ public bool IsNamesViewMode => CurrentEntryViewMode == LauncherEntryViewMode.Nam
 Verified in `MainWindowViewModel.Batch.cs`:
 
 **Path 1 -- User checkbox** (immediate save):
-- `LauncherEntryViewModel.IsSelected` setter (line 63-70) calls `_owner.UpdateSelection(this, value)` 
+- `LauncherEntryViewModel.IsSelected` setter (line 63-70) calls `_owner.UpdateSelection(this, value)`
 - This reaches `MainWindowViewModel.UpdateSelection()` (Batch.cs:88-94) which calls `ReplaceEntrySelectionFromOwner` then `SaveSelectionChangeOrRestore`
 
 **Path 2 -- Bulk/preset** (single batched save):

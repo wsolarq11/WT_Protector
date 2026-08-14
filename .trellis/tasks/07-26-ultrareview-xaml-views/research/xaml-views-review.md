@@ -67,7 +67,7 @@
   - No compile-time binding error checking -- misspelled properties only surface as runtime binding errors.
   - Slower binding resolution at runtime.
   - Compared to `CommandManagementWindow.axaml` and `DirectoryManagementWindow.axaml` which correctly declare `x:DataType` on their Window elements.
-- **Evidence**: 
+- **Evidence**:
   - `CommandManagementWindow.axaml:7` has `x:DataType="vm:CommandManagementViewModel"`
   - `DirectoryManagementWindow.axaml:7` has `x:DataType="vm:DirectoryManagementViewModel"`
   - `DiscoverAgentsWindow.axaml` has no `x:DataType` attribute
@@ -99,7 +99,7 @@
 - **Detail**: Multiple calls to `Application.Current!.FindResource("TextMutedBrush")!` and similar resource lookups use null-forgiving operators (`!`) without a null guard. `FindResource` can return null if:
   - `Application.Current` is null (during early startup or designer mode)
   - The resource key does not exist (e.g., renamed or removed token)
-  
+
   The already-registered static resources in `App.axaml.cs:34-93` should cover these keys, but the `!` operators suppress compiler warnings without runtime protection. A safer pattern would be `TryFindResource` or a null-coalescing fallback. Compare with `LauncherDialogText.SafeParseBrush` in `MainWindow.Drag.cs:311-312` which explicitly handles fallback values.
 
 ---

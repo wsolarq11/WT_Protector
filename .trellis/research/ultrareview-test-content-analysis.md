@@ -34,7 +34,7 @@ Read and analyzed 60+ test source files. Total ~85 test files (excluding `obj/` 
 ### Missing Coverage
 - Windows reserved names (CON, PRN, AUX, NUL, COM1..COM9, LPT1..LPT9) — `EntryId.Parse` should reject these or the test should verify they are not silently accepted
 - Test that `Parse` validates inputs AFTER FormC normalization (not before), so that inputs like fullwidth Latin letters that normalize to ASCII are properly handled
-- Test with leading/trailing whitespace in `Parse` 
+- Test with leading/trailing whitespace in `Parse`
 - Test with empty string in `Parse` (only tested via `IsUsable`)
 
 ---

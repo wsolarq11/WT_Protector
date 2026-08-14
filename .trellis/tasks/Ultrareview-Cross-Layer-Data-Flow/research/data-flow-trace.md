@@ -9,7 +9,7 @@
 ### Layer 4 (Views) -> Layer 3 (Orchestration)
 
 1. User clicks "Add Entry" button in MainWindow.axaml
-2. XAML binding: `Command="{Binding AddEntryCommand}"` 
+2. XAML binding: `Command="{Binding AddEntryCommand}"`
 3. `MainWindowViewModel.AddEntryAsync()` (MainWindowViewModel.Entries.cs:12) is invoked via `[RelayCommand]`
 4. Delegates to `_list.AddEntryAsync()` -- the `EntryListViewModel`
 
@@ -18,7 +18,7 @@
 5. `EntryListViewModel.AddEntryAsync()` (EntryListViewModel.cs:119-142):
    - Calls `DiscardDragReorderPreview()` first (invariant enforcement)
    - Calls `_entryService.AddEntryAsync(...)` which is `IEntryService`
-   
+
 6. `EntryService.AddEntryAsync()` (EntryService.cs:17-43):
    - Calls `_dialog.RequestEntryDraftAsync(null, ...)` which is `IDialogService`
 

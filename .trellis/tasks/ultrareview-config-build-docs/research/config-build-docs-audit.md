@@ -145,7 +145,7 @@
 #### D3. AGENTS.md
 - **File**: `AGENTS.md` (90 lines)
 - **Repo tree (lines 7-36)**: Generally accurate. Maps all major directories.
-- **File count claims**: 
+- **File count claims**:
   - Line 20: `WTLauncher.Core/` = "24 files" -- NOT VERIFIED
   - Line 21: `WTLauncher.App/ViewModels/` = "28 files" -- NOT VERIFIED
   - Line 22: `WTLauncher.App/Views/` = "13 files" -- NOT VERIFIED

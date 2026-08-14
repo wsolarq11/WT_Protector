@@ -26,7 +26,7 @@ Per .editorconfig, CA2007 (ConfigureAwait) is explicitly disabled (`dotnet_diagn
 
 **ConfigureAwait(true)** — used consistently on awaits that must return to the UI thread:
 - `PresetService.cs:50` — `.ConfigureAwait(true)`
-- `EntryListViewModel.cs:127` — `.ConfigureAwait(true)` 
+- `EntryListViewModel.cs:127` — `.ConfigureAwait(true)`
 - `EntryService.cs:27` — `.ConfigureAwait(true)`
 - `LaunchOrchestrator.cs:101` — `.ConfigureAwait(true)`
 - `MainWindowViewModel.Presets.cs:55` — `.ConfigureAwait(true)`

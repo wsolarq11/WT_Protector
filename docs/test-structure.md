@@ -87,4 +87,3 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\test-coverage.ps1
 
 - `build-and-test`：build + 快速层 + 上传 TRX，不做完整 publish。
 - `full-gate`：唯一完整验收阶段，运行 `tools/verify.ps1`，包含全量测试、发布、关键旅程冒烟和覆盖率门禁。
-
