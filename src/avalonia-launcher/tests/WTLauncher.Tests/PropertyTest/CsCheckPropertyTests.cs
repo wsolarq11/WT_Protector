@@ -3,10 +3,19 @@ using WTLauncher.Core;
 using WTLauncher.App.Infrastructure;
 using System.Collections.Immutable;
 
-namespace WTLauncher.Tests;
+using WTLauncher.Tests;
+namespace WTLauncher.Tests.PropertyTest;
 
+[Trait("Category", TestCategories.PropertyTest)]
 public sealed class CsCheckPropertyTests
 {
+    private static readonly HashSet<string> WindowsReservedEntryIds = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "con", "prn", "aux", "nul",
+        "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9",
+        "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9",
+    };
+
     // Test 1: RotateBackups -- after rotation, the managed backup chain (indices 0..maxBackups-1)
     // never exceeds maxBackups files
     [Fact]
@@ -117,6 +126,7 @@ public sealed class CsCheckPropertyTests
     public void SaveThenLoad_RoundTripsAllData()
     {
         Gen.Char['a', 'z'].Array[1, 8].Select(idChars => new string(idChars))
+            .Where(id => !WindowsReservedEntryIds.Contains(id))
             .SelectMany(
                 _ => Gen.Char['a', 'z'].Array[1, 15].Select(nameChars => new string(nameChars)),
                 (id, name) => new { Id = id, Name = name })

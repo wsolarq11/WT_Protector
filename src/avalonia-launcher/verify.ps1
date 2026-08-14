@@ -96,41 +96,14 @@ if ($isWindowsPlatform) {
         defaultPresetId = "smoke-group"
     } | ConvertTo-Json -Depth 6
     Set-Content -Encoding UTF8 -LiteralPath $smokeStore -Value $smokeStoreJson
-    $sp = Start-Process -FilePath $exe -ArgumentList @('--config', $smokeStore) -WorkingDirectory $smokeRoot -WindowStyle Hidden -PassThru
-    $processExitedClean = $true
-    try {
-        for ($i = 0; $i -lt 40; $i++) {
-            Start-Sleep -Milliseconds 100; $sp.Refresh()
-            if ($sp.HasExited) {
-                if ($sp.ExitCode -ne 0) {
-                    throw "Published app exited with code $($sp.ExitCode) during process smoke"
-                }
-                $processSmoke = 'started-exited-cleanly'
-                break
-            }
-            # Window handle appears → app booted successfully.
-            if ($sp.MainWindowHandle -ne 0) {
-                $processSmoke = 'booted-window-visible'
-                break
-            }
-        }
-        if ($processSmoke -eq 'skipped-non-windows' -and -not $sp.HasExited) {
-            # Window never appeared but process still running after timeout.
-            # Treat as success with caveat (title might be wrong, but boot didn't crash).
-            $processSmoke = 'booted-no-window-yet'
-        }
-    }
-    finally {
-        if (-not $sp.HasExited) {
-            $null = $sp.CloseMainWindow()
-            if (-not $sp.WaitForExit(5000)) {
-                $processExitedClean = $false
-                Stop-Process -Id $sp.Id -Force
-                $sp.WaitForExit(2000) | Out-Null
-            }
-        }
-    }
-    if (-not $processExitedClean) { throw 'Published app did not exit gracefully after CloseMainWindow during process smoke' }
+    $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+    $smokeScript = Join-Path $repoRoot 'tools\smoke-critical-journey.ps1'
+    if (-not (Test-Path -LiteralPath $smokeScript)) { throw "Critical journey smoke script missing: $smokeScript" }
+    $smokeOutput = & powershell -NoProfile -ExecutionPolicy Bypass -File $smokeScript -Exe $exe -ConfigPath $smokeStore -WorkingDirectory $smokeRoot
+    if ($LASTEXITCODE -ne 0) { throw 'Critical journey smoke failed' }
+    $smokeReceipt = $smokeOutput | ConvertFrom-Json
+    $processSmoke = (($smokeReceipt.checks | ForEach-Object { $_.name }) -join '+')
+    if ($processSmoke -ne 'launch+title') { throw "Critical journey smoke reported unexpected checks: $processSmoke" }
 }
 
 # ── GUI title check (Windows non-CI only) ─────────────────────────────
@@ -138,8 +111,7 @@ if ($isWindowsPlatform) {
 # Skipped in CI because it requires a real display.
 $isCi = $env:CI -eq 'true'
 $guiSmoke = if (-not $isWindowsPlatform) { 'skipped-non-windows' } elseif ($isCi) { 'skipped-ci-headless' } else { $processSmoke }
-if ($guiSmoke -eq 'booted-window-visible') {
-    # Re-use the process smoke result — the window was already verified visible.
+if ($guiSmoke -ne 'skipped-non-windows' -and $guiSmoke -ne 'skipped-ci-headless') {
     $guiSmoke = 'hidden-temp-config-window-title'
 }
 
