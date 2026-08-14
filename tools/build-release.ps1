@@ -75,4 +75,19 @@ $receipt = New-ToolReceipt 'release-build' @{
 
 $receiptPath = Join-Path $publishDir 'receipt.json'
 $receipt | Set-Content -LiteralPath $receiptPath -Encoding UTF8 -NoNewline
+
+# Distribution update manifest: the app reads this from updateManifestUrl or the
+# publish folder. It is metadata only and never rewrites config/launcher.json.
+$updateManifest = [ordered]@{
+    schemaVersion = 1
+    version = $version
+    fileName = 'WTLauncher.App.exe'
+    sha256 = (Get-FileSha256 $exe)
+    bytes = (Get-Item -LiteralPath $exe).Length
+    publishedAtUtc = (Get-Date).ToUniversalTime().ToString('o')
+    notes = 'Portable win-x64 release build; config stays portable.'
+} | ConvertTo-Json -Depth 4 -Compress
+$updateManifestPath = Join-Path $publishDir 'update-manifest.json'
+$updateManifest | Set-Content -LiteralPath $updateManifestPath -Encoding UTF8 -NoNewline
+
 $receipt
