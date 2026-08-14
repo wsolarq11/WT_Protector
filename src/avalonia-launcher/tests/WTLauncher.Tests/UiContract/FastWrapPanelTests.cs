@@ -2,8 +2,10 @@ using Avalonia;
 using Avalonia.Controls;
 using WTLauncher.App.Views;
 
-namespace WTLauncher.Tests;
+using WTLauncher.Tests;
+namespace WTLauncher.Tests.UiContract;
 
+[Trait("Category", TestCategories.UiContract)]
 public sealed class FastWrapPanelTests
 {
     // ponytail: adversarial wrap-consistency check. Three children per row

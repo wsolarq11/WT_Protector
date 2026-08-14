@@ -2,8 +2,10 @@ using Avalonia.Controls;
 using WTLauncher.App.Views;
 using static WTLauncher.Tests.MainWindowEntryCardTestFactory;
 
-namespace WTLauncher.Tests;
+using WTLauncher.Tests;
+namespace WTLauncher.Tests.UiContract;
 
+[Trait("Category", TestCategories.UiContract)]
 public sealed class MainWindowEntryCardResolverTests
 {
     [Fact]

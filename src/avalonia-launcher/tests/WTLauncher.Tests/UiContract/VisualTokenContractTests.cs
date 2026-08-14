@@ -1,7 +1,9 @@
 using System.Text.RegularExpressions;
 
-namespace WTLauncher.Tests;
+using WTLauncher.Tests;
+namespace WTLauncher.Tests.UiContract;
 
+[Trait("Category", TestCategories.UiContract)]
 public sealed partial class VisualTokenContractTests
 {
     [GeneratedRegex(@"(?<![0-9A-Fa-f])#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6})(?![0-9A-Fa-f])")]

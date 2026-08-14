@@ -4,7 +4,8 @@ using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 using Xunit;
 
-namespace WTLauncher.Tests;
+using WTLauncher.Tests;
+namespace WTLauncher.Tests.UiContract;
 
 /// <summary>
 /// Tests only behavioral formatting logic in status/text helpers — conditional branches,
@@ -12,6 +13,7 @@ namespace WTLauncher.Tests;
 /// constants (those are UI surface that changes with UX iteration; testing them verbatim
 /// creates change-detector tests with zero behavioral protection).
 /// </summary>
+[Trait("Category", TestCategories.UiContract)]
 public sealed class StatusTextContractTests
 {
     // ── LauncherEntryText (Core normalization) ──────────────

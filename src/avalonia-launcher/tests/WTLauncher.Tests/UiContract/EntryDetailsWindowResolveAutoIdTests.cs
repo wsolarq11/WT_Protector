@@ -1,9 +1,11 @@
 using WTLauncher.App.Views;
 
-namespace WTLauncher.Tests;
+using WTLauncher.Tests;
+namespace WTLauncher.Tests.UiContract;
 
 /// <summary>Tests for <see cref="EntryDetailsWindow.ResolveAutoId"/> (R5 friend-handoff:
 /// blank-ID add flow derives the entry id from the name with a timestamp fallback).</summary>
+[Trait("Category", TestCategories.UiContract)]
 public sealed class EntryDetailsWindowResolveAutoIdTests
 {
     private static readonly DateTime FixedNow = new(2026, 8, 2, 10, 30, 45);

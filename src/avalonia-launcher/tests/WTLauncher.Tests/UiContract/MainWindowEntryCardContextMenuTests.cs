@@ -1,8 +1,10 @@
 using Avalonia.Controls;
 using WTLauncher.App.Views;
 
-namespace WTLauncher.Tests;
+using WTLauncher.Tests;
+namespace WTLauncher.Tests.UiContract;
 
+[Trait("Category", TestCategories.UiContract)]
 public sealed class MainWindowEntryCardContextMenuTests
 {
     [Fact]
