@@ -12,6 +12,8 @@ namespace WTLauncher.Core;
 [JsonSerializable(typeof(LauncherSettings))]
 [JsonSerializable(typeof(LaunchEntry))]
 [JsonSerializable(typeof(LauncherPreset))]
+[JsonSerializable(typeof(LauncherRunHistoryEntry))]
+[JsonSerializable(typeof(LauncherUpdateManifest))]
 [JsonSerializable(typeof(List<LaunchEntry>))]
 [JsonSerializable(typeof(List<LauncherPreset>))]
 [JsonSerializable(typeof(EntryName))]

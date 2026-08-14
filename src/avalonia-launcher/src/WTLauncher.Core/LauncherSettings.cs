@@ -46,6 +46,17 @@ public sealed record LauncherSettings
     [JsonPropertyName("backgroundMode")]
     public string BackgroundMode { get; init; } = "solid";
 
+    [JsonPropertyName("quickLaunchHotkey")]
+    public string QuickLaunchHotkey { get; init; } = LauncherHotkey.DefaultText;
+
+    /// <summary>When true, closing the main window hides it to the tray instead of quitting.</summary>
+    [JsonPropertyName("runInTray")]
+    public bool RunInTray { get; init; } = true;
+
+    /// <summary>Optional HTTP(S)/file URL to an update manifest. Empty disables remote checks; local publish folder manifest still works when present.</summary>
+    [JsonPropertyName("updateManifestUrl")]
+    public string UpdateManifestUrl { get; init; } = "";
+
     [JsonPropertyName("window")]
     public LauncherWindowSettings Window { get; init; } = new();
 }

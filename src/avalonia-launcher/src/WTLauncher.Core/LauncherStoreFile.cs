@@ -27,4 +27,9 @@ public sealed record LauncherStoreFile
     [JsonPropertyName("defaultPresetId")]
     [JsonRequired]
     public string DefaultPresetId { get; init; } = "";
+
+    [JsonPropertyName("runHistory")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public ImmutableList<LauncherRunHistoryEntry> RunHistory { get; init; } =
+        ImmutableList<LauncherRunHistoryEntry>.Empty;
 }

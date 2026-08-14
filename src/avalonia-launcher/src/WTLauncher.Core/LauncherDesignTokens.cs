@@ -39,6 +39,8 @@ public static class LauncherDesignTokens
     public const string BadgeSuccessForegroundColor = "#047857"; // green badge text
     public const string BadgeInfoBackgroundColor = "#E0F2FE";   // blue badge background
     public const string BadgeInfoForegroundColor = "#0369A1";   // blue badge text
+    public const string BadgeWarningBackgroundColor = "#FEF3C7"; // warning badge background
+    public const string BadgeWarningForegroundColor = "#B45309"; // warning badge text
 
     // ── Drag handle ────────────────────────────────────────
     public const string DragHandleTextColor = "#334155";        // drag handle label text
