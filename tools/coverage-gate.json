@@ -1,0 +1,15 @@
+{
+  "filter": "Category=CoreUnit|Category=PropertyTest|Category=Persistence|Category=ViewModelBehavior",
+  "criticalPaths": [
+    { "className": "WTLauncher.Core.LauncherStore", "minLineRate": 0.75, "rationale": "single source of truth for save/load/validate" },
+    { "className": "WTLauncher.Core.LauncherJson", "minLineRate": 0.84, "rationale": "atomic config writes and backup rotation" },
+    { "className": "WTLauncher.Core.LauncherJsonSerializer", "minLineRate": 0.83, "rationale": "strict serialization contract" },
+    { "className": "WTLauncher.Core.LauncherStoreValidator", "minLineRate": 0.95, "rationale": "config schema validation" },
+    { "className": "WTLauncher.Core.LaunchArgumentBuilder", "minLineRate": 0.87, "rationale": "safe Windows Terminal launch construction" },
+    { "className": "WTLauncher.Core.EntryId", "minLineRate": 0.90, "rationale": "entry identity normalization and safety" },
+    { "className": "WTLauncher.Core.LauncherConfigExchange", "minLineRate": 0.90, "rationale": "import/export critical journey" },
+    { "className": "WTLauncher.App.Infrastructure.FileLauncherJsonIO", "minLineRate": 0.74, "rationale": "file persistence and recovery" },
+    { "className": "WTLauncher.App.Infrastructure.FileStorePersistence", "minLineRate": 0.32, "rationale": "persistence adapter and rollback boundary" }
+  ],
+  "notes": "Line coverage is enforced only for high-risk paths. Total repository coverage remains report-only."
+}

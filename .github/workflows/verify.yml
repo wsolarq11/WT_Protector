@@ -37,11 +37,9 @@ jobs:
       - name: Build
         run: dotnet build src/avalonia-launcher/WTLauncher.Avalonia.sln --no-restore -warnaserror
 
-      - name: Test
-        run: dotnet test src/avalonia-launcher/WTLauncher.Avalonia.sln --no-build --verbosity normal --logger "trx;LogFileName=wtlauncher-ci.trx"
-
-      - name: Publish (smoke check)
-        run: dotnet publish src/avalonia-launcher/WTLauncher.Avalonia.sln -c Release -r win-x64 --self-contained --no-restore
+      - name: Test (fast lane)
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\test-fast.ps1 -Logger "trx;LogFileName=wtlauncher-fast.trx"
 
       - name: Upload test results
         if: always()
@@ -109,3 +107,10 @@ jobs:
       - name: Run native gate
         shell: powershell
         run: .\tools\verify.ps1
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: src/avalonia-launcher/artifacts/coverage/

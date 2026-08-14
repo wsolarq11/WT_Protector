@@ -527,6 +527,45 @@ Add-Check 'hta-retired-config' @{
     activeSource = $false
 }
 
+# --- Distribution/update contract ---
+$installerScript = Get-RepoPath 'tools\install-portable.ps1'
+if (-not (Test-Path -LiteralPath $installerScript)) { throw "Missing portable installer script: $installerScript" }
+$installerText = Get-Content -Raw -Encoding UTF8 -LiteralPath $installerScript
+foreach ($installerMarker in @('WTLauncher.App.exe', 'uninstall.ps1', 'config', 'Start Menu')) {
+    if (-not $installerText.Contains($installerMarker)) { throw "Portable installer missing marker: $installerMarker" }
+}
+Add-Check 'portable-installer-contract' @{
+    path = 'tools\install-portable.ps1'
+    preservesPortableConfig = $true
+    uninstallScript = 'uninstall.ps1'
+}
+
+$releaseScript = Get-RepoPath 'tools\build-release.ps1'
+if (-not (Test-Path -LiteralPath $releaseScript)) { throw "Missing release build script: $releaseScript" }
+$releaseText = Get-Content -Raw -Encoding UTF8 -LiteralPath $releaseScript
+if (-not $releaseText.Contains('update-manifest.json')) { throw 'build-release.ps1 must emit update-manifest.json' }
+Add-Check 'update-manifest-generation' @{
+    path = 'tools\build-release.ps1'
+    manifest = 'update-manifest.json'
+}
+
+# --- Test structure layering ---
+$testRoot = Get-RepoPath 'src\avalonia-launcher\tests\WTLauncher.Tests'
+$testLayers = @('Support','CoreUnit','Persistence','ViewModelBehavior','Analyzer','Architecture','UiContract','PropertyTest')
+foreach ($layer in $testLayers) {
+    $layerDir = Join-Path $testRoot $layer
+    if (-not (Test-Path -LiteralPath $layerDir)) { throw "Missing test layer directory: $layerDir" }
+    if (@(Get-ChildItem -LiteralPath $layerDir -Filter '*.cs' -ErrorAction SilentlyContinue).Count -lt 1) { throw "Empty test layer directory: $layerDir" }
+}
+Add-Check 'test-structure-layering' @{ layers = ($testLayers -join ',') }
+
+# --- CI fast lane must not duplicate the full native gate ---
+$workflowFile = Get-RepoPath '.github\workflows\verify.yml'
+$workflowText = Get-Content -Raw -Encoding UTF8 -LiteralPath $workflowFile
+if (-not $workflowText.Contains('test-fast.ps1')) { throw 'CI build-and-test must run tools/test-fast.ps1' }
+if ($workflowText.Contains('Publish (smoke check)')) { throw 'CI build-and-test must not duplicate publish; full-gate owns publish' }
+Add-Check 'ci-fast-lane-no-publish-duplication' @{ pass = $true }
+
 $mainlineVerify = Join-Path $sourceRoot 'verify.ps1'
 if (-not (Test-Path -LiteralPath $mainlineVerify)) { throw "Missing mainline verify script: $mainlineVerify" }
 $mainlineJson = & $mainlineVerify
@@ -551,6 +590,19 @@ Add-Check 'avalonia-mainline-verify' @{
     publishedDll = $mainline.publishedDll
     sha256 = $mainline.sha256
     dllSha256 = $mainline.dllSha256
+}
+
+# --- Coverage gate for critical paths ---
+$coverageScript = Join-Path $PSScriptRoot 'test-coverage.ps1'
+if (-not (Test-Path -LiteralPath $coverageScript)) { throw "Missing coverage script: $coverageScript" }
+& powershell -NoProfile -ExecutionPolicy Bypass -File $coverageScript -NoBuild
+if ($LASTEXITCODE -ne 0) { throw 'Coverage gate failed' }
+$coverageReceiptFile = Join-Path $sourceRoot 'artifacts\coverage\coverage-gate-receipt.json'
+if (-not (Test-Path -LiteralPath $coverageReceiptFile)) { throw "Coverage receipt missing: $coverageReceiptFile" }
+$coverage = Get-Content -Raw -Encoding UTF8 -LiteralPath $coverageReceiptFile | ConvertFrom-Json
+Add-Check 'coverage-gate' @{
+    status = $coverage.status
+    criticalPaths = $coverage.criticalPaths.Count
 }
 
 # --- Architecture rule check ---
