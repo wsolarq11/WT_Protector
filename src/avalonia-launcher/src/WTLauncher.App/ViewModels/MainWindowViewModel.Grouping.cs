@@ -63,7 +63,8 @@ public sealed partial class MainWindowViewModel
             emptyStatus: LauncherRefreshStatus.GroupNoEntries,
             canceledStatus: _ => LauncherRefreshStatus.CanceledBatch,
             failedStatus: LauncherSelectionStatus.BatchLaunchFailed,
-            completedStatus: LauncherGroupStatus.BatchCompleted).ConfigureAwait(true);
+            completedStatus: LauncherGroupStatus.BatchCompleted,
+            source: LauncherRunSource.Group).ConfigureAwait(true);
     }
 
     private async Task SaveGroupAsPresetAsync(IReadOnlyList<string> entryIds)

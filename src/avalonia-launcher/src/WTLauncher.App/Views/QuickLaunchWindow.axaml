@@ -1,0 +1,47 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:WTLauncher.App.ViewModels"
+        x:Class="WTLauncher.App.Views.QuickLaunchWindow"
+        x:DataType="vm:QuickLaunchViewModel"
+        Title="WT Launcher - 快速启动"
+        Width="720"
+        Height="520"
+        MinWidth="560"
+        MinHeight="360"
+        CanResize="False"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BackgroundBrush}">
+  <Grid RowDefinitions="Auto,*" RowSpacing="10" Margin="{StaticResource DialogOuterPadding}">
+    <TextBox x:Name="QueryBox"
+             Text="{Binding Query, Mode=TwoWay}"
+             PlaceholderText="输入名称、目录或命令，Enter 启动，Esc 关闭"
+             FontSize="{StaticResource FontSizeEmphasis}"
+             Padding="12,10" />
+
+    <ListBox Grid.Row="1"
+             ItemsSource="{Binding Results}"
+             SelectedItem="{Binding SelectedResult}"
+             Background="Transparent">
+      <ListBox.ItemTemplate>
+        <DataTemplate x:DataType="vm:LauncherEntryViewModel">
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" Margin="0,4">
+            <StackPanel Spacing="2">
+              <TextBlock Text="{Binding Name}" FontSize="{StaticResource FontSizeEmphasis}" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+              <TextBlock Text="{Binding Directory}" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis" />
+              <TextBlock Text="{Binding Command}" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+            <Border Grid.Column="1"
+                    Background="{StaticResource BadgeWarningBackgroundBrush}"
+                    CornerRadius="6"
+                    Padding="6,2"
+                    IsVisible="{Binding IsStaleDirectory}"
+                    VerticalAlignment="Center">
+              <TextBlock Text="失效" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource BadgeWarningForegroundBrush}" />
+            </Border>
+          </Grid>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+  </Grid>
+</Window>

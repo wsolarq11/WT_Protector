@@ -101,6 +101,7 @@
                           Classes.compact="{Binding IsCompactLayout}"
                           Classes.micro="{Binding IsMicroLayout}"
                           Classes.keyboard-focused="{Binding IsKeyboardFocused}"
+                          Classes.stale="{Binding IsStaleDirectory}"
                           Width="{Binding CardWidth}"
                           Height="{Binding CardHeight}"
                           ClipToBounds="True">
@@ -129,6 +130,10 @@
                                   AutomationProperties.Name="编辑"
                                   InputGesture="F2"
                                   Command="{Binding EditCommand}"/>
+                        <MenuItem Header="重新选择路径"
+                                  AutomationProperties.Name="重新选择路径"
+                                  IsVisible="{Binding IsStaleDirectory}"
+                                  Command="{Binding RepairDirectoryCommand}"/>
                         <MenuItem Header="删除"
                                   AutomationProperties.Name="删除"
                                   InputGesture="Delete"
@@ -136,6 +141,21 @@
                       </ContextMenu>
                     </Border.ContextMenu>
                     <Grid RowDefinitions="Auto,*,Auto,Auto">
+                      <Border Grid.RowSpan="4"
+                              Classes="stale-badge"
+                              Background="{StaticResource BadgeWarningBackgroundBrush}"
+                              CornerRadius="6"
+                              Padding="6,2"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Top"
+                              Margin="0,6,6,0"
+                              IsVisible="{Binding IsStaleDirectory}"
+                              ZIndex="20"
+                              ToolTip.Tip="目录已失效，右键可重新选择路径">
+                        <TextBlock FontSize="{StaticResource FontSizeSmall}"
+                                   Foreground="{StaticResource BadgeWarningForegroundBrush}"
+                                   Text="失效"/>
+                      </Border>
                       <Border Grid.RowSpan="4"
                               Classes="drag-insert"
                               Width="4"
@@ -300,6 +320,7 @@
                       Classes.drag-source="{Binding IsDragPreviewSource}"
                       Classes.selected="{Binding IsSelected}"
                       Classes.keyboard-focused="{Binding IsKeyboardFocused}"
+                      Classes.stale="{Binding IsStaleDirectory}"
                       ClipToBounds="True"
                       HorizontalAlignment="Stretch"
                       DoubleTapped="OnEntryRowDoubleTapped">
@@ -328,6 +349,10 @@
                               AutomationProperties.Name="编辑"
                               InputGesture="F2"
                               Command="{Binding EditCommand}"/>
+                        <MenuItem Header="重新选择路径"
+                                  AutomationProperties.Name="重新选择路径"
+                                  IsVisible="{Binding IsStaleDirectory}"
+                                  Command="{Binding RepairDirectoryCommand}"/>
                     <MenuItem Header="删除"
                               AutomationProperties.Name="删除"
                               InputGesture="Delete"
@@ -369,12 +394,25 @@
                              ToolTip.Tip="{Binding Name}"
                              Text="{Binding Name}"/>
 
-                  <TextBlock Grid.Column="2"
-                             Classes="mono"
-                             MaxLines="1"
-                             TextTrimming="PathSegmentEllipsis"
-                             ToolTip.Tip="{Binding Directory}"
-                             Text="{Binding Directory}"/>
+                  <StackPanel Grid.Column="2"
+                              Orientation="Horizontal"
+                              Spacing="6"
+                              VerticalAlignment="Center">
+                    <TextBlock Classes="mono"
+                               MaxLines="1"
+                               TextTrimming="PathSegmentEllipsis"
+                               ToolTip.Tip="{Binding Directory}"
+                               Text="{Binding Directory}"/>
+                    <Border Background="{StaticResource BadgeWarningBackgroundBrush}"
+                            CornerRadius="4"
+                            Padding="4,1"
+                            IsVisible="{Binding IsStaleDirectory}"
+                            VerticalAlignment="Center">
+                      <TextBlock FontSize="{StaticResource FontSizeSmall}"
+                                 Foreground="{StaticResource BadgeWarningForegroundBrush}"
+                                 Text="失效"/>
+                    </Border>
+                  </StackPanel>
 
                   <TextBlock Grid.Column="3"
                              Classes="mono"
@@ -453,6 +491,7 @@
                   Classes.drag-source="{Binding IsDragPreviewSource}"
                   Classes.selected="{Binding IsSelected}"
                   Classes.keyboard-focused="{Binding IsKeyboardFocused}"
+                  Classes.stale="{Binding IsStaleDirectory}"
                   Width="{Binding NameTileWidth}"
                   Height="{Binding NameTileHeight}"
                   ClipToBounds="True"
@@ -482,6 +521,10 @@
                           AutomationProperties.Name="编辑"
                           InputGesture="F2"
                           Command="{Binding EditCommand}"/>
+                        <MenuItem Header="重新选择路径"
+                                  AutomationProperties.Name="重新选择路径"
+                                  IsVisible="{Binding IsStaleDirectory}"
+                                  Command="{Binding RepairDirectoryCommand}"/>
                 <MenuItem Header="删除"
                           AutomationProperties.Name="删除"
                           InputGesture="Delete"
@@ -513,20 +556,30 @@
                          MaxLines="1"
                          VerticalAlignment="Center"
                          Text="{Binding Name}"/>
-              <Border Grid.Column="2"
-                      Classes="entry-drag-handle"
-                      Cursor="Hand"
-                      ToolTip.Tip="拖拽排序"
-                      AutomationProperties.Name="拖拽排序"
-                      PointerPressed="OnEntryDragPointerPressed">
-                <Path Data="{StaticResource IconGripVertical}"
-                      Stroke="{StaticResource TextMutedBrush}"
-                      StrokeThickness="2"
-                      Fill="Transparent"
-                      HorizontalAlignment="Center"
-                      VerticalAlignment="Center"
-                      Width="14" Height="14"/>
-              </Border>
+              <StackPanel Grid.Column="2"
+                          Orientation="Horizontal"
+                          Spacing="4"
+                          VerticalAlignment="Center">
+                <Border Width="8"
+                        Height="8"
+                        CornerRadius="4"
+                        Background="{StaticResource BadgeWarningBackgroundBrush}"
+                        IsVisible="{Binding IsStaleDirectory}"
+                        ToolTip.Tip="目录失效"/>
+                <Border Classes="entry-drag-handle"
+                        Cursor="Hand"
+                        ToolTip.Tip="拖拽排序"
+                        AutomationProperties.Name="拖拽排序"
+                        PointerPressed="OnEntryDragPointerPressed">
+                  <Path Data="{StaticResource IconGripVertical}"
+                        Stroke="{StaticResource TextMutedBrush}"
+                        StrokeThickness="2"
+                        Fill="Transparent"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Width="14" Height="14"/>
+                </Border>
+              </StackPanel>
             </Grid>
           </Border>
         </DataTemplate>

@@ -63,7 +63,7 @@ public sealed class LauncherLaunchWorkflow
             catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
             {
                 ErrorLog.Write(ex, "Preflight");
-                RecordFailure(report, entry.Name, ex);
+                RecordFailure(report, entry.Id.Value, entry.Name, ex);
             }
         }
 
@@ -95,7 +95,7 @@ public sealed class LauncherLaunchWorkflow
             catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
             {
                 ErrorLog.Write(ex, "StartBatch");
-                RecordFailure(report, item.EntryName, index, ex);
+                RecordFailure(report, item.EntryId, item.EntryName, index, ex);
                 continue;
             }
         }
@@ -105,14 +105,16 @@ public sealed class LauncherLaunchWorkflow
 
     private static void RecordFailure(
         LauncherBatchLaunchReportBuilder report,
+        string? entryId,
         string? entryName,
         Exception exception)
     {
-        RecordFailure(report, entryName, failureIndex: null, exception);
+        RecordFailure(report, entryId, entryName, failureIndex: null, exception);
     }
 
     private static void RecordFailure(
         LauncherBatchLaunchReportBuilder report,
+        string? entryId,
         string? entryName,
         int? failureIndex,
         Exception exception)
@@ -125,8 +127,8 @@ public sealed class LauncherLaunchWorkflow
         }
 
         if (failureIndex is not null)
-            report.RecordFailure(normalizedName, failureIndex.Value, exception);
+            report.RecordFailure(entryId ?? "", normalizedName, failureIndex.Value, exception);
         else
-            report.RecordFailure(normalizedName, exception);
+            report.RecordFailure(entryId ?? "", normalizedName, exception);
     }
 }

@@ -110,6 +110,21 @@
               Click="OnOverflowMenuClicked">
         <Button.ContextMenu>
           <ContextMenu>
+            <MenuItem Header="导出全部"
+                      automation:AutomationProperties.Name="导出全部配置"
+                      Command="{Binding ExportAllConfigCommand}"/>
+            <MenuItem Header="导出选中"
+                      automation:AutomationProperties.Name="导出选中配置"
+                      Command="{Binding ExportSelectedConfigCommand}"/>
+            <MenuItem Header="导入配置"
+                      automation:AutomationProperties.Name="导入配置"
+                      Command="{Binding ImportConfigCommand}"/>
+            <MenuItem Header="最近启动"
+                      automation:AutomationProperties.Name="最近启动记录"
+                      Command="{Binding OpenRunHistoryCommand}"/>
+            <MenuItem Header="检查更新"
+                      automation:AutomationProperties.Name="检查更新"
+                      Command="{Binding CheckForUpdatesCommand}"/>
             <MenuItem Header="命令与模板"
                       automation:AutomationProperties.Name="命令与模板管理"
                       Command="{Binding OpenCommandManagementCommand}"/>
@@ -139,6 +154,14 @@
           </ContextMenu>
         </Button.ContextMenu>
       </Button>
+      <Border Background="{StaticResource BadgeWarningBackgroundBrush}" CornerRadius="14" Padding="12,7"
+              Margin="12,0,0,0" VerticalAlignment="Center"
+              IsVisible="{Binding HasStaleDirectories}"
+              ToolTip.Tip="目录已失效，请重新选择路径或删除">
+        <TextBlock Foreground="{StaticResource BadgeWarningForegroundBrush}">
+          <Run Text="失效 "/><Run Text="{Binding StaleDirectoryCount}"/><Run Text=" 项"/>
+        </TextBlock>
+      </Border>
       <Border Background="{StaticResource BadgeInfoBackgroundBrush}" CornerRadius="14" Padding="12,7"
               Margin="12,0,0,0" VerticalAlignment="Center">
         <TextBlock Foreground="{StaticResource BadgeInfoForegroundBrush}">

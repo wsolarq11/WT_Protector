@@ -44,6 +44,8 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
 
     public int VisibleCount => _projection.VisibleEntries.Count;
     public bool IsVisibleEmpty => VisibleCount == 0;
+    public int StaleDirectoryCount => _entries.Count(static e => LauncherDirectoryHealth.IsMissing(e.SnapshotEntry()));
+    public bool HasStaleDirectories => StaleDirectoryCount > 0;
 
     // ── events (kept for MWVM backward compat; Phase 3 removes these) ──
     public event Action? EntriesChanged;
@@ -95,6 +97,7 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         }
         TotalCount = _entries.Count;
         _projection.LoadEntries(entries, this);
+        RefreshDirectoryHealth();
         EntriesChanged?.Invoke();
     }
 
@@ -104,6 +107,12 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
     internal void SyncProjection()
     {
         _projection.LoadEntries(_entries.Select(e => e.SnapshotEntry()), this);
+    }
+
+    internal void RefreshDirectoryHealth()
+    {
+        OnPropertyChanged(nameof(StaleDirectoryCount));
+        OnPropertyChanged(nameof(HasStaleDirectories));
     }
 
     /// <summary>Set search filter — propagates automatically via DynamicData.</summary>
@@ -246,6 +255,7 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         TotalCount = _entries.Count;
         StatusApplier(LauncherEntryStatus.Deleted(target.EntryName));
         SyncProjection();
+        RefreshDirectoryHealth();
         EntriesChanged?.Invoke();
     }
 
@@ -285,6 +295,7 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         TotalCount = _entries.Count;
         StatusApplier(statusFactory(entry));
         SyncProjection();
+        RefreshDirectoryHealth();
         EntriesChanged?.Invoke();
     }
 
@@ -340,6 +351,7 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         item.ReplaceEntryFromOwner(updated, updated.UpdatedAtUtc);
         StatusApplier(LauncherEntryStatus.Updated(item.Name));
         SyncProjection();
+        RefreshDirectoryHealth();
         EntriesChanged?.Invoke();
     }
 

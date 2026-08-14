@@ -28,6 +28,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     private readonly IEntryService _entryService = null!;
     private readonly IPresetService _presetService = null!;
     private readonly Func<DateTimeOffset> _utcNow;
+    private ImmutableList<LauncherRunHistoryEntry> _runHistory = ImmutableList<LauncherRunHistoryEntry>.Empty;
     private readonly StatusPresenter _statusPresenter = new();
     internal readonly EntryListViewModel _list = null!;
     internal readonly PresetManager _presetManager = new();
@@ -51,6 +52,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     public bool IsFilteredEmpty => _statusPresenter.IsFilteredEmpty;
     public int SelectedCount { get => _statusPresenter.SelectedCount; set => _statusPresenter.SelectedCount = value; }
     public int PresetCount { get => _statusPresenter.PresetCount; set => _statusPresenter.PresetCount = value; }
+    public int StaleDirectoryCount => _list.StaleDirectoryCount;
+    public bool HasStaleDirectories => _list.HasStaleDirectories;
     public ReadOnlyObservableCollection<LauncherPresetViewModel> Presets => _presetManager.Presets;
     public LauncherPresetViewModel? SelectedPreset => _presetManager.SelectedPreset;
     public ReadOnlyObservableCollection<LauncherSortModeViewModel> SortModes => _layoutManager.SortModes;
@@ -86,6 +89,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
     public bool IsBatchLaunching => _launchOrchestrator.IsBatchLaunching;
 
+    public int RunHistoryCount => _runHistory.Count;
+
     public MainWindowViewModel(
         string storePath,
         StoreGrain storeGrain,
@@ -118,8 +123,14 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _launchOrchestrator.SettingsPersister = TryPersistSettingsChange;
         // Construct EntryListViewModel early so bridge delegates are ready.
         _list = new EntryListViewModel(_entryService, _utcNow, _storeGrain, _layoutManager.CardLayout);
+        _list.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(EntryListViewModel.StaleDirectoryCount) or nameof(EntryListViewModel.HasStaleDirectories))
+                OnPropertyChanged(e.PropertyName!);
+        };
         _launchOrchestrator.EntryGetter = () => _list.MutableEntries;
         _launchOrchestrator.SaveConfig = SaveConfig;
+        _launchOrchestrator.HistoryRecorder = AppendRunHistory;
         _launchOrchestrator.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(LaunchOrchestrator.RequireConfirmationForLaunches))
@@ -164,6 +175,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
             SaveDragCustomEntryOrder);
         // Load entries and presets from the unified store.
         _list.ReplaceEntries(storeFile.Entries);
+        _runHistory = LauncherRunHistory.Sanitize(storeFile.RunHistory);
+        OnPropertyChanged(nameof(RunHistoryCount));
         TotalCount = _list.MutableEntries.Count;
         VisibleCount = _list.VisibleCount;
         var presetFile = new LauncherPresetFile
@@ -348,6 +361,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
             Settings = CurrentSettings,
             Presets = _presetManager.File.Presets,
             DefaultPresetId = _presetManager.File.DefaultPresetId,
+            RunHistory = _runHistory,
         };
 
     /// <summary>Saves the given store file to disk via StoreGrain. Returns null on
@@ -410,6 +424,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         // Use ReplaceEntries (no event) then sync CustomEntryOrder before refresh,
         // so ValidateCustomOrder doesn't fail on inconsistent state.
         _list.ReplaceEntries(_storeGrain.Select(s => s.Entries));
+        _runHistory = LauncherRunHistory.Sanitize(_storeGrain.Select(s => s.RunHistory));
+        OnPropertyChanged(nameof(RunHistoryCount));
         EnsureCustomOrderContainsEntries();
         RefreshAllProjections();
     }

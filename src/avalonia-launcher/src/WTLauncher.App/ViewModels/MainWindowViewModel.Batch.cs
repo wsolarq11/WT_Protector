@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
@@ -77,7 +78,8 @@ public sealed partial class MainWindowViewModel
             LauncherSelectionStatus.NoSelectedEntries,
             LauncherSelectionStatus.BatchLaunchCanceled,
             LauncherSelectionStatus.BatchLaunchFailed,
-            LauncherSelectionStatus.BatchLaunchCompleted).ConfigureAwait(true);
+            LauncherSelectionStatus.BatchLaunchCompleted,
+            LauncherRunSource.Selection).ConfigureAwait(true);
     }
 
     [RelayCommand(CanExecute = nameof(CanCancelBatch))]

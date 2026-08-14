@@ -66,6 +66,10 @@
         </Transitions>
       </Setter>
     </Style>
+    <Style Selector="Border.card.stale">
+      <Setter Property="BorderBrush" Value="{StaticResource ErrorBrush}"/>
+      <Setter Property="BoxShadow" Value="{StaticResource NoBoxShadow}"/>
+    </Style>
     <Style Selector="Border.card:pointerover">
       <Setter Property="RenderTransform" Value="translateY(-2px)"/>
     </Style>

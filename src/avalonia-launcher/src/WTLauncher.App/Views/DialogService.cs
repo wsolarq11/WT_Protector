@@ -1,5 +1,7 @@
 using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using WTLauncher.App.Features.Dialogs;
+using WTLauncher.App.Features.Updates;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -69,5 +71,55 @@ public sealed class DialogService : IDialogService
     {
         var vm = new DirectoryManagementViewModel(initialDirectoryRows, applyEdit);
         await new DirectoryManagementWindow(vm).ShowDialog<object?>(Owner);
+    }
+
+    public async Task<string?> PickExportPathAsync()
+    {
+        var file = await Owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "导出配置",
+            SuggestedFileName = "wt-launcher-export.json",
+            DefaultExtension = "json",
+            FileTypeChoices =
+            [
+                new FilePickerFileType("WT Launcher 配置") { Patterns = ["*.json"] },
+            ],
+        });
+        return file?.TryGetLocalPath();
+    }
+
+    public async Task<string?> PickImportPathAsync()
+    {
+        var files = await Owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "导入配置",
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("WT Launcher 配置") { Patterns = ["*.json"] },
+            ],
+        });
+        return files.Count > 0 ? files[0].TryGetLocalPath() : null;
+    }
+
+    public Task<LauncherImportPlan?> RequestImportAsync(LauncherStoreFile current, LauncherStoreFile imported)
+    {
+        var vm = new ImportConfigViewModel(current, imported);
+        return new ImportMigrationWindow(vm).ShowDialog<LauncherImportPlan?>(Owner);
+    }
+
+    public async Task OpenRunHistoryAsync(IReadOnlyList<LauncherRunHistoryEntry> history)
+    {
+        var vm = new RunHistoryViewModel(history);
+        await new RunHistoryWindow(vm).ShowDialog<object?>(Owner);
+    }
+
+    public Task OpenUpdateCheckAsync(string currentVersion, string? manifestUrl)
+    {
+        var vm = new UpdateCheckViewModel(
+            new UpdateCheckService(),
+            currentVersion,
+            manifestUrl);
+        return new UpdateCheckWindow(vm).ShowDialog<object?>(Owner);
     }
 }

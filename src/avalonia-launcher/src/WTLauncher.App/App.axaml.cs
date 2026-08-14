@@ -3,10 +3,12 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
+using Avalonia.Threading;
 using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Features.Presets;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Platform;
 using WTLauncher.App.ViewModels;
 using WTLauncher.App.Views;
 using WTLauncher.Core;
@@ -62,6 +64,8 @@ public sealed partial class App : Application
         Resources["BadgeSuccessForegroundBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BadgeSuccessForegroundColor));
         Resources["BadgeInfoBackgroundBrush"]     = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BadgeInfoBackgroundColor));
         Resources["BadgeInfoForegroundBrush"]     = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BadgeInfoForegroundColor));
+        Resources["BadgeWarningBackgroundBrush"]  = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BadgeWarningBackgroundColor));
+        Resources["BadgeWarningForegroundBrush"]  = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BadgeWarningForegroundColor));
 
         // ── Drag handle ────────────────────────────────────
         Resources["DragHandleTextBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.DragHandleTextColor));
@@ -172,6 +176,7 @@ public sealed partial class App : Application
                 };
                 dialogService.Initialize(mainWindow);
                 desktop.MainWindow = mainWindow;
+                WireQuickLaunchAndTray(mainWindow, viewModel);
             }
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
@@ -209,4 +214,70 @@ public sealed partial class App : Application
         }
     }
 
+    private void WireQuickLaunchAndTray(MainWindow mainWindow, MainWindowViewModel viewModel)
+    {
+        var quickLaunchViewModel = new QuickLaunchViewModel(viewModel);
+        var quickLaunchWindow = new QuickLaunchWindow(quickLaunchViewModel);
+        var trayQuitting = false;
+
+        void ShowMainWindow()
+        {
+            if (!mainWindow.IsVisible)
+                mainWindow.Show();
+            if (mainWindow.WindowState == WindowState.Minimized)
+                mainWindow.WindowState = WindowState.Normal;
+            mainWindow.Activate();
+        }
+
+        void ShowQuickLaunch()
+        {
+            quickLaunchViewModel.Reset();
+            if (!quickLaunchWindow.IsVisible)
+                quickLaunchWindow.Show(mainWindow);
+            quickLaunchWindow.Activate();
+        }
+
+        try
+        {
+            var hotkey = LauncherHotkey.Parse(viewModel.Settings.QuickLaunchHotkey);
+#pragma warning disable CA2000
+            var hotkeyService = new Win32HotkeyService(hotkey.Modifiers, hotkey.Key);
+#pragma warning restore CA2000
+            hotkeyService.HotkeyPressed += () => Dispatcher.UIThread.Post(ShowQuickLaunch);
+        }
+        catch (Exception ex) when (ex is FormatException or InvalidOperationException or System.ComponentModel.Win32Exception or DllNotFoundException or EntryPointNotFoundException)
+        {
+            ErrorLog.Write(ex, "QuickLaunchHotkey");
+            Console.Error.WriteLine($"[WTLauncher] Quick-launch hotkey disabled: {ex.Message}");
+        }
+
+        if (viewModel.Settings.RunInTray)
+        {
+            try
+            {
+#pragma warning disable CA2000
+                var tray = new Win32TrayIcon("WT Launcher");
+#pragma warning restore CA2000
+                tray.OpenRequested += () => Dispatcher.UIThread.Post(ShowMainWindow);
+                tray.QuitRequested += () => Dispatcher.UIThread.Post(() =>
+                {
+                    trayQuitting = true;
+                    mainWindow.Close();
+                });
+                mainWindow.Closing += (_, e) =>
+                {
+                    if (!trayQuitting)
+                    {
+                        e.Cancel = true;
+                        mainWindow.Hide();
+                    }
+                };
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or DllNotFoundException or EntryPointNotFoundException)
+            {
+                ErrorLog.Write(ex, "Tray");
+                Console.Error.WriteLine($"[WTLauncher] Tray disabled: {ex.Message}");
+            }
+        }
+    }
 }

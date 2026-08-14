@@ -81,6 +81,9 @@ public sealed partial class LauncherEntryViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isKeyboardFocused;
 
+    /// <summary>Read-only projection of whether the entry's directory currently exists.</summary>
+    public bool IsStaleDirectory => LauncherDirectoryHealth.IsMissing(_entry);
+
     internal void SetSelectionFromOwner(bool selected)
     {
         if (_entry.Selected != selected)
@@ -154,6 +157,7 @@ public sealed partial class LauncherEntryViewModel : ViewModelBase
     public void RefreshDisplay()
     {
         RefreshBrand();
+        OnPropertyChanged(nameof(IsStaleDirectory));
         OnPropertyChanged(nameof(Id));
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Directory));
@@ -182,6 +186,9 @@ public sealed partial class LauncherEntryViewModel : ViewModelBase
 
     [RelayCommand]
     private Task EditAsync() => _owner.EditEntryAsync(this);
+
+    [RelayCommand]
+    private Task RepairDirectoryAsync() => _owner.EditEntryAsync(this);
 
     [RelayCommand]
     private Task DeleteAsync() => _owner.DeleteEntryAsync(this);

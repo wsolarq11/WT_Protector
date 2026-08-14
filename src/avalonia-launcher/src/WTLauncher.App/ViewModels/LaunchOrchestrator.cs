@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using CommunityToolkit.Mvvm.ComponentModel;
 using WTLauncher.App.Features;
 using WTLauncher.App.Features.Dialogs;
@@ -39,6 +40,7 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
     internal Func<Func<LauncherSettings, LauncherSettings>, LauncherStatusContent?, bool> SettingsPersister = null!;
     internal Func<IEnumerable<LauncherEntryViewModel>> EntryGetter = null!;
     internal Func<bool> SaveConfig = null!;
+    internal Action<IReadOnlyList<LauncherRunHistoryEntry>> HistoryRecorder = null!;
 
     /// <summary>CommandTemplates 可写 — CommandManagement 在提交后同步。</summary>
     public IReadOnlyDictionary<string, string>? CommandTemplates
@@ -95,12 +97,14 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
             {
                 plan = _launchWorkflow.BuildPlan(entry, RequireConfirmationForLaunches);
                 var confirmation = new LauncherSingleLaunchConfirmation(entry, plan);
-                if (!await ConfirmSingleLaunchIfRequiredAsync(confirmation).ConfigureAwait(true))
+                if (!await ConfirmSingleLaunchIfRequiredAsync(confirmation, entry.Id.Value).ConfigureAwait(true))
                     return;
 
                 _launchWorkflow.Start(plan);
                 DryRunTextSetter(LauncherSingleLaunchReceiptText.Requested(entryName, plan));
-                item.RecordLaunchFromOwner(TimestampGetter());
+                var requestedTimestamp = TimestampGetter();
+                item.RecordLaunchFromOwner(requestedTimestamp);
+                RecordRunHistory([CreateHistory(entry.Id.Value, entryName, requestedTimestamp, LauncherRunSource.Individual, LauncherRunStatus.Requested)]);
                 if (!SaveConfig())
                     return;
                 StatusApplier(LauncherSingleLaunchStatus.Requested(entryName));
@@ -108,6 +112,9 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
             catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
             {
                 ErrorLog.Write(ex, "Launch");
+                RecordRunHistory([CreateHistory(entry.Id.Value, entryName, TimestampGetter(), LauncherRunSource.Individual, LauncherRunStatus.Failed)]);
+                if (!SaveConfig())
+                    return;
                 if (entryName.Length == 0)
                 {
                     DryRunTextSetter(LauncherSingleLaunchReceiptText.Failed(ex));
@@ -127,7 +134,9 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
         }
     }
 
-    private async Task<bool> ConfirmSingleLaunchIfRequiredAsync(LauncherSingleLaunchConfirmation confirmation)
+    private async Task<bool> ConfirmSingleLaunchIfRequiredAsync(
+        LauncherSingleLaunchConfirmation confirmation,
+        string entryId)
     {
         ArgumentNullException.ThrowIfNull(confirmation);
 
@@ -144,6 +153,9 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "LaunchConfirmation");
+            RecordRunHistory([CreateHistory(entryId, entryName, TimestampGetter(), LauncherRunSource.Individual, LauncherRunStatus.Failed)]);
+            if (!SaveConfig())
+                return false;
             DryRunTextSetter(LauncherSingleLaunchReceiptText.ConfirmationFailed(entryName, plan, ex));
             StatusApplier(LauncherSingleLaunchStatus.Failed(entryName, ex));
             return false;
@@ -152,6 +164,9 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
         if (accepted)
             return true;
 
+        RecordRunHistory([CreateHistory(entryId, entryName, TimestampGetter(), LauncherRunSource.Individual, LauncherRunStatus.Canceled)]);
+        if (!SaveConfig())
+            return false;
         DryRunTextSetter(LauncherSingleLaunchReceiptText.Canceled(entryName, plan));
         StatusApplier(LauncherSingleLaunchStatus.Canceled(entryName));
         return false;
@@ -167,7 +182,8 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
         LauncherStatusContent emptyStatus,
         Func<int, LauncherStatusContent> canceledStatus,
         Func<Exception, LauncherStatusContent> failedStatus,
-        Func<LauncherBatchLaunchReport, LauncherStatusContent> completedStatus)
+        Func<LauncherBatchLaunchReport, LauncherStatusContent> completedStatus,
+        LauncherRunSource source = LauncherRunSource.Selection)
     {
         if (entries.Count == 0)
         {
@@ -181,6 +197,7 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
         _batchCts?.Dispose();
         _batchCts = new CancellationTokenSource();
         LauncherBatchLaunchPreflight preflight = null!;
+        LauncherBatchLaunchReport? completedReport = null;
         try
         {
             OnPropertyChanged(nameof(IsBatchLaunching));
@@ -193,10 +210,12 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
                     preflight.Report,
                     confirmationTargetLabel,
                     canceledStatus,
-                    failedStatus).ConfigureAwait(true))
+                    failedStatus,
+                    source).ConfigureAwait(true))
                 return;
 
             var report = _launchWorkflow.StartBatch(preflight, _batchCts.Token);
+            completedReport = report;
             var timestamp = TimestampGetter();
             var startedCount = report.RequestedCount;
             var preflightItems = preflight.Items;
@@ -221,12 +240,19 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
             }
             // Save AFTER timestamps are recorded so launch history is persisted.
             DryRunTextSetter(LauncherBatchLaunchReceiptText.Format(preflight, report));
-            if (startedCount > 0 && !SaveConfig())
+            RecordRunHistory(BuildBatchHistory(preflight.Items, report, timestamp, source));
+            if (!SaveConfig())
                 return;
             StatusApplier(completedStatus(report));
         }
         catch (OperationCanceledException)
         {
+            if (completedReport is not null)
+            {
+                RecordRunHistory(BuildBatchHistory(preflight.Items, completedReport, TimestampGetter(), source));
+                if (!SaveConfig())
+                    return;
+            }
             DryRunTextSetter(LauncherBatchLaunchReceiptText.Canceled(preflight?.Items ?? []));
             StatusApplier(LauncherRefreshStatus.CanceledBatch);
         }
@@ -249,7 +275,8 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
         LauncherBatchLaunchReport report,
         string confirmationTargetLabel,
         Func<int, LauncherStatusContent> canceledStatus,
-        Func<Exception, LauncherStatusContent> failedStatus)
+        Func<Exception, LauncherStatusContent> failedStatus,
+        LauncherRunSource source)
     {
         if (!RequireConfirmationForLaunches && report.FailedCount == 0 && !items.Any(i => i.Plan.RequiresConfirmation))
             return true;
@@ -267,6 +294,9 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "BatchLaunchConfirmation");
+            RecordRunHistory(BuildDecisionHistory(items, report, source, LauncherRunStatus.Failed, TimestampGetter()));
+            if (!SaveConfig())
+                return false;
             DryRunTextSetter(LauncherBatchLaunchReceiptText.ConfirmationFailed(confirmation.Items, ex));
             StatusApplier(failedStatus(ex));
             return false;
@@ -275,9 +305,91 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
         if (accepted)
             return true;
 
+        RecordRunHistory(BuildDecisionHistory(items, report, source, LauncherRunStatus.Canceled, TimestampGetter()));
+        if (!SaveConfig())
+            return false;
         DryRunTextSetter(LauncherBatchLaunchReceiptText.Canceled(confirmation.Items));
         StatusApplier(canceledStatus(confirmation.Items.Count));
         return false;
+    }
+
+    private void RecordRunHistory(IEnumerable<LauncherRunHistoryEntry> entries)
+    {
+        if (HistoryRecorder is null)
+            return;
+        try
+        {
+            HistoryRecorder(entries.ToList());
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "RunHistory");
+        }
+    }
+
+    private static LauncherRunHistoryEntry CreateHistory(
+        string entryId,
+        string entryName,
+        string timestampUtc,
+        LauncherRunSource source,
+        LauncherRunStatus status) =>
+        LauncherRunHistoryEntry.Create(entryId, entryName, timestampUtc, source, status);
+
+    private static ImmutableList<LauncherRunHistoryEntry> BuildBatchHistory(
+        IReadOnlyList<LauncherBatchLaunchItem> items,
+        LauncherBatchLaunchReport report,
+        string timestampUtc,
+        LauncherRunSource source)
+    {
+        var entries = new List<LauncherRunHistoryEntry>();
+        var failures = new HashSet<int>(report.FailureIndices);
+        var canceledStart = items.Count - report.SkippedCount;
+        for (var index = 0; index < items.Count; index++)
+        {
+            var status = failures.Contains(index)
+                ? LauncherRunStatus.Failed
+                : report.SkippedCount > 0 && index >= canceledStart
+                    ? LauncherRunStatus.Skipped
+                    : LauncherRunStatus.Requested;
+            entries.Add(CreateHistory(
+                items[index].EntryId,
+                items[index].EntryName,
+                timestampUtc,
+                source,
+                status));
+        }
+
+        for (var index = 0; index < report.FailureEntryIds.Count; index++)
+        {
+            var entryId = report.FailureEntryIds[index];
+            var entryName = index < report.FailureEntryNames.Count
+                ? report.FailureEntryNames[index]
+                : entryId;
+            entries.Add(CreateHistory(entryId, entryName, timestampUtc, source, LauncherRunStatus.Failed));
+        }
+
+        return entries.ToImmutableList();
+    }
+
+    private static ImmutableList<LauncherRunHistoryEntry> BuildDecisionHistory(
+        IReadOnlyList<LauncherBatchLaunchItem> items,
+        LauncherBatchLaunchReport report,
+        LauncherRunSource source,
+        LauncherRunStatus status,
+        string timestampUtc)
+    {
+        var entries = items.Select(item =>
+            CreateHistory(item.EntryId, item.EntryName, timestampUtc, source, status));
+        var failedPreflight = Enumerable.Range(0, report.FailureEntryIds.Count)
+            .Select(index => CreateHistory(
+                report.FailureEntryIds[index],
+                index < report.FailureEntryNames.Count
+                    ? report.FailureEntryNames[index]
+                    : report.FailureEntryIds[index],
+                timestampUtc,
+                source,
+                LauncherRunStatus.Failed));
+        return entries.Concat(failedPreflight).ToImmutableList();
     }
 
     private static LaunchEntry ToLaunchEntry(LauncherEntryViewModel entry) => entry.SnapshotEntry();

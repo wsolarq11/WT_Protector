@@ -17,4 +17,9 @@ public interface IDialogService
         IReadOnlyDictionary<string, string> commandTemplates);
     public Task OpenCommandManagementAsync(IReadOnlyList<CommandRow> initialCommandRows, IReadOnlyList<TemplateRow> initialTemplateRows, Func<CommandManagementEdit, CommandManagementResult> applyEdit);
     public Task OpenDirectoryManagementAsync(IReadOnlyList<DirectoryRow> initialDirectoryRows, Func<DirectoryManagementEdit, DirectoryManagementResult> applyEdit);
+    public Task<string?> PickExportPathAsync();
+    public Task<string?> PickImportPathAsync();
+    public Task<LauncherImportPlan?> RequestImportAsync(LauncherStoreFile current, LauncherStoreFile imported);
+    public Task OpenRunHistoryAsync(IReadOnlyList<LauncherRunHistoryEntry> history);
+    public Task OpenUpdateCheckAsync(string currentVersion, string? manifestUrl);
 }

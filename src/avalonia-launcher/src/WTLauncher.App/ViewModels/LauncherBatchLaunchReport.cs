@@ -5,6 +5,8 @@ namespace WTLauncher.App.ViewModels;
 public sealed record LauncherBatchLaunchReport
 {
     private readonly IReadOnlyList<string> _failureMessages;
+    private readonly IReadOnlyList<string> _failureEntryIds;
+    private readonly IReadOnlyList<string> _failureEntryNames;
 
     public LauncherBatchLaunchReport(
         int requestedCount = 0,
@@ -12,7 +14,9 @@ public sealed record LauncherBatchLaunchReport
         string? lastCommandLine = null,
         int? failureIndex = null,
         IReadOnlyList<int>? failureIndices = null,
-        IEnumerable<string>? failureMessages = null)
+        IEnumerable<string>? failureMessages = null,
+        IEnumerable<string>? failureEntryIds = null,
+        IEnumerable<string>? failureEntryNames = null)
     {
         if (requestedCount < 0)
             throw new ArgumentOutOfRangeException(
@@ -31,6 +35,8 @@ public sealed record LauncherBatchLaunchReport
         FailureIndex = failureIndex;
         FailureIndices = failureIndices ?? Array.Empty<int>();
         _failureMessages = Array.AsReadOnly(CloneFailureMessages(failureMessages));
+        _failureEntryIds = Array.AsReadOnly(CloneFailureEntryIds(failureEntryIds));
+        _failureEntryNames = Array.AsReadOnly(CloneFailureEntryNames(failureEntryNames));
     }
 
     public int RequestedCount { get; }
@@ -51,6 +57,10 @@ public sealed record LauncherBatchLaunchReport
 
     public IReadOnlyList<string> FailureMessages => _failureMessages;
 
+    public IReadOnlyList<string> FailureEntryIds => _failureEntryIds;
+
+    public IReadOnlyList<string> FailureEntryNames => _failureEntryNames;
+
     private static string[] CloneFailureMessages(IEnumerable<string>? failureMessages)
     {
         if (failureMessages is null)
@@ -67,12 +77,48 @@ public sealed record LauncherBatchLaunchReport
 
         return [.. clone];
     }
+
+    private static string[] CloneFailureEntryIds(IEnumerable<string>? failureEntryIds)
+    {
+        if (failureEntryIds is null)
+            return [];
+
+        List<string> clone = [];
+        foreach (var entryId in failureEntryIds)
+        {
+            if (entryId is null)
+                throw new InvalidDataException("Launcher batch failure entry id is null.");
+
+            clone.Add(entryId);
+        }
+
+        return [.. clone];
+    }
+
+    private static string[] CloneFailureEntryNames(IEnumerable<string>? failureEntryNames)
+    {
+        if (failureEntryNames is null)
+            return [];
+
+        List<string> clone = [];
+        foreach (var entryName in failureEntryNames)
+        {
+            if (entryName is null)
+                throw new InvalidDataException("Launcher batch failure entry name is null.");
+
+            clone.Add(entryName);
+        }
+
+        return [.. clone];
+    }
 }
 
 internal sealed class LauncherBatchLaunchReportBuilder
 {
     private readonly List<string> _failures = [];
     private readonly List<int> _failureIndices = [];
+    private readonly List<string> _failureEntryIds = [];
+    private readonly List<string> _failureEntryNames = [];
 
     public LauncherBatchLaunchReportBuilder()
     {
@@ -88,6 +134,8 @@ internal sealed class LauncherBatchLaunchReportBuilder
         FailureIndex = report.FailureIndex;
         _failureIndices.AddRange(report.FailureIndices);
         _failures.AddRange(report.FailureMessages);
+        _failureEntryIds.AddRange(report.FailureEntryIds);
+        _failureEntryNames.AddRange(report.FailureEntryNames);
     }
 
     public int RequestedCount { get; private set; }
@@ -101,7 +149,7 @@ internal sealed class LauncherBatchLaunchReportBuilder
     public int? FailureIndex { get; private set; }
 
     public LauncherBatchLaunchReport ToReport() =>
-        new(RequestedCount, SkippedCount, LastCommandLine, FailureIndex, _failureIndices, _failures);
+        new(RequestedCount, SkippedCount, LastCommandLine, FailureIndex, _failureIndices, _failures, _failureEntryIds, _failureEntryNames);
 
     public void RecordPlan(LaunchPlan plan)
     {
@@ -130,6 +178,26 @@ internal sealed class LauncherBatchLaunchReportBuilder
     public void RecordFailure(string entryName, int failureIndex, Exception exception)
     {
         RecordFailure(entryName, (int?)failureIndex, exception);
+    }
+
+    public void RecordFailure(string entryId, string entryName, Exception exception)
+    {
+        RecordFailure(entryId, entryName, failureIndex: null, exception);
+    }
+
+    public void RecordFailure(string entryId, string entryName, int failureIndex, Exception exception)
+    {
+        RecordFailure(entryId, entryName, (int?)failureIndex, exception);
+    }
+
+    private void RecordFailure(string entryId, string entryName, int? failureIndex, Exception exception)
+    {
+        if (!string.IsNullOrWhiteSpace(entryId))
+        {
+            _failureEntryIds.Add(entryId);
+            _failureEntryNames.Add(EntryName.Normalize(entryName));
+        }
+        RecordFailure(entryName, failureIndex, exception);
     }
 
     private void RecordFailure(string entryName, int? failureIndex, Exception exception)

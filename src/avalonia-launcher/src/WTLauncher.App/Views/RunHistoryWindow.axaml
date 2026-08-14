@@ -1,0 +1,35 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:WTLauncher.App.ViewModels"
+        x:Class="WTLauncher.App.Views.RunHistoryWindow"
+        x:DataType="vm:RunHistoryViewModel"
+        Title="最近启动"
+        Width="720"
+        Height="520"
+        MinWidth="560"
+        MinHeight="360"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BackgroundBrush}">
+  <Grid RowDefinitions="Auto,*" RowSpacing="12" Margin="{StaticResource DialogOuterPadding}">
+    <TextBlock Text="{Binding Summary}" FontSize="{StaticResource FontSizeBody}" Foreground="{StaticResource TextPrimaryBrush}" />
+    <ListBox Grid.Row="1" ItemsSource="{Binding Rows}" Background="Transparent">
+      <ListBox.ItemTemplate>
+        <DataTemplate x:DataType="vm:RunHistoryRowViewModel">
+          <Grid ColumnDefinitions="160,*,90,70,110" ColumnSpacing="12" Margin="0,4">
+            <TextBlock Text="{Binding Time}" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis" />
+            <StackPanel Grid.Column="1" Spacing="2">
+              <TextBlock Text="{Binding EntryName}" FontSize="{StaticResource FontSizeBody}" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+              <TextBlock Text="{Binding EntryId}" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+            <TextBlock Grid.Column="2" Text="{Binding Source}" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextMutedBrush}" />
+            <TextBlock Grid.Column="3" Text="{Binding Status}" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource BadgeWarningForegroundBrush}" IsVisible="{Binding IsFailed}" />
+            <TextBlock Grid.Column="3" Text="{Binding Status}" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextMutedBrush}" IsVisible="{Binding IsRequested}" />
+            <TextBlock Grid.Column="3" Text="{Binding Status}" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource BadgeWarningForegroundBrush}" IsVisible="{Binding IsSkipped}" />
+            <TextBlock Grid.Column="3" Text="{Binding Status}" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextMutedBrush}" IsVisible="{Binding IsCanceled}" />
+            <TextBlock Grid.Column="4" Text="仅表示启动请求已提交" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextMutedBrush}" />
+          </Grid>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+  </Grid>
+</Window>

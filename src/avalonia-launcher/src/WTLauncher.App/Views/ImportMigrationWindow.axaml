@@ -1,0 +1,48 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:WTLauncher.App.ViewModels"
+        x:Class="WTLauncher.App.Views.ImportMigrationWindow"
+        x:DataType="vm:ImportConfigViewModel"
+        Title="导入配置"
+        Width="820"
+        Height="560"
+        MinWidth="680"
+        MinHeight="420"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BackgroundBrush}">
+  <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="12" Margin="{StaticResource DialogOuterPadding}">
+    <TextBlock Text="{Binding Summary}" FontSize="{StaticResource FontSizeBody}" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" />
+
+    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="20">
+      <RadioButton Content="新增到现有配置" IsChecked="{Binding AddNewMode}" />
+      <RadioButton Content="替换为导入配置" IsChecked="{Binding ReplaceMode}" />
+    </StackPanel>
+
+    <ListBox Grid.Row="2" ItemsSource="{Binding Rows}" Background="Transparent">
+      <ListBox.ItemTemplate>
+        <DataTemplate x:DataType="vm:ImportEntryRowViewModel">
+          <Grid ColumnDefinitions="150,*,140,80" ColumnSpacing="10" Margin="0,4">
+            <StackPanel Spacing="2">
+              <TextBlock Text="{Binding Name}" FontSize="{StaticResource FontSizeBody}" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+              <TextBlock Text="{Binding Id}" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="2">
+              <TextBlock Text="{Binding OriginalDirectory}" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis" />
+              <TextBlock Text="目录在本机不存在，可填写映射" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource BadgeWarningForegroundBrush}" IsVisible="{Binding IsMissing}" />
+            </StackPanel>
+            <TextBox Grid.Column="2" Text="{Binding DirectoryOverride, Mode=TwoWay}" PlaceholderText="保持原路径" />
+            <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+              <CheckBox Content="跳过" IsChecked="{Binding IsSkipped}" />
+              <TextBlock Text="重复" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource BadgeWarningForegroundBrush}" IsVisible="{Binding IsDuplicate}" />
+            </StackPanel>
+          </Grid>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="{StaticResource DialogFooterMargin}">
+      <Button Classes="secondary" Content="取消" Click="OnCancelClicked" />
+      <Button Content="确认导入" Click="OnConfirmClicked" />
+    </StackPanel>
+  </Grid>
+</Window>
