@@ -32,3 +32,25 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 2: Accept remaining Trellis tasks: friend-handoff and docs consistency
+
+**Date**: 2026-08-16
+**Task**: Accept remaining Trellis tasks: friend-handoff and docs consistency
+**Branch**: `main`
+
+### Summary
+
+验收并收口剩余 Trellis 任务：核验 friend-handoff AC0-AC8（AOT 发布、干净产物、friend zip、空状态/添加对话框、文档与示例配置），补齐 2026-08-15 后新增的接线门禁基线（40 项/737 属性/820 用例）到 README、docs、spec 与 docs 任务验证脚本；全量门禁绿后归档两个任务。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c6fa90d6` | (see git log) |
+| `c556b05a` | (see git log) |
+
+### Status
+
+[OK] **Completed**
