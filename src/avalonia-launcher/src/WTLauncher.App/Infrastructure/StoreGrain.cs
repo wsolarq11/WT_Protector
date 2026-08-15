@@ -19,6 +19,9 @@ public sealed class StoreGrain : Grain<LauncherStoreFile>, IDisposable
     /// <summary>Fires when state changes.</summary>
     public event Action<LauncherStoreFile>? StateChanged;
 
+    /// <summary>Fires after ReloadFromDisk replaces the in-memory state.</summary>
+    public event Action<LauncherStoreFile>? Reloaded;
+
     public string StorePath => _storePath;
 
     /// <summary>Create a store grain backed by the given path.
@@ -53,6 +56,11 @@ public sealed class StoreGrain : Grain<LauncherStoreFile>, IDisposable
     {
         var fresh = _persistence.Load(_storePath);
         SetState(fresh);
+        try { Reloaded?.Invoke(fresh); }
+        catch (Exception ex) when (LauncherErrors.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "StoreGrain.Reloaded");
+        }
     }
 
     public void Dispatch(Func<LauncherStoreFile, LauncherStoreFile> reducer)

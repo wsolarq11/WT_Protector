@@ -202,10 +202,93 @@ public sealed class StoreGrainTests
         Assert.Equal(path, store.StorePath);
     }
 
+    [Fact]
+    public void Reloaded_NotifiesAfterReloadFromDisk()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        LauncherStore.Save(SampleStore(), path);
+        var store = new StoreGrain(path, new FileStorePersistence());
+        LauncherStoreFile? reloaded = null;
+        store.Reloaded += state => reloaded = state;
+
+        LauncherStore.Save(SampleStore() with { DefaultPresetId = "changed" }, path, backup: false);
+        store.ReloadFromDisk();
+
+        Assert.NotNull(reloaded);
+        Assert.Equal("changed", reloaded!.DefaultPresetId);
+        Assert.Equal("changed", store.Select(s => s.DefaultPresetId));
+    }
+
+    [Fact]
+    public void Reloaded_DoesNotFireOnDispatch()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        LauncherStore.Save(SampleStore(), path);
+        var store = new StoreGrain(path, new FileStorePersistence());
+        var notified = false;
+        store.Reloaded += _ => notified = true;
+
+        store.Dispatch(state => state with { DefaultPresetId = "changed" });
+
+        Assert.False(notified);
+    }
+
     private static string HashFile(string path)
     {
         var bytes = File.ReadAllBytes(path);
         return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes));
+    }
+}
+
+public sealed class StoreMutationSessionTests
+{
+    [Fact]
+    public void Commit_FailureInvokesRestoreAndReturnsError()
+    {
+        var restored = false;
+        using var session = new StoreMutationSession(_ => "save failed", () => restored = true);
+
+        var failure = session.Commit(new LauncherStoreFile());
+
+        Assert.Equal("save failed", failure);
+        Assert.True(restored);
+    }
+
+    [Fact]
+    public void Commit_SuccessDoesNotRestore()
+    {
+        var restored = false;
+        using var session = new StoreMutationSession(_ => null, () => restored = true);
+
+        var failure = session.Commit(new LauncherStoreFile());
+
+        Assert.Null(failure);
+        Assert.False(restored);
+    }
+
+    [Fact]
+    public void DisposeWithoutCommit_Restores()
+    {
+        var restored = false;
+
+        using (new StoreMutationSession(_ => null, () => restored = true))
+        {
+            Assert.False(restored);
+        }
+
+        Assert.True(restored);
+    }
+
+    [Fact]
+    public void CommitAfterCommit_Throws()
+    {
+        using var session = new StoreMutationSession(_ => null, () => { });
+
+        session.Commit(new LauncherStoreFile());
+
+        Assert.Throws<InvalidOperationException>(() => session.Commit(new LauncherStoreFile()));
     }
 }
 

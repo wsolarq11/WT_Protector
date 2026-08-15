@@ -32,6 +32,7 @@ public sealed partial class MainWindowViewModel
     {
         ArgumentNullException.ThrowIfNull(edit);
 
+        using var transaction = new StoreMutationSession(SaveStoreFile, RestoreVmStateFromStore);
         string statusMessage;
         try
         {
@@ -40,16 +41,12 @@ public sealed partial class MainWindowViewModel
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "DirectoryManagement.Apply");
-            RestoreVmStateFromStore();
             return DirectoryFailure($"应用失败: {ExceptionMessageFormatter.ForUser(ex)}");
         }
 
-        var saveFailure = SaveStoreFile(BuildStoreFile());
+        var saveFailure = transaction.Commit(BuildStoreFile());
         if (saveFailure is not null)
-        {
-            RestoreVmStateFromStore();
             return DirectoryFailure(saveFailure);
-        }
 
         RefreshSelectionState();
         ApplyFilter();

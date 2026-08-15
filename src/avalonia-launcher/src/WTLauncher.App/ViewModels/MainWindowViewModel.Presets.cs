@@ -223,11 +223,13 @@ public sealed partial class MainWindowViewModel
         out LauncherPresetViewModel? selectedPreset)
     {
         selectedPreset = null;
+        using var transaction = new StoreMutationSession(
+            SaveStoreFile,
+            () => _presetManager.Load(snapshot.PresetFile, snapshot.SelectedPresetId));
         _presetManager.ApplyPresetMutation(newPresetFile, selectedPresetId);
-        var saveFailure = SaveStoreFile(BuildStoreFile());
+        var saveFailure = transaction.Commit(BuildStoreFile());
         if (saveFailure is not null)
         {
-            _presetManager.Load(snapshot.PresetFile, snapshot.SelectedPresetId);
             ApplyStatusText(saveFailure);
             return false;
         }

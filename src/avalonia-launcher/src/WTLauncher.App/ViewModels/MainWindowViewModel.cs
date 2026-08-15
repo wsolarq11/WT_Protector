@@ -212,6 +212,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
                 new LauncherPresetFile { Presets = state.Presets, DefaultPresetId = state.DefaultPresetId },
                 _presetManager.SelectedPreset?.Id);
         });
+        _storeGrain.Reloaded += OnStoreReloaded;
     }
     
     /// <summary>Post-construction initialization. Subscribes to entry change
@@ -254,19 +255,20 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         {
             DiscardDragReorderPreview();
             _storeGrain.ReloadFromDisk();
-            var storeFile = _storeGrain.Select(s => s);
-            _list.ReplaceEntries(storeFile.Entries);
-            _list.KeyboardFocusedEntryId = null;
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "Refresh.LoadStore");
             StatusContent = LauncherMainWindowText.ConfigLoadFailed(ExceptionMessageFormatter.ForUser(ex));
-            return;
         }
+    }
 
+    private void OnStoreReloaded(LauncherStoreFile storeFile)
+    {
         try
         {
+            _list.ReplaceEntries(storeFile.Entries);
+            _list.KeyboardFocusedEntryId = null;
             EnsureCustomOrderContainsEntries();
 
             // Cross-validate $key command references against commandTemplates.
@@ -275,6 +277,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
             LoadPresetFile(preferredPresetId: null);
 
             ValidatePresetEntryReferences();
+            RefreshSelectionState();
+            ApplyFilter();
+            StatusContent = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
@@ -289,12 +294,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
             }
             RefreshSelectionState();
             ApplyFilter();
-            return;
         }
-
-        RefreshSelectionState();
-        ApplyFilter();
-        StatusContent = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
     }
 
     private void ValidateCommandTemplateReferences()
@@ -407,12 +407,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     private static string RequireSettingsText(string? value, string fieldName) =>
         value ?? throw new InvalidDataException($"Launcher settings {fieldName} is null.");
 
-    private string? SaveSettingsChange(LauncherSettings snapshot)
-    {
-        var saveFailure = SaveStoreFile(BuildStoreFile());
-        return saveFailure;
-    }
-
     /// <summary>Rebuild ViewModel-level state from StoreGrain after a save failure.
     /// StoreGrain already reverted its internal state; this method syncs the
     /// ViewModel's in-memory copies back to match.</summary>
@@ -480,6 +474,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     public void Dispose()
     {
         _storeSubscription?.Dispose();
+        _storeGrain.Reloaded -= OnStoreReloaded;
         _list.Dispose();
         _launchOrchestrator.Dispose();
     }

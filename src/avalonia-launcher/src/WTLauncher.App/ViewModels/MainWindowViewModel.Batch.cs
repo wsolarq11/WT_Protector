@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -144,15 +145,23 @@ public sealed partial class MainWindowViewModel
         List<(LauncherEntryViewModel Entry, bool WasSelected)> snapshot)
     {
         RefreshSelectionState();
-        var saveFailure = SaveStoreFile(BuildStoreFile());
-        if (saveFailure is null)
-            return true;
+        using var transaction = new StoreMutationSession(
+            SaveStoreFile,
+            () =>
+            {
+                foreach (var (entry, wasSelected) in snapshot)
+                    entry.SetSelectionFromOwner(wasSelected);
+                RefreshSelectionState();
+            });
 
-        foreach (var (entry, wasSelected) in snapshot)
-            entry.SetSelectionFromOwner(wasSelected);
-        RefreshSelectionState();
-        ApplyStatusText(saveFailure);
-        return false;
+        var saveFailure = transaction.Commit(BuildStoreFile());
+        if (saveFailure is not null)
+        {
+            ApplyStatusText(saveFailure);
+            return false;
+        }
+
+        return true;
     }
 
     private void RefreshSelectionState()

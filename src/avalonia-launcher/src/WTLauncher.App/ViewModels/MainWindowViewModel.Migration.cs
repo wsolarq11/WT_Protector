@@ -50,10 +50,10 @@ public sealed partial class MainWindowViewModel
             }
 
             var merged = LauncherConfigExchange.ApplyImport(BuildStoreFile(), imported, plan);
-            var saveFailure = SaveStoreFile(merged);
+            using var transaction = new StoreMutationSession(SaveStoreFile, RestoreVmStateFromStore);
+            var saveFailure = transaction.Commit(merged);
             if (saveFailure is not null)
             {
-                RestoreVmStateFromStore();
                 ApplyStatusText(saveFailure);
                 return;
             }

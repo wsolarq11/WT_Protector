@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.Input;
 using WTLauncher.App.Features;
+using WTLauncher.App.Infrastructure;
 
 namespace WTLauncher.App.ViewModels;
 
@@ -34,16 +35,15 @@ public sealed partial class MainWindowViewModel
         TotalCount = _list.MutableEntries.Count;
         EnsureCustomOrderContainsEntries();
 
-        var saveFailure = SaveStoreFile(BuildStoreFile());
+        using var transaction = new StoreMutationSession(SaveStoreFile, RestoreVmStateFromStore);
+        var saveFailure = transaction.Commit(BuildStoreFile());
         if (saveFailure is null)
         {
             RefreshAllProjections();
+            return true;
         }
-        else
-        {
-            RestoreVmStateFromStore();
-            StatusContent = LauncherStatusContent.Error(saveFailure);
-        }
-        return saveFailure is null;
+
+        StatusContent = LauncherStatusContent.Error(saveFailure);
+        return false;
     }
 }

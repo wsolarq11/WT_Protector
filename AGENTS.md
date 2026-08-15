@@ -24,13 +24,14 @@ WT_Protector/
 │       │       ├── Infrastructure/  → 9文件（持久化 IO + IStorePersistence）
 │       │       ├── Platform/        → 3文件（平台接线）
 │       │       └── Views/           → 44文件（24 cs + 20 axaml; MainWindow.axaml 承载 Cards/Details/Names 三视图, 视图体在 LauncherEntriesView.axaml）
-│       ├── tests/WTLauncher.Tests/ → 121测试文件, xUnit（8层, 门禁实测 811 用例）
+│       ├── tests/WTLauncher.Tests/ → 121测试文件, xUnit（8层, 门禁实测 818 用例）
 │       ├── run.ps1        → 开发运行
 │       └── verify.ps1     → 主线门禁（restore → test → publish → GUI smoke）
 ├── tools/                 → 脚本工具箱（详见下方）
 ├── docs/                  → 设计审计、基准对标、巨人肩膀库
 │   ├── feature-reality-north-star-audit.md → 22项功能审计 + 声明边界账本
 │   ├── feature-first-class-upgrade-audit.md → 23项功能一等公民改造审计 (2026-06-10)
+│   ├── business-wiring-boundaries.md         → 业务接线总账（View→VM→StoreGrain→外部进程）
 │   ├── design-benchmark-digest.md          → 12项外部设计基准 → 本地验收规则
 │   ├── giants-shoulders/  → 巨人肩膀库（外部项目教训）
 │   ├── reference/         → GitHub对标快照 + 快捷方式退役清单
@@ -66,7 +67,7 @@ WT_Protector/
 | Views AXAML files | 20 |
 | WTLauncher.Analyzers C# files | 7 |
 | Tests C# files | 121 |
-| Test attributes [Fact]+[Theory] | 728 |
+| Test attributes [Fact]+[Theory] | 735 |
 | Gate checks (Add-Check) | 38 |
 
 > 更新协议：结构变化 → 跑门禁看 `structure-baseline-consistency` 报什么 → 同步改本表与

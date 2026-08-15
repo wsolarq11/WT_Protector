@@ -870,7 +870,7 @@ $baselineRows = @(
     @{ Label = 'WTLauncher.Analyzers C# files';     Path = 'src\avalonia-launcher\src\WTLauncher.Analyzers';        Filter = '*.cs';                 Count = 7 }
     @{ Label = 'Tests C# files';                    Path = 'src\avalonia-launcher\tests\WTLauncher.Tests';         Filter = '*.cs';                 Count = 121 }
 )
-$baselineTestAttributes = 728
+$baselineTestAttributes = 735
 $baselineViolations = @()
 foreach ($row in $baselineRows) {
     $baselineDir = Get-RepoPath $row.Path

@@ -1,4 +1,8 @@
 using System.Collections.Immutable;
+using ErrorOr;
+using WTLauncher.App.Features.Entries;
+using WTLauncher.App.Features.Presets;
+using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -203,6 +207,36 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void ApplyCommandManagementEdit_TemplateEditSavesOnce()
+    {
+        using var temp = new TempDirectory();
+        var (config, _, _) = CreatePortableFixture(temp, Entry("a", "A", command: "$codex"));
+        var storeFile = LauncherStore.Load(config) with
+        {
+            Settings = new LauncherSettings { CommandTemplates = Templates(("codex", "codex --enable goals")) },
+        };
+        var persistence = new CountingStorePersistence();
+        var store = new StoreGrain(config, storeFile, persistence);
+        var dialogs = new StubDialogService();
+        var viewModel = new MainWindowViewModel(
+            config,
+            store,
+            storeFile,
+            CreateLaunchWorkflow(),
+            dialogs,
+            new EntryService(dialogs),
+            new PresetService(dialogs),
+            SystemUtcNow);
+        persistence.Reset();
+
+        var result = viewModel.ApplyCommandManagementEdit(
+            new CommandManagementEdit.UpdateTemplateValue("codex", "codex --verbose"));
+
+        Assert.True(result.Success);
+        Assert.Equal(1, persistence.SaveCount);
+    }
+
+    [Fact]
     public void ApplyCommandManagementEdit_PersistsChangesToStore()
     {
         using var temp = new TempDirectory();
@@ -312,5 +346,34 @@ public sealed partial class MainWindowViewModelTests
         Assert.False(viewModel.Settings.CommandTemplates.ContainsKey("claude"));
         Assert.Equal("$codex", Assert.Single(result.UpdatedCommandRows).Command);
         Assert.Equal("codex", Assert.Single(result.UpdatedTemplateRows).Key);
+    }
+
+    private sealed class CountingStorePersistence : IStorePersistence, IDisposable
+    {
+        private readonly FileStorePersistence _inner = new();
+
+        public int SaveCount { get; private set; }
+
+        public void Reset() => SaveCount = 0;
+
+        public void Dispose() => _inner.Dispose();
+
+        public LauncherStoreFile Load(string storePath, Action<Exception, string>? onRecovery = null) =>
+            _inner.Load(storePath, onRecovery);
+
+        public void Save(LauncherStoreFile store, string storePath, bool backup = true)
+        {
+            SaveCount++;
+            _inner.Save(store, storePath, backup);
+        }
+
+        public ErrorOr<LauncherStoreFile> LoadErrorOr(string storePath) =>
+            _inner.LoadErrorOr(storePath);
+
+        public string ResolveStorePath(
+            string? explicitPath,
+            string? currentDirectory = null,
+            string? appBaseDirectory = null) =>
+            _inner.ResolveStorePath(explicitPath, currentDirectory, appBaseDirectory);
     }
 }

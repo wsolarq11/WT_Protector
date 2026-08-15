@@ -32,45 +32,41 @@ public sealed partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// 单次 edit 的 transaction: snapshot → mutate (entries + settings.CommandTemplates) → save → rollback on failure。
+    /// 单次 edit 的 transaction: mutate entries/settings → 一次 Commit → 失败恢复。
     /// 成功后同步 _launchOrchestrator.CommandTemplates,让后续启动吃到新模板。
     /// </summary>
     internal CommandManagementResult ApplyCommandManagementEdit(CommandManagementEdit edit)
     {
         ArgumentNullException.ThrowIfNull(edit);
 
-        string statusMessage;
+        using var transaction = new StoreMutationSession(SaveStoreFile, RestoreVmStateFromStore);
+        CommandManagementApplied applied;
         try
         {
-            statusMessage = ApplyEditAndReturnStatus(edit);
+            applied = ApplyEditAndReturnStatus(edit);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "CommandManagement.Apply");
-            RestoreVmStateFromStore();
             return FailureResult($"应用失败: {ExceptionMessageFormatter.ForUser(ex)}");
         }
 
-        // Sync runtime template resolver with new _settings.CommandTemplates.
-        // ponytail: pre-existing latent coupling — _launchOrchestrator.CommandTemplates was set once at ctor;
-        // command management is the first runtime mutation path, so it must keep this in sync.
-        _launchOrchestrator.CommandTemplates = CurrentSettings.CommandTemplates;
-
-        var saveFailure = SaveStoreFile(BuildStoreFile());
+        var saveFailure = transaction.Commit(applied.StoreFile);
         if (saveFailure is not null)
         {
-            RestoreVmStateFromStore();
-            // restore also reverts _launchWorkflow snapshot — re-sync after rollback.
+            // Commit has already reverted ViewModel state; re-sync the runtime
+            // template resolver from the StoreGrain that remains authoritative.
             _launchOrchestrator.CommandTemplates = _storeGrain.Select(s => s.Settings.CommandTemplates);
             return FailureResult(saveFailure);
         }
 
+        _launchOrchestrator.CommandTemplates = _storeGrain.Select(s => s.Settings.CommandTemplates);
         RefreshSelectionState();
         ApplyFilter();
-        return SuccessResult(statusMessage);
+        return SuccessResult(applied.StatusMessage);
     }
 
-    private string ApplyEditAndReturnStatus(CommandManagementEdit edit)
+    private CommandManagementApplied ApplyEditAndReturnStatus(CommandManagementEdit edit)
     {
         switch (edit)
         {
@@ -79,7 +75,7 @@ public sealed partial class MainWindowViewModel
                 var oldCmd = r.OldCommand;
                 var newCmd = r.NewCommand;
                 if (string.Equals(oldCmd, newCmd, StringComparison.OrdinalIgnoreCase))
-                    return "新命令与原命令相同,无变更。";
+                    return new CommandManagementApplied("新命令与原命令相同,无变更。", BuildStoreFile());
 
                 var matched = 0;
                 foreach (var item in _list.MutableEntries)
@@ -91,9 +87,10 @@ public sealed partial class MainWindowViewModel
                         matched++;
                     }
                 }
-                return matched == 0
+                var renameStatus = matched == 0
                     ? $"未找到 command 为 '{oldCmd}' 的 entry。"
                     : $"已将 {matched} 个 entry 的命令从 '{oldCmd}' 改为 '{newCmd}'。";
+                return new CommandManagementApplied(renameStatus, BuildStoreFile());
             }
 
             case CommandManagementEdit.MergeCommands m:
@@ -101,7 +98,7 @@ public sealed partial class MainWindowViewModel
                 var loser = m.LoserCommand;
                 var keeper = m.KeeperCommand;
                 if (string.Equals(loser, keeper, StringComparison.OrdinalIgnoreCase))
-                    return "保留方与失效方相同,无法合并。";
+                    return new CommandManagementApplied("保留方与失效方相同,无法合并。", BuildStoreFile());
 
                 var matched = 0;
                 foreach (var item in _list.MutableEntries)
@@ -113,16 +110,19 @@ public sealed partial class MainWindowViewModel
                         matched++;
                     }
                 }
-                return $"已将 {matched} 个 entry 的命令从 '{loser}' 合并到 '{keeper}'。";
+                var mergeStatus = $"已将 {matched} 个 entry 的命令从 '{loser}' 合并到 '{keeper}'。";
+                return new CommandManagementApplied(mergeStatus, BuildStoreFile());
             }
 
             case CommandManagementEdit.DeleteCommand:
-                return "已删除未引用的 command (仅清理视图,无 entry 受影响)。";
+                return new CommandManagementApplied(
+                    "已删除未引用的 command (仅清理视图,无 entry 受影响)。",
+                    BuildStoreFile());
 
             case CommandManagementEdit.UpdateTemplateKey uk:
             {
                 if (string.Equals(uk.OldKey, uk.NewKey, StringComparison.OrdinalIgnoreCase))
-                    return "新 Key 与原 Key 相同,无变更。";
+                    return new CommandManagementApplied("新 Key 与原 Key 相同,无变更。", BuildStoreFile());
 
                 if (CurrentSettings.CommandTemplates.ContainsKey(uk.NewKey))
                     throw new InvalidOperationException($"Key '{uk.NewKey}' 已存在。");
@@ -144,9 +144,9 @@ public sealed partial class MainWindowViewModel
                         cascaded++;
                     }
                 }
-                var storeFile = BuildStoreFile() with { Settings = CurrentSettings with { CommandTemplates = newTemplates } };
-                SaveStoreFile(storeFile);
-                return $"模板 Key '{uk.OldKey}' → '{uk.NewKey}',自动同步 {cascaded} 个 entry 引用。";
+                var keyStoreFile = BuildStoreFile() with { Settings = CurrentSettings with { CommandTemplates = newTemplates } };
+                var keyStatus = $"模板 Key '{uk.OldKey}' → '{uk.NewKey}',自动同步 {cascaded} 个 entry 引用。";
+                return new CommandManagementApplied(keyStatus, keyStoreFile);
             }
 
             case CommandManagementEdit.UpdateTemplateValue uv:
@@ -154,9 +154,9 @@ public sealed partial class MainWindowViewModel
                 if (!CurrentSettings.CommandTemplates.ContainsKey(uv.Key))
                     throw new InvalidOperationException($"模板 Key '{uv.Key}' 不存在。");
                 var newTemplates = CurrentSettings.CommandTemplates.SetItem(uv.Key, uv.NewExpandedValue);
-                var storeFile = BuildStoreFile() with { Settings = CurrentSettings with { CommandTemplates = newTemplates } };
-                SaveStoreFile(storeFile);
-                return $"模板 '{uv.Key}' 展开内容已更新。";
+                var valueStoreFile = BuildStoreFile() with { Settings = CurrentSettings with { CommandTemplates = newTemplates } };
+                var valueStatus = $"模板 '{uv.Key}' 展开内容已更新。";
+                return new CommandManagementApplied(valueStatus, valueStoreFile);
             }
 
             case CommandManagementEdit.AddTemplate a:
@@ -164,9 +164,9 @@ public sealed partial class MainWindowViewModel
                 if (CurrentSettings.CommandTemplates.ContainsKey(a.Key))
                     throw new InvalidOperationException($"Key '{a.Key}' 已存在。");
                 var newTemplates = CurrentSettings.CommandTemplates.Add(a.Key, a.ExpandedValue);
-                var storeFile = BuildStoreFile() with { Settings = CurrentSettings with { CommandTemplates = newTemplates } };
-                SaveStoreFile(storeFile);
-                return $"已添加模板 '{a.Key}'。";
+                var addStoreFile = BuildStoreFile() with { Settings = CurrentSettings with { CommandTemplates = newTemplates } };
+                var addStatus = $"已添加模板 '{a.Key}'。";
+                return new CommandManagementApplied(addStatus, addStoreFile);
             }
 
             case CommandManagementEdit.DeleteTemplate d:
@@ -174,9 +174,9 @@ public sealed partial class MainWindowViewModel
                 if (!CurrentSettings.CommandTemplates.ContainsKey(d.Key))
                     throw new InvalidOperationException($"模板 Key '{d.Key}' 不存在。");
                 var newTemplates = CurrentSettings.CommandTemplates.Remove(d.Key);
-                var storeFile = BuildStoreFile() with { Settings = CurrentSettings with { CommandTemplates = newTemplates } };
-                SaveStoreFile(storeFile);
-                return $"已删除模板 '{d.Key}'。";
+                var deleteStoreFile = BuildStoreFile() with { Settings = CurrentSettings with { CommandTemplates = newTemplates } };
+                var deleteStatus = $"已删除模板 '{d.Key}'。";
+                return new CommandManagementApplied(deleteStatus, deleteStoreFile);
             }
 
             default:
@@ -195,4 +195,6 @@ public sealed partial class MainWindowViewModel
 
     private CommandManagementResult FailureResult(string statusMessage) =>
         new(false, statusMessage, GetCommandRowsSnapshot(), GetTemplateRowsSnapshot());
+
+    private sealed record CommandManagementApplied(string StatusMessage, LauncherStoreFile StoreFile);
 }
