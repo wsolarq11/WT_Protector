@@ -13,8 +13,8 @@ internal sealed class StubDialogService : IDialogService
     public Func<LaunchEntry?, int, IReadOnlyDictionary<string, string>?, Task<EntryDraft?>>? OnRequestEntryDraft { get; set; }
     public Func<LauncherEntryDeleteTarget, Task<bool>>? OnConfirmDeleteEntry { get; set; }
     public Func<HashSet<string>, IReadOnlyList<DirectoryRow>, IReadOnlyDictionary<string, string>, Task<DiscoveryDialogResult?>>? OnDiscoverAgents { get; set; }
-    public Func<IReadOnlyList<CommandRow>, IReadOnlyList<TemplateRow>, Func<CommandManagementEdit, CommandManagementResult>, Task>? OnOpenCommandManagement { get; set; }
-    public Func<IReadOnlyList<DirectoryRow>, Func<DirectoryManagementEdit, DirectoryManagementResult>, Task>? OnOpenDirectoryManagement { get; set; }
+    public Func<IReadOnlyList<CommandRow>, IReadOnlyList<TemplateRow>, ICommandEditApplier, Task>? OnOpenCommandManagement { get; set; }
+    public Func<IReadOnlyList<DirectoryRow>, IDirectoryEditApplier, Task>? OnOpenDirectoryManagement { get; set; }
     public Func<Task<string?>>? OnPickExportPath { get; set; }
     public Func<Task<string?>>? OnPickImportPath { get; set; }
     public Func<LauncherStoreFile, LauncherStoreFile, Task<LauncherImportPlan?>>? OnRequestImport { get; set; }
@@ -46,10 +46,10 @@ internal sealed class StubDialogService : IDialogService
         OnDiscoverAgents?.Invoke(alreadyAdded, existingDirectories, commandTemplates)
         ?? Task.FromResult<DiscoveryDialogResult?>(null);
 
-    public Task OpenCommandManagementAsync(IReadOnlyList<CommandRow> initialCommandRows, IReadOnlyList<TemplateRow> initialTemplateRows, Func<CommandManagementEdit, CommandManagementResult> applyEdit) =>
+    public Task OpenCommandManagementAsync(IReadOnlyList<CommandRow> initialCommandRows, IReadOnlyList<TemplateRow> initialTemplateRows, ICommandEditApplier applyEdit) =>
         OnOpenCommandManagement?.Invoke(initialCommandRows, initialTemplateRows, applyEdit) ?? Task.CompletedTask;
 
-    public Task OpenDirectoryManagementAsync(IReadOnlyList<DirectoryRow> initialDirectoryRows, Func<DirectoryManagementEdit, DirectoryManagementResult> applyEdit) =>
+    public Task OpenDirectoryManagementAsync(IReadOnlyList<DirectoryRow> initialDirectoryRows, IDirectoryEditApplier applyEdit) =>
         OnOpenDirectoryManagement?.Invoke(initialDirectoryRows, applyEdit) ?? Task.CompletedTask;
 
     public Task<string?> PickExportPathAsync() =>

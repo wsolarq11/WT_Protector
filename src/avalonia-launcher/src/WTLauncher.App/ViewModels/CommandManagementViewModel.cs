@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
@@ -13,7 +14,7 @@ namespace WTLauncher.App.ViewModels;
 /// </summary>
 public sealed partial class CommandManagementViewModel : ObservableObject
 {
-    private readonly Func<CommandManagementEdit, CommandManagementResult> _applyEdit;
+    private readonly ICommandEditApplier _applyEdit;
 
     public ObservableCollection<CommandRow> CommandRows { get; } = new();
     public ObservableCollection<TemplateRow> TemplateRows { get; } = new();
@@ -46,7 +47,7 @@ public sealed partial class CommandManagementViewModel : ObservableObject
     public CommandManagementViewModel(
         IReadOnlyList<CommandRow> initialCommandRows,
         IReadOnlyList<TemplateRow> initialTemplateRows,
-        Func<CommandManagementEdit, CommandManagementResult> applyEdit)
+        ICommandEditApplier applyEdit)
     {
         ArgumentNullException.ThrowIfNull(initialCommandRows);
         ArgumentNullException.ThrowIfNull(initialTemplateRows);
@@ -76,7 +77,7 @@ public sealed partial class CommandManagementViewModel : ObservableObject
         CommandManagementResult result;
         try
         {
-            result = _applyEdit(edit);
+            result = _applyEdit.Apply(edit);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {

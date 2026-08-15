@@ -1,4 +1,5 @@
 using IOPath = System.IO.Path;
+using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -56,4 +57,30 @@ internal sealed class FakeLaunchProcessStarter : ILaunchProcessStarter
 
         StartedPlans.Add(plan);
     }
+}
+
+internal sealed class FakeCommandEditApplier : ICommandEditApplier
+{
+    private readonly Func<CommandManagementEdit, CommandManagementResult>? _apply;
+
+    public FakeCommandEditApplier(Func<CommandManagementEdit, CommandManagementResult>? apply = null)
+    {
+        _apply = apply;
+    }
+
+    public CommandManagementResult Apply(CommandManagementEdit edit) =>
+        _apply?.Invoke(edit) ?? throw new InvalidOperationException("FakeCommandEditApplier has no apply delegate.");
+}
+
+internal sealed class FakeDirectoryEditApplier : IDirectoryEditApplier
+{
+    private readonly Func<DirectoryManagementEdit, DirectoryManagementResult>? _apply;
+
+    public FakeDirectoryEditApplier(Func<DirectoryManagementEdit, DirectoryManagementResult>? apply = null)
+    {
+        _apply = apply;
+    }
+
+    public DirectoryManagementResult Apply(DirectoryManagementEdit edit) =>
+        _apply?.Invoke(edit) ?? throw new InvalidOperationException("FakeDirectoryEditApplier has no apply delegate.");
 }

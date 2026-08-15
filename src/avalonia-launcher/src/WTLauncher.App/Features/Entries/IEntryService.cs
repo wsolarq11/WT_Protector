@@ -4,6 +4,16 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.Features.Entries;
 
+/// <summary>Normalization/validation port used by the entry editor view.</summary>
+public interface IEntryDraftValidator
+{
+    public bool TryNormalizeRequiredDraft(EntryDraft rawDraft, out EntryDraft draft, out string? requiredFieldError);
+    public string NormalizeId(string? id);
+    public bool IsUsableId(string id);
+    public string NormalizeText(string? text);
+    public string ResolveAutoId(string? name, DateTime now);
+}
+
 /// <summary>Entry CRUD command logic. Each method is the full dialog→validate→mutate→persist flow.
 /// Does NOT own state — the ViewModel passes collections and coordinates rollback.</summary>
 public interface IEntryService

@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using WTLauncher.App.Features.Dialogs;
+using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Features.Updates;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
@@ -13,6 +14,7 @@ namespace WTLauncher.App.Views;
 public sealed class DialogService : IDialogService
 {
     private Window? _owner;
+    private readonly IEntryDraftValidator _entryDraftValidator = new EntryDraftValidator();
 
     /// <summary>Must be called by MainWindow after construction to enable ShowDialog.</summary>
     public void Initialize(Window owner) => _owner = owner;
@@ -37,7 +39,7 @@ public sealed class DialogService : IDialogService
         var prefillData = prefill is not null
             ? new EntryDetailsWindow.EntryPrefill(prefill.Id, prefill.Name, prefill.Directory.Value, prefill.Command, prefill.Selected)
             : null;
-        return new EntryDetailsWindow(prefillData, presetReferenceCount, commandTemplates).ShowDialog<EntryDraft?>(Owner);
+        return new EntryDetailsWindow(prefillData, presetReferenceCount, commandTemplates, _entryDraftValidator).ShowDialog<EntryDraft?>(Owner);
     }
 
     public Task<bool> ConfirmDeleteEntryAsync(LauncherEntryDeleteTarget target) =>
@@ -59,7 +61,7 @@ public sealed class DialogService : IDialogService
     public async Task OpenCommandManagementAsync(
         IReadOnlyList<CommandRow> initialCommandRows,
         IReadOnlyList<TemplateRow> initialTemplateRows,
-        Func<CommandManagementEdit, CommandManagementResult> applyEdit)
+        ICommandEditApplier applyEdit)
     {
         var vm = new CommandManagementViewModel(initialCommandRows, initialTemplateRows, applyEdit);
         await new CommandManagementWindow(vm).ShowDialog<object?>(Owner);
@@ -67,7 +69,7 @@ public sealed class DialogService : IDialogService
 
     public async Task OpenDirectoryManagementAsync(
         IReadOnlyList<DirectoryRow> initialDirectoryRows,
-        Func<DirectoryManagementEdit, DirectoryManagementResult> applyEdit)
+        IDirectoryEditApplier applyEdit)
     {
         var vm = new DirectoryManagementViewModel(initialDirectoryRows, applyEdit);
         await new DirectoryManagementWindow(vm).ShowDialog<object?>(Owner);

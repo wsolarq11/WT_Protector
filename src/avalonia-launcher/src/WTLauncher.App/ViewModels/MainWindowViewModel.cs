@@ -14,7 +14,7 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
-public sealed partial class MainWindowViewModel : ObservableObject, IEntryListViewModel, ILaunchCoordinatorContext, IDisposable
+public sealed partial class MainWindowViewModel : ObservableObject, IEntryListViewModel, ILaunchCoordinatorContext, ICommandEditApplier, IDirectoryEditApplier, IDisposable
 {
     internal readonly StoreGrain _storeGrain;
     private readonly string _storePath;

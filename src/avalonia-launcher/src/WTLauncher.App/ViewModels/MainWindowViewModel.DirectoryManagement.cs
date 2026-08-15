@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
@@ -19,7 +20,7 @@ public sealed partial class MainWindowViewModel
         {
             await _dialogService.OpenDirectoryManagementAsync(
                 GetDirectoryRowsSnapshot(),
-                ApplyDirectoryManagementEdit).ConfigureAwait(true);
+                this).ConfigureAwait(true);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
@@ -27,6 +28,9 @@ public sealed partial class MainWindowViewModel
             StatusContent = LauncherRefreshStatus.DialogOpenFailed("地址管理", ex);
         }
     }
+
+    DirectoryManagementResult IDirectoryEditApplier.Apply(DirectoryManagementEdit edit) =>
+        ApplyDirectoryManagementEdit(edit);
 
     internal DirectoryManagementResult ApplyDirectoryManagementEdit(DirectoryManagementEdit edit)
     {

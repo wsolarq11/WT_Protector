@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using ErrorOr;
+using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Features.Presets;
 using WTLauncher.App.Infrastructure;
@@ -264,7 +265,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             Templates(("codex", "codex --enable goals")));
 
-        Func<CommandManagementEdit, CommandManagementResult>? capturedApply = null;
+        ICommandEditApplier? capturedApply = null;
         var dialogService = new StubDialogService
         {
             OnOpenCommandManagement = (_, _, apply) =>
@@ -278,7 +279,7 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.OpenCommandManagementCommand.ExecuteAsync(null);
 
         Assert.NotNull(capturedApply);
-        var result = capturedApply!(new CommandManagementEdit.RenameCommand("$codex", "$codex2"));
+        var result = capturedApply!.Apply(new CommandManagementEdit.RenameCommand("$codex", "$codex2"));
         Assert.True(result.Success);
         Assert.All(viewModel.Entries, e => Assert.Equal("$codex2", e.Command));
     }

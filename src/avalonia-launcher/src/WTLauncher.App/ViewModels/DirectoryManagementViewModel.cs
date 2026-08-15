@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
@@ -12,7 +13,7 @@ namespace WTLauncher.App.ViewModels;
 /// </summary>
 public sealed partial class DirectoryManagementViewModel : ObservableObject
 {
-    private readonly Func<DirectoryManagementEdit, DirectoryManagementResult> _applyEdit;
+    private readonly IDirectoryEditApplier _applyEdit;
 
     public ObservableCollection<DirectoryRow> DirectoryRows { get; } = new();
 
@@ -28,7 +29,7 @@ public sealed partial class DirectoryManagementViewModel : ObservableObject
 
     public DirectoryManagementViewModel(
         IReadOnlyList<DirectoryRow> initialRows,
-        Func<DirectoryManagementEdit, DirectoryManagementResult> applyEdit)
+        IDirectoryEditApplier applyEdit)
     {
         ArgumentNullException.ThrowIfNull(initialRows);
         _applyEdit = applyEdit ?? throw new ArgumentNullException(nameof(applyEdit));
@@ -40,7 +41,7 @@ public sealed partial class DirectoryManagementViewModel : ObservableObject
         DirectoryManagementResult result;
         try
         {
-            result = _applyEdit(edit);
+            result = _applyEdit.Apply(edit);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {

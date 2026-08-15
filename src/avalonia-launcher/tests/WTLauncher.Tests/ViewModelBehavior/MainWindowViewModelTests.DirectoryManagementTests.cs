@@ -1,3 +1,4 @@
+using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -110,7 +111,7 @@ public sealed partial class MainWindowViewModelTests
             temp,
             Entry("a", "A", directory: @"D:\x"),
             Entry("b", "B", directory: @"D:\x"));
-        Func<DirectoryManagementEdit, DirectoryManagementResult>? capturedApply = null;
+        IDirectoryEditApplier? capturedApply = null;
         var dialogService = new StubDialogService
         {
             OnOpenDirectoryManagement = (_, apply) =>
@@ -124,7 +125,7 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.OpenDirectoryManagementCommand.ExecuteAsync(null);
 
         Assert.NotNull(capturedApply);
-        var result = capturedApply!(new DirectoryManagementEdit.RenameDirectory(@"D:\x", @"D:\y"));
+        var result = capturedApply!.Apply(new DirectoryManagementEdit.RenameDirectory(@"D:\x", @"D:\y"));
         Assert.True(result.Success);
         Assert.All(viewModel.Entries, e => Assert.Equal(@"D:\y", e.Directory));
     }

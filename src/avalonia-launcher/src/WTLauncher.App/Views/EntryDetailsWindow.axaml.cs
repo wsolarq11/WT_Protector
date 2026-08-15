@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
@@ -14,6 +15,7 @@ public sealed partial class EntryDetailsWindow : Window
 {
     private readonly bool _isEdit;
     private readonly IReadOnlyDictionary<string, string>? _commandTemplates;
+    private readonly IEntryDraftValidator _validator;
 
     /// <summary>Pre-fill data for the entry editor dialog. Lives in the Views namespace
     /// to avoid leaking Core types into the View layer.</summary>
@@ -27,13 +29,19 @@ public sealed partial class EntryDetailsWindow : Window
     public EntryDetailsWindow()
     {
         _commandTemplates = null;
+        _validator = new EntryDraftValidator();
         InitializeComponent();
     }
 
-    public EntryDetailsWindow(EntryPrefill? prefill, int presetReferenceCount = 0, IReadOnlyDictionary<string, string>? commandTemplates = null)
+    public EntryDetailsWindow(
+        EntryPrefill? prefill,
+        int presetReferenceCount = 0,
+        IReadOnlyDictionary<string, string>? commandTemplates = null,
+        IEntryDraftValidator? validator = null)
     {
         _isEdit = prefill is not null;
         _commandTemplates = commandTemplates;
+        _validator = validator ?? new EntryDraftValidator();
 
         InitializeComponent();
 
@@ -42,11 +50,11 @@ public sealed partial class EntryDetailsWindow : Window
 
         IdBox.Text = RequireInitialEntryId(prefill);
         IdBox.MaxLength = 256;
-        NameBox.Text = RequireInitialEntryText(prefill, static item => item.Name, "name");
+        NameBox.Text = RequireInitialEntryText(prefill, item => item.Name, "name");
         NameBox.MaxLength = 4096;
-        DirectoryBox.Text = RequireInitialEntryText(prefill, static item => item.Directory, "directory");
+        DirectoryBox.Text = RequireInitialEntryText(prefill, item => item.Directory, "directory");
         DirectoryBox.MaxLength = 4096;
-        CommandBox.Text = RequireInitialEntryText(prefill, static item => item.Command, "command");
+        CommandBox.Text = RequireInitialEntryText(prefill, item => item.Command, "command");
         CommandBox.MaxLength = 4096;
 
         // R5 (friend-handoff): in add mode, lower the barrier — ID may stay blank
@@ -96,7 +104,7 @@ public sealed partial class EntryDetailsWindow : Window
 
         CommandBox.TextChanged += (_, _) =>
         {
-            var cmd = EntryName.Normalize(CommandBox.Text);
+            var cmd = _validator.NormalizeText(CommandBox.Text);
             if (cmd.StartsWith('$') && cmd.Length > 1)
             {
                 var key = cmd[1..];
@@ -113,7 +121,7 @@ public sealed partial class EntryDetailsWindow : Window
         };
 
         // Trigger initial preview for edit mode
-        var initialCmd = EntryName.Normalize(CommandBox.Text ?? "");
+        var initialCmd = _validator.NormalizeText(CommandBox.Text ?? "");
         if (initialCmd.StartsWith('$') && initialCmd.Length > 1)
         {
             var key = initialCmd[1..];
@@ -162,7 +170,7 @@ public sealed partial class EntryDetailsWindow : Window
                 RequireSubmittedText(CommandBox, "command"),
                 SelectedBox.IsChecked == true);
 
-            if (!LauncherEntryDrafts.TryNormalizeRequiredDraft(rawDraft, out var draft, out var requiredFieldError))
+            if (!_validator.TryNormalizeRequiredDraft(rawDraft, out var draft, out var requiredFieldError))
             {
                 ErrorText.Text = requiredFieldError;
                 ErrorText.IsVisible = true;
@@ -183,13 +191,8 @@ public sealed partial class EntryDetailsWindow : Window
     /// with a timestamp fallback for names that cannot form an ID
     /// (e.g. non-Latin). Uniqueness stays enforced by the service layer.
     /// </summary>
-    public static string ResolveAutoId(string? name, DateTime now)
-    {
-        var derived = EntryId.Normalize(name);
-        return derived.Length > 0
-            ? derived
-            : $"entry-{now:yyyyMMddHHmmss}";
-    }
+    public static string ResolveAutoId(string? name, DateTime now) =>
+        new EntryDraftValidator().ResolveAutoId(name, now);
 
     /// <summary>
     /// Add-mode ID resolution: blank ID is auto-derived from the name.
@@ -204,19 +207,19 @@ public sealed partial class EntryDetailsWindow : Window
         return ResolveAutoId(RequireSubmittedText(NameBox, "name"), DateTime.Now);
     }
 
-    private static string RequireInitialEntryId(EntryPrefill? prefill)
+    private string RequireInitialEntryId(EntryPrefill? prefill)
     {
         if (prefill is null)
             return string.Empty;
 
-        var id = EntryId.Normalize(prefill.Id);
-        if (!EntryId.IsUsable(id))
+        var id = _validator.NormalizeId(prefill.Id);
+        if (!_validator.IsUsableId(id))
             throw new InvalidDataException("Launcher entry dialog initial id is required.");
 
         return id;
     }
 
-    private static string RequireInitialEntryText(
+    private string RequireInitialEntryText(
         EntryPrefill? prefill,
         Func<EntryPrefill, string?> selectText,
         string fieldName)
@@ -224,7 +227,7 @@ public sealed partial class EntryDetailsWindow : Window
         if (prefill is null)
             return string.Empty;
 
-        var text = EntryName.Normalize(selectText(prefill));
+        var text = _validator.NormalizeText(selectText(prefill));
         if (text.Length == 0)
             throw new InvalidDataException($"Launcher entry dialog initial {fieldName} is required.");
 

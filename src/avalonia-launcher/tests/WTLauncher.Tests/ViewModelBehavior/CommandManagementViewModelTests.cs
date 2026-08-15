@@ -13,7 +13,7 @@ public sealed class CommandManagementViewModelTests
         var viewModel = new CommandManagementViewModel(
             [new CommandRow("codex", 1, ["项目"])],
             [],
-            _ => throw new InvalidOperationException("not used"));
+            new FakeCommandEditApplier());
 
         Assert.True(viewModel.IsCommandTabActive, "command tab should be active initially");
         Assert.False(viewModel.IsTemplateTabActive, "template tab should be inactive initially");
@@ -28,7 +28,7 @@ public sealed class CommandManagementViewModelTests
     [Fact]
     public void TabCommands_UpdateSingleActiveTabProjection()
     {
-        var viewModel = new CommandManagementViewModel([], [], _ => throw new InvalidOperationException("not used"));
+        var viewModel = new CommandManagementViewModel([], [], new FakeCommandEditApplier());
 
         viewModel.SelectTemplateTabCommand.Execute(null);
 
@@ -47,11 +47,11 @@ public sealed class CommandManagementViewModelTests
         var viewModel = new CommandManagementViewModel(
             [],
             [],
-            _ => new CommandManagementResult(
+            new FakeCommandEditApplier(_ => new CommandManagementResult(
                 true,
                 "已添加模板",
                 [],
-                [new TemplateRow("codex", "codex --full-auto", 0)]));
+                [new TemplateRow("codex", "codex --full-auto", 0)])));
 
         viewModel.AddTemplateCommand.Execute("codex\tcodex --full-auto");
 

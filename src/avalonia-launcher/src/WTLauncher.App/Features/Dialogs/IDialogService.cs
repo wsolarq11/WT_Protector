@@ -3,6 +3,16 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.Features.Dialogs;
 
+public interface ICommandEditApplier
+{
+    public CommandManagementResult Apply(CommandManagementEdit edit);
+}
+
+public interface IDirectoryEditApplier
+{
+    public DirectoryManagementResult Apply(DirectoryManagementEdit edit);
+}
+
 public interface IDialogService
 {
     public Task<bool> ConfirmLaunchAsync(LauncherSingleLaunchConfirmation confirmation);
@@ -15,8 +25,8 @@ public interface IDialogService
         HashSet<string> alreadyAdded,
         IReadOnlyList<DirectoryRow> existingDirectories,
         IReadOnlyDictionary<string, string> commandTemplates);
-    public Task OpenCommandManagementAsync(IReadOnlyList<CommandRow> initialCommandRows, IReadOnlyList<TemplateRow> initialTemplateRows, Func<CommandManagementEdit, CommandManagementResult> applyEdit);
-    public Task OpenDirectoryManagementAsync(IReadOnlyList<DirectoryRow> initialDirectoryRows, Func<DirectoryManagementEdit, DirectoryManagementResult> applyEdit);
+    public Task OpenCommandManagementAsync(IReadOnlyList<CommandRow> initialCommandRows, IReadOnlyList<TemplateRow> initialTemplateRows, ICommandEditApplier applyEdit);
+    public Task OpenDirectoryManagementAsync(IReadOnlyList<DirectoryRow> initialDirectoryRows, IDirectoryEditApplier applyEdit);
     public Task<string?> PickExportPathAsync();
     public Task<string?> PickImportPathAsync();
     public Task<LauncherImportPlan?> RequestImportAsync(LauncherStoreFile current, LauncherStoreFile imported);

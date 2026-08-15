@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
@@ -22,7 +23,7 @@ public sealed partial class MainWindowViewModel
             await _dialogService.OpenCommandManagementAsync(
                 GetCommandRowsSnapshot(),
                 GetTemplateRowsSnapshot(),
-                ApplyCommandManagementEdit).ConfigureAwait(true);
+                this).ConfigureAwait(true);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
@@ -35,6 +36,9 @@ public sealed partial class MainWindowViewModel
     /// 单次 edit 的 transaction: mutate entries/settings → 一次 Commit → 失败恢复。
     /// 成功后同步 _launchOrchestrator.CommandTemplates,让后续启动吃到新模板。
     /// </summary>
+    CommandManagementResult ICommandEditApplier.Apply(CommandManagementEdit edit) =>
+        ApplyCommandManagementEdit(edit);
+
     internal CommandManagementResult ApplyCommandManagementEdit(CommandManagementEdit edit)
     {
         ArgumentNullException.ThrowIfNull(edit);

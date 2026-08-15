@@ -5,14 +5,26 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.Features.Entries;
 
-public sealed class EntryService : IEntryService
+public sealed class EntryService : IEntryService, IEntryDraftValidator
 {
     private readonly IDialogService _dialog;
+    private readonly EntryDraftValidator _validator = new();
 
     public EntryService(IDialogService dialog)
     {
         _dialog = dialog ?? throw new ArgumentNullException(nameof(dialog));
     }
+
+    public bool TryNormalizeRequiredDraft(EntryDraft rawDraft, out EntryDraft draft, out string? requiredFieldError) =>
+        _validator.TryNormalizeRequiredDraft(rawDraft, out draft, out requiredFieldError);
+
+    public string NormalizeId(string? id) => _validator.NormalizeId(id);
+
+    public bool IsUsableId(string id) => _validator.IsUsableId(id);
+
+    public string NormalizeText(string? text) => _validator.NormalizeText(text);
+
+    public string ResolveAutoId(string? name, DateTime now) => _validator.ResolveAutoId(name, now);
 
     public async Task<ServiceResult<LaunchEntry>> AddEntryAsync(
         IEnumerable<LaunchEntry> existingEntries,
@@ -159,5 +171,25 @@ public sealed class EntryService : IEntryService
             candidate = $"{baseId}-{index++}";
         }
         return candidate;
+    }
+}
+
+public sealed class EntryDraftValidator : IEntryDraftValidator
+{
+    public bool TryNormalizeRequiredDraft(EntryDraft rawDraft, out EntryDraft draft, out string? requiredFieldError) =>
+        LauncherEntryDrafts.TryNormalizeRequiredDraft(rawDraft, out draft, out requiredFieldError);
+
+    public string NormalizeId(string? id) => EntryId.Normalize(id);
+
+    public bool IsUsableId(string id) => EntryId.IsUsable(id);
+
+    public string NormalizeText(string? text) => EntryName.Normalize(text);
+
+    public string ResolveAutoId(string? name, DateTime now)
+    {
+        var derived = NormalizeId(name);
+        return derived.Length > 0
+            ? derived
+            : $"entry-{now:yyyyMMddHHmmss}";
     }
 }
