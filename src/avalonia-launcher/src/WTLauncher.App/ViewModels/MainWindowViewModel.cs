@@ -15,7 +15,7 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
-public sealed partial class MainWindowViewModel : ObservableObject, IEntryListViewModel, ILaunchCoordinatorContext, ICommandExecutionContext, IStatusSink, ICommandEditApplier, IDirectoryEditApplier, IProjectionSynchronizer, IDisposable
+public sealed partial class MainWindowViewModel : ObservableObject, IEntryListViewModel, ILaunchCoordinatorContext, ICommandExecutionContext, IStatusSink, ICommandHost, ICommandEditApplier, IDirectoryEditApplier, IProjectionSynchronizer, IDisposable
 {
     internal readonly StoreGrain _storeGrain;
     private readonly string _storePath;
@@ -36,6 +36,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     internal readonly EntryListViewModel _list = null!;
     internal readonly PresetManager _presetManager = new();
     internal readonly LayoutManager _layoutManager = new();
+    internal readonly LauncherPresetCommandWorkflow _presetWorkflow;
+    internal readonly LauncherLayoutWorkflow _layoutWorkflow;
 
     // Status forwarding — reads StatusPresenter, re-fires PropertyChanged via subscription
     public LauncherStatusContent StatusContent { get => _statusPresenter.StatusContent; set => _statusPresenter.StatusContent = value; }
@@ -159,10 +161,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _layoutManager.NotifyDisplayModeProjectionChanged();
         // Subscribe to layout events AFTER init so construction doesn't trigger persistence.
         _layoutManager.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName!);
-        _layoutManager.FilterChanged += OnLayoutFilterChanged;
-        _layoutManager.SortChanged += OnLayoutSortChanged;
-        _layoutManager.ViewModeChanged += OnLayoutViewModeChanged;
-        _layoutManager.GroupKeyChanged += OnLayoutGroupKeyChanged;
+        _presetWorkflow = new LauncherPresetCommandWorkflow(this, _list, _presetManager, _presetService, _launchOrchestrator, this);
+        _layoutWorkflow = new LauncherLayoutWorkflow(this, _list, _layoutManager, this);
         // Construct workflow AFTER settings normalization so it captures
         // the normalized values — DiscardDragReorderPreview syncs from it.
         _dragReorderWorkflow = new LauncherDragReorderWorkflow(
@@ -487,6 +487,20 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     void IStatusSink.Apply(LauncherStatusContent status) => StatusContent = status;
 
     void IStatusSink.SetDryRunText(string text) => DryRunText = text;
+
+    void ICommandHost.DiscardDragReorderPreview() => DiscardDragReorderPreview();
+
+    void ICommandHost.RefreshSelectionState() => RefreshSelectionState();
+
+    void ICommandHost.NotifyPresetManagementCommands() => NotifyPresetManagementCommands();
+
+    void ICommandHost.RefreshReorderCommandState() => RefreshReorderCommandState();
+
+    void ICommandHost.RestoreVmStateFromStore() => RestoreVmStateFromStore();
+
+    void ICommandHost.NotifySearchHistoryChanged() => OnPropertyChanged(nameof(SearchHistoryItems));
+
+    bool ICommandHost.ReplaceSelection(IReadOnlySet<string> entryIds) => ReplaceSelection(entryIds);
 
     LauncherSettings ILaunchCoordinatorContext.GetSettings() => CurrentSettings;
 

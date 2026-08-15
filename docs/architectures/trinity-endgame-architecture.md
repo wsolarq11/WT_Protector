@@ -12,7 +12,7 @@
 > - ✅ VTK 简化落地：`beb47560` 删除 EventJournal.cs（142 行，与 B.3 所述一致）、UiStateProjection.cs、LauncherEvent.cs、LauncherStoreProjector.cs、EventJsonContext.cs、EventStore/*；保留 Grain 线程模型（StoreGrain : Grain<LauncherStoreFile>）。
 > - ⚠️ 未按提案命名落地的门禁：Phase 4 提议的 `vtk-pure-functions` / `vtk-state-machine` / `vtk-no-codebehind-logic` / `vtk-compiled-bindings` 未采用；实际为 `trinity-architecture-integrity` + `vtk-architecture-integrity` + `vtk-no-appstore-residue`（既有 `no-imperative-view-ui` 覆盖 View 层逻辑）。
 > - ⚠️ Phase 3 的“全域 x:CompileBindings=True”未落地：Views 中无 `x:CompileBindings` 属性；`x:DataType` 见于 10 个 axaml 文件。
-> - 历史数字保留：“700 tests / 28 gate checks / 5 analyzers”、“gate 28/28”为 2026-07-25 时点记录（git 时点测量 beb47560：测试文件 98、[Fact]/[Theory] 属性 632、Add-Check 29）；当前结构基线见 AGENTS.md（122 测试文件 / 739 属性 / 40 门禁）。
+> - 历史数字保留：“700 tests / 28 gate checks / 5 analyzers”、“gate 28/28”为 2026-07-25 时点记录（git 时点测量 beb47560：测试文件 98、[Fact]/[Theory] 属性 632、Add-Check 29）；当前结构基线见 AGENTS.md（124 测试文件 / 743 属性 / 40 门禁）。
 > - 提案正文（根因分析/迁移路径/置信度分析/消除映射）为 2026-07-25 时点提案记录，保留原文。
 
 

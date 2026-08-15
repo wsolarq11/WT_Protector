@@ -1,9 +1,6 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using WTLauncher.App.Features;
-using WTLauncher.App.Features.Presets;
-using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -75,37 +72,7 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
-        DiscardDragReorderPreview();
-        var target = new LauncherPresetSaveTarget(entryIds);
-        var nameResult = await _presetService.RequestNewPresetAsync(target, _presetManager.Presets.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase)).ConfigureAwait(true);
-        if (nameResult is not ServiceSuccess<string> nameSuccess)
-        {
-            StatusContent = nameResult switch
-            {
-                ServiceCanceled<string> canceled => canceled.Status,
-                ServiceFailure<string> failure => failure.Status,
-                _ => throw new UnreachableException(),
-            };
-            return;
-        }
-        var presetName = nameSuccess.Value;
-
-        var snapshot = _presetManager.CaptureSnapshot();
-        var addResult = _presetService.AddPreset(_presetManager.File, presetName, target.EntryIds, GetEntryIds());
-        if (addResult is not ServiceSuccess<PresetMutation> addSuccess)
-        {
-            _presetManager.Load(snapshot.File, snapshot.SelectedPresetId);
-            StatusContent = addResult switch
-            {
-                ServiceCanceled<PresetMutation> canceled => canceled.Status,
-                ServiceFailure<PresetMutation> failure => failure.Status,
-                _ => throw new UnreachableException(),
-            };
-            return;
-        }
-        var preset = addSuccess.Value.Preset;
-        if (SavePresetMutationAndApply(snapshot, addSuccess.Value.PresetFile, preset.Id, out var savedPreset) && savedPreset is not null)
-            ApplyStatusText(LauncherPresetStatus.Saved(savedPreset.Name, savedPreset.EntryIds.Count));
+        await _presetWorkflow.SaveAsPresetAsync(entryIds).ConfigureAwait(true);
     }
 
     // ponytail: ApplyFilter 末尾追加 RebuildVisibleGroups 调用,见 MainWindowViewModel.cs 主类。

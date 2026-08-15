@@ -176,7 +176,7 @@ Add-Check 'test-file-count' @{
 
 **理由**: 防止测试文件被无意识地删除。60+ 的测试文件基线是项目成熟度的体现。
 
-> 复核（2026-08-15）：上述两项建议均**未纳入**门禁——当前 40 项中不存在 `editorconfig` 或 `test-file-count` 检查。测试数量退化现由 `structure-baseline-consistency`（122 测试文件、739 属性基线）与 `coverage-gate` 间接约束。
+> 复核（2026-08-15）：上述两项建议均**未纳入**门禁——当前 40 项中不存在 `editorconfig` 或 `test-file-count` 检查。测试数量退化现由 `structure-baseline-consistency`（124 测试文件、743 属性基线）与 `coverage-gate` 间接约束。
 
 ---
 
