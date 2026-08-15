@@ -13,6 +13,7 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `docs/reference/shortcut-backup-manifest.json` — human-readable replacement for the deleted `WT_Shortcuts_Backup/` binary shortcut tree.
 - `docs/feature-reality-north-star-audit.md` — feature-by-feature reality mapping and north-star audit for the active launcher scope.
 - `docs/feature-first-class-upgrade-audit.md` — current all-capability real-problem and first-class upgrade audit.
+- `docs/business-wiring-boundaries.md` — business wiring ledger: each user path from View/ViewModel/StoreGrain to persistence or external process, with boundaries and known seams.
 - `.snow/` — git-ignored local runtime/index state; the gate asserts it stays ignored (`git ls-files -- .snow` is empty) and never validates its contents.
 - `.gitattributes` — repository line-ending policy; text is normalized as LF to avoid CRLF-only churn.
 - `.wt-protector.dsc.yaml` — WinGet Configuration file declaring fresh-machine prerequisites (Windows Terminal + PowerShell 7); applied via `winget configure` or `tools/apply-machine-config.ps1`.
