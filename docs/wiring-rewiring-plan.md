@@ -1,6 +1,7 @@
 # 重新布线图：WT Launcher 目标接线拓扑
 
-> 状态：规划草案
+> 状态：规划已定稿
+> 生产蓝图：`docs/wiring-rewiring-production-blueprint.md`
 > 授权：最高布线和接线权限
 > 对齐：5 层架构 + StoreGrain 单一状态源 + 显式端口 + 无服务定位器
 
@@ -190,8 +191,8 @@ public interface ICommandExecutionContext
 ### Phase E：接线图机器化
 
 - 将本蓝图沉淀为 `docs/wiring-map.md` 唯一端口台账。
-- verify.ps1 新增 `wiring-map-consistency`：源码中的端口实现/消费必须出现在台账；MainWindowViewModel 行预算超限即失败。
-- 验收：门禁从 40 项升到 42 项；结构基线同步。
+- verify.ps1 新增 `wiring-map-consistency`、`main-vm-line-budget`、`workflow-no-callback-bag` 三条检查。
+- 验收：门禁从 40 项升到 43 项；结构基线同步。
 
 ## 6. 禁止事项
 
