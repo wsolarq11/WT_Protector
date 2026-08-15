@@ -54,3 +54,24 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 3: Finalize production-ready rewiring blueprint
+
+**Date**: 2026-08-16
+**Task**: Finalize production-ready rewiring blueprint
+**Branch**: `main`
+
+### Summary
+
+将重新布线规划升级为生产就绪蓝图：固定 ICommandExecutionContext/IStatusSink 契约、命令面迁移矩阵、文件清单、workflow 规格、测试计划、三条新增门禁与回滚方案；全量门禁 40 项/820 用例全绿。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `550f3436` | (see git log) |
+
+### Status
+
+[OK] **Completed**
