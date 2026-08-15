@@ -17,7 +17,10 @@ if (-not $smokeStore) {
     $smokeStoreJson = @{
         schemaVersion = 2
         entries = @(@{id='smoke';name='smoke';directory='.';command='echo smoke';selected=$false;updatedAtUtc='';launchedAtUtc=''})
-        settings = @{lastFilterText='';sortMode='custom';entryViewMode='cards';requireConfirmationForLaunches=$true;customEntryOrder=@('smoke');searchHistory=@();commandTemplates=@{};window=@{width=1180;height=760;windowState='Normal'}}
+        # runInTray must be explicitly false: with the declared default (true),
+        # closing the main window hides to tray and the smoke's CloseMainWindow
+        # exit assertion would never fire.
+        settings = @{lastFilterText='';sortMode='custom';entryViewMode='cards';requireConfirmationForLaunches=$true;runInTray=$false;customEntryOrder=@('smoke');searchHistory=@();commandTemplates=@{};window=@{width=1180;height=760;windowState='Normal'}}
         presets = @(@{id='smoke-group';name='Smoke';entryIds=@('smoke')})
         defaultPresetId = 'smoke-group'
     } | ConvertTo-Json -Depth 6

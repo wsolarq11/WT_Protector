@@ -37,7 +37,14 @@ public sealed class FileStorePersistence : IStorePersistence, IDisposable
 
             var store = _io.LoadRequired<LauncherStoreFile>(path, "Launcher store");
             LauncherStoreValidator.ThrowIfInvalid(store);
-            return store;
+
+            // STJ record deserialization does not run property initializers, so a
+            // missing optional settings key arrives as null/false instead of the
+            // declared default. Apply the declared defaults for missing/blank
+            // optional settings (quickLaunchHotkey, runInTray, updateManifestUrl)
+            // using the raw JSON to distinguish "key absent" from "explicit value".
+            var rawJson = File.ReadAllText(path);
+            return LauncherSettingsDefaults.ApplyMissingSettingsDefaults(store, rawJson);
         }
 
         return _io.LoadWithRecovery(storePath, LoadAndValidate, "StoreLoad.RecoveredFromBackup",
