@@ -75,3 +75,28 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 4: Rewiring production full implementation (Phase A-E)
+
+**Date**: 2026-08-16
+**Task**: `08-16-rewiring-production`
+**Branch**: `main`
+
+### Summary
+
+将生产蓝图全量落地：Phase A 端口上下文、Phase B Preset/Layout、Phase C Selection/Maintenance/Entry、Phase D Exchange/Update、Phase E wiring-map 台账与三条门禁。MainWindowViewModel 总行数 1168（预算 1200），832 测试全绿，门禁 43 项全绿。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `33577f2e` | Phase A context and ports |
+| `4cbf9590` | Phase B preset and layout |
+| `5a5bca54` | Phase C selection maintenance entry |
+| `eef7d4ad` | Phase D exchange and update |
+| `e5fc23dc` | Phase E wiring map and 43-check gate |
+
+### Status
+
+[OK] **Completed**
