@@ -4,6 +4,13 @@
 > 授权：最高布线和接线权限
 > 对齐：5 层架构 + StoreGrain 单一状态源 + 显式端口 + 无服务定位器
 
+## 0. 术语映射
+
+- 拓扑：系统的抽象形状，节点与依赖方向。
+- 布线：路径规划，命令和数据“应该走哪条路”，边界画在哪。
+- 接线：实际绑定，接口由谁实现、谁被注入、谁被调用。
+- 本蓝图用六词描述设计：拓扑、契约、状态、数据、路径、验证。
+
 ## 1. 现状诊断
 
 当前 MainWindowViewModel 仍承担大量命令编排：
@@ -72,6 +79,40 @@ flowchart TB
     Main --> Views
 ```
 
+## 3.1 当前拓扑 → 目标拓扑
+
+当前：MainWindowViewModel 是中心 hub，Views、Dialog、StoreGrain、外部 IO 都直接指向它，所有命令体落在这里。
+
+```mermaid
+flowchart LR
+    Views --> Main[MainWindowViewModel hub]
+    Main --> Grain[(StoreGrain)]
+    Main --> Dialogs[IDialogService]
+    Main --> External[IConfigExchangeService / IUpdateManifestReader]
+```
+
+目标：MainWindowViewModel 变成 facade，命令体落到 workflow；StoreGrain 仍是状态中心，但不再是所有命令的直接目标。
+
+```mermaid
+flowchart LR
+    Views --> Main[MainWindowViewModel facade]
+    Main --> Cmd[Command Workflows]
+    Cmd --> Ctx[ICommandExecutionContext]
+    Ctx --> Grain[(StoreGrain)]
+    Ctx --> Sync[IProjectionSynchronizer]
+    Ctx --> Status[IStatusSink]
+```
+
+## 3.2 要拆除的接线
+
+| 当前接线 | 问题 | 目标接线 |
+|----------|------|----------|
+| MainWindowViewModel.Presets.cs 直接执行 CRUD/apply/launch 命令体 | 446 行命令体留在 shell | PresetCommandWorkflow 承载事务 |
+| MainWindowViewModel.Layout.cs 保存后直接重建投影 | 布局命令与投影刷新耦合 | LayoutWorkflow 通过 context 提交并同步 |
+| MainWindowViewModel.Batch.cs 同时处理选择和启动 | 两条选择写入路径和启动决策混在一起 | SelectionWorkflow 管选择，LaunchOrchestrator 管启动 |
+| MainWindowViewModel.CommandManagement.cs 内层/外层保存历史 | 双保存风险 | StoreMutationSession 单次 Commit |
+| MainWindowViewModel.Migration.cs 直接调 IConfigExchangeService | 外部 IO 编排仍在 shell | ExchangeWorkflow 承载导入导出 |
+
 ## 4. 目标 Command Workflow 拆解
 
 不再按 partial 文件切，而是按业务事务切：
@@ -89,6 +130,38 @@ flowchart TB
 这些 workflow 通过显式上下文端口取得 StoreGrain、投影同步、状态与时间，不回调 MainWindowViewModel 的方法包。
 
 ## 5. 迁移阶段
+
+### Phase 0：锁定六词设计语言
+
+| 词 | 本蓝图对应物 |
+|----|--------------|
+| 拓扑 | 5 层架构 + MainWindowViewModel 从中心 hub 变为 facade |
+| 契约 | ICommandExecutionContext、现有端口、workflow 公共方法签名 |
+| 状态 | StoreGrain 单一 owner、StoreMutationSession、两条选择写入路径 |
+| 数据 | config/launcher.json、导入导出外部文件 |
+| 路径 | 命令 -> workflow -> StoreMutationSession -> StoreGrain -> 投影同步 |
+| 验证 | workflow 独立测试、门禁 wiring-map-consistency、MainWindowViewModel 行预算 |
+
+### Phase A：定义 CommandExecutionContext
+
+- 新增窄上下文端口，不创建新状态网关：
+
+```csharp
+public interface ICommandExecutionContext
+{
+    StoreGrain Store { get; }
+    IProjectionSynchronizer Projections { get; }
+    IStatusSink Status { get; }
+    DateTimeOffset GetTimestampUtc();
+}
+```
+
+- `StoreGrain` 直接暴露为状态网关，不包一层薄 `IStoreGateway`，避免撞 `no-thin-wrapper-delegation`。
+- `IStatusSink` 只负责状态文本和回执，不持有业务状态。
+- `Projections` 只允许三种模式：VisibleOnly、Mutation、FullReload。
+- MainWindowViewModel 实现该上下文，但 workflow 只依赖接口。
+- 验收：MainWindowViewModel 中不再出现“取状态 → 改状态 → 保存 → 刷新”的重复骨架。
+
 
 ### Phase A：定义 CommandExecutionContext
 
@@ -143,3 +216,10 @@ flowchart TB
 - 行预算不能替代设计：必须按真实事务边界提取，否则只是换文件。
 - 回调桥接会重新变厚：ICommandExecutionContext 应保持窄，不能变成“MainWindowViewModel 全家桶”。
 - 与既有 gate `no-thin-wrapper-delegation` 冲突的提取必须直接判定为坏方案。
+
+## 9. 下一步
+
+1. 执行 Phase A：新增 `ICommandExecutionContext` + `IStatusSink`，MainWindowViewModel 实现上下文。
+2. 先迁移 Preset 与 Layout 两个最大命令体，每步保持门禁绿。
+3. 迁移完成后更新 docs/business-wiring-boundaries.md 与结构基线。
+4. 最后把 docs/wiring-map.md 做成端口台账并接入 wiring-map-consistency 门禁。
