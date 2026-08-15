@@ -161,6 +161,35 @@ public sealed partial class LauncherPresetCommandWorkflow
         }
     }
 
+    public async Task LaunchGroupAsync(IReadOnlyList<LauncherEntryViewModel> entries)
+    {
+        if (entries.Count == 0)
+        {
+            ApplyStatus(LauncherRefreshStatus.GroupNoEntries);
+            return;
+        }
+
+        await _launch.LaunchBatchAsync(
+            entries,
+            confirmationTargetLabel: $"分组 \"{entries[0].Command}\"",
+            emptyStatus: LauncherRefreshStatus.GroupNoEntries,
+            canceledStatus: _ => LauncherRefreshStatus.CanceledBatch,
+            failedStatus: LauncherSelectionStatus.BatchLaunchFailed,
+            completedStatus: LauncherGroupStatus.BatchCompleted,
+            source: LauncherRunSource.Group).ConfigureAwait(true);
+    }
+
+    public async Task SaveGroupAsPresetAsync(IReadOnlyList<string> entryIds)
+    {
+        if (entryIds.Count == 0)
+        {
+            ApplyStatus(LauncherRefreshStatus.GroupNoEntriesCannotSave);
+            return;
+        }
+
+        await SaveAsPresetAsync(entryIds).ConfigureAwait(true);
+    }
+
     public async Task<bool> SaveAsPresetAsync(IReadOnlyList<string> entryIds)
     {
         if (entryIds.Count == 0)

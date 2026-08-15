@@ -882,6 +882,73 @@ Add-Check 'vtk-no-appstore-residue' @{
     invariant = 'AppStore was deleted by VTuber-Killer migration; zero references allowed in src/'
 }
 
+# --- Rewiring Phase E gates: wiring map ledger, VM line budget, workflow ports ---
+$wiringMapPath = Join-Path $root 'docs\wiring-map.md'
+if (-not (Test-Path -LiteralPath $wiringMapPath)) {
+    throw 'Missing docs/wiring-map.md port ledger'
+}
+$wiringMapText = Get-Content -Raw -Encoding UTF8 -LiteralPath $wiringMapPath
+$workflowDir = Get-RepoPath 'src\avalonia-launcher\src\WTLauncher.App\ViewModels\Commands'
+$workflowFiles = @(Get-ChildItem -LiteralPath $workflowDir -Filter '*.cs')
+$missingWorkflows = @()
+foreach ($file in $workflowFiles) {
+    if (-not $wiringMapText.Contains($file.BaseName)) {
+        $missingWorkflows += $file.BaseName
+    }
+}
+$requiredPorts = @('ICommandExecutionContext','IStatusSink','IProjectionSynchronizer','ICommandHost','IEntryCardHost','ICommandEditApplier','IDirectoryEditApplier','ILaunchCoordinatorContext')
+$missingPorts = @()
+foreach ($port in $requiredPorts) {
+    if (-not $wiringMapText.Contains($port)) {
+        $missingPorts += $port
+    }
+}
+if ($missingWorkflows.Count -gt 0 -or $missingPorts.Count -gt 0) {
+    throw "wiring-map-consistency: missing workflows: $($missingWorkflows -join ', '); missing ports: $($missingPorts -join ', ')"
+}
+Add-Check 'wiring-map-consistency' @{
+    path = 'docs\wiring-map.md'
+    workflows = $workflowFiles.Count
+    missingWorkflows = ($missingWorkflows -join ', ')
+    missingPorts = ($missingPorts -join ', ')
+}
+
+$mainVmFiles = @(Get-ChildItem -LiteralPath (Get-RepoPath 'src\avalonia-launcher\src\WTLauncher.App\ViewModels') -Filter 'MainWindowViewModel*.cs')
+$mainVmLines = @($mainVmFiles | ForEach-Object { Get-Content -LiteralPath $_.FullName }).Count
+if ($mainVmLines -gt 1200) {
+    throw "main-vm-line-budget: MainWindowViewModel*.cs total $mainVmLines exceeds 1200"
+}
+Add-Check 'main-vm-line-budget' @{
+    lines = $mainVmLines
+    budget = 1200
+    path = 'src\avalonia-launcher\src\WTLauncher.App\ViewModels\MainWindowViewModel*.cs'
+}
+
+$callbackViolations = New-Object System.Collections.Generic.List[string]
+foreach ($file in $workflowFiles) {
+    $workflowText = Get-Content -Raw -Encoding UTF8 -LiteralPath $file.FullName
+    $ctorMatches = [regex]::Matches($workflowText, 'public\s+Launcher\w+Workflow\s*\((?<params>(?:[^()]|\([^()]*\))*)\)')
+    foreach ($ctor in $ctorMatches) {
+        $params = $ctor.Groups['params'].Value
+        if ($params -match 'MainWindowViewModel') {
+            $callbackViolations.Add("$($file.Name): ctor depends on MainWindowViewModel")
+        }
+        if ($params -match 'Action<') {
+            $callbackViolations.Add("$($file.Name): ctor uses Action callback")
+        }
+        if ($params -match 'Func<' -and $params -notmatch 'Func<DateTimeOffset') {
+            $callbackViolations.Add("$($file.Name): ctor uses Func callback")
+        }
+    }
+}
+if ($callbackViolations.Count -gt 0) {
+    throw "workflow-no-callback-bag: $($callbackViolations -join '; ')"
+}
+Add-Check 'workflow-no-callback-bag' @{
+    violations = $callbackViolations.Count
+    invariant = 'Workflow ctors use narrow ports, not MainWindowViewModel or Func/Action callback bags'
+}
+
 # --- Structure baseline consistency (enforced single source: AGENTS.md table) ---
 # 2026-08-15: AGENTS.md/CLAUDE.md repo-map numbers had silently drifted (Core 24->53,
 # ViewModels 28->54, partials 7->15, test files 61->121, checks 31->40). This check makes
@@ -893,7 +960,7 @@ Add-Check 'vtk-no-appstore-residue' @{
 # 5.1 without a BOM (ANSI decoding), so non-ASCII literals would silently mismatch.
 $baselineRows = @(
     @{ Label = 'WTLauncher.Core C# files';          Path = 'src\avalonia-launcher\src\WTLauncher.Core';            Filter = '*.cs';                 Count = 53 }
-    @{ Label = 'ViewModels C# files';               Path = 'src\avalonia-launcher\src\WTLauncher.App\ViewModels';   Filter = '*.cs';                 Count = 64 }
+    @{ Label = 'ViewModels C# files';               Path = 'src\avalonia-launcher\src\WTLauncher.App\ViewModels';   Filter = '*.cs';                 Count = 65 }
     @{ Label = 'MainWindowViewModel partials';     Path = 'src\avalonia-launcher\src\WTLauncher.App\ViewModels';   Filter = 'MainWindowViewModel.*.cs'; Count = 15 }
     @{ Label = 'Features C# files';                 Path = 'src\avalonia-launcher\src\WTLauncher.App\Features';     Filter = '*.cs';                 Count = 16 }
     @{ Label = 'Views C# files';                    Path = 'src\avalonia-launcher\src\WTLauncher.App\Views';        Filter = '*.cs';                 Count = 24 }

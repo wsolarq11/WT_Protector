@@ -19,7 +19,7 @@ WT_Protector/
 │       │   ├── WTLauncher.Core/     → Layer 0: 纯数据/规则（53文件, 零Avalonia依赖）
 │       │   ├── WTLauncher.Analyzers/ → Roslyn 分析器（7文件, 架构规则强制）
 │       │   └── WTLauncher.App/      → Layer 1-4: ViewModels + Features + Views
-│       │       ├── ViewModels/      → 64文件（MainWindowViewModel + 15 partial）
+│       │       ├── ViewModels/      → 65文件（MainWindowViewModel + 15 partial）
 │       │       ├── Features/        → 16文件（Entries/Presets/Status/Updates/Dialogs/ConfigExchange）
 │       │       ├── Infrastructure/  → 9文件（持久化 IO + IStorePersistence）
 │       │       ├── Platform/        → 3文件（平台接线）
@@ -45,7 +45,7 @@ WT_Protector/
 
 | 脚本                                          | 用途                                                                                                                                                                                                                                                                                                                                          | 何时用                                               |
 | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `verify.ps1`                                  | **全量门禁**：40 项检查（行尾策略、`.snow/` 忽略、退役路径、无裸 catch、无硬编码颜色、主线布局、README、功能审计、声明边界、GitHub 快照、launcher.json/config/presets/settings 各 schema、快捷方式/WinForms/HTA 退役、Avalonia 测试+发布+GUI 冒烟、**结构基线**、settings-single-source、no-stale-three-file-refs、winget-config-schema、Views 免命令式 UI、安全审计 F1-F3、无瘦包装、VTK/Trinity 架构、AppStore 残留、架构规则、分析器连线） | 每次提交前；声称"完成"前                             |
+| `verify.ps1`                                  | **全量门禁**：43 项检查（行尾策略、`.snow/` 忽略、退役路径、无裸 catch、无硬编码颜色、主线布局、README、功能审计、声明边界、GitHub 快照、launcher.json/config/presets/settings 各 schema、快捷方式/WinForms/HTA 退役、Avalonia 测试+发布+GUI 冒烟、**结构基线**、settings-single-source、no-stale-three-file-refs、winget-config-schema、Views 免命令式 UI、安全审计 F1-F3、无瘦包装、VTK/Trinity 架构、AppStore 残留、架构规则、分析器连线） | 每次提交前；声称"完成"前                             |
 | `build-release.ps1`                           | **稳定发布构建**：win-x64 self-contained publish → `src/avalonia-launcher/artifacts/publish/win-x64/`                                                                                                                                                                                                                                         | 需要产出可分发的 exe 时                              |
 | `apply-machine-config.ps1`                    | **新机配置包装器**：`winget configure --file .wt-protector.dsc.yaml`；`-DryRun` 仅 validate                                                                                                                                                                                                                                                   | 拿到新 Windows 机器、想一键声明式安装前置依赖时      |
 | `config-lib.ps1`                              | **共享 PowerShell 函数库**：被 verify.ps1、build-release.ps1 等引用                                                                                                                                                                                                                                                                           | 不直接调用；被其他脚本 dot-source                    |
@@ -60,7 +60,7 @@ WT_Protector/
 | 基线项 | 数量 |
 |--------|------|
 | WTLauncher.Core C# files | 53 |
-| ViewModels C# files | 64 |
+| ViewModels C# files | 65 |
 | MainWindowViewModel partials | 15 |
 | Features C# files | 16 |
 | Views C# files | 24 |
@@ -68,7 +68,7 @@ WT_Protector/
 | WTLauncher.Analyzers C# files | 7 |
 | Tests C# files | 129 |
 | Test attributes [Fact]+[Theory] | 749 |
-| Gate checks (Add-Check) | 40 |
+| Gate checks (Add-Check) | 43 |
 
 > 更新协议：结构变化 → 跑门禁看 `structure-baseline-consistency` 报什么 → 同步改本表与
 > `tools/verify.ps1` 基线常量 → 门禁转绿。

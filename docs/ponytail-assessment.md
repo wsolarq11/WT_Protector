@@ -3,7 +3,7 @@
 审查时间: 2026-07-23
 审查范围: `tools/verify.ps1` 中所有 `# ponytail:` 注释标注的已知局限性
 
-> 复核（2026-08-15）：文中 6 个门禁名称全部仍在当前 `tools/verify.ps1`（现共 40 项检查）；行号已更新为复核日当前值（原行号与 2026-07-23 当日版本及当前版本均不符，逐项证据见验证台账 `.trellis/tasks/08-15-docs/ledgers/ponytail-assessment.md`）。当日 ponytail 注释共 6 处，复核时为 10 处。
+> 复核（2026-08-15）：文中 6 个门禁名称全部仍在当前 `tools/verify.ps1`（现共 43 项检查）；行号已更新为复核日当前值（原行号与 2026-07-23 当日版本及当前版本均不符，逐项证据见验证台账 `.trellis/tasks/08-15-docs/ledgers/ponytail-assessment.md`）。当日 ponytail 注释共 6 处，复核时为 10 处。
 
 ---
 

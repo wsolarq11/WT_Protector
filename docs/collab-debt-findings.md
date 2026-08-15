@@ -13,7 +13,7 @@
 
 > **2026-08-15 归档 + 核验注记**: 本文档已于 2026-08-15 自仓库根目录 `git mv` 至 `docs/collab-debt-findings.md`（内容不变；git status 显示 staged rename）。
 > 文中全部短提交哈希（4aebd24、ffb9cd6、c801a50、77504425 等）在当前 git 历史中无法解析（历史曾重写，0 个 unreachable 对象），仅能确认对应提交主题仍存在于现历史；哈希类声明按历史记录保留，未做追溯修改。
-> 可复核的现状: F1 落点 `DirectoryPath.cs` 含 GetFullPath（2 处）；F2 `knownEntryIds` 参数与 `PresetService.FindInvalidEntryIds` 现存（10 处引用）；F3 `EntryId.cs` 含 LatinScriptRanges/EnsureLatinScript（4 处）；LiteDB 0 命中；WeakReferenceMessenger 仅 1 处注释提及（`ViewModels/Messages.cs:7`），FeatureMessage 0 命中；verify.yml `full-gate` 确为 PR 触发；verify.ps1 现 40 项 Add-Check，测试属性现 749（门禁实测 832 用例）。
+> 可复核的现状: F1 落点 `DirectoryPath.cs` 含 GetFullPath（2 处）；F2 `knownEntryIds` 参数与 `PresetService.FindInvalidEntryIds` 现存（10 处引用）；F3 `EntryId.cs` 含 LatinScriptRanges/EnsureLatinScript（4 处）；LiteDB 0 命中；WeakReferenceMessenger 仅 1 处注释提及（`ViewModels/Messages.cs:7`），FeatureMessage 0 命中；verify.yml `full-gate` 确为 PR 触发；verify.ps1 现 43 项 Add-Check，测试属性现 749（门禁实测 832 用例）。
 
 ---
 

@@ -24,7 +24,7 @@ Active mainline: `src/avalonia-launcher/`. Everything under `retired/` is archiv
 Run everything from the **repository root**. PowerShell on Windows.
 
 ```powershell
-# Full native gate — 40 checks (growing), must be green before any "done" claim
+# Full native gate — 43 checks (growing), must be green before any "done" claim
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
 
 # Stable release publish → src/avalonia-launcher/artifacts/publish/win-x64/WTLauncher.App.exe

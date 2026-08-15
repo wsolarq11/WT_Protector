@@ -1,25 +1,20 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
-using WTLauncher.App.Features;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
-// Cards 视图分组渲染。Split from MainWindowViewModel.cs (task 07-11-cards-command-grouping).
-// VisibleGroups 是渲染源 — groupKey=none 时单组"all"无 header;非 none 时按 key 分组。
-// ponytail: 单源真 — VisibleEntries 是 canonical,VisibleGroups 是它的派生 view projection。
+// Cards 视图分组渲染投影。Launch/save-as-preset bodies live in
+// LauncherPresetCommandWorkflow; VisibleGroups is a derived projection.
 
 public sealed partial class MainWindowViewModel
 {
-    /// <summary>Cards 视图渲染源。groupKey=none 时含 1 组(showHeader=false),非 none 时按 key 分组。</summary>
     public ObservableCollection<LauncherCardGroupViewModel> VisibleGroups { get; } = new();
 
-    /// <summary>从 VisibleEntries 派生 VisibleGroups。每次 ApplyFilter / Refresh / group key 变更后调用。</summary>
     internal void RebuildVisibleGroups()
     {
         var launchEntries = _list.MutableVisibleEntries.Select(ToLaunchEntry).ToList();
         var groups = LauncherEntryGrouper.Group(launchEntries, _layoutManager.CardsGroupKey);
-        // ponytail: TryAdd 而非 ToDictionary — 与 LaunchBatchAsync 同模式,_entries 出现重复 ID 时(仅可能由反射注入或 schema 历史损坏)优雅退化,不抛 ArgumentException。
         var entryById = new Dictionary<string, LauncherEntryViewModel>(EntryId.Comparer);
         foreach (var vm in _list.MutableVisibleEntries)
             entryById.TryAdd(vm.Id, vm);
@@ -34,47 +29,14 @@ public sealed partial class MainWindowViewModel
                 .Cast<LauncherEntryViewModel>()
                 .ToList();
 
-            var displayName = showHeader ? g.Key : string.Empty;
             VisibleGroups.Add(new LauncherCardGroupViewModel(
                 key: g.Key,
-                displayName: displayName,
+                displayName: showHeader ? g.Key : string.Empty,
                 count: g.Count,
                 showHeader: showHeader,
                 entries: entriesInGroup,
-                launchAllAsync: LaunchGroupAsync,
-                saveAsPresetAsync: SaveGroupAsPresetAsync));
+                launchAllAsync: _presetWorkflow.LaunchGroupAsync,
+                saveAsPresetAsync: _presetWorkflow.SaveGroupAsPresetAsync));
         }
     }
-
-    private async Task LaunchGroupAsync(IReadOnlyList<LauncherEntryViewModel> entries)
-    {
-        if (entries.Count == 0)
-        {
-            StatusContent = LauncherRefreshStatus.GroupNoEntries;
-            return;
-        }
-
-        await _launchOrchestrator.LaunchBatchAsync(
-            entries,
-            confirmationTargetLabel: $"分组 \"{entries[0].Command}\"",
-            emptyStatus: LauncherRefreshStatus.GroupNoEntries,
-            canceledStatus: _ => LauncherRefreshStatus.CanceledBatch,
-            failedStatus: LauncherSelectionStatus.BatchLaunchFailed,
-            completedStatus: LauncherGroupStatus.BatchCompleted,
-            source: LauncherRunSource.Group).ConfigureAwait(true);
-    }
-
-    private async Task SaveGroupAsPresetAsync(IReadOnlyList<string> entryIds)
-    {
-        if (entryIds.Count == 0)
-        {
-            StatusContent = LauncherRefreshStatus.GroupNoEntriesCannotSave;
-            return;
-        }
-
-        await _presetWorkflow.SaveAsPresetAsync(entryIds).ConfigureAwait(true);
-    }
-
-    // ponytail: ApplyFilter 末尾追加 RebuildVisibleGroups 调用,见 MainWindowViewModel.cs 主类。
-    // Refresh() 末尾同样追加。
 }

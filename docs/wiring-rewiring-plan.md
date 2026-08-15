@@ -1,6 +1,6 @@
 # 重新布线图：WT Launcher 目标接线拓扑
 
-> 状态：规划已定稿
+> 状态：规划已定稿，并已按生产蓝图全量落地（Phase A-E）
 > 生产蓝图：`docs/wiring-rewiring-production-blueprint.md`
 > 授权：最高布线和接线权限
 > 对齐：5 层架构 + StoreGrain 单一状态源 + 显式端口 + 无服务定位器

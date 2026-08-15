@@ -42,6 +42,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     internal readonly LauncherEntryCommandWorkflow _entryWorkflow;
     internal readonly LauncherExchangeCommandWorkflow _exchangeWorkflow;
     internal readonly LauncherUpdateCommandWorkflow _updateWorkflow;
+    internal readonly LauncherReorderCommandWorkflow _reorderWorkflow;
 
     // Status forwarding — reads StatusPresenter, re-fires PropertyChanged via subscription
     public LauncherStatusContent StatusContent { get => _statusPresenter.StatusContent; set => _statusPresenter.StatusContent = value; }
@@ -126,6 +127,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _launchOrchestrator.RequireConfirmationForLaunches = CurrentSettings.RequireConfirmationForLaunches;
         // Construct EntryListViewModel early so the coordinator context can read entries.
         _list = new EntryListViewModel(_entryService, _utcNow, _storeGrain, _layoutManager.CardLayout);
+        _reorderWorkflow = new LauncherReorderCommandWorkflow(this, _list, _layoutManager, this);
         _list.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(EntryListViewModel.StaleDirectoryCount) or nameof(EntryListViewModel.HasStaleDirectories))

@@ -1,8 +1,8 @@
 # WT Launcher 重新布线生产蓝图
 
-> 状态：Production-ready blueprint v1
+> 状态：Production-ready blueprint v1，Phase A-E 已全量落地（2026-08-15）
 > 上游：`docs/wiring-rewiring-plan.md`
-> 范围：全量接线契约化，不实施生产代码迁移
+> 范围：全量接线契约化；实现已按 Phase A-E 落地，`docs/wiring-map.md` 为端口台账
 
 ## 1. 生产定义（DoD）
 

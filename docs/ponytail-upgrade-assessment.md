@@ -3,7 +3,7 @@
 **生成日期**: 2026-07-25
 **范围**: verify.ps1 中 3 个标记了 `ponytail:` 的已知局限性
 
-> 复核（2026-08-15）：3 个门禁名称仍在当前 `tools/verify.ps1`（现共 40 项检查）；行号已更新为复核日当前值（2026-07-25 当日 9df5ceec 版本实际为 550/564/583，见验证台账 `.trellis/tasks/08-15-docs/ledgers/ponytail-upgrade-assessment.md`）。
+> 复核（2026-08-15）：3 个门禁名称仍在当前 `tools/verify.ps1`（现共 43 项检查）；行号已更新为复核日当前值（2026-07-25 当日 9df5ceec 版本实际为 550/564/583，见验证台账 `.trellis/tasks/08-15-docs/ledgers/ponytail-upgrade-assessment.md`）。
 
 ---
 
