@@ -12,11 +12,11 @@ The correct exemplar is composite:
 - **Visual quality:** CodexSwitchUI's component/theme separation plus Windows/Fluent/WCAG principles already captured by `DESIGN.md`.
 - **Operational quality:** first-class entry/group/settings/receipt patterns from the existing launcher/workspace benchmark library.
 
-CodexSwitch is not an across-the-board code exemplar: its indexed `MainWindowViewModel.cs` is 5291 lines. It is useful for component, theme, icon and packaging patterns, not for ViewModel size or product scope.
+CodexSwitch is not an across-the-board code exemplar: its indexed `MainWindowViewModel.cs` is 5291 lines (as measured during this audit; external benchmark data — no second in-repo source). It is useful for component, theme, icon and packaging patterns, not for ViewModel size or product scope.
 
 ## Evidence baseline
 
-### Current WT Launcher strengths
+### WT Launcher strengths (as of 2026-07-13)
 
 - `WTLauncher.Core` stays independent of Avalonia and app ViewModels, enforced by ArchUnitNET.
 - `config/launcher.json` is the single authority and uses atomic replace plus backup recovery.
@@ -24,7 +24,9 @@ CodexSwitch is not an across-the-board code exemplar: its indexed `MainWindowVie
 - Drag reorder uses pointer capture rather than OLE's nested message loop.
 - Three view modes, keyboard alternatives, global confirmation policy, launch receipts and a full publish/smoke gate already exist.
 
-### Current concentration hotspots
+> Note (2026-08-15 verification): the snapshot → mutate → save → rollback line describes the state as of this audit's date. The snapshot classes were removed on 2026-07-21; rollback now lives in `StoreGrain.Dispatch` (save-first-then-commit). The remaining strengths above were re-verified on 2026-08-15.
+
+### Concentration hotspots (as of 2026-07-13)
 
 | Surface | Evidence | Meaning |
 | --- | --- | --- |
@@ -34,6 +36,8 @@ CodexSwitch is not an across-the-board code exemplar: its indexed `MainWindowVie
 | Layout orchestration | `MainWindowViewModel.Layout.cs` is 427 lines | filtering, sorting, sizing, modes, scroll and persistence remain coupled |
 | Batch orchestration | `MainWindowViewModel.Batch.cs` is 338 lines | selection and launch workflow share one owner |
 | Token drift | hardcoded margins, radii, font sizes and colors remain in XAML/C# | `LauncherDesignTokens` is not yet the complete visual source of truth |
+
+> Note (2026-08-15 verification): all line counts above are measurements taken on the audit date (2026-07-13) and have since changed: `MainWindow.axaml` is now 341 lines; `CommandManagementWindow` was converted to `CommandManagementWindow.axaml` (168) + `.axaml.cs` (158); `MainWindowViewModel.Presets.cs` is 444 lines; `Layout.cs` is 226 lines; `Batch.cs` is 190 lines.
 
 ## Refactor matrix
 
@@ -55,9 +59,9 @@ CodexSwitch is not an across-the-board code exemplar: its indexed `MainWindowVie
 | V-06 | P2 | Responsive proof | Responsive rules exist, but acceptance is concentrated in calculations and one GUI smoke size. | Add a small screenshot/manual matrix for narrow, default, wide and high-DPI states; keep calculation tests as the release gate. | High feasibility; low risk. | `07-12-fma-p4-quality` |
 | UX-01 | P0 | Frequent work | Finding commonly used entries still depends on manual groups/recent sorting. | Complete launch-count/frecency sorting without displaying analytics noise. | High feasibility; low schema risk because the field is optional. | `07-11-entry-launch-count-frecency` |
 | UX-02 | P1 | Central management | Commands/directories are first-class but management is visually separate and implementation-heavy. | Finish the central management flow and make add/edit/merge/delete outcomes immediately visible in the main list. | High feasibility; medium integration risk. | `07-11-centralize-declutter` |
-| UX-03 | P1 | Fast creation | Reusing an existing directory and command template still takes too many form steps. | Complete the discovery “existing directory → command template → create entry” path and reuse the existing add-entry mutation service. | High feasibility; low conceptual risk. | `07-11-directory-scan-wizard` |
+| UX-03 | P1 | Fast creation | Reusing an existing directory and command template still takes too many form steps. | Complete the discovery "existing directory → command template → create entry" path and reuse the existing add-entry mutation service. | High feasibility; low conceptual risk. | `07-11-directory-scan-wizard` |
 | UX-04 | P1 | Feedback | Status text is strong but competes with transient actions and can be missed. | Preserve the status bar as authority; add restrained in-context success/error emphasis, never a notification center. | High feasibility; low risk. | Quality/visual child |
-| UX-05 | P2 | First-run discoverability | A portable JSON-first tool assumes users understand entries, groups and confirmation immediately. | Add a small empty-state/onboarding path with “add entry”, “discover”, config path and one sentence about groups. | High feasibility; low maintenance cost. | New lightweight child |
+| UX-05 | P2 | First-run discoverability | A portable JSON-first tool assumes users understand entries, groups and confirmation immediately. | Add a small empty-state/onboarding path with "add entry", "discover", config path and one sentence about groups. | High feasibility; low maintenance cost. | New lightweight child |
 | UX-06 | P2 | Receipts/history | Current transient receipts are honest, but users cannot revisit a missed result. | Keep transient receipts unless real support cases prove history is needed; then add a bounded in-memory/session list before persisting anything. | Defer; persistence would increase scope and privacy surface. | No task yet |
 
 ## Recommended sequence

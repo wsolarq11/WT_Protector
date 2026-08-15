@@ -100,7 +100,7 @@
   - 右键/更多菜单承载次级操作
 - New/changed components:
   - 顶部 overflow 菜单：直接保留启动/新增/发现等高频动作；选择与刷新、数据管理、启动组维护使用带文字且可键盘打开的菜单入口，菜单项继续绑定原命令
-  - 右键 "复制副本" 菜单项：深度拷贝当前条目为新条目，保留所有字段，名称追加 "的副本"
+  - 右键 "复制" 菜单项：深度拷贝当前条目为新条目（生成新 Id），保留目录与命令字段，名称追加 " (副本)"，选择状态重置为未选中
   - 拖拽 ghost（覆盖层上的半透明卡片）
   - 拖拽插入指示（卡片左/右高亮线）
   - 三档密度卡片布局（Normal / Compact / Micro）
@@ -121,7 +121,7 @@
   - ViewModel 负责三视图状态、名称墙列数/项目尺寸、全局启动确认设置；三视图只能有一个可变来源，`IsCardsViewMode` / `IsDetailedListMode` / `IsNamesViewMode` 仅作为只读投影
   - 卡片密度只能有一个可变来源：`LauncherEntryLayoutDensity`；`IsCompactLayout` / `IsMicroLayout` 仅作为 XAML class 的只读投影
   - 拖拽提示只能有一个 entry-local 可变来源：`DragCueState`；`IsDragPreviewTarget` / `IsDragPreviewSource` / `IsDragInsertBefore` / `IsDragInsertAfter` 仅作为 XAML class 的只读投影
-  - 拖拽插入指示的视觉 token 只能由 `drag-target` 持有；三视图只保留方向、尺寸、定位差异，不重复颜色/圆角/透明度/命中测试
+  - 拖拽插入指示的视觉 token 集中在 MainWindow.axaml 的两个共享样式：`Border.card.drag-target`（高亮边框/粗细）与 `Border.drag-insert`（圆角/颜色/透明度/命中测试）；三视图只保留方向、尺寸、定位差异，不重复颜色/圆角/透明度/命中测试
   - 选择状态只有两个写入入口：用户勾选经 `IsSelected` 立即保存；批量/预设/编辑经 `SetSelectionFromOwner` 同步后只批量保存一次，不用全局 bulk flag 抑制副作用
   - 拖拽排序状态只能由单个 `DragReorderSession?` 持有；snapshot、source、target、last preview 不允许散落为多个 loose fields
   - View 负责拖拽 ghost、插入指示、轻动画
@@ -144,7 +144,7 @@
   - 卡片尺寸变化时自动切换 Normal / Compact / Micro
   - 详细列表视图优先压缩纵向高度，不通过显示更新时间占用扫描宽度
   - 名称墙视图按可用宽度计算列数：窄窗口至少 1-2 列，常规窗口 3+ 列；项目宽度保证名称可读，超长名称单行省略并提供 Tooltip
-  - 顶部四框行使用单个 Grid：搜索框占剩余主宽，排序/视图/启动组按比例或最小宽度分配；不允许因窗口形变导致某个框上下边线错位或框线溢出窗口
+  - 顶部四框行使用单个 Grid（ControlBoxesGrid，列比例 1.8*/1*/1*/2.8*）：搜索、排序、视图、启动组按星号比例占满内容区并共享同一上下边线；不允许因窗口形变导致某个框上下边线错位或框线溢出窗口
 - Touch/hover differences: 当前以鼠标为主；拖拽 ghost 和插入提示需要在指针悬停/拖拽时才出现
 
 ## Interaction states

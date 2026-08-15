@@ -1,10 +1,12 @@
-
 # Retired artifacts
 
-This directory is for launcher artifacts that are intentionally no longer on the active path.
+This directory holds launcher artifacts that are intentionally off the active path — archive-only, never restore.
 
-- `WT Launcher.hta` — archived legacy HTA launcher.
-- `config/config.json` — HTA-local config for the archived launcher. The HTA resolves this file under its local `config/` directory, so the retired snapshot stays self-contained for manual/reference use.
-- `design/winforms-launcher.md` — absorbed design lessons and receipts from the retired WinForms executable/source line.
+- `retired/config/config.json` — HTA-local config of the legacy launcher. The HTA launcher snapshot itself was
+  removed 2026-07-06 (commit `825ecb5b`); this config remains as the only HTA-era artifact.
+- `design/winforms-launcher.md` — absorbed design lessons and receipts from the retired WinForms
+  executable/source line.
 
-`retired/config/config.json` is not the active launcher config and not a fallback for the Avalonia mainline. The active config remains `config/config.json` at the repository root.
+`retired/config/config.json` is not the active launcher config and not a fallback for the Avalonia
+mainline. The active config is `config/launcher.json` at the repository root (entries + presets +
+settings + `defaultPresetId` as one atomic unit).

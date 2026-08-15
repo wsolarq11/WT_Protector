@@ -1,6 +1,7 @@
 # Feature reality and north-star audit
 
 Reviewed on: 2026-06-24
+Facts re-verified against current source: 2026-08-15 (ledger: `.trellis/tasks/08-15-docs/ledgers/feature-reality-north-star-audit.md`)
 
 Purpose: evaluate whether each active WT Launcher feature mapping solves a real user problem and whether the implementation is already a domain north star. This is an audit document, not marketing copy.
 
@@ -9,7 +10,7 @@ Purpose: evaluate whether each active WT Launcher feature mapping solves a real 
 This audit covers the active Avalonia mainline and repository-level launcher contract:
 
 - `src/avalonia-launcher/`
-- `config/launcher.json` (unified store: entries + presets + settings + defaultPresetId)
+- `config/launcher.json` (unified store: entries + presets + settings + defaultPresetId + runHistory)
 - `README.md`
 - `DESIGN.md`
 - `docs/design-benchmark-digest.md`
@@ -229,8 +230,8 @@ The counts below are a summary ledger for the 22 feature sections. They are not 
 
 - Feature count: 22
 - Verdict count: narrow-north-star=22
-- Gap count: none-proven=5,future-workload=8,external-process-limit=4,visual-proof=3,distribution-scope=1,source-freshness=1
-- Proof count: repo-battle-tested=20,market-informed=4,legacy-flow-informed=1,accessibility-informed=1,source-backed=1
+- Gap count: none-proven=5,future-workload=9,external-process-limit=4,visual-proof=3,distribution-scope=1,source-freshness=1
+- Proof count: repo-battle-tested=21,market-informed=5,legacy-flow-informed=1,accessibility-informed=1,source-backed=1
 - Completion boundary: all 22 feature verdicts support the narrow portable Windows Terminal workspace-launcher claim only; broad, unimprovable, universal-superiority, and absolute zero-side-effect claims remain blocked by the objective and gap ledgers.
 - Absolute boundary: future-workload, external-process-limit, visual-proof, distribution-scope, and source-freshness gaps block "100% confidence / 0% side effects" as a product-wide claim.
 
@@ -243,7 +244,7 @@ The counts below are a summary ledger for the 22 feature sections. They are not 
 - Proof type: repo-battle-tested, market-informed
 - Verdict level: narrow-north-star
 - Gap class: future-workload
-- Current data owner: `config/launcher.json` entry rows with `id`, `name`, `directory`, `command`, `selected`, optional `updatedAtUtc`.
+- Current data owner: `config/launcher.json` entry rows with `id`, `name`, `directory`, `command`, `selected`, optional `updatedAtUtc`/`launchedAtUtc`, and `launchCount`.
 - Evidence: `README.md` documents the schema; `LaunchArgumentBuilder.Build` turns a row into the `wt.exe` launch plan; repository config tests build dry-run plans for active config rows.
 - Verdict: north-star for this narrow Windows Terminal launcher.
 - Remaining gap: no import/export format for external launch definitions; keep that out of scope until real user need appears.
@@ -371,13 +372,13 @@ The counts below are a summary ledger for the 22 feature sections. They are not 
 ### 12. Sort modes
 
 - Feature id: sort-modes
-- Real problem: users need different scan modes: custom memory order, newest updated, or alphabetic lookup.
+- Real problem: users need different scan modes: custom memory order, most recent launch, newest updated, alphabetic lookup, or frequent use (frecency).
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: none-proven
 - Current data owner: `launcher.json` settings `sortMode`.
-- Evidence: tests cover custom/updated/alphabetic sort behavior and reject missing or unknown mode ids.
-- Verdict: north-star; three modes are enough and not a framework.
+- Evidence: tests cover custom/recent/updated/alphabetical/frequent sort behavior (including frecency scoring via `launchCount`) and reject missing or unknown mode ids.
+- Verdict: north-star; the five modes are enough and not a framework.
 - Remaining gap: none proven.
 
 ### 13. View modes: Cards / Details / Names
@@ -435,8 +436,8 @@ The counts below are a summary ledger for the 22 feature sections. They are not 
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: future-workload
-- Current data owner: config/preset/settings stores plus mutation snapshots.
-- Evidence: store tests cover temp writes, `.bak` backups, skip-backup rollback writes, multi-file rollback failure statuses, config load returning a read-only entry collection snapshot instead of a mutable load list, rollback snapshot accessors cloning or read-only wrapping captured state instead of exposing mutable rollback storage, invalid in-memory mutation data and invalid rollback snapshots propagating instead of being reported as ordinary save/rollback failure, and fail-fast rejection of missing files plus missing, null, blank mode, non-positive window geometry, unknown, or wrong-case JSON fields. ViewModel refresh now shares that fail-fast preset-load contract instead of synthesizing a second empty preset truth.
+- Current data owner: `config/launcher.json` written through `LauncherJson`/`FileLauncherJsonIO` (temp-file + `File.Replace` atomic write, `.bak` backup recovery, 3-generation backup rotation); rollback is `StoreGrain.Dispatch` save-first-then-commit (snapshot classes removed 2026-07-21).
+- Evidence: store tests cover temp writes, `.bak` backups, save-first-then-commit rollback leaving memory unchanged on save failure, config load returning a read-only entry collection snapshot instead of a mutable load list, invalid in-memory mutation data propagating instead of being reported as an ordinary save failure, and fail-fast rejection of missing files plus missing, null, blank mode, non-positive window geometry, unknown, or wrong-case JSON fields. ViewModel refresh shares that fail-fast preset-load contract instead of synthesizing a second empty preset truth.
 - Verdict: north-star for a single-process local app.
 - Remaining gap: no file locking or merge resolution for concurrent external edits; that is not a current requirement.
 
@@ -448,7 +449,7 @@ The counts below are a summary ledger for the 22 feature sections. They are not 
 - Verdict level: narrow-north-star
 - Gap class: none-proven
 - Current data owner: Core owns pure records/rules; App owns ViewModels/Views; Tests own behavior contracts.
-- Evidence: solution layout and root verify enforce Core/App/Tests presence, tests cover Core helpers independently, ViewModel-owned collections expose read-only projections instead of public mutable collection owners, startup arguments reject null argument lists plus unknown or duplicate `--config` inputs instead of silently choosing one, and config path resolution rejects missing search roots instead of silently falling back to `Environment.CurrentDirectory`.
+- Evidence: solution layout and root verify enforce Core/App/Tests presence, tests cover Core helpers independently, ViewModel-owned collections expose read-only projections instead of public mutable collection owners, startup arguments reject null argument lists and duplicate `--config` inputs, collect unknown `--`-prefixed arguments as warnings while rejecting other unknown arguments instead of silently choosing one, and config path resolution rejects missing search roots instead of silently falling back to `Environment.CurrentDirectory`.
 - Verdict: north-star for maintainability.
 - Remaining gap: none proven.
 
@@ -484,7 +485,7 @@ The counts below are a summary ledger for the 22 feature sections. They are not 
 - Verdict level: narrow-north-star
 - Gap class: source-freshness
 - Current data owner: `DESIGN.md`, `docs/design-benchmark-digest.md`, and `docs/giants-shoulders/`.
-- Evidence: docs translate external references into local acceptance rules, tests keep the digest referenced, verify the giants-shoulders admission rule and current entries, preserve the first-class launcher pattern table plus "what not to copy" boundary, `docs/reference/github-similar-projects-snapshot.json` preserves the current GitHub market yardstick used by this audit, `tools/update-github-similar-projects-snapshot.ps1` refreshes it from GitHub API state, and root verify validates the snapshot schema, freshness window, representative direct projects, and broad-market repositories.
+- Evidence: `docs/design-benchmark-digest.md` translates 12 external benchmarks into 10 local acceptance rules, `docs/giants-shoulders/launcher-first-class-patterns.md` preserves the 12-tool borrowed-pattern table plus the "what we intentionally did not copy" boundary and participates in the `no-stale-three-file-refs` activeDocs gate, `docs/reference/github-similar-projects-snapshot.json` preserves the GitHub market yardstick used by this audit, `tools/update-github-similar-projects-snapshot.ps1` refreshes it from GitHub API state, and root verify validates the snapshot schema, freshness window, representative direct projects, and broad-market repositories.
 - Verdict: north-star for source-tracked decision support in this repo. It converts outside lessons into local acceptance rules and explicit rejection boundaries instead of importing frameworks.
 - Remaining gap: source freshness must be refreshed when a decision depends on a changed external standard; stale references are not current proof.
 
@@ -495,8 +496,8 @@ The counts below are a summary ledger for the 22 feature sections. They are not 
 - Proof type: repo-battle-tested, market-informed
 - Verdict level: narrow-north-star
 - Gap class: future-workload
-- Current data owner: `src/WTLauncher.Core/AgentCatalog.cs`, `src/WTLauncher.Core/AgentDiscoveryScanner.cs`, `src/WTLauncher.App/Views/DiscoverAgentsWindow.cs`, and the discovery ViewModel partial.
-- Evidence: catalog covers the 2026 AI agent CLI market, scanner is a pure function in Core (no Avalonia dependency, exempted in ArchUnitNET R5 alongside LaunchArgumentBuilder/LauncherStore for File.Exists reads only), dialog follows the existing pure-C# code-behind pattern (matches ConfirmBatchLaunchWindow), MainWindowViewModel.Discovery reuses the existing snapshot + atomic-save + rollback pipeline (no second persistence path), tests cover scanner PATH resolution, version regex, per-agent failure isolation, dedup against existing entries, and rollback on save failure.
+- Current data owner: `src/avalonia-launcher/src/WTLauncher.Core/AgentCatalog.cs`, `src/avalonia-launcher/src/WTLauncher.Core/AgentDiscoveryScanner.cs`, `src/avalonia-launcher/src/WTLauncher.App/Views/DiscoverAgentsWindow.axaml` (+ code-behind), `src/avalonia-launcher/src/WTLauncher.App/ViewModels/DiscoverAgentsViewModel.cs`, and `MainWindowViewModel.Discovery.cs`.
+- Evidence: catalog covers the 2026 AI agent CLI market, scanner is a pure function in Core (no Avalonia dependency, exempted in ArchUnitNET R5 alongside LaunchArgumentBuilder/LauncherStore for File.Exists reads only), dialog follows the existing pure-C# code-behind pattern (matches ConfirmBatchLaunchWindow), MainWindowViewModel.Discovery reuses the existing `StoreGrain.Dispatch` save-first-then-commit pipeline (no second persistence path), tests cover scanner PATH resolution, version regex, per-agent failure isolation, dedup against existing entries, and rollback on save failure.
 - Verdict: north-star for narrowing "auto-detect + one-click add" to the documented 8-agent CLI market on Windows. It is not a cross-platform auto-installer and does not claim universal coverage of every future agent.
 - Remaining gap: catalog must be refreshed when a new agent CLI reaches market adoption; absent agents are silently skipped (not a failure), so users won't see agents they haven't installed.
 
@@ -557,7 +558,7 @@ Objective claim impact tokens used below:
 - Requirement: evaluate every active feature.
   - Requirement id: evaluate-every-active-feature
   - Claim impact: supports-current-feature-coverage
-  - Evidence: the 22 feature sections above cover every active feature mapping documented in `README.md` and the current Avalonia mainline scope.
+  - Evidence: the 22 feature sections above classify the audit-tracked active feature mappings; `README.md` additionally documents launcher surfaces this audit does not classify (quick-launch hotkey overlay, system tray, config export/import, run history, explicit update checks, portable installer, clone, brand badges).
   - Status: proven-current-scope — the audit covers the current repository scope.
 - Requirement: decide whether each feature is battle-practice or market-proven north-star.
   - Requirement id: classify-battle-practice-or-market-proven

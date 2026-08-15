@@ -5,6 +5,10 @@
 **项目**: WT Protector (Avalonia/.NET Windows Terminal 工作区启动器)
 **Gate 状态**: **PASS** — 28 项检查全部通过, 700 tests 全绿
 
+> **2026-08-15 核验注记（当前状态）**: 本文为 2026-07-25 时点快照，"28 项检查 / 700 tests / 基线提交 e4cdabe" 均为该日历史记录，不做追溯修改。
+> 当前门禁（2026-08-15）: **38 项检查** / **728 测试属性**（[Fact] 699 + [Theory] 29，门禁实测 811 用例），以 AGENTS.md 结构基线为准。
+> 文中短提交哈希（e4cdabe、4aebd24、ffb9cd6 等）在当前 git 历史中无法解析（git log 退出非零，无 unreachable 对象，历史疑似重写），仅 825ecb5b 可验证；对应提交主题在现历史中仍存在。
+
 ---
 
 ## 目录
@@ -109,7 +113,9 @@
 
 ### 2.1 verify.ps1 gate 状态
 
-**当前门禁**: **PASS** — 全部 28 项检查通过 ✓
+**当前门禁** (2026-07-25 时点): **PASS** — 全部 28 项检查通过 ✓
+
+> 2026-08-15 核验: 当前 verify.ps1 为 38 项 Add-Check（structure-baseline-consistency 自计数），测试属性 728（门禁实测 811 用例）；下表分类为 2026-07-25 时点值。
 
 | 类别 | 数量 | 状态 |
 |------|------|------|
@@ -150,6 +156,8 @@
 | `verify.ps1:529` (no-stale-three-file-refs) | 只检查 `$activeDocs` 列表中的文档 | 添加新文档到 `$activeDocs` 数组 |
 | `verify.ps1:555` (settings-single-source) | 依赖特定代码模式指纹,重构后可能失效 | 未显式文档化 |
 | `verify.ps1:567` (winget-config-schema) | 无 DSC v3 时无法执行完整 winget 验证 | 安装 DSC v3 后运行 `.\tools\apply-machine-config.ps1 -DryRun` |
+
+> 2026-08-15 核验: 三处检查现位于 verify.ps1 第 646 / 660 / 679 行（文件现 920 行）；表中行号为 2026-07-25 时点值。
 
 ### 3.2 collab-debt-findings 优化建议 (未处理)
 

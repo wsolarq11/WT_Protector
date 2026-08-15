@@ -1,3 +1,4 @@
+> Historical record — completed 2026-07-23; archived 2026-08-15 to docs/archive/. Content is a point-in-time record, not current state.
 # Phase 3 完成报告: 补充低断言测试文件
 
 ## 结果

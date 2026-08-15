@@ -129,7 +129,7 @@ The store is a **single file** (`config/launcher.json`) owning entries + presets
 3. Rotate `.bak` → `.bak.1` → `.bak.2` → delete (copy-then-rotate, not rotate-then-copy).
 4. `finally` block cleans up the temp file (wrapped in its own try/catch so cleanup failure cannot replace the original exception).
 
-ViewModels call `AppStore.Mutate` which handles persistence internally. If save throws, `AppStore` automatically reverts its internal `_state` and the VM syncs via `RestoreVmStateFromStore()`.
+ViewModels call `StoreGrain.Dispatch` which handles persistence internally (save-first-then-commit: the reducer result is persisted before memory is updated). If save throws, memory is left unchanged and the VM syncs via `RestoreVmStateFromStore()`.
 
 **When snapshot-rollback is still appropriate:** Single mutations that modify in-memory ViewModel state before the save. The snapshot restores the ViewModel, not the files (the files are protected by the atomic write inside `LauncherJson.Save`).
 

@@ -87,7 +87,7 @@ Read-only projections (`IsCompactLayout`, `IsCardsViewMode`, etc.) are computed 
 
 `TrySaveWindowBounds` 原本 catch 裸 `Exception`，吞掉了不应出现的异常。现窄化为 `IOException | UnauthorizedAccessException | SecurityException`。裸 `Exception` 掩盖 bug，已知异常才处理。
 
-**Gate 强制层**（自 `266aa6f` 后）：`tools/verify.ps1` 的 `no-bare-catch-exception` 检查扫描 `src/avalonia-launcher/src/**/*.cs`（排除 obj/bin），任何形如 `catch (Exception)` 或 `catch (Exception ex)` 且同行无 `when` 过滤器的 catch 都会让 gate 失败。合规模式：`catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))` 或 `catch (Exception ex) when (ex is IOException or ...)` ——54 处现存 catch 全部使用此模式。修复 `DiscoverAgentsViewModel.ScanAsync` 的 `266aa6f` 提交就是这个不变量的恢复案例。
+**Gate 强制层**（自 `aae2454e` 后，修复于 `b3556262`）：`tools/verify.ps1` 的 `no-bare-catch-exception` 检查扫描 `src/avalonia-launcher/src/**/*.cs`（排除 obj/bin），任何形如 `catch (Exception)` 或 `catch (Exception ex)` 且同行无 `when` 过滤器的 catch 都会让 gate 失败。合规模式：`catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))` 或 `catch (Exception ex) when (ex is IOException or ...)` ——54 处现存 catch 全部使用此模式。修复 `DiscoverAgentsViewModel.ScanAsync` 的 `266aa6f` 提交就是这个不变量的恢复案例。
 
 ---
 

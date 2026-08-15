@@ -17,6 +17,15 @@
 > - `.trellis/spec/views/mvvm-pattern.md` — ViewModelBase 模式规范
 > - `src/avalonia-launcher/src/WTLauncher.Core/AppState.cs` — 单源状态树
 > - `src/avalonia-launcher/src/WTLauncher.App/ViewModels/ViewModelBase.cs` — 生命周期管理
+>
+> **验证记录 (2026-08-15)** — `.trellis/tasks/08-15-docs` 协议逐项核实：
+> - ✅ 时间线：VTK 落地 `e11183cc` (2026-07-24, EventJournal + Grain + StoreGrain)；CFA 落地 `9df5ceec`/`4534cddd` (2026-07-25)；Fluxor 骨架 `86cce496` (2026-07-23) → Scheme B `0c0b8771` (2026-07-24) 移除。
+> - ✅ 上表“实际落地方案”中的 **Grain.Mutate 锁内原子化仍成立**：`Grain.Mutate`（App/Infrastructure/Grain.cs:43）由 `StoreGrain.Dispatch` 在锁内调用（StoreGrain.cs:60）；save-first-then-commit 不变。
+> - ⚠️ “AppState 单源”仅为 2026-07-25→07-26 的中间状态：`WTLauncher.Core/AppState.cs` 由 `9df5ceec` 创建、`4e35fabc` (2026-07-26) 删除。当前无 AppState 类型，单源 = `StoreGrain`（持有 `LauncherStoreFile`）；`App/ViewModels/AppStateMachine.cs` 为 Trinity 引入的 UI 状态机。
+> - ⚠️ `.trellis/tasks/07-25-closed-flux-arch/` 已归档 → `.trellis/tasks/archive/2026-07/07-25-closed-flux-arch/`（`1e44ba36` 2026-07-25）。
+> - ✅ `.trellis/spec/views/mvvm-pattern.md`、`App/ViewModels/ViewModelBase.cs` 均存在。
+> - 正文（2026-07-23 提案）为历史记录保留原文；其中“673 测试”为当时本地运行口径（git 时点测量 `a441f56f`：[Fact]/[Theory] 属性 601 个）。
+
 
 > 基于深度代码调研 + 行业架构调研的综合方案
 > 目标：从根源消除整类问题，而非逐个修复 bug

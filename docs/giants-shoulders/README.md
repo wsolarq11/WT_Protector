@@ -1,5 +1,7 @@
 # 巨人肩膀库
 
+> Verified 2026-08-15 — 依据 .trellis/tasks/08-15-docs/verification-protocol.md 逐项查证后重写；本仓库相关声明均已对照工作树核实。
+
 Purpose: keep high-signal external project lessons one step away from this repository, so future stack and UX decisions can start from checked references instead of re-discovery.
 
 This is a reference library, not an authority layer. The active WT Launcher source of truth remains the current repository, its `README.md`, and its native gate:
@@ -22,8 +24,8 @@ Every entry in this library should record:
 
 | Entry | Why it matters |
 | --- | --- |
-| [CodexSwitch: Avalonia + .NET 10 + Native AOT](./codexswitch-avalonia-native-aot.md) | A modern C# desktop app shape that may fit a next-generation WT Launcher better than the current WinForms/GDI implementation. |
-| [First-class launcher patterns](./launcher-first-class-patterns.md) | 12-tool industry survey distilled into WT Launcher entries, presets, settings, and future status boundaries. |
+| [CodexSwitch: Avalonia + .NET 10 + Native AOT](./codexswitch-avalonia-native-aot.md) | The external reference that justified promoting the Avalonia/.NET line into the current mainline `src/avalonia-launcher/`; the former single-file WinForms/GDI line is retired (`retired/design/winforms-launcher.md`) and must not be restored. |
+| [First-class launcher patterns](./launcher-first-class-patterns.md) | 12-tool industry survey (reviewed 2026-05-17) distilled into WT Launcher entries, presets, settings, and future status boundaries; the named launch-group slice has since landed in `config/launcher.json`. |
 
 ## How to use before changing WT Launcher
 

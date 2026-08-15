@@ -418,74 +418,75 @@ Code-behind OnWindowKeyDown:
 
 ---
 
-## Scenario: AppStore mutation with automatic rollback
+## Scenario: StoreGrain mutation with save-first-then-commit rollback
 
 ### 1. Scope / Trigger
 
-Use this contract when a ViewModel mutation changes in-memory state that must persist to the unified launcher store. Rollback is automatic inside `AppStore.Mutate` — the caller never sees a half-persisted state.
+Use this contract when a ViewModel mutation changes in-memory state that must persist to the unified launcher store. Rollback is built into `StoreGrain.Dispatch` — the reducer result is persisted to disk BEFORE memory is updated, so a failed save leaves memory unchanged and surfaces the error to the caller (verified in `WTLauncher.App/Infrastructure/StoreGrain.cs`).
 
 ### 2. Signatures
 
 ```csharp
-// AppStore handles rollback internally
-public void Mutate(Func<LauncherStoreFile, LauncherStoreFile> transform);
+// The single write path (analyzer-enforced: DispatchMustBeOnlyWritePathAnalyzer)
+public void Dispatch(Func<LauncherStoreFile, LauncherStoreFile> reducer);
+public ErrorOr<Success> DispatchErrorOr(Func<LauncherStoreFile, LauncherStoreFile> reducer);
 
-// ViewModel-level sync after AppStore rolls back
+// ViewModel-level sync after a failed save
 private void RestoreVmStateFromStore();
 ```
 
 ### 3. Contracts
 
-- `AppStore.Mutate` captures `before` state before invoking `transform`. If `LauncherStore.Save` throws, `_state` reverts to `before` and subscribers are NOT notified.
-- After a failed `Mutate`, callers that cache local state (e.g., `_settings`, `_list.MutableEntries`) must call `RestoreVmStateFromStore()` to re-sync from AppStore.
-- `RestoreVmStateFromStore` re-reads `_settings`, presets, and entries from AppStore, then calls `EnsureCustomOrderContainsEntries()` and `RefreshAllProjections()`.
+- `StoreGrain.Dispatch` applies the reducer, saves the result through `IStorePersistence` (→ `FileStorePersistence` → `FileLauncherJsonIO`, temp-file + `File.Replace` + `.bak`), and only then updates in-memory state inside the `Grain<TState>` lock. On save failure, memory is NOT updated and the exception propagates (or becomes an `ErrorOr` failure via `DispatchErrorOr`).
+- After a failed `Dispatch`/save, callers that cache local state (e.g., `_settings`, `_list.MutableEntries`) must call `RestoreVmStateFromStore()` to re-sync from `StoreGrain.Select`.
+- `RestoreVmStateFromStore` re-reads `_settings`, presets, and entries from the grain, then calls `EnsureCustomOrderContainsEntries()` and `RefreshAllProjections()`.
+- Historical note: the former `AppStore.Mutate` (snapshot-before → revert) was removed by the VTuber-Killer migration (2026-07-24); save-first-then-commit replaced it.
 
 ### 4. Validation & Error Matrix
 
 | Condition | Required result |
 | --- | --- |
-| `transform` succeeds + `Save` succeeds | AppStore updates `_state`; subscribers notified |
-| `transform` succeeds but `Save` fails (recoverable) | AppStore reverts `_state` to `before`; VM must call `RestoreVmStateFromStore()` |
-| `transform` itself throws | Exception propagates immediately; `_state` and file unchanged |
+| reducer succeeds + save succeeds | Disk updated, then memory updated atomically inside the grain lock; subscribers notified |
+| reducer succeeds but save fails (recoverable) | Memory unchanged; caller sees the error (`DispatchErrorOr` returns `LauncherErrors.ConfigSaveFailed`); VM calls `RestoreVmStateFromStore()` |
+| reducer itself throws | Exception propagates immediately; memory and file unchanged |
 
 ### 5. Good/Base/Bad Cases
 
-- Good: entry mutation saves → AppStore notifies subscriber → VM re-reads `_settings` and preset state.
-- Base: save failure → AppStore reverts → VM calls `RestoreVmStateFromStore()` → state matches pre-mutation.
-- Bad: mutating AppStore state AND local state independently, forgetting to re-sync on failure.
+- Good: entry mutation saves → grain notifies subscriber → VM re-reads `_settings` and preset state.
+- Base: save failure → memory unchanged → VM calls `RestoreVmStateFromStore()` → state matches pre-mutation.
+- Bad: mutating store state AND local state independently, forgetting to re-sync on failure.
 
 ### 6. Tests Required
 
-- `AppStoreTests`: success does not revert; failure reverts and rethrows; subscriber called only on success.
-- Every mutation family keeps a save-failure regression asserting `RestoreVmStateFromStore()` restores full state after an AppStore rollback.
+- `StoreGrainTests` (file: `tests/Persistence/AppStoreTests.cs` — legacy filename): success does not revert; failure leaves memory unchanged; subscriber called only on success.
+- Every mutation family keeps a save-failure regression asserting `RestoreVmStateFromStore()` restores full state after a failed save.
 
 ### 7. Implementation
 
 ```csharp
-// AppStore mutation flow (simplified)
-var before = _state;
-try
+// StoreGrain.Dispatch mutation flow (simplified, StoreGrain.cs)
+var after = Mutate(state =>
 {
-    _state = transform(_state);
-    LauncherStore.Save(_state, _storePath);
-    _stateChanged?.Invoke(_state);
-}
-catch when (IsRecoverable(ex))
-{
-    _state = before;
-    throw; // caller runs RestoreVmStateFromStore
-}
+    var newState = reducer(state);
+    _persistence.Save(newState, _storePath, backup: true); // save FIRST
+    return newState; // only then does Mutate commit to memory
+});
+try { StateChanged?.Invoke(after); }
+catch (Exception ex) when (LauncherErrors.IsRecoverable(ex)) { ErrorLog.Write(ex, "StoreGrain.StateChanged"); }
+```
 
+```csharp
 // ViewModel restore
 private void RestoreVmStateFromStore()
 {
-    _settings = _appStore.Select(s => s.Settings);
+    _settings = _storeGrain.Select(s => s.Settings);
     _presetManager.Load(...);
-    _list.ReplaceEntries(_appStore.Select(s => s.Entries));
+    _list.ReplaceEntries(_storeGrain.Select(s => s.Entries));
     EnsureCustomOrderContainsEntries();
     RefreshAllProjections();
 }
 ```
+
 
 ---
 
@@ -706,19 +707,19 @@ _launchOrchestrator.PropertyChanged += (_, e) => { OnPropertyChanged(e.PropertyN
 
 ## State Single-Sourcing Pattern (2026-07-24, Phase 1 triple-cut-arch)
 
-ViewModel 不得持有 `AppStore` 状态的副本。所有状态读取通过 `AppStore.Select`，所有写入通过 `AppStore.Dispatch`:
+ViewModel 不得持有 `StoreGrain` 状态的副本。所有状态读取通过 `StoreGrain.Select`，所有写入通过 `StoreGrain.Dispatch` / `DispatchErrorOr`:
 
 ```csharp
 // ✅ Correct: projection from single store
-internal LauncherSettings CurrentSettings => _appStore.Select(s => s.Settings);
+internal LauncherSettings CurrentSettings => _storeGrain.Select(s => s.Settings);
 
 // ❌ Wrong: local field duplicates store state
 private LauncherSettings _settings;
 ```
 
-**Transition state:** `_settings` field temporarily retained as working copy during construction. Full elimination requires DragWorkflow refactor (reads/writes through AppStore).
+**Transition state:** `_settings` field temporarily retained as working copy during construction. Full elimination requires DragWorkflow refactor (reads/writes through StoreGrain).
 
-**Compile-time enforcement:** Rule WT1002/1003 in `WTLauncher.Analyzers` reject direct `LauncherStore.Save` calls outside `AppStore.Dispatch`.
+**Compile-time enforcement:** Rule WT1002/1003 in `WTLauncher.Analyzers` reject direct `LauncherStore.Save` calls outside `StoreGrain.Dispatch`.
 
 ## Drag Workflow as Finite State Machine (2026-07-24, Phase 4)
 
@@ -749,5 +750,5 @@ _machine.Configure(DragState.Committing).Permit(DragTrigger.Done, DragState.Idle
 - ❌ **Code-behind contains business `if/else`** — delegate to ViewModel.
 - ❌ **View references Core types as data contracts** — Views only bind to ViewModel properties.
 - ❌ **在 SearchTextBox 上调用 `SelectAll()`** — AutoCompleteBox 无此方法。仅用 `Focus()`.
-- ❌ **ViewModel 持有 `_settings` 字段** — 使用 `CurrentSettings` 从 AppStore 读取。
+- ❌ **ViewModel 持有 `_settings` 字段** — 使用 `CurrentSettings` 从 StoreGrain 读取。
 - ❌ **手写状态机守卫** — 使用 `Stateless` `StateMachine<TState,TTrigger>` 形式化建模。

@@ -1,4 +1,4 @@
-﻿# 协作模式与技术债务管理审查报告
+# 协作模式与技术债务管理审查报告
 
 审查时间: 2026-07-23 (本文档上次更新: 2026-07-25)
 审查范围: 最近 500 个提交 (实际跨度: 约 369 个提交自 2026-07-01)
@@ -10,6 +10,10 @@
 > - 测试: 696 → 716, Gate: verify.ps1 PASS (含 GUI smoke)
 > - Vogen 值对象已全部迁移为 Core 原生 `record struct` (ValueObjects/ 目录已删除)
 > - CFA (Closed Flux Architecture) 5 步迁移已完成 — 参见 `.trellis/tasks/archive/2026-07/07-25-closed-flux-arch/`
+
+> **2026-08-15 归档 + 核验注记**: 本文档已于 2026-08-15 自仓库根目录 `git mv` 至 `docs/collab-debt-findings.md`（内容不变；git status 显示 staged rename）。
+> 文中全部短提交哈希（4aebd24、ffb9cd6、c801a50、77504425 等）在当前 git 历史中无法解析（历史曾重写，0 个 unreachable 对象），仅能确认对应提交主题仍存在于现历史；哈希类声明按历史记录保留，未做追溯修改。
+> 可复核的现状: F1 落点 `DirectoryPath.cs` 含 GetFullPath（2 处）；F2 `knownEntryIds` 参数与 `PresetService.FindInvalidEntryIds` 现存（10 处引用）；F3 `EntryId.cs` 含 LatinScriptRanges/EnsureLatinScript（4 处）；LiteDB 0 命中；WeakReferenceMessenger 仅 1 处注释提及（`ViewModels/Messages.cs:7`），FeatureMessage 0 命中；verify.yml `full-gate` 确为 PR 触发；verify.ps1 现 920 行 / 38 项 Add-Check，测试属性现 728（门禁实测 811 用例）。
 
 ---
 

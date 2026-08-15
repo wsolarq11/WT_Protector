@@ -10,7 +10,7 @@ From the repository root:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\run.ps1
 ```
 
-The app reads the repository-root `config/launcher.json` (entries + presets + settings + defaultPresetId as one atomic unit) and persists all mutations there. The header batch controls can select all visible filtered entries, clear the saved selection, or one-click launch the saved checked set.
+The app reads the repository-root `config/launcher.json` (entries + presets + settings + defaultPresetId + runHistory as one atomic unit) and persists all mutations there. The header batch controls can select all visible filtered entries, clear the saved selection, or one-click launch the saved checked set.
 
 ## Verify
 
@@ -49,7 +49,7 @@ The codebase is organized in five logical layers. Each layer depends only on the
 
 - `LaunchEntry`, `LaunchPlan`, `LauncherPreset` — immutable-shaped records
 - `LaunchArgumentBuilder` — `wt.exe` argument construction with Windows-style quoting
-- `LauncherJson` — atomic temp-file + `.bak` JSON persistence
+- `LauncherJson` — atomic temp-file + `File.Replace` JSON persistence with `.bak` backup (static facade delegating to `ILauncherJsonIO`)
 - `LauncherEntryOrder`, `LauncherEntryLayoutCalculator` — pure ordering/layout rules reused outside one ViewModel branch
 
 ### Layer 1 — Command-local mutations (ViewModels)
@@ -59,13 +59,15 @@ The codebase is organized in five logical layers. Each layer depends only on the
 - Entry add/edit/delete command handlers own the short validation → mutate → save sequence.
 - Shared rules stay in narrow helpers such as `LauncherEntryDrafts`; avoid a second ViewModel workflow when there is only one caller.
 
-### Layer 2 — Persistence + rollback (AppStore + ViewModels)
+### Layer 2 — Persistence + rollback (StoreGrain + ViewModels)
 
-`src/WTLauncher.App/Infrastructure/AppStore.cs` + `MainWindowViewModel.RestoreVmStateFromStore()`
+`src/WTLauncher.App/Infrastructure/StoreGrain.cs` + `MainWindowViewModel.RestoreVmStateFromStore()`
 
-- `AppStore.Mutate` handles automatic rollback: captures `before`, applies transform, persists via `LauncherStore.Save`, reverts on failure.
-- `RestoreVmStateFromStore()` re-syncs ViewModel state after AppStore rollback.
-- Coordinates `launcher.json` (entries + presets + settings + defaultPresetId) as one atomic unit
+- `StoreGrain.Dispatch` handles rollback via save-first-then-commit: the reducer result is persisted (through `FileStorePersistence` → `FileLauncherJsonIO`, temp-file + `File.Replace` + `.bak`) before memory is updated; on save failure memory is unchanged and the caller sees the error.
+- `RestoreVmStateFromStore()` re-syncs ViewModel state after a rollback.
+- Coordinates `launcher.json` (entries + presets + settings + defaultPresetId + runHistory) as one atomic unit.
+
+> The former `AppStore` class was removed by the VTuber-Killer migration (2026-07-24); `StoreGrain.Dispatch` is the only write path.
 
 ### Layer 3 — ViewModel orchestration
 
@@ -73,15 +75,15 @@ The codebase is organized in five logical layers. Each layer depends only on the
 
 - The single writable owner of launcher UI state
 - Delegates reusable rules to Core helpers and persistence/rollback boundaries
-- Injects dialog confirmation `Func<>` delegates through the `MainWindow` constructor
+- Receives dialog confirmation and services (`IDialogService`, `IEntryService`, `IPresetService`) through its constructor; `MainWindow` receives the ViewModel
 
 ### Layer 4 — Views & drag-drop
 
 `src/WTLauncher.App/Views/`
 
-- XAML with three view modes: Cards / Details / Names
-- Drag reorder: `MainWindowDragGhostFactory` with ghost overlay and insert preview
-- Focused view helpers remain for shared drag and hit-test behavior; one-off menu guards stay in `MainWindow`
+- XAML with three view modes: Cards / Details / Names (`MainWindow.axaml` hosts the modes; the view bodies live in `LauncherEntriesView.axaml`)
+- Drag reorder: `MainWindow.Drag.cs` (`ShowDragGhost`/`MoveDragGhost`/`HideDragGhost` with an OverlayLayer ghost + insert preview), layout math in Core (`LauncherDragGhostLayoutCalculator`), reorder-session state in the ViewModel (`LauncherDragReorderWorkflow`)
+- Focused view helpers (`MainWindowEntryCardResolver`, `FastWrapPanel`) handle shared drag hit-test and layout; one-off menu guards stay in `MainWindow`
 
 ### Key invariants
 

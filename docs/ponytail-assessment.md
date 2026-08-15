@@ -3,9 +3,11 @@
 审查时间: 2026-07-23
 审查范围: `tools/verify.ps1` 中所有 `# ponytail:` 注释标注的已知局限性
 
+> 复核（2026-08-15）：文中 6 个门禁名称全部仍在当前 `tools/verify.ps1`（现共 38 项检查）；行号已更新为复核日当前值（原行号与 2026-07-23 当日版本及当前版本均不符，逐项证据见验证台账 `.trellis/tasks/08-15-docs/ledgers/ponytail-assessment.md`）。当日 ponytail 注释共 6 处，复核时为 10 处。
+
 ---
 
-## 1. no-stale-three-file-refs (verify.ps1:529)
+## 1. no-stale-three-file-refs (verify.ps1:646)
 
 ### 当前实现
 
@@ -50,7 +52,7 @@ $activeDocs = @(
 
 ---
 
-## 2. settings-single-source-buildstorefile (verify.ps1:555)
+## 2. settings-single-source-buildstorefile (verify.ps1:660)
 
 ### 当前实现
 
@@ -95,7 +97,7 @@ Entries = _list.MutableEntries.Select(ToLaunchEntry).ToImmutableList(),
 
 ---
 
-## 3. winget-config-schema-valid (verify.ps1:567)
+## 3. winget-config-schema-valid (verify.ps1:679)
 
 ### 当前实现
 
@@ -131,7 +133,7 @@ Entries = _list.MutableEntries.Select(ToLaunchEntry).ToImmutableList(),
 
 ## 4. 安全审计门禁 (F1/F2/F3) 的 ponytail 注释评估
 
-### F1: security-audit-f1-path-getfullpath (verify.ps1:606)
+### F1: security-audit-f1-path-getfullpath (verify.ps1:713)
 
 **注释内容**: 扫描 `DirectoryPath.cs` 中 `Path.GetFullPath(` 的调用。如果规范化逻辑移至其他类或方法，门禁会漏检。
 
@@ -144,7 +146,7 @@ Entries = _list.MutableEntries.Select(ToLaunchEntry).ToImmutableList(),
 
 **充分性**: 充分。注释明确指出升级路径（"add a second scan pattern for the new location"）。
 
-### F2: security-audit-f2-preset-entryid-validate (verify.ps1:623)
+### F2: security-audit-f2-preset-entryid-validate (verify.ps1:730)
 
 **注释内容**: 检查 `IPresetService.cs` 中 `knownEntryIds` 字符串。参数重命名或接口迁移会绕过门禁。
 
@@ -157,7 +159,7 @@ Entries = _list.MutableEntries.Select(ToLaunchEntry).ToImmutableList(),
 
 **充分性**: 充分。注释指出升级路径（"add the new interface name to the scan pattern"）。
 
-### F3: security-audit-f3-homoglyph-protection (verify.ps1:640)
+### F3: security-audit-f3-homoglyph-protection (verify.ps1:747)
 
 **注释内容**: 检查 `EntryId.cs` 中 `LatinScript` 字符串。白名单重命名或移入 helper 类会绕过门禁。
 

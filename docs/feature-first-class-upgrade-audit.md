@@ -4,6 +4,8 @@ Reviewed on: 2026-06-10
 
 Scope: HEAD `22f57a9` 的 Avalonia 主线、根配置、发布/验证脚本和项目文档。独立审计，不抄旧报告（2026-06-09）结论。
 
+> 复核注（2026-08-15）：快照哈希 `22f57a9` 在当前 git 历史中不可解析（`git cat-file -t 22f57a9` 失败，`git log --all` 无此对象），保留为 2026-06-10 审计时的记录，无法在当前历史复核；同期提交 `61f7716`（2026-06-10）仍可解析。
+
 Current evidence used in this pass:
 
 - `git rev-parse --short HEAD` → `22f57a9`; worktree clean on source files.
@@ -53,29 +55,29 @@ Current evidence used in this pass:
 
 | # | 能力 | 星级 | 真实问题 | 关键证据 | 改造建议 |
 |---|------|------|----------|----------|----------|
-| 1 | Launch entry object | ⭐⭐⭐⭐⭐ | 19 entries 证明真实使用；消灭重复 cd/敲命令 | `LaunchEntry.cs:5-30` 7 字段、`[JsonRequired]`、`UnmappedMemberHandling.Disallow` | 无——数据结构最小、硬、正确 |
-| 2 | Existing-directory contract | ⭐⭐⭐⭐⭐ | 陈旧目录瞬间破坏用户信任 | `LaunchArgumentBuilder.cs:25-26` runtime check；`verify.ps1` gate 双重防御 | 无——fail-fast 边界位置正确 |
-| 3 | Search/filter | ⭐⭐⭐⭐ | 19 entries 需要快速定位 | `LauncherEntryVisibility.cs:124-141` 多词匹配正确；`searchHistory` 已通过 AutoCompleteBox 绑定到搜索输入——不再是无 UI 死数据 | 加 150ms 去抖（当前无去抖）；或保持当前实现——完整搜索 history 已经可用 |
+| 1 | Launch entry object | ⭐⭐⭐⭐⭐ | 19 entries 证明真实使用；消灭重复 cd/敲命令 | `LaunchEntry.cs` 8 字段（id/name/directory/command/selected/updatedAtUtc/launchedAtUtc/launchCount）、`[JsonRequired]`；Loose Read + Strict Write（未知键跳过；2026-07-23 起不再使用 `UnmappedMemberHandling.Disallow`） | 无——数据结构最小、硬、正确 |
+| 2 | Existing-directory contract | ⭐⭐⭐⭐⭐ | 陈旧目录瞬间破坏用户信任 | `LaunchArgumentBuilder.cs` wt.exe 路径探测（LOCALAPPDATA→ProgramFiles→FileNotFoundException）runtime check；`verify.ps1` gate 双重防御 | 无——fail-fast 边界位置正确 |
+| 3 | Search/filter | ⭐⭐⭐ | 19 entries 需要快速定位 | `LauncherEntryQuery.cs` MatchesFilter 多词匹配（名称/目录/命令）正确；`searchHistory` 当时仅被收集未渲染（死数据）；无去抖、无 Escape 取消聚焦 | 加 150ms 去抖（当前无去抖）；或保持当前实现——完整搜索 history 已经可用 |
 | 4 | Direct single launch | ⭐⭐⭐⭐⭐ | 核心动作——找到并启动 | `LaunchArgumentBuilder.cs` 构造 `wt.exe` plan；snapshot + confirmation + receipt 三层契约 | 无——不用加"危险命令分类剧场" |
 | 5 | Checkbox selection & batch launch | ⭐⭐⭐⭐⭐ | 每天一键启动一组工作区 | preflight/confirmation/receipt 分离；snapshot 防 mutation 漂移；`LauncherBatchLaunchReport` 不可变 | 可选：`continueOnError` 参数支持"全启"模式 |
-| 6 | Named launch groups / presets | ⭐⭐⭐⭐⭐ | 子集需要命名、审查、可移植 | `launcher.json` presets 引用 stable entry ids；`LauncherPresetFiles.Validate` 三阶段校验；Normalize id 消除大小写特殊情况 | 无——这是项目最好的数据结构 |
+| 6 | Named launch groups / presets | ⭐⭐⭐⭐⭐ | 子集需要命名、审查、可移植 | `launcher.json` presets 引用 stable entry ids；`LauncherPresetValidator.cs`（Core）校验；Normalize id 消除大小写特殊情况 | 无——这是项目最好的数据结构 |
 | 7 | First-class preset actions | ⭐⭐⭐⭐⭐ | 不能要求用户手改 JSON | `MainWindowViewModel.Presets*.cs` CRUD + locked preset + rollback；快照-写入-回滚 3 操作一致 | 无 |
 | 8 | Preset-vs-selection preview | ⭐⭐⭐⭐⭐ | 应用前必须预知变化 | `LauncherPresetSelectionPreview` 纯函数；Matched/Missing/Extra 三元组；已匹配时禁用 no-op | 可选：展示差异条目名称（数据结构已备好） |
 | 9 | Preset launch plan preview | ⭐⭐⭐⭐⭐ | 批量启动前看到实际命令 | 复用 `PreflightBatch`——预演和实际启动同一路径；预演不启动进程快照验证 | 无 |
 | 10 | Add/edit/delete launcher buttons | ⭐⭐⭐⭐⭐ | 配置维护不能只靠 JSON | 7 步统一模式：DiscardDrag→Dialog→Validate→Snapshot→Mutate→SaveChain(rollback)→StatusText | 补充 Clone 专用测试（当前 0 条） |
 | 11 | Custom order & drag/non-drag reorder | ⭐⭐⭐⭐ | 空间记忆 > 字母序 | `customEntryOrder` 单一 owner；lazy preview 防无差别重排；context-menu reorder 共用模型 | 补充 `LauncherDragReorderWorkflow.Preview/Commit/Cancel` 隔离单元测试 |
-| 12 | Sort modes | ⭐⭐⭐⭐ | 自定义/最近/更新时间/字母序四种真实扫描 | 4 mode 契约；NormalizeSortModeId 白名单；但 ParseLaunchedAt 宽松隐晦排序 | 统一 `ParseLaunchedAt` 和 `ParseUpdatedAt` 的严格度 |
+| 12 | Sort modes | ⭐⭐⭐⭐ | 自定义/最近/更新时间/字母序/使用频率五种真实扫描 | 5 mode 契约（custom/recent/updated/alphabetical/frequent）；NormalizeSortModeId 白名单；但 ParseLaunchedAt 宽松隐晦排序 | 统一 `ParseLaunchedAt` 和 `ParseUpdatedAt` 的严格度 |
 | 13 | View modes: Cards/Details/Names | ⭐⭐⭐⭐ | 可读操作/紧凑扫描/一眼总览三种任务 | 单一 `CurrentEntryViewMode` 驱动 3 个只读投影；save-rollback 完整 | 统一三种视图的 ScrollViewer；Details 列宽从 DesignTokens 引用 |
 | 14 | Adaptive card sizing & density | ⭐⭐⭐⭐⭐ | 窗口变化不能挤烂卡片 | `LauncherEntryLayoutCalculator` 纯函数；单一 `_layoutDensity` enum 消 bool 组合爆炸；`FastWrapPanel` 消除 O(n²) | 给 LayoutCalculator 加纯函数级单元测试 |
 | 15 | Global launch confirmation | ⭐⭐⭐⭐ | 启动安全规则必须唯一、可见 | 全局开关 + snapshot/rollback；per-entry `confirm` 已拒绝；但 1 个专项测试不覆盖 preset 路径 | 补充 preset 路径测试；区分"回调未注入"和"用户拒绝" |
 | 16 | Portable settings | ⭐⭐⭐⭐⭐ | 偏好跟仓库走，不藏 AppData | `LauncherSettings` POCO 单源；31 个设置测试覆盖所有 null/空白/大小写/未知字段拒绝 | 无 |
-| 17 | JSON persistence, backup & rollback | ⭐⭐⭐⭐⭐ | 配置半写比功能缺失更糟 | temp-file→backup rotation→File.Move 原子写入；3 代备份；staged rollback 跨 config/preset/settings | 无——单进程本地工具足够 |
+| 17 | JSON persistence, backup & rollback | ⭐⭐⭐⭐⭐ | 配置半写比功能缺失更糟 | temp-file→`.bak` backup rotation→`File.Replace` 原子写入；3 代备份（`FileLauncherJsonIO.DefaultMaxBackups=3`）；save-first-then-commit 回滚（`StoreGrain.Dispatch`，快照类 2026-07-21 移除） | 无——单进程本地工具足够 |
 | 18 | Core/App/Tests separation | ⭐⭐⭐⭐⭐ | 启动参数/排序/配置规则必须可测试 | Core 零 Avalonia 依赖；542 tests；Test 结构镜像生产架构 | 无 |
 | 19 | Self-contained win-x64 publish & native gate | ⭐⭐⭐⭐⭐ | 桌面工具必须产出可运行 exe | `build-release.ps1` SHA256 receipt；`verify.ps1` 16 checks + GUI smoke；双 receipt 路径 | 无 |
 | 20 | Retired legacy surfaces | ⭐⭐⭐⭐⭐ | HTA/WinForms 留作活路径 = 第二套真相 | `retired/` 归档；root gate 阻止 4 个旧路径复活；退役文档完整性验证 | 无 |
-| 21 | Design benchmark & giants-shoulders | ⭐⭐⭐⭐⭐ | 设计判断不能靠感觉 | 12 基准→10 本地验收规则；12 工具对标↔`launcher.json` presets 映射；xUnit 锁定文档结构 | 考虑 CI 中自动检查快照新鲜度 |
+| 21 | Design benchmark & giants-shoulders | ⭐⭐⭐⭐⭐ | 设计判断不能靠感觉 | 12 基准→10 本地验收规则（`design-benchmark-digest.md`）；12 工具对标→本地翻译（`launcher-first-class-patterns.md` 12 借用模式表）；xUnit 预设套件锁定 presets 结构 + 门禁 `presets-schema`/`security-audit-f2` | 考虑 CI 中自动检查快照新鲜度 |
 | 22 | Command templates | ⭐⭐⭐⭐ | 长命令重复制造错误 | `LauncherCommandTemplateResolver` 纯函数；unknown key fail-fast；`$key` 预览 | 补 20 行 xUnit 合约测试 |
-| 23 | Design tokens | ⭐⭐⭐⭐⭐ | 颜色/间距分散→视觉漂移 | `LauncherDesignTokens.cs` 66 行单一源；`App.axaml.cs` 注入→XAML `{StaticResource}`；合约测试禁止硬编码 | 无 |
+| 23 | Design tokens | ⭐⭐⭐⭐⭐ | 颜色/间距分散→视觉漂移 | `LauncherDesignTokens.cs` 93 行单一源；`App.axaml.cs` 注入→XAML `{StaticResource}`；合约测试禁止硬编码（`VisualTokenContractTests`） | 无 |
 
 ## 剩余缺口账本
 

@@ -43,4 +43,4 @@ Purpose: convert 12 external first-class design benchmarks into WT Launcher acce
 
 ## Optional visual receipts
 
-- Manual visual inspection of live drag ghost alignment and insert cue animation remains useful after visual-heavy changes, but it is no longer a blocking benchmark gap: current source-tracked tests cover drag cue structure, insert token ownership, ghost pointer-follow geometry, FLIP subscription safety, and GUI smoke startup.
+- Manual visual inspection of live drag ghost alignment and insert cue animation remains useful after visual-heavy changes, but it is no longer a blocking benchmark gap: source-tracked tests cover drag-cue/insert-decision structure (`UiContract/MainWindowDragInsertDecisionTests`), semantic token ownership (`UiContract/VisualTokenContractTests`), ghost pointer-follow geometry (`CoreUnit/LauncherDragGhostLayoutCalculatorTests` + `PropertyTest/LauncherLayoutPbtTests`), card shrink-to-readable-minimum with intentional scroll fallback (`ViewModelBehavior/MainWindowViewModelTests.LayoutTests`), and GUI smoke startup (`src/avalonia-launcher/verify.ps1`).

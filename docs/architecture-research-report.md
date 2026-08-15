@@ -3,6 +3,14 @@
 > 调研日期：2026-07-23
 > 调研范围：5 个方向，10+ 来源
 > 核心目标：搜索能"从根源消除整类问题"的架构模式与最佳实践
+>
+> **验证记录 (2026-08-15)** — `.trellis/tasks/08-15-docs` 协议逐项核实：
+> - ✅ 调研日期与 git 一致：`093d16bc 2026-07-23 [Snow Team] pattern-researcher: auto-commit work`。
+> - ⚠️ 文中“项目已在用 Fluxor / 当前 Fluxor Store”均为 **2026-07-23 时点**事实（Fluxor 骨架 `86cce496` 同日提交）；Fluxor 已于 2026-07-24 Scheme B（`0c0b8771`）移除，2026-07-25 CFA 完成迁移。当前状态管理 = `StoreGrain`（单一容器，Dispatch/DispatchErrorOr）。
+> - ⚠️ 文中“当前问题”映射（LayoutManager.cs / Layout.cs / ReplaceEntries / TryRefreshCardSize / `_lastApplied*` 等）引用的是 2026-07-23 时点代码，相关实现已被后续 Scheme B / VTK / CFA / Trinity 重构替换，不再代表当前代码。
+> - ⚠️ “Avalonia 11+ 才完全支持 ItemsRepeater，需确认项目使用的版本”为外部技术断言；当前 `Directory.Packages.props` 为 Avalonia 12.1.0。
+> - 其余外部来源引用（React/Redux/Fluxor/CommunityToolkit/Avalonia/Fowler 等 URL）为带 URL 的调研记录，仓库无法以代码证据验证，保留原文。
+
 
 ---
 

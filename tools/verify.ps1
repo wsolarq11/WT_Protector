@@ -851,6 +851,69 @@ Add-Check 'vtk-no-appstore-residue' @{
     invariant = 'AppStore was deleted by VTuber-Killer migration; zero references allowed in src/'
 }
 
+# --- Structure baseline consistency (enforced single source: AGENTS.md table) ---
+# 2026-08-15: AGENTS.md/CLAUDE.md repo-map numbers had silently drifted (Core 24->53,
+# ViewModels 28->53, partials 7->15, test files 61->121, checks 31->37). This check makes
+# AGENTS.md's structure-baseline table the single documented source of structure facts and
+# verifies it against the filesystem + the constants below. Change structure -> update BOTH
+# the constants here AND the AGENTS.md table; the gate fails until they agree.
+# NOTE: keep this check last (right before the receipt) so it self-counts every Add-Check.
+# NOTE: all labels/messages here are ASCII-only: this script is read by Windows PowerShell
+# 5.1 without a BOM (ANSI decoding), so non-ASCII literals would silently mismatch.
+$baselineRows = @(
+    @{ Label = 'WTLauncher.Core C# files';          Path = 'src\avalonia-launcher\src\WTLauncher.Core';            Filter = '*.cs';                 Count = 53 }
+    @{ Label = 'ViewModels C# files';               Path = 'src\avalonia-launcher\src\WTLauncher.App\ViewModels';   Filter = '*.cs';                 Count = 53 }
+    @{ Label = 'MainWindowViewModel partials';     Path = 'src\avalonia-launcher\src\WTLauncher.App\ViewModels';   Filter = 'MainWindowViewModel.*.cs'; Count = 15 }
+    @{ Label = 'Features C# files';                 Path = 'src\avalonia-launcher\src\WTLauncher.App\Features';     Filter = '*.cs';                 Count = 15 }
+    @{ Label = 'Views C# files';                    Path = 'src\avalonia-launcher\src\WTLauncher.App\Views';        Filter = '*.cs';                 Count = 24 }
+    @{ Label = 'Views AXAML files';                 Path = 'src\avalonia-launcher\src\WTLauncher.App\Views';        Filter = '*.axaml';              Count = 20 }
+    @{ Label = 'WTLauncher.Analyzers C# files';     Path = 'src\avalonia-launcher\src\WTLauncher.Analyzers';        Filter = '*.cs';                 Count = 7 }
+    @{ Label = 'Tests C# files';                    Path = 'src\avalonia-launcher\tests\WTLauncher.Tests';         Filter = '*.cs';                 Count = 121 }
+)
+$baselineTestAttributes = 728
+$baselineViolations = @()
+foreach ($row in $baselineRows) {
+    $baselineDir = Get-RepoPath $row.Path
+    $baselineActual = @(Get-ChildItem -LiteralPath $baselineDir -Recurse -File -Filter $row.Filter -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -notmatch '\\(obj|bin|TestResults)\\' }).Count
+    if ($baselineActual -ne $row.Count) {
+        $baselineViolations += "$($row.Label): baseline $($row.Count), found $baselineActual"
+    }
+}
+$testAttrFactCount = 0
+$testAttrTheoryCount = 0
+foreach ($testFile in (Get-ChildItem -LiteralPath (Get-RepoPath 'src\avalonia-launcher\tests\WTLauncher.Tests') -Recurse -File -Filter '*.cs' |
+    Where-Object { $_.FullName -notmatch '\\(obj|bin|TestResults)\\' })) {
+    $testText = Get-Content -Raw -Encoding UTF8 -LiteralPath $testFile.FullName
+    $testAttrFactCount += [regex]::Matches($testText, '[[]Fact').Count
+    $testAttrTheoryCount += [regex]::Matches($testText, '[[]Theory').Count
+}
+if (($testAttrFactCount + $testAttrTheoryCount) -ne $baselineTestAttributes) {
+    $baselineViolations += "test attributes: baseline $baselineTestAttributes, found $($testAttrFactCount + $testAttrTheoryCount) ($testAttrFactCount Fact + $testAttrTheoryCount Theory)"
+}
+$agentsBaselineText = Get-Content -Raw -Encoding UTF8 -LiteralPath (Get-RepoPath 'AGENTS.md')
+foreach ($row in $baselineRows) {
+    if (-not $agentsBaselineText.Contains("| $($row.Label) | $($row.Count) |")) {
+        $baselineViolations += "AGENTS.md structure-baseline missing/outdated row: | $($row.Label) | $($row.Count) |"
+    }
+}
+if (-not $agentsBaselineText.Contains("| Test attributes [Fact]+[Theory] | $baselineTestAttributes |")) {
+    $baselineViolations += "AGENTS.md structure-baseline missing/outdated row: | Test attributes [Fact]+[Theory] | $baselineTestAttributes |"
+}
+$baselineCheckCount = $checks.Count + 1   # this check is about to be added
+if (-not $agentsBaselineText.Contains("| Gate checks (Add-Check) | $baselineCheckCount |")) {
+    $baselineViolations += "AGENTS.md structure-baseline missing/outdated row: | Gate checks (Add-Check) | $baselineCheckCount |"
+}
+if ($baselineViolations.Count -gt 0) {
+    throw "Structure baseline drift: $($baselineViolations -join '; '). Update tools/verify.ps1 baseline constants AND the AGENTS.md structure-baseline table together."
+}
+Add-Check 'structure-baseline-consistency' @{
+    rows = $baselineRows.Count
+    testAttributes = $baselineTestAttributes
+    checks = $baselineCheckCount
+    enforcedSource = 'AGENTS.md structure-baseline table'
+}
+
 New-ToolReceipt 'root-verify' @{
     root = $root
     checks = $checks

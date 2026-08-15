@@ -8,10 +8,27 @@
 
 > Research result: "深度全网deepsearch调研出新架构来剪掉一切问题的源头"
 > 2026-07-06
+>
+> **Verification (2026-08-15)** — `.trellis/tasks/08-15-docs` protocol. Dates confirmed via git
+> (`61c6bc64` 2026-07-06 created; `2af3be2d` 2026-07-10 repositioned as contingency). This is a dated
+> fallback-plan record — per AGENTS.md it is research only, NOT an action plan; the Options A/B/C
+> proposal below is kept intact. Verified / corrected facts:
+> - ✅ "1 solution, 3 projects, 1 CI pipeline" — measured at `61c6bc64` (WTLauncher.Avalonia.sln,
+>   WTLauncher.App/Core/Tests csproj, `.github/workflows/verify.yml`).
+> - ⚠️ Source/test line counts and test counts corrected to measurements at `61c6bc64`
+>   (≈7,981 non-test .cs lines; ≈7,509 test .cs lines; 63 test files; 418 `[Fact]`/`[Theory]`
+>   attributes; 6 PackageReference declarations) — see inline edits.
+> - ⚠️ The "19 entries" launcher.json claim is unverifiable at its date: no tracked
+>   `config/launcher.json` existed at `61c6bc64` (the tracked config then was
+>   `retired/config/config.json`, an 18-line flat structure). As of 2026-08-15 the tracked
+>   `config/launcher.json` has 12 entries and 2 presets (incl. `core-projects`).
+> - Windows Terminal capability table and `wt.exe` examples: external product facts researched
+>   2026-07-06; not verifiable from this repo — kept as dated research.
+
 
 ## The Root Cause
 
-The WT Protector project is a C#/Avalonia GUI application (~10,000 source lines, ~9,000 test lines, 2 NuGet dependencies, 1 solution, 3 projects, 1 CI pipeline) whose **sole function** is to construct `wt.exe` command lines — something Windows Terminal already does natively.
+The WT Protector project is a C#/Avalonia GUI application (measured at commit `61c6bc64`, 2026-07-06: ≈7,981 non-test .cs lines, ≈7,509 test .cs lines, 6 PackageReference declarations, 1 solution, 3 projects, 1 CI pipeline) whose **sole function** is to construct `wt.exe` command lines — something Windows Terminal already does natively.
 
 Every bug, every over-engineering pattern, every architecture debate, every UltraReview round — they all stem from one root decision:
 
@@ -30,7 +47,7 @@ Every bug, every over-engineering pattern, every architecture debate, every Ultr
 
 ### Proof: The Entire Config Is a Single `startupActions` String
 
-Current `launcher.json` has 19 entries. For the "core-projects" preset (2 entries):
+The `launcher.json` of the time had 19 entries — unverifiable at its date: no tracked `config/launcher.json` existed at commit `61c6bc64` (the tracked config then was `retired/config/config.json`, an 18-line flat structure). Measured 2026-08-15: `config/launcher.json` has 12 entries and 2 presets. For the "core-projects" preset (2 entries at the time):
 
 ```powershell
 wt -w "core-projects" `
@@ -124,8 +141,11 @@ If template expansion or multi-select batch launch is essential, a console app w
 | Value objects (EntryId etc.) | ~500 | Validation, normalization, Result<T,E> wrapper |
 | Persistence (JSON + LiteDB) | ~1,000 | 2 backends, migration, snapshot/rollback |
 | Build system | ~200 | csproj, solution, NuGet restore, CI |
-| Tests | ~9,000 | xUnit, 457 tests, 49 files |
-| Total | ~22,000 | All of it |
+| Tests | ≈7,509 (measured at 61c6bc64) | xUnit, 418 [Fact]/[Theory] attributes, 63 test files (measured at 61c6bc64) |
+| Total | ≈15,490 (measured: 7,981 src + 7,509 tests) | All of it |
+
+> Row-level line counts other than Tests are rough 2026-07-06 estimates and were not individually
+> verified; measured totals at commit `61c6bc64`: 7,981 non-test .cs lines, 7,509 test .cs lines.
 
 ## What Remains
 
@@ -137,7 +157,7 @@ If template expansion or multi-select batch launch is essential, a console app w
 
 ## Test Strategy for the Replacement
 
-The current C# launcher has 457 tests verifying:
+The C# launcher at the time (2026-07-06; measured at commit `61c6bc64`: 418 `[Fact]`/`[Theory]` attributes across 63 test files) had tests verifying:
 - Entry ID normalization (testing string parsing)
 - Batch launch preflight logic (testing selection + command construction)
 - Drag reorder (testing in-memory list reordering)
@@ -159,4 +179,4 @@ In Option A (Windows Terminal profiles only), the "test" is:
 | Template variable expansion (`$codex` → full command) | Handled by Option B (PowerShell substitution) or Option A (profile commandline) |
 | Dynamic multi-entry selection at runtime | Option B with `-Preset` parameter; Windows Terminal's `startupActions` covers fixed workspaces |
 | Migration from current config format | Config already exists; just need to transform it |
-| Loss of search/filter/visual card UI | These are features of a launcher, not of launching. If they're essential, keep the C# app. But question: how often do you search when you have 19 entries and 2 presets? |
+| Loss of search/filter/visual card UI | These are features of a launcher, not of launching. If they're essential, keep the C# app. But question: how often do you search when you have 19 entries and 2 presets? (entry count unverifiable at the date — no tracked launcher.json at `61c6bc64`; measured 2026-08-15: 12 entries / 2 presets) |

@@ -3,9 +3,13 @@
 状态：已完成（P0-P7 已实现并归档）
 适用范围：`src/avalonia-launcher` 测试体系、CI、Avalonia 门禁
 
+> 创建日期: 2026-08-15（提交 1d8dbadd）；P0-P7 任务已归档于 `.trellis/tasks/archive/2026-08/`。
+> 文中指标为 2026-08-14 基线（120 测试源文件 / 721 属性 / 804 用例，与 `docs/test-structure.md` 基线表一致）。
+> 复核（2026-08-15）：当前基线以 AGENTS.md 结构基线为准 — 121 测试文件 / 728 个 `[Fact]`+`[Theory]` 属性 / 门禁实测 811 用例。
+
 ## 目标
 
-把当前“单测试项目 + 804 个测试 + 全量跑”的结构升级为分层、快速、可维护的测试体系，同时保持 `tools/verify.ps1` 的完整验收能力。
+把当前"单测试项目 + 804 个测试 + 全量跑"的结构升级为分层、快速、可维护的测试体系，同时保持 `tools/verify.ps1` 的完整验收能力。
 
 ## 现状基线
 
@@ -57,7 +61,7 @@
 
 验收：
 - `dotnet test --filter Category=CoreUnit` 和 `--filter Category=ViewModelBehavior` 均能独立运行。
-- 快速层耗时明显低于全量，CI 至少有一个“秒级/分钟级”反馈通道。
+- 快速层耗时明显低于全量，CI 至少有一个"秒级/分钟级"反馈通道。
 
 ### ✅ P2 目录/命名空间分层
 
@@ -104,7 +108,7 @@ tests/WTLauncher.Tests/
 候选旅程：
 - 启动应用并加载临时 `launcher.json`。
 - 主窗口出现且条目标题可见。
-- 关键命令路径（选择、预设、批启动）由 ViewModel 集成测试覆盖；E2E 只做“应用能真实启动并进入可用状态”。
+- 关键命令路径（选择、预设、批启动）由 ViewModel 集成测试覆盖；E2E 只做"应用能真实启动并进入可用状态"。
 
 行动：
 - 新建独立 E2E 目录或项目，不混入单元测试。
@@ -122,7 +126,7 @@ tests/WTLauncher.Tests/
 行动：
 - 配置 coverlet 输出 Cobertura/OpenCover，并上传 CI artifact。
 - 为 Core 纯逻辑和持久化关键路径设置阈值。
-- 为启动、导入、回滚等高风险路径建立“必须覆盖”清单。
+- 为启动、导入、回滚等高风险路径建立"必须覆盖"清单。
 - 评估 Stryker.NET 突变测试；若 .NET 10/AOT 不支持则记录为暂缓。
 
 验收：
@@ -138,6 +142,8 @@ tests/WTLauncher.Tests/
 - `build-and-test` 只做 build、快速层测试、结果上传。
 - `full-gate` 作为唯一完整验收阶段，复用已上传的 build/TRX。
 - 评估 `tools/verify.ps1` 内部是否可传 `-SkipMainlineTests` 给 `src/avalonia-launcher/verify.ps1`，避免本地重复跑测试。
+
+> 复核（2026-08-15）：`-SkipMainlineTests` 参数未加入 `src/avalonia-launcher/verify.ps1`；CI 去重由 `build-and-test` 快速层（`test-fast.ps1`）+ `ci-fast-lane-no-publish-duplication` 门禁检查实现。
 
 验收：
 - CI 日志中全量测试只执行一轮。
@@ -171,14 +177,16 @@ P2 在 P1 之后做，先有分类再做物理移动。
 
 ## 建议 Trellis 任务拆分
 
+规划时建议以下 8 个任务（实际实现并归档为 `08-14-` 前缀，见 `.trellis/tasks/archive/2026-08/`）：
+
 1. `08-14-test-map-baseline`
 2. `08-14-test-level-traits-fast-path`
 3. `08-14-test-directory-layering`
-4. `08-15-ui-contract-semantics`
-5. `08-15-critical-journey-smoke`
-6. `08-15-coverage-gates`
-7. `08-15-ci-verify-dedupe`
-8. `08-15-test-roadmap-acceptance`
+4. `08-14-ui-contract-semantics`
+5. `08-14-critical-journey-smoke`
+6. `08-14-coverage-gates`
+7. `08-14-ci-verify-dedupe`
+8. `08-14-test-roadmap-acceptance`
 
 ## 风险与对策
 
@@ -186,4 +194,4 @@ P2 在 P1 之后做，先有分类再做物理移动。
 - 拆目录会碰到 `InternalsVisibleTo`、测试辅助类引用：保留 `Support/`，不拆项目。
 - Avalonia E2E 可能 flaky：数量压到 1-3 条，CI 独立 job，不做浏览器式全量 E2E。
 - 覆盖率阈值可能制造假安全感：只对关键路径设阈值，全仓覆盖率只报告不强制。
-- XAML 契约测试迁移可能发现“规则本身不明确”：先把规则写进 `docs/test-structure.md`，再写测试。
+- XAML 契约测试迁移可能发现"规则本身不明确"：先把规则写进 `docs/test-structure.md`，再写测试。

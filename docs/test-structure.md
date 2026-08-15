@@ -41,6 +41,8 @@ tests/WTLauncher.Tests/
 
 ## 基线（2026-08-14）
 
+> 复核（2026-08-15）：当前基线以 AGENTS.md 结构基线为准 — **121 测试源文件 / 728 个 `[Fact]`+`[Theory]` 属性 / 门禁实测 811 用例**。下表 120/721/804 为 2026-08-14 时点记录（历史基线）。
+
 | 指标 | 值 |
 |---|---|
 | 测试源文件 | 120 |
@@ -74,6 +76,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\smoke-critical-journ
 ```
 
 冒烟固定在 2 条断言（进程启动进入主窗口、窗口标题为 `WT Launcher`），使用临时 `launcher.json` 和 `--config`，不触碰真实配置。`src/avalonia-launcher/verify.ps1` 已接入该脚本。
+
+> 注：命令中的 exe 路径为 verify 门禁的发布产物（`artifacts/` 为 git-ignored 构建输出，仓库中不落盘）；需先运行门禁的 publish 步骤生成该 exe。
 
 ## 覆盖率门禁
 

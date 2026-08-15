@@ -3,15 +3,17 @@
 **生成日期**: 2026-07-25
 **范围**: verify.ps1 中 3 个标记了 `ponytail:` 的已知局限性
 
+> 复核（2026-08-15）：3 个门禁名称仍在当前 `tools/verify.ps1`（现共 38 项检查）；行号已更新为复核日当前值（2026-07-25 当日 9df5ceec 版本实际为 550/564/583，见验证台账 `.trellis/tasks/08-15-docs/ledgers/ponytail-upgrade-assessment.md`）。
+
 ---
 
 ## 评估总览
 
 | # | Gate 名称 | 位置 | 风险等级 | 建议 |
 |---|-----------|------|----------|------|
-| 1 | no-stale-three-file-refs | verify.ps1:529 | 低 | 保持现状 |
-| 2 | settings-single-source-buildstorefile | verify.ps1:555 | 低 | 保持现状 |
-| 3 | winget-config-schema-valid | verify.ps1:567 | 低 | 保持现状 |
+| 1 | no-stale-three-file-refs | verify.ps1:646 | 低 | 保持现状 |
+| 2 | settings-single-source-buildstorefile | verify.ps1:660 | 低 | 保持现状 |
+| 3 | winget-config-schema-valid | verify.ps1:679 | 低 | 保持现状 |
 
 **结论**: 3 个 ponytail 局限均不需要升级修复。保持在预期风险接受范围内。
 

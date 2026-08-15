@@ -197,21 +197,21 @@ Until then, hand-rolled one-shot migration is correct for this codebase.
 
 **Source:** `WTLauncher.Analyzers/DispatchMustBeOnlyWritePathAnalyzer.cs`
 
-Rule WT1003 (compile-time error): `LauncherStore.Save` must only be called from `AppStore.Dispatch`, `DispatchAsync`, or `DispatchErrorOr`. Any direct call in production code is rejected.
+Rule WT1003 (compile-time error): `LauncherStore.Save` must only be called from `StoreGrain.Dispatch` or `StoreGrain.DispatchErrorOr`. Any direct call in production code is rejected.
 
-**Why:** `TrySaveWindowBounds` (H2 bug) was writing directly to disk via `LauncherStore.Save`, bypassing AppStore. This caused persistent state desync: AppStore._state never saw the window bounds change, so the next Dispatch overwrote them. Test infrastructure (test fixture setup) suppresses this rule via `NoWarn`.
+**Why:** `TrySaveWindowBounds` (H2 bug) was writing directly to disk via `LauncherStore.Save`, bypassing the store grain. This caused persistent state desync: the grain state never saw the window bounds change, so the next Dispatch overwrote them. Test infrastructure (test fixture setup) suppresses this rule via `NoWarn`.
 
 ### Read-Side State Single-Sourcing (2026-07-24, Phase 1 triple-cut-arch)
 
 **Source:** `MainWindowViewModel.cs`
 
-`CurrentSettings` property reads directly from `AppStore.Select(s => s.Settings)`, eliminating `_settings` field drift:
+`CurrentSettings` property reads directly from `StoreGrain.Select(s => s.Settings)`, eliminating `_settings` field drift:
 
 ```csharp
-internal LauncherSettings CurrentSettings => _appStore.Select(s => s.Settings);
+internal LauncherSettings CurrentSettings => _storeGrain.Select(s => s.Settings);
 ```
 
-**Transition:** `_settings` field retained as working copy during construction and DragWorkflow sync. Future elimination requires DragWorkflow to read/write through AppStore directly.
+**Transition:** `_settings` field retained as working copy during construction and DragWorkflow sync. Future elimination requires DragWorkflow to read/write through StoreGrain directly.
 
 ### Single Canonical Assembler: BuildStoreFile (2026-07-09, task 07-09-settings-single-source)
 
@@ -221,7 +221,7 @@ internal LauncherSettings CurrentSettings => _appStore.Select(s => s.Settings);
 
 **Pin gate:** `tools/verify.ps1` check `settings-single-source-buildstorefile` regex-counts the unique hand-assembly signature in `MainWindowViewModel.cs` and asserts exactly 1 match. Regression triggers a verify failure.
 
-**Collaborator working state is NOT dual truth:** `LauncherDragReorderWorkflow._settings` and `AppStore._state` are sometimes mistaken for dual-truth — they are not. The workflow mutates `_settings` during Preview before persist; AppStore holds the single source and reverts automatically on save failure. Main VM syncs via `_settings = _dragReorderWorkflow.Settings` (5 sites in `Drag.cs`) and `_settings = _appStore.Select(s => s.Settings)` for store reads. This manual sync is the cost of collaborator-boundary design, NOT a bug. Verified by 7 equivalence tests in `MainWindowViewModelTests.DragTests.cs`.
+**Collaborator working state is NOT dual truth:** `LauncherDragReorderWorkflow._settings` and the store grain state are sometimes mistaken for dual-truth — they are not. The workflow mutates `_settings` during Preview before persist; `StoreGrain` holds the single source and leaves memory unchanged on save failure (save-first-then-commit). Main VM syncs via `_settings = _dragReorderWorkflow.Settings` (5 sites in `Drag.cs`) and `_settings = _storeGrain.Select(s => s.Settings)` for store reads. This manual sync is the cost of collaborator-boundary design, NOT a bug. Verified by 7 equivalence tests in `MainWindowViewModelTests.DragTests.cs`.
 
 
 
@@ -343,7 +343,7 @@ try { /* temp file, backup rotation, atomic replace */ }
 finally { SaveLock.Release(); }
 ```
 
-**Why:** AppStore already serializes per-instance access via its own `SemaphoreSlim`. The Save lock is defense-in-depth against cross-instance or direct `LauncherStore.Save` calls from multiple threads.
+**Why:** `StoreGrain` already serializes access through its `Grain<TState>` lock (read/mutate serialized). The Save lock is defense-in-depth against cross-instance or direct `LauncherStore.Save` calls from multiple threads.
 
 ## Stale Temp Cleanup
 

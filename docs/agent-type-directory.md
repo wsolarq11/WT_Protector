@@ -3,6 +3,10 @@
 生成时间: 2026-07-23
 数据来源: `git log --grep="[Snow Team]"`（共 44 个提交，含 27 个 auto-commit 和 17 个 merge）
 
+> **2026-08-15 核验注记**: 本文为 2026-07-23 时点记录。当前 git 历史（曾重写）中，27 个 Agent 名均有同名 auto-commit 可对应（如 core-fixer → `243deb97`，07-22），但文中全部短哈希（ffb9cd6 等）无法解析（`git log -1` 退出非零、0 个 unreachable 对象），各 Agent 的修改文件数与 +/- 行数无法复核。
+> Snow Team 提交现计数 **47**（29 auto-commit + 18 merge），仍全部集中于 07-22（12）与 07-23（35）两天；目录生成后另有 `fluxor-integrator`（`44247cc7`）、`phase-e-worker`（`ee2a85a9`）两个 auto-commit 与 1 个 merge（`0224dbbf`）落地，故"27 种"为生成时点计数。
+> 路径核验: `docs/architecture-research-report.md` 存在且恰为 593 行（与文中一致）；`collab-debt-findings.md` 已随 2026-08-15 归档移动至 `docs/collab-debt-findings.md`（现 261 行），此处按指示保留裸文件名引用。
+
 ---
 
 ## 概述

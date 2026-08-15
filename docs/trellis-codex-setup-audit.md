@@ -2,6 +2,8 @@
 
 Date: 2026-07-13
 
+> 复核（2026-08-15）：本文为 2026-07-13 当日状态记录。当前 `.codex/hooks.json` 仅注册 `UserPromptSubmit`（inject-workflow-state.py）与 `SubagentStart`（inject-subagent-context.py）；`SessionStart` 注册已于 2026-07-24（提交 d6280974）移除，`session-start.py` 脚本仍在但未挂载。其余路径（`.codex/agents`、`.agents/skills`、`.trellis/scripts/get_context.py`）复核均存在。当日逐项证据见验证台账 `.trellis/tasks/08-15-docs/ledgers/trellis-codex-setup-audit.md`。
+
 ## Outcome
 
 The project uses the current stable Trellis release and now has both required Codex lifecycle entry points wired:

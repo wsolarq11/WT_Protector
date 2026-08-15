@@ -1,3 +1,4 @@
+> Historical record — completed 2026-07-23; archived 2026-08-15 to docs/archive/. Content is a point-in-time record, not current state.
 # 安全审计 F2: Preset entryId 运行时交叉验证 — 完成报告
 
 ## 结果

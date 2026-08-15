@@ -2,6 +2,17 @@
 
 > 2026-07-21
 > 目标: 深度全网 deepsearch，找到能从根上剪掉问题源头而非打补丁的架构方案
+>
+> **验证记录 (2026-08-15)** — `.trellis/tasks/08-15-docs` 协议逐项核实：
+> - ✅ 调研日期与 git 一致：`bfc7ed90 2026-07-21 refactor: Unified Store Architecture — AppStore + EntryManager 消除 + 消息简化`；本报告的推荐方案（Unified Store / AppStore）在**同一提交已实现**（AppStore.cs +102、EntryManager.cs -70、MainWindowViewModel.Messaging.cs -46、快照类删除）。
+> - ⚠️ 后续演进：AppStore 于 2026-07-24 VTK（`e11183cc`）迁移中删除（门禁 `vtk-no-appstore-residue`，tools/verify.ps1:849 强制零残留），最终由 Trinity（2026-07-25，`beb47560`）取代；当前无 AppStore。
+> - ⚠️ R1/R2 描述的共享集合、EntryManager（10+ Func<> 委托）为 2026-07-21 时点诊断：EntryManager 已于当次提交删除（当前仅 IEntryCardHost.cs:14 注释提及）；R3 的 WeakReferenceMessenger 至今仍在使用（ViewModels/Messages.cs）。
+> - ⚠️ 快照类（LauncherEntryMutationSnapshot / LauncherSelectionMutationSnapshot）已于 2026-07-21 移除；当前回滚 = `StoreGrain.Dispatch` save-first-then-commit。
+> - ⚠️ “保留不变：Core 层 0 改动、Views 层 0 改动”仅指 bfc7ed90 当次提交范围；此后 Core/Views 均有演进。
+> - ⚠️ “670 测试继续通过”为当时本地运行口径（git 时点测量 bfc7ed90：[Fact]/[Theory] 属性 607、测试文件 94）。
+> - “删除文件清单”中的 LauncherDragReorderWorkflow.cs 实际未删除（至今存在，生产使用 Stateless）。
+> - 其余外部来源（bool.dev / Redux / Akka / Signals 等）为带日期调研记录，仓库无法以代码证据验证，保留原文。
+
 
 ## 当前架构根因诊断 (R1-R3)
 

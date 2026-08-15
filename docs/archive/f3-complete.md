@@ -1,3 +1,4 @@
+> Historical record — completed 2026-07-23; archived 2026-08-15 to docs/archive/. Content is a point-in-time record, not current state.
 # F3 完成报告: EntryId 同形字保护
 
 ## 安全审计发现

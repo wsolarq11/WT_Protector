@@ -3,6 +3,18 @@
 > **生成日期**: 2026-07-25
 > **研究基线**: 全网 deepsearch (Avalonia/ReactiveUI/DynamicData/Stateless/Functional Core/Property-Based Testing) + WT Protector 全仓审计
 > **目标**: 无限逼近 99.99% 置信度，从架构层面让整类 bug 不可能存在
+>
+> **验证与落地记录 (2026-08-15)** — `.trellis/tasks/08-15-docs` 协议逐项核实：
+> - ✅ **本提案已于 2026-07-25 落地**：与本文档同提交 `beb47560 feat: implement Trinity endgame architecture — 3-zone refactoring`。
+> - ✅ 门禁 `trinity-architecture-integrity`（tools/verify.ps1:824）强制六组件存在，实测全部命中：`LauncherJsonSerializer`（Core/LauncherJsonSerializer.cs）、`LauncherStoreValidator`（Core/LauncherStoreValidator.cs）、`ILauncherJsonIO`（Core/ILauncherJsonIO.cs）、`IStorePersistence`（Core/IStorePersistence.cs）、`EntryProjection`（App/Features/Entries/EntryProjection.cs）、`AppStateMachine`（App/ViewModels/AppStateMachine.cs）。
+> - ✅ 命名差异（草稿 vs 代码）：状态机实际类型为 `AppStateMachine`，枚举为 `AppUIState` / `AppUITrigger`（草稿写作 UIState/UITrigger）；“AppReducer/AppState”对应实现为 `StoreGrain.Dispatch(Func<LauncherStoreFile, LauncherStoreFile>)`（状态 = LauncherStoreFile，草稿签名一致）；`EntryProjection` 实际为 `SourceCache<LauncherEntryViewModel, string>`（键 vm.Id，草稿写作 SourceCache<string, LaunchEntry>），Filter→Sort→Bind 管道一致。
+> - ✅ 依赖落地：DynamicData 9.4.33、Stateless 5.20.0、CsCheck 4.2.0 均在 `Directory.Packages.props`；Stateless 生产使用于 `AppStateMachine` + `LauncherDragReorderWorkflow`；PBT 测试落地于 tests/PropertyTest/（LauncherEntryOrderPbtTests / LauncherJsonSerializerPbtTests / LauncherLayoutPbtTests / LauncherStoreValidatorPbtTests + CsCheckPropertyTests）。
+> - ✅ VTK 简化落地：`beb47560` 删除 EventJournal.cs（142 行，与 B.3 所述一致）、UiStateProjection.cs、LauncherEvent.cs、LauncherStoreProjector.cs、EventJsonContext.cs、EventStore/*；保留 Grain 线程模型（StoreGrain : Grain<LauncherStoreFile>）。
+> - ⚠️ 未按提案命名落地的门禁：Phase 4 提议的 `vtk-pure-functions` / `vtk-state-machine` / `vtk-no-codebehind-logic` / `vtk-compiled-bindings` 未采用；实际为 `trinity-architecture-integrity` + `vtk-architecture-integrity` + `vtk-no-appstore-residue`（既有 `no-imperative-view-ui` 覆盖 View 层逻辑）。
+> - ⚠️ Phase 3 的“全域 x:CompileBindings=True”未落地：Views 中无 `x:CompileBindings` 属性；`x:DataType` 见于 10 个 axaml 文件。
+> - 历史数字保留：“700 tests / 28 gate checks / 5 analyzers”、“gate 28/28”为 2026-07-25 时点记录（git 时点测量 beb47560：测试文件 98、[Fact]/[Theory] 属性 632、Add-Check 29）；当前结构基线见 AGENTS.md（121 测试文件 / 728 属性 / 38 门禁）。
+> - 提案正文（根因分析/迁移路径/置信度分析/消除映射）为 2026-07-25 时点提案记录，保留原文。
+
 
 ---
 
@@ -489,7 +501,7 @@ Trinity 架构可以让以下整类 bug **在架构层面不可能存在**：
 | 决策 | 选项 | 选择 | 原因 |
 |------|------|------|------|
 | 状态管理库 | Fluxor / DynamicData / 自研 | DynamicData | 更轻量，与 Rx.NET 生态整合，不需要额外 Action/Reducer 样板 |
-| 状态机库 | Stateless / 自研 / 不用 | Stateless + 源生成 | 成熟库（5.20.1），支持声明式配置，可扩展源生成分析器 |
+| 状态机库 | Stateless / 自研 / 不用 | Stateless + 源生成 | 成熟库（5.20.0，Directory.Packages.props 实测），支持声明式配置，可扩展源生成分析器 |
 | View 层绑定 | Reflection / Compiled / 混合 | Compiled 全开 | Avalonia 12 完全支持，零运行时开销 |
 | 测试框架 | xUnit / CsCheck 混合 | Zone 0: CsCheck PBT; Zone 1-2: xUnit | PBT 覆盖边界，示例测试覆盖编排 |
 | VTuber-Killer 处理 | 保留 / 简化 / 删除 | 简化 | 保留 Grain 线程模型，删除 EventJournal，Reducer 替代 Event Sourcing |
