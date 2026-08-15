@@ -1,168 +1,38 @@
 using CommunityToolkit.Mvvm.Input;
-using WTLauncher.App.Infrastructure;
-using WTLauncher.Core;
+using WTLauncher.App.Features;
 
 namespace WTLauncher.App.ViewModels;
 
-// Selection + batch launch delegation. Split from MainWindowViewModel.cs as part of
-// 07-09-split-mainviewmodel-stage2. Batch launch is delegated to LaunchOrchestrator.
+// Selection command surface + selection state projection. Mutation and batch
+// launch command bodies live in LauncherSelectionCommandWorkflow.
 
 // _batchCts lives in LaunchOrchestrator (which suppresses CA1001 internally);
 // MainWindowViewModel does not own any disposable field and needs no suppression.
 public sealed partial class MainWindowViewModel
 {
     [RelayCommand(CanExecute = nameof(CanSelectVisible))]
-    private void SelectVisible()
-    {
-        DiscardDragReorderPreview();
-        var targets = _list.MutableVisibleEntries.Where(entry => !entry.IsSelected).ToList();
-        if (targets.Count == 0)
-        {
-            ApplyStatusText(
-                _list.MutableVisibleEntries.Count == 0
-                    ? LauncherSelectionStatus.NoVisibleEntries
-                    : LauncherSelectionStatus.VisibleAlreadySelected);
-            return;
-        }
-
-        if (SetSelection(targets, selected: true))
-            ApplyStatusText(LauncherSelectionStatus.VisibleSelected(targets.Count));
-    }
-
-    /// <summary>
-    /// Clears selection on ALL entries (including hidden ones behind the current
-    /// filter). This is a programmatic "deselect everything" — the View data-binds
-    /// to this command for the "clear selection" toolbar button.
-    ///
-    /// For a user-facing "clear visible only" variant, see <see cref="ClearVisibleSelection"/>.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
-    private void ClearSelection()
-    {
-        DiscardDragReorderPreview();
-        var targets = GetSelectedEntries();
-        if (targets.Count == 0)
-        {
-            ApplyStatusText(LauncherSelectionStatus.NoSelectedEntriesToClear);
-            return;
-        }
-
-        if (SetSelection(targets, selected: false))
-            ApplyStatusText(LauncherSelectionStatus.Cleared(targets.Count));
-    }
-
-    /// <summary>
-    /// Clears selection only on VISIBLE entries — the user-facing behavior
-    /// that matches "what you see is what you act on."
-    /// Call this when the user explicitly wants to clear only filtered results.
-    /// </summary>
-    public void ClearVisibleSelection()
-    {
-        DiscardDragReorderPreview();
-        var targets = _list.MutableVisibleEntries.Where(entry => entry.IsSelected).ToList();
-        if (targets.Count == 0)
-        {
-            ApplyStatusText(LauncherSelectionStatus.NoSelectedEntriesToClear);
-            return;
-        }
-
-        if (SetSelection(targets, selected: false))
-            ApplyStatusText(LauncherSelectionStatus.Cleared(targets.Count));
-    }
+    private void SelectVisible() => _selectionWorkflow.SelectVisible();
 
     [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
-    private async Task LaunchSelectedAsync()
-    {
-        await _launchOrchestrator.LaunchBatchAsync(
-            GetSelectedEntries(),
-            "已勾选项",
-            LauncherSelectionStatus.NoSelectedEntries,
-            LauncherSelectionStatus.BatchLaunchCanceled,
-            LauncherSelectionStatus.BatchLaunchFailed,
-            LauncherSelectionStatus.BatchLaunchCompleted,
-            LauncherRunSource.Selection).ConfigureAwait(true);
-    }
+    private void ClearSelection() => _selectionWorkflow.ClearSelection();
+
+    public void ClearVisibleSelection() => _selectionWorkflow.ClearVisibleSelection();
+
+    [RelayCommand(CanExecute = nameof(CanOperateOnSelection))]
+    private async Task LaunchSelectedAsync() =>
+        await _selectionWorkflow.LaunchSelectedAsync().ConfigureAwait(true);
 
     [RelayCommand(CanExecute = nameof(CanCancelBatch))]
     private void CancelBatch() => _launchOrchestrator.CancelBatch();
 
     private bool CanCancelBatch() => _launchOrchestrator.IsBatchLaunching;
 
-    internal void UpdateSelection(LauncherEntryViewModel item, bool selected)
-    {
-        DiscardDragReorderPreview();
-        var previousSelected = item.ReplaceEntrySelectionFromOwner(selected);
-        var snapshot = new List<(LauncherEntryViewModel Entry, bool WasSelected)> { (item, previousSelected) };
-        SaveSelectionChangeOrRestore(snapshot);
-    }
+    internal void UpdateSelection(LauncherEntryViewModel item, bool selected) =>
+        _selectionWorkflow.UpdateSelection(item, selected);
 
-    private bool CanOperateOnSelection() => SelectedCount > 0;
+    private bool CanOperateOnSelection() => _selectionWorkflow.CanOperateOnSelection();
 
-    private bool CanSelectVisible() => _list.MutableVisibleEntries.Any(entry => !entry.IsSelected);
-
-    private bool SetSelection(IReadOnlyList<LauncherEntryViewModel> entries, bool selected)
-    {
-        DiscardDragReorderPreview();
-        var snapshot = entries.Select(e => (e, e.IsSelected)).ToList();
-        try
-        {
-            foreach (var entry in entries)
-                entry.SetSelectionFromOwner(selected);
-
-            return SaveSelectionChangeOrRestore(snapshot);
-        }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-        {
-            // If a PropertyChanged handler throws mid-loop, restore
-            // the pre-mutation state so the ViewModel is not left in an
-            // inconsistent half-selected condition.
-            foreach (var (entry, wasSelected) in snapshot)
-                entry.SetSelectionFromOwner(wasSelected);
-            throw;
-        }
-    }
-
-    private bool ReplaceSelection(IReadOnlySet<string> selectedIds)
-    {
-        DiscardDragReorderPreview();
-        var snapshot = _list.MutableEntries.Select(e => (e, e.IsSelected)).ToList();
-        try
-        {
-            foreach (var entry in _list.MutableEntries)
-                entry.SetSelectionFromOwner(selectedIds.Contains(entry.Id));
-
-            return SaveSelectionChangeOrRestore(snapshot);
-        }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-        {
-            foreach (var (entry, wasSelected) in snapshot)
-                entry.SetSelectionFromOwner(wasSelected);
-            throw;
-        }
-    }
-
-    private bool SaveSelectionChangeOrRestore(
-        List<(LauncherEntryViewModel Entry, bool WasSelected)> snapshot)
-    {
-        RefreshSelectionState();
-        using var transaction = new StoreMutationSession(
-            SaveStoreFile,
-            () =>
-            {
-                foreach (var (entry, wasSelected) in snapshot)
-                    entry.SetSelectionFromOwner(wasSelected);
-                RefreshSelectionState();
-            });
-
-        var saveFailure = transaction.Commit(BuildStoreFile());
-        if (saveFailure is not null)
-        {
-            ApplyStatusText(saveFailure);
-            return false;
-        }
-
-        return true;
-    }
+    private bool CanSelectVisible() => _selectionWorkflow.CanSelectVisible();
 
     private void RefreshSelectionState()
     {
@@ -184,16 +54,6 @@ public sealed partial class MainWindowViewModel
         NotifyPresetManagementCommands();
     }
 
-    private List<LauncherEntryViewModel> GetSelectedEntries() =>
-        _list.MutableEntries
-            .Where(entry => entry.IsSelected)
-            .ToList();
-
-    private List<string> GetSelectedEntryIds()
-    {
-        var ids = new List<string>(_list.MutableEntries.Count);
-        foreach (var entry in _list.MutableEntries)
-            if (entry.IsSelected) ids.Add(entry.Id);
-        return ids;
-    }
+    private IReadOnlyList<string> GetSelectedEntryIds() =>
+        _selectionWorkflow.GetSelectedEntryIds();
 }

@@ -38,6 +38,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     internal readonly LayoutManager _layoutManager = new();
     internal readonly LauncherPresetCommandWorkflow _presetWorkflow;
     internal readonly LauncherLayoutWorkflow _layoutWorkflow;
+    internal readonly LauncherSelectionCommandWorkflow _selectionWorkflow;
+    internal readonly LauncherMaintenanceCommandWorkflow _maintenanceWorkflow;
+    internal readonly LauncherEntryCommandWorkflow _entryWorkflow;
 
     // Status forwarding — reads StatusPresenter, re-fires PropertyChanged via subscription
     public LauncherStatusContent StatusContent { get => _statusPresenter.StatusContent; set => _statusPresenter.StatusContent = value; }
@@ -163,6 +166,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _layoutManager.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName!);
         _presetWorkflow = new LauncherPresetCommandWorkflow(this, _list, _presetManager, _presetService, _launchOrchestrator, this);
         _layoutWorkflow = new LauncherLayoutWorkflow(this, _list, _layoutManager, this);
+        _selectionWorkflow = new LauncherSelectionCommandWorkflow(this, _list, _launchOrchestrator, this);
+        _maintenanceWorkflow = new LauncherMaintenanceCommandWorkflow(this, _list, _dialogService, _launchOrchestrator, this);
+        _entryWorkflow = new LauncherEntryCommandWorkflow(this, _list, _entryService, this);
         // Construct workflow AFTER settings normalization so it captures
         // the normalized values — DiscardDragReorderPreview syncs from it.
         _dragReorderWorkflow = new LauncherDragReorderWorkflow(
@@ -500,7 +506,18 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
     void ICommandHost.NotifySearchHistoryChanged() => OnPropertyChanged(nameof(SearchHistoryItems));
 
-    bool ICommandHost.ReplaceSelection(IReadOnlySet<string> entryIds) => ReplaceSelection(entryIds);
+    bool ICommandHost.ReplaceSelection(IReadOnlySet<string> entryIds) => _selectionWorkflow.ReplaceSelection(entryIds);
+
+    LauncherStoreFile ICommandHost.BuildStoreFile() => BuildStoreFile();
+
+    string? ICommandHost.SaveStoreFile(LauncherStoreFile storeFile) => SaveStoreFile(storeFile);
+
+    void ICommandHost.EnsureCustomOrderContainsEntries() => EnsureCustomOrderContainsEntries();
+
+    void ICommandHost.SyncTotalCount() => TotalCount = _list.MutableEntries.Count;
+
+    LauncherEntryViewModel ICommandHost.CreateEntryViewModel(LaunchEntry entry) =>
+        new(entry, this);
 
     LauncherSettings ILaunchCoordinatorContext.GetSettings() => CurrentSettings;
 

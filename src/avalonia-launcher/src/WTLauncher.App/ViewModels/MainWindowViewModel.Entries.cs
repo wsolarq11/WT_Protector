@@ -1,49 +1,24 @@
 using CommunityToolkit.Mvvm.Input;
-using WTLauncher.App.Features;
-using WTLauncher.App.Infrastructure;
 
 namespace WTLauncher.App.ViewModels;
 
-// Entry Add/Clone/Edit/Delete command flow. Split from MainWindowViewModel.cs as
-// part of 07-09-split-mainviewmodel-stage2. Uses IEntryService for command logic.
+// Entry Add/Clone/Edit/Delete command surface. The actual add/clone/edit/delete
+// flows live in EntryListViewModel; collection persistence lives in
+// LauncherEntryCommandWorkflow.
 
 public sealed partial class MainWindowViewModel
 {
     [RelayCommand]
-    private async Task AddEntryAsync()
-    {
-        await _list.AddEntryAsync();
-    }
+    private Task AddEntryAsync() => _list.AddEntryAsync();
 
-    internal async Task CloneEntryAsync(LauncherEntryViewModel item)
-    {
-        await _list.CloneEntryAsync(item);
-    }
+    internal Task CloneEntryAsync(LauncherEntryViewModel item) =>
+        _list.CloneEntryAsync(item);
 
-    internal async Task EditEntryAsync(LauncherEntryViewModel item)
-    {
-        await _list.EditEntryAsync(item);
-    }
+    internal Task EditEntryAsync(LauncherEntryViewModel item) =>
+        _list.EditEntryAsync(item);
 
-    internal async Task DeleteEntryAsync(LauncherEntryViewModel item)
-    {
-        await _list.DeleteEntryAsync(item);
-    }
+    internal Task DeleteEntryAsync(LauncherEntryViewModel item) =>
+        _list.DeleteEntryAsync(item);
 
-    private bool SaveEntryCollectionChanges()
-    {
-        TotalCount = _list.MutableEntries.Count;
-        EnsureCustomOrderContainsEntries();
-
-        using var transaction = new StoreMutationSession(SaveStoreFile, RestoreVmStateFromStore);
-        var saveFailure = transaction.Commit(BuildStoreFile());
-        if (saveFailure is null)
-        {
-            SynchronizeProjections(ProjectionSyncMode.Mutation);
-            return true;
-        }
-
-        StatusContent = LauncherStatusContent.Error(saveFailure);
-        return false;
-    }
+    private bool SaveEntryCollectionChanges() => _entryWorkflow.SaveEntryCollectionChanges();
 }

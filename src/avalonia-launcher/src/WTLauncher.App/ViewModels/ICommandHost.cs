@@ -15,4 +15,9 @@ public interface ICommandHost
     public void RestoreVmStateFromStore();
     public void NotifySearchHistoryChanged();
     public bool ReplaceSelection(IReadOnlySet<string> entryIds);
+    public LauncherStoreFile BuildStoreFile();
+    public string? SaveStoreFile(LauncherStoreFile storeFile);
+    public void EnsureCustomOrderContainsEntries();
+    public void SyncTotalCount();
+    public LauncherEntryViewModel CreateEntryViewModel(LaunchEntry entry);
 }

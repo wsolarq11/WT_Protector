@@ -7,12 +7,11 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
-// Discovery Add flow. Split from MainWindowViewModel.cs as part of
-// 07-10-agent-cli-discovery. Uses IDialogService for dialog interaction.
+// Discovery dialog orchestration surface. Discovery apply and collection save
+// live in LauncherEntryCommandWorkflow.
 
 public sealed partial class MainWindowViewModel
 {
-
     [RelayCommand]
     private async Task DiscoverAgentsAsync()
     {
@@ -28,7 +27,7 @@ public sealed partial class MainWindowViewModel
                     .Where(name => !string.IsNullOrWhiteSpace(name))
                     .ToHashSet(StringComparer.OrdinalIgnoreCase),
                 DirectoryUsageAnalyzer.Analyze(_list.MutableEntries.Select(ToLaunchEntry)),
-                CurrentSettings.CommandTemplates) // Phase 1
+                CurrentSettings.CommandTemplates)
                 .ConfigureAwait(true);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
@@ -46,7 +45,7 @@ public sealed partial class MainWindowViewModel
 
         if (selection is ExistingDirectorySelection directorySelection)
         {
-            AddExistingDirectoryEntry(directorySelection.Draft);
+            _entryWorkflow.AddExistingDirectoryEntry(directorySelection.Draft);
             return;
         }
 
@@ -62,61 +61,9 @@ public sealed partial class MainWindowViewModel
         }
 
         var userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-
-        int added = 0;
-        var skipped = new List<string>();
-        foreach (var discovered in selected)
-        {
-            var draft = AgentRecommendationFactory.ToDraft(discovered, userHome);
-            var result = _entryService.CreateEntryFromDraft(draft, originalId: null, previousEntry: null, _list.MutableEntries.Select(ToLaunchEntry));
-            if (result is not ServiceSuccess<LaunchEntry> success)
-            {
-                StatusContent = result switch
-                {
-                    ServiceCanceled<LaunchEntry> canceled => canceled.Status,
-                    ServiceFailure<LaunchEntry> failure => failure.Status,
-                    _ => throw new UnreachableException(),
-                };
-                skipped.Add(discovered.Catalog.DisplayName);
-                continue;
-            }
-
-            var entry = success.Value;
-            entry = entry with { UpdatedAtUtc = CurrentTimestampUtc() };
-            _list.MutableEntries.Add(new LauncherEntryViewModel(entry, this));
-            // CustomEntryOrder is synced via EnsureCustomOrderContainsEntries during apply
-            added++;
-        }
-
-        EnsureCustomOrderContainsEntries();
-        if (!SaveEntryCollectionChanges())
+        if (!_entryWorkflow.TryAddDiscoveredAgents(selected, userHome, out var added, out var skipped))
             return;
 
         StatusContent = LauncherDiscoveryStatus.AgentsAdded(added, skipped);
-    }
-
-    private void AddExistingDirectoryEntry(EntryDraft draft)
-    {
-        var result = _entryService.CreateEntryFromDraft(
-            draft, originalId: null, previousEntry: null, _list.MutableEntries.Select(ToLaunchEntry));
-        switch (result)
-        {
-            case ServiceSuccess<LaunchEntry> success:
-                var entry = success.Value with { UpdatedAtUtc = CurrentTimestampUtc() };
-                _list.MutableEntries.Add(new LauncherEntryViewModel(entry, this));
-                // CustomEntryOrder is synced via EnsureCustomOrderContainsEntries during apply
-                EnsureCustomOrderContainsEntries();
-                if (SaveEntryCollectionChanges())
-                    ApplyStatusText(LauncherEntryStatus.Added(entry.Name));
-                return;
-            case ServiceCanceled<LaunchEntry> canceled:
-                StatusContent = canceled.Status;
-                return;
-            case ServiceFailure<LaunchEntry> failure:
-                StatusContent = failure.Status;
-                return;
-            default:
-                throw new UnreachableException();
-        }
     }
 }

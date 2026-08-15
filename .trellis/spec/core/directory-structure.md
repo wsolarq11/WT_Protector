@@ -103,12 +103,12 @@ src/avalonia-launcher/
 │   └── WTLauncher.App/
 │       ├── Program.cs                  # Entry point
 │       ├── App.axaml / App.axaml.cs    # Design token injection
-│       ├── ViewModels/                 # Layer 1-3: 59 C# files (MainWindowViewModel + 15 partials + collaborators)
+│       ├── ViewModels/                 # Layer 1-3: 62 C# files (MainWindowViewModel + 15 partials + collaborators)
 │       ├── Features/                   # 16 C# files (Entries/Presets/Status/Updates/Dialogs/ConfigExchange)
 │       ├── Infrastructure/             # 9 C# files (persistence IO + IStorePersistence)
 │       ├── Platform/                   # 3 C# files (platform wiring)
 │       └── Views/                      # Layer 4: 44 files (24 C# + 20 AXAML)
-├── tests/WTLauncher.Tests/             # 124 xUnit C# files, 8 layers, 743 [Fact]/[Theory] (gate runs 826)
+├── tests/WTLauncher.Tests/             # 127 xUnit C# files, 8 layers, 746 [Fact]/[Theory] (gate runs 829)
 └── artifacts/                          # Build outputs (gitignored)
 ```
 
