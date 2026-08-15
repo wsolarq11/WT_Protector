@@ -34,9 +34,9 @@ foreach ($s in @('Retired WinForms launcher design','Portable config discovery',
 
 # AGENTS.md structure-baseline: 10 rows
 $baselineRows = @(
-    '| WTLauncher.Core C# files | 53 |','| ViewModels C# files | 53 |','| MainWindowViewModel partials | 15 |',
-    '| Features C# files | 15 |','| Views C# files | 24 |','| Views AXAML files | 20 |',
-    '| WTLauncher.Analyzers C# files | 7 |','| Tests C# files | 121 |','| Test attributes [Fact]+[Theory] | 728 |','| Gate checks (Add-Check) | 38 |')
+    '| WTLauncher.Core C# files | 53 |','| ViewModels C# files | 54 |','| MainWindowViewModel partials | 15 |',
+    '| Features C# files | 16 |','| Views C# files | 24 |','| Views AXAML files | 20 |',
+    '| WTLauncher.Analyzers C# files | 7 |','| Tests C# files | 121 |','| Test attributes [Fact]+[Theory] | 737 |','| Gate checks (Add-Check) | 40 |')
 $agents = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $root 'AGENTS.md')
 $rowsOk = $true
 foreach ($r in $baselineRows) { if (-not $agents.Contains($r)) { Write-Host "FAIL AGENTS.md baseline row: $r"; $rowsOk = $false; $fail++ } }

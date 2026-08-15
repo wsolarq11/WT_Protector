@@ -884,7 +884,7 @@ Add-Check 'vtk-no-appstore-residue' @{
 
 # --- Structure baseline consistency (enforced single source: AGENTS.md table) ---
 # 2026-08-15: AGENTS.md/CLAUDE.md repo-map numbers had silently drifted (Core 24->53,
-# ViewModels 28->53, partials 7->15, test files 61->121, checks 31->37). This check makes
+# ViewModels 28->54, partials 7->15, test files 61->121, checks 31->40). This check makes
 # AGENTS.md's structure-baseline table the single documented source of structure facts and
 # verifies it against the filesystem + the constants below. Change structure -> update BOTH
 # the constants here AND the AGENTS.md table; the gate fails until they agree.

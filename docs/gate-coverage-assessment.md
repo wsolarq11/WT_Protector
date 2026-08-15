@@ -3,7 +3,7 @@
 评估时间: 2026-07-23
 评估范围: 截至评估日 `tools/verify.ps1` 中的 25 项检查
 
-> 复核（2026-08-15）：门禁现为 **38 项检查**（与 AGENTS.md 结构基线一致）。原 25 项检查全部保留（无移除/改名），另新增 13 项（见文末「当前门禁状态」）。下表行号为 2026-07-23 当日版本（与提交 ee2a85a9 逐行一致）；当前行号见文末对照。
+> 复核（2026-08-15）：门禁现为 **40 项检查**（与 AGENTS.md 结构基线一致）。原 25 项检查全部保留（无移除/改名），另新增 15 项（见文末「当前门禁状态」）。下表行号为 2026-07-23 当日版本（与提交 ee2a85a9 逐行一致）；当前行号见文末对照。
 
 ---
 
@@ -176,7 +176,7 @@ Add-Check 'test-file-count' @{
 
 **理由**: 防止测试文件被无意识地删除。60+ 的测试文件基线是项目成熟度的体现。
 
-> 复核（2026-08-15）：上述两项建议均**未纳入**门禁——当前 38 项中不存在 `editorconfig` 或 `test-file-count` 检查。测试数量退化现由 `structure-baseline-consistency`（121 测试文件、728 属性基线）与 `coverage-gate` 间接约束。
+> 复核（2026-08-15）：上述两项建议均**未纳入**门禁——当前 40 项中不存在 `editorconfig` 或 `test-file-count` 检查。测试数量退化现由 `structure-baseline-consistency`（121 测试文件、737 属性基线）与 `coverage-gate` 间接约束。
 
 ---
 
@@ -198,9 +198,9 @@ Add-Check 'test-file-count' @{
 
 ---
 
-## 附：当前门禁状态（2026-08-15 复核，38 项）
+## 附：当前门禁状态（2026-08-15 复核，40 项）
 
-原 25 项全部保留，新增 13 项：
+原 25 项全部保留，新增 15 项：
 
 | 新增检查名称 | 当前行号 | 类别 |
 |------|---------|------|
@@ -212,6 +212,8 @@ Add-Check 'test-file-count' @{
 | coverage-gate | 603 | 覆盖率门禁 |
 | architecture-rule-check | 616 | 架构规则 |
 | analyzer-wiring | 623 | 分析器连线 |
+| dialog-service-no-func-action | 712 | 视图契约 |
+| views-no-direct-core-business-calls | 728 | 视图契约 |
 | no-thin-wrapper-delegation | 775 | 编码规范 |
 | vtk-architecture-integrity | 799 | 架构完整性 |
 | trinity-architecture-integrity | 824 | 架构完整性 |

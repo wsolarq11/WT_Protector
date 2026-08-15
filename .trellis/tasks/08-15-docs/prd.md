@@ -18,5 +18,5 @@ AGENTS.md / CLAUDE.md / .trellis/spec 中的结构数字（文件数、partial �
 - [x] 7 个历史文档 git mv 归档（docs/archive/ + docs/collab-debt-findings.md）
 - [x] AGENTS.md 结构基线 10 行与 verify.ps1 基线常量一致
 - [x] CLAUDE.md / README.md / retired/README.md / spec 数字全部校正
-- [x] verify.ps1 全绿（38 项检查，含新增 structure-baseline-consistency）
+- [x] verify.ps1 全绿（40 项检查，含新增 structure-baseline-consistency）
 - [x] git diff --check 通过

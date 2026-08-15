@@ -36,9 +36,9 @@
 
 ## 已知已核实事实（可直接引用，无需重复验证）
 
-- 结构基线: Core 53 / ViewModels 53 / partials 15 / Features 15 / Views 24cs+20axaml / Analyzers 7 / Tests 121 / 测试属性 728 / 门禁 38
+- 结构基线: Core 53 / ViewModels 54 / partials 15 / Features 16 / Views 24cs+20axaml / Analyzers 7 / Tests 121 / 测试属性 737 / 门禁 40
 - HTA 于 2026-07-06 提交 825ecb5b 移除（retired/ 仅剩 config.json + design md）
 - 快照类 LauncherEntryMutationSnapshot/LauncherSelectionMutationSnapshot 已于 2026-07-21 删除；回滚 = StoreGrain.Dispatch save-first-then-commit
 - WTLauncher.Core.FSharp 为孤儿项目（fsproj 自标 _FSharpProjectIsOrphaned）
 - 测试 8 层: Support/CoreUnit/Persistence/ViewModelBehavior/Analyzer/Architecture/UiContract/PropertyTest
-- 门禁实测用例 811（728 属性展开）
+- 门禁实测用例 820（737 属性展开）
