@@ -31,7 +31,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = false },
-            launchWorkflow: new LauncherLaunchWorkflow(_ => { }));
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => { })));
 
         await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
 
@@ -82,7 +82,7 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(
             config,
             settings,
-            launchWorkflow: new LauncherLaunchWorkflow(_ => { }),
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => { })),
             dialogService: dialog);
         viewModel.Entries.Single(entry => entry.Id == "one").IsSelected = true;
         viewModel.Entries.Single(entry => entry.Id == "two").IsSelected = true;

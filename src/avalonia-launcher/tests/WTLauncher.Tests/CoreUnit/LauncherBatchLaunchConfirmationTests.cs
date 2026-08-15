@@ -11,7 +11,7 @@ public sealed class LauncherBatchLaunchConfirmationTests
     public void ConfirmationSnapshotsItemsAndTargetLabel()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => throw new InvalidOperationException("should not start")));
         var preflight = workflow.PreflightBatch([Entry("one", temp.Path)], requireConfirmation: true);
         var items = preflight.Items.ToList();
 
@@ -26,7 +26,7 @@ public sealed class LauncherBatchLaunchConfirmationTests
     public void ConfirmationItemsDoNotExposeMutableStorage()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => throw new InvalidOperationException("should not start")));
         var preflight = workflow.PreflightBatch([Entry("one", temp.Path)], requireConfirmation: true);
         var confirmation = new LauncherBatchLaunchConfirmation(preflight.Items, "已勾选项");
 
@@ -40,7 +40,7 @@ public sealed class LauncherBatchLaunchConfirmationTests
     public void ConfirmationRejectsBlankTargetLabel()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => throw new InvalidOperationException("should not start")));
         var preflight = workflow.PreflightBatch([Entry("one", temp.Path)], requireConfirmation: true);
 
         var exception = Assert.Throws<ArgumentException>(() =>

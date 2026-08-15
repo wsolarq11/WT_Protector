@@ -11,7 +11,7 @@ public sealed class LauncherLaunchWorkflowTests
     public void BuildPlanUsesGlobalConfirmationSetting()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => { });
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => { }));
         var entry = Entry("one", temp.Path);
 
         var directPlan = workflow.BuildPlan(entry, requireConfirmation: false);
@@ -24,7 +24,7 @@ public sealed class LauncherLaunchWorkflowTests
     [Fact]
     public void StartBatchReportsPlanFailuresWithoutStartingProcesses()
     {
-        var workflow = new LauncherLaunchWorkflow(_ => { });
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => { }));
 
         var report = workflow.StartBatch(
             [
@@ -45,7 +45,7 @@ public sealed class LauncherLaunchWorkflowTests
     public void PreflightBatchBuildsPlansWithoutStartingProcesses()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => throw new InvalidOperationException("should not start")));
 
         var preflight = workflow.PreflightBatch(
             [
@@ -65,7 +65,7 @@ public sealed class LauncherLaunchWorkflowTests
     public void PreflightItemsDoNotExposeMutableStorage()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => throw new InvalidOperationException("should not start")));
 
         var preflight = workflow.PreflightBatch(
             [
@@ -83,7 +83,7 @@ public sealed class LauncherLaunchWorkflowTests
     public void StartBatchDoesNotMutatePreflightReport()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => throw new InvalidOperationException("should not start")));
 
         var preflight = workflow.PreflightBatch(
             [
@@ -115,7 +115,7 @@ public sealed class LauncherLaunchWorkflowTests
     {
         using var temp = new TempDirectory();
         var startedPlans = new List<LaunchPlan>();
-        var workflow = new LauncherLaunchWorkflow(plan => startedPlans.Add(plan));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(plan => startedPlans.Add(plan)));
 
         var report = workflow.StartBatch(
             [
@@ -136,7 +136,7 @@ public sealed class LauncherLaunchWorkflowTests
     [Fact]
     public void StartBatchRejectsNullEntryRows()
     {
-        var workflow = new LauncherLaunchWorkflow(_ => { });
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => { }));
 
         var exception = Assert.Throws<ArgumentNullException>(() =>
             workflow.StartBatch([null!], requireConfirmation: false));
@@ -148,7 +148,7 @@ public sealed class LauncherLaunchWorkflowTests
     public void PreflightBatchReportsBlankEntryNameWithoutInventingFallbackName()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => throw new InvalidOperationException("should not start")));
 
         var preflight = workflow.PreflightBatch(
             [
@@ -165,7 +165,7 @@ public sealed class LauncherLaunchWorkflowTests
     public void PreflightBatchReportsBlankEntryIdWithoutInventingFallbackId()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => throw new InvalidOperationException("should not start")));
 
         var preflight = workflow.PreflightBatch(
             [
@@ -183,7 +183,7 @@ public sealed class LauncherLaunchWorkflowTests
     public void StartBatchKeepsLastCommandLineWhenStartFails()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("blocked"));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => throw new InvalidOperationException("blocked")));
 
         var report = workflow.StartBatch(
             [
@@ -202,7 +202,7 @@ public sealed class LauncherLaunchWorkflowTests
     public void StartBatchUsesPreflightNameSnapshotWhenEntryNameMutates()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("blocked"));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => throw new InvalidOperationException("blocked")));
         var entry = Entry("one", temp.Path);
         var preflight = workflow.PreflightBatch([entry], requireConfirmation: false);
         entry = entry with { Name = EntryName.Empty };
@@ -224,12 +224,12 @@ public sealed class LauncherLaunchWorkflowTests
     {
         using var temp = new TempDirectory();
         var attempted = new List<string>();
-        var workflow = new LauncherLaunchWorkflow(plan =>
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(plan =>
         {
             attempted.Add(plan.WorkingDirectory);
             if (attempted.Count == 2)
                 throw new InvalidOperationException("blocked");
-        });
+        }));
 
         var report = workflow.StartBatch(
             [
@@ -252,12 +252,12 @@ public sealed class LauncherLaunchWorkflowTests
     {
         using var temp = new TempDirectory();
         var attempted = new List<string>();
-        var workflow = new LauncherLaunchWorkflow(plan =>
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(plan =>
         {
             attempted.Add(plan.WorkingDirectory);
             if (attempted.Count == 1)
                 throw new InvalidOperationException("blocked");
-        });
+        }));
 
         var report = workflow.StartBatch(
             [
@@ -280,12 +280,12 @@ public sealed class LauncherLaunchWorkflowTests
     {
         using var temp = new TempDirectory();
         var attempted = new List<string>();
-        var workflow = new LauncherLaunchWorkflow(plan =>
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(plan =>
         {
             attempted.Add(plan.WorkingDirectory);
             if (attempted.Count is 1 or 3)
                 throw new InvalidOperationException("blocked");
-        });
+        }));
 
         var report = workflow.StartBatch(
             [
@@ -309,7 +309,7 @@ public sealed class LauncherLaunchWorkflowTests
     {
         using var temp = new TempDirectory();
         var startedPlans = new List<LaunchPlan>();
-        var workflow = new LauncherLaunchWorkflow(plan => startedPlans.Add(plan));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(plan => startedPlans.Add(plan)));
 
         var report = workflow.StartBatch(
             [

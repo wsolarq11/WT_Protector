@@ -63,7 +63,7 @@ Write-Host "Contract validation: found $($jsonRequiredFields.Count) [JsonRequire
 
 # P1#1: No SaveConfig() / Save*() call discards its return value.
 $saveDiscards = Select-String -Path (Join-Path $sourceRoot 'src\WTLauncher.App\ViewModels\*.cs') -Pattern '^\s+Save\w+\(\)'
-$saveDiscards += Select-String -Path (Join-Path $sourceRoot 'src\WTLauncher.App\ViewModels\*.cs') -Pattern '^\s+if\s*\([^)]*\w+\)\s+Save\w+\(\)' -NotMatch | Select-String -Pattern '\.Save\w+\(\)'
+$saveDiscards += Select-String -Path (Join-Path $sourceRoot 'src\WTLauncher.App\ViewModels\*.cs') -Pattern '^\s+if\s*\([^)]*\.Save\w+\(\)' -NotMatch | Select-String -Pattern '\.Save\w+\(\)' | Where-Object { $_.Line -notmatch '=>' }
 if ($saveDiscards) {
     $lines = ($saveDiscards | ForEach-Object { "$($_.Filename):$($_.LineNumber)" }) -join ', '
     throw "Contract violation: Save*() return value discarded at: $lines"

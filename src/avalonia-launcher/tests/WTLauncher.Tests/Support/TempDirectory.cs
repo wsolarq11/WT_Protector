@@ -1,4 +1,6 @@
 using IOPath = System.IO.Path;
+using WTLauncher.App.ViewModels;
+using WTLauncher.Core;
 
 namespace WTLauncher.Tests;
 
@@ -29,5 +31,29 @@ internal sealed class TempDirectory : IDisposable
         catch (UnauthorizedAccessException)
         {
         }
+    }
+}
+
+internal sealed class FakeLaunchProcessStarter : ILaunchProcessStarter
+{
+    private readonly Action<LaunchPlan>? _start;
+
+    public FakeLaunchProcessStarter(Action<LaunchPlan>? start = null)
+    {
+        _start = start;
+    }
+
+    public List<LaunchPlan> StartedPlans { get; } = [];
+
+    public void Start(LaunchPlan plan)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        if (_start is not null)
+        {
+            _start(plan);
+            return;
+        }
+
+        StartedPlans.Add(plan);
     }
 }

@@ -4,28 +4,41 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
+/// <summary>Process-boundary port used by launch workflows.</summary>
+public interface ILaunchProcessStarter
+{
+    public void Start(LaunchPlan plan);
+}
+
+/// <summary>Production process starter; keeps Process.Start behind a narrow port.</summary>
+public sealed class ProcessLaunchStarter : ILaunchProcessStarter
+{
+    public void Start(LaunchPlan plan)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        using var process = Process.Start(new ProcessStartInfo(plan.Executable)
+        {
+            Arguments = plan.Arguments,
+            WorkingDirectory = plan.WorkingDirectory,
+            UseShellExecute = false,
+            CreateNoWindow = false,
+        }) ?? throw new InvalidOperationException($"Failed to start process: {plan.Executable}");
+    }
+}
+
 public sealed class LauncherLaunchWorkflow
 {
-    private readonly Action<LaunchPlan> _start;
+    private readonly ILaunchProcessStarter _start;
 
     public IReadOnlyDictionary<string, string>? CommandTemplates { get; internal set; }
 
-    public LauncherLaunchWorkflow(Action<LaunchPlan> start)
+    public LauncherLaunchWorkflow(ILaunchProcessStarter start)
     {
         _start = start ?? throw new ArgumentNullException(nameof(start));
     }
 
     public static LauncherLaunchWorkflow Create() =>
-        new(plan =>
-        {
-            using var process = Process.Start(new ProcessStartInfo(plan.Executable)
-            {
-                Arguments = plan.Arguments,
-                WorkingDirectory = plan.WorkingDirectory,
-                UseShellExecute = false,
-                CreateNoWindow = false,
-            }) ?? throw new InvalidOperationException($"Failed to start process: {plan.Executable}");
-        });
+        new(new ProcessLaunchStarter());
 
     public LaunchPlan BuildPlan(LaunchEntry entry, bool requireConfirmation) =>
         LaunchArgumentBuilder.Build(
@@ -37,7 +50,7 @@ public sealed class LauncherLaunchWorkflow
     public void Start(LaunchPlan plan)
     {
         ArgumentNullException.ThrowIfNull(plan);
-        _start(plan);
+        _start.Start(plan);
     }
 
     public LauncherBatchLaunchReport StartBatch(

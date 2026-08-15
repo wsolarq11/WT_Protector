@@ -136,7 +136,7 @@ public sealed partial class MainWindowViewModelTests
     private static List<LaunchEntry> LoadEntriesById(string config) =>
         LauncherStore.Load(config).Entries.OrderBy(entry => entry.Id.Value).ToList();
 
-    private static LauncherLaunchWorkflow CreateLaunchWorkflow() => new(_ => { });
+    private static LauncherLaunchWorkflow CreateLaunchWorkflow() => new(new FakeLaunchProcessStarter(_ => { }));
 
     private static DateTimeOffset SystemUtcNow() => DateTimeOffset.UtcNow;
 }

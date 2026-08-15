@@ -12,12 +12,12 @@ public sealed class LauncherBatchLaunchReceiptTextTests
     {
         using var temp = new TempDirectory();
         var attempts = 0;
-        var workflow = new LauncherLaunchWorkflow(_ =>
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ =>
         {
             attempts++;
             if (attempts == 2)
                 throw new InvalidOperationException("blocked");
-        });
+        }));
         var preflight = workflow.PreflightBatch(
             [
                 Entry("one", temp.Path),
@@ -47,12 +47,12 @@ public sealed class LauncherBatchLaunchReceiptTextTests
         using var temp = new TempDirectory();
         // E8: Start delegate now fires for valid items even when preflight has failures.
         var attempts = 0;
-        var workflow = new LauncherLaunchWorkflow(_ =>
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ =>
         {
             attempts++;
             if (attempts == 1)
                 throw new InvalidOperationException("blocked");
-        });
+        }));
         var preflight = workflow.PreflightBatch(
             [
                 Entry("valid", temp.Path),
@@ -72,7 +72,7 @@ public sealed class LauncherBatchLaunchReceiptTextTests
     public void ReceiptUsesPreflightNameSnapshotWhenEntryNameMutates()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("blocked"));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => throw new InvalidOperationException("blocked")));
         var entry = Entry("one", temp.Path);
         var preflight = workflow.PreflightBatch([entry], requireConfirmation: false);
         entry = entry with { Name = EntryName.Empty };
@@ -89,7 +89,7 @@ public sealed class LauncherBatchLaunchReceiptTextTests
     public void CanceledReceiptMarksEveryPlanAsNotStarted()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => throw new InvalidOperationException("should not start")));
         var preflight = workflow.PreflightBatch(
             [
                 Entry("one", temp.Path),
@@ -111,7 +111,7 @@ public sealed class LauncherBatchLaunchReceiptTextTests
     public void ConfirmationFailedReceiptMarksEveryPlanAsNotStarted()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => throw new InvalidOperationException("should not start")));
         var preflight = workflow.PreflightBatch(
             [
                 Entry("one", temp.Path),

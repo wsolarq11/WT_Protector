@@ -102,6 +102,6 @@ internal static class MainWindowEntryCardTestFactory
         };
     }
 
-    private static LauncherLaunchWorkflow CreateLaunchWorkflow() => new(_ => { });
+    private static LauncherLaunchWorkflow CreateLaunchWorkflow() => new(new FakeLaunchProcessStarter(_ => { }));
 }
 

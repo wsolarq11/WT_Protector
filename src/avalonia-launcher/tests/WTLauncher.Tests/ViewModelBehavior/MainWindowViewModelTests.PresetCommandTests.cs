@@ -130,7 +130,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = false },
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(startedPlans.Add)));
 
         Assert.True(viewModel.LaunchSelectedPresetCommand.CanExecute(null));
 
@@ -161,7 +161,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             launcherSettings,
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(startedPlans.Add)));
 
         StartDefaultDragPreview(viewModel, launcherSettings);
 
@@ -188,7 +188,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(startedPlans.Add)));
 
         viewModel.PreviewSelectedPresetCommand.Execute(null);
 
@@ -219,7 +219,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             launcherSettings,
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(startedPlans.Add)));
 
         StartDefaultDragPreview(viewModel, launcherSettings);
 
@@ -247,7 +247,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = false },
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(startedPlans.Add)));
 
         viewModel.PreviewSelectedPresetCommand.Execute(null);
 
@@ -276,7 +276,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = false },
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(startedPlans.Add)));
 
         viewModel.DryRunText = "旧启动组预演";
         var snapshot = viewModel.Entries.Single(entry => entry.Id == "one").SnapshotEntry();
@@ -320,7 +320,7 @@ public sealed partial class MainWindowViewModelTests
                     return Task.FromResult(false);
                 },
             },
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(startedPlans.Add)));
 
         await viewModel.LaunchSelectedPresetCommand.ExecuteAsync(null);
 
@@ -365,7 +365,7 @@ public sealed partial class MainWindowViewModelTests
                     return Task.FromResult(true);
                 },
             },
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(startedPlans.Add)));
 
         await viewModel.LaunchSelectedPresetCommand.ExecuteAsync(null);
 
@@ -407,7 +407,7 @@ public sealed partial class MainWindowViewModelTests
                     return Task.FromResult(true);
                 },
             },
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(startedPlans.Add)));
 
         await viewModel.LaunchSelectedPresetCommand.ExecuteAsync(null);
 
@@ -435,7 +435,7 @@ public sealed partial class MainWindowViewModelTests
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
             dialogService: new StubDialogService { OnConfirmBatchLaunch = _ => throw new InvalidOperationException("dialog unavailable") },
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(startedPlans.Add)));
 
         await viewModel.LaunchSelectedPresetCommand.ExecuteAsync(null);
 

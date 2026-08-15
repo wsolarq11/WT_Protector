@@ -11,7 +11,7 @@ public sealed class LauncherBatchLaunchPlanTextTests
     public void FormatUsesPreflightNameSnapshotWhenEntryNameMutates()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => throw new InvalidOperationException("should not start")));
         var entry = Entry("one", temp.Path);
         var preflight = workflow.PreflightBatch([entry], requireConfirmation: true);
         entry = entry with { Name = EntryName.Empty };
@@ -35,7 +35,7 @@ public sealed class LauncherBatchLaunchPlanTextTests
     public void Format_SingleItem_ContainsEntryNameAndCommandLine()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => throw new InvalidOperationException("should not start")));
         var entry = Entry("alpha", temp.Path);
         var preflight = workflow.PreflightBatch([entry], requireConfirmation: true);
 
@@ -50,7 +50,7 @@ public sealed class LauncherBatchLaunchPlanTextTests
     public void Format_MultipleItems_SeparatesEachWithNewline()
     {
         using var temp = new TempDirectory();
-        var workflow = new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("should not start"));
+        var workflow = new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => throw new InvalidOperationException("should not start")));
         var entry1 = Entry("first", temp.Path);
         var entry2 = Entry("second", temp.Path);
         var preflight = workflow.PreflightBatch([entry1, entry2], requireConfirmation: true);

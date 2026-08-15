@@ -14,7 +14,7 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
-public sealed partial class MainWindowViewModel : ObservableObject, IEntryListViewModel, IDisposable
+public sealed partial class MainWindowViewModel : ObservableObject, IEntryListViewModel, ILaunchCoordinatorContext, IDisposable
 {
     internal readonly StoreGrain _storeGrain;
     private readonly string _storePath;
@@ -111,26 +111,16 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         ConfigPathDisplay = LauncherMainWindowText.StorePathDisplay(storePath);
         _statusPresenter.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName!);
         // Construct LaunchOrchestrator early so bridge delegates are ready.
-        _launchOrchestrator = new LaunchOrchestrator(launchWorkflow, dialogService);
+        _launchOrchestrator = new LaunchOrchestrator(launchWorkflow, dialogService, this);
         _launchOrchestrator.CommandTemplates = CurrentSettings.CommandTemplates;
         _launchOrchestrator.RequireConfirmationForLaunches = CurrentSettings.RequireConfirmationForLaunches;
-        _launchOrchestrator.SettingsGetter = () => CurrentSettings;
-        _launchOrchestrator.TimestampGetter = () => CurrentTimestampUtc();
-        _launchOrchestrator.DryRunTextSetter = s => DryRunText = s;
-        _launchOrchestrator.StatusApplier = s => StatusContent = s;
-        _launchOrchestrator.FilterApplier = ApplyFilter;
-        _launchOrchestrator.ReorderDiscarder = DiscardDragReorderPreview;
-        _launchOrchestrator.SettingsPersister = TryPersistSettingsChange;
-        // Construct EntryListViewModel early so bridge delegates are ready.
+        // Construct EntryListViewModel early so the coordinator context can read entries.
         _list = new EntryListViewModel(_entryService, _utcNow, _storeGrain, _layoutManager.CardLayout);
         _list.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(EntryListViewModel.StaleDirectoryCount) or nameof(EntryListViewModel.HasStaleDirectories))
                 OnPropertyChanged(e.PropertyName!);
         };
-        _launchOrchestrator.EntryGetter = () => _list.MutableEntries;
-        _launchOrchestrator.SaveConfig = SaveConfig;
-        _launchOrchestrator.HistoryRecorder = AppendRunHistory;
         _launchOrchestrator.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(LaunchOrchestrator.RequireConfirmationForLaunches))
@@ -145,6 +135,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
                 OnPropertyChanged(e.PropertyName!);
             }
         };
+        _launchOrchestrator.MarkContextReady();
         _list.StatusApplier = s => StatusContent = s;
         _list.DragPreviewDiscarder = DiscardDragReorderPreview;
         _list.SelectionUpdater = UpdateSelection;
@@ -469,6 +460,30 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         RefreshSelectionState();
         ApplyFilter();
     }
+
+    LauncherSettings ILaunchCoordinatorContext.GetSettings() => CurrentSettings;
+
+    string ILaunchCoordinatorContext.GetTimestampUtc() => CurrentTimestampUtc();
+
+    void ILaunchCoordinatorContext.SetDryRunText(string text) => DryRunText = text;
+
+    void ILaunchCoordinatorContext.ApplyStatus(LauncherStatusContent status) => StatusContent = status;
+
+    void ILaunchCoordinatorContext.ApplyFilter() => ApplyFilter();
+
+    void ILaunchCoordinatorContext.DiscardDragReorderPreview() => DiscardDragReorderPreview();
+
+    bool ILaunchCoordinatorContext.PersistSettings(
+        Func<LauncherSettings, LauncherSettings> mutator,
+        LauncherStatusContent? successStatus) =>
+        TryPersistSettingsChange(mutator, successStatus);
+
+    IEnumerable<LauncherEntryViewModel> ILaunchCoordinatorContext.GetEntries() => _list.MutableEntries;
+
+    bool ILaunchCoordinatorContext.SaveConfig() => SaveConfig();
+
+    void ILaunchCoordinatorContext.RecordRunHistory(IReadOnlyList<LauncherRunHistoryEntry> entries) =>
+        AppendRunHistory(entries);
 
     /// <summary>释放 StoreGrain 订阅和其他托管资源。</summary>
     public void Dispose()

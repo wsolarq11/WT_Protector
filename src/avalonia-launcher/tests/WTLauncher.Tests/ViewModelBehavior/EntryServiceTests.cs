@@ -69,7 +69,7 @@ public sealed class EntryServiceTests
             "unused.json",
             appStore,
             appStore.Select(s => s),
-            new LauncherLaunchWorkflow(_ => { }),
+            new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => { })),
             dialogs,
             service,
             new PresetService(dialogs),

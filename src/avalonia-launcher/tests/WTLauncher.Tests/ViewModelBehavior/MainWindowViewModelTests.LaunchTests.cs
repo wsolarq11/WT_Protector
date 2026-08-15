@@ -88,7 +88,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add),
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(startedPlans.Add)),
             dialogService: dialogService);
 
         await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
@@ -117,7 +117,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add),
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(startedPlans.Add)),
             dialogService: dialogService);
         dialogService.OnConfirmLaunch = candidate =>
         {
@@ -186,7 +186,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add),
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(startedPlans.Add)),
             dialogService: dialogService);
         dialogService.OnConfirmLaunch = candidate =>
         {
@@ -247,7 +247,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = false },
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add));
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(startedPlans.Add)));
 
         await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
 
@@ -270,7 +270,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = false },
-            launchWorkflow: new LauncherLaunchWorkflow(_ => throw new InvalidOperationException("blocked")));
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(_ => throw new InvalidOperationException("blocked"))));
 
         await viewModel.Entries.Single(entry => entry.Id == "one").LaunchCommand.ExecuteAsync(null);
 
@@ -496,7 +496,7 @@ public sealed partial class MainWindowViewModelTests
             config,
             settings,
             new LauncherSettings { RequireConfirmationForLaunches = true },
-            launchWorkflow: new LauncherLaunchWorkflow(startedPlans.Add),
+            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(startedPlans.Add)),
             dialogService: dialogService);
 
         await viewModel.LaunchSelectedCommand.ExecuteAsync(null);
