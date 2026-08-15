@@ -563,6 +563,7 @@ public sealed partial class MainWindowViewModelTests
         // SaveConfig failed — StatusText MUST preserve the save-error message
         // set by ApplyStatusText, NOT be overwritten by "已请求启动".
         Assert.Contains("存储保存失败", viewModel.StatusText);
+        Assert.Contains("已启动，但运行历史保存失败", viewModel.StatusText);
         Assert.DoesNotContain("已请求启动", viewModel.StatusText);
         Assert.Equal(LauncherStatusTone.Error, viewModel.StatusTone);
 

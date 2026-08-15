@@ -4,6 +4,16 @@
 
 ---
 
+## Wiring Contract Update (2026-08-15)
+
+> The older Func/Action dialog-injection guidance below is retained as history. The current contracts supersede it.
+
+- `IDialogService` opens windows; dialog contracts must not expose `Func<...>` or `Action<...>` bridges.
+- `IProjectionSynchronizer.SynchronizeProjections(ProjectionSyncMode)` is the single projection rebuild entry for `VisibleOnly`, `Mutation`, and `FullReload`. Callers must not invoke private `ApplyFilter` or `RebuildVisibleGroups` directly.
+- `ILaunchCoordinatorContext : IProjectionSynchronizer`; `SaveConfig(LaunchSaveResultKind)` returns `LaunchSaveResult`, distinguishing saves that fail after an external launch side effect.
+- `IConfigExchangeService` wraps import/export file IO; `IUpdateManifestReader` wraps HTTP(S)/local update manifest reads.
+- `MainWindowViewModel` receives `StoreGrain`, `IDialogService`, `IEntryService`, `IPresetService`, `Func<DateTimeOffset>`, and optional `IConfigExchangeService`.
+
 ## Architecture
 
 ```

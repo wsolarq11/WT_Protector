@@ -7,6 +7,20 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
+/// <summary>Distinguishes a store save failure that happened after an external
+/// launch side effect from one that happened before the launch request.</summary>
+public enum LaunchSaveResultKind
+{
+    SaveSucceeded,
+    SaveFailedAfterLaunch,
+    SaveFailedBeforeLaunch,
+}
+
+public readonly record struct LaunchSaveResult(LaunchSaveResultKind Kind, string? ErrorMessage)
+{
+    public bool IsSuccess => Kind == LaunchSaveResultKind.SaveSucceeded;
+}
+
 /// <summary>Coordinator port for everything LaunchOrchestrator needs from the main VM.</summary>
 public interface ILaunchCoordinatorContext : IProjectionSynchronizer
 {
@@ -17,7 +31,7 @@ public interface ILaunchCoordinatorContext : IProjectionSynchronizer
     public void DiscardDragReorderPreview();
     public bool PersistSettings(Func<LauncherSettings, LauncherSettings> mutator, LauncherStatusContent? successStatus);
     public IEnumerable<LauncherEntryViewModel> GetEntries();
-    public bool SaveConfig();
+    public LaunchSaveResult SaveConfig(LaunchSaveResultKind kind);
     public void RecordRunHistory(IReadOnlyList<LauncherRunHistoryEntry> entries);
 }
 
@@ -113,7 +127,7 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
                 var requestedTimestamp = _context.GetTimestampUtc();
                 item.RecordLaunchFromOwner(requestedTimestamp);
                 RecordRunHistory([CreateHistory(entry.Id.Value, entryName, requestedTimestamp, LauncherRunSource.Individual, LauncherRunStatus.Requested)]);
-                if (!_context.SaveConfig())
+                if (!_context.SaveConfig(LaunchSaveResultKind.SaveFailedAfterLaunch).IsSuccess)
                     return;
                 _context.ApplyStatus(LauncherSingleLaunchStatus.Requested(entryName));
             }
@@ -121,7 +135,7 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
             {
                 ErrorLog.Write(ex, "Launch");
                 RecordRunHistory([CreateHistory(entry.Id.Value, entryName, _context.GetTimestampUtc(), LauncherRunSource.Individual, LauncherRunStatus.Failed)]);
-                if (!_context.SaveConfig())
+                if (!_context.SaveConfig(LaunchSaveResultKind.SaveFailedBeforeLaunch).IsSuccess)
                     return;
                 if (entryName.Length == 0)
                 {
@@ -162,7 +176,7 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
         {
             ErrorLog.Write(ex, "LaunchConfirmation");
             RecordRunHistory([CreateHistory(entryId, entryName, _context.GetTimestampUtc(), LauncherRunSource.Individual, LauncherRunStatus.Failed)]);
-            if (!_context.SaveConfig())
+            if (!_context.SaveConfig(LaunchSaveResultKind.SaveFailedBeforeLaunch).IsSuccess)
                 return false;
             _context.SetDryRunText(LauncherSingleLaunchReceiptText.ConfirmationFailed(entryName, plan, ex));
             _context.ApplyStatus(LauncherSingleLaunchStatus.Failed(entryName, ex));
@@ -173,7 +187,7 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
             return true;
 
         RecordRunHistory([CreateHistory(entryId, entryName, _context.GetTimestampUtc(), LauncherRunSource.Individual, LauncherRunStatus.Canceled)]);
-        if (!_context.SaveConfig())
+        if (!_context.SaveConfig(LaunchSaveResultKind.SaveFailedBeforeLaunch).IsSuccess)
             return false;
         _context.SetDryRunText(LauncherSingleLaunchReceiptText.Canceled(entryName, plan));
         _context.ApplyStatus(LauncherSingleLaunchStatus.Canceled(entryName));
@@ -249,7 +263,7 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
             // Save AFTER timestamps are recorded so launch history is persisted.
             _context.SetDryRunText(LauncherBatchLaunchReceiptText.Format(preflight, report));
             RecordRunHistory(BuildBatchHistory(preflight.Items, report, timestamp, source));
-            if (!_context.SaveConfig())
+            if (!_context.SaveConfig(LaunchSaveResultKind.SaveFailedAfterLaunch).IsSuccess)
                 return;
             _context.ApplyStatus(completedStatus(report));
         }
@@ -258,7 +272,7 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
             if (completedReport is not null)
             {
                 RecordRunHistory(BuildBatchHistory(preflight.Items, completedReport, _context.GetTimestampUtc(), source));
-                if (!_context.SaveConfig())
+                if (!_context.SaveConfig(LaunchSaveResultKind.SaveFailedAfterLaunch).IsSuccess)
                     return;
             }
             _context.SetDryRunText(LauncherBatchLaunchReceiptText.Canceled(preflight?.Items ?? []));
@@ -303,7 +317,7 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
         {
             ErrorLog.Write(ex, "BatchLaunchConfirmation");
             RecordRunHistory(BuildDecisionHistory(items, report, source, LauncherRunStatus.Failed, _context.GetTimestampUtc()));
-            if (!_context.SaveConfig())
+            if (!_context.SaveConfig(LaunchSaveResultKind.SaveFailedBeforeLaunch).IsSuccess)
                 return false;
             _context.SetDryRunText(LauncherBatchLaunchReceiptText.ConfirmationFailed(confirmation.Items, ex));
             _context.ApplyStatus(failedStatus(ex));
@@ -314,7 +328,7 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
             return true;
 
         RecordRunHistory(BuildDecisionHistory(items, report, source, LauncherRunStatus.Canceled, _context.GetTimestampUtc()));
-        if (!_context.SaveConfig())
+        if (!_context.SaveConfig(LaunchSaveResultKind.SaveFailedBeforeLaunch).IsSuccess)
             return false;
         _context.SetDryRunText(LauncherBatchLaunchReceiptText.Canceled(confirmation.Items));
         _context.ApplyStatus(canceledStatus(confirmation.Items.Count));

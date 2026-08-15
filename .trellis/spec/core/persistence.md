@@ -4,6 +4,13 @@
 
 ---
 
+## Wiring Contract Update (2026-08-15)
+
+- `StoreMutationSession` is the single transaction primitive for multi-step ViewModel mutation commits: `Commit` saves once, and `Dispose` restores in-memory state when the caller did not commit.
+- `StoreGrain.ReloadFromDisk` fires `Reloaded`; `MainWindowViewModel` performs one `SynchronizeProjections(ProjectionSyncMode.FullReload)` pass while suppressing intermediate `EntriesChanged` syncs.
+- Canonical store writes still go through `StoreGrain` → atomic `LauncherJson.Save`. External import/export reads/writes are wrapped by `IConfigExchangeService`.
+- Launch history saves use `LaunchSaveResult` so the caller can distinguish “save failed before launch” from “launch happened but history save failed.”
+
 ## JSON Persistence Engine
 
 **Source:** `src/avalonia-launcher/src/WTLauncher.Core/LauncherJson.cs`

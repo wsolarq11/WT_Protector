@@ -343,16 +343,19 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
             StatusContent = status;
     }
 
-    private bool SaveConfig()
+    private LaunchSaveResult SaveConfig(LaunchSaveResultKind kind)
     {
         var saveFailure = SaveStoreFile(BuildStoreFile());
         if (saveFailure is not null)
         {
-            ApplyStatusText(saveFailure);
-            return false;
+            var status = kind == LaunchSaveResultKind.SaveFailedAfterLaunch
+                ? LauncherStatusContent.Error($"已启动，但运行历史保存失败：{saveFailure}")
+                : LauncherStatusContent.Error(saveFailure);
+            ApplyStatusText(status);
+            return new LaunchSaveResult(kind, saveFailure);
         }
 
-        return true;
+        return new LaunchSaveResult(LaunchSaveResultKind.SaveSucceeded, null);
     }
 
     /// <summary>Builds a LauncherStoreFile snapshot from current in-memory state.</summary>
@@ -492,7 +495,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
     IEnumerable<LauncherEntryViewModel> ILaunchCoordinatorContext.GetEntries() => _list.MutableEntries;
 
-    bool ILaunchCoordinatorContext.SaveConfig() => SaveConfig();
+    LaunchSaveResult ILaunchCoordinatorContext.SaveConfig(LaunchSaveResultKind kind) => SaveConfig(kind);
 
     void ILaunchCoordinatorContext.RecordRunHistory(IReadOnlyList<LauncherRunHistoryEntry> entries) =>
         AppendRunHistory(entries);

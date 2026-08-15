@@ -1,7 +1,7 @@
 # 业务接线与边界总账
 
-- 状态：Active
-- 对齐基线：当前 Avalonia 主线源码（HEAD `c269fdf4`，2026-08-15）
+- 状态：Contracted（Phase 1-6 landed）
+- 对齐基线：当前 Avalonia 主线源码（2026-08-15，接线契约化已完成）
 - 范围：`src/avalonia-launcher/` 主线代码 + `config/launcher.json` 统一存储契约
 - 方法：按“View 入口 → ViewModel/Manager/Service → StoreGrain → 文件持久化 → 外部进程/系统能力”逐条溯源；只记录当前事实和已观察到的脆弱接线点，不新增架构决策。
 
@@ -47,9 +47,9 @@ MainWindowViewModel
 ### 2. 刷新与重新加载
 
 - 入口：`MainWindowViewModel.Refresh`
-- 接线：先 `DiscardDragReorderPreview` → `StoreGrain.ReloadFromDisk` → `EntryListViewModel.ReplaceEntries` → `EnsureCustomOrderContainsEntries` → 校验 `$key` 模板引用 → 重载 preset → 校验 preset 引用 → `RefreshSelectionState` + `ApplyFilter`
+- 接线：先 `DiscardDragReorderPreview` → `StoreGrain.ReloadFromDisk` → `Reloaded` 事件 → `EntryListViewModel.ReplaceEntries` → `EnsureCustomOrderContainsEntries` → 校验 `$key` 模板引用 → 重载 preset → 校验 preset 引用 → `SynchronizeProjections(ProjectionSyncMode.FullReload)`
 - 边界：
-  - `ReloadFromDisk` 不触发 StoreGrain 订阅；VM 必须手动同步 UI 投影。
+  - `Reloaded` 事件期间抑制中间 `EntriesChanged` 同步，Reload 只走一次全量投影同步。
   - 缺失模板 key 只显示状态，不阻止加载；preset 悬空引用写 ErrorLog，不抛异常。
   - 任何 mutation 入口都必须先丢弃拖拽预览，防止幽灵插入状态泄漏到刷新后的视图。
 
@@ -64,7 +64,7 @@ MainWindowViewModel
 - 边界：
   - 保存失败发生在 Dispatch 之前时，VM 集合尚未改动；Dispatch 失败时 store 不变，VM 通过 `RestoreVmStateFromStore` 恢复。
   - 每个 mutation 第一步丢弃拖拽预览。
-  - 已知接线缝隙：`EntryDetailsWindow` code-behind 已调用 `LauncherEntryDrafts.TryNormalizeRequiredDraft`，服务层随后还会再校验一次；这是双重校验路径，不是双重写盘。
+  - `EntryDetailsWindow` 与 `PresetDetailsWindow` 通过 `IEntryDraftValidator` 做即时反馈；服务层仍负责最终校验，两者共用同一端口实现，View code-behind 不再直接调 Core 规范化。
 
 ### 4. 勾选与批量选择
 
@@ -78,17 +78,17 @@ MainWindowViewModel
 ### 5. 单条启动
 
 - 入口：`LauncherEntryViewModel.LaunchCommand` / 快速启动 Enter / 主窗口键盘 Enter
-- 接线：`IEntryCardHost.LaunchAsync` → `LaunchOrchestrator.LaunchAsync` → `LauncherLaunchWorkflow.BuildPlan` → 需要时 `ConfirmLaunchAsync` → `_launchWorkflow.Start(plan)` → `RecordLaunchFromOwner` + `RecordRunHistory` → `SaveConfig`
+- 接线：`IEntryCardHost.LaunchAsync` → `LaunchOrchestrator.LaunchAsync` → `LauncherLaunchWorkflow.BuildPlan` → 需要时 `ConfirmLaunchAsync` → `_launchWorkflow.Start(plan)` → `RecordLaunchFromOwner` + `RecordRunHistory` → `SaveConfig(LaunchSaveResultKind.SaveFailedAfterLaunch)`
 - 边界：
   - `Start` 是唯一外部进程边界：`Process.Start` 只表示“启动请求已发出”，不表示终端会话健康。
   - 启动参数由 Core `LaunchArgumentBuilder` 生成（wt.exe 路径探测、目录存在性、统一确认开关、`$key` 模板解析）。
-  - 进程已经启动后发生的配置保存失败无法回滚外部副作用；代码会显示保存错误状态，但运行历史/启动次数已在内存中变化。
+  - 进程已经启动后发生的配置保存失败无法回滚外部副作用；`LaunchSaveResultKind.SaveFailedAfterLaunch` 明确表达该语义，状态栏显示“已启动，但运行历史保存失败”，运行历史/启动次数仅在内存中变化。
   - 取消确认会写入 `Canceled` 运行历史并保存。
 
 ### 6. 批量启动（勾选/预设/分组）
 
 - 入口：`LaunchSelectedAsync`、`LaunchSelectedPresetAsync`、卡片分组 `LaunchGroupAsync`
-- 接线：`LaunchOrchestrator.LaunchBatchAsync` → `PreflightBatch` → 需要时 `ConfirmBatchLaunchAsync` → `StartBatch(preflight, CancellationToken)` → 按条目生成报告 → 更新启动时间/次数 → 写运行历史 → `SaveConfig`
+- 接线：`LaunchOrchestrator.LaunchBatchAsync` → `PreflightBatch` → 需要时 `ConfirmBatchLaunchAsync` → `StartBatch(preflight, CancellationToken)` → 按条目生成报告 → 更新启动时间/次数 → 写运行历史 → `SaveConfig(LaunchSaveResultKind.SaveFailedAfterLaunch)`
 - 边界：
   - 预演与实际启动共用 `LauncherLaunchWorkflow.PreflightBatch`，避免“预演路径 ≠ 实际路径”。
   - 单个条目失败不会中止其余条目；取消通过 batch-level `CancellationTokenSource` 停止后续启动。
@@ -111,17 +111,17 @@ MainWindowViewModel
 ### 8. 命令管理
 
 - 入口：`OpenCommandManagementAsync`
-- 接线：`CommandUsageAnalyzer` 生成命令/模板快照 → `DialogService` 打开 `CommandManagementWindow` → `CommandManagementViewModel` 只发 edit → `MainWindowViewModel.ApplyCommandManagementEdit` 作为事务回调执行 mutation → 保存 → 刷新命令行/模板行
+- 接线：`CommandUsageAnalyzer` 生成命令/模板快照 → `IDialogService.OpenCommandManagementAsync(ICommandEditApplier)` → `CommandManagementViewModel` 只发 edit → `ICommandEditApplier.Apply` → `StoreMutationSession` 单次 Commit → 刷新命令行/模板行
 - 边界：
   - 对话框自身不持 store、不写盘；所有变更回主 VM 执行。
   - 模板 key 重命名会级联更新 entry 的 `$key` 引用；模板新增/删除/改值只改 settings，不碰 entry 命令文本（删除只清理未引用视图）。
   - 保存成功后必须重新同步 `LaunchOrchestrator.CommandTemplates`，否则后续启动仍吃到旧模板。
-  - 已观察到的接线缝隙：模板相关 edit 在 `ApplyEditAndReturnStatus` 内部先调了一次 `SaveStoreFile`，外层 `ApplyCommandManagementEdit` 再保存一次；当前是“双保存”事实，需要后续决策是否收敛为单次事务保存。
+  - 模板相关 edit 已移除内层保存，统一由外层 `StoreMutationSession` 单次 Commit。
 
 ### 9. 地址管理
 
 - 入口：`OpenDirectoryManagementAsync`
-- 接线：`DirectoryUsageAnalyzer` 生成地址引用快照 → `DirectoryManagementWindow` → `MainWindowViewModel.ApplyDirectoryManagementEdit` → 批量 rename/merge/delete 对应 entry 的 directory → `SaveStoreFile`
+- 接线：`DirectoryUsageAnalyzer` 生成地址引用快照 → `IDialogService.OpenDirectoryManagementAsync(IDirectoryEditApplier)` → `MainWindowViewModel.ApplyDirectoryManagementEdit` → 批量 rename/merge/delete 对应 entry 的 directory → `StoreMutationSession` 单次 Commit
 - 边界：
   - rename/merge 会同步更新所有匹配 entry 的 `UpdatedAtUtc`；delete 只清理未引用地址视图，不删除 entry。
   - 保存失败时 `RestoreVmStateFromStore` 恢复集合。
@@ -166,8 +166,8 @@ MainWindowViewModel
 
 ### 15. 导入/导出
 
-- 导出：`ExportAllConfigAsync` / `ExportSelectedConfigAsync` → `PickExportPathAsync` → `LauncherConfigExchange.BuildExportFile` → `LauncherJson.Save`（写用户选择的外部路径）
-- 导入：`ImportConfigAsync` → `PickImportPathAsync` → `LauncherStore.Load` → `ImportMigrationWindow` 生成 `LauncherImportPlan` → `LauncherConfigExchange.ApplyImport` → `SaveStoreFile(merged)` → `ApplyStoreFileToVm`
+- 导出：`ExportAllConfigAsync` / `ExportSelectedConfigAsync` → `PickExportPathAsync` → `IConfigExchangeService.BuildExport` → `IConfigExchangeService.SaveExport`（写用户选择的外部路径）
+- 导入：`ImportConfigAsync` → `PickImportPathAsync` → `IConfigExchangeService.LoadImport` → `ImportMigrationWindow` 生成 `LauncherImportPlan` → `IConfigExchangeService.ApplyImport` → StoreGrain 保存 `merged` → `ApplyStoreFileToVm`
 - 边界：
   - 导入对话框预览重复 ID、缺失目录、无效 preset 引用，并允许跳过/目录覆盖。
   - 导入合并结果先经 StoreGrain 保存，成功后同步 VM；保存失败先 `RestoreVmStateFromStore`。
@@ -176,7 +176,7 @@ MainWindowViewModel
 ### 16. 更新检查
 
 - 入口：`CheckForUpdatesAsync`
-- 接线：`DialogService` → `UpdateCheckWindow` → `UpdateCheckViewModel` → `UpdateCheckService` → `settings.updateManifestUrl`（HTTP(S) 或本地文件）→ Core manifest 解析/版本比较
+- 接线：`DialogService` → `UpdateCheckWindow` → `UpdateCheckViewModel` → `UpdateCheckService(IUpdateManifestReader)` → `settings.updateManifestUrl`（HTTP(S) 或本地文件）→ Core manifest 解析/版本比较
 - 边界：
   - 只读检查，不下载安装；无 manifest URL 时返回配置提示。
   - 网络/文件读取错误转成窗口内错误状态，不影响主 store。
@@ -185,10 +185,10 @@ MainWindowViewModel
 
 - 状态：`LayoutManager` 是单一可写 owner；`IsCustomSortMode/IsCardsViewMode/...` 都是投影。
 - 接线：LayoutManager 事件 → MWVM 持久化回调：
-  - FilterText → `DispatchErrorOr` 保存 `lastFilterText`
+  - FilterText → `DispatchErrorOr` 保存 `lastFilterText`，随后统一走 `SynchronizeProjections(ProjectionSyncMode.VisibleOnly)`
   - SortMode → 保存 `sortMode`
   - EntryViewMode → 保存 `entryViewMode`
-  - CardsGroupKey → 保存 `cardsGroupKey` 并重建分组
+  - CardsGroupKey → 保存 `cardsGroupKey`，随后统一走 `SynchronizeProjections(ProjectionSyncMode.VisibleOnly)`
   - Enter 提交搜索 → `LauncherSearchHistory.Record` 保存 `searchHistory`（上限 20）
 - 边界：
   - 保存失败时把 LayoutManager 回滚到 StoreGrain 值，再刷新。
@@ -232,18 +232,20 @@ MainWindowViewModel
 - 规划任务：`.trellis/tasks/08-15-wiring-system-plan/design.md`（档位 2：接线契约化）
 - 实施计划：`.trellis/tasks/08-15-wiring-system-plan/implement.md`
 
-## 当前需要人工决策的接线点
+## 已契约化的接线点（Phase 1-6）
 
-- 命令管理模板 edit 存在内层保存 + 外层保存的双保存路径。
-- `EntryDetailsWindow` code-behind 直接调用 Core draft 规范化，服务层再校验；功能上安全，但接线边界不干净。
-- `StoreGrain.ReloadFromDisk` 不通知订阅者，刷新路径依赖 VM 手动全量重同步。
-- 启动副作用先于配置保存；若历史/启动次数保存失败，内存中已变化而磁盘未保存，当前只显示错误，不做内存回滚。
-- 导入/导出通过 `LauncherJson.Save` 写外部文件，与规范 store 的 StoreGrain 写入不是同一事务边界。
+- 命令管理/地址管理 mutation 已收敛到 `StoreMutationSession` 单次 Commit；双保存回归测试覆盖。
+- Entry/Preset 表单通过 `IEntryDraftValidator`，View code-behind 不再直接调 Core 规范化；`views-no-direct-core-business-calls` 门禁生效。
+- `StoreGrain.ReloadFromDisk` 通过 `Reloaded` 事件触发 `SynchronizeProjections(ProjectionSyncMode.FullReload)` 单次全量同步。
+- 启动保存已改为 `LaunchSaveResult`，区分“启动前保存失败”与“启动后保存失败”，并给出明确用户文案与内存策略。
+- 导入/导出通过 `IConfigExchangeService`，更新检查通过 `IUpdateManifestReader`；`dialog-service-no-func-action` 门禁生效。
 
 ## 证据文件
 
 - 入口/接线：`src/avalonia-launcher/src/WTLauncher.App/App.axaml.cs`
 - 编排：`src/avalonia-launcher/src/WTLauncher.App/ViewModels/MainWindowViewModel*.cs`
-- 启动/持久化：`src/avalonia-launcher/src/WTLauncher.App/ViewModels/LaunchOrchestrator.cs`、`Infrastructure/StoreGrain.cs`、`Infrastructure/FileStorePersistence.cs`
+- 启动/持久化：`src/avalonia-launcher/src/WTLauncher.App/ViewModels/LaunchOrchestrator.cs`、`Infrastructure/StoreGrain.cs`、`Infrastructure/FileStorePersistence.cs`、`Infrastructure/StoreMutationSession.cs`
+- 投影/协作端口：`ViewModels/IProjectionSynchronizer.cs`、`ViewModels/LaunchOrchestrator.cs`（`ILaunchCoordinatorContext`）
 - Entry/Preset/布局/状态：`Features/Entries/EntryListViewModel.cs`、`ViewModels/PresetManager.cs`、`ViewModels/LayoutManager.cs`、`ViewModels/StatusPresenter.cs`
+- 外部 IO：`Features/ConfigExchangeService.cs`、`Features/Updates/UpdateCheckService.cs`
 - 平台接线：`Platform/Win32HotkeyService.cs`、`Platform/Win32TrayIcon.cs`、`Views/MainWindow.Drag.cs`

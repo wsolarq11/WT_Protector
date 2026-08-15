@@ -4,6 +4,13 @@
 
 ---
 
+## Wiring Contract Update (2026-08-15)
+
+- `IDialogService` must not expose `Func<...>` or `Action<...>` bridge parameters.
+- Command/directory management dialogs receive `ICommandEditApplier` / `IDirectoryEditApplier`; the dialog ViewModel applies edits through the port and never persists itself.
+- `EntryDetailsWindow` and `PresetDetailsWindow` receive `IEntryDraftValidator`; code-behind must not call Core normalization directly.
+- Views construct windows only through `DialogService`; business validation and file IO stay behind feature ports.
+
 ## Dialog Inventory
 
 | Dialog | File | Return Type | Purpose |

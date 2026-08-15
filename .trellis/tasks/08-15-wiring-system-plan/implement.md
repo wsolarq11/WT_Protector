@@ -8,9 +8,9 @@
 
 ## Phase 0：基线固化
 
-- [ ] 确认 `git diff --check` + `tools/verify.ps1` 全绿。
-- [ ] 为 8 个接线系统各建立最小 wiring 测试文件（仅当现有测试未覆盖时才新增）。
-- [ ] 记录每阶段回滚 commit 基线。
+- [x] 确认 `git diff --check` + `tools/verify.ps1` 全绿。
+- [x] 为 8 个接线系统各建立最小 wiring 测试文件（仅当现有测试未覆盖时才新增）。
+- [x] 记录每阶段回滚 commit 基线。
 
 ## Phase 1：事务保存与双保存
 
