@@ -22,10 +22,10 @@ public readonly record struct LaunchSaveResult(LaunchSaveResultKind Kind, string
 }
 
 /// <summary>Coordinator port for everything LaunchOrchestrator needs from the main VM.</summary>
-public interface ILaunchCoordinatorContext : IProjectionSynchronizer
+public interface ILaunchCoordinatorContext : ICommandExecutionContext
 {
     public LauncherSettings GetSettings();
-    public string GetTimestampUtc();
+    public new string GetTimestampUtc();
     public void SetDryRunText(string text);
     public void ApplyStatus(LauncherStatusContent status);
     public void DiscardDragReorderPreview();

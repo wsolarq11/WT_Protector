@@ -15,7 +15,7 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
-public sealed partial class MainWindowViewModel : ObservableObject, IEntryListViewModel, ILaunchCoordinatorContext, ICommandEditApplier, IDirectoryEditApplier, IProjectionSynchronizer, IDisposable
+public sealed partial class MainWindowViewModel : ObservableObject, IEntryListViewModel, ILaunchCoordinatorContext, ICommandExecutionContext, IStatusSink, ICommandEditApplier, IDirectoryEditApplier, IProjectionSynchronizer, IDisposable
 {
     internal readonly StoreGrain _storeGrain;
     private readonly string _storePath;
@@ -477,6 +477,16 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
     void IProjectionSynchronizer.SynchronizeProjections(ProjectionSyncMode mode) =>
         SynchronizeProjections(mode);
+
+    StoreGrain ICommandExecutionContext.Store => _storeGrain;
+
+    IStatusSink ICommandExecutionContext.Status => this;
+
+    string ICommandExecutionContext.GetTimestampUtc() => CurrentTimestampUtc();
+
+    void IStatusSink.Apply(LauncherStatusContent status) => StatusContent = status;
+
+    void IStatusSink.SetDryRunText(string text) => DryRunText = text;
 
     LauncherSettings ILaunchCoordinatorContext.GetSettings() => CurrentSettings;
 

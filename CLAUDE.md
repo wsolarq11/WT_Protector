@@ -92,7 +92,7 @@ Source under `src/avalonia-launcher/src/`. Layers depend only on lower layers.
 | 3 — Orchestration | `MainWindowViewModel` (the single writable owner of UI state) | delegates reusable rules to Core, injects dialog `Func<>`s through `MainWindow` ctor | Keep a second copy of state that drifts from the single owner |
 | 4 — Views | `WTLauncher.App/Views/` (`MainWindow.axaml` hosts the 3 view modes — Cards / Details / Names — whose bodies live in `LauncherEntriesView.axaml`) | XAML, drag ghost + insert indicators, code-behind = windowing only (drag hit-test, dialog injection, keyboard nav) | Business decisions / `if` statements about launch logic |
 
-Tests: `src/avalonia-launcher/tests/WTLauncher.Tests/` — xUnit, 737 `[Fact]`/`[Theory]` attributes across all layers (incl. Roslyn analyzer suite; the gate runs 820 cases). These are the mainline gate.
+Tests: `src/avalonia-launcher/tests/WTLauncher.Tests/` — xUnit, 739 `[Fact]`/`[Theory]` attributes across all layers (incl. Roslyn analyzer suite; the gate runs 822 cases). These are the mainline gate.
 
 ## Non-negotiable invariants (these bite when broken)
 

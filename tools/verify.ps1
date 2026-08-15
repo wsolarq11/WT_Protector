@@ -893,15 +893,15 @@ Add-Check 'vtk-no-appstore-residue' @{
 # 5.1 without a BOM (ANSI decoding), so non-ASCII literals would silently mismatch.
 $baselineRows = @(
     @{ Label = 'WTLauncher.Core C# files';          Path = 'src\avalonia-launcher\src\WTLauncher.Core';            Filter = '*.cs';                 Count = 53 }
-    @{ Label = 'ViewModels C# files';               Path = 'src\avalonia-launcher\src\WTLauncher.App\ViewModels';   Filter = '*.cs';                 Count = 54 }
+    @{ Label = 'ViewModels C# files';               Path = 'src\avalonia-launcher\src\WTLauncher.App\ViewModels';   Filter = '*.cs';                 Count = 56 }
     @{ Label = 'MainWindowViewModel partials';     Path = 'src\avalonia-launcher\src\WTLauncher.App\ViewModels';   Filter = 'MainWindowViewModel.*.cs'; Count = 15 }
     @{ Label = 'Features C# files';                 Path = 'src\avalonia-launcher\src\WTLauncher.App\Features';     Filter = '*.cs';                 Count = 16 }
     @{ Label = 'Views C# files';                    Path = 'src\avalonia-launcher\src\WTLauncher.App\Views';        Filter = '*.cs';                 Count = 24 }
     @{ Label = 'Views AXAML files';                 Path = 'src\avalonia-launcher\src\WTLauncher.App\Views';        Filter = '*.axaml';              Count = 20 }
     @{ Label = 'WTLauncher.Analyzers C# files';     Path = 'src\avalonia-launcher\src\WTLauncher.Analyzers';        Filter = '*.cs';                 Count = 7 }
-    @{ Label = 'Tests C# files';                    Path = 'src\avalonia-launcher\tests\WTLauncher.Tests';         Filter = '*.cs';                 Count = 121 }
+    @{ Label = 'Tests C# files';                    Path = 'src\avalonia-launcher\tests\WTLauncher.Tests';         Filter = '*.cs';                 Count = 122 }
 )
-$baselineTestAttributes = 737
+$baselineTestAttributes = 739
 $baselineViolations = @()
 foreach ($row in $baselineRows) {
     $baselineDir = Get-RepoPath $row.Path
