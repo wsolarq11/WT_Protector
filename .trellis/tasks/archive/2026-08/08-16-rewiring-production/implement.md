@@ -47,3 +47,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
 ## Rollback
 
 Each phase is an independent commit. If a phase fails gate, revert only that phase commit.
+
+## Landing
+
+- Phase A `33577f2e` (context and ports)
+- Phase B `4cbf9590` (preset and layout)
+- Phase C `5a5bca54` (selection, maintenance, entry)
+- Phase D `eef7d4ad` (exchange and update)
+- Phase E `e5fc23dc` (wiring map and 43-check gate)
+- Final verification: `dotnet build -warnaserror` 0 warnings, 832 tests passed, `tools/verify.ps1` PASS

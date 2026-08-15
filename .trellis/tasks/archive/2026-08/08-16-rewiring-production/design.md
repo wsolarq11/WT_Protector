@@ -45,3 +45,7 @@ Views -> MainWindowViewModel command surface -> Workflow -> ICommandExecutionCon
 - ViewModels/IStatusSink.cs, ViewModels/ICommandExecutionContext.cs.
 - docs/wiring-map.md: port ledger.
 - tools/verify.ps1: three new checks.
+
+## Implementation Status
+
+All phases landed: A `33577f2e`, B `4cbf9590`, C `5a5bca54`, D `eef7d4ad`, E `e5fc23dc`. Final gate 43 checks green, 832 tests, MainWindowViewModel total 1168 lines.

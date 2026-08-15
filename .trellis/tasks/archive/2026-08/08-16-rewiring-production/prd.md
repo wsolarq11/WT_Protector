@@ -16,13 +16,13 @@
 
 ## Acceptance Criteria
 
-- [ ] MainWindowViewModel*.cs 总行数 <= 1200。
-- [ ] 6 个 Command Workflow 均有独立测试文件，覆盖成功、失败回滚、取消/空输入。
-- [ ] MainWindowViewModel 不再直接触碰 IConfigExchangeService / IUpdateManifestReader。
-- [ ] docs/wiring-map.md 与源码端口一致性由门禁校验。
-- [ ] 门禁 checks 从 40 升到 43：wiring-map-consistency、main-vm-line-budget、workflow-no-callback-bag。
-- [ ] dotnet build -warnaserror 0 警告；dotnet test 全绿；tools/verify.ps1 全绿。
-- [ ] 结构基线同步更新（ViewModels 文件数、partials、Tests、attributes、checks）。
+- [x] MainWindowViewModel*.cs 总行数 <= 1200（实测 1168）。
+- [x] 6 个 Command Workflow 均有独立测试文件，覆盖成功、失败回滚、取消/空输入。
+- [x] MainWindowViewModel 不再直接触碰 IConfigExchangeService / IUpdateManifestReader。
+- [x] docs/wiring-map.md 与源码端口一致性由门禁校验。
+- [x] 门禁 checks 从 40 升到 43：wiring-map-consistency、main-vm-line-budget、workflow-no-callback-bag。
+- [x] dotnet build -warnaserror 0 警告；dotnet test 832 全绿；tools/verify.ps1 43 checks 全绿。
+- [x] 结构基线同步更新（ViewModels 65、partials 15、Tests 129、attributes 749、checks 43）。
 
 ## Notes
 
