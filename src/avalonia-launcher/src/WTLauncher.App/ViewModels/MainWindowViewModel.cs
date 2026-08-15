@@ -14,11 +14,12 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
-public sealed partial class MainWindowViewModel : ObservableObject, IEntryListViewModel, ILaunchCoordinatorContext, ICommandEditApplier, IDirectoryEditApplier, IDisposable
+public sealed partial class MainWindowViewModel : ObservableObject, IEntryListViewModel, ILaunchCoordinatorContext, ICommandEditApplier, IDirectoryEditApplier, IProjectionSynchronizer, IDisposable
 {
     internal readonly StoreGrain _storeGrain;
     private readonly string _storePath;
     private bool _initialized;
+    private bool _isApplyingStoreReload;
     private readonly IDisposable? _storeSubscription;
     /// <summary>Read-only settings snapshot from StoreGrain. Eliminates the old dual-source _settings field.
     /// Phase 1c: Closed Flux Architecture (07-25).</summary>
@@ -128,7 +129,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
                 OnPropertyChanged(nameof(RequireConfirmationForLaunches));
                 OnPropertyChanged(nameof(LaunchConfirmationToggleText));
                 OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
-                ApplyFilter();
+                SynchronizeProjections(ProjectionSyncMode.VisibleOnly);
             }
             else
             {
@@ -188,7 +189,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         // Sync via dispatch if order is empty or stale.
         EnsureCustomOrderContainsEntries();
         RefreshSelectionState();
-        ApplyFilter();
+        SynchronizeProjections(ProjectionSyncMode.VisibleOnly);
         // Notify initial UI state for launch confirmation toggle (bypassed direct init).
         OnPropertyChanged(nameof(RequireConfirmationForLaunches));
         OnPropertyChanged(nameof(LaunchConfirmationToggleText));
@@ -216,8 +217,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     
     private void OnEntriesChanged()
     {
-        if (!_initialized) return;
-        RefreshAllProjections();
+        if (!_initialized || _isApplyingStoreReload) return;
+        SynchronizeProjections(ProjectionSyncMode.Mutation);
     }
 
     private void OnEntryCountChanged()
@@ -256,35 +257,41 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
 
     private void OnStoreReloaded(LauncherStoreFile storeFile)
     {
+        _isApplyingStoreReload = true;
         try
         {
-            _list.ReplaceEntries(storeFile.Entries);
-            _list.KeyboardFocusedEntryId = null;
-            EnsureCustomOrderContainsEntries();
-
-            // Cross-validate $key command references against commandTemplates.
-            ValidateCommandTemplateReferences();
-
-            LoadPresetFile(preferredPresetId: null);
-
-            ValidatePresetEntryReferences();
-            RefreshSelectionState();
-            ApplyFilter();
-            StatusContent = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
-        }
-        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-        {
-            ErrorLog.Write(ex, "Refresh.Validate");
-            StatusContent = LauncherMainWindowText.ConfigValidationFailed(ExceptionMessageFormatter.ForUser(ex));
-            // Reload preset file to ensure _presetFile and UI state are consistent
-            // after a partial failure during Phase 2 validation.
-            try { LoadPresetFile(preferredPresetId: null); }
-            catch (Exception presetEx) when (ExceptionFilters.IsRecoverable(presetEx))
+            try
             {
-                ErrorLog.Write(presetEx, "Refresh.ReloadPresetFile");
+                _list.ReplaceEntries(storeFile.Entries);
+                _list.KeyboardFocusedEntryId = null;
+                EnsureCustomOrderContainsEntries();
+
+                // Cross-validate $key command references against commandTemplates.
+                ValidateCommandTemplateReferences();
+
+                LoadPresetFile(preferredPresetId: null);
+
+                ValidatePresetEntryReferences();
+                SynchronizeProjections(ProjectionSyncMode.FullReload);
+                StatusContent = LauncherMainWindowText.Loaded(TotalCount, PresetCount);
             }
-            RefreshSelectionState();
-            ApplyFilter();
+            catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+            {
+                ErrorLog.Write(ex, "Refresh.Validate");
+                StatusContent = LauncherMainWindowText.ConfigValidationFailed(ExceptionMessageFormatter.ForUser(ex));
+                // Reload preset file to ensure _presetFile and UI state are consistent
+                // after a partial failure during Phase 2 validation.
+                try { LoadPresetFile(preferredPresetId: null); }
+                catch (Exception presetEx) when (ExceptionFilters.IsRecoverable(presetEx))
+                {
+                    ErrorLog.Write(presetEx, "Refresh.ReloadPresetFile");
+                }
+                SynchronizeProjections(ProjectionSyncMode.FullReload);
+            }
+        }
+        finally
+        {
+            _isApplyingStoreReload = false;
         }
     }
 
@@ -412,7 +419,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _runHistory = LauncherRunHistory.Sanitize(_storeGrain.Select(s => s.RunHistory));
         OnPropertyChanged(nameof(RunHistoryCount));
         EnsureCustomOrderContainsEntries();
-        RefreshAllProjections();
+        SynchronizeProjections(ProjectionSyncMode.Mutation);
     }
 
     internal void SetKeyboardFocusedEntryId(string? value)
@@ -452,14 +459,17 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     private IEnumerable<string> GetEntryIds() =>
         _list.MutableEntries.Select(entry => entry.Id);
 
-    /// <summary>Refreshes all in-memory projections after a mutation.
-    /// Call at the end of any mutation that changes entry/preset state
-    /// to keep selection state and filter consistent.</summary>
-    private void RefreshAllProjections()
+    /// <summary>Single projection sync entry. VisibleOnly is safe for filter/sort/
+    /// group changes; Mutation and FullReload also refresh selection-derived state.</summary>
+    private void SynchronizeProjections(ProjectionSyncMode mode)
     {
-        RefreshSelectionState();
-        ApplyFilter();
+        if (mode != ProjectionSyncMode.VisibleOnly)
+            RefreshSelectionState();
+        RebuildVisibleProjection();
     }
+
+    void IProjectionSynchronizer.SynchronizeProjections(ProjectionSyncMode mode) =>
+        SynchronizeProjections(mode);
 
     LauncherSettings ILaunchCoordinatorContext.GetSettings() => CurrentSettings;
 
@@ -468,8 +478,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     void ILaunchCoordinatorContext.SetDryRunText(string text) => DryRunText = text;
 
     void ILaunchCoordinatorContext.ApplyStatus(LauncherStatusContent status) => StatusContent = status;
-
-    void ILaunchCoordinatorContext.ApplyFilter() => ApplyFilter();
 
     void ILaunchCoordinatorContext.DiscardDragReorderPreview() => DiscardDragReorderPreview();
 

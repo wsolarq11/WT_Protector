@@ -52,8 +52,7 @@ public sealed partial class MainWindowViewModel
         if (saveFailure is not null)
             return DirectoryFailure(saveFailure);
 
-        RefreshSelectionState();
-        ApplyFilter();
+        SynchronizeProjections(ProjectionSyncMode.Mutation);
         return DirectorySuccess(statusMessage);
     }
 

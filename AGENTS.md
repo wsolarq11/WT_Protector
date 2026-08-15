@@ -19,12 +19,12 @@ WT_Protector/
 │       │   ├── WTLauncher.Core/     → Layer 0: 纯数据/规则（53文件, 零Avalonia依赖）
 │       │   ├── WTLauncher.Analyzers/ → Roslyn 分析器（7文件, 架构规则强制）
 │       │   └── WTLauncher.App/      → Layer 1-4: ViewModels + Features + Views
-│       │       ├── ViewModels/      → 53文件（MainWindowViewModel + 15 partial）
+│       │       ├── ViewModels/      → 54文件（MainWindowViewModel + 15 partial）
 │       │       ├── Features/        → 15文件（Entries/Presets/Status/Updates/Dialogs）
 │       │       ├── Infrastructure/  → 9文件（持久化 IO + IStorePersistence）
 │       │       ├── Platform/        → 3文件（平台接线）
 │       │       └── Views/           → 44文件（24 cs + 20 axaml; MainWindow.axaml 承载 Cards/Details/Names 三视图, 视图体在 LauncherEntriesView.axaml）
-│       ├── tests/WTLauncher.Tests/ → 121测试文件, xUnit（8层, 门禁实测 818 用例）
+│       ├── tests/WTLauncher.Tests/ → 121测试文件, xUnit（8层, 门禁实测 820 用例）
 │       ├── run.ps1        → 开发运行
 │       └── verify.ps1     → 主线门禁（restore → test → publish → GUI smoke）
 ├── tools/                 → 脚本工具箱（详见下方）
@@ -60,14 +60,14 @@ WT_Protector/
 | 基线项 | 数量 |
 |--------|------|
 | WTLauncher.Core C# files | 53 |
-| ViewModels C# files | 53 |
+| ViewModels C# files | 54 |
 | MainWindowViewModel partials | 15 |
 | Features C# files | 15 |
 | Views C# files | 24 |
 | Views AXAML files | 20 |
 | WTLauncher.Analyzers C# files | 7 |
 | Tests C# files | 121 |
-| Test attributes [Fact]+[Theory] | 735 |
+| Test attributes [Fact]+[Theory] | 737 |
 | Gate checks (Add-Check) | 38 |
 
 > 更新协议：结构变化 → 跑门禁看 `structure-baseline-consistency` 报什么 → 同步改本表与

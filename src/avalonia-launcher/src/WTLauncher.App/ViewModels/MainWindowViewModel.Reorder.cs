@@ -45,14 +45,14 @@ public sealed partial class MainWindowViewModel
             // may have added new entry IDs after the snapshot was captured, and restoring
             // the snapshot would lose them.
             EnsureCustomOrderContainsEntries();
-            ApplyFilter();
+            SynchronizeProjections(ProjectionSyncMode.VisibleOnly);
             StatusContent = LauncherDragReorderStatus.MoveUnavailable;
             return;
         }
 
         var storeFile = BuildStoreFile() with { Settings = CurrentSettings with { CustomEntryOrder = updatedOrder } };
         var saveFailure = SaveStoreFile(storeFile);
-        ApplyFilter();
+        SynchronizeProjections(ProjectionSyncMode.VisibleOnly);
         ApplyStatusText(
             saveFailure is null
                 ? LauncherDragReorderStatus.Moved(entry.Name)

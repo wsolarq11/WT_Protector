@@ -86,7 +86,7 @@ public sealed partial class MainWindowViewModel
             preferredPresetId);
         _list.ReplaceEntries(store.Entries);
         EnsureCustomOrderContainsEntries();
-        RefreshAllProjections();
+        SynchronizeProjections(ProjectionSyncMode.FullReload);
         _launchOrchestrator.CommandTemplates = store.Settings.CommandTemplates;
     }
 

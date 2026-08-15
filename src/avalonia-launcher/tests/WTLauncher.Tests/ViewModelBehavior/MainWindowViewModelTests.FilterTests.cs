@@ -116,6 +116,61 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void FilterMutation_SyncsVisibleCountGroupsAndEmptyState()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp,
+            Entry("one", command: "codex", selected: true),
+            Entry("two", command: "opencode", selected: false),
+            Entry("three", command: "codex", selected: false));
+        var viewModel = CreateViewModel(config, settings);
+        viewModel.CardsGroupKey = LauncherCardsGroupKeys.Command;
+
+        viewModel.FilterText = "codex";
+
+        Assert.Equal(2, viewModel.VisibleCount);
+        Assert.False(viewModel.IsVisibleEmpty);
+        Assert.Equal(2, viewModel.VisibleGroups.Sum(group => group.Count));
+        Assert.Equal(1, viewModel.SelectedCount);
+
+        viewModel.FilterText = "missing";
+
+        Assert.Equal(0, viewModel.VisibleCount);
+        Assert.True(viewModel.IsVisibleEmpty);
+        Assert.Empty(viewModel.VisibleGroups);
+        Assert.Equal(1, viewModel.SelectedCount);
+    }
+
+    [Fact]
+    public void StoreReload_SyncsVisibleProjectionsAndGroupsInOnePass()
+    {
+        using var temp = new TempDirectory();
+        var (config, settings, _) = CreatePortableFixture(temp,
+            Entry("one", command: "codex", selected: true),
+            Entry("two", command: "opencode", selected: false));
+        var viewModel = CreateViewModel(config, settings);
+        viewModel.CardsGroupKey = LauncherCardsGroupKeys.Command;
+
+        var store = LauncherStore.Load(config) with
+        {
+            Entries =
+            [
+                Entry("one", command: "codex", selected: true),
+                Entry("two", command: "codex", selected: false),
+            ],
+            Settings = LauncherStore.Load(config).Settings with { LastFilterText = "codex" },
+        };
+        LauncherStore.Save(store, config, backup: false);
+        viewModel.RefreshCommand.Execute(null);
+
+        Assert.Equal(2, viewModel.VisibleCount);
+        Assert.False(viewModel.IsVisibleEmpty);
+        var group = Assert.Single(viewModel.VisibleGroups);
+        Assert.Equal(2, group.Count);
+        Assert.Equal(1, viewModel.SelectedCount);
+    }
+
+    [Fact]
     public void ClearVisibleSelectionOnlyClearsFilteredEntries()
     {
         using var temp = new TempDirectory();

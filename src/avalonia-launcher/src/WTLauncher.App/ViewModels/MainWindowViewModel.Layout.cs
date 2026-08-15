@@ -28,7 +28,7 @@ public sealed partial class MainWindowViewModel
             StatusContent = LauncherStatusContent.Error("存储保存失败: " + result.Errors[0].Description);
         }
         EnsureCustomOrderContainsEntries();
-        ApplyFilter();
+        SynchronizeProjections(ProjectionSyncMode.VisibleOnly);
     }
 
     private void OnLayoutSortChanged()
@@ -50,7 +50,7 @@ public sealed partial class MainWindowViewModel
             StatusContent = LauncherSettingsStatus.SortModeSaved(sortMode.Label);
             OnPropertyChanged(nameof(IsCustomSortMode));
         }
-        ApplyFilter();
+        SynchronizeProjections(ProjectionSyncMode.VisibleOnly);
         RefreshReorderCommandState();
     }
 
@@ -89,7 +89,7 @@ public sealed partial class MainWindowViewModel
             StatusContent = LauncherStatusContent.Error(result.Errors[0].Description);
             return;
         }
-        RebuildVisibleGroups();
+        SynchronizeProjections(ProjectionSyncMode.VisibleOnly);
     }
 
     /// <summary>
@@ -116,7 +116,7 @@ public sealed partial class MainWindowViewModel
         return true;
     }
 
-    private void ApplyFilter()
+    private void RebuildVisibleProjection()
     {
         var isDragging = _dragReorderWorkflow.HasActiveSession;
 
@@ -214,7 +214,7 @@ public sealed partial class MainWindowViewModel
             var store = BuildStoreFile();
             store = store with { Settings = store.Settings with { CustomEntryOrder = synced } };
             SaveStoreFile(store);
-            ApplyFilter();
+            SynchronizeProjections(ProjectionSyncMode.VisibleOnly);
         }
     }
 

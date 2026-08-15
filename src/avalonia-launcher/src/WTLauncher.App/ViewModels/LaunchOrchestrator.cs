@@ -8,13 +8,12 @@ using WTLauncher.Core;
 namespace WTLauncher.App.ViewModels;
 
 /// <summary>Coordinator port for everything LaunchOrchestrator needs from the main VM.</summary>
-public interface ILaunchCoordinatorContext
+public interface ILaunchCoordinatorContext : IProjectionSynchronizer
 {
     public LauncherSettings GetSettings();
     public string GetTimestampUtc();
     public void SetDryRunText(string text);
     public void ApplyStatus(LauncherStatusContent status);
-    public void ApplyFilter();
     public void DiscardDragReorderPreview();
     public bool PersistSettings(Func<LauncherSettings, LauncherSettings> mutator, LauncherStatusContent? successStatus);
     public IEnumerable<LauncherEntryViewModel> GetEntries();
@@ -433,7 +432,7 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
     {
         OnPropertyChanged(nameof(LaunchConfirmationToggleText));
         OnPropertyChanged(nameof(LaunchConfirmationToggleTip));
-        _context.ApplyFilter();
+        _context.SynchronizeProjections(ProjectionSyncMode.VisibleOnly);
     }
 
     /// <summary>释放 _batchCts 防止 Timer 泄漏。</summary>

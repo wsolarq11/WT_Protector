@@ -39,7 +39,7 @@ public sealed partial class MainWindowViewModel
         var saveFailure = transaction.Commit(BuildStoreFile());
         if (saveFailure is null)
         {
-            RefreshAllProjections();
+            SynchronizeProjections(ProjectionSyncMode.Mutation);
             return true;
         }
 

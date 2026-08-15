@@ -176,9 +176,9 @@ public sealed partial class MainWindowViewModelTests
         entries.Add(duplicate);
         // Refresh the VisibleEntries projection so the duplicate is visible.
         typeof(MainWindowViewModel).GetMethod(
-            "ApplyFilter",
+            "SynchronizeProjections",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-            .Invoke(viewModel, null);
+            .Invoke(viewModel, [ProjectionSyncMode.VisibleOnly]);
         Assert.Equal(2, viewModel.VisibleEntries.Count(entry => entry.Id == "one"));
 
         // Should not throw ArgumentException from ToDictionary — the TryAdd

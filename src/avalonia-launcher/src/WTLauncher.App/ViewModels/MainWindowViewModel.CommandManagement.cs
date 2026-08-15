@@ -66,7 +66,7 @@ public sealed partial class MainWindowViewModel
 
         _launchOrchestrator.CommandTemplates = _storeGrain.Select(s => s.Settings.CommandTemplates);
         RefreshSelectionState();
-        ApplyFilter();
+        SynchronizeProjections(ProjectionSyncMode.VisibleOnly);
         return SuccessResult(applied.StatusMessage);
     }
 

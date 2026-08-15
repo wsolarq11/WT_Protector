@@ -30,7 +30,7 @@ public sealed partial class MainWindowViewModel
         {
             // CFA Step 1c: Workflow owns CustomEntryOrder during drag;
             // persisted on commit (Task 1d eliminates workflow _settings entirely).
-            ApplyFilter();
+            SynchronizeProjections(ProjectionSyncMode.VisibleOnly);
         }
     }
 
@@ -68,7 +68,7 @@ public sealed partial class MainWindowViewModel
             if (_dragReorderWorkflow.HasActiveSession)
                 ReorderVisibleEntryForDrag(draggedEntryId, targetEntryId, insertAfter);
             else
-                ApplyFilter();
+                SynchronizeProjections(ProjectionSyncMode.VisibleOnly);
         }
 
         return result.Accepted;
@@ -128,7 +128,7 @@ public sealed partial class MainWindowViewModel
         var result = _dragReorderWorkflow.Commit(IsCustomSortMode);
         // CFA Step 1c: _settings field eliminated — SaveSettingsToStore callback
         // inside the workflow persists the committed settings (including CustomEntryOrder).
-        ApplyFilter();
+        SynchronizeProjections(ProjectionSyncMode.VisibleOnly);
         ApplyStatusText(result.Status);
         _lastPreviewParams = null;
     }
@@ -144,7 +144,7 @@ public sealed partial class MainWindowViewModel
         // CFA Step 1c: _settings field eliminated — CurrentSettings reads from store grain.
         // Workflow Cancel restores pre-drag state internally; no store mutation needed.
         if (result.RefreshEntries)
-            ApplyFilter();
+            SynchronizeProjections(ProjectionSyncMode.VisibleOnly);
         ApplyStatusText(result.Status);
         _lastPreviewParams = null;
     }
@@ -156,7 +156,7 @@ public sealed partial class MainWindowViewModel
         {
             // CFA Step 1c: _settings field eliminated — CurrentSettings reads from store grain.
             // Workflow Cancel restores pre-drag state internally; no store mutation needed.
-            ApplyFilter();
+            SynchronizeProjections(ProjectionSyncMode.VisibleOnly);
         }
     }
 }
