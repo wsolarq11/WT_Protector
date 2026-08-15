@@ -38,15 +38,15 @@
 
 ## Acceptance Criteria
 
-- [ ] AC0: `tools/build-release.ps1` 成功完成 AOT 发布(修复 NETSDK1207),产出单一原生 exe;CI `aot-verify` 任务改为发布 App 项目后不再失败。
-- [ ] AC1: `tools/build-release.ps1` 输出目录无 `.pdb`、无陈旧 `config/`,含 exe + 必需原生 dll(libSkiaSharp/libHarfBuzzSharp/av_libglesv2,AOT 非单文件,实测确认)+ receipt;exe 属性页显示产品名与版本,图标为正式图标。
-- [ ] AC2: 一条命令(新增 `tools/package-friend.ps1` 或并入 build-release)产出 zip,内含 exe、使用说明、示例配置;zip 解压到全新目录后双击 exe 可启动。
-- [ ] AC3: 全新无配置环境启动 exe → 出现可视空状态面板,含「添加第一个工作区」「发现已安装工具」入口;点击任一入口走通对应流程。
-- [ ] AC4: 从「添加第一个工作区」添加一个目录:可通过浏览选择目录,无需手敲路径,无需自己发明 ID,默认命令可直接启动(pwsh 或等价);添加成功后卡片出现并可启动。
-- [ ] AC5: 朋友版文档在仓库 `docs/` 存在且被 zip 打包;文档按步骤执行一次可完成"添加并启动第一个工作区"(不依赖 AI CLI)。
-- [ ] AC6: README 不再声称 `config/launcher.json` 是版本库内容;README 提及示例配置与朋友文档的入口。
-- [ ] AC7: `config/launcher.example.json` 存在、进版本库、通过现有 config-schema 校验(gate 不红),且不含任何本机绝对路径。
-- [ ] AC8: 全部既有验证保持绿:`tools/verify.ps1` 31 项检查通过,410+ 测试通过;空状态/添加对话框改动不破坏 drag/selection/preset 既有行为。
+- [x] AC0: `tools/build-release.ps1` 成功完成 AOT 发布(修复 NETSDK1207),产出单一原生 exe;CI `aot-verify` 任务改为发布 App 项目后不再失败。
+- [x] AC1: `tools/build-release.ps1` 输出目录无 `.pdb`、无陈旧 `config/`,含 exe + 必需原生 dll(libSkiaSharp/libHarfBuzzSharp/av_libglesv2,AOT 非单文件,实测确认)+ receipt;exe 属性页显示产品名与版本,图标为正式图标。
+- [x] AC2: 一条命令(新增 `tools/package-friend.ps1` 或并入 build-release)产出 zip,内含 exe、使用说明、示例配置;zip 解压到全新目录后双击 exe 可启动。
+- [x] AC3: 全新无配置环境启动 exe → 出现可视空状态面板,含「添加第一个工作区」「发现已安装工具」入口;点击任一入口走通对应流程。
+- [x] AC4: 从「添加第一个工作区」添加一个目录:可通过浏览选择目录,无需手敲路径,无需自己发明 ID,默认命令可直接启动(pwsh 或等价);添加成功后卡片出现并可启动。
+- [x] AC5: 朋友版文档在仓库 `docs/` 存在且被 zip 打包;文档按步骤执行一次可完成"添加并启动第一个工作区"(不依赖 AI CLI)。
+- [x] AC6: README 不再声称 `config/launcher.json` 是版本库内容;README 提及示例配置与朋友文档的入口。
+- [x] AC7: `config/launcher.example.json` 存在、进版本库、通过现有 config-schema 校验(gate 不红),且不含任何本机绝对路径。
+- [x] AC8: 全部既有验证保持绿:`tools/verify.ps1` 31 项检查通过,410+ 测试通过;空状态/添加对话框改动不破坏 drag/selection/preset 既有行为。
 
 ## Out of Scope
 
