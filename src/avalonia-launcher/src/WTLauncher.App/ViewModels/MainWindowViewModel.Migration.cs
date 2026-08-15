@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using CommunityToolkit.Mvvm.Input;
 using WTLauncher.App.Features;
+using WTLauncher.App.Features.ConfigExchange;
 using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
@@ -41,7 +42,7 @@ public sealed partial class MainWindowViewModel
             if (string.IsNullOrWhiteSpace(path))
                 return;
 
-            var imported = LauncherStore.Load(path);
+            var imported = _configExchangeService.LoadImport(path);
             var plan = await _dialogService.RequestImportAsync(BuildStoreFile(), imported);
             if (plan is null)
             {
@@ -49,7 +50,7 @@ public sealed partial class MainWindowViewModel
                 return;
             }
 
-            var merged = LauncherConfigExchange.ApplyImport(BuildStoreFile(), imported, plan);
+            var merged = _configExchangeService.ApplyImport(BuildStoreFile(), imported, plan);
             using var transaction = new StoreMutationSession(SaveStoreFile, RestoreVmStateFromStore);
             var saveFailure = transaction.Commit(merged);
             if (saveFailure is not null)
@@ -98,8 +99,8 @@ public sealed partial class MainWindowViewModel
             if (string.IsNullOrWhiteSpace(path))
                 return;
 
-            var export = LauncherConfigExchange.BuildExportFile(BuildStoreFile(), entryIds);
-            LauncherJson.Save(export, path, backup: false);
+            var export = _configExchangeService.BuildExport(BuildStoreFile(), entryIds);
+            _configExchangeService.SaveExport(export, path);
             StatusContent = LauncherStatusContent.Success($"已导出 {export.Entries.Count} 个条目。");
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))

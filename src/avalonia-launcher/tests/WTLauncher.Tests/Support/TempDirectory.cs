@@ -1,5 +1,6 @@
 using IOPath = System.IO.Path;
 using WTLauncher.App.Features.Dialogs;
+using WTLauncher.App.Features.Updates;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -83,4 +84,17 @@ internal sealed class FakeDirectoryEditApplier : IDirectoryEditApplier
 
     public DirectoryManagementResult Apply(DirectoryManagementEdit edit) =>
         _apply?.Invoke(edit) ?? throw new InvalidOperationException("FakeDirectoryEditApplier has no apply delegate.");
+}
+
+internal sealed class FakeUpdateManifestReader : IUpdateManifestReader
+{
+    private readonly Func<string, Task<string>>? _read;
+
+    public FakeUpdateManifestReader(Func<string, Task<string>>? read = null)
+    {
+        _read = read;
+    }
+
+    public Task<string> ReadManifestAsync(string manifestUrl) =>
+        _read?.Invoke(manifestUrl) ?? throw new InvalidOperationException("FakeUpdateManifestReader has no read delegate.");
 }

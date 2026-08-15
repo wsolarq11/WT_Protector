@@ -50,7 +50,7 @@ public sealed partial class MainWindowViewModelTests
     [Fact]
     public async Task UpdateCheckViewModel_DisplaysNewVersion()
     {
-        var service = new UpdateCheckService(_ =>
+        var service = new UpdateCheckService(new FakeUpdateManifestReader(_ =>
             Task.FromResult("""
             {
               "schemaVersion": 1,
@@ -60,7 +60,7 @@ public sealed partial class MainWindowViewModelTests
               "bytes": 1,
               "publishedAtUtc": "2026-08-14T00:00:00Z"
             }
-            """));
+            """)));
         var viewModel = new UpdateCheckViewModel(service, "1.0.0", "https://example.invalid/update.json");
 
         await viewModel.CheckAsync();

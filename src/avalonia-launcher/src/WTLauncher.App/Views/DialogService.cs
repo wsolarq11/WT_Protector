@@ -29,7 +29,7 @@ public sealed class DialogService : IDialogService
         new ConfirmBatchLaunchWindow(confirmation).ShowDialog<bool>(Owner);
 
     public async Task<string?> RequestNewPresetAsync(LauncherPresetSaveTarget target, HashSet<string> existingNames) =>
-        await new PresetDetailsWindow(target, existingNames).ShowDialog<string?>(Owner);
+        await new PresetDetailsWindow(target, existingNames, _entryDraftValidator).ShowDialog<string?>(Owner);
 
     public Task<bool> ConfirmDeletePresetAsync(LauncherPresetDeleteTarget target) =>
         new ConfirmPresetDeleteWindow(target).ShowDialog<bool>(Owner);

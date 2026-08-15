@@ -699,6 +699,37 @@ if ($violations.Count -gt 0) {
 }
 Add-Check 'no-imperative-view-ui' @{ viewsScanned = $true; violations = $violations.Count; allowedExceptions = $whitelisted }
 
+# Wiring contract: DialogService must not accept Func/Action bridge delegates.
+$dialogBridgeViolations = @()
+Get-ChildItem -Path (Join-Path $viewsDir 'src\WTLauncher.App\Features\Dialogs') -Filter '*.cs' | ForEach-Object {
+    $hits = Select-String -Path $_.FullName -Pattern '\b(?:Func|Action)<'
+    if ($hits) { $dialogBridgeViolations += $hits }
+}
+if ($dialogBridgeViolations.Count -gt 0) {
+    $lines = ($dialogBridgeViolations | ForEach-Object { "$($_.Filename):$($_.LineNumber)" }) -join ', '
+    throw "Dialog contract still exposes Func/Action bridges at: $lines"
+}
+Add-Check 'dialog-service-no-func-action' @{
+    violations = $dialogBridgeViolations.Count
+    invariant = 'Dialog contracts use ports, not Func/Action bridges'
+}
+
+# Wiring contract: Views code-behind must delegate business IO and normalization to ports.
+$viewsBusinessPattern = '(?:LauncherEntryDrafts|LauncherConfigExchange)\.|LauncherJson\.Save\(|LauncherStore\.Load\(|EntryName\.Normalize\('
+$viewsBusinessViolations = @()
+Get-ChildItem -Path "$viewsDir\src\WTLauncher.App\Views" -Filter '*.cs' -Recurse | ForEach-Object {
+    $hits = Select-String -Path $_.FullName -Pattern $viewsBusinessPattern
+    if ($hits) { $viewsBusinessViolations += $hits }
+}
+if ($viewsBusinessViolations.Count -gt 0) {
+    $lines = ($viewsBusinessViolations | ForEach-Object { "$($_.Filename):$($_.LineNumber)" }) -join ', '
+    throw "Views code-behind still touches business IO/normalization at: $lines"
+}
+Add-Check 'views-no-direct-core-business-calls' @{
+    violations = $viewsBusinessViolations.Count
+    invariant = 'View code-behind delegates business IO and normalization to ports'
+}
+
 # ponytail: Scans for `Path.GetFullPath(` in DirectoryPath.cs only. If the
 # normalization moves to a different class or method (e.g. LaunchEntry.cs
 # ExpandEnvironmentVariables), this gate misses the regression. Upgrade path:
@@ -864,7 +895,7 @@ $baselineRows = @(
     @{ Label = 'WTLauncher.Core C# files';          Path = 'src\avalonia-launcher\src\WTLauncher.Core';            Filter = '*.cs';                 Count = 53 }
     @{ Label = 'ViewModels C# files';               Path = 'src\avalonia-launcher\src\WTLauncher.App\ViewModels';   Filter = '*.cs';                 Count = 54 }
     @{ Label = 'MainWindowViewModel partials';     Path = 'src\avalonia-launcher\src\WTLauncher.App\ViewModels';   Filter = 'MainWindowViewModel.*.cs'; Count = 15 }
-    @{ Label = 'Features C# files';                 Path = 'src\avalonia-launcher\src\WTLauncher.App\Features';     Filter = '*.cs';                 Count = 15 }
+    @{ Label = 'Features C# files';                 Path = 'src\avalonia-launcher\src\WTLauncher.App\Features';     Filter = '*.cs';                 Count = 16 }
     @{ Label = 'Views C# files';                    Path = 'src\avalonia-launcher\src\WTLauncher.App\Views';        Filter = '*.cs';                 Count = 24 }
     @{ Label = 'Views AXAML files';                 Path = 'src\avalonia-launcher\src\WTLauncher.App\Views';        Filter = '*.axaml';              Count = 20 }
     @{ Label = 'WTLauncher.Analyzers C# files';     Path = 'src\avalonia-launcher\src\WTLauncher.Analyzers';        Filter = '*.cs';                 Count = 7 }

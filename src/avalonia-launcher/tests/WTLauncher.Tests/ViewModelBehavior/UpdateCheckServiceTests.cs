@@ -10,7 +10,7 @@ public sealed class UpdateCheckServiceTests
     [Fact]
     public async Task CheckAsync_ReportsNewerManifest()
     {
-        var service = new UpdateCheckService(_ =>
+        var service = new UpdateCheckService(new FakeUpdateManifestReader(_ =>
             Task.FromResult("""
             {
               "schemaVersion": 1,
@@ -20,7 +20,7 @@ public sealed class UpdateCheckServiceTests
               "bytes": 1,
               "publishedAtUtc": "2026-08-14T00:00:00Z"
             }
-            """));
+            """)));
 
         var result = await service.CheckAsync("https://example.invalid/manifest.json", "1.0.0");
 
@@ -32,7 +32,7 @@ public sealed class UpdateCheckServiceTests
     [Fact]
     public async Task CheckAsync_ReturnsUpToDateForSameVersion()
     {
-        var service = new UpdateCheckService(_ =>
+        var service = new UpdateCheckService(new FakeUpdateManifestReader(_ =>
             Task.FromResult("""
             {
               "schemaVersion": 1,
@@ -42,7 +42,7 @@ public sealed class UpdateCheckServiceTests
               "bytes": 1,
               "publishedAtUtc": "2026-08-14T00:00:00Z"
             }
-            """));
+            """)));
 
         var result = await service.CheckAsync("file:///update/manifest.json", "1.0.0");
 
@@ -53,7 +53,7 @@ public sealed class UpdateCheckServiceTests
     [Fact]
     public async Task CheckAsync_SurfacesFetchFailureAndMissingUrl()
     {
-        var failing = new UpdateCheckService(_ => throw new IOException("offline"));
+        var failing = new UpdateCheckService(new FakeUpdateManifestReader(_ => throw new IOException("offline")));
         var failed = await failing.CheckAsync("https://example.invalid/manifest.json", "1.0.0");
         Assert.True(failed.HasError);
         Assert.Contains("offline", failed.ErrorMessage, StringComparison.Ordinal);

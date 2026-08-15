@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Diagnostics.CodeAnalysis;
 using WTLauncher.App.Features;
+using WTLauncher.App.Features.ConfigExchange;
 using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Features.Presets;
@@ -28,6 +29,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     private readonly IDialogService _dialogService;
     private readonly IEntryService _entryService = null!;
     private readonly IPresetService _presetService = null!;
+    private readonly IConfigExchangeService _configExchangeService;
     private readonly Func<DateTimeOffset> _utcNow;
     private ImmutableList<LauncherRunHistoryEntry> _runHistory = ImmutableList<LauncherRunHistoryEntry>.Empty;
     private readonly StatusPresenter _statusPresenter = new();
@@ -100,7 +102,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         IDialogService dialogService,
         IEntryService entryService,
         IPresetService presetService,
-        Func<DateTimeOffset> utcNow)
+        Func<DateTimeOffset> utcNow,
+        IConfigExchangeService? configExchangeService = null)
     {
         ArgumentNullException.ThrowIfNull(storeFile);
         _storeGrain = storeGrain ?? throw new ArgumentNullException(nameof(storeGrain));
@@ -109,6 +112,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _entryService = entryService ?? throw new ArgumentNullException(nameof(entryService));
         _presetService = presetService ?? throw new ArgumentNullException(nameof(presetService));
         _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
+        _configExchangeService = configExchangeService ?? new ConfigExchangeService();
         ConfigPathDisplay = LauncherMainWindowText.StorePathDisplay(storePath);
         _statusPresenter.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName!);
         // Construct LaunchOrchestrator early so bridge delegates are ready.

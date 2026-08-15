@@ -4,6 +4,29 @@ using WTLauncher.Core;
 
 namespace WTLauncher.App.Features.Updates;
 
+/// <summary>Reads a raw update manifest from an HTTP(S) URL or local file path.</summary>
+public interface IUpdateManifestReader
+{
+    public Task<string> ReadManifestAsync(string manifestUrl);
+}
+
+public sealed class HttpUpdateManifestReader : IUpdateManifestReader
+{
+    public async Task<string> ReadManifestAsync(string manifestUrl)
+    {
+        if (Uri.TryCreate(manifestUrl, UriKind.Absolute, out var uri)
+            && uri.Scheme is "http" or "https")
+        {
+            using var client = new HttpClient();
+            using var response = await client.GetAsync(uri).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        }
+
+        return await File.ReadAllTextAsync(manifestUrl).ConfigureAwait(false);
+    }
+}
+
 public sealed record LauncherUpdateCheckResult
 {
     public bool HasUpdate { get; init; }
@@ -21,11 +44,11 @@ public sealed record LauncherUpdateCheckResult
 
 public sealed class UpdateCheckService
 {
-    private readonly Func<string, Task<string>> _fetch;
+    private readonly IUpdateManifestReader _reader;
 
-    public UpdateCheckService(Func<string, Task<string>>? fetch = null)
+    public UpdateCheckService(IUpdateManifestReader? reader = null)
     {
-        _fetch = fetch ?? DefaultFetch;
+        _reader = reader ?? new HttpUpdateManifestReader();
     }
 
     public async Task<LauncherUpdateCheckResult> CheckAsync(
@@ -45,7 +68,7 @@ public sealed class UpdateCheckService
 
         try
         {
-            var json = await _fetch(url).ConfigureAwait(true);
+            var json = await _reader.ReadManifestAsync(url).ConfigureAwait(true);
             var manifest = LauncherUpdateManifestParser.Parse(json);
             return new LauncherUpdateCheckResult
             {
@@ -62,19 +85,5 @@ public sealed class UpdateCheckService
                 ErrorMessage = ex.Message,
             };
         }
-    }
-
-    private static async Task<string> DefaultFetch(string manifestUrl)
-    {
-        if (Uri.TryCreate(manifestUrl, UriKind.Absolute, out var uri)
-            && uri.Scheme is "http" or "https")
-        {
-            using var client = new HttpClient();
-            using var response = await client.GetAsync(uri).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-        }
-
-        return await File.ReadAllTextAsync(manifestUrl).ConfigureAwait(false);
     }
 }

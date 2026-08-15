@@ -1,26 +1,32 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using WTLauncher.App.Features.Entries;
 using WTLauncher.App.ViewModels;
-using WTLauncher.Core;
 
 namespace WTLauncher.App.Views;
 
 public sealed partial class PresetDetailsWindow : Window
 {
     private readonly IReadOnlySet<string> _existingPresetNames = null!;
+    private readonly IEntryDraftValidator _validator = null!;
 
     public PresetDetailsWindow()
     {
+        _validator = new EntryDraftValidator();
         InitializeComponent();
     }
 
-    public PresetDetailsWindow(LauncherPresetSaveTarget target, IReadOnlySet<string> existingPresetNames)
+    public PresetDetailsWindow(
+        LauncherPresetSaveTarget target,
+        IReadOnlySet<string> existingPresetNames,
+        IEntryDraftValidator? validator = null)
     {
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(existingPresetNames);
 
         _existingPresetNames = existingPresetNames;
+        _validator = validator ?? new EntryDraftValidator();
 
         InitializeComponent();
 
@@ -42,7 +48,7 @@ public sealed partial class PresetDetailsWindow : Window
     // before the save-path delegates to ViewModel validation. Keep both.
     private void Submit()
     {
-        var name = EntryName.Normalize(NameBox.Text);
+        var name = _validator.NormalizeText(NameBox.Text);
         if (name.Length == 0)
         {
             ErrorText.Text = "请输入启动组名称。";
