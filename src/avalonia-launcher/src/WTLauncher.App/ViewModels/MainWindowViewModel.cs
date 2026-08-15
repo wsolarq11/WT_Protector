@@ -29,7 +29,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     private readonly IDialogService _dialogService;
     private readonly IEntryService _entryService = null!;
     private readonly IPresetService _presetService = null!;
-    private readonly IConfigExchangeService _configExchangeService;
     private readonly Func<DateTimeOffset> _utcNow;
     private ImmutableList<LauncherRunHistoryEntry> _runHistory = ImmutableList<LauncherRunHistoryEntry>.Empty;
     private readonly StatusPresenter _statusPresenter = new();
@@ -41,6 +40,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     internal readonly LauncherSelectionCommandWorkflow _selectionWorkflow;
     internal readonly LauncherMaintenanceCommandWorkflow _maintenanceWorkflow;
     internal readonly LauncherEntryCommandWorkflow _entryWorkflow;
+    internal readonly LauncherExchangeCommandWorkflow _exchangeWorkflow;
+    internal readonly LauncherUpdateCommandWorkflow _updateWorkflow;
 
     // Status forwarding — reads StatusPresenter, re-fires PropertyChanged via subscription
     public LauncherStatusContent StatusContent { get => _statusPresenter.StatusContent; set => _statusPresenter.StatusContent = value; }
@@ -117,7 +118,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _entryService = entryService ?? throw new ArgumentNullException(nameof(entryService));
         _presetService = presetService ?? throw new ArgumentNullException(nameof(presetService));
         _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
-        _configExchangeService = configExchangeService ?? new ConfigExchangeService();
         ConfigPathDisplay = LauncherMainWindowText.StorePathDisplay(storePath);
         _statusPresenter.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName!);
         // Construct LaunchOrchestrator early so bridge delegates are ready.
@@ -169,6 +169,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         _selectionWorkflow = new LauncherSelectionCommandWorkflow(this, _list, _launchOrchestrator, this);
         _maintenanceWorkflow = new LauncherMaintenanceCommandWorkflow(this, _list, _dialogService, _launchOrchestrator, this);
         _entryWorkflow = new LauncherEntryCommandWorkflow(this, _list, _entryService, this);
+        _exchangeWorkflow = new LauncherExchangeCommandWorkflow(this, _list, _presetManager, _dialogService, configExchangeService ?? new ConfigExchangeService(), _launchOrchestrator, this);
+        _updateWorkflow = new LauncherUpdateCommandWorkflow(this, _dialogService);
         // Construct workflow AFTER settings normalization so it captures
         // the normalized values — DiscardDragReorderPreview syncs from it.
         _dragReorderWorkflow = new LauncherDragReorderWorkflow(
