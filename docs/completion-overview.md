@@ -111,11 +111,11 @@
 
 ## 2. 待办 (Todos)
 
-### 2.1 verify.ps1 gate 状态
+### 2.1 npm run verify gate 状态
 
-**当前门禁** (2026-07-25 时点): **PASS** — 全部 28 项检查通过 ✓
+**当前门禁** (2026-08-16 时点): **PASS** — 全部 45 项检查通过 ✓
 
-> 2026-08-15 核验: 当前 verify.ps1 为 43 项 Add-Check（structure-baseline-consistency 自计数），测试属性 749（门禁实测 832 用例）；下表分类为 2026-07-25 时点值。
+> 2026-08-16 核验: 当前 `scripts/verify.ts` 为 45 项 Add-Check（structure-baseline-consistency 自计数），测试属性 749（门禁实测 832 用例）；下表分类为历史时点值。
 
 | 类别 | 数量 | 状态 |
 |------|------|------|
@@ -137,7 +137,7 @@
 **扫描结果**: 0 个。
 
 - `src/avalonia-launcher/src/**/*.cs` — 0 个 (排除 `ponytail:` 和 `Debug.WriteLine`)
-- `tools/**/*.ps1` — 0 个
+- active `*.ps1` — 0 个
 
 ### 2.3 Trellis Active Tasks
 
@@ -147,24 +147,24 @@
 
 ## 3. 剩余 (Remaining)
 
-### 3.1 verify.ps1 ponytail 技术债
+### 3.1 verify gate ponytail 技术债
 
-`verify.ps1` 中标记了 3 个已知局限性 (与上次总览相同,未被处理):
+`scripts/verify.ts` 中标记了 3 个已知局限性 (与上次总览相同,未被处理):
 
 | 位置 | 局限性 | 升级路径 |
 |------|--------|----------|
-| `verify.ps1:529` (no-stale-three-file-refs) | 只检查 `$activeDocs` 列表中的文档 | 添加新文档到 `$activeDocs` 数组 |
-| `verify.ps1:555` (settings-single-source) | 依赖特定代码模式指纹,重构后可能失效 | 未显式文档化 |
-| `verify.ps1:567` (winget-config-schema) | 无 DSC v3 时无法执行完整 winget 验证 | 安装 DSC v3 后运行 `.\tools\apply-machine-config.ps1 -DryRun` |
+| `scripts/checks/static.ts` (no-stale-three-file-refs) | 只检查 `activeDocs` 列表中的文档 | 添加新文档到 `activeDocs` 数组 |
+| `scripts/checks/static.ts` (settings-single-source) | 依赖特定代码模式指纹,重构后可能失效 | 未显式文档化 |
+| `scripts/checks/static.ts` (winget-config-schema) | 无 DSC v3 时无法执行完整 winget 验证 | 安装 DSC v3 后运行 `npm run apply:config:dry` |
 
-> 2026-08-15 核验: 三处检查现位于 verify.ps1 第 646 / 660 / 679 行（文件现 920 行）；表中行号为 2026-07-25 时点值。
+> 2026-08-16 核验: 三处检查现位于 `scripts/checks/static.ts`；表中行号为历史时点值。
 
 ### 3.2 collab-debt-findings 优化建议 (未处理)
 
 以下建议来自技术债务审查报告,当前未处理:
 
 - **Agent 类型目录** (发现 4.2-A): 建立 Agent 类型目录以复用最佳实践
-- **CI 验证** (发现 4.4-B): merge 前自动运行 verify.ps1
+- **CI 验证** (发现 4.4-B): merge 前自动运行 `npm run verify`
 - **方法级别死代码门禁** (发现 5.5-C): 目前无自动化检查
 
 ### 3.3 架构改革路线已变更 (2026-07-25 更新)
@@ -224,7 +224,7 @@ CFA 在 VTuber-Killer 基础上进一步消除了 `_settings` 双源、Vogen 依
 
 1. **更新 collab-debt-findings.md** — **[2026-07-25]** 同步严重程度汇总,关闭全部6项行动项,补充后续变更记录
 2. **标记 architecture-reform-proposal.md 为过期** — **[2026-07-25]** 顶部添加过期声明,映射到 VTuber-Killer 实际落地方案
-3. **补充 gate ponytail 注释** — **[2026-07-25]** 确认 verify.ps1 中全部6个 ponytail 注释已存在: 3个安全审计 gate (F1/F2/F3) + 3个已知局限 (no-stale-three-file-refs / settings-single-source / winget-config-schema)
+3. **补充 gate ponytail 注释** — **[2026-07-25]** 确认 `scripts/verify.ts` 中全部6个 ponytail 注释已存在: 3个安全审计 gate (F1/F2/F3) + 3个已知局限 (no-stale-three-file-refs / settings-single-source / winget-config-schema)
 
 ### 5.2 中期 (已完成 ✅)
 

@@ -1,0 +1,15 @@
+D:\AI\projects\WT_Protector\tools\smoke-probe\bin\Release\net10.0\SmokeProbe.exe
+D:\AI\projects\WT_Protector\tools\smoke-probe\bin\Release\net10.0\SmokeProbe.deps.json
+D:\AI\projects\WT_Protector\tools\smoke-probe\bin\Release\net10.0\SmokeProbe.runtimeconfig.json
+D:\AI\projects\WT_Protector\tools\smoke-probe\bin\Release\net10.0\SmokeProbe.dll
+D:\AI\projects\WT_Protector\tools\smoke-probe\bin\Release\net10.0\SmokeProbe.pdb
+D:\AI\projects\WT_Protector\tools\smoke-probe\obj\Release\net10.0\SmokeProbe.GeneratedMSBuildEditorConfig.editorconfig
+D:\AI\projects\WT_Protector\tools\smoke-probe\obj\Release\net10.0\SmokeProbe.AssemblyInfoInputs.cache
+D:\AI\projects\WT_Protector\tools\smoke-probe\obj\Release\net10.0\SmokeProbe.AssemblyInfo.cs
+D:\AI\projects\WT_Protector\tools\smoke-probe\obj\Release\net10.0\SmokeProbe.csproj.CoreCompileInputs.cache
+D:\AI\projects\WT_Protector\tools\smoke-probe\obj\Release\net10.0\SmokeProbe.sourcelink.json
+D:\AI\projects\WT_Protector\tools\smoke-probe\obj\Release\net10.0\SmokeProbe.dll
+D:\AI\projects\WT_Protector\tools\smoke-probe\obj\Release\net10.0\refint\SmokeProbe.dll
+D:\AI\projects\WT_Protector\tools\smoke-probe\obj\Release\net10.0\SmokeProbe.pdb
+D:\AI\projects\WT_Protector\tools\smoke-probe\obj\Release\net10.0\SmokeProbe.genruntimeconfig.cache
+D:\AI\projects\WT_Protector\tools\smoke-probe\obj\Release\net10.0\ref\SmokeProbe.dll

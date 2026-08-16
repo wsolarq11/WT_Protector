@@ -2,14 +2,14 @@
 
 Reviewed on: 2026-05-17
 Last touched: 2026-07-09 (three-file-reference cleanup, `a5e1d757`)
-Verified: 2026-08-15 — this file is in the `no-stale-three-file-refs` gate's activeDocs list (`tools/verify.ps1`); the rewrite below contains no `config/(config|presets|settings).json` references, only the single `config/launcher.json` store.
+Verified: 2026-08-15 — this file is in the `no-stale-three-file-refs` gate's activeDocs list (`scripts/verify.ts`); the rewrite below contains no `config/(config|presets|settings).json` references, only the single `config/launcher.json` store.
 
 Purpose: preserve the design lessons from the 12-tool industry survey so WT Launcher does not rediscover the same first-class UX ideas later.
 
 This page is source material for WT Launcher decisions, not a mandate to copy any product. The local acceptance gate remains:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
+```bash
+npm run verify
 ```
 
 ## Local conclusion
@@ -67,7 +67,7 @@ Those ideas remain future candidates only if they beat the current gate with les
 The slice proposed at review time has fully landed and is now gate-protected:
 
 1. `launcher.json` presets exist as a human-readable named launch-group section in the unified store — verified: `config/launcher.json` contains `presets` (2 presets) and `defaultPresetId` (`core-projects`); example schema in `config/launcher.example.json`.
-2. Preset ids and entry references are validated in both xUnit and the gate — verified: `tools/verify.ps1` `presets-schema` check (line ~416) plus `security-audit-f2-preset-entryid-validate` (line ~730, `IPresetService.AddPreset/UpdatePreset` must validate against `knownEntryIds`); xUnit preset suites incl. `LauncherPresetIdsTests`, `LauncherPresetWorkflowTests`, `PresetServiceTests`, `MainWindowViewModelTests.PresetSelectionTests`.
+2. Preset ids and entry references are validated in both xUnit and the gate — verified: `scripts/verify.ts` `presets-schema` check plus `security-audit-f2-preset-entryid-validate` (`IPresetService.AddPreset/UpdatePreset` must validate against `knownEntryIds`); xUnit preset suites incl. `LauncherPresetIdsTests`, `LauncherPresetWorkflowTests`, `PresetServiceTests`, `MainWindowViewModelTests.PresetSelectionTests`.
 3. UI selector plus explicit `应用启动组` action — verified: `LauncherPresetSelectionPreview.DefaultApplyButtonText` and the bound apply button; `MainWindowViewModel.Presets.cs` `ApplyPreset`/`CanApplyPreset`.
 4. Light first-class actions `保存为新启动组` / `更新当前启动组` / `删除当前启动组` — verified: menu items in `Views/LauncherControlBar.axaml` (under the `启动组维护` button), commands `SaveSelectionAsPresetCommand` / `UpdateSelectedPresetCommand` / `DeleteSelectedPresetCommand`.
 5. Existing `selected` checkboxes preserved as the HTA-compatible bridge — verified: `CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"` in `Views/LauncherEntriesView.axaml`.

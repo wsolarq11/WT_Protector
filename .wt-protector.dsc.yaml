@@ -2,7 +2,7 @@
 # WT Launcher / WT Protector — fresh-machine setup
 #
 # Run: winget configure --file .wt-protector.dsc.yaml
-# Or:  .\tools\apply-machine-config.ps1
+# Or:  npm run apply:config  /  npm run apply:config:dry
 #
 # Declares the minimum prerequisites for WT Launcher to be useful on a fresh
 # Windows machine: Windows Terminal (the launcher starts wt.exe) + PowerShell 7

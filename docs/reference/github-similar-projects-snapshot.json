@@ -2,7 +2,7 @@
     "schemaVersion":  3,
     "capturedAtUtc":  "2026-08-14T11:53:15Z",
     "evidenceCommand":  "gh repo view \u003cowner\u003e/\u003crepo\u003e --json nameWithOwner,url,description,stargazerCount,forkCount,pushedAt,updatedAt,primaryLanguage,isArchived",
-    "refreshCommand":  "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tools\\update-github-similar-projects-snapshot.ps1",
+    "refreshCommand":  "npm run update:github-snapshot",
     "queries":  [
                     "Windows Terminal workspace launcher",
                     "Windows Terminal session manager",

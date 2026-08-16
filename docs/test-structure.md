@@ -58,36 +58,36 @@ tests/WTLauncher.Tests/
 
 ## 验证命令
 
-```powershell
+```bash
 dotnet build src/avalonia-launcher/WTLauncher.Avalonia.sln -c Release --no-restore -warnaserror
 dotnet test src/avalonia-launcher/WTLauncher.Avalonia.sln -c Release --no-restore
 ```
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\test-fast.ps1
+```bash
+npm run test:fast
 ```
 
 快速层包含 `CoreUnit`、`PropertyTest`、`Architecture`、`Analyzer`，不包括需要临时文件/VM 集成层的测试。
 
 ## 关键旅程 E2E 冒烟
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\smoke-critical-journey.ps1 -Exe .\src\avalonia-launcher\artifacts\verify-publish\win-x64\WTLauncher.App.exe
+```bash
+npm run smoke
 ```
 
-冒烟固定在 2 条断言（进程启动进入主窗口、窗口标题为 `WT Launcher`），使用临时 `launcher.json` 和 `--config`，不触碰真实配置。`src/avalonia-launcher/verify.ps1` 已接入该脚本。
+冒烟固定在 2 条断言（进程启动进入主窗口、窗口标题为 `WT Launcher`），使用临时 `launcher.json` 和 `--config`，不触碰真实配置。`npm run verify:mainline` 已接入该冒烟。
 
 > 注：命令中的 exe 路径为 verify 门禁的发布产物（`artifacts/` 为 git-ignored 构建输出，仓库中不落盘）；需先运行门禁的 publish 步骤生成该 exe。
 
 ## 覆盖率门禁
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\test-coverage.ps1
+```bash
+npm run test:coverage
 ```
 
-关键路径清单在 `tools/coverage-gate.json`，覆盖保存、原子写入、序列化、校验、启动参数、ID 安全、导入导出、文件持久化与回滚边界。全仓总覆盖率只报告、不设硬性目标；`tools/verify.ps1` 会执行该门禁。
+关键路径清单在 `tools/coverage-gate.json`，覆盖保存、原子写入、序列化、校验、启动参数、ID 安全、导入导出、文件持久化与回滚边界。全仓总覆盖率只报告、不设硬性目标；`npm run verify` 会执行该门禁。
 
 ## CI 反馈分层
 
 - `build-and-test`：build + 快速层 + 上传 TRX，不做完整 publish。
-- `full-gate`：唯一完整验收阶段，运行 `tools/verify.ps1`，包含全量测试、发布、关键旅程冒烟和覆盖率门禁。
+- `full-gate`：唯一完整验收阶段，运行 `npm run verify`，包含全量测试、发布、关键旅程冒烟和覆盖率门禁。

@@ -27,9 +27,7 @@ WT_Protector/
 │       │       ├── Platform/        → 3文件（平台接线）
 │       │       └── Views/           → 44文件（24 cs + 20 axaml; MainWindow.axaml 承载 Cards/Details/Names 三视图, 视图体在 LauncherEntriesView.axaml）
 │       ├── tests/WTLauncher.Tests/ → 129测试文件, xUnit（8层, 门禁实测 832 用例）
-│       ├── run.ps1        → 开发运行
-│       └── verify.ps1     → 主线门禁（restore → test → publish → GUI smoke）
-├── tools/                 → 脚本工具箱（详见下方）
+├── tools/                 → .NET 辅助工具（smoke-probe / uninstaller）
 ├── docs/                  → 设计审计、基准对标、巨人肩膀库
 │   ├── feature-reality-north-star-audit.md → 22项功能审计 + 声明边界账本
 │   ├── feature-first-class-upgrade-audit.md → 23项功能一等公民改造审计 (2026-06-10)
@@ -43,26 +41,26 @@ WT_Protector/
     └── README.md          → 退役说明
 ```
 
-## 脚本工具箱 (tools/)
+## 脚本工具箱 (npm scripts + tools/)
 
-| 脚本                                          | 用途                                                                                                                                                                                                                                                                                                                                          | 何时用                                               |
+| 命令 / 工具                                     | 用途                                                                                                                                                                                                                                                                                                                                          | 何时用                                               |
 | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `verify.ps1`                                  | **全量门禁**：44 项检查（行尾策略、`.snow/` 忽略、退役路径、无裸 catch、无硬编码颜色、主线布局、README、功能审计、声明边界、GitHub 快照、launcher.json/config/presets/settings 各 schema、快捷方式/WinForms/HTA 退役、Avalonia 测试+发布+GUI 冒烟、**结构基线**、release-lockfile-consistency、settings-single-source、no-stale-three-file-refs、winget-config-schema、Views 免命令式 UI、安全审计 F1-F3、无瘦包装、VTK/Trinity 架构、AppStore 残留、架构规则、分析器连线） | 每次提交前；声称"完成"前                             |
-| `build-release.ps1`                           | **稳定发布构建**：win-x64 self-contained publish → `src/avalonia-launcher/artifacts/publish/win-x64/`                                                                                                                                                                                                                                         | 需要产出可分发的 exe 时                              |
-| `release-contract.ps1`                        | **中央发布契约**：locked-mode restore + Native AOT publish + clean worktree + receipt/manifest 校验                                                                                                                                                                                                                                        | CI 合并前；声称发布完成前                            |
-| `apply-machine-config.ps1`                    | **新机配置包装器**：`winget configure --file .wt-protector.dsc.yaml`；`-DryRun` 仅 validate                                                                                                                                                                                                                                                   | 拿到新 Windows 机器、想一键声明式安装前置依赖时      |
-| `config-lib.ps1`                              | **共享 PowerShell 函数库**：被 verify.ps1、build-release.ps1 等引用                                                                                                                                                                                                                                                                           | 不直接调用；被其他脚本 dot-source                    |
-| `test-launch-args.ps1`                        | **聚焦测试**：仅运行 LaunchArgumentBuilder 测试                                                                                                                                                                                                                                                                                               | 快速验证启动参数逻辑                                 |
-| `update-github-similar-projects-snapshot.ps1` | **刷新 GitHub 对标快照**：通过 `gh repo view` 拉取 12 个对标项目的最新数据                                                                                                                                                                                                                                                                    | 需要更新市场对标证据时（快照超过 30 天会被门禁拒绝） |
+| `npm run verify`                              | **全量门禁**：45 项检查（行尾策略、`.snow/` 忽略、退役路径、无 active PowerShell、无裸 catch、无硬编码颜色、主线布局、README、功能审计、声明边界、GitHub 快照、launcher.json/config/presets/settings 各 schema、快捷方式/WinForms/HTA 退役、Avalonia 测试+发布+GUI 冒烟、**结构基线**、release-lockfile-consistency、settings-single-source、no-stale-three-file-refs、winget-config-schema、Views 免命令式 UI、安全审计 F1-F3、无瘦包装、VTK/Trinity 架构、AppStore 残留、架构规则、分析器连线） | 每次提交前；声称"完成"前                             |
+| `npm run release:contract`                    | **中央发布契约**：locked-mode restore + Native AOT publish + clean worktree + receipt/manifest 校验                                                                                                                                                                                                                                        | CI 合并前；声称发布完成前                            |
+| `npm run apply:config` / `apply:config:dry`   | **新机配置包装器**：`winget configure --file .wt-protector.dsc.yaml`；dry-run 仅 validate                                                                                                                                                                                                                                                   | 拿到新 Windows 机器、想一键声明式安装前置依赖时      |
+| `npm run test:launch-args`                    | **聚焦测试**：仅运行 LaunchArgumentBuilder 测试                                                                                                                                                                                                                                                                                               | 快速验证启动参数逻辑                                 |
+| `npm run update:github-snapshot`              | **刷新 GitHub 对标快照**：通过 `gh repo view` 拉取 12 个对标项目的最新数据                                                                                                                                                                                                                                                                    | 需要更新市场对标证据时（快照超过 30 天会被门禁拒绝） |
+| `npm run install:portable` / `uninstall`      | **便携安装/卸载**：部署 AOT 发布产物 + `uninstaller.exe`（.NET self-contained），卸载不依赖 Node/PowerShell                                                                                                                                                                                                                                  | 安装/卸载本机便携版时                                |
+| `npm run package:friend`                      | **好友交接包**：将 AOT exe、快速上手、示例 config 打成单 zip                                                                                                                                                                                                                                                                                  | 产出可分发的 friend zip 时                           |
 
-> TS 发布入口：`scripts/build-release.ts` + `scripts/release-contract.ts`，执行 `npm run release:contract`（CI 当前权威入口）。旧 `tools/release-contract.ps1` 在等价验证期间保留。
-> TS 根门禁：`scripts/verify.ts` + `scripts/checks/*`，执行 `npm run verify`（CI full-gate 当前权威入口）。旧 `tools/verify.ps1` 在等价验证期间保留。
+> TS 发布入口：`scripts/build-release.ts` + `scripts/release-contract.ts`，执行 `npm run release:contract`（CI 唯一权威入口）。
+> TS 根门禁：`scripts/verify.ts` + `scripts/checks/*`，执行 `npm run verify`（CI full-gate 唯一权威入口）。
 > TS 主线入口：`scripts/run.ts`、`scripts/verify-mainline.ts`、`scripts/test-fast.ts`、`scripts/test-coverage.ts`、`scripts/test-launch-args.ts`、`scripts/smoke-critical-journey.ts`；对应 `npm run start`、`verify:mainline`、`test:fast`、`test:coverage`、`test:launch-args`、`smoke`。
 
 ## 结构基线（Structure Baseline）— 门禁强制
 
-仓库结构事实的**唯一文档源**。`tools/verify.ps1` 与 `scripts/verify.ts` 的 `structure-baseline-consistency` 检查逐项校验
-文件系统与本表：结构变化时必须**同步更新**本表与两个门禁中的基线常量，否则门禁失败。
+仓库结构事实的**唯一文档源**。`scripts/verify.ts` 的 `structure-baseline-consistency` 检查逐项校验
+文件系统与本表：结构变化时必须**同步更新**本表与 `scripts/checks/run.ts` 基线常量，否则门禁失败。
 
 | 基线项 | 数量 |
 |--------|------|
@@ -75,10 +73,10 @@ WT_Protector/
 | WTLauncher.Analyzers C# files | 7 |
 | Tests C# files | 129 |
 | Test attributes [Fact]+[Theory] | 749 |
-| Gate checks (Add-Check) | 44 |
+| Gate checks (Add-Check) | 45 |
 
 > 更新协议：结构变化 → 跑门禁看 `structure-baseline-consistency` 报什么 → 同步改本表与
-> `tools/verify.ps1` / `scripts/checks/run.ts` 基线常量 → 门禁转绿。
+> `scripts/checks/run.ts` 基线常量 → 门禁转绿。
 
 ## 藤曼路径 (Vine Trail) — 新会话导航
 
@@ -89,15 +87,15 @@ WT_Protector/
 3. **想做 UI/UX 决策？** → `DESIGN.md`（品牌、原则、组件所有权、Token 规则）
 4. **想审计功能边界？** → `docs/feature-reality-north-star-audit.md`（22 项功能、声明边界账本）
 5. **想参考外部设计？** → `docs/design-benchmark-digest.md` + `docs/giants-shoulders/`
-6. **想运行/测试？** → `powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\run.ps1`
-7. **想验证全仓？** → `npm ci && npm run verify`（等价保留：`powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1`）
+6. **想运行/测试？** → `npm run start` / `npm run verify:mainline`
+7. **想验证全仓？** → `npm ci && npm run verify`
 8. **想跑 TS 发布契约？** → `npm ci && npm run release:contract`
 
 ## 核心规则
 
 - `.snow/` 是忽略的本地运行时/索引状态，不追踪、不校验、不作为完成声明依据
 - 行尾由 `.gitattributes` 管理：全部文本归一化为 LF
-- 声称仓库变更"完成"前必须跑通：`git diff --check` + `npm run verify`（等价：`tools\verify.ps1`）
+- 声称仓库变更"完成"前必须跑通：`git diff --check` + `npm run verify`
 - 源码在 `src/avalonia-launcher/`，退役物在 `retired/`，不恢复退役路径
 - 配置文件 `config/launcher.json` 是唯一权威源（entries + presets + settings + defaultPresetId + runHistory 一体），无 AppData/registry 后备
 

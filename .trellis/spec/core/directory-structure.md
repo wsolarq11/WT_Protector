@@ -95,8 +95,6 @@ Layer 4 ─ Views/                     XAML + code-behind + drag-drop
 ```
 src/avalonia-launcher/
 ├── README.md                           # 5-layer architecture docs
-├── run.ps1                             # Dev run script
-├── verify.ps1                          # Mainline gate (restore → test → publish → smoke)
 ├── src/
 │   ├── WTLauncher.Core/                # Layer 0: 53 C# files
 │   ├── WTLauncher.Analyzers/           # Roslyn analyzers: 7 C# files

@@ -12,7 +12,8 @@ The test project uses **xUnit v3** + **ArchUnitNET** for architecture invariants
 - `src/avalonia-launcher/tests/WTLauncher.Tests/Support/LauncherPersistenceTestFixtures.cs` — canonical shared fixtures (`Entry()`, `PresetFile()` factories)
 - `src/avalonia-launcher/tests/WTLauncher.Tests/Support/TestRepositoryPaths.cs` — temp directory management
 - `src/avalonia-launcher/tests/WTLauncher.Tests/Architecture/ArchitectureRules.cs` — ArchUnitNET architecture invariants (R1-R6)
-- `src/avalonia-launcher/verify.ps1` — mainline gate script
+- `src/avalonia-launcher/README.md` — mainline gate and architecture overview
+- `scripts/verify-mainline.ts` — mainline gate script
 
 ---
 

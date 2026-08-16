@@ -44,7 +44,7 @@ Resources["NoBoxShadow"] = BoxShadows.Parse("0 0 0 0 Transparent");
 <Setter Property="BoxShadow" Value="{StaticResource NoBoxShadow}"/>
 ```
 
-The root `tools/verify.ps1` gate reports `app-raw-hex-zero` and rejects a temporary raw-hex fixture, so an allowlist must not be introduced to bypass the ownership rule.
+The root `scripts/verify.ts` gate reports `app-raw-hex-zero` and rejects a temporary raw-hex fixture, so an allowlist must not be introduced to bypass the ownership rule.
 
 ### Class-based Visual States
 

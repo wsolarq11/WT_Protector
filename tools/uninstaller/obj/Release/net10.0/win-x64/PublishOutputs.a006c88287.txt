@@ -1,0 +1,2 @@
+D:\AI\projects\WT_Protector\src\avalonia-launcher\artifacts\uninstaller\win-x64\Uninstaller.pdb
+D:\AI\projects\WT_Protector\src\avalonia-launcher\artifacts\uninstaller\win-x64\Uninstaller.exe

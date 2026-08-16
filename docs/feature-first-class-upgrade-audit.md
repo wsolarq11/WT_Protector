@@ -12,7 +12,7 @@ Current evidence used in this pass:
 - `config/launcher.json` → 19 entries / 19 unique ids / 19 existing directories; 2 presets（`core-projects`, `blank-manual`）; settings with `sortMode=custom`, `entryViewMode=cards`, `requireConfirmationForLaunches=false`, 3 commandTemplates, 2 searchHistory entries.
 - `git diff --check` → PASS.
 - `dotnet test` → 542 tests PASS.
-- Full gate `tools\verify.ps1` → 16/16 root checks structural PASS (GUI smoke skipped on non-Windows; mainline verify receipt validates SHA256 of published DLL).
+- Full gate `npm run verify` → 16/16 root checks structural PASS (GUI smoke skipped on non-Windows; mainline verify receipt validates SHA256 of published DLL).
 - GitHub similar-projects snapshot `capturedAtUtc: 2026-06-09T15:47:55Z` → age: 1 day, within 30-day window.
 
 ## 判断标准
@@ -56,7 +56,7 @@ Current evidence used in this pass:
 | # | 能力 | 星级 | 真实问题 | 关键证据 | 改造建议 |
 |---|------|------|----------|----------|----------|
 | 1 | Launch entry object | ⭐⭐⭐⭐⭐ | 19 entries 证明真实使用；消灭重复 cd/敲命令 | `LaunchEntry.cs` 8 字段（id/name/directory/command/selected/updatedAtUtc/launchedAtUtc/launchCount）、`[JsonRequired]`；Loose Read + Strict Write（未知键跳过；2026-07-23 起不再使用 `UnmappedMemberHandling.Disallow`） | 无——数据结构最小、硬、正确 |
-| 2 | Existing-directory contract | ⭐⭐⭐⭐⭐ | 陈旧目录瞬间破坏用户信任 | `LaunchArgumentBuilder.cs` wt.exe 路径探测（LOCALAPPDATA→ProgramFiles→FileNotFoundException）runtime check；`verify.ps1` gate 双重防御 | 无——fail-fast 边界位置正确 |
+| 2 | Existing-directory contract | ⭐⭐⭐⭐⭐ | 陈旧目录瞬间破坏用户信任 | `LaunchArgumentBuilder.cs` wt.exe 路径探测（LOCALAPPDATA→ProgramFiles→FileNotFoundException）runtime check；`npm run verify` gate 双重防御 | 无——fail-fast 边界位置正确 |
 | 3 | Search/filter | ⭐⭐⭐ | 19 entries 需要快速定位 | `LauncherEntryQuery.cs` MatchesFilter 多词匹配（名称/目录/命令）正确；`searchHistory` 当时仅被收集未渲染（死数据）；无去抖、无 Escape 取消聚焦 | 加 150ms 去抖（当前无去抖）；或保持当前实现——完整搜索 history 已经可用 |
 | 4 | Direct single launch | ⭐⭐⭐⭐⭐ | 核心动作——找到并启动 | `LaunchArgumentBuilder.cs` 构造 `wt.exe` plan；snapshot + confirmation + receipt 三层契约 | 无——不用加"危险命令分类剧场" |
 | 5 | Checkbox selection & batch launch | ⭐⭐⭐⭐⭐ | 每天一键启动一组工作区 | preflight/confirmation/receipt 分离；snapshot 防 mutation 漂移；`LauncherBatchLaunchReport` 不可变 | 可选：`continueOnError` 参数支持"全启"模式 |
@@ -73,7 +73,7 @@ Current evidence used in this pass:
 | 16 | Portable settings | ⭐⭐⭐⭐⭐ | 偏好跟仓库走，不藏 AppData | `LauncherSettings` POCO 单源；31 个设置测试覆盖所有 null/空白/大小写/未知字段拒绝 | 无 |
 | 17 | JSON persistence, backup & rollback | ⭐⭐⭐⭐⭐ | 配置半写比功能缺失更糟 | temp-file→`.bak` backup rotation→`File.Replace` 原子写入；3 代备份（`FileLauncherJsonIO.DefaultMaxBackups=3`）；save-first-then-commit 回滚（`StoreGrain.Dispatch`，快照类 2026-07-21 移除） | 无——单进程本地工具足够 |
 | 18 | Core/App/Tests separation | ⭐⭐⭐⭐⭐ | 启动参数/排序/配置规则必须可测试 | Core 零 Avalonia 依赖；542 tests；Test 结构镜像生产架构 | 无 |
-| 19 | Self-contained win-x64 publish & native gate | ⭐⭐⭐⭐⭐ | 桌面工具必须产出可运行 exe | `build-release.ps1` SHA256 receipt；`verify.ps1` 16 checks + GUI smoke；双 receipt 路径 | 无 |
+| 19 | Self-contained win-x64 publish & native gate | ⭐⭐⭐⭐⭐ | 桌面工具必须产出可运行 exe | `npm run release:build` SHA256 receipt；`npm run verify` checks + GUI smoke；双 receipt 路径 | 无 |
 | 20 | Retired legacy surfaces | ⭐⭐⭐⭐⭐ | HTA/WinForms 留作活路径 = 第二套真相 | `retired/` 归档；root gate 阻止 4 个旧路径复活；退役文档完整性验证 | 无 |
 | 21 | Design benchmark & giants-shoulders | ⭐⭐⭐⭐⭐ | 设计判断不能靠感觉 | 12 基准→10 本地验收规则（`design-benchmark-digest.md`）；12 工具对标→本地翻译（`launcher-first-class-patterns.md` 12 借用模式表）；xUnit 预设套件锁定 presets 结构 + 门禁 `presets-schema`/`security-audit-f2` | 考虑 CI 中自动检查快照新鲜度 |
 | 22 | Command templates | ⭐⭐⭐⭐ | 长命令重复制造错误 | `LauncherCommandTemplateResolver` 纯函数；unknown key fail-fast；`$key` 预览 | 补 20 行 xUnit 合约测试 |
@@ -116,6 +116,6 @@ Current evidence used in this pass:
 WT Protector 对"可移植 Windows Terminal 工作空间启动器"窄域，23 项功能全部 3 星以上、17 项 5 星、0 项存在严重缺口。真实代码缺口不是新功能，而是：
 
 1. **6 项 3-4 星功能有小缺口**——都是测试不足或用户路径不完整，不是数据结构错误；
-2. **保持 root gate 新鲜**——提交/发布前跑 `git diff --check` + `tools\verify.ps1`；
+2. **保持 root gate 新鲜**——提交/发布前跑 `git diff --check` + `npm run verify`；
 3. **做最小的改进**——给 searchHistory 加 autocomplete、补 3 个隔离单元测试、统一 sort 严格度；
 4. **继续拒绝** broad launcher / 插件平台 / 静默 fallback / 预铺 speculative 功能。

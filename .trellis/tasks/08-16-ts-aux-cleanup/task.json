@@ -3,7 +3,7 @@
   "name": "ts-aux-cleanup",
   "title": "TS辅助脚本与PS清理",
   "description": "迁移辅助脚本、处理生成式卸载器边界、删除 active PS、更新文档与基线",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

@@ -6,8 +6,8 @@ Purpose: keep high-signal external project lessons one step away from this repos
 
 This is a reference library, not an authority layer. The active WT Launcher source of truth remains the current repository, its `README.md`, and its native gate:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
+```bash
+npm run verify
 ```
 
 ## Admission rule
@@ -30,7 +30,7 @@ Every entry in this library should record:
 ## How to use before changing WT Launcher
 
 1. Re-read the relevant entry and its source links.
-2. Re-check the current WT Launcher state with `git status --short` and `tools\verify.ps1`.
+2. Re-check the current WT Launcher state with `git status --short` and `npm run verify`.
 3. Define a spike that does **not** replace the active executable until it proves first-order benefit.
 4. Compare against the active acceptance standard: quicker, simpler, more natural UX; same or stronger config/launch safety; same or cheaper verification.
 5. Adopt only if the spike wins under the same gate; otherwise archive the spike and keep the active path unchanged.

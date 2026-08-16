@@ -6,8 +6,8 @@ This is the active source line for WT Launcher. It was promoted from the former 
 
 From the repository root:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\run.ps1
+```bash
+npm run start
 ```
 
 The app reads the repository-root `config/launcher.json` (entries + presets + settings + defaultPresetId + runHistory as one atomic unit) and persists all mutations there. The header batch controls can select all visible filtered entries, clear the saved selection, or one-click launch the saved checked set.
@@ -16,19 +16,19 @@ The app reads the repository-root `config/launcher.json` (entries + presets + se
 
 From the repository root:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
+```bash
+npm run verify
 ```
 
 Or run only the Avalonia mainline gate:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\verify.ps1
+```bash
+npm run verify:mainline
 ```
 
-TypeScript parity entry points (repository root):
+TypeScript mainline and focused-test entry points:
 
-```powershell
+```bash
 npm run verify
 npm run verify:mainline
 npm run test:fast
@@ -44,11 +44,11 @@ The local mainline gate runs:
 3. `dotnet publish -c Release -r win-x64 --self-contained true` into isolated verification output
 4. a hidden temp-config startup smoke of the published exe on Windows; non-Windows hosts skip that GUI-only step after tests and win-x64 publish verification
 
-Verification publish output is ignored under `artifacts/verify-publish/win-x64/`. Stable release output from `tools/build-release.ps1` is ignored under `artifacts/publish/win-x64/`. The central release contract is `tools/release-contract.ps1` from the repository root: locked-mode AOT restore, `--no-restore` publish, clean-worktree assertion, and receipt/manifest validation. The TypeScript authority is `npm run release:contract` (CI entry point).
+Verification publish output is ignored under `artifacts/verify-publish/win-x64/`. Stable release output from `npm run release:build` is ignored under `artifacts/publish/win-x64/`. The central release contract is `npm run release:contract` from the repository root: locked-mode AOT restore, `--no-restore` publish, clean-worktree assertion, and receipt/manifest validation.
 
 ## Current acceptance question
 
-This line has replaced the WinForms source tree as the mainline. Further work should improve the Avalonia UX directly while preserving the root `tools/verify.ps1` gate and the portable config contract.
+This line has replaced the WinForms source tree as the mainline. Further work should improve the Avalonia UX directly while preserving the root `npm run verify` gate and the portable config contract.
 
 ## Architecture layers
 

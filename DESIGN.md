@@ -28,7 +28,7 @@
   - 不引入额外依赖来替代当前 native gate
 - Success signals:
   - 卡片可读、动作可达、拖拽可理解
-  - `tools/verify.ps1` / `tools/build-release.ps1` 持续通过
+  - `npm run verify` / `npm run release:contract` 持续通过
   - 用户能在不依赖滚轮的情况下完成大多数操作，滚轮只作为兜底
   - 详细列表视图每行只容纳一行文字，上下仅保留约半个字母高度的呼吸空间
   - 名称墙视图能随窗口宽度自适应双列/多列，常规窗口下一眼看全更多启动项

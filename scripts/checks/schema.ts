@@ -18,7 +18,7 @@ function requireArray(value: unknown, context: string): unknown[] {
 }
 
 export function checkGithubSnapshot(): void {
-  requireRepoPath("tools/update-github-similar-projects-snapshot.ps1", "GitHub snapshot refresh script");
+  requireRepoPath("scripts/update-github-similar-projects-snapshot.ts", "GitHub snapshot refresh script");
   const filePath = requireRepoPath("docs/reference/github-similar-projects-snapshot.json", "GitHub similar-project snapshot");
   const snapshot = readJson<Record<string, unknown>>(filePath);
   assertOnlyJsonKeys(
@@ -44,13 +44,13 @@ export function checkGithubSnapshot(): void {
   const ageDays = ageMs / 86_400_000;
   if (ageDays > maxAgeDays) {
     throw new Error(
-      `GitHub similar-project snapshot is stale: ${snapshot.capturedAtUtc}. Refresh with: powershell -NoProfile -ExecutionPolicy Bypass -File .\\tools\\update-github-similar-projects-snapshot.ps1`,
+      `GitHub similar-project snapshot is stale: ${snapshot.capturedAtUtc}. Refresh with: npm run update:github-snapshot`,
     );
   }
   if (typeof snapshot.evidenceCommand !== "string" || !snapshot.evidenceCommand.includes("gh repo view <owner>/<repo>")) {
     throw new Error("GitHub similar-project snapshot must record the gh repo view evidence command");
   }
-  if (typeof snapshot.refreshCommand !== "string" || !snapshot.refreshCommand.includes("tools\\update-github-similar-projects-snapshot.ps1")) {
+  if (typeof snapshot.refreshCommand !== "string" || !snapshot.refreshCommand.includes("npm run update:github-snapshot")) {
     throw new Error("GitHub similar-project snapshot must record its repo-local refresh command");
   }
   const summary = snapshot.summary;
@@ -176,7 +176,7 @@ export function checkGithubSnapshot(): void {
   }
   addCheck("github-similar-projects-snapshot", {
     path: "docs\\reference\\github-similar-projects-snapshot.json",
-    refreshScript: "tools\\update-github-similar-projects-snapshot.ps1",
+    refreshScript: "scripts\\update-github-similar-projects-snapshot.ts",
     capturedAtUtc: snapshot.capturedAtUtc,
     maxAgeDays,
     ageDays: Math.round(ageDays * 100) / 100,

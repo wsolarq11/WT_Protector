@@ -226,7 +226,7 @@ internal LauncherSettings CurrentSettings => _storeGrain.Select(s => s.Settings)
 
 **Why single assembler:** Pre-2026-07-09 there were two — `BuildStoreFile()` and `SaveSettingsToStore(settings)` — and the latter hand-assembled the same 4 fields (`Entries` / `Settings` / `Presets` / `DefaultPresetId`) independently. The dual path meant any field-addition or re-ordering had to be mirrored in both sites, creating drift risk.
 
-**Pin gate:** `tools/verify.ps1` check `settings-single-source-buildstorefile` regex-counts the unique hand-assembly signature in `MainWindowViewModel.cs` and asserts exactly 1 match. Regression triggers a verify failure.
+**Pin gate:** `scripts/verify.ts` check `settings-single-source-buildstorefile` regex-counts the unique hand-assembly signature in `MainWindowViewModel.cs` and asserts exactly 1 match. Regression triggers a verify failure.
 
 **Collaborator working state is NOT dual truth:** `LauncherDragReorderWorkflow._settings` and the store grain state are sometimes mistaken for dual-truth — they are not. The workflow mutates `_settings` during Preview before persist; `StoreGrain` holds the single source and leaves memory unchanged on save failure (save-first-then-commit). Main VM syncs via `_settings = _dragReorderWorkflow.Settings` (5 sites in `Drag.cs`) and `_settings = _storeGrain.Select(s => s.Settings)` for store reads. This manual sync is the cost of collaborator-boundary design, NOT a bug. Verified by 7 equivalence tests in `MainWindowViewModelTests.DragTests.cs`.
 
