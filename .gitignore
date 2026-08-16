@@ -21,6 +21,9 @@ src/avalonia-launcher/**/bin/
 src/avalonia-launcher/**/obj/
 src/avalonia-launcher/**/TestResults/
 src/avalonia-launcher/artifacts/
+tools/**/bin/
+tools/**/obj/
+tools/**/TestResults/
 
 # Auto-captured wiki session logs; promote durable findings manually.
 omx_wiki/session-log-*.md
