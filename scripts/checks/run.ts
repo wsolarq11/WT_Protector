@@ -1,5 +1,6 @@
 import path from "node:path";
 import { repoRoot, solutionPath } from "../config-lib.js";
+import { restoreSolutionNativeAot } from "../publish-lib.js";
 import { runVerifyMainline } from "../verify-mainline.js";
 import { runCoverageGate } from "../test-coverage.js";
 import {
@@ -12,20 +13,13 @@ import {
 } from "./common.js";
 
 export async function checkReleaseLockfileConsistency(): Promise<void> {
-  await execChecked("AOT locked restore", "dotnet", [
-    "restore",
-    solutionPath,
-    "-r",
-    "win-x64",
-    "-p:EnableNativeAot=true",
-    "--locked-mode",
-  ]);
+  await restoreSolutionNativeAot(true);
   addCheck("release-lockfile-consistency", { lockedMode: true, aotMarker: "EnableNativeAot" });
 }
 
 export async function checkAvaloniaMainlineVerify(): Promise<void> {
   const mainline = await runVerifyMainline();
-  const requiredFields = ["schemaVersion", "kind", "status", "repoHead", "worktreeDirty", "worktreeStatus"];
+  const requiredFields = ["schemaVersion", "kind", "status", "repoHead", "worktreeDirty", "worktreeStatus", "nativeAot"];
   for (const field of requiredFields) {
     if (!(field in mainline)) {
       throw new Error(`Avalonia mainline receipt missing field: ${field}`);
@@ -43,8 +37,11 @@ export async function checkAvaloniaMainlineVerify(): Promise<void> {
   if (mainline.status !== "PASS") {
     throw new Error("Avalonia mainline verify did not pass");
   }
-  if (String(mainline.publishedDll ?? "").trim() === "") {
-    throw new Error("Avalonia mainline verify publishedDll is required");
+  if (mainline.nativeAot !== true) {
+    throw new Error("Avalonia mainline verify must publish with Native AOT");
+  }
+  if (mainline.publishedDll !== null) {
+    throw new Error("Avalonia mainline Native AOT receipt must not claim a managed publishedDll");
   }
   addCheck("avalonia-mainline-verify", {
     schemaVersion: mainline.schemaVersion,
@@ -52,12 +49,12 @@ export async function checkAvaloniaMainlineVerify(): Promise<void> {
     status: mainline.status,
     repoHead: mainline.repoHead,
     worktreeDirty: mainline.worktreeDirty,
+    nativeAot: mainline.nativeAot,
     tests: mainline.tests,
     guiSmoke: mainline.guiSmoke,
     publishedExe: mainline.publishedExe,
     publishedDll: mainline.publishedDll,
     sha256: mainline.sha256,
-    dllSha256: mainline.dllSha256,
   });
 }
 

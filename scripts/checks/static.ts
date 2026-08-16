@@ -599,6 +599,28 @@ export function checkTestStructureLayering(): void {
   addCheck("test-structure-layering", { layers: layers.join(",") });
 }
 
+export function checkAotToolchainOwnedBySdk(): void {
+  const csproj = readText("src/avalonia-launcher/src/WTLauncher.App/WTLauncher.App.csproj");
+  const props = readText("src/avalonia-launcher/Directory.Packages.props");
+  const violations: string[] = [];
+  for (const packageName of ["Microsoft.DotNet.ILCompiler", "Microsoft.NET.ILLink.Tasks"]) {
+    if (csproj.includes(`Include="${packageName}"`)) {
+      violations.push(`WTLauncher.App.csproj must not reference ${packageName} explicitly`);
+    }
+    if (props.includes(`Include="${packageName}"`)) {
+      violations.push(`Directory.Packages.props must not pin ${packageName}`);
+    }
+  }
+  if (violations.length > 0) {
+    throw new Error(`Native AOT toolchain must be owned by the .NET SDK: ${violations.join("; ")}`);
+  }
+  addCheck("aot-toolchain-owned-by-sdk", {
+    csprojExplicit: false,
+    propsExplicit: false,
+    invariant: ".NET SDK owns Native AOT compiler and linker selection",
+  });
+}
+
 export function checkNoActivePowerShellScripts(): void {
   const scripts = walkFilesExcluding(repoRoot, ["node_modules", ".git", ".snow", "artifacts", "retired", "archive"]);
   const active = scripts.filter((file) => file.toLowerCase().endsWith(".ps1"));

@@ -29,7 +29,7 @@ npm ci
 npm run typecheck
 npm test
 
-# Full native gate — 45 checks (growing), must be green before any "done" claim
+# Full native gate — 46 checks (growing), must be green before any "done" claim
 npm run verify
 
 # Central release contract: locked-mode restore + AOT publish + clean worktree + receipt validation

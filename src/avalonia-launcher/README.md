@@ -41,7 +41,7 @@ The local mainline gate runs:
 
 1. `dotnet restore -r win-x64 -p:EnableNativeAot=true --locked-mode`
 2. `dotnet test -c Release`
-3. `dotnet publish -c Release -r win-x64 --self-contained true` into isolated verification output
+3. `dotnet publish -c Release -r win-x64 -p:EnableNativeAot=true --self-contained true` into isolated verification output
 4. a hidden temp-config startup smoke of the published exe on Windows; non-Windows hosts skip that GUI-only step after tests and win-x64 publish verification
 
 Verification publish output is ignored under `artifacts/verify-publish/win-x64/`. Stable release output from `npm run release:build` is ignored under `artifacts/publish/win-x64/`. The central release contract is `npm run release:contract` from the repository root: locked-mode AOT restore, `--no-restore` publish, clean-worktree assertion, and receipt/manifest validation.

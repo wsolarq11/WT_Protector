@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { makeReceipt, repoRoot } from "./config-lib.js";
 import { checks } from "./checks/common.js";
 import {
+  checkAotToolchainOwnedBySdk,
   checkAppRawHexZero,
   checkCiFastLaneNoPublishDuplication,
   checkClaimBoundaryLedger,
@@ -71,6 +72,7 @@ export async function runVerify(): Promise<unknown> {
   checkUpdateManifestGeneration();
   checkTestStructureLayering();
   checkCiFastLaneNoPublishDuplication();
+  checkAotToolchainOwnedBySdk();
   await checkReleaseLockfileConsistency();
   await checkAvaloniaMainlineVerify();
   await checkCoverageGate();

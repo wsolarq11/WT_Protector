@@ -205,7 +205,7 @@ Run the project gate from the repository root:
 npm run verify
 ```
 
-The verifier currently enforces 45 checks — see the `addCheck` calls in `scripts/checks/` for the canonical list. Summary by category:
+The verifier currently enforces 46 checks — see the `addCheck` calls in `scripts/checks/` for the canonical list. Summary by category:
 
 - **repo hygiene**: line-ending policy (LF), `.snow/` ignored local state, retired paths (`WT Launcher.exe`, `src/winforms-launcher/`, `spikes/`) do not return;
 - **mainline layout**: `src/avalonia-launcher/` has the solution, app project, tests project, and mainline verify script;
@@ -215,7 +215,7 @@ The verifier currently enforces 45 checks — see the `addCheck` calls in `scrip
 - **schema invariants**: `config-schema`, `presets-schema`, `settings-json`, `settings-single-source-buildstorefile` (single canonical assembler), `no-stale-three-file-refs` (active docs must not reference abandoned three-file architecture);
 - **retirement hygiene**: shortcut-backup retirement, WinForms retired design (`retired/design/winforms-launcher.md`), HTA retired config;
 - **machine setup**: `.wt-protector.dsc.yaml` exists at repo root and carries the required DSC v3 schema markers (`configuration-dsc-schema/0.2`, `configurationVersion: 0.2.0`) plus the two required `WinGetPackage` resources (`Microsoft.WindowsTerminal`, `Microsoft.PowerShell`); structural validation only — run `npm run apply:config:dry` for winget's own schema validation when DSC v3 is installed;
-- **Avalonia mainline**: restore/test/isolated verification publish passes; on Windows a hidden temp-config startup smoke of the published exe; non-Windows hosts skip GUI smoke after win-x64 publish verification.
+- **Avalonia mainline**: restore/test/isolated Native AOT verification publish passes; on Windows a hidden temp-config startup smoke of the published exe; non-Windows hosts skip GUI smoke after win-x64 Native AOT publish verification.
 
 The final verifier line is a JSON receipt with `schemaVersion`, `kind`, `status`, `repoHead`, `worktreeDirty`, and `worktreeStatus` fields before tool-specific evidence. The Avalonia mainline receipt uses the same schema and is checked by the root gate.
 
@@ -239,7 +239,7 @@ The central release contract runs the same locked-mode restore, Native AOT publi
 npm run release:contract
 ```
 
-The TypeScript root gate is the full-gate CI body and reports the 45-check receipt:
+The TypeScript root gate is the full-gate CI body and reports the 46-check receipt:
 
 ```bash
 npm run verify
