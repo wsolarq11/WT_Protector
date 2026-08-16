@@ -163,3 +163,24 @@ Added TS run, verify-mainline, fast, coverage, launch-args and smoke commands; p
 ### Status
 
 [OK] **Completed**
+
+
+## Session 7: TS root gate migration
+
+**Date**: 2026-08-16
+**Task**: TS root gate migration
+**Branch**: `main`
+
+### Summary
+
+Added npm run verify with 44 TS checks; CI full-gate switched to npm; retained PS gate now calls TS mainline/coverage; dual-track both PASS.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5cefc0b5` | (see git log) |
+
+### Status
+
+[OK] **Completed**
