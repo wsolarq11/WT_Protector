@@ -66,13 +66,14 @@ function newestCoverageFile(directory: string): string {
   return xmlFiles.sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs)[0];
 }
 
-async function main(): Promise<void> {
-  const { values } = parseArgs({
-    options: {
-      "no-build": { type: "boolean", default: false },
-    },
-  });
+export interface CoverageGateReceipt {
+  status: "PASS";
+  report: string;
+  criticalPaths: CoverageClass[];
+  receiptPath: string;
+}
 
+export async function runCoverageGate(noBuild: boolean): Promise<CoverageGateReceipt> {
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as CoverageManifest;
   rmSync(coverageDir, { recursive: true, force: true });
   mkdirSync(coverageDir, { recursive: true });
@@ -90,13 +91,12 @@ async function main(): Promise<void> {
     "--results-directory",
     coverageDir,
   ];
-  if (values["no-build"]) {
+  if (noBuild) {
     args.push("--no-build");
   }
   const result = await execa("dotnet", args, { stdio: "inherit", reject: false });
   if (result.exitCode !== 0) {
-    process.exitCode = result.exitCode ?? 1;
-    return;
+    throw new Error(`dotnet test coverage failed with exit code ${result.exitCode}`);
   }
 
   const coverageFile = newestCoverageFile(coverageDir);
@@ -117,21 +117,27 @@ async function main(): Promise<void> {
   }
 
   if (failures.length > 0) {
-    for (const failure of failures) {
-      process.stderr.write(`${failure}\n`);
-    }
-    process.exitCode = 1;
-    return;
+    throw new Error(`Coverage gate failed:\n${failures.join("\n")}`);
   }
 
   const receipt = {
-    status: "PASS",
+    status: "PASS" as const,
     report: coverageFile,
     criticalPaths: reported,
   };
   const receiptPath = path.join(coverageDir, "coverage-gate-receipt.json");
   writeFileSync(receiptPath, JSON.stringify(receipt), "utf8");
-  process.stdout.write(`${receiptPath}\n`);
+  return { ...receipt, receiptPath };
+}
+
+async function main(): Promise<void> {
+  const { values } = parseArgs({
+    options: {
+      "no-build": { type: "boolean", default: false },
+    },
+  });
+  const receipt = await runCoverageGate(Boolean(values["no-build"]));
+  process.stdout.write(`${receipt.receiptPath}\n`);
 }
 
 const isMain = Boolean(process.argv[1]) && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);

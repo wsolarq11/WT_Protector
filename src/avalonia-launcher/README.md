@@ -29,6 +29,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\veri
 TypeScript parity entry points (repository root):
 
 ```powershell
+npm run verify
 npm run verify:mainline
 npm run test:fast
 npm run test:coverage

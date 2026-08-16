@@ -37,6 +37,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\release-contract.ps1
 npm ci
 npm run typecheck
 npm test
+npm run verify
 npm run release:contract
 
 # TypeScript mainline and test commands

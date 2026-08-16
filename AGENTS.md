@@ -13,7 +13,7 @@ WT_Protector/
 ├── config/                → 运行时配置（JSON, 人可读写）
 │   └── launcher.json      → 统一存储：启动条目 + 命名启动组 + UI 偏好 + defaultPresetId + runHistory
 ├── package.json / package-lock.json → Node/TypeScript 脚本系统
-├── scripts/               → TS 脚本（config-lib / build-release / release-contract / run / verify-mainline / test-* / smoke + Vitest）
+├── scripts/               → TS 脚本（config-lib / build-release / release-contract / verify / verify-mainline / test-* / smoke + Vitest）
 ├── src/
 │   └── avalonia-launcher/ → 活动主线：Avalonia/.NET 源码 + 测试 + 构建
 │       ├── README.md      → 源码架构（5层模型）、构建与验证
@@ -56,12 +56,13 @@ WT_Protector/
 | `update-github-similar-projects-snapshot.ps1` | **刷新 GitHub 对标快照**：通过 `gh repo view` 拉取 12 个对标项目的最新数据                                                                                                                                                                                                                                                                    | 需要更新市场对标证据时（快照超过 30 天会被门禁拒绝） |
 
 > TS 发布入口：`scripts/build-release.ts` + `scripts/release-contract.ts`，执行 `npm run release:contract`（CI 当前权威入口）。旧 `tools/release-contract.ps1` 在等价验证期间保留。
+> TS 根门禁：`scripts/verify.ts` + `scripts/checks/*`，执行 `npm run verify`（CI full-gate 当前权威入口）。旧 `tools/verify.ps1` 在等价验证期间保留。
 > TS 主线入口：`scripts/run.ts`、`scripts/verify-mainline.ts`、`scripts/test-fast.ts`、`scripts/test-coverage.ts`、`scripts/test-launch-args.ts`、`scripts/smoke-critical-journey.ts`；对应 `npm run start`、`verify:mainline`、`test:fast`、`test:coverage`、`test:launch-args`、`smoke`。
 
 ## 结构基线（Structure Baseline）— 门禁强制
 
-仓库结构事实的**唯一文档源**。`tools/verify.ps1` 的 `structure-baseline-consistency` 检查逐项校验
-文件系统与本表：结构变化时必须**同步更新**本表与 `tools/verify.ps1` 中的基线常量，否则门禁失败。
+仓库结构事实的**唯一文档源**。`tools/verify.ps1` 与 `scripts/verify.ts` 的 `structure-baseline-consistency` 检查逐项校验
+文件系统与本表：结构变化时必须**同步更新**本表与两个门禁中的基线常量，否则门禁失败。
 
 | 基线项 | 数量 |
 |--------|------|
@@ -77,7 +78,7 @@ WT_Protector/
 | Gate checks (Add-Check) | 44 |
 
 > 更新协议：结构变化 → 跑门禁看 `structure-baseline-consistency` 报什么 → 同步改本表与
-> `tools/verify.ps1` 基线常量 → 门禁转绿。
+> `tools/verify.ps1` / `scripts/checks/run.ts` 基线常量 → 门禁转绿。
 
 ## 藤曼路径 (Vine Trail) — 新会话导航
 
@@ -89,14 +90,14 @@ WT_Protector/
 4. **想审计功能边界？** → `docs/feature-reality-north-star-audit.md`（22 项功能、声明边界账本）
 5. **想参考外部设计？** → `docs/design-benchmark-digest.md` + `docs/giants-shoulders/`
 6. **想运行/测试？** → `powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\run.ps1`
-7. **想验证全仓？** → `powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1`
+7. **想验证全仓？** → `npm ci && npm run verify`（等价保留：`powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1`）
 8. **想跑 TS 发布契约？** → `npm ci && npm run release:contract`
 
 ## 核心规则
 
 - `.snow/` 是忽略的本地运行时/索引状态，不追踪、不校验、不作为完成声明依据
 - 行尾由 `.gitattributes` 管理：全部文本归一化为 LF
-- 声称仓库变更"完成"前必须跑通：`git diff --check` + `tools\verify.ps1`
+- 声称仓库变更"完成"前必须跑通：`git diff --check` + `npm run verify`（等价：`tools\verify.ps1`）
 - 源码在 `src/avalonia-launcher/`，退役物在 `retired/`，不恢复退役路径
 - 配置文件 `config/launcher.json` 是唯一权威源（entries + presets + settings + defaultPresetId + runHistory 一体），无 AppData/registry 后备
 

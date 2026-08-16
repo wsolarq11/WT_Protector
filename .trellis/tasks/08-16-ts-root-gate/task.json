@@ -3,7 +3,7 @@
   "name": "ts-root-gate",
   "title": "TS根门禁迁移",
   "description": "把 tools/verify.ps1 的 44 项 Add-Check 按模块迁移为 TS 根门禁",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

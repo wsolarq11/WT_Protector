@@ -247,6 +247,12 @@ npm ci
 npm run release:contract
 ```
 
+The TypeScript root gate is now the full-gate CI body and reports the same 44-check receipt as the retained PowerShell gate:
+
+```powershell
+npm run verify
+```
+
 The TypeScript mainline and focused-test entries mirror the PowerShell gates for parity validation:
 
 ```powershell

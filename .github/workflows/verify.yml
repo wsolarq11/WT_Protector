@@ -37,9 +37,14 @@ jobs:
       - name: Build
         run: dotnet build src/avalonia-launcher/WTLauncher.Avalonia.sln --no-restore -warnaserror
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+          cache: npm
+
       - name: Test (fast lane)
-        shell: powershell
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\test-fast.ps1 -Logger "trx;LogFileName=wtlauncher-fast.trx"
+        run: npm ci && npm run test:fast -- --logger "trx;LogFileName=wtlauncher-fast.trx"
 
       - name: Upload test results
         if: always()
@@ -98,7 +103,7 @@ jobs:
           path: src/avalonia-launcher/artifacts/publish/win-x64/
 
   full-gate:
-    name: Full Native Gate (verify.ps1)
+    name: Full Native Gate (npm run verify)
     runs-on: windows-latest
     needs: [build-and-test, nuget-audit, release-contract]
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
@@ -115,9 +120,14 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+          cache: npm
+
       - name: Run native gate
-        shell: powershell
-        run: .\tools\verify.ps1
+        run: npm ci && npm run verify
 
       - name: Upload coverage report
         if: always()

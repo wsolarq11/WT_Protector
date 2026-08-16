@@ -540,12 +540,12 @@ Add-Check 'portable-installer-contract' @{
     uninstallScript = 'uninstall.ps1'
 }
 
-$releaseScript = Get-RepoPath 'tools\build-release.ps1'
+$releaseScript = Get-RepoPath 'scripts\build-release.ts'
 if (-not (Test-Path -LiteralPath $releaseScript)) { throw "Missing release build script: $releaseScript" }
 $releaseText = Get-Content -Raw -Encoding UTF8 -LiteralPath $releaseScript
-if (-not $releaseText.Contains('update-manifest.json')) { throw 'build-release.ps1 must emit update-manifest.json' }
+if (-not $releaseText.Contains('update-manifest.json')) { throw 'scripts/build-release.ts must emit update-manifest.json' }
 Add-Check 'update-manifest-generation' @{
-    path = 'tools\build-release.ps1'
+    path = 'scripts\build-release.ts'
     manifest = 'update-manifest.json'
 }
 
@@ -562,7 +562,7 @@ Add-Check 'test-structure-layering' @{ layers = ($testLayers -join ',') }
 # --- CI fast lane must not duplicate the full native gate ---
 $workflowFile = Get-RepoPath '.github\workflows\verify.yml'
 $workflowText = Get-Content -Raw -Encoding UTF8 -LiteralPath $workflowFile
-if (-not $workflowText.Contains('test-fast.ps1')) { throw 'CI build-and-test must run tools/test-fast.ps1' }
+if (-not $workflowText.Contains('npm run test:fast')) { throw 'CI build-and-test must run npm run test:fast' }
 if ($workflowText.Contains('Publish (smoke check)')) { throw 'CI build-and-test must not duplicate publish; full-gate owns publish' }
 Add-Check 'ci-fast-lane-no-publish-duplication' @{ pass = $true }
 
@@ -578,9 +578,9 @@ Add-Check 'release-lockfile-consistency' @{
     aotMarker = 'EnableNativeAot'
 }
 
-$mainlineVerify = Join-Path $sourceRoot 'verify.ps1'
+$mainlineVerify = Join-Path $root 'scripts\verify-mainline.ts'
 if (-not (Test-Path -LiteralPath $mainlineVerify)) { throw "Missing mainline verify script: $mainlineVerify" }
-$mainlineJson = & $mainlineVerify
+$mainlineJson = & npm run verify:mainline 2>&1
 $mainline = ($mainlineJson | Select-Object -Last 1) | ConvertFrom-Json
 foreach ($requiredField in @('schemaVersion', 'kind', 'status', 'repoHead', 'worktreeDirty', 'worktreeStatus')) {
     if (-not ($mainline.PSObject.Properties.Name -contains $requiredField)) { throw "Avalonia mainline receipt missing field: $requiredField" }
@@ -607,7 +607,8 @@ Add-Check 'avalonia-mainline-verify' @{
 # --- Coverage gate for critical paths ---
 $coverageScript = Join-Path $PSScriptRoot 'test-coverage.ps1'
 if (-not (Test-Path -LiteralPath $coverageScript)) { throw "Missing coverage script: $coverageScript" }
-& powershell -NoProfile -ExecutionPolicy Bypass -File $coverageScript -NoBuild
+$coverageOutput = & npm run test:coverage -- --no-build 2>&1
+$coverageOutput | Out-Host
 if ($LASTEXITCODE -ne 0) { throw 'Coverage gate failed' }
 $coverageReceiptFile = Join-Path $sourceRoot 'artifacts\coverage\coverage-gate-receipt.json'
 if (-not (Test-Path -LiteralPath $coverageReceiptFile)) { throw "Coverage receipt missing: $coverageReceiptFile" }
