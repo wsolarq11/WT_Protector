@@ -4,9 +4,9 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 
 ## What this project contains
 
-- `src/avalonia-launcher/` — active mainline Avalonia/.NET launcher source, tests, run script, and publish gate.
+- `src/avalonia-launcher/` — active mainline Avalonia/.NET launcher source, tests, and publish gate.
 - `config/launcher.example.json` — machine-agnostic template of the unified launcher store (zero entries, locked `blank-manual` preset). The live `config/launcher.json` is git-ignored runtime state (it carries machine-local absolute paths); friends and fresh clones start from the example.
-- `docs/使用说明.txt` — friend-facing quick start (zero jargon, three steps to first launch). `tools/package-friend.ps1` packages it into the friend zip by globbing the single `docs/*.txt` (it deliberately avoids a Chinese literal — Windows PowerShell 5.1 reads no-BOM UTF-8 scripts as ANSI and corrupts non-ASCII literals).
+- `docs/使用说明.txt` — friend-facing quick start (zero jargon, three steps to first launch). `npm run package:friend` packages it into the friend zip by globbing the single `docs/*.txt`.
 - `retired/` — archive-only storage (never restore): the legacy HTA launcher snapshot was removed 2026-07-06 (commit `825ecb5b`); its config and the WinForms design lessons remain.
 - `retired/config/config.json` — retired HTA-local config kept as archive/reference (the HTA that read it is gone).
 - `retired/design/winforms-launcher.md` — retired WinForms executable/source design lessons and receipts.
@@ -16,13 +16,12 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `docs/business-wiring-boundaries.md` — business wiring ledger: each user path from View/ViewModel/StoreGrain to persistence or external process, with boundaries and known seams.
 - `.snow/` — git-ignored local runtime/index state; the gate asserts it stays ignored (`git ls-files -- .snow` is empty) and never validates its contents.
 - `.gitattributes` — repository line-ending policy; text is normalized as LF to avoid CRLF-only churn.
-- `.wt-protector.dsc.yaml` — WinGet Configuration file declaring fresh-machine prerequisites (Windows Terminal + PowerShell 7 + Node.js LTS); applied via `winget configure` or `tools/apply-machine-config.ps1`.
-- `tools/verify.ps1` — no-interaction local verification gate (44 checks).
+- `.wt-protector.dsc.yaml` — WinGet Configuration file declaring fresh-machine prerequisites (Windows Terminal + PowerShell 7 + Node.js LTS); applied via `winget configure` or `npm run apply:config`.
 - `package.json` / `package-lock.json` / `scripts/` — Node/TypeScript scripting layer for release and verification commands; `scripts/release-contract.ts` is the CI release-contract execution body.
-- `tools/config-lib.ps1` — shared helper functions used by verification and config tools.
-- `tools/apply-machine-config.ps1` — thin wrapper that applies (or `-DryRun` validates) `.wt-protector.dsc.yaml` for fresh-machine setup.
+- `tools/smoke-probe/` — .NET helper used by `npm run smoke` to launch the published GUI, check the window title, and close it without PowerShell.
+- `tools/uninstaller/` — .NET self-contained uninstaller source; `npm run install:portable` publishes it as `uninstaller.exe`.
 - `docs/reference/github-similar-projects-snapshot.json` — current GitHub similar-project evidence used by the feature north-star audit.
-- `tools/update-github-similar-projects-snapshot.ps1` — refreshes that market snapshot through `gh repo view`; the root gate rejects stale snapshots.
+- `npm run update:github-snapshot` — refreshes that market snapshot through `gh repo view`; the root gate rejects stale snapshots.
 - `docs/giants-shoulders/` — "巨人肩膀库": curated external project lessons and source links for future stack/reflection decisions.
   The old root `WT Launcher.exe`, old `src/winforms-launcher/`, and old `spikes/` directory are intentionally retired. The former Avalonia spike is now the source mainline under `src/avalonia-launcher/`.
 
@@ -87,7 +86,7 @@ Active config entries must not contain the obsolete per-entry `confirm` key. Lau
 
 All active JSON files must exist, require the documented camelCase keys, and reject missing, null, or blank mode keys. Unknown JSON keys are silently skipped at load time (Loose Read for forward compatibility). Source-gen serialization writes only known fields (Strict Write), making the C# record the effective schema contract.
 
-Nested `settings.window.width` and `settings.window.height` must be positive numbers; the gate (verify.ps1) rejects non-positive geometry. At runtime, invalid values clamp to minimums via Math.Max.
+Nested `settings.window.width` and `settings.window.height` must be positive numbers; the gate (`npm run verify`) rejects non-positive geometry. At runtime, invalid values clamp to minimums via Math.Max.
 
 Named launch groups live inside the store under the `presets` array:
 
@@ -103,7 +102,7 @@ Named launch groups live inside the store under the `presets` array:
 Preset fields:
 
 - `id` — stable human-readable launch group identity.
-- `entryIds` — stable entry ids; `tools/verify.ps1` rejects unknown or duplicate references.
+- `entryIds` — stable entry ids; `npm run verify` rejects unknown or duplicate references.
 - `locked` — optional UI guard for system groups such as `blank-manual`; locked groups can still be applied but cannot be updated or deleted in the app.
 - `defaultPresetId` (top-level) — startup UI selection; applying it is explicit.
 
@@ -143,21 +142,21 @@ Additional settings fields:
 
 ## Friend handoff (2026-08-02)
 
-A ready-to-share zip is built with two commands (repo root, PowerShell):
+A ready-to-share zip is built with two commands (repository root):
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build-release.ps1     # AOT exe → artifacts/publish/win-x64/
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\package-friend.ps1    # friend zip → artifacts/friend/WTLauncher-<version>.zip
+```bash
+npm run release:build     # AOT exe → artifacts/publish/win-x64/
+npm run package:friend    # friend zip → artifacts/friend/WTLauncher-<version>.zip
 ```
 
-The zip contains the AOT exe, the quick-start `使用说明.txt` (three-step quick start, SmartScreen bypass included; resolved from `docs/` by `tools/package-friend.ps1` via a single-`*.txt` glob), and `config/launcher.example.json`. A friend unzips to any folder and double-clicks the exe; the app boots with an empty store and the first-run welcome panel guides adding the first workspace. The exe is unsigned — the quick start documents "更多信息 → 仍要运行". This zip flow needs no installer and touches no registry or AppData (see Safety notes).
+The zip contains the AOT exe, the quick-start `使用说明.txt` (three-step quick start, SmartScreen bypass included; resolved from `docs/` by `scripts/package-friend.ts` via a single-`*.txt` glob), and `config/launcher.example.json`. A friend unzips to any folder and double-clicks the exe; the app boots with an empty store and the first-run welcome panel guides adding the first workspace. The exe is unsigned — the quick start documents "更多信息 → 仍要运行". This zip flow needs no installer and touches no registry or AppData (see Safety notes).
 
 ## Run the mainline app
 
 From the repository root:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\run.ps1
+```bash
+npm run start
 ```
 
 Optional explicit config path:
@@ -178,11 +177,11 @@ The launcher needs Windows Terminal + PowerShell 7 on the host. A WinGet Configu
 winget configure --file .\.wt-protector.dsc.yaml
 ```
 
-Or the thin wrapper (resolves the path, exposes a `-DryRun` validate-only mode):
+Or the thin wrapper (resolves the path, exposes a dry-run validate-only mode):
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\apply-machine-config.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\apply-machine-config.ps1 -DryRun
+```bash
+npm run apply:config
+npm run apply:config:dry
 ```
 
 What the configuration does:
@@ -202,11 +201,11 @@ Agent CLIs that ship via `irm | iex` (`claude`, `codex`, `cursor`, `antigravity`
 
 Run the project gate from the repository root:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
+```bash
+npm run verify
 ```
 
-The verifier currently enforces a growing set of checks — see the `Add-Check` calls in `tools/verify.ps1` for the canonical list. Summary by category:
+The verifier currently enforces 45 checks — see the `addCheck` calls in `scripts/checks/` for the canonical list. Summary by category:
 
 - **repo hygiene**: line-ending policy (LF), `.snow/` ignored local state, retired paths (`WT Launcher.exe`, `src/winforms-launcher/`, `spikes/`) do not return;
 - **mainline layout**: `src/avalonia-launcher/` has the solution, app project, tests project, and mainline verify script;
@@ -215,7 +214,7 @@ The verifier currently enforces a growing set of checks — see the `Add-Check` 
 - **launcher.json contract**: top-level `LauncherStoreFile` (schemaVersion=2) parses, unique entry `id`s, preset `entryIds` reference known entries only, every active entry `directory` exists on this machine;
 - **schema invariants**: `config-schema`, `presets-schema`, `settings-json`, `settings-single-source-buildstorefile` (single canonical assembler), `no-stale-three-file-refs` (active docs must not reference abandoned three-file architecture);
 - **retirement hygiene**: shortcut-backup retirement, WinForms retired design (`retired/design/winforms-launcher.md`), HTA retired config;
-- **machine setup**: `.wt-protector.dsc.yaml` exists at repo root and carries the required DSC v3 schema markers (`configuration-dsc-schema/0.2`, `configurationVersion: 0.2.0`) plus the two required `WinGetPackage` resources (`Microsoft.WindowsTerminal`, `Microsoft.PowerShell`); structural validation only — run `tools/apply-machine-config.ps1 -DryRun` for winget's own schema validation when DSC v3 is installed;
+- **machine setup**: `.wt-protector.dsc.yaml` exists at repo root and carries the required DSC v3 schema markers (`configuration-dsc-schema/0.2`, `configurationVersion: 0.2.0`) plus the two required `WinGetPackage` resources (`Microsoft.WindowsTerminal`, `Microsoft.PowerShell`); structural validation only — run `npm run apply:config:dry` for winget's own schema validation when DSC v3 is installed;
 - **Avalonia mainline**: restore/test/isolated verification publish passes; on Windows a hidden temp-config startup smoke of the published exe; non-Windows hosts skip GUI smoke after win-x64 publish verification.
 
 The final verifier line is a JSON receipt with `schemaVersion`, `kind`, `status`, `repoHead`, `worktreeDirty`, and `worktreeStatus` fields before tool-specific evidence. The Avalonia mainline receipt uses the same schema and is checked by the root gate.
@@ -224,38 +223,31 @@ Canonical distributable output:
 
 - executable: `src/avalonia-launcher/artifacts/publish/win-x64/WTLauncher.App.exe`
 - folder: `src/avalonia-launcher/artifacts/publish/win-x64/`
-- builder: `powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build-release.ps1`
+- builder: `npm run release:build`
 
-Note: `src/avalonia-launcher/artifacts/verify-publish/win-x64/WTLauncher.App.exe` is only the isolated verifier publish target used by `verify.ps1`, not the canonical distributable path.
+Note: `src/avalonia-launcher/artifacts/verify-publish/win-x64/WTLauncher.App.exe` is only the isolated verifier publish target used by `npm run verify`, not the canonical distributable path.
 
 The verifier publishes into isolated ignored output under `src/avalonia-launcher/artifacts/verify-publish/win-x64/` so a running release executable does not block the gate. Build/publish the stable mainline executable without running the whole root gate:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build-release.ps1
+```bash
+npm run release:build
 ```
 
 The central release contract runs the same locked-mode restore, Native AOT publish, clean-worktree assertion, and receipt/manifest validation that CI requires:
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\release-contract.ps1
-```
-
-The TypeScript release-contract entry point is now the CI execution body and reports the same contract receipt:
-
-```powershell
-npm ci
+```bash
 npm run release:contract
 ```
 
-The TypeScript root gate is now the full-gate CI body and reports the same 44-check receipt as the retained PowerShell gate:
+The TypeScript root gate is the full-gate CI body and reports the 45-check receipt:
 
-```powershell
+```bash
 npm run verify
 ```
 
-The TypeScript mainline and focused-test entries mirror the PowerShell gates for parity validation:
+The TypeScript mainline and focused-test entries are the canonical test commands:
 
-```powershell
+```bash
 npm run verify:mainline
 npm run test:fast
 npm run test:coverage
@@ -269,24 +261,24 @@ The publish output is ignored local build output under:
 src/avalonia-launcher/artifacts/publish/win-x64/WTLauncher.App.exe
 ```
 
-If that stable executable is already running, `tools/build-release.ps1` stops before publishing and reports the blocking PID(s); keep using `tools/verify.ps1` for routine gates, or close the running app before a stable release publish.
+If that stable executable is already running, `scripts/build-release.ts` stops before publishing and reports the blocking PID(s); keep using `npm run verify` for routine gates, or close the running app before a stable release publish.
 
 ## Testing
 
 Tests live in one `WTLauncher.Tests` project with physical layers under `src/avalonia-launcher/tests/WTLauncher.Tests/` and `[Trait("Category", ...)]` markers. The canonical map is `docs/test-structure.md`.
 
-```powershell
+```bash
 # Fast lane: CoreUnit + PropertyTest + Architecture + Analyzer
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\test-fast.ps1
+npm run test:fast
 
 # Critical-path coverage gate
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\test-coverage.ps1
+npm run test:coverage
 
 # Temp-config critical-journey smoke (published exe)
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\smoke-critical-journey.ps1 -Exe .\src\avalonia-launcher\artifacts\verify-publish\win-x64\WTLauncher.App.exe
+npm run smoke
 
 # Complete native gate
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
+npm run verify
 ```
 
 CI uses `build-and-test` for build + fast lane, `release-contract` (via `npm run release:contract`) for the central AOT publish contract, and `full-gate` for the single complete verify/publish pass.
@@ -362,6 +354,6 @@ Current gate state:
 
 - the feature audit currently classifies all 22 active feature mappings as narrow-domain north-star for the portable Windows Terminal workspace-launcher scope only;
 - the full absolute objective remains not complete as written because unimprovable-product, stronger-than-every-GitHub-similar, and absolute zero-side-effect claims are still blocked by current evidence;
-- no current native-gate blocker is known after a fresh `tools/verify.ps1` PASS;
+- no current native-gate blocker is known after a fresh `npm run verify` PASS;
 - this is not a claim that the launcher is unimprovable, stronger than every GitHub alternative, or capable of 0% side effects after starting arbitrary external processes;
-- for future visual-heavy layout changes, repeat screenshot-backed comfort passes without weakening the root `tools/verify.ps1` gate.
+- for future visual-heavy layout changes, repeat screenshot-backed comfort passes without weakening the root `npm run verify` gate.

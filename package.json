@@ -17,14 +17,25 @@
     "test:coverage": "tsx scripts/test-coverage.ts",
     "test:launch-args": "tsx scripts/test-launch-args.ts",
     "smoke": "tsx scripts/smoke-critical-journey.ts --exe src/avalonia-launcher/artifacts/verify-publish/win-x64/WTLauncher.App.exe",
+    "apply:config": "tsx scripts/apply-machine-config.ts",
+    "apply:config:dry": "tsx scripts/apply-machine-config.ts --dry-run",
+    "generate:icon": "tsx scripts/generate-icon.ts",
+    "install:portable": "tsx scripts/install-portable.ts",
+    "uninstall": "tsx scripts/install-portable.ts --uninstall",
+    "package:friend": "tsx scripts/package-friend.ts",
+    "update:github-snapshot": "tsx scripts/update-github-similar-projects-snapshot.ts",
     "release:build": "tsx scripts/build-release.ts",
     "release:contract": "tsx scripts/release-contract.ts"
   },
   "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "archiver": "^8.0.0",
     "execa": "^10.0.1",
-    "fast-xml-parser": "^5.10.1"
+    "fast-xml-parser": "^5.10.1",
+    "png-to-ico": "^3.0.2"
   },
   "devDependencies": {
+    "@types/archiver": "^8.0.0",
     "@types/node": "^26.2.0",
     "tsx": "^4.23.12",
     "typescript": "^7.0.2",

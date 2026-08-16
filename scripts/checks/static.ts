@@ -12,6 +12,7 @@ import {
   repoPath,
   shortHashFile,
   walkFiles,
+  walkFilesExcluding,
 } from "./common.js";
 
 function relDisplay(filePath: string): string {
@@ -561,12 +562,16 @@ export function checkHtaRetiredConfig(): void {
 }
 
 export function checkPortableInstallerContract(): void {
-  const text = readText("tools/install-portable.ps1");
-  containsRequiredMarkers(text, ["WTLauncher.App.exe", "uninstall.ps1", "config", "Start Menu"], "Portable installer");
+  const text = readText("scripts/install-portable.ts");
+  containsRequiredMarkers(
+    text,
+    ["WTLauncher.App.exe", "uninstaller.exe", "config", "createShortcut"],
+    "Portable installer",
+  );
   addCheck("portable-installer-contract", {
-    path: "tools\\install-portable.ps1",
+    path: "scripts\\install-portable.ts",
     preservesPortableConfig: true,
-    uninstallScript: "uninstall.ps1",
+    uninstaller: "uninstaller.exe",
   });
 }
 
@@ -592,6 +597,15 @@ export function checkTestStructureLayering(): void {
     }
   }
   addCheck("test-structure-layering", { layers: layers.join(",") });
+}
+
+export function checkNoActivePowerShellScripts(): void {
+  const scripts = walkFilesExcluding(repoRoot, ["node_modules", ".git", ".snow", "artifacts", "retired", "archive"]);
+  const active = scripts.filter((file) => file.toLowerCase().endsWith(".ps1"));
+  if (active.length > 0) {
+    throw new Error(`Active PowerShell scripts must be zero; found: ${active.map((file) => relDisplay(file)).join(", ")}`);
+  }
+  addCheck("no-active-powershell-scripts", { activePowerShellScripts: active.length });
 }
 
 export function checkCiFastLaneNoPublishDuplication(): void {

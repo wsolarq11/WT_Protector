@@ -69,7 +69,7 @@ Every command (Add/Edit/Delete/Launch/Reorder) must test:
 
 ## Line Ending Contract
 
-All persisted JSON uses LF (`\n`). `LauncherJson.NormalizeLineEndings` enforces it at write time inside `Save`, so every byte stream written through `LauncherStore.Save` is LF-normalized regardless of input. The repo-level `.gitattributes` LF policy is enforced by the `line-ending-policy` check in `tools/verify.ps1` (that check inspects `.gitattributes`, not `launcher.json` bytes). No per-test fixture method is needed.
+All persisted JSON uses LF (`\n`). `LauncherJson.NormalizeLineEndings` enforces it at write time inside `Save`, so every byte stream written through `LauncherStore.Save` is LF-normalized regardless of input. The repo-level `.gitattributes` LF policy is enforced by the `line-ending-policy` check in `scripts/verify.ts` (that check inspects `.gitattributes`, not `launcher.json` bytes). No per-test fixture method is needed.
 
 ---
 
@@ -77,24 +77,24 @@ All persisted JSON uses LF (`\n`). `LauncherJson.NormalizeLineEndings` enforces 
 
 ### Local Gate (before commit)
 
-```powershell
+```bash
 dotnet build src/avalonia-launcher/WTLauncher.Avalonia.sln -c Release --no-restore -warnaserror
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\test-fast.ps1
+npm run test:fast
 dotnet test src/avalonia-launcher/WTLauncher.Avalonia.sln -c Release --no-restore
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\test-coverage.ps1
+npm run test:coverage
 ```
 
 ### Full Gate (before claiming "done")
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
+```bash
+npm run verify
 ```
 
 This runs: restore → full test → publish → temp-config critical-journey smoke → coverage gate → architecture/analyzer checks. Published GUI smoke runs on Windows.
 
-CI runs `tools/test-fast.ps1` (`CoreUnit` + `PropertyTest` + `Architecture` + `Analyzer`) in `build-and-test`; `full-gate` runs `tools/verify.ps1` as the only complete test/publish pass.
+CI runs `npm run test:fast` (`CoreUnit` + `PropertyTest` + `Architecture` + `Analyzer`) in `build-and-test`; `full-gate` runs `npm run verify` as the only complete test/publish pass.
 
-The E2E layer is intentionally capped: `tools/smoke-critical-journey.ps1` asserts only process boot into the main window and the `WT Launcher` window title, always against a temp `--config`.
+The E2E layer is intentionally capped: `npm run smoke` asserts only process boot into the main window and the `WT Launcher` window title, always against a temp `--config`.
 
 For visual-token changes, the gate must additionally prove:
 

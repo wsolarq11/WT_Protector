@@ -104,6 +104,25 @@ export function walkFiles(directory: string): string[] {
   return files;
 }
 
+export function walkFilesExcluding(directory: string, excludedSegments: string[]): string[] {
+  const files: string[] = [];
+  const excluded = new Set(excludedSegments);
+  const walk = (current: string): void => {
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const fullPath = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        if (!excluded.has(entry.name)) {
+          walk(fullPath);
+        }
+      } else if (entry.isFile()) {
+        files.push(fullPath);
+      }
+    }
+  };
+  walk(directory);
+  return files;
+}
+
 export function shortHashFile(filePath: string): string {
   return createHash("sha256").update(readFileSync(filePath)).digest("hex").toUpperCase().slice(0, 16);
 }

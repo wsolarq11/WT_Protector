@@ -15,7 +15,7 @@ This audit covers the active Avalonia mainline and repository-level launcher con
 - `DESIGN.md`
 - `docs/design-benchmark-digest.md`
 - `docs/reference/github-similar-projects-snapshot.json`
-- `tools/verify.ps1`
+- `scripts/verify.ts`
 
 It does not evaluate ignored `.snow/` local runtime/index state.
 
@@ -109,7 +109,7 @@ Local implication tokens used below:
 
 ## Current GitHub similar-project snapshot
 
-Live GitHub repository search/API checks were refreshed using current queries for `"Windows Terminal" workspace launcher`, `"Windows Terminal" session manager`, and `"Claude Code" launcher`. The current structured evidence is source-tracked in `docs/reference/github-similar-projects-snapshot.json`, including summary counts and controlled `yardstickVerdict` values, and refreshed by `tools/update-github-similar-projects-snapshot.ps1`, captured with `gh repo view <owner>/<repo> --json nameWithOwner,url,description,stargazerCount,forkCount,pushedAt,updatedAt,primaryLanguage,isArchived`. GitHub evidence capturedAtUtc: `2026-06-09T15:47:55Z`. The result is blunt: a universal "stronger than any similar GitHub project" claim is not provable, and in the broad launcher market it is false. Flow Launcher and Wox are mature broad launchers with thousands of stars, plugin ecosystems, package channels, and community proof. WT Launcher should not fight them as a generic launcher. That would be stupid scope creep.
+Live GitHub repository search/API checks were refreshed using current queries for `"Windows Terminal" workspace launcher`, `"Windows Terminal" session manager`, and `"Claude Code" launcher`. The current structured evidence is source-tracked in `docs/reference/github-similar-projects-snapshot.json`, including summary counts and controlled `yardstickVerdict` values, and refreshed by `npm run update:github-snapshot`, captured with `gh repo view <owner>/<repo> --json nameWithOwner,url,description,stargazerCount,forkCount,pushedAt,updatedAt,primaryLanguage,isArchived`. GitHub evidence capturedAtUtc: `2026-06-09T15:47:55Z`. The result is blunt: a universal "stronger than any similar GitHub project" claim is not provable, and in the broad launcher market it is false. Flow Launcher and Wox are mature broad launchers with thousands of stars, plugin ecosystems, package channels, and community proof. WT Launcher should not fight them as a generic launcher. That would be stupid scope creep.
 
 The relevant fight is narrower: portable Windows Terminal workspace launching with inspectable entries, named launch groups, side-effect-free plan preview, explicit launch confirmation, rollback-aware JSON persistence, and a native repo gate.
 
@@ -257,7 +257,7 @@ The counts below are a summary ledger for the 22 feature sections. They are not 
 - Verdict level: narrow-north-star
 - Gap class: external-process-limit
 - Current data owner: `config/launcher.json` `directory`; current local truth is the filesystem.
-- Evidence: `tools/verify.ps1` rejects active config rows whose `directory` is not an existing container.
+- Evidence: `scripts/verify.ts` rejects active config rows whose `directory` is not an existing container.
 - Verdict: north-star. This is the right boundary: fail fast at the repo gate instead of adding UI guesswork.
 - Remaining gap: command executability is intentionally not probed because commands are arbitrary trusted local shell text.
 
@@ -305,7 +305,7 @@ The counts below are a summary ledger for the 22 feature sections. They are not 
 - Verdict level: narrow-north-star
 - Gap class: future-workload
 - Current data owner: `config/launcher.json`, referencing stable entry ids.
-- Evidence: preset schema is documented, validated by `tools/verify.ps1`, and covered by store/workflow/ViewModel tests, including missing `entryIds` rejection and invalid preset references rejected before label/preview/launch projection. The ViewModel load path propagates missing or failed `launcher.json` presets instead of replacing it with an empty launch-group model, and preset view models snapshot preset facts plus read-only entry ids instead of exposing the live mutable preset object. The selected preset can be launched directly, preserving current checkbox state instead of forcing a selection rewrite before launch, while still sharing the same preflight/confirmation path as selected-item batch launch. Applying, previewing, or launching a preset also discards uncommitted drag-sort preview state first, so a visual ghost order is not silently persisted by a launch-group action. Applying a preset has a failure contract too: config backup/write failures leave the preset selection and config file unchanged and report `配置保存失败` instead of claiming the group was applied.
+- Evidence: preset schema is documented, validated by `scripts/verify.ts`, and covered by store/workflow/ViewModel tests, including missing `entryIds` rejection and invalid preset references rejected before label/preview/launch projection. The ViewModel load path propagates missing or failed `launcher.json` presets instead of replacing it with an empty launch-group model, and preset view models snapshot preset facts plus read-only entry ids instead of exposing the live mutable preset object. The selected preset can be launched directly, preserving current checkbox state instead of forcing a selection rewrite before launch, while still sharing the same preflight/confirmation path as selected-item batch launch. Applying, previewing, or launching a preset also discards uncommitted drag-sort preview state first, so a visual ghost order is not silently persisted by a launch-group action. Applying a preset has a failure contract too: config backup/write failures leave the preset selection and config file unchanged and report `配置保存失败` instead of claiming the group was applied.
 - Verdict: north-star. This is the best current data-structure move in the project.
 - Remaining gap: no external import/export yet; not needed for the current local workflow.
 
@@ -460,7 +460,7 @@ The counts below are a summary ledger for the 22 feature sections. They are not 
 - Proof type: repo-battle-tested
 - Verdict level: narrow-north-star
 - Gap class: distribution-scope
-- Current data owner: `tools/verify.ps1`, `src/avalonia-launcher/verify.ps1`, and ignored publish artifacts.
+- Current data owner: `scripts/verify.ts`, `scripts/verify-mainline.ts`, and ignored publish artifacts.
 - Evidence: root verify checks retired paths, config/presets/settings, docs, the GitHub similar-project snapshot schema plus refresh script and freshness window, tests, publish, and hidden startup smoke.
 - Verdict: north-star for repo-local Windows release proof.
 - Remaining gap: no installer/update channel; that belongs to distribution scope, not current launcher correctness.
@@ -485,7 +485,7 @@ The counts below are a summary ledger for the 22 feature sections. They are not 
 - Verdict level: narrow-north-star
 - Gap class: source-freshness
 - Current data owner: `DESIGN.md`, `docs/design-benchmark-digest.md`, and `docs/giants-shoulders/`.
-- Evidence: `docs/design-benchmark-digest.md` translates 12 external benchmarks into 10 local acceptance rules, `docs/giants-shoulders/launcher-first-class-patterns.md` preserves the 12-tool borrowed-pattern table plus the "what we intentionally did not copy" boundary and participates in the `no-stale-three-file-refs` activeDocs gate, `docs/reference/github-similar-projects-snapshot.json` preserves the GitHub market yardstick used by this audit, `tools/update-github-similar-projects-snapshot.ps1` refreshes it from GitHub API state, and root verify validates the snapshot schema, freshness window, representative direct projects, and broad-market repositories.
+- Evidence: `docs/design-benchmark-digest.md` translates 12 external benchmarks into 10 local acceptance rules, `docs/giants-shoulders/launcher-first-class-patterns.md` preserves the 12-tool borrowed-pattern table plus the "what we intentionally did not copy" boundary and participates in the `no-stale-three-file-refs` activeDocs gate, `docs/reference/github-similar-projects-snapshot.json` preserves the GitHub market yardstick used by this audit, `npm run update:github-snapshot` refreshes it from GitHub API state, and root verify validates the snapshot schema, freshness window, representative direct projects, and broad-market repositories.
 - Verdict: north-star for source-tracked decision support in this repo. It converts outside lessons into local acceptance rules and explicit rejection boundaries instead of importing frameworks.
 - Remaining gap: source freshness must be refreshed when a decision depends on a changed external standard; stale references are not current proof.
 
@@ -596,7 +596,7 @@ Claim status tokens used below:
 Evidence owner tokens used below:
 
 - `feature-audit`: this document's feature mapping and objective completion audit.
-- `native-gate`: `tools/verify.ps1` plus the focused repository contract tests.
+- `native-gate`: `scripts/verify.ts` plus the focused repository contract tests.
 - `github-snapshot`: `docs/reference/github-similar-projects-snapshot.json`.
 - `scope-rejection`: deliberate refusal to add speculative broad-platform scope.
 - `external-process-boundary`: repository-owned checks before handing control to `wt.exe`.

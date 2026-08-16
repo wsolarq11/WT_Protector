@@ -12,6 +12,7 @@ import {
   checkLineEndingPolicy,
   checkMainVmLineBudget,
   checkMainlineLayout,
+  checkNoActivePowerShellScripts,
   checkNoBareCatchException,
   checkNoImperativeViewUi,
   checkNoStaleThreeFileRefs,
@@ -91,6 +92,7 @@ export async function runVerify(): Promise<unknown> {
   checkWiringMapConsistency();
   checkMainVmLineBudget();
   checkWorkflowNoCallbackBag();
+  checkNoActivePowerShellScripts();
   checkStructureBaselineConsistency();
   return makeReceipt("root-verify", { root: repoRoot, checks });
 }

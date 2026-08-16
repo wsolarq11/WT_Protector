@@ -21,23 +21,18 @@ Active mainline: `src/avalonia-launcher/`. Everything under `retired/` is archiv
 
 ## Commands — the gate is the contract
 
-Run everything from the **repository root**. PowerShell on Windows.
+Run everything from the **repository root**. The product runtime shell is Windows Terminal + PowerShell 7; repository scripting is Node/TypeScript and does not invoke PowerShell.
 
-```powershell
-# Full native gate — 44 checks (growing), must be green before any "done" claim
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
-
-# Stable release publish → src/avalonia-launcher/artifacts/publish/win-x64/WTLauncher.App.exe
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build-release.ps1
-
-# Central release contract: locked-mode restore + AOT publish + clean worktree + receipt validation
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\release-contract.ps1
-
-# TypeScript scripting layer (CI release-contract authority)
+```bash
+# TypeScript scripting layer and CI authority
 npm ci
 npm run typecheck
 npm test
+
+# Full native gate — 45 checks (growing), must be green before any "done" claim
 npm run verify
+
+# Central release contract: locked-mode restore + AOT publish + clean worktree + receipt validation
 npm run release:contract
 
 # TypeScript mainline and test commands
@@ -48,14 +43,11 @@ npm run test:coverage
 npm run test:launch-args
 npm run smoke
 
-# Run the app against the canonical config/launcher.json
-powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\run.ps1
-
-# Avalonia-only gate (restore → test → publish → hidden GUI smoke on Windows)
-powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\verify.ps1
-
-# Just the launch-argument tests
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\test-launch-args.ps1
+# Machine setup, portable install/uninstall, and friend package
+npm run apply:config
+npm run install:portable
+npm run uninstall
+npm run package:friend
 ```
 
 Raw dotnet (when iterating locally):
@@ -137,7 +129,7 @@ This repo is Trellis-managed. New non-trivial work should follow the Trellis pha
 - `.trellis/workspace/<dev>/journal-*.md` — per-developer journal.
 - `.codex/agents/` and `.agents/skills/` — optional sub-agents (`trellis-research`, `trellis-implement`, `trellis-check`) for dispatch-capable platforms.
 - `AGENTS.md` — full repo navigation map and "vine trail" entry path; start there when lost.
-- `AGENTS.md` 「结构基线」表 is the single documented source of structure facts (file counts, partials, test attributes, checks); gate check `structure-baseline-consistency` enforces it — change structure → update the table and the `tools/verify.ps1` baseline constants together.
+- `AGENTS.md` 「结构基线」表 is the single documented source of structure facts (file counts, partials, test attributes, checks); gate check `structure-baseline-consistency` enforces it — change structure → update the table and the `scripts/checks/run.ts` baseline constants together.
 
 Trellis tasks are **not** required for small fixes; `init`-style documentation, single-line fixes, and obvious tweaks can be inline. For multi-file features or anything that touches the gate, create a task and plan first.
 

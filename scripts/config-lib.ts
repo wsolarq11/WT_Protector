@@ -22,7 +22,7 @@ export function normalizePath(filePath: string): string {
 }
 
 export function readJson<T>(filePath: string): T {
-  const raw = readFileSync(filePath, "utf8");
+  const raw = readFileSync(filePath, "utf8").replace(/^\uFEFF/, "");
   const parsed = JSON.parse(raw) as unknown;
   if (parsed === null || parsed === undefined) {
     throw new Error(`JSON parsed to null: ${filePath}`);
