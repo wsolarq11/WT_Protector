@@ -142,3 +142,24 @@ Added Node/TypeScript scripting layer, TS build-release and release-contract par
 ### Status
 
 [OK] **Completed**
+
+
+## Session 6: TS mainline and test scripts
+
+**Date**: 2026-08-16
+**Task**: TS mainline and test scripts
+**Branch**: `main`
+
+### Summary
+
+Added TS run, verify-mainline, fast, coverage, launch-args and smoke commands; parity validated with 832 tests, 444 fast tests, 13 launch-args tests, coverage gate and GUI smoke.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `559619ec` | (see git log) |
+
+### Status
+
+[OK] **Completed**

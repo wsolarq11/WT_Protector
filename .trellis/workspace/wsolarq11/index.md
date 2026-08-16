@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 5
+- **Total Sessions**: 6
 - **Last Active**: 2026-08-16
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~144 | Active |
+| `journal-1.md` | ~165 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 6 | 2026-08-16 | TS mainline and test scripts | `559619ec` | `main` |
 | 5 | 2026-08-16 | TS scripting foundation | `6ea58201` | `main` |
 | 4 | 2026-08-16 | Central release contract phase 0 | `eb964b91` | `main` |
 | 3 | 2026-08-16 | Finalize production-ready rewiring blueprint | `550f3436` | `main` |
