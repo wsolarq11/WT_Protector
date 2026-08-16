@@ -21,7 +21,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.301"
 
       - name: Cache NuGet packages
         uses: actions/cache@v4
@@ -65,10 +65,12 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.301"
 
       - name: Audit
-        run: dotnet nuget audit src/avalonia-launcher/WTLauncher.Avalonia.sln
+        run: |
+          dotnet restore src/avalonia-launcher/WTLauncher.Avalonia.sln -r win-x64 -p:EnableNativeAot=true --locked-mode
+          dotnet list src/avalonia-launcher/WTLauncher.Avalonia.sln package --vulnerable --include-transitive --no-restore
 
   release-contract:
     name: Release Contract
@@ -84,7 +86,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.301"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -118,7 +120,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.301"
 
       - name: Setup Node
         uses: actions/setup-node@v4

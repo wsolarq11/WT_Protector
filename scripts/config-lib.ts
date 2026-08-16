@@ -133,25 +133,32 @@ export function assertRequiredField(object: Record<string, unknown>, field: stri
 }
 
 export async function runningReleasePids(exePath: string): Promise<number[]> {
-  const result = await execa(
-    "wmic",
-    ["process", "where", "name='WTLauncher.App.exe'", "get", "ExecutablePath,ProcessId", "/format:csv"],
-    { reject: false },
-  );
+  const script = [
+    "$processes = @(Get-Process -Name 'WTLauncher.App' -ErrorAction SilentlyContinue | Select-Object Path, Id);",
+    "if ($processes.Count -eq 0) { '[]' } else { $processes | ConvertTo-Json -Compress }",
+  ].join(" ");
+  const result = await execa("pwsh", ["-NoProfile", "-Command", script], { reject: false });
   if (result.exitCode !== 0) {
-    throw new Error(`wmic process query failed: ${result.stderr || result.stdout}`);
+    throw new Error(`process query failed: ${result.stderr || result.stdout}`);
   }
+
+  let items: unknown;
+  try {
+    items = JSON.parse(result.stdout.trim() || "[]");
+  } catch {
+    throw new Error(`process query returned invalid JSON: ${result.stdout}`);
+  }
+
   const target = normalizePath(exePath).toLowerCase();
+  const records = Array.isArray(items) ? items : [items];
   const pids: number[] = [];
-  const lines = result.stdout.split(/\r?\n/).filter((line) => line.trim().length > 0);
-  for (const line of lines.slice(1)) {
-    const parts = line.split(",");
-    if (parts.length < 3) {
+  for (const record of records) {
+    if (!record || typeof record !== "object") {
       continue;
     }
-    const processPath = parts[1]?.trim();
-    const pid = Number(parts[2]?.trim());
-    if (processPath && Number.isFinite(pid) && normalizePath(processPath).toLowerCase() === target) {
+    const processPath = (record as Record<string, unknown>)["Path"];
+    const pid = Number((record as Record<string, unknown>)["Id"]);
+    if (typeof processPath === "string" && Number.isFinite(pid) && normalizePath(processPath).toLowerCase() === target) {
       pids.push(pid);
     }
   }
