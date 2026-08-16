@@ -57,7 +57,43 @@ internal static class TestRepositoryPaths
 
     private static string FindRepositoryRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        var workspace = Environment.GetEnvironmentVariable("GITHUB_WORKSPACE");
+        var candidates = new[]
+        {
+            workspace ?? "",
+            AppContext.BaseDirectory,
+            Directory.GetCurrentDirectory(),
+            typeof(TestRepositoryPaths).Assembly.Location,
+        };
+
+        foreach (var candidate in candidates)
+        {
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                continue;
+            }
+
+            var root = FindRepositoryRootFrom(candidate);
+            if (root is not null)
+            {
+                return root;
+            }
+        }
+
+        throw new DirectoryNotFoundException("Could not locate WT_Protector repository root from test output directory.");
+    }
+
+    private static string? FindRepositoryRootFrom(string start)
+    {
+        var startDirectory = File.Exists(start)
+            ? Path.GetDirectoryName(start)
+            : start;
+        if (string.IsNullOrWhiteSpace(startDirectory))
+        {
+            return null;
+        }
+
+        var dir = new DirectoryInfo(startDirectory);
         while (dir is not null)
         {
             if (File.Exists(Path.Combine(dir.FullName, "config", "launcher.json"))
@@ -70,6 +106,6 @@ internal static class TestRepositoryPaths
             dir = dir.Parent;
         }
 
-        throw new DirectoryNotFoundException("Could not locate WT_Protector repository root from test output directory.");
+        return null;
     }
 }
