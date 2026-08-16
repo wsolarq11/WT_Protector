@@ -9,6 +9,5 @@
     <PackageReference Include="ErrorOr" />
     <PackageReference Include="OneOf" />
     <PackageReference Include="MSBuild.CompilerCache" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.NET.ILLink.Tasks" PrivateAssets="all" />
   </ItemGroup>
 </Project>

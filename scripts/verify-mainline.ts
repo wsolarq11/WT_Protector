@@ -4,7 +4,6 @@ import { fileURLToPath } from "node:url";
 import { execa } from "execa";
 import { XMLParser } from "fast-xml-parser";
 import {
-  appProjectPath,
   avaloniaRoot,
   fileBytes,
   makeReceipt,
@@ -12,10 +11,10 @@ import {
   runStep,
   sha256File,
   shortSha256,
-  solutionPath,
   testsProjectPath,
   type ToolReceipt,
 } from "./config-lib.js";
+import { restoreSolutionNativeAot, runNativeAotPublish } from "./publish-lib.js";
 import { runSmoke } from "./smoke-critical-journey.js";
 
 const verifyPublishDir = path.join(avaloniaRoot, "artifacts", "verify-publish", "win-x64");
@@ -159,14 +158,7 @@ async function processSmoke(exePath: string): Promise<string> {
 }
 
 export async function runVerifyMainline(): Promise<ToolReceipt> {
-  await runDotnet("dotnet restore solution win-x64 native-aot-locked", [
-    "restore",
-    solutionPath,
-    "-r",
-    "win-x64",
-    "-p:EnableNativeAot=true",
-    "--locked-mode",
-  ]);
+  await restoreSolutionNativeAot(true);
 
   mkdirSync(testResultsDir, { recursive: true });
   rmSync(testResultsFile, { force: true });
@@ -188,28 +180,12 @@ export async function runVerifyMainline(): Promise<ToolReceipt> {
   const testSeconds = Math.round(((Date.now() - testStarted) / 1000) * 100) / 100;
 
   const publishStarted = Date.now();
-  await runDotnet("dotnet publish app win-x64", [
-    "publish",
-    appProjectPath,
-    "-c",
-    "Release",
-    "-r",
-    "win-x64",
-    "--self-contained",
-    "true",
-    "--no-restore",
-    "-o",
-    verifyPublishDir,
-  ]);
+  await runNativeAotPublish({ outputDir: verifyPublishDir });
   const publishSeconds = Math.round(((Date.now() - publishStarted) / 1000) * 100) / 100;
 
   const exePath = path.join(verifyPublishDir, "WTLauncher.App.exe");
-  const dllPath = path.join(verifyPublishDir, "WTLauncher.App.dll");
   if (!pathExists(exePath)) {
     throw new Error(`Published exe missing: ${exePath}`);
-  }
-  if (!pathExists(dllPath)) {
-    throw new Error(`Published dll missing: ${dllPath}`);
   }
   if (!pathExists(testResultsFile)) {
     throw new Error(`Test result file missing: ${testResultsFile}`);
@@ -254,14 +230,13 @@ export async function runVerifyMainline(): Promise<ToolReceipt> {
 
   return makeReceipt("avalonia-mainline-verify", {
     sourceRoot: avaloniaRoot,
+    nativeAot: true,
     tests: counters.total,
     guiSmoke,
     publishedExe: exePath,
-    publishedDll: dllPath,
+    publishedDll: null,
     bytes: fileBytes(exePath),
     sha256: shortSha256(exePath),
-    dllBytes: fileBytes(dllPath),
-    dllSha256: shortSha256(dllPath),
     perf: { testSeconds, publishSeconds },
   });
 }

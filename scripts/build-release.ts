@@ -14,13 +14,13 @@ import {
   pathExists,
   publishDir,
   runningReleasePids,
-  runStep,
   sha256File,
   shortSha256,
   solutionPath,
   writeJsonNoBom,
   type ToolReceipt,
 } from "./config-lib.js";
+import { restoreSolutionNativeAot, runNativeAotPublish } from "./publish-lib.js";
 
 const vsInstaller = "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer";
 const exeName = "WTLauncher.App.exe";
@@ -65,15 +65,6 @@ async function removeStaleConfig(directory: string): Promise<void> {
   await rm(path.join(directory, "config"), { recursive: true, force: true });
 }
 
-async function runDotnet(step: string, args: string[]): Promise<void> {
-  await runStep(step, async () => {
-    const result = await execa("dotnet", args, { stdio: "inherit", reject: false });
-    if (result.exitCode !== 0) {
-      throw new Error(`exit code ${result.exitCode}`);
-    }
-  });
-}
-
 export interface BuildReleaseOptions {
   locked: boolean;
 }
@@ -100,26 +91,13 @@ export async function runBuildRelease(options: BuildReleaseOptions): Promise<Too
   const version = await describeVersion();
   await mkdir(publishDir, { recursive: true });
 
-  const restoreArgs = ["restore", solutionPath, "-r", "win-x64", "-p:EnableNativeAot=true"];
-  if (options.locked) {
-    restoreArgs.push("--locked-mode");
-  }
-  await runDotnet("dotnet restore solution win-x64 native-aot", restoreArgs);
+  await restoreSolutionNativeAot(options.locked);
 
-  await runDotnet("dotnet publish app win-x64 native-aot", [
-    "publish",
-    appProjectPath,
-    "-c",
-    "Release",
-    "-r",
-    "win-x64",
-    "-p:EnableNativeAot=true",
-    "--no-restore",
-    "-o",
-    publishDir,
-    `-p:Version=${version}`,
-    `-p:InformationalVersion=${version}`,
-  ]);
+  await runNativeAotPublish({
+    outputDir: publishDir,
+    version,
+    informationalVersion: version,
+  });
 
   if (!pathExists(exePath)) {
     throw new Error(`Published exe missing: ${exePath}`);

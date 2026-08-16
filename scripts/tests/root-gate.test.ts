@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { assertOnlyJsonKeys, assertPositiveNumber } from "../checks/common.js";
+import { checkAotToolchainOwnedBySdk } from "../checks/static.js";
 
 describe("root gate JSON helpers", () => {
   it("accepts only known keys", () => {
@@ -15,5 +16,11 @@ describe("root gate JSON helpers", () => {
     expect(assertPositiveNumber(1200, "budget")).toBe(1200);
     expect(() => assertPositiveNumber(0, "budget")).toThrow("budget must be positive");
     expect(() => assertPositiveNumber(null, "budget")).toThrow("budget is required");
+  });
+});
+
+describe("Native AOT recurrence gate", () => {
+  it("requires the .NET SDK to own ILCompiler selection", () => {
+    expect(() => checkAotToolchainOwnedBySdk()).not.toThrow();
   });
 });

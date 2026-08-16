@@ -31,8 +31,6 @@
     <PackageReference Include="DynamicData" />
     <PackageReference Include="OneOf" />
     <PackageReference Include="MSBuild.CompilerCache" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.NET.ILLink.Tasks" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.DotNet.ILCompiler" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <AdditionalFiles Include="**/*.axaml" />

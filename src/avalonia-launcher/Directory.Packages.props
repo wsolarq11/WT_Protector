@@ -24,7 +24,5 @@
     <PackageVersion Include="Stateless" Version="5.20.0" />
     <PackageVersion Include="OneOf" Version="3.0.271" />
     <PackageVersion Include="MSBuild.CompilerCache" Version="0.13.7" />
-    <PackageVersion Include="Microsoft.NET.ILLink.Tasks" Version="10.0.10" />
-    <PackageVersion Include="Microsoft.DotNet.ILCompiler" Version="10.0.10" />
   </ItemGroup>
 </Project>

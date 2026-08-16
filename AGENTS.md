@@ -45,7 +45,7 @@ WT_Protector/
 
 | 命令 / 工具                                     | 用途                                                                                                                                                                                                                                                                                                                                          | 何时用                                               |
 | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `npm run verify`                              | **全量门禁**：45 项检查（行尾策略、`.snow/` 忽略、退役路径、无 active PowerShell、无裸 catch、无硬编码颜色、主线布局、README、功能审计、声明边界、GitHub 快照、launcher.json/config/presets/settings 各 schema、快捷方式/WinForms/HTA 退役、Avalonia 测试+发布+GUI 冒烟、**结构基线**、release-lockfile-consistency、settings-single-source、no-stale-three-file-refs、winget-config-schema、Views 免命令式 UI、安全审计 F1-F3、无瘦包装、VTK/Trinity 架构、AppStore 残留、架构规则、分析器连线） | 每次提交前；声称"完成"前                             |
+| `npm run verify`                              | **全量门禁**：46 项检查（行尾策略、`.snow/` 忽略、退役路径、无 active PowerShell、无裸 catch、无硬编码颜色、主线布局、README、功能审计、声明边界、GitHub 快照、launcher.json/config/presets/settings 各 schema、快捷方式/WinForms/HTA 退役、Avalonia 测试+Native AOT 发布+GUI 冒烟、**结构基线**、release-lockfile-consistency、aot-toolchain-owned-by-sdk、settings-single-source、no-stale-three-file-refs、winget-config-schema、Views 免命令式 UI、安全审计 F1-F3、无瘦包装、VTK/Trinity 架构、AppStore 残留、架构规则、分析器连线） | 每次提交前；声称"完成"前                             |
 | `npm run release:contract`                    | **中央发布契约**：locked-mode restore + Native AOT publish + clean worktree + receipt/manifest 校验                                                                                                                                                                                                                                        | CI 合并前；声称发布完成前                            |
 | `npm run apply:config` / `apply:config:dry`   | **新机配置包装器**：`winget configure --file .wt-protector.dsc.yaml`；dry-run 仅 validate                                                                                                                                                                                                                                                   | 拿到新 Windows 机器、想一键声明式安装前置依赖时      |
 | `npm run test:launch-args`                    | **聚焦测试**：仅运行 LaunchArgumentBuilder 测试                                                                                                                                                                                                                                                                                               | 快速验证启动参数逻辑                                 |
@@ -73,7 +73,7 @@ WT_Protector/
 | WTLauncher.Analyzers C# files | 7 |
 | Tests C# files | 129 |
 | Test attributes [Fact]+[Theory] | 756 |
-| Gate checks (Add-Check) | 45 |
+| Gate checks (Add-Check) | 46 |
 
 > 更新协议：结构变化 → 跑门禁看 `structure-baseline-consistency` 报什么 → 同步改本表与
 > `scripts/checks/run.ts` 基线常量 → 门禁转绿。
