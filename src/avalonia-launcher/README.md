@@ -26,6 +26,16 @@ Or run only the Avalonia mainline gate:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\verify.ps1
 ```
 
+TypeScript parity entry points (repository root):
+
+```powershell
+npm run verify:mainline
+npm run test:fast
+npm run test:coverage
+npm run test:launch-args
+npm run smoke
+```
+
 The local mainline gate runs:
 
 1. `dotnet restore -r win-x64 -p:EnableNativeAot=true --locked-mode`

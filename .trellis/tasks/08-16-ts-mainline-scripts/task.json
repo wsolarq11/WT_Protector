@@ -3,7 +3,7 @@
   "name": "ts-mainline-scripts",
   "title": "TS主线与测试脚本",
   "description": "迁移 run、mainline verify、测试、覆盖率与冒烟脚本到 TS",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

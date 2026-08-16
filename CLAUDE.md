@@ -39,6 +39,14 @@ npm run typecheck
 npm test
 npm run release:contract
 
+# TypeScript mainline and test commands
+npm run start
+npm run verify:mainline
+npm run test:fast
+npm run test:coverage
+npm run test:launch-args
+npm run smoke
+
 # Run the app against the canonical config/launcher.json
 powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\run.ps1
 

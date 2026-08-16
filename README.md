@@ -247,6 +247,16 @@ npm ci
 npm run release:contract
 ```
 
+The TypeScript mainline and focused-test entries mirror the PowerShell gates for parity validation:
+
+```powershell
+npm run verify:mainline
+npm run test:fast
+npm run test:coverage
+npm run test:launch-args
+npm run smoke
+```
+
 The publish output is ignored local build output under:
 
 ```text

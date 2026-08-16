@@ -8,13 +8,20 @@
     "node": ">=20"
   },
   "scripts": {
+    "start": "tsx scripts/run.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "verify:mainline": "tsx scripts/verify-mainline.ts",
+    "test:fast": "tsx scripts/test-fast.ts",
+    "test:coverage": "tsx scripts/test-coverage.ts",
+    "test:launch-args": "tsx scripts/test-launch-args.ts",
+    "smoke": "tsx scripts/smoke-critical-journey.ts --exe src/avalonia-launcher/artifacts/verify-publish/win-x64/WTLauncher.App.exe",
     "release:build": "tsx scripts/build-release.ts",
     "release:contract": "tsx scripts/release-contract.ts"
   },
   "dependencies": {
-    "execa": "^10.0.1"
+    "execa": "^10.0.1",
+    "fast-xml-parser": "^5.10.1"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",

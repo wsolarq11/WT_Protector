@@ -13,7 +13,7 @@ WT_Protector/
 ├── config/                → 运行时配置（JSON, 人可读写）
 │   └── launcher.json      → 统一存储：启动条目 + 命名启动组 + UI 偏好 + defaultPresetId + runHistory
 ├── package.json / package-lock.json → Node/TypeScript 脚本系统
-├── scripts/               → TS 脚本（config-lib / build-release / release-contract + Vitest）
+├── scripts/               → TS 脚本（config-lib / build-release / release-contract / run / verify-mainline / test-* / smoke + Vitest）
 ├── src/
 │   └── avalonia-launcher/ → 活动主线：Avalonia/.NET 源码 + 测试 + 构建
 │       ├── README.md      → 源码架构（5层模型）、构建与验证
@@ -56,6 +56,7 @@ WT_Protector/
 | `update-github-similar-projects-snapshot.ps1` | **刷新 GitHub 对标快照**：通过 `gh repo view` 拉取 12 个对标项目的最新数据                                                                                                                                                                                                                                                                    | 需要更新市场对标证据时（快照超过 30 天会被门禁拒绝） |
 
 > TS 发布入口：`scripts/build-release.ts` + `scripts/release-contract.ts`，执行 `npm run release:contract`（CI 当前权威入口）。旧 `tools/release-contract.ps1` 在等价验证期间保留。
+> TS 主线入口：`scripts/run.ts`、`scripts/verify-mainline.ts`、`scripts/test-fast.ts`、`scripts/test-coverage.ts`、`scripts/test-launch-args.ts`、`scripts/smoke-critical-journey.ts`；对应 `npm run start`、`verify:mainline`、`test:fast`、`test:coverage`、`test:launch-args`、`smoke`。
 
 ## 结构基线（Structure Baseline）— 门禁强制
 
