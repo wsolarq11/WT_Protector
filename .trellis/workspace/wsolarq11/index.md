@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 3
+- **Total Sessions**: 4
 - **Last Active**: 2026-08-16
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~77 | Active |
+| `journal-1.md` | ~123 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 4 | 2026-08-16 | Central release contract phase 0 | `eb964b91` | `main` |
 | 3 | 2026-08-16 | Finalize production-ready rewiring blueprint | `550f3436` | `main` |
 | 2 | 2026-08-16 | Accept remaining Trellis tasks: friend-handoff and docs consistency | `c6fa90d6`, `c556b05a` | `main` |
 | 1 | 2026-08-16 | Wiring system Tier 2 contract full-stack implementation | `bd1894e6`, `4b5303cf`, `2c349eed`, `1cc5d77a`, `432672a5`, `72d50f27`, `990df8e6` | `main` |

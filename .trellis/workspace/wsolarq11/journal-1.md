@@ -100,3 +100,24 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 4: Central release contract phase 0
+
+**Date**: 2026-08-16
+**Task**: Central release contract phase 0
+**Branch**: `main`
+
+### Summary
+
+Central release contract phase 0: locked-mode AOT restore, clean-worktree publish contract, required CI release-contract job, root gate 44 checks, and lockfile restore-graph fix.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `eb964b91` | (see git log) |
+
+### Status
+
+[OK] **Completed**
