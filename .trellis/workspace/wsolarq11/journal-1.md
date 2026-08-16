@@ -184,3 +184,24 @@ Added npm run verify with 44 TS checks; CI full-gate switched to npm; retained P
 ### Status
 
 [OK] **Completed**
+
+
+## Session 8: Auxiliary TS migration and PowerShell cleanup
+
+**Date**: 2026-08-16
+**Task**: Auxiliary TS migration and PowerShell cleanup
+**Branch**: `main`
+
+### Summary
+
+Migrated auxiliary scripts to TS; added .NET smoke probe and self-contained uninstaller; archived all active PowerShell; npm verify 45/45 and release:contract PASS in clean worktree.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `55439a2b` | (see git log) |
+
+### Status
+
+[OK] **Completed**

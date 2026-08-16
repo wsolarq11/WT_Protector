@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 7
+- **Total Sessions**: 8
 - **Last Active**: 2026-08-16
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~186 | Active |
+| `journal-1.md` | ~207 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 8 | 2026-08-16 | Auxiliary TS migration and PowerShell cleanup | `55439a2b` | `main` |
 | 7 | 2026-08-16 | TS root gate migration | `5cefc0b5` | `main` |
 | 6 | 2026-08-16 | TS mainline and test scripts | `559619ec` | `main` |
 | 5 | 2026-08-16 | TS scripting foundation | `6ea58201` | `main` |
