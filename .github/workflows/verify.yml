@@ -130,6 +130,10 @@ jobs:
           node-version: "lts/*"
           cache: npm
 
+      - name: Prepare CI launcher store
+        shell: pwsh
+        run: Copy-Item config/launcher.ci.json config/launcher.json -Force
+
       - name: Run native gate
         run: npm ci && npm run verify
 

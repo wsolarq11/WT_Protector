@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2,
+  "settings": {
+    "sortMode": "custom",
+    "entryViewMode": "cards",
+    "cardsGroupKey": "none",
+    "requireConfirmationForLaunches": false,
+    "customEntryOrder": [
+      "SystemPerformanceLab_20260504",
+      "claude_temp",
+      "ci-sample"
+    ],
+    "window": {
+      "width": 1024,
+      "height": 768
+    }
+  },
+  "entries": [
+    {
+      "id": "SystemPerformanceLab_20260504",
+      "name": "SystemPerformanceLab_20260504",
+      "directory": "C:\\ci\\SystemPerformanceLab_20260504",
+      "command": "pwsh",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": "",
+      "launchCount": 0
+    },
+    {
+      "id": "claude_temp",
+      "name": "CLAUDE_temp",
+      "directory": "C:\\ci\\temp_claude",
+      "command": "pwsh",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": "",
+      "launchCount": 0
+    },
+    {
+      "id": "ci-sample",
+      "name": "CI Sample",
+      "directory": "C:\\ci\\sample",
+      "command": "pwsh",
+      "selected": false,
+      "updatedAtUtc": "",
+      "launchedAtUtc": "",
+      "launchCount": 0
+    }
+  ],
+  "presets": [
+    {
+      "id": "ci-default",
+      "name": "CI Default",
+      "entryIds": [
+        "SystemPerformanceLab_20260504",
+        "claude_temp",
+        "ci-sample"
+      ]
+    },
+    {
+      "id": "blank-manual",
+      "name": "Blank Manual",
+      "entryIds": [],
+      "locked": true
+    }
+  ],
+  "defaultPresetId": "ci-default",
+  "runHistory": []
+}
