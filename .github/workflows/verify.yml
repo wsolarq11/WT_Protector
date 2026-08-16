@@ -38,7 +38,7 @@ jobs:
         run: dotnet build src/avalonia-launcher/WTLauncher.Avalonia.sln --no-restore -warnaserror
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "lts/*"
           cache: npm
@@ -90,7 +90,7 @@ jobs:
           dotnet-version: "10.0.301"
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "lts/*"
           cache: npm
@@ -125,7 +125,7 @@ jobs:
           dotnet-version: "10.0.301"
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "lts/*"
           cache: npm
