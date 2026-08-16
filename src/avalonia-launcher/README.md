@@ -94,7 +94,7 @@ The codebase is organized in five logical layers. Each layer depends only on the
 
 - XAML with three view modes: Cards / Details / Names (`MainWindow.axaml` hosts the modes; the view bodies live in `LauncherEntriesView.axaml`)
 - Drag reorder: `MainWindow.Drag.cs` (`ShowDragGhost`/`MoveDragGhost`/`HideDragGhost` with an OverlayLayer ghost + insert preview), layout math in Core (`LauncherDragGhostLayoutCalculator`), reorder-session state in the ViewModel (`LauncherDragReorderWorkflow`)
-- Focused view helpers (`MainWindowEntryCardResolver`, `FastWrapPanel`) handle shared drag hit-test and layout; one-off menu guards stay in `MainWindow`
+- Focused view helpers (`MainWindowEntryCardResolver`, `FastWrapPanel`, `FillGridPanel`) handle shared drag hit-test, names-wall wrapping, and card fill-grid layout; one-off menu guards stay in `MainWindow`
 
 ### Key invariants
 

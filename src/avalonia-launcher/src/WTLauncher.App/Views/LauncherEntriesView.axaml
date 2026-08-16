@@ -89,7 +89,13 @@
                           IsVisible="{Binding IsExpanded}">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                  <views:FastWrapPanel ItemSpacing="{x:Static core:LauncherDesignTokens.SpacingSmall}" LineSpacing="{x:Static core:LauncherDesignTokens.SpacingSmall}"/>
+                  <views:FillGridPanel ItemSpacing="{x:Static core:LauncherDesignTokens.SpacingSmall}"
+                                       LineSpacing="{x:Static core:LauncherDesignTokens.SpacingSmall}"
+                                       Columns="{Binding CardColumns}"
+                                       ViewportHeight="{Binding CardsViewportHeight}"
+                                       ItemHeight="{Binding CardHeight}"
+                                       FillViewport="{Binding FillCardsViewportHeight}"
+                                       StretchLastRow="True"/>
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
@@ -102,8 +108,8 @@
                           Classes.micro="{Binding IsMicroLayout}"
                           Classes.keyboard-focused="{Binding IsKeyboardFocused}"
                           Classes.stale="{Binding IsStaleDirectory}"
-                          Width="{Binding CardWidth}"
-                          Height="{Binding CardHeight}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
                           ClipToBounds="True">
                     <!-- L51: Keyboard accelerators for context menu discoverability -->
                     <Border.ContextMenu>

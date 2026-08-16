@@ -38,5 +38,19 @@ public sealed partial class MainWindowViewModel
                 launchAllAsync: _presetWorkflow.LaunchGroupAsync,
                 saveAsPresetAsync: _presetWorkflow.SaveGroupAsPresetAsync));
         }
+
+        RefreshCardGroupProjections();
+    }
+
+    public void RefreshCardGroupProjections()
+    {
+        var cardLayout = _layoutManager.CardLayout;
+        var fillViewport = string.Equals(_layoutManager.CardsGroupKey, LauncherCardsGroupKeys.None, StringComparison.Ordinal);
+        foreach (var group in VisibleGroups)
+            group.SetCardGridProjection(
+                cardLayout.CardColumns,
+                _layoutManager.CardsViewportHeight,
+                cardLayout.CardHeight,
+                fillViewport);
     }
 }

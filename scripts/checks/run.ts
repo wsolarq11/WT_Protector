@@ -125,7 +125,7 @@ export function checkStructureBaselineConsistency(): void {
     { label: "WTLauncher.Analyzers C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.Analyzers", filter: "*.cs", count: 7 },
     { label: "Tests C# files", path: "src\\avalonia-launcher\\tests\\WTLauncher.Tests", filter: "*.cs", count: 129 },
   ];
-  const baselineTestAttributes = 749;
+  const baselineTestAttributes = 756;
   const violations: string[] = [];
 
   for (const row of baselineRows) {

@@ -83,7 +83,7 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public void CardSizingUsesGoldenRatioWhenSpaceAllows()
+    public void CardSizingFillsAvailableRowHeightWhenSpaceAllows()
     {
         using var temp = new TempDirectory();
         var entries = NumberedEntries(6);
@@ -93,11 +93,12 @@ public sealed partial class MainWindowViewModelTests
         viewModel.UpdateCardsAvailableSize(new Size(900, 520));
 
         var first = Assert.IsType<LauncherEntryViewModel>(viewModel.VisibleEntries.First());
-        var actualRatio = first.CardWidth / first.CardHeight;
-        Assert.InRange(
-            actualRatio,
-            LauncherEntryLayoutCalculator.CardGoldenRatio - 0.02,
-            LauncherEntryLayoutCalculator.CardGoldenRatio + 0.02);
+        var cardLayout = viewModel._layoutManager.CardLayout;
+        Assert.True(cardLayout.FillsAvailableHeight);
+        Assert.True(cardLayout.CardColumns >= 2);
+        var usedHeight = (cardLayout.CardRows * first.CardHeight)
+            + ((cardLayout.CardRows - 1) * LauncherEntryLayoutCalculator.CardGap);
+        Assert.InRange(usedHeight, 520 - 0.001, 520 + 0.001);
     }
 
     [Fact]
