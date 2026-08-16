@@ -32,7 +32,7 @@ jobs:
             nuget-${{ runner.os }}-
 
       - name: Restore
-        run: dotnet restore src/avalonia-launcher/WTLauncher.Avalonia.sln
+        run: dotnet restore src/avalonia-launcher/WTLauncher.Avalonia.sln -r win-x64 -p:EnableNativeAot=true --locked-mode
 
       - name: Build
         run: dotnet build src/avalonia-launcher/WTLauncher.Avalonia.sln --no-restore -warnaserror
@@ -65,31 +65,37 @@ jobs:
       - name: Audit
         run: dotnet nuget audit src/avalonia-launcher/WTLauncher.Avalonia.sln
 
-  aot-verify:
-    name: Native AOT Compile
+  release-contract:
+    name: Release Contract
     runs-on: windows-latest
-    continue-on-error: true
     permissions:
       contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          lfs: false
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
 
-      - name: Restore
-        run: dotnet restore src/avalonia-launcher/WTLauncher.Avalonia.sln
+      - name: Run release contract
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\release-contract.ps1
 
-      - name: AOT publish
-        run: dotnet publish src/avalonia-launcher/src/WTLauncher.App/WTLauncher.App.csproj -c Release -r win-x64 -p:EnableNativeAot=true --no-restore
+      - name: Upload release artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-contract-artifacts
+          path: src/avalonia-launcher/artifacts/publish/win-x64/
 
   full-gate:
     name: Full Native Gate (verify.ps1)
     runs-on: windows-latest
-    needs: [build-and-test, nuget-audit, aot-verify]
+    needs: [build-and-test, nuget-audit, release-contract]
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     permissions:
       contents: read

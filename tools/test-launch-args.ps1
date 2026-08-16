@@ -10,7 +10,7 @@ $tests = Get-AvaloniaTestsProjectPath
 if (-not (Test-Path -LiteralPath $solution)) { throw "Missing solution: $solution" }
 if (-not (Test-Path -LiteralPath $tests)) { throw "Missing tests project: $tests" }
 
-Invoke-NativeStep 'dotnet restore solution' { dotnet restore $solution }
+Invoke-NativeStep 'dotnet restore solution native-aot-locked' { dotnet restore $solution -r win-x64 -p:EnableNativeAot=true --locked-mode }
 Invoke-NativeStep 'dotnet test LaunchArgumentBuilder' { dotnet test $tests -c Release --no-restore --filter FullyQualifiedName~LaunchArgumentBuilder --verbosity minimal }
 
 [pscustomobject]@{

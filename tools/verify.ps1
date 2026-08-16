@@ -566,6 +566,18 @@ if (-not $workflowText.Contains('test-fast.ps1')) { throw 'CI build-and-test mus
 if ($workflowText.Contains('Publish (smoke check)')) { throw 'CI build-and-test must not duplicate publish; full-gate owns publish' }
 Add-Check 'ci-fast-lane-no-publish-duplication' @{ pass = $true }
 
+# --- Release lockfile consistency ---
+# AOT publish depends on Microsoft.DotNet.ILCompiler in packages.lock.json.
+# Locked mode catches stale or missing lock entries without running the full publish.
+$lockedRestore = & dotnet restore (Get-AvaloniaSolutionPath) -r win-x64 -p:EnableNativeAot=true --locked-mode 2>&1
+if ($LASTEXITCODE -ne 0) {
+    throw 'AOT restore failed in locked mode; update packages.lock.json with the EnableNativeAot restore graph'
+}
+Add-Check 'release-lockfile-consistency' @{
+    lockedMode = $true
+    aotMarker = 'EnableNativeAot'
+}
+
 $mainlineVerify = Join-Path $sourceRoot 'verify.ps1'
 if (-not (Test-Path -LiteralPath $mainlineVerify)) { throw "Missing mainline verify script: $mainlineVerify" }
 $mainlineJson = & $mainlineVerify

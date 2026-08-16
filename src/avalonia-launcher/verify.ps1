@@ -15,7 +15,7 @@ $testResultsDir = Join-Path $sourceRoot 'artifacts\test-results'
 $testResultsFile = Join-Path $testResultsDir 'wtlauncher-tests.trx'
 $smokeRoot = Join-Path $sourceRoot 'artifacts\gui-smoke'
 
-Invoke-NativeStep 'dotnet restore solution win-x64' { dotnet restore $solution -r win-x64 }
+Invoke-NativeStep 'dotnet restore solution win-x64 native-aot-locked' { dotnet restore $solution -r win-x64 -p:EnableNativeAot=true --locked-mode }
 New-Item -ItemType Directory -Path $testResultsDir -Force | Out-Null
 Remove-Item -LiteralPath $testResultsFile -Force -ErrorAction SilentlyContinue
 # ── Performance baseline: record elapsed time for key steps ────────────

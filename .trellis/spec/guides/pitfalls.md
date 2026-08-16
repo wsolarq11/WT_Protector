@@ -1144,3 +1144,13 @@ private async void OnXxxClicked(object? sender, RoutedEventArgs e)
 | **后果** | 属性测试间歇性失败（随机种子偶发），失败信息只给种子不给输入，排查慢 |
 | **修复** | 生成器前置条件用与生产代码相同的规范化规则：`char.GetUnicodeCategory(ch) is not (Control or Format)`；用复现种子 + 打印失败输入快速定位 |
 | **适用** | 任何对"规范化后非空"有要求的随机属性测试；前置条件必须镜像生产规范化，不能想当然 |
+
+### 10.17 `packages.lock.json` 的 AOT ILCompiler 条目会被非 AOT restore 擦掉
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-08-16 central-release-contract session；根门禁在 `release-lockfile-consistency` 后运行 mainline 非 AOT restore，`packages.lock.json` 中的 `Microsoft.DotNet.ILCompiler` 被移除 |
+| **根因** | `WTLauncher.App.csproj` 用 `EnableNativeAot` 条件设置 `PublishAot`，AOT restore 会把 `Microsoft.DotNet.ILCompiler` 写进锁文件；不带该标记的 restore 会重新生成锁文件并擦掉条目。release publish 若允许隐式 restore，又会把条目加回来，形成每次构建都脏 |
+| **后果** | lockfile 漂移、`--locked-mode` 失败、发布工作区不干净；CI 若仍是 informational AOT job，失败还会被掩盖 |
+| **修复** | 所有会写 app lockfile 的 restore 统一使用 `-p:EnableNativeAot=true`，需要严格校验时加 `--locked-mode`；publish 固定 `--no-restore`。当前已覆盖 `tools/build-release.ps1`、`src/avalonia-launcher/verify.ps1`、`tools/test-launch-args.ps1` 和 CI restore |
+| **适用** | 任何条件式 `PublishAot` 项目 + `RestorePackagesWithLockFile`；锁文件一致性必须由“同一 restore 图”保证，不能只靠一次显式修复 |

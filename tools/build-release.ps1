@@ -1,4 +1,6 @@
-param()
+param(
+    [switch]$LockedMode
+)
 Set-StrictMode -Version Latest
 
 $ErrorActionPreference = 'Stop'
@@ -43,11 +45,16 @@ $version = & {
 
 New-Item -ItemType Directory -Force -Path $publishDir | Out-Null
 
-Invoke-NativeStep 'dotnet restore solution win-x64' { dotnet restore $solution -r win-x64 }
+# Restore with the same AOT marker as publish; otherwise PublishAot's implicit
+# restore rewrites packages.lock.json on every release build. -LockedMode makes
+# restore fail when packages.lock.json would need to change.
+$restoreArgs = @('-r', 'win-x64', '-p:EnableNativeAot=true')
+if ($LockedMode) { $restoreArgs += '--locked-mode' }
+Invoke-NativeStep 'dotnet restore solution win-x64 native-aot' { dotnet restore $solution @restoreArgs }
 # 07-12-modernization: Native AOT publish (EnableNativeAot marker enables the
 # project-scoped PublishAot in WTLauncher.App.csproj; passing PublishAot on the
 # command line would propagate globally to the analyzer project → NETSDK1207).
-Invoke-NativeStep 'dotnet publish app win-x64 native-aot' { dotnet publish $app -c Release -r win-x64 -p:EnableNativeAot=true -o $publishDir -p:Version=$version -p:InformationalVersion=$version }
+Invoke-NativeStep 'dotnet publish app win-x64 native-aot' { dotnet publish $app -c Release -r win-x64 -p:EnableNativeAot=true --no-restore -o $publishDir -p:Version=$version -p:InformationalVersion=$version }
 
 if (-not (Test-Path -LiteralPath $exe)) { throw "Published exe missing: $exe" }
 

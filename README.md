@@ -17,7 +17,7 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `.snow/` — git-ignored local runtime/index state; the gate asserts it stays ignored (`git ls-files -- .snow` is empty) and never validates its contents.
 - `.gitattributes` — repository line-ending policy; text is normalized as LF to avoid CRLF-only churn.
 - `.wt-protector.dsc.yaml` — WinGet Configuration file declaring fresh-machine prerequisites (Windows Terminal + PowerShell 7); applied via `winget configure` or `tools/apply-machine-config.ps1`.
-- `tools/verify.ps1` — no-interaction local verification gate (43 checks).
+- `tools/verify.ps1` — no-interaction local verification gate (44 checks).
 - `tools/config-lib.ps1` — shared helper functions used by verification and config tools.
 - `tools/apply-machine-config.ps1` — thin wrapper that applies (or `-DryRun` validates) `.wt-protector.dsc.yaml` for fresh-machine setup.
 - `docs/reference/github-similar-projects-snapshot.json` — current GitHub similar-project evidence used by the feature north-star audit.
@@ -233,6 +233,12 @@ The verifier publishes into isolated ignored output under `src/avalonia-launcher
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build-release.ps1
 ```
 
+The central release contract runs the same locked-mode restore, Native AOT publish, clean-worktree assertion, and receipt/manifest validation that CI requires:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\release-contract.ps1
+```
+
 The publish output is ignored local build output under:
 
 ```text
@@ -259,7 +265,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\smoke-critical-journ
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
 ```
 
-CI uses `build-and-test` for build + fast lane and `full-gate` for the single complete verify/publish pass.
+CI uses `build-and-test` for build + fast lane, `release-contract` for the central AOT publish contract, and `full-gate` for the single complete verify/publish pass.
 
 ## WinForms retirement
 
