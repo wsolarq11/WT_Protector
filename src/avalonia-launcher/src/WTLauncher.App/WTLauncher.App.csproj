@@ -17,6 +17,7 @@
          analyzer project via Directory.Build.props and fail with NETSDK1207. -->
     <PublishAot Condition="'$(EnableNativeAot)' == 'true'">true</PublishAot>
     <IsAotCompatible>true</IsAotCompatible>
+    <RuntimeFrameworkVersion Condition="'$(EnableNativeAot)' == 'true'">10.0.10</RuntimeFrameworkVersion>
     <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
     <!-- CS0618: LaunchPlan.CommandLine is [Obsolete] for logging but still used for UI display (DryRun). -->
     <NoWarn>$(NoWarn);CS0618</NoWarn>

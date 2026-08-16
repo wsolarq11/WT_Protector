@@ -4,6 +4,7 @@
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
     <IsAotCompatible>true</IsAotCompatible>
+    <RuntimeFrameworkVersion Condition="'$(EnableNativeAot)' == 'true'">10.0.10</RuntimeFrameworkVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="ErrorOr" />
