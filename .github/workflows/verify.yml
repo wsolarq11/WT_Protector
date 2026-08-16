@@ -81,9 +81,14 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+          cache: npm
+
       - name: Run release contract
-        shell: powershell
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\release-contract.ps1
+        run: npm ci && npm run release:contract
 
       - name: Upload release artifacts
         if: always()

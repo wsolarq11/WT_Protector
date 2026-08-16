@@ -3,7 +3,7 @@
   "name": "ts-scripting-foundation",
   "title": "TS脚本系统骨架",
   "description": "建立 Node/TypeScript 脚本系统，迁移 build-release 与 release-contract",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

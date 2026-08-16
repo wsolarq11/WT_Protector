@@ -40,6 +40,16 @@ properties:
         id: Microsoft.PowerShell
         source: winget
 
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: node
+      dependsOn:
+        - powershell
+      directives:
+        description: Install Node.js LTS (repo scripts)
+      settings:
+        id: OpenJS.NodeJS.LTS
+        source: winget
+
     # ── Optional AI agent CLIs ────────────────────────────────────────
     # Uncomment to install via winget. Verify each package id is current
     # at https://github.com/microsoft/winget-pkgs before enabling — ids

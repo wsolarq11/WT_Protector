@@ -1,0 +1,25 @@
+{
+  "name": "wt-protector-scripts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "TypeScript scripting layer for WT Protector release and verification tooling",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "release:build": "tsx scripts/build-release.ts",
+    "release:contract": "tsx scripts/release-contract.ts"
+  },
+  "dependencies": {
+    "execa": "^10.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}

@@ -31,3 +31,8 @@ config/*.legacybak2
 
 # Windows shortcuts (local launcher references)
 *.lnk
+
+# Node/TypeScript scripting layer
+node_modules/
+*.tsbuildinfo
+coverage/

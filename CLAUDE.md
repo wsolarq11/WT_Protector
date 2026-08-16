@@ -33,6 +33,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build-release.ps1
 # Central release contract: locked-mode restore + AOT publish + clean worktree + receipt validation
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\release-contract.ps1
 
+# TypeScript scripting layer (CI release-contract authority)
+npm ci
+npm run typecheck
+npm test
+npm run release:contract
+
 # Run the app against the canonical config/launcher.json
 powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\run.ps1
 
@@ -78,7 +84,7 @@ deep architecture research (`07-23-arch-deep-research/`) are committed. Key fact
 - **MemoizedSelector._hasCached** is `volatile`.
 - **AgentDiscoveryScanner.Scan()** accepts `CancellationToken ct = default`.
 - **DiscoverAgentsViewModel** propagates CancellationToken through `_scanFunc`.
-- **CI:** AOT publish is enforced by the required `release-contract` job, `dotnet nuget audit` (was no-op restore),
+- **CI:** AOT publish is enforced by the required `release-contract` job, executed through `npm run release:contract`; `dotnet nuget audit` (was no-op restore),
   Dependabot (NuGet + GitHub Actions), `.editorconfig`.
 
 `.snow/`, `.claude/`, `.agents/`, `artifacts/`, `*.bak*`, `*.log`, `*.tmp` are git-ignored local/runtime state — never gate or commit on them.

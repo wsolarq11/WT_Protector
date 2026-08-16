@@ -33,7 +33,7 @@ The local mainline gate runs:
 3. `dotnet publish -c Release -r win-x64 --self-contained true` into isolated verification output
 4. a hidden temp-config startup smoke of the published exe on Windows; non-Windows hosts skip that GUI-only step after tests and win-x64 publish verification
 
-Verification publish output is ignored under `artifacts/verify-publish/win-x64/`. Stable release output from `tools/build-release.ps1` is ignored under `artifacts/publish/win-x64/`. The central release contract is `tools/release-contract.ps1` from the repository root: locked-mode AOT restore, `--no-restore` publish, clean-worktree assertion, and receipt/manifest validation.
+Verification publish output is ignored under `artifacts/verify-publish/win-x64/`. Stable release output from `tools/build-release.ps1` is ignored under `artifacts/publish/win-x64/`. The central release contract is `tools/release-contract.ps1` from the repository root: locked-mode AOT restore, `--no-restore` publish, clean-worktree assertion, and receipt/manifest validation. The TypeScript authority is `npm run release:contract` (CI entry point).
 
 ## Current acceptance question
 

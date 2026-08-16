@@ -9,9 +9,11 @@ WT_Protector/
 ├── AGENTS.md              ← 你在这里。全仓导航中枢
 ├── README.md              → 详细项目文档（配置schema、安全说明、功能清单）
 ├── DESIGN.md              → 设计契约（品牌、原则、视觉语言、组件所有权）
-├── .wt-protector.dsc.yaml → WinGet Configuration：新机就绪层（Windows Terminal + PowerShell 7）
+├── .wt-protector.dsc.yaml → WinGet Configuration：新机就绪层（Windows Terminal + PowerShell 7 + Node LTS）
 ├── config/                → 运行时配置（JSON, 人可读写）
 │   └── launcher.json      → 统一存储：启动条目 + 命名启动组 + UI 偏好 + defaultPresetId + runHistory
+├── package.json / package-lock.json → Node/TypeScript 脚本系统
+├── scripts/               → TS 脚本（config-lib / build-release / release-contract + Vitest）
 ├── src/
 │   └── avalonia-launcher/ → 活动主线：Avalonia/.NET 源码 + 测试 + 构建
 │       ├── README.md      → 源码架构（5层模型）、构建与验证
@@ -53,6 +55,8 @@ WT_Protector/
 | `test-launch-args.ps1`                        | **聚焦测试**：仅运行 LaunchArgumentBuilder 测试                                                                                                                                                                                                                                                                                               | 快速验证启动参数逻辑                                 |
 | `update-github-similar-projects-snapshot.ps1` | **刷新 GitHub 对标快照**：通过 `gh repo view` 拉取 12 个对标项目的最新数据                                                                                                                                                                                                                                                                    | 需要更新市场对标证据时（快照超过 30 天会被门禁拒绝） |
 
+> TS 发布入口：`scripts/build-release.ts` + `scripts/release-contract.ts`，执行 `npm run release:contract`（CI 当前权威入口）。旧 `tools/release-contract.ps1` 在等价验证期间保留。
+
 ## 结构基线（Structure Baseline）— 门禁强制
 
 仓库结构事实的**唯一文档源**。`tools/verify.ps1` 的 `structure-baseline-consistency` 检查逐项校验
@@ -85,6 +89,7 @@ WT_Protector/
 5. **想参考外部设计？** → `docs/design-benchmark-digest.md` + `docs/giants-shoulders/`
 6. **想运行/测试？** → `powershell -NoProfile -ExecutionPolicy Bypass -File .\src\avalonia-launcher\run.ps1`
 7. **想验证全仓？** → `powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1`
+8. **想跑 TS 发布契约？** → `npm ci && npm run release:contract`
 
 ## 核心规则
 
