@@ -78,9 +78,10 @@ public sealed class CsCheckPropertyTests
             .SelectMany(
                 name => Gen.Char[' ', '\u02FF'].Array[1, 20]
                     .Select(c => new string(c))
-                    .Where(cmd => cmd.Any(ch => char.GetUnicodeCategory(ch) is not
-                        (System.Globalization.UnicodeCategory.Control or
-                         System.Globalization.UnicodeCategory.Format))),
+                    .Where(cmd => cmd.Any(ch => !char.IsWhiteSpace(ch) &&
+                        char.GetUnicodeCategory(ch) is not
+                            (System.Globalization.UnicodeCategory.Control or
+                             System.Globalization.UnicodeCategory.Format))),
                 (name, cmd) => new { Name = name, Command = cmd })
             .Sample(assert: input =>
             {
