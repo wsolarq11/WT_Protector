@@ -122,6 +122,7 @@ public sealed partial class LauncherLayoutWorkflow
         _layout.UpdateCardsAvailableSize(availableSize);
         _layout.CardLayout.Recalculate(
             _layout.CardsAvailableSize, _entries.VisibleEntries.Count);
+        _host.RefreshCardGroupProjections();
     }
 
     public bool TrySaveWindowBounds(double width, double height, double x = 0, double y = 0, string windowState = "Normal")

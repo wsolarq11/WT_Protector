@@ -140,6 +140,10 @@ public sealed partial class LayoutManager : ObservableObject
 
     public Size CardsAvailableSize => _cardsAvailableSize;
 
+    public double CardsAvailableHeight => _cardsAvailableSize.Height;
+
+    public double CardsViewportHeight => CardsAvailableHeight;
+
     public void NotifyDisplayModeProjectionChanged()
     {
         OnPropertyChanged(nameof(IsCardsViewMode));
@@ -158,6 +162,8 @@ public sealed partial class LayoutManager : ObservableObject
         if (_cardsAvailableSize == normalized)
             return; // Skip when size unchanged — avoids redundant PropertyChanged storm.
         _cardsAvailableSize = normalized;
+        OnPropertyChanged(nameof(CardsAvailableHeight));
+        OnPropertyChanged(nameof(CardsViewportHeight));
     }
 
     private static Size NormalizeAvailableSize(Size availableSize) => new(
@@ -169,6 +175,7 @@ public sealed partial class LayoutManager : ObservableObject
         _cardsGroupKey = normalized;
         OnPropertyChanged(nameof(CardsGroupKey));
         OnPropertyChanged(nameof(SelectedCardsGroupOption));
+        OnPropertyChanged(nameof(CardsViewportHeight));
     }
 
     public LauncherSortModeViewModel ResolveSortMode(string? sortModeId) =>
@@ -185,6 +192,7 @@ public sealed partial class LayoutManager : ObservableObject
         _cardsGroupKey = normalized;
         OnPropertyChanged(nameof(CardsGroupKey));
         OnPropertyChanged(nameof(SelectedCardsGroupOption));
+        OnPropertyChanged(nameof(CardsViewportHeight));
         GroupKeyChanged?.Invoke();
     }
 

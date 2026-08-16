@@ -6,29 +6,46 @@ namespace WTLauncher.Tests.CoreUnit;
 [Trait("Category", TestCategories.CoreUnit)]
 public sealed class LauncherEntryLayoutCalculatorTests
 {
-    // ── Legacy tests ───────────────────────────────────────────
+    // ── Fill-grid layout ────────────────────────────────────────
 
     [Fact]
-    public void Calculate_KeepsCardRatioNearGoldenRhythmWhenSpaceAllows()
+    public void CalculateCardGrid_FillsAvailableHeightWhenSpaceAllows()
     {
-        var layout = LauncherEntryLayoutCalculator.Calculate(900, 520, 6);
+        var grid = LauncherEntryLayoutCalculator.CalculateCardGrid(900, 520, 6);
 
-        var actualRatio = layout.CardWidth / layout.CardHeight;
-        Assert.InRange(
-            actualRatio,
-            LauncherEntryLayoutCalculator.CardGoldenRatio - 0.02,
-            LauncherEntryLayoutCalculator.CardGoldenRatio + 0.02);
+        Assert.True(grid.FillsAvailableHeight);
+        Assert.True(grid.Columns >= 2);
+        var usedHeight = (grid.Rows * grid.Height) + ((grid.Rows - 1) * LauncherEntryLayoutCalculator.CardGap);
+        Assert.InRange(usedHeight, 520 - 0.001, 520 + 0.001);
     }
 
     [Fact]
-    public void Calculate_UsesReadableMinimumBeforeScrollFallback()
+    public void CalculateCardGrid_UsesReadableMinimumBeforeScrollFallback()
     {
-        var layout = LauncherEntryLayoutCalculator.Calculate(892, 330, 19);
+        var grid = LauncherEntryLayoutCalculator.CalculateCardGrid(892, 330, 19);
 
-        Assert.True(layout.CardHeight >= LauncherEntryLayoutCalculator.CardMinHeight);
-        var rows = (int)Math.Ceiling(19 / 4d);
-        var usedHeight = (rows * layout.CardHeight) + ((rows - 1) * LauncherEntryLayoutCalculator.CardGap);
+        Assert.False(grid.FillsAvailableHeight);
+        Assert.True(grid.Height >= LauncherEntryLayoutCalculator.CardMinHeight);
+        var usedHeight = (grid.Rows * grid.Height) + ((grid.Rows - 1) * LauncherEntryLayoutCalculator.CardGap);
         Assert.True(usedHeight > 330.001);
+    }
+
+    [Fact]
+    public void CalculateCardGridWithColumns_UsesSharedColumnsForGroups()
+    {
+        var grid = LauncherEntryLayoutCalculator.CalculateCardGridWithColumns(4, 1132, 520, 19);
+
+        Assert.Equal(4, grid.Columns);
+        Assert.Equal(5, grid.Rows);
+        Assert.True(grid.FillsAvailableHeight);
+        var usedWidth = (grid.Columns * grid.Width) + ((grid.Columns - 1) * LauncherEntryLayoutCalculator.CardGap);
+        var usedHeight = (grid.Rows * grid.Height) + ((grid.Rows - 1) * LauncherEntryLayoutCalculator.CardGap);
+        Assert.InRange(usedWidth, 1132 - 0.001, 1132 + 0.001);
+        Assert.InRange(usedHeight, 520 - 0.001, 520 + 0.001);
+
+        var smallGroup = LauncherEntryLayoutCalculator.CalculateCardGridWithColumns(4, 1132, 520, 3);
+        Assert.Equal(4, smallGroup.Columns);
+        Assert.Equal(1, smallGroup.Rows);
     }
 
     [Fact]

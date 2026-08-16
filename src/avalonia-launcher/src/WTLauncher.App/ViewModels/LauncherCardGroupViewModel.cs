@@ -24,7 +24,31 @@ public sealed partial class LauncherCardGroupViewModel : ObservableObject
     [ObservableProperty]
     private bool _isExpanded = true;
 
+    [ObservableProperty]
+    private int _cardColumns = 1;
+
+    [ObservableProperty]
+    private double _cardsViewportHeight = double.NaN;
+
+    [ObservableProperty]
+    private double _cardHeight = LauncherEntryLayoutCalculator.CardMinHeight;
+
+    [ObservableProperty]
+    private bool _fillCardsViewportHeight = true;
+
     public string CountLabel => $"{Count} 个";
+
+    internal void SetCardGridProjection(
+        int cardColumns,
+        double cardsViewportHeight,
+        double cardHeight,
+        bool fillCardsViewportHeight)
+    {
+        CardColumns = cardColumns;
+        CardsViewportHeight = cardsViewportHeight;
+        CardHeight = cardHeight;
+        FillCardsViewportHeight = fillCardsViewportHeight;
+    }
 
     public LauncherCardGroupViewModel(
         string key,

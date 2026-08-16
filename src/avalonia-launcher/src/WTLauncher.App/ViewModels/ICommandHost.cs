@@ -10,6 +10,7 @@ public interface ICommandHost
 {
     public void DiscardDragReorderPreview();
     public void RefreshSelectionState();
+    public void RefreshCardGroupProjections();
     public void NotifyPresetManagementCommands();
     public void RefreshReorderCommandState();
     public void RestoreVmStateFromStore();

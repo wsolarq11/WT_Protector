@@ -72,7 +72,7 @@ WT_Protector/
 | Views AXAML files | 20 |
 | WTLauncher.Analyzers C# files | 7 |
 | Tests C# files | 129 |
-| Test attributes [Fact]+[Theory] | 749 |
+| Test attributes [Fact]+[Theory] | 756 |
 | Gate checks (Add-Check) | 45 |
 
 > 更新协议：结构变化 → 跑门禁看 `structure-baseline-consistency` 报什么 → 同步改本表与

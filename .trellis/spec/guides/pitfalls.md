@@ -1154,3 +1154,13 @@ private async void OnXxxClicked(object? sender, RoutedEventArgs e)
 | **后果** | lockfile 漂移、`--locked-mode` 失败、发布工作区不干净；CI 若仍是 informational AOT job，失败还会被掩盖 |
 | **修复** | 所有会写 app lockfile 的 restore 统一使用 `-p:EnableNativeAot=true`，需要严格校验时加 `--locked-mode`；publish 固定 `--no-restore`。当前已覆盖 `tools/build-release.ps1`、`src/avalonia-launcher/verify.ps1`、`tools/test-launch-args.ps1` 和 CI restore |
 | **适用** | 任何条件式 `PublishAot` 项目 + `RestorePackagesWithLockFile`；锁文件一致性必须由“同一 restore 图”保证，不能只靠一次显式修复 |
+
+### 10.18 fill-grid 落地问题族：视图共享、绑定上下文、分组列数与 VM 行预算
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-08-16 fill-grid-impl session；`LauncherEntriesView.axaml` + `Panels.cs` + `MainWindowViewModel*.cs` |
+| **根因** | ① 删 `FastWrapPanel` 前只按 cards 用法假设，漏掉 names wall 仍在用它；② `ItemsPanelTemplate` 内 `RelativeSource AncestorType=UserControl` 的 `DataContext` 编译绑定类型未知，Avalonia 报 `AVLN2000`；③ 固定列 solver 用 `Math.Min(count, maxColumns)` 把全局列数夹到组内条目数，小组列宽漂移；④ 分组面板直接用 viewport 高度当每组建高，小组会撑满整块区域；⑤ 末行拉伸用“末行已用宽度”再除回去，等于没拉伸；⑥ `MainWindowViewModel` 主文件加转发属性/事件块后超过 1200 行硬门禁 |
+| **后果** | 多轮构建/测试/门禁失败：缺 `FastWrapPanel`、`AVLN2000`、小组列数漂移、组面板过高、末行不填满、`main-vm-line-budget` 1201 |
+| **修复** | ① 全仓搜引用后把 `FastWrapPanel` 与 `FillGridPanel` 放在同一 Views 文件并保留 names wall；② 布局投影下沉到 `LauncherCardGroupViewModel`，面板直接绑定 `CardColumns/CardHeight/FillCardsViewportHeight`；③ `fixedColumns` 只按可用宽度 clamp，不按组内条目数 clamp，并加小组固定列用例；④ `FillGridPanel` 增加 `FillViewport`/`ItemHeight`：未分组填满视口，分组共享全局行高按内容堆叠；⑤ 末行拉伸按整行宽度分配；⑥ 删除 VM 转发属性，改为 `LauncherLayoutWorkflow` 调 `ICommandHost.RefreshCardGroupProjections()`，行数回到预算内 |
+| **适用** | Avalonia 多视图共享面板、`ItemsPanelTemplate` 编译绑定、分组 fill-grid、末行拉伸、`MainWindowViewModel` 行预算；删除共享 View 前必须全仓引用扫描 |

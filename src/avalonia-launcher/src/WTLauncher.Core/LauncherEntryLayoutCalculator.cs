@@ -56,54 +56,114 @@ public static class LauncherEntryLayoutCalculator
         return (cardLayout.Width, cardLayout.Height, nameTileLayout.Width, nameTileLayout.Height);
     }
 
+    public static CardGridLayout CalculateCardGrid(
+        double availableWidth,
+        double availableHeight,
+        int itemCount,
+        double itemSpacing = CardGap,
+        double lineSpacing = CardGap,
+        double minItemWidth = CardMinWidth,
+        double minItemHeight = CardMinHeight)
+    {
+        var safeWidth = double.IsFinite(availableWidth) && availableWidth > 0 ? availableWidth : FallbackAvailableWidth;
+        var safeHeight = double.IsFinite(availableHeight) && availableHeight > 0 ? availableHeight : FallbackAvailableHeight;
+        var count = Math.Min(Math.Max(1, itemCount), 10000);
+        return CalculateCardGridCore(safeWidth, safeHeight, count, null, itemSpacing, lineSpacing, minItemWidth, minItemHeight);
+    }
+
+    public static CardGridLayout CalculateCardGridWithColumns(
+        int columns,
+        double availableWidth,
+        double availableHeight,
+        int itemCount,
+        double itemSpacing = CardGap,
+        double lineSpacing = CardGap,
+        double minItemWidth = CardMinWidth,
+        double minItemHeight = CardMinHeight)
+    {
+        var safeWidth = double.IsFinite(availableWidth) && availableWidth > 0 ? availableWidth : FallbackAvailableWidth;
+        var safeHeight = double.IsFinite(availableHeight) && availableHeight > 0 ? availableHeight : FallbackAvailableHeight;
+        var count = Math.Min(Math.Max(1, itemCount), 10000);
+        return CalculateCardGridCore(safeWidth, safeHeight, count, Math.Max(1, columns), itemSpacing, lineSpacing, minItemWidth, minItemHeight);
+    }
+
     private static (double Width, double Height) CalculateCardLayout(double availableWidth, double availableHeight, int count)
+    {
+        var grid = CalculateCardGridCore(availableWidth, availableHeight, count, null, CardGap, CardGap, CardMinWidth, CardMinHeight);
+        return (grid.Width, grid.Height);
+    }
+
+    private static CardGridLayout CalculateCardGridCore(
+        double availableWidth,
+        double availableHeight,
+        int count,
+        int? fixedColumns,
+        double itemSpacing,
+        double lineSpacing,
+        double minItemWidth,
+        double minItemHeight)
     {
         // The scoring function balances three competing goals:
         //   1. Card size close to the preferred golden-rectangle dimensions (273×169 px).
         //   2. Card aspect ratio close to the golden ratio (21:13 ≈ 1.615).
         //   3. Avoid cards shorter than the minimum height (overflow penalty).
         //
-        // Weights were tuned by hand against the project's typical entry counts (10-30)
-        // and window sizes (900-1400 px wide) to produce stable, readable columns.
-        // The scale term dominates; shape penalty is 8% weight; overflow penalty is a
-        // soft push (18%) that only activates when cards would be shorter than CardMinHeight.
+        // Fill-grid mode keeps the full row-cell height when the window fits; only the
+        // overflow penalty allows the scroll fallback below the minimum height.
         const double rhythmUnit = 13;          // base spacing unit from the design rhythm
         const double goldenWidthUnits = 21;    // golden-rectangle width in rhythm units
         const double goldenHeightUnits = 13;   // golden-rectangle height in rhythm units
         const double preferredWidth = rhythmUnit * goldenWidthUnits;   // 273 px
         const double preferredHeight = rhythmUnit * goldenHeightUnits; // 169 px
 
-        var bestWidth = Math.Max(CardMinWidth, availableWidth);
-        var bestHeight = Math.Max(CardMinHeight, availableHeight);
+        var maxColumns = Math.Max(1, (int)Math.Floor((availableWidth + itemSpacing) / (minItemWidth + itemSpacing)));
+        var bestColumns = Math.Clamp(fixedColumns ?? 1, 1, Math.Max(1, maxColumns));
+        var bestRows = (int)Math.Ceiling(count / (double)bestColumns);
+        var bestWidth = Math.Max(minItemWidth, availableWidth);
+        var bestHeight = Math.Max(minItemHeight, availableHeight);
+        var bestFillsAvailableHeight = true;
         var bestScore = double.NegativeInfinity;
 
-        for (var columns = 1; columns <= count; columns++)
+        var searchColumns = fixedColumns.HasValue
+            ? Math.Max(1, Math.Min(fixedColumns.Value, maxColumns))
+            : Math.Min(count, maxColumns);
+        for (var columns = 1; columns <= searchColumns; columns++)
         {
+            if (fixedColumns.HasValue && columns != fixedColumns.Value)
+                continue;
+
             var rows = (int)Math.Ceiling(count / (double)columns);
-            var width = (availableWidth - ((columns - 1) * CardGap)) / columns;
-            var height = (availableHeight - ((rows - 1) * CardGap)) / rows;
+            var width = (availableWidth - ((columns - 1) * itemSpacing)) / columns;
+            var height = (availableHeight - ((rows - 1) * lineSpacing)) / rows;
             if (width <= 0 || height <= 0)
                 continue;
 
-            if (width < CardMinWidth)
+            if (width < minItemWidth && !fixedColumns.HasValue)
                 continue;
 
-            var effectiveHeight = Math.Max(CardMinHeight, height);
-            var shapedHeight = Math.Max(CardMinHeight, Math.Min(effectiveHeight, width / CardGoldenRatio));
-            var scale = Math.Min(width / preferredWidth, shapedHeight / preferredHeight);
-            var shapePenalty = Math.Abs((width / shapedHeight) - CardGoldenRatio);
-            var overflowRatio = height < CardMinHeight ? (CardMinHeight / height) : 1;
+            var effectiveHeight = Math.Max(minItemHeight, height);
+            var scale = Math.Min(width / preferredWidth, effectiveHeight / preferredHeight);
+            var shapePenalty = Math.Abs((width / effectiveHeight) - CardGoldenRatio);
+            var overflowRatio = height < minItemHeight ? (minItemHeight / height) : 1;
             var overflowPenalty = (overflowRatio - 1) * 0.18;
             var score = scale - (shapePenalty * 0.08) - overflowPenalty;
             if (score > bestScore)
             {
                 bestScore = score;
                 bestWidth = width;
-                bestHeight = shapedHeight;
+                bestHeight = effectiveHeight;
+                bestColumns = columns;
+                bestRows = rows;
+                bestFillsAvailableHeight = height >= minItemHeight - 0.001;
             }
         }
 
-        return (Math.Max(CardMinWidth, Math.Floor(bestWidth)), Math.Max(CardMinHeight, Math.Floor(bestHeight)));
+        return new CardGridLayout(
+            Math.Max(minItemWidth, bestWidth),
+            Math.Max(minItemHeight, bestHeight),
+            bestColumns,
+            bestRows,
+            bestFillsAvailableHeight);
     }
 
     private static (double Width, double Height) CalculateNameTileLayout(double availableWidth, double availableHeight, int count)
@@ -141,3 +201,10 @@ public static class LauncherEntryLayoutCalculator
             maxColumns);
     }
 }
+
+public sealed record CardGridLayout(
+    double Width,
+    double Height,
+    int Columns,
+    int Rows,
+    bool FillsAvailableHeight);
