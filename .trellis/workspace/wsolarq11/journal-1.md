@@ -121,3 +121,24 @@ Central release contract phase 0: locked-mode AOT restore, clean-worktree publis
 ### Status
 
 [OK] **Completed**
+
+
+## Session 5: TS scripting foundation
+
+**Date**: 2026-08-16
+**Task**: TS scripting foundation
+**Branch**: `main`
+
+### Summary
+
+Added Node/TypeScript scripting layer, TS build-release and release-contract parity, CI release job switched to npm run release:contract, Node LTS in DSC, Vitest coverage for release helpers.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6ea58201` | (see git log) |
+
+### Status
+
+[OK] **Completed**
