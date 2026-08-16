@@ -1164,3 +1164,13 @@ private async void OnXxxClicked(object? sender, RoutedEventArgs e)
 | **后果** | 多轮构建/测试/门禁失败：缺 `FastWrapPanel`、`AVLN2000`、小组列数漂移、组面板过高、末行不填满、`main-vm-line-budget` 1201 |
 | **修复** | ① 全仓搜引用后把 `FastWrapPanel` 与 `FillGridPanel` 放在同一 Views 文件并保留 names wall；② 布局投影下沉到 `LauncherCardGroupViewModel`，面板直接绑定 `CardColumns/CardHeight/FillCardsViewportHeight`；③ `fixedColumns` 只按可用宽度 clamp，不按组内条目数 clamp，并加小组固定列用例；④ `FillGridPanel` 增加 `FillViewport`/`ItemHeight`：未分组填满视口，分组共享全局行高按内容堆叠；⑤ 末行拉伸按整行宽度分配；⑥ 删除 VM 转发属性，改为 `LauncherLayoutWorkflow` 调 `ICommandHost.RefreshCardGroupProjections()`，行数回到预算内 |
 | **适用** | Avalonia 多视图共享面板、`ItemsPanelTemplate` 编译绑定、分组 fill-grid、末行拉伸、`MainWindowViewModel` 行预算；删除共享 View 前必须全仓引用扫描 |
+
+### 10.19 CI 远端门禁问题族：本机配置、SDK 包锁、deprecated 工具与 artifact 配额
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-08-16 fill-grid CI session；`config/launcher.json` 未跟踪，`wmic`/`dotnet nuget audit` 在 GitHub runner 不可用，`10.0.x` SDK 与锁文件漂移，artifact quota 撞顶 |
+| **根因** | ① `TestRepositoryPaths` 和 `npm run verify` 都把本机未跟踪的 `config/launcher.json` 当仓库根/必填文件，CI checkout 里不存在；② `dotnet nuget audit` 不是该 SDK 的受支持子命令，`dotnet list package --vulnerable --include-transitive` 才是；③ SDK 内部 `Microsoft.NET.ILLink.Tasks`/`Microsoft.DotNet.ILCompiler` 由 SDK 滚动补丁决定，`10.0.x` 安装的同一版本号可能解析不同 patch，locked-mode 因此漂移；④ `wmic` 已从 Windows runner 移除；⑤ GitHub Actions artifact 存储配额是外部计费限制，会让 `if: always()` 上传步骤把本已成功的 job 标记失败 |
+| **后果** | CI 连续多轮失败：NU1004、`'audit' was not matched`、`wmic 不是内部或外部命令`、`Could not locate repository root`、`Missing portable launcher store`、`Artifact storage quota has been hit` |
+| **修复** | ① 仓库根标记只用已跟踪的 `README.md + src/avalonia-launcher + .github`，新增 `config/launcher.ci.json`，full-gate 先复制为 `config/launcher.json`；② audit 改 `dotnet list package --vulnerable --include-transitive --no-restore`；③ 在 `Directory.Packages.props` 显式钉住 `Microsoft.NET.ILLink.Tasks` 与 `Microsoft.DotNet.ILCompiler` 10.0.10，并在 Core/App csproj 加 `PrivateAssets=all`；④ `runningReleasePids` 改 `pwsh Get-Process` 查询；⑤ artifact 上传步骤加 `continue-on-error: true` |
+| **适用** | 任何“本机 gate 绿但远端 CI 红”的仓库：CI 必须只依赖已跟踪文件；锁文件里的 SDK 内部包要显式钉版本；Windows runner 不再默认提供 `wmic`；CI 不应把外部 artifact 配额当构建失败 |
