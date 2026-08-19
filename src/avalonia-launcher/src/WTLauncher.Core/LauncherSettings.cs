@@ -7,13 +7,13 @@ namespace WTLauncher.Core;
 /// produce a new instance via <c>with { }</c>. Collection properties use
 /// ImmutableList/immutable-friendly types for true immutability.
 /// ponytail: SchemaVersion lives only at LauncherStoreFile top level — single source of truth.
-/// launcher.json is validated against the C# record schema at load time
-/// (UnmappedMemberHandling=Disallow), so reintroducing settings.schemaVersion
-/// fails loudly rather than silently drifting.</summary>
+/// launcher.json uses Loose Read at load time (unknown keys silently skipped
+/// for forward compatibility), so settings.schemaVersion would be ignored
+/// rather than failing loudly.</summary>
 public sealed record LauncherSettings
 {
     [JsonPropertyName("lastFilterText")]
-    [JsonRequired]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string LastFilterText { get; init; } = "";
 
     [JsonPropertyName("sortMode")]

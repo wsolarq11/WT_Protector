@@ -81,12 +81,6 @@
           "MSBuild.Sdk.Extras": "3.0.44"
         }
       },
-      "OneOf": {
-        "type": "Direct",
-        "requested": "[3.0.271, )",
-        "resolved": "3.0.271",
-        "contentHash": "pqpqeK8xQGggExhr4tesVgJkjdn+9HQAO0QgrYV2hFjE3y90okzk1kQMntMiUOGfV7FrCUfKPaVvPBD4IANqKg=="
-      },
       "Stateless": {
         "type": "Direct",
         "requested": "[5.20.0, )",
@@ -259,8 +253,7 @@
       "wtlauncher.core": {
         "type": "Project",
         "dependencies": {
-          "ErrorOr": "[2.1.1, )",
-          "OneOf": "[3.0.271, )"
+          "ErrorOr": "[2.1.1, )"
         }
       },
       "ErrorOr": {

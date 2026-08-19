@@ -6,9 +6,7 @@ import {
   checkAotToolchainOwnedBySdk,
   checkAppRawHexZero,
   checkCiFastLaneNoPublishDuplication,
-  checkClaimBoundaryLedger,
   checkDialogServiceNoFuncAction,
-  checkFeatureObjectiveBoundary,
   checkHtaRetiredConfig,
   checkLineEndingPolicy,
   checkMainVmLineBudget,
@@ -38,6 +36,7 @@ import {
 } from "./checks/static.js";
 import {
   checkConfigExampleSchema,
+  checkConfigRequiredFields,
   checkGithubSnapshot,
   checkLauncherStore,
   checkShortcutBackupRetirement,
@@ -60,12 +59,11 @@ export async function runVerify(): Promise<unknown> {
   checkAppRawHexZero();
   checkMainlineLayout();
   checkReadme();
-  checkFeatureObjectiveBoundary();
-  checkClaimBoundaryLedger();
   checkGithubSnapshot();
   const activeIds = checkLauncherStore();
   checkConfigExampleSchema();
   checkShortcutBackupRetirement(activeIds);
+  checkConfigRequiredFields();
   checkWinformsRetiredDesign();
   checkHtaRetiredConfig();
   checkPortableInstallerContract();

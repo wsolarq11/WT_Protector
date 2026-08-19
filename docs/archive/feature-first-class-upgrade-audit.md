@@ -60,7 +60,7 @@ Current evidence used in this pass:
 | 3 | Search/filter | ⭐⭐⭐ | 19 entries 需要快速定位 | `LauncherEntryQuery.cs` MatchesFilter 多词匹配（名称/目录/命令）正确；`searchHistory` 当时仅被收集未渲染（死数据）；无去抖、无 Escape 取消聚焦 | 加 150ms 去抖（当前无去抖）；或保持当前实现——完整搜索 history 已经可用 |
 | 4 | Direct single launch | ⭐⭐⭐⭐⭐ | 核心动作——找到并启动 | `LaunchArgumentBuilder.cs` 构造 `wt.exe` plan；snapshot + confirmation + receipt 三层契约 | 无——不用加"危险命令分类剧场" |
 | 5 | Checkbox selection & batch launch | ⭐⭐⭐⭐⭐ | 每天一键启动一组工作区 | preflight/confirmation/receipt 分离；snapshot 防 mutation 漂移；`LauncherBatchLaunchReport` 不可变 | 可选：`continueOnError` 参数支持"全启"模式 |
-| 6 | Named launch groups / presets | ⭐⭐⭐⭐⭐ | 子集需要命名、审查、可移植 | `launcher.json` presets 引用 stable entry ids；`LauncherPresetValidator.cs`（Core）校验；Normalize id 消除大小写特殊情况 | 无——这是项目最好的数据结构 |
+| 6 | Named launch groups / presets | ⭐⭐⭐⭐⭐ | 子集需要命名、审查、可移植 | `launcher.json` presets 引用 stable entry ids；`LauncherPresetWorkflow.cs`（Core）校验；Normalize id 消除大小写特殊情况 | 无——这是项目最好的数据结构 |
 | 7 | First-class preset actions | ⭐⭐⭐⭐⭐ | 不能要求用户手改 JSON | `MainWindowViewModel.Presets*.cs` CRUD + locked preset + rollback；快照-写入-回滚 3 操作一致 | 无 |
 | 8 | Preset-vs-selection preview | ⭐⭐⭐⭐⭐ | 应用前必须预知变化 | `LauncherPresetSelectionPreview` 纯函数；Matched/Missing/Extra 三元组；已匹配时禁用 no-op | 可选：展示差异条目名称（数据结构已备好） |
 | 9 | Preset launch plan preview | ⭐⭐⭐⭐⭐ | 批量启动前看到实际命令 | 复用 `PreflightBatch`——预演和实际启动同一路径；预演不启动进程快照验证 | 无 |
@@ -119,3 +119,4 @@ WT Protector 对"可移植 Windows Terminal 工作空间启动器"窄域，23 �
 2. **保持 root gate 新鲜**——提交/发布前跑 `git diff --check` + `npm run verify`；
 3. **做最小的改进**——给 searchHistory 加 autocomplete、补 3 个隔离单元测试、统一 sort 严格度；
 4. **继续拒绝** broad launcher / 插件平台 / 静默 fallback / 预铺 speculative 功能。
+

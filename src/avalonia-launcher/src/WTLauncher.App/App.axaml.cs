@@ -150,6 +150,8 @@ public sealed partial class App : Application
                 // 进程退出时由 OS 清理。MainWindowViewModel.Dispose 释放 StoreGrain 订阅。
 #pragma warning disable CA2000
                 var storePersistence = new FileStorePersistence();
+                LauncherStore.DefaultPersistence = storePersistence;
+                LauncherJson.DefaultIO = new FileLauncherJsonIO();
                 var storeGrain = new StoreGrain(storePath, storePersistence);
 #pragma warning restore CA2000
                 var storeFile = storeGrain.Select(s => s);

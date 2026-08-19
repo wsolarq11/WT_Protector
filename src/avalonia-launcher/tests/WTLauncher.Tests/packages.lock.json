@@ -468,7 +468,6 @@
           "Avalonia.Themes.Fluent": "[12.1.0, )",
           "CommunityToolkit.Mvvm": "[8.4.2, )",
           "DynamicData": "[9.4.33, )",
-          "OneOf": "[3.0.271, )",
           "Stateless": "[5.20.0, )",
           "WTLauncher.Core": "[1.0.0, )"
         }
@@ -476,8 +475,7 @@
       "wtlauncher.core": {
         "type": "Project",
         "dependencies": {
-          "ErrorOr": "[2.1.1, )",
-          "OneOf": "[3.0.271, )"
+          "ErrorOr": "[2.1.1, )"
         }
       },
       "Avalonia": {
@@ -573,12 +571,6 @@
           "Microsoft.CodeAnalysis.Workspaces.Common": "[4.11.0]",
           "System.Composition": "8.0.0"
         }
-      },
-      "OneOf": {
-        "type": "CentralTransitive",
-        "requested": "[3.0.271, )",
-        "resolved": "3.0.271",
-        "contentHash": "pqpqeK8xQGggExhr4tesVgJkjdn+9HQAO0QgrYV2hFjE3y90okzk1kQMntMiUOGfV7FrCUfKPaVvPBD4IANqKg=="
       },
       "Stateless": {
         "type": "CentralTransitive",
