@@ -205,3 +205,24 @@ Migrated auxiliary scripts to TS; added .NET smoke probe and self-contained unin
 ### Status
 
 [OK] **Completed**
+
+
+## Session 9: 税项清理：六个维度简化
+
+**Date**: 2026-08-20
+**Task**: 税项清理：六个维度简化
+**Branch**: `main`
+
+### Summary
+
+完成4个子任务：修复ConfigExchangeService静态门面接线bug（App.axaml.cs注入DefaultPersistence/DefaultIO）；修复runInTray null默认值bug（ParsePresentSettingsKeys过滤null值）；删除死代码AppError+OneOf包；内联Grain<T>到StoreGrain。跳过clean-schema-fields（searchHistory/runHistory/lastFilterText非死数据）。完成文档清理：LauncherSettings注释修正、archived过时审计文档、Trinity终局架构加过期标记、移除2项门禁检查（claim-boundary-ledger, feature-objective-boundary）。全量门禁45项全部通过，847测试通过。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1ed818b5` | (see git log) |
+
+### Status
+
+[OK] **Completed**
