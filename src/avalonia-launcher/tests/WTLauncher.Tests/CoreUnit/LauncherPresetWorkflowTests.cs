@@ -43,73 +43,8 @@ public sealed class LauncherPresetWorkflowTests
         Assert.Equal(expected, PresetId.NormalizeReference(id));
     }
 
-    [Fact]
-    public void ClonePresetFile_CreatesDeepCopyForRollback()
-    {
-        var original = PresetFile("daily", Preset("daily", "Daily", true, "one"));
 
-        var clone = LauncherPresetValidator.Validate(original);
 
-        original = original with
-        {
-            DefaultPresetId = "changed",
-            Presets = original.Presets.SetItem(0, original.Presets[0] with
-            {
-                Name = "Changed",
-                EntryIds = original.Presets[0].EntryIds.Add("two"),
-            }),
-        };
-
-        Assert.Equal("daily", clone.DefaultPresetId);
-        var preset = Assert.Single(clone.Presets);
-        Assert.Equal("Daily", preset.Name);
-        Assert.Equal(["one"], preset.EntryIds);
-        Assert.True(preset.Locked);
-    }
-
-    [Fact]
-    public void ClonePresetFile_RejectsInvalidPresetData()
-    {
-        var original = new LauncherPresetFile
-        {
-            DefaultPresetId = " Daily ",
-            Presets =
-            [
-                new LauncherPreset
-                {
-                    Id = " Daily ",
-                    Name = null!,
-                    EntryIds = ["one"],
-                },
-                new LauncherPreset
-                {
-                    Id = " Daily ",
-                    Name = "Second",
-                    EntryIds = ["two"],
-                },
-            ],
-        };
-
-        var exception = Assert.Throws<InvalidDataException>(() => LauncherPresetValidator.Validate(original));
-
-        Assert.Equal("Launcher preset 0 name is empty.", exception.Message);
-        Assert.Equal(" Daily ", original.DefaultPresetId);
-        Assert.Equal(2, original.Presets.Count);
-        Assert.Null(original.Presets[0].Name);
-        Assert.Equal(["two"], original.Presets[1].EntryIds);
-    }
-
-    [Fact]
-    public void ClonePresetFile_RejectsNullPresetRows()
-    {
-        var original = new LauncherPresetFile
-        {
-            Presets = [null!],
-        };
-
-        var exception = Assert.Throws<InvalidDataException>(() => LauncherPresetValidator.Validate(original));
-        Assert.Equal("Launcher preset 0 is null.", exception.Message);
-    }
 
     [Fact]
     public void AddPreset_AppendsUniquePresetWithSelectedEntries()

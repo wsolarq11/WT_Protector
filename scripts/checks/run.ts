@@ -59,6 +59,11 @@ export async function checkAvaloniaMainlineVerify(): Promise<void> {
 }
 
 export async function checkCoverageGate(): Promise<void> {
+  // Known optimization opportunity: runVerifyMainline() already runs dotnet test
+  // (with --verbosity minimal --logger trx). Adding --collect "XPlat Code Coverage"
+  // to that command and reusing the coverage XML here would save the second
+  // dotnet test pass (~15-20s). See: scripts/verify-mainline.ts L167-179.
+  // Evaluate when the verify time budget becomes constrained.
   const coverage = await runCoverageGate(true);
   addCheck("coverage-gate", {
     status: coverage.status,
@@ -113,7 +118,7 @@ function matchesFilter(filePath: string, filter: string): boolean {
 
 export function checkStructureBaselineConsistency(): void {
   const baselineRows: BaselineRow[] = [
-    { label: "WTLauncher.Core C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.Core", filter: "*.cs", count: 53 },
+    { label: "WTLauncher.Core C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.Core", filter: "*.cs", count: 51 },
     { label: "ViewModels C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\ViewModels", filter: "*.cs", count: 65 },
     { label: "MainWindowViewModel partials", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\ViewModels", filter: "MainWindowViewModel.*.cs", count: 15 },
     { label: "Features C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\Features", filter: "*.cs", count: 16 },
@@ -122,7 +127,7 @@ export function checkStructureBaselineConsistency(): void {
     { label: "WTLauncher.Analyzers C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.Analyzers", filter: "*.cs", count: 7 },
     { label: "Tests C# files", path: "src\\avalonia-launcher\\tests\\WTLauncher.Tests", filter: "*.cs", count: 129 },
   ];
-  const baselineTestAttributes = 756;
+  const baselineTestAttributes = 764;
   const violations: string[] = [];
 
   for (const row of baselineRows) {
@@ -189,3 +194,6 @@ export function checkStructureBaselineConsistency(): void {
     enforcedSource: "AGENTS.md structure-baseline table",
   });
 }
+
+
+

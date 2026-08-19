@@ -23,12 +23,6 @@
           "MSBuild.Sdk.Extras": "3.0.44"
         }
       },
-      "OneOf": {
-        "type": "Direct",
-        "requested": "[3.0.271, )",
-        "resolved": "3.0.271",
-        "contentHash": "pqpqeK8xQGggExhr4tesVgJkjdn+9HQAO0QgrYV2hFjE3y90okzk1kQMntMiUOGfV7FrCUfKPaVvPBD4IANqKg=="
-      },
       "MSBuild.Sdk.Extras": {
         "type": "Transitive",
         "resolved": "3.0.44",

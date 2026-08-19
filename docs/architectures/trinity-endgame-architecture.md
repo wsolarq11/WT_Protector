@@ -1,5 +1,7 @@
 # Trinity 终局架构提案 — 剪掉一切问题的源头
 
+> **DEPRECATED** (2026-08-20): This document describes the Trinity architecture proposal, which has been superseded by the current Scheme B architecture (StoreGrain + FileStorePersistence + 5-layer). Retained for historical reference only.
+
 > **生成日期**: 2026-07-25
 > **研究基线**: 全网 deepsearch (Avalonia/ReactiveUI/DynamicData/Stateless/Functional Core/Property-Based Testing) + WT Protector 全仓审计
 > **目标**: 无限逼近 99.99% 置信度，从架构层面让整类 bug 不可能存在

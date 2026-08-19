@@ -5,14 +5,15 @@ using WTLauncher.Core;
 namespace WTLauncher.App.Infrastructure;
 
 /// <summary>
-/// Thread-safe store grain. Backed by <see cref="LauncherStore"/> for persistence.
-///
-/// All mutations go through <see cref="Dispatch"/> (pure reducer), which saves
-/// to disk before applying to in-memory state. On save failure, the in-memory
-/// state is NOT updated — the caller sees the exception.
+/// Thread-safe store grain. Owns in-memory <see cref="LauncherStoreFile"/> state
+/// and persists all mutations through <see cref="Dispatch"/> (pure reducer), which
+/// saves to disk before applying to memory. On save failure, the in-memory state
+/// is NOT updated — the caller sees the exception.
 /// </summary>
-public sealed class StoreGrain : Grain<LauncherStoreFile>, IDisposable
+public sealed class StoreGrain : IDisposable
 {
+    private readonly object _lock = new();
+    private LauncherStoreFile _state = null!;
     private readonly string _storePath;
     private readonly IStorePersistence _persistence;
 
@@ -27,35 +28,34 @@ public sealed class StoreGrain : Grain<LauncherStoreFile>, IDisposable
     /// <summary>Create a store grain backed by the given path.
     /// State is loaded synchronously from disk via <paramref name="persistence"/>.</summary>
     public StoreGrain(string storePath, IStorePersistence persistence)
-        : base(LoadInitialState(storePath, persistence))
     {
         _storePath = storePath;
         _persistence = persistence;
+        _state = LoadInitialState(storePath, persistence);
     }
 
     /// <summary>Test-only: creates a store with the given initial state.
     /// No file I/O — state starts from <paramref name="initialState"/>.
     /// Falls back to <see cref="FileStorePersistence"/> when <paramref name="persistence"/> is null.</summary>
     internal StoreGrain(string storePath, LauncherStoreFile initialState, IStorePersistence? persistence = null)
-        : base(initialState)
     {
         _storePath = storePath;
         _persistence = persistence ?? new FileStorePersistence();
+        _state = initialState;
     }
 
     /// <summary>Read a projection from current state (thread-safe).</summary>
-    public T Select<T>(Func<LauncherStoreFile, T> selector) => ReadState(selector);
+    public T Select<T>(Func<LauncherStoreFile, T> selector)
+    {
+        lock (_lock) { return selector(_state); }
+    }
 
-    /// <summary>Apply a reducer and persist. On save failure, state is unchanged.
-    /// Reads, applies reducer, saves, and updates memory atomically inside
-    /// Grain.Mutate lock — eliminates the TOCTOU window.
-    /// Subscriber exceptions are caught and logged to prevent Dispatch failure cascades.</summary>
     /// <summary>Reload state from disk via persistence. Does not notify subscribers.
     /// Used by <see cref="MainWindowViewModel.Refresh"/> to synchronize with external changes.</summary>
     public void ReloadFromDisk()
     {
         var fresh = _persistence.Load(_storePath);
-        SetState(fresh);
+        lock (_lock) { _state = fresh; }
         try { Reloaded?.Invoke(fresh); }
         catch (Exception ex) when (LauncherErrors.IsRecoverable(ex))
         {
@@ -63,14 +63,19 @@ public sealed class StoreGrain : Grain<LauncherStoreFile>, IDisposable
         }
     }
 
+    /// <summary>Apply a reducer and persist. On save failure, state is unchanged.
+    /// Serializes save + memory update under a single lock to eliminate the TOCTOU window.
+    /// Subscriber exceptions are caught and logged to prevent Dispatch failure cascades.</summary>
     public void Dispatch(Func<LauncherStoreFile, LauncherStoreFile> reducer)
     {
-        var after = Mutate(state =>
+        LauncherStoreFile after;
+        lock (_lock)
         {
-            var newState = reducer(state);
+            var newState = reducer(_state);
             _persistence.Save(newState, _storePath, backup: true);
-            return newState;
-        });
+            _state = newState;
+            after = newState;
+        }
         try { StateChanged?.Invoke(after); }
         catch (Exception ex) when (LauncherErrors.IsRecoverable(ex))
         {
