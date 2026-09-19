@@ -23,6 +23,7 @@ jobs:
         with:
           dotnet-version: "10.0.301"
           cache: true
+          cache-dependency-path: src/avalonia-launcher/src/WTLauncher.App/packages.lock.json
 
       - name: Setup Node
         uses: actions/setup-node@v4
