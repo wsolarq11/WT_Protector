@@ -9,16 +9,8 @@
     ────────────────────────────────────────────────────────────────
   -->
 
-  <!-- Destructive button (delete/danger actions) -->
-  <Style Selector="Button.destructive">
-    <Setter Property="Background" Value="{StaticResource DestructiveBrush}"/>
-    <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
-    <Setter Property="FontWeight" Value="SemiBold"/>
-    <Setter Property="Padding" Value="14,8"/>
-    <Setter Property="CornerRadius" Value="10"/>
-    <Setter Property="HorizontalContentAlignment" Value="Center"/>
-    <Setter Property="VerticalContentAlignment" Value="Center"/>
-  </Style>
+  <!-- Destructive button styling now lives in App.axaml so every window gets it
+       without including DialogSharedStyles. -->
 
   <!-- Management list — shared by CommandManagementWindow and DirectoryManagementWindow -->
   <Style Selector="ListBox.management-list">

@@ -11,11 +11,18 @@ public static class LauncherDesignTokens
     public const string DestructiveColor = "#DC2626";      // delete/danger actions
     public const string ErrorColor = "#B22222";           // error text (Firebrick, contrast 5.24:1 AA)
     public const string BackgroundColor = "#F8FAFC";       // window background
+    public const string BackgroundTopColor = "#FBF8F2";    // atmospheric canvas top: warm paper light
+    public const string BackgroundBottomColor = "#EAF0F7"; // atmospheric canvas bottom: cool slate recession
+    public const string CanvasLightColor = "#FFFDF8";      // radial focal light on the canvas
+    public const string CanvasLightEndColor = "#00FFFDF8"; // transparent tail of the focal light
+    public const string HorizonColor = "#DCE3EE";          // subtle perspective horizon line
     public const string TextPrimaryColor = "#0F172A";      // headings, primary text
     public const string TextMutedColor = "#4B5563";        // secondary/muted text (contrast 5.8:1 AA)
     public const string BorderColor = "#E2E8F0";           // card/item borders
     public const string SurfaceColor = "White";            // card/item backgrounds
     public const string BoxShadowColor = "#120F172A";      // card shadow, #AARRGGBB 是 Avalonia Color.Parse 标准格式
+    public const string ControlShadowColor = "#140F172A";  // foreground control elevation shadow
+    public const string FocusGlowColor = "#3B82F6";        // foreground focal glow
     public const string DragGhostShadowColor = "#220F172A"; // elevated drag preview shadow
 
     // ── Semantic state colors ──────────────────────────────
@@ -52,6 +59,16 @@ public static class LauncherDesignTokens
 
     // ── Spacing / Rhythm (golden-ratio aligned) ─────────────
     public const double SpacingSmall = 8;
+    public const double SpacingStep = 13;
+    public const double SpacingWide = 21;
+    public const double SpacingFrame = 34;
+
+    // ── Foreground control shape ─────────────────────────────
+    public const double ControlCornerRadius = 10;
+    public const double DropdownCornerRadius = 12;
+    public const double DialogCornerRadius = 16;
+    public const double ButtonCornerRadius = 10;
+    public const double FocusBorderThickness = 2;
 
     // ── Typography ─────────────────────────────────────────
     public const double FontSizeSmall = 12;
