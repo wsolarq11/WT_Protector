@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using ErrorOr;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.Core;
 
@@ -221,6 +222,18 @@ public sealed class StoreGrainTests
     }
 
     [Fact]
+    public void ReloadFromDisk_CorruptPrimary_Throws()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        LauncherStore.Save(SampleStore(), path, backup: false);
+        var store = new StoreGrain(path, new FileStorePersistence());
+        File.WriteAllText(path, "not-json{");
+
+        Assert.Throws<System.Text.Json.JsonException>(() => store.ReloadFromDisk());
+    }
+
+    [Fact]
     public void Reloaded_DoesNotFireOnDispatch()
     {
         using var temp = new TempDirectory();
@@ -235,11 +248,50 @@ public sealed class StoreGrainTests
         Assert.False(notified);
     }
 
+    [Fact]
+    public void Constructor_UnreadableExistingFile_ReturnsEmptyStateWithoutThrowing()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        File.WriteAllText(path, "{}");
+        var persistence = new ThrowingLoadPersistence(new IOException("unreadable"));
+
+        var store = new StoreGrain(path, persistence);
+
+        Assert.Empty(store.Select(s => s.Entries));
+        Assert.Empty(store.Select(s => s.Presets));
+    }
+
+    [Fact]
+    public void Constructor_FileNotFoundDuringLoad_ReturnsEmptyStateWithoutThrowing()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        File.WriteAllText(path, "{}");
+        var persistence = new ThrowingLoadPersistence(new FileNotFoundException("gone"));
+
+        var store = new StoreGrain(path, persistence);
+
+        Assert.Empty(store.Select(s => s.Entries));
+    }
+
     private static string HashFile(string path)
     {
         var bytes = File.ReadAllBytes(path);
         return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes));
     }
+}
+
+public sealed class ThrowingLoadPersistence(Exception exception) : IStorePersistence
+{
+    public LauncherStoreFile Load(string storePath, Action<Exception, string>? onRecovery = null) => throw exception;
+
+    public void Save(LauncherStoreFile store, string storePath, bool backup = true) => throw new NotSupportedException();
+
+    public ErrorOr<LauncherStoreFile> LoadErrorOr(string storePath) => throw exception;
+
+    public string ResolveStorePath(string? explicitPath, string? currentDirectory = null, string? appBaseDirectory = null)
+        => explicitPath ?? string.Empty;
 }
 
 public sealed class StoreMutationSessionTests

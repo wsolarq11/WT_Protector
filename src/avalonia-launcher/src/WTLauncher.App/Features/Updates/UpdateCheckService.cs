@@ -12,12 +12,19 @@ public interface IUpdateManifestReader
 
 public sealed class HttpUpdateManifestReader : IUpdateManifestReader
 {
+    private readonly HttpMessageHandler _handler;
+
+    public HttpUpdateManifestReader(HttpMessageHandler? handler = null)
+    {
+        _handler = handler ?? new HttpClientHandler();
+    }
+
     public async Task<string> ReadManifestAsync(string manifestUrl)
     {
         if (Uri.TryCreate(manifestUrl, UriKind.Absolute, out var uri)
             && uri.Scheme is "http" or "https")
         {
-            using var client = new HttpClient();
+            using var client = new HttpClient(_handler);
             using var response = await client.GetAsync(uri).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStringAsync().ConfigureAwait(false);

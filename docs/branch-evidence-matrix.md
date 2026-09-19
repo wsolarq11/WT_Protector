@@ -14,7 +14,7 @@ Update when: 门禁步骤、CI 流程、Trellis 更新逻辑、配置 schema 或
 
 ## 门禁层：45 步
 
-本 session 已装 .NET 10.0.401 SDK（`C:\Program Files\dotnet`），实测默认 `npm run verify` 全量 PASS：`dotnetSdk=10.0.401`、`failures=0`、`advisory=1`、`skipped=0`、`checks=49`；Avalonia 主线 848 个测试全部通过。winget 尝试安装失败：本机 Windows 10 19045 的 Appx 模块不可用（0x80131539），`apply:config` 分支仍不可执行。
+本 session 已装 .NET 10.0.401 SDK（`C:\Program Files\dotnet`），实测默认 `npm run verify` 全量 PASS：`dotnetSdk=10.0.401`、`failures=0`、`advisory=1`、`skipped=0`；Avalonia 主线 870 个测试全部通过。winget 尝试安装失败：本机 Windows 10 19045 的 Appx 模块不可用（0x80131539），`apply:config` 分支仍不可执行。
 
 ### Static：38 步
 
@@ -57,7 +57,7 @@ Update when: 门禁步骤、CI 流程、Trellis 更新逻辑、配置 schema 或
 | 35 | main-vm-line-budget | PASS，lines=1197/1200 | 实测确证（临界值） | 距预算仅 3 行，是本次发现的最脆弱可见分支 |
 | 36 | workflow-no-callback-bag | PASS，scannedFiles=8 | 实测确证（通过路径）+ 内建自检 | 8 workflow 构造器均扫到；回调袋失败分支未注入 |
 | 37 | no-active-powershell-scripts | PASS，scannedFiles=3016 | 实测确证（通过路径） | 全仓 3016 文件无 active .ps1；命中分支未注入 |
-| 38 | structure-baseline-consistency | PASS | 实测确证（通过路径） | 8 行基线、765 属性、45 步全部一致；漂移分支未注入 |
+| 38 | structure-baseline-consistency | PASS | 实测确证（通过路径） | 8 行基线、787 属性、45 步全部一致；漂移分支未注入 |
 
 ### Local：1 步
 
@@ -71,8 +71,8 @@ Update when: 门禁步骤、CI 流程、Trellis 更新逻辑、配置 schema 或
 
 | 步骤 | 本次结果 | 判定 |
 | --- | --- | --- |
-| release-lockfile-consistency | PASS，lockedMode=true，aotMarker=EnableNativeAot | 实测确证 |
-| avalonia-mainline-verify | PASS，tests=848，nativeAot=true，worktreeDirty=false | 实测确证 |
+| release-lockfile-consistency | PASS，lockedMode=true，aotMarker=EnableNativeAot（本 session 因 SDK 10.0.401 漂移用 `--force-evaluate` 重生成 lock 后转绿） | 实测确证 |
+| avalonia-mainline-verify | PASS，tests=870，nativeAot=true，worktreeDirty=true | 实测确证 |
 | coverage-gate | PASS，criticalPaths=9 | 实测确证 |
 | architecture-rule-check | PASS | 实测确证 |
 | analyzer-wiring | PASS | 实测确证 |
@@ -99,24 +99,28 @@ Update when: 门禁步骤、CI 流程、Trellis 更新逻辑、配置 schema 或
 | npm run release:build | 由 release:contract 执行：PASS，AOT publish 27,681,792 bytes | 实测确证 |
 | npm run release:contract | EXIT=0，status=PASS，worktreeClean=true | 实测确证 |
 | npm run update:github-snapshot | EXIT=1，gh 未认证 | 实测确证失败路径（缺 GH_TOKEN） |
-| npm run make | EXIT=0：release-build PASS + critical-journey launch/title PASS + friend zip 19,243,311 bytes | 实测确证 |
+| npm run make | EXIT=0：dirty-tree advisory + release-build PASS + critical-journey launch/title PASS + friend zip 19,235,792 bytes | 实测确证 |
 | npm run package:friend | EXIT=0，zip 含 exe、`av_libglesv2.dll`、`libHarfBuzzSharp.dll`、`libSkiaSharp.dll`、`使用说明.txt`、`config/launcher.example.json`；不含 `receipt.json` / `update-manifest.json` | 实测确证 |
 | exe 单独运行 | 失败：`DllNotFoundException: libSkiaSharp`，证明原生 DLL 是运行依赖 | 实测确证 |
-| npm run start / apply:config / install:portable / uninstall / generate:icon | 未执行 | 源码静态推断（GUI/副作用/需交互） |
+| npm run start | EXIT=1（boot 后主动杀进程），窗口标题 `WT Launcher`，进程正常退出残留为 0 | 实测确证 boot 路径 |
+| npm run apply:config:dry | EXIT=1：winget 缺失，且 Appx 模块不可用（0x80131539） | 实测确证环境不可执行 |
+| npm run install:portable | EXIT=0（临时目录 + `--skip-shortcuts`）；安装目录只含 exe、三个原生 DLL、`install-manifest.json`、`uninstaller.exe`，已排除 `receipt.json`/`update-manifest.json` | 实测确证 |
+| npm run uninstall | EXIT=0，删除安装目录 | 实测确证 |
+| npm run generate:icon | EXIT=0，`app.ico` 重生成多尺寸（16/24/32/48/64/128/256） | 实测确证 |
 
 ## Avalonia 源码层
 
-结构基线：Core 51、ViewModels 64（partials 15）、Features 15、Views 24、Analyzer 7、Tests 129、测试属性 765。本机已装 .NET 10.0.401，`avalonia-mainline-verify` 实测 848 个测试全部通过；下表“实测确证”以该 receipt 为准。
+结构基线：Core 51、ViewModels 64（partials 15）、Features 15、Views 24、Analyzer 7、Tests 135、测试属性 787。本机已装 .NET 10.0.401，`avalonia-mainline-verify` 实测 870 个测试全部通过；下表“实测确证”以该 receipt 为准。
 
 | 层/分叉点 | 语义 | 判定 | 证据 |
 | --- | --- | --- | --- |
-| `DirectoryPath.Parse` 空/无效/UNC/设备路径 | 目录路径安全边界 | 实测确证（848 tests） | `EntryDirectoryTests.cs:13-68` |
-| `EntryId.Parse` 保留名/路径符/非拉丁同形字 | ID 安全边界 | 实测确证（848 tests） | `LauncherEntryIdsTests.cs:129-152` |
-| `LaunchArgumentBuilder.Build` 空字段/32767 上限/转义 | 启动参数边界 | 实测确证（848 tests） | `LaunchArgumentBuilderTests.cs`、`CsCheckPropertyTests.cs` |
-| `LauncherCommandTemplateResolver` `$$`/`$key`/缺 key | 命令模板解析 | 实测确证（848 tests） | `LauncherCommandTemplateResolverTests.cs` |
-| `LauncherEntryOrder` 同步/移动/去重 | 排序状态机 | 实测确证（848 tests） | `LauncherEntryOrderTests.cs`、PBT |
-| `LauncherStoreValidator` 版本 >2/<1 | schema 升级边界 | 实测确证（848 tests） | `LauncherStoreValidatorPbtTests.cs` |
-| `StoreGrain.Dispatch` 并发 save+state | 并发写一致性 | 实测确证（848 tests） | `ConcurrencyStressTests.cs:18-49` |
+| `DirectoryPath.Parse` 空/无效/UNC/设备路径 | 目录路径安全边界 | 实测确证（870 tests） | `EntryDirectoryTests.cs:13-68` |
+| `EntryId.Parse` 保留名/路径符/非拉丁同形字 | ID 安全边界 | 实测确证（870 tests） | `LauncherEntryIdsTests.cs:129-152` |
+| `LaunchArgumentBuilder.Build` 空字段/32767 上限/转义 | 启动参数边界 | 实测确证（870 tests） | `LaunchArgumentBuilderTests.cs`、`CsCheckPropertyTests.cs` |
+| `LauncherCommandTemplateResolver` `$$`/`$key`/缺 key | 命令模板解析 | 实测确证（870 tests） | `LauncherCommandTemplateResolverTests.cs` |
+| `LauncherEntryOrder` 同步/移动/去重 | 排序状态机 | 实测确证（870 tests） | `LauncherEntryOrderTests.cs`、PBT |
+| `LauncherStoreValidator` 版本 >2/<1 | schema 升级边界 | 实测确证（870 tests） | `LauncherStoreValidatorPbtTests.cs` |
+| `StoreGrain.Dispatch` 并发 save+state | 并发写一致性 | 实测确证（870 tests） | `ConcurrencyStressTests.cs:18-49` |
 | `StoreGrain.ReloadFromDisk` 锁外读盘 + `StateChanged` 锁外触发 | 重载与通知竞态 | 源码静态推断（无直接竞态测试） | `StoreGrain.cs:55-84`；研究文件 M6/M7 仍指向此处 |
 | `MainWindowViewModel` 15 个 partial | 单写状态聚合 | 实测确证（门禁行预算） | `main-vm-line-budget` lines=1197/1200，余量 3 行 |
 | `DiscoverAgentsWindow.axaml.cs` 动态构建 UI | 有意命令式 UI 例外 | 实测确证（修正后） | `no-imperative-view-ui` 白名单唯一命令式视图 |
@@ -125,18 +129,18 @@ Update when: 门禁步骤、CI 流程、Trellis 更新逻辑、配置 schema 或
 
 关键结论：Core 层边界测试密度高；Persistence 的 `ReloadFromDisk`/`StateChanged` 竞态仍是源码静态推断，没有直接测试钉死；Views 的命令式 UI 检查刚从 2 个文件收紧到 20 个文件。
 
-Top 无覆盖分叉（源码静态推断，按静默错误风险降序）：
+Top 无覆盖分叉（源码静态推断，按静默错误风险降序；本 session 已关闭前五项主路径，剩余为部分分支）：
 
-1. `StoreGrain.cs:108-125` 初始化读失败静默回退空 store，后续 Dispatch 可能覆盖原本可读配置。
-2. `LegacyMigration.cs:33-85` 解析失败/改名 `.bak` 失败被吞，整条迁移链零测试。
-3. `FileLauncherJsonIO.cs:71-143` 备份轮转失败吞异常、恢复失败回抛、无 `.bak` 回抛均零测试。
-4. `ErrorOrExtensions.cs:25-56` `IsRecoverable` 解包循环与分类零运行时测试，全局影响 catch-when。
-5. `EntryId.cs:68/71`、`DirectoryPath.cs:36/43` 保留名、路径分隔符、`..`、设备路径、无效字符拒绝零测试。
-6. `MainWindowViewModel.cs:292-304` `OnStoreReloaded` 验证失败部分恢复与 preset 重载 catch 零测试。
-7. `EntryListViewModel.cs:231-305` 删除/重命名保存失败 catch 零测试。
-8. `UpdateCheckService.cs:17-26` 真实 HTTP/File/非 2xx/超时全盲区。
-9. `ImportConfigViewModel.cs:36-87` 导入合并/告警与保存失败回滚零测试。
-10. `ResourceKeyAnalyzer.cs` 与 `CatchExceptionMustHaveWhenCodeFixProvider.cs` 两个分析器/CodeFix 完全零测试。
+1. `StoreGrain.cs:106-126` 初始化读失败静默回退空 store：已新增可读失败与 FileNotFound 两条测试；后续 Dispatch 覆盖原本可读配置的完整攻击链仍属静态推断。
+2. `LegacyMigration.cs:33-85`：已新增四测覆盖迁移成功、统一 store 跳过、settings/presets 损坏降级；改名 `.bak` 失败分支仍静态推断。
+3. `FileLauncherJsonIO.cs:71-104`：已新增备份恢复失败回抛、主文件缺失从备份链恢复；备份轮转失败吞异常仍静态推断。
+4. `ErrorOrExtensions.cs:25-56`：已新增 Try/TryAsync 可恢复与非可恢复四测。
+5. `EntryId.cs`/`DirectoryPath.cs` 保留名、路径分隔符、`..`、设备路径：已新增测试补齐。
+6. `MainWindowViewModel.cs:272-304` `OnStoreReloaded` 验证失败部分恢复与 preset 重载 catch：已新增 Refresh 损坏主文件无备份时报错分支；验证失败部分恢复分支仍静态推断。
+7. `EntryListViewModel.cs:231-305`：已新增删除保存失败保留条目并报错；重命名保存失败分支仍静态推断。
+8. `UpdateCheckService.cs:17-26`：已新增本地文件读取与非 2xx 报错；真实网络超时/非 2xx 的 HTTP 延迟分支仍静态推断。
+9. `ImportConfigViewModel.cs`：已新增 Summary/BuildPlan 重复、缺失、无效引用分支；保存失败回滚仍静态推断。
+10. `ResourceKeyAnalyzer.cs` 已新增未定义 StaticResource 诊断测试；`CatchExceptionMustHaveWhenCodeFixProvider.cs` 仍零测试。
 
 ## CI 工作流层
 
@@ -149,7 +153,7 @@ Top 无覆盖分叉（源码静态推断，按静默错误风险降序）：
 | `CI=true` local tier | `local-entry-directories` 显式跳过，与 CI 覆盖一致 | 实测确证 | `CI=true npm run verify` receipt |
 | `update:github-snapshot` | 需 `gh auth`；本机 `gh 2.98.0` 未认证，EXIT=1 | 实测确证（缺认证失败路径） | 命令输出 `gh auth login` 提示 |
 | `apply:config` | 需 `winget`；本机无 winget，且 Appx 模块不可用 | 实测确证环境不可执行 | Appx 加载失败 0x80131539 |
-| GUI/副作用入口 | `start`、`install:portable`、`uninstall`、`generate:icon`、`apply:config` | 源码静态推断（未执行） | `package.json:11-25` |
+| GUI/副作用入口 | `start`、`install:portable`、`uninstall`、`generate:icon`、`apply:config` | 实测确证（本 session 已执行；`apply:config` 因 winget 缺失失败） | `package.json:11-25` |
 | 便携好友包 | `package:friend` 只打 exe + 三个原生 DLL + 示例配置 + 使用说明，不含 `receipt.json` / `update-manifest.json` | 实测确证（本次展开 zip 复核） | `scripts/package-friend.ts:31-36` |
 
 已消除的远端独占分支：多 job `needs` 链、PR/main/master `if` 求值、三处 `upload-artifact if: always()`、`build-and-test` 与 `release-contract` 分 runner 的 lock 隔离。当前 CI 只剩 GitHub Actions 平台本身不可本地复现的调度事实。
@@ -182,15 +186,15 @@ Top 无覆盖分叉（源码静态推断，按静默错误风险降序）：
 
 | 字段/校验分支 | 期望 | 判定 | 证据 |
 | --- | --- | --- | --- |
-| `schemaVersion` | TS 侧必须 `2`；C# `ExpectedSchemaVersion=2`、`Minimum=1` | 有测试覆盖（848 tests 实测） | `schema.ts:235`；`LauncherStoreValidatorPbtTests.cs` 覆盖 >2 与 <1 |
+| `schemaVersion` | TS 侧必须 `2`；C# `ExpectedSchemaVersion=2`、`Minimum=1` | 有测试覆盖（870 tests 实测） | `schema.ts:235`；`LauncherStoreValidatorPbtTests.cs` 覆盖 >2 与 <1 |
 | `entries[].id/name/directory/command` | `[JsonRequired]`，四字段非空 | 有测试覆盖 + 门禁实测 | `LaunchEntry.cs`；`common.ts readConfigItems` |
-| `DirectoryPath.Parse` 空值/无效字符/UNC/设备路径 | 抛 `FormatException` | 有测试覆盖（848 tests 实测） | `DirectoryPath.cs:24-48`；`EntryDirectoryTests.cs:13-60` |
-| `DirectoryPath.ParseAndValidateExists` | 不存在目录抛 `DirectoryNotFoundException` | 有测试覆盖（848 tests 实测） | `EntryDirectoryTests.cs:30` |
-| `EntryId.Parse` 空/保留名/路径符/非拉丁同形字/控制符 | 抛 `FormatException` | 有测试覆盖（848 tests 实测） | `EntryId.cs:45-77`、`150-183`；`LauncherEntryIdsTests.cs:129-152` |
-| `LaunchArgumentBuilder.Build` 空名/空命令/超 32767 | 抛异常或生成计划 | 有测试覆盖（848 tests 实测） | `LaunchArgumentBuilder.cs:59-78`；`LaunchArgumentBuilderTests.cs`、PBT |
-| `LauncherCommandTemplateResolver` `$$` 转义/`$key`/缺 key | 正确解析/抛错 | 有测试覆盖（848 tests 实测） | `LauncherCommandTemplateResolverTests.cs` |
-| `LauncherEntryOrder.SyncWithEntries/MoveRelative/BuildIndex` | 去重、保持合法、相对移动 | 有测试覆盖（848 tests 实测） | `LauncherEntryOrderTests.cs`、`LauncherEntryOrderPbtTests.cs` |
-| `LauncherEntryQuery.FilterAndSort` 各 sortMode | 正确排序与过滤 | 有测试覆盖（848 tests 实测） | `LauncherEntryQueryTests.cs` |
+| `DirectoryPath.Parse` 空值/无效字符/UNC/设备路径 | 抛 `FormatException` | 有测试覆盖（870 tests 实测） | `DirectoryPath.cs:24-48`；`EntryDirectoryTests.cs:13-60` |
+| `DirectoryPath.ParseAndValidateExists` | 不存在目录抛 `DirectoryNotFoundException` | 有测试覆盖（870 tests 实测） | `EntryDirectoryTests.cs:30` |
+| `EntryId.Parse` 空/保留名/路径符/非拉丁同形字/控制符 | 抛 `FormatException` | 有测试覆盖（870 tests 实测） | `EntryId.cs:45-77`、`150-183`；`LauncherEntryIdsTests.cs:129-152` |
+| `LaunchArgumentBuilder.Build` 空名/空命令/超 32767 | 抛异常或生成计划 | 有测试覆盖（870 tests 实测） | `LaunchArgumentBuilder.cs:59-78`；`LaunchArgumentBuilderTests.cs`、PBT |
+| `LauncherCommandTemplateResolver` `$$` 转义/`$key`/缺 key | 正确解析/抛错 | 有测试覆盖（870 tests 实测） | `LauncherCommandTemplateResolverTests.cs` |
+| `LauncherEntryOrder.SyncWithEntries/MoveRelative/BuildIndex` | 去重、保持合法、相对移动 | 有测试覆盖（870 tests 实测） | `LauncherEntryOrderTests.cs`、`LauncherEntryOrderPbtTests.cs` |
+| `LauncherEntryQuery.FilterAndSort` 各 sortMode | 正确排序与过滤 | 有测试覆盖（870 tests 实测） | `LauncherEntryQueryTests.cs` |
 | TS `assertPositiveNumber/assertOnlyJsonKeys/readConfigItems` | 正数/白名单/必填 | 实测确证 | `root-gate.test.ts`、`config-lib.test.ts` 全绿 |
 | 三份 config 的 `[JsonRequired]` 字段齐全 | 21 个唯一必填字段，按 LauncherStoreFile/Entry/Preset/Settings/Window/RunHistory 分类全量强制 | 实测确证 | `npm run verify` receipt `config-required-fields` totalRequired=21，三份均 ok |
 | `customEntryOrder` 全量唯一、preset 引用解析、command template 引用 | 无悬空引用 | 实测确证 | `checkLauncherStore` 通过；失败分支未注入 |
