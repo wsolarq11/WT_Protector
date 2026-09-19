@@ -5,12 +5,12 @@ import { runVerifyMainline } from "../verify-mainline.js";
 import { runCoverageGate } from "../test-coverage.js";
 import {
   addCheck,
-  checks,
   countMatches,
   execChecked,
   readText,
   walkFiles,
 } from "./common.js";
+import { gateStepIds } from "../gate-steps.js";
 
 export async function checkReleaseLockfileConsistency(): Promise<void> {
   await restoreSolutionNativeAot(true);
@@ -55,6 +55,10 @@ export async function checkAvaloniaMainlineVerify(): Promise<void> {
     publishedExe: mainline.publishedExe,
     publishedDll: mainline.publishedDll,
     sha256: mainline.sha256,
+    bytes: mainline.bytes,
+    // 主线 receipt 已实测出 testSeconds/publishSeconds,但此前抄录时被丢弃,
+    // 于是"门禁时间花在哪一步"只能靠猜。保留测量值,运行时优化才有依据。
+    perf: mainline.perf,
   });
 }
 
@@ -62,8 +66,11 @@ export async function checkCoverageGate(): Promise<void> {
   // Known optimization opportunity: runVerifyMainline() already runs dotnet test
   // (with --verbosity minimal --logger trx). Adding --collect "XPlat Code Coverage"
   // to that command and reusing the coverage XML here would save the second
-  // dotnet test pass (~15-20s). See: scripts/verify-mainline.ts L167-179.
-  // Evaluate when the verify time budget becomes constrained.
+  // dotnet test pass. See: scripts/verify-mainline.ts L167-179.
+  // Measured 2026-09-17: full gate WALL ~52s (test pass ~19s, AOT publish ~5s),
+  // so this saves roughly one test pass of ~15-20s, under a third of the gate.
+  // The gate is not yet time-constrained; keep the separate pass until a real
+  // budget forces the merge.
   const coverage = await runCoverageGate(true);
   addCheck("coverage-gate", {
     status: coverage.status,
@@ -72,6 +79,10 @@ export async function checkCoverageGate(): Promise<void> {
 }
 
 export async function checkArchitectureRuleCheck(): Promise<void> {
+  // --no-build alone does NOT imply --no-restore: without it, this step runs an
+  // implicit restore with default parameters (no win-x64 RID, no AOT marker) and
+  // rewrites packages.lock.json, breaking release-lockfile-consistency. Verified
+  // 2026-09-17: the gate left all four lock files modified.
   await execChecked("Architecture rule tests", "dotnet", [
     "test",
     solutionPath,
@@ -80,6 +91,7 @@ export async function checkArchitectureRuleCheck(): Promise<void> {
     "--filter",
     "FullyQualifiedName~ArchitectureRules",
     "--no-build",
+    "--no-restore",
   ]);
   addCheck("architecture-rule-check", { pass: true });
 }
@@ -119,15 +131,15 @@ function matchesFilter(filePath: string, filter: string): boolean {
 export function checkStructureBaselineConsistency(): void {
   const baselineRows: BaselineRow[] = [
     { label: "WTLauncher.Core C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.Core", filter: "*.cs", count: 51 },
-    { label: "ViewModels C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\ViewModels", filter: "*.cs", count: 65 },
+    { label: "ViewModels C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\ViewModels", filter: "*.cs", count: 64 },
     { label: "MainWindowViewModel partials", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\ViewModels", filter: "MainWindowViewModel.*.cs", count: 15 },
-    { label: "Features C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\Features", filter: "*.cs", count: 16 },
+    { label: "Features C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\Features", filter: "*.cs", count: 15 },
     { label: "Views C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\Views", filter: "*.cs", count: 24 },
     { label: "Views AXAML files", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\Views", filter: "*.axaml", count: 20 },
     { label: "WTLauncher.Analyzers C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.Analyzers", filter: "*.cs", count: 7 },
     { label: "Tests C# files", path: "src\\avalonia-launcher\\tests\\WTLauncher.Tests", filter: "*.cs", count: 129 },
   ];
-  const baselineTestAttributes = 764;
+  const baselineTestAttributes = 765;
   const violations: string[] = [];
 
   for (const row of baselineRows) {
@@ -178,9 +190,9 @@ export function checkStructureBaselineConsistency(): void {
   if (!agentsBaselineText.includes(`| Test attributes [Fact]+[Theory] | ${baselineTestAttributes} |`)) {
     violations.push(`AGENTS.md structure-baseline missing/outdated row: | Test attributes [Fact]+[Theory] | ${baselineTestAttributes} |`);
   }
-  const baselineCheckCount = checks.length + 1;
-  if (!agentsBaselineText.includes(`| Gate checks (Add-Check) | ${baselineCheckCount} |`)) {
-    violations.push(`AGENTS.md structure-baseline missing/outdated row: | Gate checks (Add-Check) | ${baselineCheckCount} |`);
+  const baselineCheckCount = gateStepIds.length;
+  if (!agentsBaselineText.includes(`| Gate steps (verify.ts) | ${baselineCheckCount} |`)) {
+    violations.push(`AGENTS.md structure-baseline missing/outdated row: | Gate steps (verify.ts) | ${baselineCheckCount} |`);
   }
   if (violations.length > 0) {
     throw new Error(
@@ -190,7 +202,7 @@ export function checkStructureBaselineConsistency(): void {
   addCheck("structure-baseline-consistency", {
     rows: baselineRows.length,
     testAttributes: baselineTestAttributes,
-    checks: baselineCheckCount,
+    gateSteps: baselineCheckCount,
     enforcedSource: "AGENTS.md structure-baseline table",
   });
 }

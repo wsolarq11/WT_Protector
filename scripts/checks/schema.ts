@@ -37,16 +37,8 @@ export function checkGithubSnapshot(): void {
   if (Number.isNaN(capturedAt.getTime())) {
     throw new Error("GitHub similar-project snapshot capturedAtUtc is not parseable: " + snapshot.capturedAtUtc);
   }
-  const maxAgeDays = 30;
-  const ageMs = Date.now() - capturedAt.getTime();
-  if (ageMs < 0) {
+  if (capturedAt.getTime() > Date.now()) {
     throw new Error("GitHub similar-project snapshot capturedAtUtc is in the future: " + snapshot.capturedAtUtc);
-  }
-  const ageDays = ageMs / 86_400_000;
-  if (ageDays > maxAgeDays) {
-    throw new Error(
-      "GitHub similar-project snapshot is stale: " + snapshot.capturedAtUtc + ". Refresh with: npm run update:github-snapshot",
-    );
   }
   if (typeof snapshot.evidenceCommand !== "string" || !snapshot.evidenceCommand.includes("gh repo view <owner>/<repo>")) {
     throw new Error("GitHub similar-project snapshot must record the gh repo view evidence command");
@@ -175,12 +167,10 @@ export function checkGithubSnapshot(): void {
   if (Number(summary.woxStars) !== woxStars) {
     throw new Error("GitHub similar-project snapshot summary woxStars mismatch: " + summary.woxStars + " vs " + woxStars);
   }
-  addCheck("github-similar-projects-snapshot", {
+  addCheck("github-snapshot-shape", {
     path: "docs\\reference\\github-similar-projects-snapshot.json",
     refreshScript: "scripts\\update-github-similar-projects-snapshot.ts",
     capturedAtUtc: snapshot.capturedAtUtc,
-    maxAgeDays,
-    ageDays: Math.round(ageDays * 100) / 100,
     repositories: summary.repositories,
     directNarrowWeaker: summary.directNarrowWeaker,
     adjacentAxisStronger: summary.adjacentAxisStronger,
@@ -188,6 +178,55 @@ export function checkGithubSnapshot(): void {
     flowStars,
     woxStars,
   });
+}
+
+/// <summary>对标快照的外部时效性。它与代码正确性没有因果关系:过期只说明人工采集的
+/// 市场对标数据需要刷新。门禁将它列为 advisory,避免一个外部数据文件瘫痪全部代码验证。</summary>
+export function checkGithubSnapshotFreshness(): void {
+  const filePath = requireRepoPath(
+    "docs/reference/github-similar-projects-snapshot.json",
+    "GitHub similar-project snapshot",
+  );
+  const snapshot = readJson<Record<string, unknown>>(filePath);
+  const capturedAt = new Date(String(snapshot.capturedAtUtc ?? ""));
+  if (Number.isNaN(capturedAt.getTime())) {
+    throw new Error("GitHub similar-project snapshot capturedAtUtc is missing or not parseable");
+  }
+  const maxAgeDays = 30;
+  const ageDays = Math.floor((Date.now() - capturedAt.getTime()) / 86_400_000);
+  if (ageDays > maxAgeDays) {
+    throw new Error(
+      `GitHub similar-project snapshot is stale: captured ${snapshot.capturedAtUtc}, ${ageDays} days old (limit ${maxAgeDays}). Refresh with: npm run update:github-snapshot`,
+    );
+  }
+  addCheck("github-snapshot-freshness", { capturedAtUtc: snapshot.capturedAtUtc, ageDays, maxAgeDays });
+}
+
+/// <summary>条目目录存在性是本机环境事实,不是配置契约:CI 用 config/launcher.ci.json
+/// 覆盖真实配置,因此 CI 上这条检查没有意义。门禁用 local 层标记它并在 CI 上显式留痕跳过,
+/// 不再用环境变量在检查内部静默分支。</summary>
+export function checkLocalEntryDirectories(): void {
+  const storePath = requireRepoPath("config/launcher.json", "local launcher store");
+  const store = readJson<Record<string, unknown>>(storePath);
+  const entries = asArray(store.entries);
+  const missing: string[] = [];
+  entries.forEach((entry, index) => {
+    if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
+      return;
+    }
+    const item = entry as Record<string, unknown>;
+    const directory = item.directory;
+    if (typeof directory !== "string" || directory.trim() === "") {
+      return;
+    }
+    if (!existsSync(directory)) {
+      missing.push(`item ${index} (${String(item.name ?? "")}): ${directory}`);
+    }
+  });
+  if (missing.length > 0) {
+    throw new Error("Launcher entry directories missing on this machine: " + missing.join("; "));
+  }
+  addCheck("local-entry-directories", { entries: entries.length, missing: 0 });
 }
 
 export function checkLauncherStore(): Set<string> {
@@ -205,9 +244,6 @@ export function checkLauncherStore(): Set<string> {
     }
     const item = entry as Record<string, unknown>;
     const id = String(item.id ?? "");
-    if (process.env.CI !== "true" && typeof item.directory === "string" && !existsSync(item.directory)) {
-      throw new Error("Config item " + index + " directory does not exist: " + item.directory);
-    }
     selectedFields += 1;
     if (seenIds.has(id)) {
       throw new Error("Duplicate config id: " + id);
@@ -219,7 +255,6 @@ export function checkLauncherStore(): Set<string> {
     uniqueIds: seenIds.size,
     selectedFields,
     selectedCapable: selectedFields === entries.length,
-    existingDirectories: entries.length,
   });
 
   const defaultPresetId = String(store.defaultPresetId ?? "");
