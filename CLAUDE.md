@@ -16,8 +16,9 @@ WT Launcher: local Windows Terminal workspace launcher. Avalonia 12 + .NET 10, w
 npm ci
 npm run typecheck
 npm test
-npm run verify              # full gate before any "done" claim
-npm run release:contract    # CI release authority
+npm run make              # 唯一产品编译：build + smoke + package:friend
+npm run verify            # full gate before any "done" claim
+npm run release:contract  # CI release authority
 npm run start
 npm run verify:mainline
 npm run test:fast

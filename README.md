@@ -42,14 +42,16 @@ Live `config/launcher.json` is git-ignored runtime state; `config/launcher.examp
 ## Build and verification
 
 ```bash
-npm run verify            # full gate: static blocks; local and snapshot are advisory; native skips without .NET SDK
-npm run verify:mainline   # Avalonia gate only
-npm run test:fast         # CoreUnit + PropertyTest + Architecture + Analyzer
+npm ci                     # 一次性安装脚本依赖
+npm run make               # 唯一产品编译命令：build + smoke + friend zip
+npm run verify             # full gate: static blocks; local and snapshot are advisory; native skips without .NET SDK
+npm run verify:mainline    # Avalonia gate only
+npm run test:fast          # CoreUnit + PropertyTest + Architecture + Analyzer
 npm run test:coverage
 npm run test:launch-args
-npm run smoke             # published exe critical journey
-npm run release:build     # AOT exe -> artifacts/publish/win-x64/
-npm run release:contract  # CI release contract: locked restore + AOT publish + clean tree + receipt
+npm run smoke              # published exe critical journey
+npm run release:build      # AOT exe -> artifacts/publish/win-x64/
+npm run release:contract   # CI release contract: locked restore + AOT publish + clean tree + receipt
 ```
 
 Distributable for normal users: `npm run package:friend` 产出的 `artifacts/friend/WTLauncher-<version>.zip`，内含 exe、运行所需的 Avalonia/Skia 原生 DLL、可选示例配置与快速开始；解压即用。`artifacts/publish/win-x64/` 是发布构建目录，其 `receipt.json` / `update-manifest.json` 是发布契约与更新元数据，不进入好友包。`artifacts/verify-publish/` 是隔离验证输出，不是交付物。

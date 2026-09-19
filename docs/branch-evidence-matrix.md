@@ -99,6 +99,7 @@ Update when: 门禁步骤、CI 流程、Trellis 更新逻辑、配置 schema 或
 | npm run release:build | 由 release:contract 执行：PASS，AOT publish 27,681,792 bytes | 实测确证 |
 | npm run release:contract | EXIT=0，status=PASS，worktreeClean=true | 实测确证 |
 | npm run update:github-snapshot | EXIT=1，gh 未认证 | 实测确证失败路径（缺 GH_TOKEN） |
+| npm run make | EXIT=0：release-build PASS + critical-journey launch/title PASS + friend zip 19,243,311 bytes | 实测确证 |
 | npm run package:friend | EXIT=0，zip 含 exe、`av_libglesv2.dll`、`libHarfBuzzSharp.dll`、`libSkiaSharp.dll`、`使用说明.txt`、`config/launcher.example.json`；不含 `receipt.json` / `update-manifest.json` | 实测确证 |
 | exe 单独运行 | 失败：`DllNotFoundException: libSkiaSharp`，证明原生 DLL 是运行依赖 | 实测确证 |
 | npm run start / apply:config / install:portable / uninstall / generate:icon | 未执行 | 源码静态推断（GUI/副作用/需交互） |

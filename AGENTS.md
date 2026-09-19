@@ -23,6 +23,7 @@ WT_Protector/
 
 | 命令 | 用途 |
 | --- | --- |
+| `npm run make` | 唯一产品编译：build + smoke + package:friend，产出可交付 zip |
 | `npm run verify` | 全量门禁：static + local + native + snapshot；提交前必须跑 |
 | `npm run release:contract` | 发布契约：locked restore + AOT publish + clean tree + receipt |
 | `npm run verify:mainline` | 仅 Avalonia 主线门禁 |
