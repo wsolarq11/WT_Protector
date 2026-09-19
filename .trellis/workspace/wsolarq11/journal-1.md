@@ -226,3 +226,32 @@ Migrated auxiliary scripts to TS; added .NET smoke probe and self-contained unin
 ### Status
 
 [OK] **Completed**
+
+
+## Session 10: 门禁彻底加固 + 死代码清除
+
+**Date**: 2026-09-17
+**Task**: 门禁机制贯穿到底 + 少即是多去冗余
+**Branch**: `main`
+
+### Summary
+
+门禁机制层彻底加固与去冗余。机制：8 条"断言违规不存在"检查补齐自证 fixture；`main-vm-line-budget` 与 `no-active-powershell-scripts` 补空扫描守卫（0 文件即抛错）；新增 `task-ledger-citations-resolve` 检查（台账引用可解析）；`assertEveryStepAccounted` 加 name 对齐断言（step id 与 addCheck name 必须同名，`launcher-store` 一步四记豁免），消除命名双轨；覆盖注释闭环（门禁 WALL 52-63s / 测试 19-28s / 发布 5-6s，不合并）。测试：`security-audit-f1` 补 `DirectoryPath.Parse` 相对路径规范化行为测试（之前唯一无兜底的字符串绊线）。删除：`checkVtkArchitectureIntegrity`（StoreGrain 被 29 处引用 + 分析器硬编码，存在性由编译器保证，纯冗余）；`AppStateMachine.cs` 死代码（定义文件外零引用，Trinity 提案的 Zone 1 UI 状态机从未接线，按 EntryProjection 同类先例删除，trinity 检查 5→4）。文档：修复 10 处漂移 + 台账 8 处死引用 + DESIGN.md 证据路径指向现役 TS + README settings name 对齐。最终基线：门禁 45 步、测试属性 765、主线 848 用例、ViewModels 64、trinity 4 组件；门禁 EXIT=1 唯一失败 `local-entry-directories`（用户数据）。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| (uncommitted) | 门禁加固 + 死代码清除，约 70 项改动待分批提交 |
+
+### Status
+
+[P] **In Progress** — 改动已全量验证，提交与收尾在用户侧
+
+### Next Steps
+
+- 分批提交约 70 项未提交（产品代码 / 门禁机制 / 文档 / Trellis 工具链四组）
+- P3 文档归档（历史提案文档）需决策
+- P4 CI 4 作业去重 + 三模式观察（需远端验证）
+- `local-entry-directories` 用户数据（`config/launcher.json` item 6）
+- `.trellis/tasks/active` 死引用 1 处走 Trellis 流程
