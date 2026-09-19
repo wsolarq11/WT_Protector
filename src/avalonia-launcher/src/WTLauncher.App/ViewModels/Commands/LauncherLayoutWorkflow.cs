@@ -2,6 +2,7 @@ using Avalonia;
 using WTLauncher.App.Features;
 using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -40,7 +41,7 @@ public sealed partial class LauncherLayoutWorkflow
         if (result.IsError)
         {
             _layout.FilterText = _context.Store.Select(s => s.Settings.LastFilterText);
-            ApplyStatus(LauncherStatusContent.Error("存储保存失败: " + result.Errors[0].Description));
+            ApplyStatus(LauncherStatusContent.Error(LauncherLocalization.Format("persistence.storeSaveFailed", result.Errors[0].Description)));
         }
 
         EnsureCustomOrderContainsEntries();
@@ -59,7 +60,7 @@ public sealed partial class LauncherLayoutWorkflow
         {
             _layout.SelectedSortMode = _layout.ResolveSortMode(
                 _context.Store.Select(s => s.Settings.SortMode));
-            ApplyStatus(LauncherStatusContent.Error("存储保存失败: " + result.Errors[0].Description));
+            ApplyStatus(LauncherStatusContent.Error(LauncherLocalization.Format("persistence.storeSaveFailed", result.Errors[0].Description)));
         }
         else
         {
@@ -83,7 +84,7 @@ public sealed partial class LauncherLayoutWorkflow
             _layout.SelectedDisplayMode = _layout.ResolveDisplayMode(
                 _context.Store.Select(s => s.Settings.EntryViewMode));
             _layout.NotifyDisplayModeProjectionChanged();
-            ApplyStatus(LauncherStatusContent.Error("存储保存失败: " + result.Errors[0].Description));
+            ApplyStatus(LauncherStatusContent.Error(LauncherLocalization.Format("persistence.storeSaveFailed", result.Errors[0].Description)));
         }
         else
         {

@@ -1,5 +1,6 @@
 using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -67,7 +68,7 @@ public sealed class EntryService : IEntryService, IEntryDraftValidator
         var cloneSource = new LaunchEntry
         {
             Id = GenerateUniqueCloneId(sourceEntry.Id, existingEntryIds),
-            Name = sourceEntry.Name + " (副本)",
+            Name = sourceEntry.Name + LauncherLocalization.Format("entry.copySuffix"),
             Directory = sourceEntry.Directory,
             Command = sourceEntry.Command,
             Selected = false,

@@ -1,4 +1,5 @@
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -69,7 +70,7 @@ public sealed class UpdateCheckService
             return new LauncherUpdateCheckResult
             {
                 ManifestUrl = null,
-                ErrorMessage = "未配置更新清单地址；可在 launcher.json 的 settings.updateManifestUrl 设置。",
+                ErrorMessage = LauncherLocalization.Format("update.manifestUrlMissing"),
             };
         }
 

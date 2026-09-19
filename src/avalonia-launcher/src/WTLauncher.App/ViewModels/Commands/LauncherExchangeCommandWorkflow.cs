@@ -4,6 +4,7 @@ using WTLauncher.App.Features.ConfigExchange;
 using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -53,7 +54,7 @@ public sealed partial class LauncherExchangeCommandWorkflow
             .ToImmutableList();
         if (ids.Count == 0)
         {
-            _context.Status.Apply(LauncherStatusContent.Warning("没有勾选条目，请先勾选要导出的条目。"));
+            _context.Status.Apply(LauncherStatusContent.Warning(LauncherLocalization.Format("exchange.noSelected")));
             return;
         }
 
@@ -73,7 +74,7 @@ public sealed partial class LauncherExchangeCommandWorkflow
             var plan = await _dialogService.RequestImportAsync(_host.BuildStoreFile(), imported);
             if (plan is null)
             {
-                _context.Status.Apply(LauncherRefreshStatus.DialogCanceled("导入"));
+                _context.Status.Apply(LauncherRefreshStatus.DialogCanceled(LauncherLocalization.Format("dialog.import")));
                 return;
             }
 
@@ -89,13 +90,13 @@ public sealed partial class LauncherExchangeCommandWorkflow
             ApplyStoreFileToVm(merged);
             ApplyStatus(LauncherStatusContent.Success(
                 plan.Mode == LauncherImportMode.Replace
-                    ? "已替换为导入配置。"
-                    : "已新增导入条目与启动组。"));
+                    ? LauncherLocalization.Format("exchange.replaced")
+                    : LauncherLocalization.Format("exchange.addedEntries")));
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "Migration.Import");
-            ApplyStatus(LauncherRefreshStatus.DialogOpenFailed("导入", ex));
+            ApplyStatus(LauncherRefreshStatus.DialogOpenFailed(LauncherLocalization.Format("dialog.import"), ex));
         }
     }
 
@@ -109,12 +110,12 @@ public sealed partial class LauncherExchangeCommandWorkflow
 
             var export = _exchange.BuildExport(_host.BuildStoreFile(), entryIds);
             _exchange.SaveExport(export, path);
-            ApplyStatus(LauncherStatusContent.Success($"已导出 {export.Entries.Count} 个条目。"));
+            ApplyStatus(LauncherStatusContent.Success(LauncherLocalization.Format("exchange.exported", export.Entries.Count)));
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "Migration.Export");
-            ApplyStatus(LauncherRefreshStatus.DialogOpenFailed("导出", ex));
+            ApplyStatus(LauncherRefreshStatus.DialogOpenFailed(LauncherLocalization.Format("dialog.export"), ex));
         }
     }
 

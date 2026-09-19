@@ -1,6 +1,7 @@
 using WTLauncher.App.Features;
 using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -76,7 +77,7 @@ public sealed partial class LauncherSelectionCommandWorkflow
     {
         await _launch.LaunchBatchAsync(
             GetSelectedEntries(),
-            "已勾选项",
+            LauncherLocalization.Format("selection.itemLabel"),
             LauncherSelectionStatus.NoSelectedEntries,
             LauncherSelectionStatus.BatchLaunchCanceled,
             LauncherSelectionStatus.BatchLaunchFailed,
