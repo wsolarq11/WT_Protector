@@ -1,44 +1,48 @@
 using WTLauncher.App.Features;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
 // Multi-line launch receipt / dry-run preview text for the DryRun panel.
-// Split from LauncherStatusText.cs: these classes format multi-line blocks
-// (not single-line status bar content) for the launch receipt display area.
+// User-facing strings resolve through LauncherLocalization; only block layout
+// and the plan/report formatting logic live here.
 
 public static class LauncherSingleLaunchStatus
 {
     public static LauncherStatusContent Preview(string entryName, bool requiresConfirmation) =>
         requiresConfirmation
-            ? LauncherStatusContent.Neutral($"预演: {entryName}（需要确认）")
-            : LauncherStatusContent.Neutral($"预演: {entryName}");
+            ? LauncherStatusContent.Neutral(LauncherLocalization.Format("single.previewConfirm", entryName))
+            : LauncherStatusContent.Neutral(LauncherLocalization.Format("single.preview", entryName));
 
     public static LauncherStatusContent PreviewFailed(string entryName) =>
-        LauncherStatusContent.Error($"预演失败: {entryName}");
+        LauncherStatusContent.Error(LauncherLocalization.Format("single.previewFailedName", entryName));
 
     public static LauncherStatusContent PreviewFailed(Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        return LauncherStatusContent.Error($"预演失败: {ExceptionMessageFormatter.ForUser(exception)}");
+        return LauncherStatusContent.Error(
+            LauncherLocalization.Format("single.previewFailed", ExceptionMessageFormatter.ForUser(exception)));
     }
 
     public static LauncherStatusContent Canceled(string entryName) =>
-        LauncherStatusContent.Warning($"已取消: {entryName}");
+        LauncherStatusContent.Warning(LauncherLocalization.Format("single.canceled", entryName));
 
     public static LauncherStatusContent Requested(string entryName) =>
-        LauncherStatusContent.Success($"已请求启动: {entryName}");
+        LauncherStatusContent.Success(LauncherLocalization.Format("single.requested", entryName));
 
     public static LauncherStatusContent Failed(string entryName, Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        return LauncherStatusContent.Error($"启动失败: {entryName} — {ExceptionMessageFormatter.ForUser(exception)}");
+        return LauncherStatusContent.Error(
+            LauncherLocalization.Format("single.failedName", entryName, ExceptionMessageFormatter.ForUser(exception)));
     }
 
     public static LauncherStatusContent Failed(Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        return LauncherStatusContent.Error($"启动失败: {ExceptionMessageFormatter.ForUser(exception)}");
+        return LauncherStatusContent.Error(
+            LauncherLocalization.Format("single.failed", ExceptionMessageFormatter.ForUser(exception)));
     }
 }
 
@@ -50,10 +54,10 @@ public static class LauncherSingleLaunchReceiptText
 
         return string.Join(
             Environment.NewLine,
-            "启动回执",
-            $"已请求启动: {RequireName(entryName)}",
+            LauncherLocalization.Format("receipt.launchTitle"),
+            LauncherLocalization.Format("single.requested", RequireName(entryName)),
             plan.CommandLine,
-            $"（实际执行: {plan.ExecutionCommandLine}）");
+            LauncherLocalization.Format("single.actualExecution", plan.ExecutionCommandLine));
     }
 
     public static string Canceled(string entryName, LaunchPlan plan)
@@ -62,10 +66,10 @@ public static class LauncherSingleLaunchReceiptText
 
         return string.Join(
             Environment.NewLine,
-            "启动回执",
-            $"已取消: {RequireName(entryName)}",
+            LauncherLocalization.Format("receipt.launchTitle"),
+            LauncherLocalization.Format("single.canceled", RequireName(entryName)),
             plan.CommandLine,
-            $"（实际执行: {plan.ExecutionCommandLine}）");
+            LauncherLocalization.Format("single.actualExecution", plan.ExecutionCommandLine));
     }
 
     public static string PreviewFailed(string entryName, Exception exception)
@@ -74,9 +78,9 @@ public static class LauncherSingleLaunchReceiptText
 
         return string.Join(
             Environment.NewLine,
-            "预演回执",
-            $"预演失败: {RequireName(entryName)}",
-            $"错误: {ExceptionMessageFormatter.ForUser(exception)}");
+            LauncherLocalization.Format("receipt.previewTitle"),
+            LauncherLocalization.Format("single.previewFailedName", RequireName(entryName)),
+            LauncherLocalization.Format("single.error", ExceptionMessageFormatter.ForUser(exception)));
     }
 
     public static string PreviewFailed(Exception exception)
@@ -85,8 +89,8 @@ public static class LauncherSingleLaunchReceiptText
 
         return string.Join(
             Environment.NewLine,
-            "预演回执",
-            $"预演失败: {ExceptionMessageFormatter.ForUser(exception)}");
+            LauncherLocalization.Format("receipt.previewTitle"),
+            LauncherLocalization.Format("single.previewFailed", ExceptionMessageFormatter.ForUser(exception)));
     }
 
     public static string ConfirmationFailed(string entryName, LaunchPlan plan, Exception exception)
@@ -96,10 +100,10 @@ public static class LauncherSingleLaunchReceiptText
 
         return string.Join(
             Environment.NewLine,
-            "启动回执",
-            $"启动确认失败: {RequireName(entryName)}",
+            LauncherLocalization.Format("receipt.launchTitle"),
+            LauncherLocalization.Format("single.confirmationFailed", RequireName(entryName)),
             plan.CommandLine,
-            $"错误: {ExceptionMessageFormatter.ForUser(exception)}");
+            LauncherLocalization.Format("single.error", ExceptionMessageFormatter.ForUser(exception)));
     }
 
     public static string Failed(string entryName, Exception exception)
@@ -108,9 +112,9 @@ public static class LauncherSingleLaunchReceiptText
 
         return string.Join(
             Environment.NewLine,
-            "启动回执",
-            $"启动失败: {RequireName(entryName)}",
-            $"错误: {ExceptionMessageFormatter.ForUser(exception)}");
+            LauncherLocalization.Format("receipt.launchTitle"),
+            LauncherLocalization.Format("single.failedName", RequireName(entryName), ExceptionMessageFormatter.ForUser(exception)),
+            LauncherLocalization.Format("single.error", ExceptionMessageFormatter.ForUser(exception)));
     }
 
     public static string Failed(Exception exception)
@@ -119,8 +123,8 @@ public static class LauncherSingleLaunchReceiptText
 
         return string.Join(
             Environment.NewLine,
-            "启动回执",
-            $"启动失败: {ExceptionMessageFormatter.ForUser(exception)}");
+            LauncherLocalization.Format("receipt.launchTitle"),
+            LauncherLocalization.Format("single.failed", ExceptionMessageFormatter.ForUser(exception)));
     }
 
     public static string Failed(string entryName, LaunchPlan plan, Exception exception)
@@ -130,10 +134,10 @@ public static class LauncherSingleLaunchReceiptText
 
         return string.Join(
             Environment.NewLine,
-            "启动回执",
-            $"启动失败: {RequireName(entryName)}",
+            LauncherLocalization.Format("receipt.launchTitle"),
+            LauncherLocalization.Format("single.failedName", RequireName(entryName), ExceptionMessageFormatter.ForUser(exception)),
             plan.CommandLine,
-            $"错误: {ExceptionMessageFormatter.ForUser(exception)}");
+            LauncherLocalization.Format("single.error", ExceptionMessageFormatter.ForUser(exception)));
     }
 
     private static string RequireName(string entryName)
@@ -164,11 +168,11 @@ public static class LauncherBatchLaunchPlanText
         ArgumentNullException.ThrowIfNull(preflight);
 
         List<string> lines = [
-            "预演回执",
-            $"预演失败: 失败 {preflight.Report.FailedCount} 项，未启动 {preflight.Items.Count} 项",
+            LauncherLocalization.Format("receipt.previewTitle"),
+            LauncherLocalization.Format("batch.preflightFailed", preflight.Report.FailedCount, preflight.Items.Count),
         ];
 
-        AppendPlanLines(lines, preflight.Items, "• 未启动: ");
+        AppendPlanLines(lines, preflight.Items, LauncherLocalization.Format("batch.unstartedMarker"));
         AppendFailureLines(lines, preflight.Report.FailureMessages);
         return JoinBlocks(lines);
     }
@@ -179,8 +183,8 @@ public static class LauncherBatchLaunchPlanText
 
         return JoinBlocks(
         [
-            "预演回执",
-            $"预演失败: {ExceptionMessageFormatter.ForUser(exception)}",
+            LauncherLocalization.Format("receipt.previewTitle"),
+            LauncherLocalization.Format("single.previewFailed", ExceptionMessageFormatter.ForUser(exception)),
         ]);
     }
 
@@ -190,7 +194,7 @@ public static class LauncherBatchLaunchPlanText
         string prefix)
     {
         foreach (var item in items)
-            lines.Add($"{prefix}{item.EntryName}{Environment.NewLine}{item.Plan.CommandLine}{Environment.NewLine}（实际: {item.Plan.ExecutionCommandLine}）");
+            lines.Add($"{prefix}{item.EntryName}{Environment.NewLine}{item.Plan.CommandLine}{Environment.NewLine}{LauncherLocalization.Format("batch.actual", item.Plan.ExecutionCommandLine)}");
     }
 
     private static void AppendFailureLines(List<string> lines, IReadOnlyList<string> failures)
@@ -198,7 +202,7 @@ public static class LauncherBatchLaunchPlanText
         if (failures.Count == 0)
             return;
 
-        lines.Add("失败:");
+        lines.Add(LauncherLocalization.Format("batch.failure"));
         lines.AddRange(failures.Select(failure => $"- {failure}"));
     }
 
@@ -216,8 +220,8 @@ public static class LauncherBatchLaunchReceiptText
         ArgumentNullException.ThrowIfNull(report);
 
         List<string> lines = [
-            "启动回执",
-            $"已请求启动 {report.RequestedCount} 项，失败 {report.FailedCount} 项，未启动 {report.SkippedCount} 项",
+            LauncherLocalization.Format("receipt.launchTitle"),
+            LauncherLocalization.Format("batch.requestedSummary", report.RequestedCount, report.FailedCount, report.SkippedCount),
         ];
 
         AppendPlanLines(lines, preflight.Items, report);
@@ -230,8 +234,8 @@ public static class LauncherBatchLaunchReceiptText
         ArgumentNullException.ThrowIfNull(items);
 
         List<string> lines = [
-            "启动回执",
-            $"已取消: 已请求启动 0 项，未启动 {items.Count} 项",
+            LauncherLocalization.Format("receipt.launchTitle"),
+            LauncherLocalization.Format("batch.canceledSummary", items.Count),
         ];
 
         AppendUnstartedPlanLines(lines, items);
@@ -248,9 +252,9 @@ public static class LauncherBatchLaunchReceiptText
 
         var lines = new List<string>
         {
-            "启动回执",
-            $"启动确认失败: {ExceptionMessageFormatter.ForUser(exception)}",
-            $"已请求启动 0 项，未启动 {items.Count} 项",
+            LauncherLocalization.Format("receipt.launchTitle"),
+            LauncherLocalization.Format("batch.confirmationFailedSummary", ExceptionMessageFormatter.ForUser(exception)),
+            LauncherLocalization.Format("batch.canceledSummary", items.Count),
         };
 
         AppendUnstartedPlanLines(lines, items);
@@ -264,8 +268,8 @@ public static class LauncherBatchLaunchReceiptText
 
         return string.Join(
             Environment.NewLine,
-            "启动回执",
-            $"批量启动失败: {ExceptionMessageFormatter.ForUser(exception)}");
+            LauncherLocalization.Format("receipt.launchTitle"),
+            LauncherLocalization.Format("batch.failedLaunch", ExceptionMessageFormatter.ForUser(exception)));
     }
 
     private static void AppendPlanLines(
@@ -280,7 +284,7 @@ public static class LauncherBatchLaunchReceiptText
         for (var index = 0; index < items.Count; index++)
         {
             var item = items[index];
-            lines.Add($"• {StatusFor(index, report)}: {item.EntryName}");
+            lines.Add(LauncherLocalization.Format("batch.prefix", StatusFor(index, report), item.EntryName));
             lines.Add(item.Plan.CommandLine);
         }
     }
@@ -288,13 +292,12 @@ public static class LauncherBatchLaunchReceiptText
     private static string StatusFor(int index, LauncherBatchLaunchReport report)
     {
         // R9: With continue-on-failure, failures may be interspersed with successes.
-        // Use the full failure-indices set rather than a single FailureIndex.
         if (report.FailureIndices.Contains(index))
-            return "启动失败";
+            return LauncherLocalization.Format("batch.statusFailed");
 
-        // All non-failure items up through (RequestedCount + FailedCount - 1) are "已请求".
-        // Items past that range are "未启动" (only happens when items are skipped).
-        return index < report.RequestedCount + report.FailureIndices.Count ? "已请求" : "未启动";
+        return index < report.RequestedCount + report.FailureIndices.Count
+            ? LauncherLocalization.Format("batch.statusRequested")
+            : LauncherLocalization.Format("batch.statusSkipped");
     }
 
     private static void AppendFailureLines(List<string> lines, IReadOnlyList<string> failures)
@@ -303,7 +306,7 @@ public static class LauncherBatchLaunchReceiptText
             return;
 
         lines.Add("");
-        lines.Add("失败:");
+        lines.Add(LauncherLocalization.Format("batch.failure"));
         lines.AddRange(failures.Select(failure => $"- {failure}"));
     }
 
@@ -317,7 +320,7 @@ public static class LauncherBatchLaunchReceiptText
         lines.Add("");
         foreach (var item in items)
         {
-            lines.Add($"• 未启动: {item.EntryName}");
+            lines.Add(LauncherLocalization.Format("batch.unstartedPrefix", item.EntryName));
             lines.Add(item.Plan.CommandLine);
         }
     }
