@@ -18,6 +18,7 @@ Update when: 文档新增、移动、归档或用途变化时。
 | [wiring-map.md](wiring-map.md) | workflow 与端口唯一台账 | 新增端口或 workflow |
 | [design-benchmark-digest.md](design-benchmark-digest.md) | 12 项外部设计基准 → 本地验收规则 | 基准或验收规则变化 |
 | [test-structure.md](test-structure.md) | 测试层级与文件归属规则 | 测试目录或分类变化 |
+| [branch-evidence-matrix.md](branch-evidence-matrix.md) | 全仓显隐分支实测矩阵：实测确证 vs 源码静态推断 | 门禁/CI/Trellis/配置/源码分支证据变化 |
 | [reference/distribution-signing-strategy.md](reference/distribution-signing-strategy.md) | 发布、签名与更新策略 | 发布或签名策略变化 |
 | [使用说明.txt](使用说明.txt) | 用户快速上手 | 安装或使用流程变化 |
 
