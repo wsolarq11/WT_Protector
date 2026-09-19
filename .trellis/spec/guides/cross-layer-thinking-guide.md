@@ -1,338 +1,44 @@
 # Cross-Layer Thinking Guide
 
-> **Purpose**: Think through data flow across layers before implementing.
+> 目的：实现前想透 5 层数据流。多数 bug 发生在层边界，不在层内。
 
----
+## 实现前
 
-## The Problem
+1. 映射数据流 `Source → Transform → Store → Retrieve → Transform → Display`；每箭头问：格式？会错在哪？谁负责校验？
+2. 识别边界：API↔Service（类型不匹配/缺字段）、Service↔DB（格式转换/null）、Backend↔Frontend（序列化/日期格式）、组件↔组件（props 形状变化）。
+3. 定义契约：每边界的精确输入/输出格式 + 可能错误。
 
-**Most bugs happen at layer boundaries**, not within layers.
+## 常见跨层错误
 
-Common cross-layer bugs:
+1. 隐式格式假设 → 边界显式转换。
+2. 校验散落多层 → 入口校验一次。
+3. 泄漏抽象 → 每层只知邻居。
+4. 每消费者解析同一 payload → 事件边界 decode 一次再导出类型化投影。规则：append-only log / JSON stream / RPC payload / config 文件，建一个所有者拥有：payload 类型定义、`unknown` 类型 guard + normalize、UI 命令用的元数据投影、从事实源重放状态的 reducer。渲染可格式化，但不得重定义 payload 契约。
 
-- API returns format A, frontend expects format B
-- Database stores X, service transforms to Y, but loses data
-- Multiple layers implement the same logic differently
+## 跨层特性清单
 
----
+实现前：映射完整数据流 / 识别全部边界 / 定义每边界格式 / 决定校验点。实现后：edge case（null/empty/invalid）测过 / 每边界错误处理验证 / 数据 round-trip / 消费者导入共享 decoder 非本地 cast / 派生状态回指源事件标识（`seq` / `id` / `version`）不另造游标。
 
-## Before Implementing Cross-Layer Features
+## 跨平台模板一致性
 
-### Step 1: Map the Data Flow
+修改命令模板后：`find src/templates/*/commands/trellis/ -name "<command>.*"` 找全部平台 / 更新所有副本（.md + .toml）/ Gemini TOML 适配续行（`\\` vs `\`）与三引号字符串 / 跑 `/trellis:check-cross-layer`。实例：改 `record-session.md` 漏 iFlow/Kilo/OpenCode/Gemini。
 
-Draw out how data moves:
+## 生成式运行时模板升级一致性
 
-```
-Source → Transform → Store → Retrieve → Transform → Display
-```
+部分生成文件既是文档又是运行时输入（`.trellis/workflow.md` 被 `get_context.py` / `workflow_phase.py` / SessionStart / per-turn hook 解析）。清单：识别每个读模板的运行时解析器（不只安装它的 writer）/ 检查相关语法是否在托管标记区外 / 验证 fresh init 与写旧 `.trellis/.version` 的 upgrade 场景 / 加旧模板 fixture 升级回归断言装出当前形状 / 更新拥有运行时契约的 backend spec。实例：Codex inline mode 改平台标记，`trellis update` 只合并 `[workflow-state:*]` 块，保留区外 stale 标记 → 升级项目旧路由。
 
-For each arrow, ask:
+## 版本化文档边界
 
-- What format is the data in?
-- What could go wrong?
-- Who is responsible for validation?
+源路径、`docs.json` 版本路由、渲染版本选择器必须描述同一 release line。清单：识别目标线（stable/beta/RC）/ 校验 MDX 路径（stable=`docs-site/{start,advanced,...}` + `zh/`；beta=`docs-site/beta/**` + `zh/beta/**`；RC=`docs-site/rc/**` + `zh/rc/**`）/ 校验 `docs.json` 导航指向同路径 / 提交前 grep 对侧树找 release-line 特定词 / beta 内容出现在 root 路径视为 source-path bug。
 
-### Step 2: Identify Boundaries
+## Mode-Detection 探测清单
 
-| Boundary              | Common Issues                     |
-| --------------------- | --------------------------------- |
-| API ↔ Service         | Type mismatches, missing fields   |
-| Service ↔ Database    | Format conversions, null handling |
-| Backend ↔ Frontend    | Serialization, date formats       |
-| Component ↔ Component | Props shape changes               |
+CLI 探测远程资源自动判定 mode 时。实现前：探测跑在所有用结果的路径（interactive / `-y` / `--flag` 组合）/ 区分 404 vs 瞬态错误 / 瞬态错误 abort 或 retry 不静默换 mode / 上下文变化（切 source）时重置共享状态（cache/prefetch）/ 快捷路径（`--template` 跳过 picker）与探测路径同等错误处理质量。实现后：追踪探测结果→mode 分支每条路径无 fallthrough / 外部格式契约（giget URI/raw URL）测试或注释 / 元数据读完整响应或流式解析（禁固定前缀当完整 JSON）/ 重组复合标识符校验全字段 + 正确位置（`provider:repo/path#ref` 非 `provider:repo#ref/path`）/ 快捷后调用的 action 函数不用旧 catch-all fetch。实例：自定义 registry 8 bug（探测只 interactive、瞬态落错 mode、giget `#ref` 位置错、prefetch 泄漏、`--template` 绕过探测）；agent-session hint 用 `read(4096)` 截断 JSON 解析失败。
 
-### Step 3: Define Contracts
+## 事件日志 / 投影边界
 
-For each boundary:
+append-only log 是跨层契约：`CLI → writer → events.jsonl → reader → filter → reducer → display`。新增事件 kind/字段清单：加入中央事件分类 / 事件层加类型化变体或 type guard / 用户输入/JSON 的数组对象字段加 normalize helper / `seq` / `id` 只在 writer 分配 / filter 与 reducer 消费类型化 guard 非本地 cast / display 消费 reducer 输出或类型化事件非 raw JSON / 至少一条回归证明 history replay 与 live filter 同 filter 模型。
 
-- What is the exact input format?
-- What is the exact output format?
-- What errors can occur?
+## FindUpward 幽灵配置陷阱
 
----
-
-## Common Cross-Layer Mistakes
-
-### Mistake 1: Implicit Format Assumptions
-
-**Bad**: Assuming date format without checking
-
-**Good**: Explicit format conversion at boundaries
-
-### Mistake 2: Scattered Validation
-
-**Bad**: Validating the same thing in multiple layers
-
-**Good**: Validate once at the entry point
-
-### Mistake 3: Leaky Abstractions
-
-**Bad**: Component knows about database schema
-
-**Good**: Each layer only knows its neighbors
-
-### Mistake 4: Every Consumer Parses The Same Payload
-
-**Bad**: A command reads JSONL events and casts fields inline:
-
-```typescript
-const thread = (ev as { thread?: string }).thread;
-const labels = (ev as { labels?: string[] }).labels;
-```
-
-This looks local, but it means every consumer owns a private version of the
-event contract. The next field change will update one command and miss another.
-
-**Good**: Decode once at the event boundary, then export typed projections:
-
-```typescript
-if (!isThreadEvent(ev)) return false;
-return ev.thread === filter.thread;
-```
-
-**Rule**: For append-only logs, JSON streams, RPC payloads, or config files,
-create one owner for:
-
-- event / payload type definitions
-- type guards and normalization from `unknown`
-- metadata projections used by UI commands
-- reducers that replay state from the source of truth
-
-Rendering code may format fields, but it must not redefine the payload contract.
-
----
-
-## Checklist for Cross-Layer Features
-
-Before implementation:
-
-- [ ] Mapped the complete data flow
-- [ ] Identified all layer boundaries
-- [ ] Defined format at each boundary
-- [ ] Decided where validation happens
-
-After implementation:
-
-- [ ] Tested with edge cases (null, empty, invalid)
-- [ ] Verified error handling at each boundary
-- [ ] Checked data survives round-trip
-- [ ] Checked that consumers import shared decoders / projections instead of
-      casting payload fields locally
-- [ ] Checked that derived state points back to the source event identifier
-      (`seq`, `id`, `version`) instead of inventing a second cursor
-
----
-
-## Cross-Platform Template Consistency
-
-In Trellis, command templates (e.g., `record-session.md`) exist in **multiple platforms** with identical or near-identical content. This is a cross-layer boundary.
-
-### Checklist: After Modifying Any Command Template
-
-- [ ] Find all platforms with the same command: `find src/templates/*/commands/trellis/ -name "<command>.*"`
-- [ ] Update all platform copies (Markdown `.md` and TOML `.toml`)
-- [ ] For Gemini TOML: adapt line continuations (`\\` vs `\`) and triple-quoted strings
-- [ ] Run `/trellis:check-cross-layer` to verify nothing was missed
-
-**Real-world example**: Updated `record-session.md` in Claude to use `--mode record`, but forgot iFlow, Kilo, OpenCode, and Gemini — caught by cross-layer check.
-
----
-
-## Generated Runtime Template Upgrade Consistency
-
-Some generated files are both documentation and runtime input. In Trellis,
-`.trellis/workflow.md` is parsed by `get_context.py`, `workflow_phase.py`,
-SessionStart filters, and per-turn hooks. Template changes must be validated
-against both fresh init and upgrade paths.
-
-### Checklist: After Modifying A Runtime-Parsed Template
-
-- [ ] Identify every runtime parser that reads the template, not just the file
-      writer that installs it
-- [ ] Check whether relevant syntax lives outside obvious managed regions
-      such as tag blocks
-- [ ] Verify fresh `init` output and a versioned `update` scenario that writes
-      the older `.trellis/.version`
-- [ ] Add an upgrade regression using an older pristine template fixture, then
-      assert the installed file reaches the current packaged shape
-- [ ] Update the backend spec that owns the runtime contract
-
----
-
-## Versioned Documentation Boundary
-
-Versioned documentation is a cross-layer boundary: source paths, `docs.json`
-version routing, and the rendered version selector must all describe the same
-release line.
-
-### Checklist: Before Editing Versioned Docs
-
-- [ ] Identify the target release line: stable, beta, or RC
-- [ ] Verify the edited MDX path matches that line:
-  - stable: `docs-site/{start,advanced,...}` and `docs-site/zh/{start,advanced,...}`
-  - beta: `docs-site/beta/**` and `docs-site/zh/beta/**`
-  - RC: `docs-site/rc/**` and `docs-site/zh/rc/**`
-- [ ] Verify `docs.json` navigation points the version label to the same paths
-- [ ] Grep the opposite tree for release-line-specific terms before committing
-- [ ] Treat beta content appearing under root release paths as a source-path bug,
-      not a rendering bug
-
-**Real-world example**: A beta-only task workflow change documented
-`prd.md` + `design.md` + `implement.md`, task-creation consent, and Codex
-mode banners under root `start/` and `advanced/` paths. The docs site then
-served 0.6 beta behavior under the Release selector. The fix was to restore root
-release docs, move the 0.6 content to `beta/` and `zh/beta/`, and add a grep
-audit for beta markers against the root release tree.
-
-**Real-world example**: Codex inline mode changed workflow platform markers from
-`[Codex]` / `[Kilo, Antigravity, Windsurf]` to `[codex-sub-agent]` /
-`[codex-inline, Kilo, Antigravity, Windsurf]`. Fresh init was correct, but
-`trellis update` only merged `[workflow-state:*]` blocks and preserved stale
-markers outside those blocks. Result: upgraded projects got new hook scripts
-but old workflow routing, so `get_context.py --mode phase --platform codex`
-could return empty Phase 2.1 detail.
-
----
-
-## Mode-Detection Probe Checklist
-
-When a CLI auto-detects a mode by probing a remote resource (e.g., checking if `index.json` exists to decide marketplace vs direct download):
-
-### Before implementing:
-
-- [ ] Probe runs in **ALL** code paths that use the result (interactive, `-y`, `--flag` combos)
-- [ ] 404 vs transient error are distinguished — don't treat both as "not found"
-- [ ] Transient errors **abort or retry**, never silently switch modes
-- [ ] Shared state (caches, prefetched data) is **reset** when context changes (e.g., user switches source)
-- [ ] **Shortcut paths** (e.g., `--template` skipping picker) must have the same error-handling quality as the probed path — check that downstream functions don't call catch-all wrappers
-
-### After implementing:
-
-- [ ] Trace every path from probe result to the mode-decision branch — no fallthrough
-- [ ] External format contracts (giget URI, raw URLs) are tested or at least documented as comments
-- [ ] Metadata reads consume a complete response or use a streaming parser — never parse a fixed-size prefix as full JSON
-- [ ] When reconstructing a composite identifier from parsed parts, verify **all** fields are included and in the **correct position** (e.g., `provider:repo/path#ref` not `provider:repo#ref/path`)
-- [ ] Verify that **action functions** called after a shortcut don't internally use the old catch-all fetch — they must use the probe-quality variant when error distinction matters
-
-**Real-world example**: Custom registry flow had 8 bugs across 3 review rounds: (1) probe only ran in interactive mode, (2) transient errors fell through to wrong mode, (3) giget URI had `#ref` in wrong position, (4) prefetched templates leaked across source switches, (5) `--template` shortcut bypassed probe but `downloadTemplateById` internally used catch-all `fetchTemplateIndex`, turning timeouts into "Template not found".
-
-**Real-world example**: Agent-session update hints fetched npm `latest` metadata with `response.read(4096)` and then parsed it as complete JSON. The `@mindfoldhq/trellis` package metadata exceeded 4 KB, so the JSON was truncated, parse failed silently, and the first session injection showed no update hint. Fix: read the complete response before parsing, and add a regression where `version` is followed by an 8 KB metadata tail.
-
----
-
-## Cross-Platform Template Consistency
-
-In Trellis, command templates (e.g., `record-session.md`) exist in **multiple platforms** with identical or near-identical content. This is a cross-layer boundary.
-
-### Checklist: After Modifying Any Command Template
-
-- [ ] Find all platforms with the same command: `find src/templates/*/commands/trellis/ -name "<command>.*"`
-- [ ] Update all platform copies (Markdown `.md` and TOML `.toml`)
-- [ ] For Gemini TOML: adapt line continuations (`\\` vs `\`) and triple-quoted strings
-- [ ] Run `/trellis:check-cross-layer` to verify nothing was missed
-
-**Real-world example**: Updated `record-session.md` in Claude to use `--mode record`, but forgot iFlow, Kilo, OpenCode, and Gemini — caught by cross-layer check.
-
----
-
-## Generated Runtime Template Upgrade Consistency
-
-Some generated files are both documentation and runtime input. In Trellis,
-`.trellis/workflow.md` is parsed by `get_context.py`, `workflow_phase.py`,
-SessionStart filters, and per-turn hooks. Template changes must be validated
-against both fresh init and upgrade paths.
-
-### Checklist: After Modifying A Runtime-Parsed Template
-
-- [ ] Identify every runtime parser that reads the template, not just the file
-  writer that installs it
-- [ ] Check whether relevant syntax lives outside obvious managed regions
-  such as tag blocks
-- [ ] Verify fresh `init` output and a versioned `update` scenario that writes
-  the older `.trellis/.version`
-- [ ] Add an upgrade regression using an older pristine template fixture, then
-  assert the installed file reaches the current packaged shape
-- [ ] Update the backend spec that owns the runtime contract
-
-**Real-world example**: Codex inline mode changed workflow platform markers from
-`[Codex]` / `[Kilo, Antigravity, Windsurf]` to `[codex-sub-agent]` /
-`[codex-inline, Kilo, Antigravity, Windsurf]`. Fresh init was correct, but
-`trellis update` only merged `[workflow-state:*]` blocks and preserved stale
-markers outside those blocks. Result: upgraded projects got new hook scripts
-but old workflow routing, so `get_context.py --mode phase --platform codex`
-could return empty Phase 2.1 detail.
-
----
-
-## Mode-Detection Probe Checklist
-
-When a CLI auto-detects a mode by probing a remote resource (e.g., checking if `index.json` exists to decide marketplace vs direct download):
-
-### Before implementing:
-- [ ] Probe runs in **ALL** code paths that use the result (interactive, `-y`, `--flag` combos)
-- [ ] 404 vs transient error are distinguished — don't treat both as "not found"
-- [ ] Transient errors **abort or retry**, never silently switch modes
-- [ ] Shared state (caches, prefetched data) is **reset** when context changes (e.g., user switches source)
-- [ ] **Shortcut paths** (e.g., `--template` skipping picker) must have the same error-handling quality as the probed path — check that downstream functions don't call catch-all wrappers
-
-### After implementing:
-- [ ] Trace every path from probe result to the mode-decision branch — no fallthrough
-- [ ] External format contracts (giget URI, raw URLs) are tested or at least documented as comments
-- [ ] Metadata reads consume a complete response or use a streaming parser — never parse a fixed-size prefix as full JSON
-- [ ] When reconstructing a composite identifier from parsed parts, verify **all** fields are included and in the **correct position** (e.g., `provider:repo/path#ref` not `provider:repo#ref/path`)
-- [ ] Verify that **action functions** called after a shortcut don't internally use the old catch-all fetch — they must use the probe-quality variant when error distinction matters
-
-**Real-world example**: Custom registry flow had 8 bugs across 3 review rounds: (1) probe only ran in interactive mode, (2) transient errors fell through to wrong mode, (3) giget URI had `#ref` in wrong position, (4) prefetched templates leaked across source switches, (5) `--template` shortcut bypassed probe but `downloadTemplateById` internally used catch-all `fetchTemplateIndex`, turning timeouts into "Template not found".
-
-**Real-world example**: Agent-session update hints fetched npm `latest` metadata with `response.read(4096)` and then parsed it as complete JSON. The `@mindfoldhq/trellis` package metadata exceeded 4 KB, so the JSON was truncated, parse failed silently, and the first session injection showed no update hint. Fix: read the complete response before parsing, and add a regression where `version` is followed by an 8 KB metadata tail.
-
----
-
-## When to Create Flow Documentation
-
-Create detailed flow docs when:
-
-- Feature spans 3+ layers
-- Multiple teams are involved
-- Data format is complex
-- Feature has caused bugs before
-
----
-
-## Event Log / Projection Boundary
-
-Append-only logs are cross-layer contracts. A single event travels through:
-
-```
-CLI input → event writer → events.jsonl → reader → filter → reducer → display
-```
-
-### Checklist: After Adding A New Event Kind Or Field
-
-- [ ] Add the event kind to the central event taxonomy
-- [ ] Add a typed event variant or type guard at the event layer
-- [ ] Add normalization helpers for array/object fields that come from
-      user input or JSON
-- [ ] Keep `seq` / `id` assignment in the event writer only
-- [ ] Make filters and reducers consume the typed event guard, not local casts
-- [ ] Make display code consume reducer output or typed events, not raw JSON
-- [ ] Add at least one regression that proves history replay and live filtering
-      use the same filter model
-
-**Real-world example**: Thread channels added `kind: "thread"`, `description`,
-`context`, labels, and `lastSeq`. The first implementation replayed thread
-state correctly, but several commands still re-parsed event payload fields with
-local casts. The fix was to make the core event layer own `ThreadChannelEvent`
-and `isThreadEvent`, make `reduceChannelMetadata` the only channel metadata
-projection, and make `reduceThreads` the only thread replay reducer.
-
-## FindUpward 路径解析的幽灵配置陷阱
-
-`FindUpward` 依赖 `README.md` 作为仓库根标记。当项目子目录也有 `README.md` 时，如果该子目录下恰好有 `config/StoreFileName` 文件（例如误操作导致），`FindUpward` 会提前停止搜索。
-
-**排查**：视图为空时，按以下顺序排查：
-1. 检查 `config/StoreFileName` 文件是否存在且条目数正确
-2. 检查进程是否有旧 WTLauncher.App 未被杀死（锁定构建输出）
-3. 检查上层目录是否有同名配置文件被 `FindUpward` 优先发现
-
-**修复**：删除上层幽灵文件 + 重启应用。
+`FindUpward` 依赖 `README.md` 作仓库根标记；子目录也有 `README.md` 且下有幽灵 `config/StoreFileName` 时提前停搜。排查（视图为空）：1) 检查 `config/StoreFileName` 存在且条目正确；2) 检查旧 WTLauncher.App 进程锁构建输出；3) 检查上层目录同名配置文件被 `FindUpward` 优先发现。修复：删上层幽灵文件 + 重启。

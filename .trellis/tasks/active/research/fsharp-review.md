@@ -4,61 +4,34 @@
 - **Scope**: Internal
 - **Date**: 2026-07-26
 
-## Files Found
+## 问题
 
-| File Path | Description |
-|---|---|
-| `src/avalonia-launcher/src/WTLauncher.Core.FSharp/Library.fs` | Single F# source file — 5 record types + `LaunchArgumentBuilder.quoteArgument` module |
-| `src/avalonia-launcher/src/WTLauncher.Core.FSharp/WTLauncher.Core.FSharp.fsproj` | F# project file, targets `net10.0`, `IsAotCompatible=true` |
-| `src/avalonia-launcher/WTLauncher.Avalonia.sln` | Solution includes F# project at line 16 |
+审查 `WTLauncher.Core.FSharp` 的 F# 惯用性、C# 互操作与边界情况。
 
-## Findings
+## 结论
 
-### 1. Orphaned project — no consumers
+孤儿项目：`WTLauncher.Core.FSharp` 在 `.sln:16` 中但无任何 C# 项目引用，全仓 `.csproj`/`.cs` 零命中，整个代码库不可达且零测试。`quoteArgument` 与 C# `QuoteArgument` 逻辑等价（反斜杠计数、引号转义、尾部反斜杠翻倍一致），唯一差异是缺 null 守卫；5 个 record 与 C# 类型结构重复；AOT 下 FSharp.Core 增重（当前无消费者故非问题）。
 
-The F# project `WTLauncher.Core.FSharp` is included in the `.sln` (line 16) but **no C# project references it**. A grep for `Core.FSharp` in all `.csproj` and `.cs` files returns zero matches. The entire codebase is unreachable.
+## 关键证据
 
-- **Evidence**: Grep `WTLauncher.Core.FSharp` across all `.csproj` files returned no matches; grep across all `.cs` files returned no matches.
-- **Impact**: The `quoteArgument` function, all 5 record types, and the `LaunchArgumentBuilder` module are compiled but never loaded or executed by any consumer. Zero test coverage.
+- `Library.fs:56-75` `let quoteArgument (value: string)` 无 null 守卫；F# 字符串默认非空，但 C# 互操作边界可传 null，`for ch in value` 会抛 `NullReferenceException`。对照 C# `LaunchArgumentBuilder.cs:124` 首行 `ArgumentNullException.ThrowIfNull(value)`。
+- `Library.fs:9-52` 5 个 record（`LaunchEntry`/`LauncherWindowSettings`/`LauncherSettings`/`LauncherPreset`/`LauncherStoreFile`）与 `WTLauncher.Core` 同名 C# 类型结构一致，是第二份未用副本。
+- `WTLauncher.Core.FSharp.fsproj:6` `<IsAotCompatible>true</IsAotCompatible>`；`string list`（`Microsoft.FSharp.Collections.FSharpList<T>`）依赖 FSharp.Core 并按元素链表分配，Native AOT 下增重。
+- `.fsproj` 未定义 `<FSharpPreferNetFrameworkReferences>false</FSharpPreferNetFrameworkReferences>` 或 `<MicrosoftFSharpPackageVersion>` 固定，构建依赖宿主 SDK 选择的 FSharp.SDK 版本。
+- 可复现命令：
 
-### 2. Null handling gap at F#/C# boundary
+```bash
+rg "Core.FSharp" src/avalonia-launcher --glob "*.csproj"   # 0 命中
+rg "FSharp" src/avalonia-launcher --glob "*.cs"            # 0 命中
+```
 
-- `Library.fs:56-75` — `let quoteArgument (value: string)` has no null guard.
-- F# strings are non-nullable by default, but at the C# interop boundary a C# caller could pass `null`. The `for ch in value` loop (line 60) would throw a `NullReferenceException` with no context.
-- C# version at `LaunchArgumentBuilder.cs:124` has `ArgumentNullException.ThrowIfNull(value)` as the first line.
-- **Fix needed**: Add a null guard if this code will ever be consumed from C#.
+## Caveats
 
-### 3. No consumers across the entire codebase
+无 F# 测试；无说明 F# 项目意图的架构文档；仓库无 F# 专用 `.editorconfig` 或编码规范。
 
-- Grep for `FSharp` across all `.cs` files in `src/avalonia-launcher` returned zero matches.
-- The C# `WTLauncher.Core.LaunchArgumentBuilder.QuoteArgument` is the canonical implementation, used by production code at `LaunchArgumentBuilder.cs:72` and tested at `LaunchArgumentBuilderTests.cs:57,63`.
-- The F# version is a second, unused copy with no tests.
+## 关联路径
 
-### 4. AOT compatibility concern
-
-- `WTLauncher.Core.FSharp.fsproj:6` sets `<IsAotCompatible>true</IsAotCompatible>`.
-- Record types use F# `string list` (e.g., `CustomEntryOrder: string list`, `SearchHistory: string list`, `EntryIds: string list` at `Library.fs:32,35,43`). F# lists (`Microsoft.FSharp.Collections.FSharpList<T>`) require the FSharp.Core runtime and are linked-list allocated per element.
-- For Native AOT, the FSharp.Core dependency adds measurable binary size. However, since this project has no consumers, this is currently a non-issue.
-
-### 5. Code duplication with C# types
-
-- The 5 F# record types (`LaunchEntry`, `LauncherWindowSettings`, `LauncherSettings`, `LauncherPreset`, `LauncherStoreFile`) at `Library.fs:9-52` duplicate the same types already in `WTLauncher.Core` (C#). They are structurally identical.
-- If the F# module were ever consumed, there would be two parallel type definitions for the same data — a maintenance burden.
-
-### 6. quoteArgument logic parity
-
-- The F# `quoteArgument` function (`Library.fs:55-75`) is a structurally faithful port of the C# `QuoteArgument` method (`LaunchArgumentBuilder.cs:122-158`).
-- Backslash counting, quote escaping, and trailing backslash doubling are identical in both implementations.
-- The only functional difference is the absence of the null guard (see finding 2).
-
-### 7. `fsproj` does not define `<FSharpPreferNetFrameworkReferences>`
-
-- The `.fsproj` (`WTLauncher.Core.FSharp.fsproj`) is minimal — only `TargetFramework`, `RuntimeIdentifiers`, `IsAotCompatible`, and `Nullable`.
-- No `<FSharpPreferNetFrameworkReferences>false</FSharpPreferNetFrameworkReferences>` or `<MicrosoftFSharpPackageVersion>` pinning.
-- This is fine for default behavior but means the build depends on whatever FSharp.SDK version the host dotnet SDK selects.
-
-## Caveats / Not Found
-
-- No architectural document describes the intended purpose of the F# project. It appears to be a proof-of-concept or experimental module.
-- No tests exist for the F# code.
-- No F# specific `.editorconfig` or coding guidelines in the repo reference F# conventions or code style.
+- `src/avalonia-launcher/src/WTLauncher.Core.FSharp/Library.fs`
+- `src/avalonia-launcher/src/WTLauncher.Core.FSharp/WTLauncher.Core.FSharp.fsproj`
+- `src/avalonia-launcher/WTLauncher.Avalonia.sln:16`
+- `src/avalonia-launcher/src/WTLauncher.Core/LaunchArgumentBuilder.cs:122-158`（C# 规范实现，生产使用于 `:72`，测试于 `LaunchArgumentBuilderTests.cs:57,63`）

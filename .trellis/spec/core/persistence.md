@@ -1,419 +1,117 @@
 # Persistence — Core Layer
 
-> Single-file JSON store with atomic writes, backup rotation, and LF line endings.
-
----
-
-## Wiring Contract Update (2026-08-15)
-
-- `StoreMutationSession` is the single transaction primitive for multi-step ViewModel mutation commits: `Commit` saves once, and `Dispose` restores in-memory state when the caller did not commit.
-- `StoreGrain.ReloadFromDisk` fires `Reloaded`; `MainWindowViewModel` performs one `SynchronizeProjections(ProjectionSyncMode.FullReload)` pass while suppressing intermediate `EntriesChanged` syncs.
-- Canonical store writes still go through `StoreGrain` → atomic `LauncherJson.Save`. External import/export reads/writes are wrapped by `IConfigExchangeService`.
-- Launch history saves use `LaunchSaveResult` so the caller can distinguish “save failed before launch” from “launch happened but history save failed.”
-
-## JSON Persistence Engine
-
-**Source:** `src/avalonia-launcher/src/WTLauncher.Core/LauncherJson.cs`
-
-### Atomic Write Pattern
-
-```csharp
-// temp file → optional backup rotation → atomic replace
-var tempPath = fullPath + $".tmp-{Guid.NewGuid():N}";
-File.WriteAllText(tempPath, json + "\n");
-
-if (backup && File.Exists(fullPath))
-{
-    // Copy current → bakTempPath, rotate old backups, move bakTempPath → .bak.
-    // Copy-then-rotate order: if crash occurs mid-rotation, bakTempPath is
-    // still on disk and the original .bak is preserved.
-    var bakTempPath = fullPath + $".bak-tmp-{Guid.NewGuid():N}";
-    File.Copy(fullPath, bakTempPath, overwrite: true);
-    RotateBackups(fullPath);
-    File.Move(bakTempPath, fullPath + ".bak", overwrite: true);
-}
+> 单文件 JSON 存储，原子写 + 备份轮转 + LF 行尾。`LauncherJson.Save` 是唯一原子写路径。
 
-// Atomic commit on NTFS:
-if (File.Exists(fullPath))
-    File.Replace(tempPath, fullPath, null);   // MOVEFILE_REPLACE_EXISTING
-else
-    File.Move(tempPath, fullPath);
-```
+## Wiring Contract（2026-08-15）
 
-**Rules:**
-1. **Always write to a temp file first** — never directly overwrite the real file.
-2. **Temp file names include `Guid.NewGuid():N`** — prevents collisions.
-3. **`File.Replace` when target exists** (atomic on same NTFS volume); `File.Move` only for first-save when target doesn't exist.
-4. **`finally`-style cleanup is handled by `CleanupStaleTempFiles`** at app startup — temp files orphaned by a crash are cleaned next launch.
+- `StoreMutationSession` = 多步 VM mutation 提交原语：`Commit` 保存一次，`Dispose` 在未提交时恢复内存状态。
+- `StoreGrain.ReloadFromDisk` 触发 `Reloaded`；`MainWindowViewModel` 做一次 `SynchronizeProjections(ProjectionSyncMode.FullReload)`，抑制中间 `EntriesChanged` 同步。
+- 规范写走 `StoreGrain` → 原子 `LauncherJson.Save`；导入/导出读写包 `IConfigExchangeService`。
+- 启动历史保存用 `LaunchSaveResult`，区分"启动前保存失败"与"启动后历史保存失败"。
 
-### Backup Rotation
+## 原子写（`LauncherJson.cs`）
 
-Keeps up to 3 generations: `.bak` → `.bak.1` → `.bak.2` → delete.
+temp 文件 → 可选备份轮转 → 原子替换。规则：
+1. 先写 temp，绝不直接覆盖真实文件。
+2. temp 名含 `Guid.NewGuid():N`。
+3. 目标存在 → `File.Replace`（同 NTFS 卷原子，`MoveFileEx MOVEFILE_REPLACE_EXISTING`）；首次保存（目标不存在）→ `File.Move`。`File.Move(overwrite:true)` 非原子，禁用。
+4. 崩溃遗留 temp 由 `CleanupStaleTempFiles` 启动时清理。
 
-**Source:** `LauncherJson.RotateBackups(fullPath, maxBackups = 3)`
+备份轮转（最多 3 代 `.bak → .bak.1 → .bak.2 → 删`）：copy-then-rotate（先 copy 到 `bak-temp-{Guid}` 再 rotate，最后 move 到 `.bak`），避免旋转中 `.bak` 缺失窗口。
 
-**Order:** copy current file to `bakTempPath` → rotate existing `.bak*` files → atomically `File.Move(bakTempPath, fullPath + ".bak")`. This avoids the window where `.bak` is missing mid-rotation.
+行尾：持久化 JSON 一律 LF（`NormalizeLineEndings` → `ReplaceLineEndings`）。
 
-### Line Ending Normalization
+## AOT source-gen 序列化（2026-07-12）
 
-All persisted JSON uses LF (`\n`) — matches `.gitattributes` `* text=auto`.
+`LauncherJsonContext`：`[JsonSourceGenerationOptions(WriteIndented=false, ReadCommentHandling=Skip, AllowTrailingCommas=true, MaxDepth=64)]` + 每个类型 `[JsonSerializable]`。规则：
+1. 选项写在 context 类 attribute，非 `JsonSerializerOptions`（运行时 source-gen 只读 attribute）。
+2. 泛型（如 `List<LaunchEntry>`）需显式 `[JsonSerializable]`。
+3. 新 `Load<T>` / `Save<T>` 类型必须注册，否则 `GetTypeInfo(typeof(T))` 返回 null 运行期抛。
 
-```csharp
-private static string NormalizeLineEndings(string text) =>
-    text.ReplaceLineEndings(RepositoryLineEnding);
-```
+读写用 `JsonTypeInfo<T>` 重载：`JsonSerializer.Deserialize(stream, jsonTypeInfo)` / `Serialize(value, jsonTypeInfo)`（AOT 安全，禁 `JsonSerializerOptions` 重载）。
 
-### Native AOT: Source-Generated JsonSerializerContext (2026-07-12)
+Loose Read / Strict Write：读静默跳过未知键（前向兼容）；写只写 C# record 声明的属性。
 
-For Native AOT publishing (`-p:PublishAot=true`), `System.Text.Json` uses a **source-generated** `JsonSerializerContext` instead of reflection-based serializers. Every type that passes through `LauncherJson.Load<T>` / `Save<T>` must be registered.
+## 单文件存储（2026-07-08 起）
 
-**Source:** `src/avalonia-launcher/src/WTLauncher.Core/LauncherJsonContext.cs`
+`config/launcher.json` 五段合一：
 
-```csharp
-[JsonSourceGenerationOptions(
-    WriteIndented = false,
-    ReadCommentHandling = JsonCommentHandling.Skip,
-    AllowTrailingCommas = true,
-    MaxDepth = 64)]
-[JsonSerializable(typeof(LauncherStoreFile))]
-[JsonSerializable(typeof(LauncherSettings))]
-[JsonSerializable(typeof(LaunchEntry))]
-[JsonSerializable(typeof(LauncherPreset))]
-[JsonSerializable(typeof(List<LaunchEntry>))]
-[JsonSerializable(typeof(List<LauncherPreset>))]
-[JsonSerializable(typeof(EntryName))]
-[JsonSerializable(typeof(EntryId))]
-[JsonSerializable(typeof(DirectoryPath))]
-[JsonSerializable(typeof(LauncherStore.LegacyPresetDocument))]
-internal sealed partial class LauncherJsonContext : JsonSerializerContext
-{
-}
-```
+| 段 | 类型 | 所有者 |
+|----|------|--------|
+| `schemaVersion` | `int`（=2） | `LauncherStore.ExpectedStoreSchemaVersion` |
+| `settings` | `LauncherSettings` | 窗口态 / 排序过滤 / 命令模板 / 搜索历史 |
+| `entries` | `ImmutableList<LaunchEntry>` | 启动按钮 |
+| `presets` | `ImmutableList<LauncherPreset>` | 保存选择组 |
+| `defaultPresetId` | `string` | 启动激活预设 |
 
-**Key rules:**
-1. `[JsonSourceGenerationOptions]` on the context class --- NOT on `JsonSerializerOptions`. At runtime, source gen only reads options from the attribute, not from the options object.
-2. All generic types used (e.g., `List<LaunchEntry>`) must have explicit `[JsonSerializable]` attributes --- `JsonSerializerContext` does not auto-generate for generic type arguments.
-3. **new type -> add attribute** --- every new `LauncherJson.Load<T>` / `Save<T>` call with a type not yet registered will throw at runtime via `GetTypeInfo(typeof(T))` returning null.
+schemaVersion 单一源：只在 `LauncherStoreFile` 顶层；`LauncherSettings` 无 `SchemaVersion`（历史双版本造成漂移，pitfalls §6.1）。前向兼容：未知键跳过，旧 `settings.schemaVersion` 静默丢弃并在下次保存移除（pin：`LauncherStoreLoadFailureTests.LauncherSettings_LegacySchemaVersionInJson_LooseReadSkipsUnknownKey`）。Schema-First（Corvus.JsonSchema）否决：C# record 即内部持久化 schema，双源增漂移风险。
 
-**Loading pattern** (uses `JsonTypeInfo<T>` for AOT safety):
-```csharp
-var typeInfo = (JsonTypeInfo<T>)LauncherJsonContext.Default.GetTypeInfo(typeof(T))!;
-return JsonSerializer.Deserialize(stream, typeInfo);
-```
+`SchemaMigrationRegistry` 延后：迁移面仅 1 条（`MigrateFromLegacyFiles` 一次性三文件→单文件），无 v3 bump。≥2 条迁移路径或 v3 结构性变更时重审。
 
-**Saving pattern** (AOT-safe `JsonSerializer.Serialize<T>(T, JsonTypeInfo<T>)`):
-```csharp
-var typeInfo = (JsonTypeInfo<T>)LauncherJsonContext.Default.GetTypeInfo(typeof(T))!;
-var json = NormalizeLineEndings(JsonSerializer.Serialize(value, typeInfo));
-```
+备份恢复链：`LoadWithRecovery` 按 `.bak → .bak.1 → .bak.2` 搜索首个有效备份（≤ `DefaultMaxBackups`）。不变量：`RotateBackups` 不超 `maxBackups`；`CleanupStaleTempFiles` 只删匹配 `\.(tmp|stage|bak-tmp|recovery)-[0-9a-f]{32}$`，且获取 `SaveLock` 防删进行中保存的 temp；静态 `SaveLock` 序列化所有实例保存。
 
-### Serializer Options
+## 写路径编译期强制（WT1003）
 
-Serialization options are set via `[JsonSourceGenerationOptions]` on `LauncherJsonContext`. Read options are lenient (forward-compatible), write options are strict via source-gen (only known fields written):
+`DispatchMustBeOnlyWritePathAnalyzer`：`LauncherStore.Save` 仅允许在 `StoreGrain.Dispatch` / `DispatchErrorOr` 调用。反例：`TrySaveWindowBounds` 直写绕过 grain 造成状态 desync；测试 fixture 经 `NoWarn` 豁免。
 
-- `ReadCommentHandling = JsonCommentHandling.Skip` → silent forward-compat for newer config keys.
-- `AllowTrailingCommas = true` → user-friendly config editing.
-- `UnmappedMemberHandling` not set → defaults to `Skip` for reading, irrelevant for source-gen writes.
-- `MaxDepth = 64` → nested structure limit.
-- Source-gen overloads (`JsonSerializer.Deserialize(stream, jsonTypeInfo)` / `Serialize(value, jsonTypeInfo)`) are used instead of `JsonSerializerOptions`-based overloads for Native AOT safety.
+## 读侧单一源（2026-07-24）
 
-### Loose Read / Strict Write (2026-07-23, Phase 1 Scheme B)
+`CurrentSettings => _storeGrain.Select(s => s.Settings)`，消除 `_settings` 漂移。过渡态：构造期与 DragWorkflow 同步保留 `_settings` 工作副本；彻底移除需 DragWorkflow 直接读写 StoreGrain。
 
-The serialization strategy uses **Loose Read + Strict Write**:
+`BuildStoreFile()` 是唯一手工组装 `LauncherStoreFile` 的方法；所有保存路径必经它。门禁 `settings-single-source-buildstorefile` 断言该签名恰好 1 处。
 
-- **Read:** Unknown JSON keys are silently skipped. This enables forward compatibility — an older app version can load a config written by a newer version that added fields.
-- **Write:** Source-gen only writes properties declared on the C# record. Unknown properties cannot be written, making the C# record the effective schema.
+协作类工作态不是双源：`LauncherDragReorderWorkflow._settings` 在 Preview 前变异；StoreGrain 是单一源，保存失败内存不变；VM 经 5 处 `Drag.cs` 同步 + `_storeGrain.Select` 读取；7 个等价测试钉死。
 
-**Trade-off:** Silent forward-compatibility is preferred over fail-loud at load time. Developer mistakes (e.g., adding a record field without `[JsonPropertyName]`) are caught at write time, not read time. For the older approach (fail-loud on read), see "Schema-First Enforcement" in the history below.
+## 为何 settings 嵌套不拆
 
-### Historical: Schema-First `Disallow` (2026-07-10 — 2026-07-23)
+`LauncherSettings` 只含 UI/展示态；业务态在顶层。单文件原子性优于多文件（拆开需两阶段提交，单用户启动器过度）。仅当独立高频写入（如每次 resize 写 window bounds）出现才重审。
 
-Before Phase 1, `UnmappedMemberHandling = Disallow` was used, making the C# record the **single source of truth** for JSON structure — unknown keys threw `JsonException`. This was replaced with Loose Read for forward compatibility (Scheme B architecture decision).
+## API 与路径解析
 
----
+`LauncherStore.Load/Save/ResolveStorePath/MigrateFromLegacyFiles`；常量 `ExpectedStoreSchemaVersion=2`、`StoreFileName="launcher.json"`、`ConfigDirectoryName="config"`。
 
-## Single-File Store (since 2026-07-08)
+`ResolveStorePath` 顺序：显式 CLI 路径 → 自 cwd 向上找 `config/launcher.json` + `README.md` → 自 app base 向上 → 首个非空候选根。`README.md` 是 git 根标记。
 
-**Source:** `src/avalonia-launcher/src/WTLauncher.Core/LauncherStore.cs`, `LauncherStoreFile.cs`
+加载管线：`ThrowIfStorePathMissing → MigrateFromLegacyFiles（旧三文件存在且 launcher.json 缺）→ LoadWithRecovery(LoadRequired<LauncherStoreFile>) → 文件 <50MB → 反序列化 → SchemaVersion > Expected 抛 InvalidDataException("from a newer version")`。值对象校验在用时，不在 Store 层。
 
-The store is a **single file** `config/launcher.json` owning five sections together:
+首次运行：文件缺失返回 `new LauncherStoreFile()`（空 entries/默认 settings），正常路径非错误（抛错会静默退出）。
 
-```json
-{
-  "schemaVersion": 2,
-  "settings":     { "schemaVersion": 2, "lastFilterText": "", ... },
-  "entries":      [ { "id": "...", "name": "...", "directory": "...", "command": "...", ... } ],
-  "presets":      [ { "id": "...", "name": "...", "entryIds": [...] } ],
-  "defaultPresetId": "core-projects"
-}
-```
+备份恢复两路径：文件存在但损坏（Json/InvalidData/IO 异常）→ 试 `.bak` 原子恢复 + 重试（重试在原 try/catch 外，防备份也损坏时死循环）+ `OnRecoveryFromBackup` 钩子；仍失败重抛原异常。文件缺失 → 试 `.bak` `File.Move`；无备份返回默认。
 
-| Section | Type | Owner |
-|---------|------|-------|
-| `schemaVersion` | `int` (currently `2`) | `LauncherStore.ExpectedStoreSchemaVersion` |
-| `settings` | `LauncherSettings` | window state, sort/filter, command templates, search history |
-| `entries` | `ImmutableList<LaunchEntry>` | the workspace buttons |
-| `presets` | `ImmutableList<LauncherPreset>` | saved selection groups |
-| `defaultPresetId` | `string` | which preset is active on startup |
+Schema 版本：`> Expected` 拒绝（升级提示，防降级静默丢数据）；`<= Expected` 接受。bump 前加旧→新迁移。
 
-### Single Source of Truth: SchemaVersion (2026-07-09, task 07-09-schema-first-persistence)
+Legacy 迁移（一次性 F06）：`MigrateFromLegacyFiles`：读旧 `config.json`（flat entries）/ `settings.json`（best-effort）/ `presets.json`（best-effort）→ 建 `LauncherStoreFile` 存 `launcher.json`（带备份）→ 旧文件改 `.bak`（不再读）。
 
-`schemaVersion` lives **only** at the `LauncherStoreFile` top level. `LauncherSettings` does NOT have its own `SchemaVersion` field — historical dual-versioning (top-level `=2` + nested `=1`) created drift bugs (pitfalls §6.1).
+## 并发与清理
 
-**Why single source:** The whole file is one atomic unit (single-file persistence). Versioning the settings section separately from entries/presets has no meaning — they all migrate together. The previous `LauncherSettings.SchemaVersion = 1` was a dead field never validated, and 4 mutation sites reset it on every save — confusing and bug-prone.
-
-**Forward compatibility:** Loose Read (2026-07-23, Phase 1). Unknown JSON keys are silently skipped at load time. The legacy `settings.schemaVersion` key is no longer rejected — it is silently dropped and naturally removed on the next save (since source-gen writes only known fields). Pinned by `LauncherStoreLoadFailureTests.LauncherSettings_LegacySchemaVersionInJson_LooseReadSkipsUnknownKey`.
-
-**Decision:** Schema-First migration (Corvus.JsonSchema source generator) was rejected — C# records ARE the schema for app-internal persistence. Adding a JSON Schema file would create a second source of truth and increase drift risk, not decrease it. Corvus is correct for API contracts / externally-authored config, not for sole-author sole-reader app persistence.
-
-### SchemaMigrationRegistry: deferred until v3 bump (2026-07-09, task 07-09-schema-migration-registry)
-
-A versioned `SchemaMigrationRegistry` (EF Core / Rails style) was considered and **deferred**. The current migration surface is exactly ONE path: `MigrateFromLegacyFiles` (one-time, three-file → single-file, already executed on all real installations). There is no v3 schema bump planned.
-
-**Why deferred:**
-- Registry requires at least 2 migration paths to justify the abstraction (else it's an "interface with one implementation").
-- Field additions inside an existing record are now **breaking changes** under `UnmappedMemberHandling = Disallow` (2026-07-10): removing or renaming a `[JsonPropertyName]` fails loudly on the next load of any pre-change file. This is the intended schema-first contract — it does not eliminate migration work, it just surfaces it immediately instead of letting it drift silently. The current migration surface is still one path, and now it cannot grow unnoticed.
-- The 60-line static `MigrateFromLegacyFiles` is well-tested, self-documenting, and isolated.
-
-**When to revisit:**
-1. v3 schema bump involves breaking structural change (not just field additions), OR
-2. Two parallel migration paths coexist (e.g., legacy + v2 → v3).
-
-Until then, hand-rolled one-shot migration is correct for this codebase.
-
-`LauncherStoreFile` is a `sealed record` with init-only properties — mutations produce a new instance via `with { }`.
-
-### Backup Rotation and Recovery (2026-07-24, Phase 3 triple-cut-arch)
-
-**Source:** `src/avalonia-launcher/src/WTLauncher.Core/LauncherJson.cs`
-
-`RotateBackups` uses copy-then-rotate order to avoid crash windows:
-1. Copy current file to `bak-temp-{Guid}`
-2. Rotate chain: `.bak` → `.bak.1`, `.bak.1` → `.bak.2`, delete oldest
-3. Move `bak-temp-{Guid}` → `.bak`
-
-**Recovery chain:** `LoadWithRecovery` searches `.bak` → `.bak.1` → `.bak.2` in order (up to `DefaultMaxBackups`), returning the first valid backup found.
-
-**Crash safety:** `CleanupStaleTempFiles` acquires `SaveLock` so it cannot delete an in-progress save's temp file. The static `SaveLock` serializes all saves across all AppStore instances.
-
-**Invariants:**
-- `RotateBackups` never creates more than `maxBackups` managed backup files
-- `CleanupStaleTempFiles` only deletes files matching `\.(tmp|stage|bak-tmp|recovery)-[0-9a-f]{32}$` — never unrelated files
-
-### Compile-Time Write Path Enforcement (2026-07-24, Phase 2 triple-cut-arch)
-
-**Source:** `WTLauncher.Analyzers/DispatchMustBeOnlyWritePathAnalyzer.cs`
-
-Rule WT1003 (compile-time error): `LauncherStore.Save` must only be called from `StoreGrain.Dispatch` or `StoreGrain.DispatchErrorOr`. Any direct call in production code is rejected.
-
-**Why:** `TrySaveWindowBounds` (H2 bug) was writing directly to disk via `LauncherStore.Save`, bypassing the store grain. This caused persistent state desync: the grain state never saw the window bounds change, so the next Dispatch overwrote them. Test infrastructure (test fixture setup) suppresses this rule via `NoWarn`.
-
-### Read-Side State Single-Sourcing (2026-07-24, Phase 1 triple-cut-arch)
-
-**Source:** `MainWindowViewModel.cs`
-
-`CurrentSettings` property reads directly from `StoreGrain.Select(s => s.Settings)`, eliminating `_settings` field drift:
-
-```csharp
-internal LauncherSettings CurrentSettings => _storeGrain.Select(s => s.Settings);
-```
-
-**Transition:** `_settings` field retained as working copy during construction and DragWorkflow sync. Future elimination requires DragWorkflow to read/write through StoreGrain directly.
-
-### Single Canonical Assembler: BuildStoreFile (2026-07-09, task 07-09-settings-single-source)
-
-`MainWindowViewModel.BuildStoreFile()` is the **only** method that hand-assembles a `LauncherStoreFile` for persistence. Every save path must route through it.
-
-**Why single assembler:** Pre-2026-07-09 there were two — `BuildStoreFile()` and `SaveSettingsToStore(settings)` — and the latter hand-assembled the same 4 fields (`Entries` / `Settings` / `Presets` / `DefaultPresetId`) independently. The dual path meant any field-addition or re-ordering had to be mirrored in both sites, creating drift risk.
-
-**Pin gate:** `scripts/verify.ts` check `settings-single-source-buildstorefile` regex-counts the unique hand-assembly signature in `MainWindowViewModel.cs` and asserts exactly 1 match. Regression triggers a verify failure.
-
-**Collaborator working state is NOT dual truth:** `LauncherDragReorderWorkflow._settings` and the store grain state are sometimes mistaken for dual-truth — they are not. The workflow mutates `_settings` during Preview before persist; `StoreGrain` holds the single source and leaves memory unchanged on save failure (save-first-then-commit). Main VM syncs via `_settings = _dragReorderWorkflow.Settings` (5 sites in `Drag.cs`) and `_settings = _storeGrain.Select(s => s.Settings)` for store reads. This manual sync is the cost of collaborator-boundary design, NOT a bug. Verified by 7 equivalence tests in `MainWindowViewModelTests.DragTests.cs`.
-
-
-
-### Why Settings Is Nested, Not Split (audit 2026-07-09)
-
-The 2026-07-09 schema-driven-architecture audit re-examined whether `settings` should be split out of `launcher.json` into a separate file (concern S13). **Decision: keep nested.**
-
-**Why nested is correct:**
-1. **UI/business state already separated at the data-structure level** — `LauncherSettings` contains only UI/presentation state (lastFilterText, sortMode, entryViewMode, window bounds, command templates, search history, customEntryOrder, requireConfirmationForLaunches). Business state (entries, presets, defaultPresetId) lives at the top level. The nested design does not mix concerns.
-2. **Single-file atomicity beats multi-file** — splitting into two files introduces a cross-file consistency window: settings.json writes succeed while entries.json fails (or vice versa). The current `LauncherJson.Save` writes one file atomically via temp→`File.Replace`→`.bak` rotation. Splitting would require a two-phase commit, which is overkill for a single-user launcher.
-3. **No real problem to solve** — 19 entries, 2 presets, 9 UI settings run cleanly in one file. No user-visible bug, no test pressure, no perf constraint driving a split.
-
-**When to revisit:** only if a real workload emerges that needs independent settings writes (e.g., window bounds written on every resize while entries are unchanged, causing excessive entry-array serialization). Until then, single-file wins.
-
-### API
-
-```csharp
-public static class LauncherStore
-{
-    public const int ExpectedStoreSchemaVersion = 2;
-    public const string StoreFileName = "launcher.json";
-    public const string ConfigDirectoryName = "config";
-
-    public static LauncherStoreFile Load(string storePath);
-    public static void Save(LauncherStoreFile store, string storePath, bool backup = true);
-    public static string ResolveStorePath(string? explicitPath, string? currentDirectory = null, string? appBaseDirectory = null);
-    public static LauncherStoreFile? MigrateFromLegacyFiles(string configDirectory);
-}
-```
-
-### Path Resolution Strategy (`ResolveStorePath`)
-
-```
-1. Explicit CLI path → use directly if it points at config/launcher.json
-2. Search upward from current directory → find config/launcher.json + README.md
-3. Search upward from app base directory → find config/launcher.json + README.md
-4. Fallback: build config/launcher.json under the first non-null candidate root
-```
-
-Repository marker (`README.md`) is the **git root signal**. Without it, upward search continues.
-
-### Validation Pipeline
-
-`LauncherStore.Load()` runs a strict pipeline:
-
-```
-ThrowIfStorePathMissing
-  → MigrateFromLegacyFiles (if legacy config.json/presets.json/settings.json exist and launcher.json doesn't)
-  → LoadWithRecovery(LauncherJson.LoadRequired<LauncherStoreFile>)
-      → File size check (< 50 MB)
-      → Deserialize → LauncherStoreFile
-      → SchemaVersion > Expected → throw InvalidDataException("from a newer version")
-```
-
-Value-object validation (`EntryId.Parse`, `EntryName.Parse`, etc.) happens at use time, not in the store layer. JSON deserialization handles structural validity; value objects handle semantic validity.
-
-### First-Run Bootstrap
-
-When `launcher.json` is missing, `LoadWithRecovery` returns `new LauncherStoreFile()` (empty entries, default settings). First-run is a normal path, NOT an error. Throwing on missing file causes silent exit (no MainWindow, no error dialog).
-
-### Backup Recovery
-
-`LoadWithRecovery` runs two recovery paths:
-
-1. **File exists but is corrupt** (`JsonException` / `InvalidDataException` / `IOException`):
-   - Try `path + ".bak"`: atomic recovery via temp-file → `File.Replace`.
-   - Retry `loadAndValidate(path)` — OUTSIDE the original try/catch to avoid infinite loop when backup is also corrupt.
-   - Invoke `OnRecoveryFromBackup` hook (logged by App layer).
-   - If recovery fails or no backup exists, re-throw the original exception.
-
-2. **File missing**:
-   - Try `path + ".bak"`: simple `File.Move` (target doesn't exist, atomicity not critical).
-   - If no backup, return `defaultValue` (first-run bootstrap).
-
-**Rationale:** The save path creates `.bak` files — the load path must consume them. Otherwise backup is dead code.
-
-### Schema Version Validation
-
-```csharp
-public const int ExpectedStoreSchemaVersion = 2;
-
-if (store.SchemaVersion > ExpectedStoreSchemaVersion)
-    throw new InvalidDataException(
-        $"Launcher store schema version {store.SchemaVersion} is from a newer version of the app. Please upgrade WT Launcher.");
-```
-
-**Migration contract:**
-- Schema versions **above** expected → reject with upgrade message (file is newer than app → prevents silent data loss on downgrade).
-- Schema versions **at or below** expected → accept. No downward migration code yet — when bumping `ExpectedStoreSchemaVersion`, add a migration path that reads the old version and transforms it to the new format BEFORE validation.
-
-### Legacy Migration (one-time, F06)
-
-`MigrateFromLegacyFiles(configDir)` runs once when `launcher.json` doesn't exist but `config.json` does:
-
-1. Load legacy `config.json` (flat `List<LaunchEntry>`).
-2. Load legacy `settings.json` if present (best-effort, default on failure).
-3. Load legacy `presets.json` if present (best-effort, empty on failure).
-4. Build `LauncherStoreFile` and save to `launcher.json` (with backup).
-5. Rename legacy files to `.bak` (best-effort).
-
-After migration, the legacy files are preserved as `.bak` and never read again.
-
-## Atomic Write: `File.Replace` vs `File.Move`
-
-`Save` uses **both**, depending on whether the target exists:
-
-- **Target exists** → `File.Replace(temp, target, null)` — backed by `MoveFileEx(MOVEFILE_REPLACE_EXISTING)`, atomic on the same NTFS volume.
-- **Target missing** (first save) → `File.Move(temp, target)` — `File.Replace` requires the target to already exist.
-
-`File.Move(temp, target, overwrite: true)` is **NOT atomic** on Windows — it decomposes into delete+rename — and is not used.
-
-## Concurrency: Save Lock (2026-07-23, Phase 2)
-
-`LauncherJson.Save` is protected by a `private static SemaphoreSlim(1, 1)` to serialize concurrent writes:
-
-```csharp
-SaveLock.Wait();
-try { /* temp file, backup rotation, atomic replace */ }
-finally { SaveLock.Release(); }
-```
-
-**Why:** `StoreGrain` already serializes access through its `Grain<TState>` lock (read/mutate serialized). The Save lock is defense-in-depth against cross-instance or direct `LauncherStore.Save` calls from multiple threads.
-
-## Stale Temp Cleanup
-
-**Source:** `LauncherJson.CleanupStaleTempFiles(configDir)`
-
-At startup (before any store load), enumerate `*.tmp-*`, `*.stage-*`, `*.bak-tmp-*`, `*.recovery-*` files matching the app's `.<kind>-<32-hex-chars>` naming convention and delete them. Safe to call every startup — failures are silently ignored. Catches orphaned files from crashed Save() or recovery operations.
+`LauncherJson.Save` 用 `private static SemaphoreSlim(1,1)` 序列化写（防御跨实例/直接调用）。`CleanupStaleTempFiles` 启动时删匹配命名的孤儿 temp，失败静默忽略。
 
 ## Forbidden Patterns
 
-- ❌ **Direct file overwrite** — always use `LauncherJson.Save()` (temp + atomic replace).
-- ❌ **`File.Move(overwrite: true)`** — NOT atomic on Windows. Use `File.Replace` when the target exists.
-- ❌ **CRLF in persisted JSON** — always LF, verified by `verify.ps1`.
-- ❌ **Using `JsonSerializer.Serialize` directly** — always go through `LauncherJson.Save()`.
-- ❌ **Throwing on FileNotFound for Load** — return defaults for first-run bootstrap.
-- ❌ **Adding serialized fields without `[JsonIgnore]` consideration** — every new field on a serialized record changes the JSON shape and breaks contract tests.
-- ❌ **Backup rotation in rotate-then-copy order** — if rotation crashes mid-flight, `.bak` is missing. Use copy-then-rotate.
+- ❌ 直接覆盖文件；用 `LauncherJson.Save()`。
+- ❌ `File.Move(overwrite:true)`（非原子）；目标存在用 `File.Replace`。
+- ❌ 持久化 JSON CRLF；必须 LF。
+- ❌ 直接 `JsonSerializer.Serialize`；经 `LauncherJson.Save()`。
+- ❌ Load 对 FileNotFound 抛；首次运行返回默认。
+- ❌ 序列化字段未考虑 `[JsonIgnore]`；新增字段改 JSON 形状会破契约测试。
+- ❌ rotate-then-copy 备份轮转；必须 copy-then-rotate。
 
----
+## 双层上限集合（如 SearchHistory ≤20）
 
-## Two-Layer Capped Collections
+上限在两层执行：Store 加载时截断（防手改 JSON 绕过）+ ViewModel 写入时截断（防运行时 bug）。测试必须两层都验证（VM 态 + round-trip `LauncherStore.Load()`）。
 
-当集合字段有最大条目限制时，上限在**两层**执行：
+## 已移除抽象（防重引入）
 
-1. **加载时（Store）**: `RequireXxx()` 在规范化加载后截断。防止手动编辑 JSON 绕过上限。
-2. **写入时（ViewModel）**: 写入方法在保存前截断。防止运行时逻辑 bug 超过上限。
-
-### 示例：SearchHistory（上限 20 条）
-
-**加载时** — `LauncherStore` 在加载后截断:
-```csharp
-// 去重 → 去空 → 去空白 → 上限 20
-if (normalized.Count > 20)
-    normalized.RemoveRange(20, normalized.Count - 20);
-```
-
-**写入时** — `MainWindowViewModel.RecordSearchTerm()`:
-```csharp
-// 去重移到最前 → 上限 20
-var newHistory = _settings.SearchHistory.RemoveAll(match).Insert(0, normalized);
-if (newHistory.Count > 20)
-    newHistory = newHistory.RemoveRange(20, newHistory.Count - 20);
-```
-
-**测试必须覆盖**: 两层都验证——VM 状态 + 文件持久化（round-trip via `LauncherStore.Load()`）。
-
-**Source:** `LauncherStore.cs`, `MainWindowViewModel.cs`.
-
----
-
-## Removed Abstractions (historical)
-
-The following were removed during the 2026-07 single-file refactoring and ponytail audits. They are listed here to prevent re-introduction:
-
-| Removed | Reason | Replaced By |
-|---------|--------|-------------|
-| `IStore` interface | One implementation, no polymorphism benefit | Direct `LauncherStore.Load/Save` calls |
-| `JsonStore` wrapper | Thin wrapper over `LauncherStore` | Direct calls |
-| `LiteDbStore` | LiteDB BSON mapper incompatible with init-only immutable records | `LauncherJson` (JSON) is the production store |
-| `MigrationTool` (JSON→LiteDB) | LiteDB deferred indefinitely then deleted | Removed entirely |
-| `NormalizeEntries` / `ValidateEntrySelectionFields` pipeline | Normalize pipeline removed in ponytail audit | Value-object `Parse` at use time |
-| Multi-file stage-all-then-commit (config.json + presets.json + settings.json) | Three-file store collapsed into `launcher.json` | Single-file atomic save inside `LauncherJson.Save` |
-| `LauncherPresetMutationSnapshot` (separate type) | Inlined — only one caller | Logic merged into `LauncherEntryMutationSnapshot` / `MainWindowViewModel` |
-| `LauncherEntryMutationSnapshot` / `LauncherSelectionMutationSnapshot` | **Deleted** 2026-07-21 | Rollback via `AppStore.Dispatch` internal revert + `RestoreVmStateFromStore()` |
-| `AppStore.Mutate` / `MutateAsync` / `MutateErrorOr` | **Deleted** 2026-07-23 (Phase 2) | Callers use `Dispatch` / `DispatchAsync` / `DispatchErrorOr` directly |
-| `LooseOptions` / `StrictOptions` (JsonSerializerOptions fields) | **Deleted** 2026-07-23 (Phase 1) | `JsonTypeInfo<T>` from `LauncherJsonContext.Default` — AOT-safe overloads |
-| `ExceptionFilters.UnwrapAggregates` | **Deleted** 2026-07-23 (Phase 2) | Inline unwrap in DEBUG guard; Core `IsRecoverable` handles production unwrap |
+| 移除 | 原因 | 替代 |
+|------|------|------|
+| `IStore` | 单一实现 | 直接 `LauncherStore.Load/Save` |
+| `JsonStore` | 薄包装 | 直接调用 |
+| `LiteDbStore` | LiteDB BSON 与 init-only 不可变 record 不兼容 | `LauncherJson` |
+| `MigrationTool` | LiteDB 无限期延后后删除 | 删除 |
+| `NormalizeEntries` / `ValidateEntrySelectionFields` | ponytail 移除 | 值对象用时 `Parse` |
+| 多文件 stage-all-then-commit | 三文件并入 `launcher.json` | 单文件原子保存 |
+| `LauncherPresetMutationSnapshot` | 单一调用方内联 | 并入 mutation snapshot / MWVM |
+| `LauncherEntryMutationSnapshot` / `LauncherSelectionMutationSnapshot` | 2026-07-21 删除 | `AppStore.Dispatch` 内部 revert + `RestoreVmStateFromStore()` |
+| `AppStore.Mutate` / `MutateAsync` / `MutateErrorOr` | 2026-07-23 删除 | `Dispatch` / `DispatchAsync` / `DispatchErrorOr` |
+| `LooseOptions` / `StrictOptions` | 2026-07-23 删除 | `JsonTypeInfo<T>` AOT 重载 |
+| `ExceptionFilters.UnwrapAggregates` | 2026-07-23 删除 | DEBUG guard 内联解包；Core `IsRecoverable` 处理生产解包 |

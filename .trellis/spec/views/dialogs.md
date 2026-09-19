@@ -1,170 +1,58 @@
 # Dialogs — Views Layer
 
-> Confirmation windows, entry editor, preset editor — the dialog contract.
+> 确认窗口、entry/preset 编辑器：对话框契约。
 
----
+## Wiring Contract（2026-08-15）
 
-## Wiring Contract Update (2026-08-15)
+- `IDialogService` 禁暴露 `Func<...>` / `Action<...>` 桥参数。
+- 命令/目录管理对话框收 `ICommandEditApplier` / `IDirectoryEditApplier`；对话框 VM 经端口应用编辑，绝不自己持久化。
+- `EntryDetailsWindow` / `PresetDetailsWindow` 收 `IEntryDraftValidator`；code-behind 禁直接调 Core 规范化。
+- Views 只经 `DialogService` 建窗；业务校验与文件 IO 留在 feature 端口后。
 
-- `IDialogService` must not expose `Func<...>` or `Action<...>` bridge parameters.
-- Command/directory management dialogs receive `ICommandEditApplier` / `IDirectoryEditApplier`; the dialog ViewModel applies edits through the port and never persists itself.
-- `EntryDetailsWindow` and `PresetDetailsWindow` receive `IEntryDraftValidator`; code-behind must not call Core normalization directly.
-- Views construct windows only through `DialogService`; business validation and file IO stay behind feature ports.
+## 对话框清单
 
-## Dialog Inventory
+| 对话框 | 文件 | 返回 | 用途 |
+|--------|------|------|------|
+| Confirm Launch | `ConfirmLaunchWindow.cs` | `bool` | 单启动确认 |
+| Confirm Batch Launch | `ConfirmBatchLaunchWindow.cs` | `bool` | 批量确认 |
+| Confirm Entry Delete | `ConfirmEntryDeleteWindow.cs` | `bool` | 删条目确认 |
+| Confirm Preset Delete | `ConfirmPresetDeleteWindow.cs` | `bool` | 删预设确认 |
+| Entry Details | `EntryDetailsWindow.cs` | `EntryDraft?` | 增/改条目 |
+| Preset Details | `PresetDetailsWindow.cs` | `string?` | 保存/更新预设 |
+| Directory Management | `DirectoryManagementWindow.cs` | `null` | 浏览/合并目录 |
+| Directory Edit | `DirectoryEditDialog.cs` | `string?` | 编辑目录路径 |
+| Command Edit | `CommandEditDialog.cs` | `string?` / `(string,string)` | 编辑命令/模板 |
+| Discover Agents | `DiscoverAgentsWindow.cs` | `DiscoveredAgent[]?` | 自动发现 CLI agent |
+| Command Management | `CommandManagementWindow.axaml` | `null` | 管理命令/模板 |
 
-| Dialog | File | Return Type | Purpose |
-|--------|------|-------------|---------|
-| Confirm Launch | `ConfirmLaunchWindow.cs` | `bool` | Single launch "are you sure?" |
-| Confirm Batch Launch | `ConfirmBatchLaunchWindow.cs` | `bool` | Batch launch confirmation |
-| Confirm Entry Delete | `ConfirmEntryDeleteWindow.cs` | `bool` | Delete entry confirmation |
-| Confirm Preset Delete | `ConfirmPresetDeleteWindow.cs` | `bool` | Delete preset confirmation |
-| Entry Details | `EntryDetailsWindow.cs` | `EntryDraft?` | Add / edit entry |
-| Preset Details | `PresetDetailsWindow.cs` | `string?` | Save / update preset |
-| Directory Management | `DirectoryManagementWindow.cs` | `null` | Browse/merge directories |
-| Directory Edit | `DirectoryEditDialog.cs` | `string?` | Edit directory path |
-| Command Edit | `CommandEditDialog.cs` | `string?` or `(string, string)` | Edit command or template |
-| Discover Agents | `DiscoverAgentsWindow.cs` | `DiscoveredAgent[]?` | Auto-discover CLI agents |
-| Command Management | `CommandManagementWindow.axaml` | `null` | Manage commands/templates |
+## 对话框模式
 
----
+1. 构造收类型化参数对象（确认收 target；编辑器收 draft，null=新建）。
+2. `ShowDialog<T>` 返回有意义结果（`bool`=确认/取消；`EntryDraft?` null=取消）。
+3. 只收集输入返回；VM 决定处置，绝不直接调业务逻辑。
 
-## Dialog Pattern
+共享 helper：`LauncherDialogButtons.cs` / `LauncherDialogText.cs`。两个对话框按钮布局/文本相似即抽到 helper，不复刻 chrome。注入在 `MainWindow.axaml.cs`（VM 只知 delegate，View 知 `ShowDialog<>`，此处是 seam）。
 
-Every dialog follows the same pattern:
+## 一致性 Token（V03）
 
-### 1. Constructor takes a typed parameter object
+| Token | 值 | 消费方 |
+|-------|----|--------|
+| `DialogTitleFontSize` | 20 | `LauncherDialogText.Title()`、`CommandManagementWindow.axaml` `{StaticResource DialogTitleFontSize}` |
+| `DialogOuterPadding` | 24 | 全部程序化对话框、`CommandManagementWindow.axaml` `{StaticResource DialogOuterPadding}` |
+| `DialogFooterTopMargin` | 14 | `LauncherDialogButtons.Footer()`、`CommandManagementWindow.axaml` `{StaticResource DialogFooterMargin}`（Margin `0,14,0,0`） |
+| `DialogFooterSpacing` | 10 | `LauncherDialogButtons.Footer()` 按钮水平间距 |
 
-```csharp
-// Confirmation dialogs take a "target" describing what to confirm
-new ConfirmEntryDeleteWindow(LauncherEntryDeleteTarget target)
+规则：`Title()` 用 `DialogTitleFontSize`，禁每对话框 FontSize 覆盖；外容器用 `DialogOuterPadding`，禁字面量 20/22/24；`Footer()` 收 `DialogFooterTopMargin`，除非父 Grid `RowSpacing=14` 已提供（用 0 防双倍）；`CommandManagementWindow.axaml` 消费三个 `{StaticResource}`，禁 XAML 字面量。
 
-// Editor dialogs take a "draft" for editing (null = create new)
-new EntryDetailsWindow(LaunchEntry? entry, int referenceCount, ...)
-```
+## 破坏性对话框语义（V03）
 
-### 2. Returns meaningful result via `ShowDialog<T>`
+危险删除/移除对话框偏向安全：Cancel `IsDefault=true` + `IsCancel=true` + `Opened` 初始焦点；破坏按钮 `IsDefault=false` + `LauncherDialogButtons.Destructive()`。受影响：`ConfirmEntryDeleteWindow`、`ConfirmPresetDeleteWindow`。安全/肯定对话框（launch/save/confirm）继续 Primary 为默认 + 初始焦点主操作。
 
-```csharp
-// bool: user clicked confirm / cancel
-var accepted = await new ConfirmLaunchWindow(plan).ShowDialog<bool>(owner);
-
-// EntryDraft?: null means canceled
-var draft = await new EntryDetailsWindow(entry, ...).ShowDialog<EntryDraft?>(owner);
-```
-
-### 3. Never calls business logic directly
-
-Dialogs only **collect user input** and return it. The ViewModel decides what to do with it.
-
----
-
-## Shared Dialog Helpers
-
-**Source:** `LauncherDialogButtons.cs`, `LauncherDialogText.cs`
-
-Common button layouts and text patterns shared across dialogs:
-
-```csharp
-// LauncherDialogButtons.cs
-public static class LauncherDialogButtons
-{
-    // Standard OK/Cancel button row
-    // Shared button styling
-}
-
-// LauncherDialogText.cs
-public static class LauncherDialogText
-{
-    // Shared label text patterns
-}
-```
-
-**Rule:** If two dialogs have similar button layouts or text, extract to these helpers. Don't duplicate dialog chrome.
-
----
-
-## Dialog Injection in MainWindow
-
-**Source:** `MainWindow.axaml.cs` lines 25-30
-
-```csharp
-public MainWindow(MainWindowViewModel viewModel) : this()
-{
-    DataContext = viewModel;
-    viewModel.ConfirmLaunchAsync = confirmation =>
-        new ConfirmLaunchWindow(confirmation).ShowDialog<bool>(this);
-    viewModel.RequestEntryDraftAsync = entry =>
-        new EntryDetailsWindow(entry, ...).ShowDialog<EntryDraft?>(this);
-    // ... all other dialogs
-}
-```
-
-**Why here:** The `MainWindow` knows about Avalonia's `Window.ShowDialog<>()`. The ViewModel only knows about `Func<>`. This is the seam.
-
----
-
----
-
-## Dialog Consistency Tokens (V03)
-
-Three tokens unify title font size, outer padding, and footer spacing across all programmatic dialogs:
-
-| Token | Value | Consumed By |
-|-------|-------|-------------|
-| `DialogTitleFontSize` | 20 | `LauncherDialogText.Title()`, `CommandManagementWindow.axaml` via `{StaticResource DialogTitleFontSize}` |
-| `DialogOuterPadding` | 24 | All programmatic dialogs (Border.Padding or Grid.Margin), `CommandManagementWindow.axaml` via `{StaticResource DialogOuterPadding}` |
-| `DialogFooterTopMargin` | 14 | `LauncherDialogButtons.Footer()`, `CommandManagementWindow.axaml` via `{StaticResource DialogFooterMargin}` (Margin: `0,14,0,0`) |
-| `DialogFooterSpacing` | 10 | `LauncherDialogButtons.Footer()` horizontal button spacing |
-
-**Rules:**
-- `LauncherDialogText.Title()` must use `LauncherDesignTokens.DialogTitleFontSize` — no per-dialog FontSize override.
-- All dialog outer containers must use `LauncherDesignTokens.DialogOuterPadding` — no per-dialog literal (20/22/24).
-- `LauncherDialogButtons.Footer()` must receive `LauncherDesignTokens.DialogFooterTopMargin` unless the parent Grid's `RowSpacing=14` already provides spacing (then use `0` to avoid double spacing).
-- `CommandManagementWindow.axaml` must consume `{StaticResource DialogOuterPadding}`, `{StaticResource DialogTitleFontSize}`, and `{StaticResource DialogFooterMargin}` — no XAML literals.
-
-**Source:** `LauncherDesignTokens.cs`
-
----
-
-## Destructive Dialog Semantics (V03)
-
-Dangerous delete/remove dialogs must bias user input toward safety:
-
-- Cancel button: `IsDefault=true`, `IsCancel=true`, receives initial focus in `Opened`.
-- Delete/destructive button: `IsDefault=false`, styled with `LauncherDialogButtons.Destructive()`.
-
-```csharp
-var cancel = LauncherDialogButtons.Cancel(isDefault: true);
-cancel.Click += (_, _) => Close(false);
-var delete = LauncherDialogButtons.Destructive("删除启动按钮", isDefault: false);
-delete.Click += (_, _) => Close(true);
-Opened += (_, _) => cancel.Focus();
-```
-
-**Affected dialogs:** `ConfirmEntryDeleteWindow`, `ConfirmPresetDeleteWindow`.
-
-Safe/affirmative dialogs (launch, save, confirm) continue using Primary as default with initial focus on the primary action.
-
----
-
-## Design Token Usage in Dialogs
-
-```csharp
-public const double DialogMinWidth = 420;
-public const double DialogFooterSpacing = 10;
-public const double DialogTitleFontSize = 20;
-public const double DialogOuterPadding = 24;
-public const double DialogFooterTopMargin = 14;
-```
-
-**Source:** `LauncherDesignTokens.cs`
-
----
+Design token 用法：`DialogMinWidth=420`、`DialogFooterSpacing=10`、`DialogTitleFontSize=20`、`DialogOuterPadding=24`、`DialogFooterTopMargin=14`。
 
 ## Forbidden Patterns
 
-- ❌ **Dialog calls `LauncherStore.Save()` directly** — return data, let ViewModel persist.
-- ❌ **Dialog modifies `MainWindowViewModel` state** — return result, let ViewModel handle.
-- ❌ **`ShowDialog<object>` with casting** — always use the correct typed return value.
-- ❌ **Dialog with no null-return for cancel** — canceled editing must return `null`, not a default object.
+- ❌ 对话框直调 `LauncherStore.Save()`；返回数据让 VM 持久化。
+- ❌ 对话框改 `MainWindowViewModel` 状态；返回结果让 VM 处置。
+- ❌ `ShowDialog<object>` + 强转；用正确类型化返回。
+- ❌ 取消无 null 返回；取消编辑必须返回 `null` 非默认对象。

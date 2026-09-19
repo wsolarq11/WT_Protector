@@ -1,303 +1,55 @@
 # Test Patterns
 
-> How to write tests in WTLauncher.Tests.
+> 如何写 `WTLauncher.Tests` 测试。
 
----
+## 命名
 
-## Test File Naming
+`<TypeUnderTest>Tests.cs`（单文件）或 `<TypeUnderTest>Tests.<Area>Tests.cs`（分区）。例：`LaunchArgumentBuilderTests.cs`、`MainWindowViewModelTests.DragTests.cs`。
 
-```
-<TypeUnderTest>Tests.cs                    # Single test file
-<TypeUnderTest>Tests.<Area>Tests.cs        # Split across areas
-```
+## Fixture
 
-**Examples:**
-- `LaunchArgumentBuilderTests.cs` — single class, one file
-- `MainWindowViewModelTests.DragTests.cs` — partial ViewModel, `Drag` area
-- `MainWindowViewModelTests.PresetCommandTests.cs` — partial ViewModel, `PresetCommand` area
-- `LauncherStoreLoadFailureTests.cs` — single class, persistence failure scenarios
+工厂方法：`LauncherPersistenceTestFixtures.cs` 提供 `Entry(id)` / `PresetFile(...)` / `Preset(...)`；VM 区测试在 `MainWindowViewModelTests.Shared.cs` 有私有 `Entry(...)`。规则：工厂 `private static`；只收测试相关参数；中文测试名（`"演示"` / `"项目"`）。
 
----
+临时目录：`TestRepositoryPaths.cs` / `TempDirectory.cs`（IDisposable）。规则：碰文件 I/O 的测试必用临时目录，禁写真实 `config/`。`TestRepositoryPaths` 以活跃单一标记 `config/launcher.json` + `README.md` + Avalonia 源根定位仓库；禁锚定退役 `config.json` / `settings.json` / `presets.json`。
 
-## Fixture Setup Pattern
+## 结构
 
-### Factory Methods
+Arrange-Act-Assert；`[Fact]` 单场景、`[Theory]` + `[InlineData]` 参数化。
 
-Each test shared file provides factory methods for creating test data:
+## 分层类别
 
-```csharp
-// LauncherPersistenceTestFixtures.cs (persistence-roundtrip helpers)
-public static LaunchEntry Entry(string id) => new() { Id = id, Name = id, Directory = ..., Command = "pwsh" };
-public static LauncherPresetFile PresetFile(params LauncherPreset[] presets) => new() { ... };
-public static LauncherPreset Preset(string id, params string[] entryIds) => new() { ... };
-```
+- Layer 0（Core）：纯函数直测（`LaunchArgumentBuilderTests`、`LauncherEntryLayoutCalculatorTests`、`LauncherEntryOrderTests`、`LauncherEntryVisibilityTests`）。
+- Layer 1-3（VM）：mock `Func<>` 注入（`ConfirmLaunchAsync = _ => Task.FromResult(true)`）。
+- Layer 4（Views）：测提取纯函数（`MainWindowDragInsertDecisionTests`、`LauncherDragGhostLayoutCalculatorTests`、`MainWindowEntryCardResolverTests`、`MainWindowEntryRowDoubleTapTests`）。
+- 契约：`StatusTextContractTests`、`MainWindowViewModelTests.CollectionContractTests`、`DialogBoundaryTests`、`PresetPersistenceTests`。
 
-ViewModel-area tests have their own private `Entry(id, name?, directory?, command?, selected?)` factory in `MainWindowViewModelTests.Shared.cs` for behavior-test ergonomics.
+## 架构规则（ArchUnitNET）
 
-**Rules:**
-1. Factory methods are `private static` in the test class or shared file.
-2. Accept only the parameters relevant to the test — override defaults sparingly.
-3. Use Chinese names for test entries (matching real usage): `"演示"`, `"项目"`.
+包：`TngTech.ArchUnitNET` 0.13.3 + `TngTech.ArchUnitNET.xUnitV3` 0.13.3。R1-R10：
+R1 Core 禁引 `Avalonia.*`；R2 禁引 `CommunityToolkit.*`；R3 禁依赖 `WTLauncher.App.*`；R4 ViewModels 禁依赖 `System.IO.File`；R5 仅 `LauncherJson` + 已知读者（`LaunchArgumentBuilder`、`LauncherStore`）可依赖 `System.IO.File`（Core 内）；R6 Core 禁引 `WTLauncher.App.ViewModels.*`；R7 / R8 Preset / Entry 服务禁引 Views；R9 / R10 Preset / Entry 服务禁依赖 `System.IO.File`。
 
-### Temp Directory Pattern
+Gotcha 1（type-level vs method-level）：`MethodMembers` 只含已加载程序集方法，外部框架方法（`System.IO.File.WriteAllText` 等）只作 `MethodCallDependency` 目标。用 `MethodMembers()` 匹配 = 空集静默通过。用 type-level：`.Should().NotDependOnAnyTypesThat().HaveFullName("System.IO.File")`。代价是更粗（连读调用 `File.Exists` 也抓），按需用 R5 的显式豁免。
 
-**Source:** `TestRepositoryPaths.cs`, `TempDirectory.cs`
+Gotcha 2（`IObjectProvider` 有状态）：每个 `[Fact]` 建 fresh predicate；跨规则复用静态 provider 会静默合并条件。
 
-```csharp
-// TestRepositoryPaths creates isolated temp directories
-// TempDirectory wraps IDisposable cleanup
-```
+新增规则：1) 新 `[Fact]` `R7_<Layer>_<Constraint>`；2) inline 构造谓词；3) 依目标是否已加载决定 type/method-level；4) 豁免加 `.And().DoNotHaveFullName(...)` + `Because(...)` 注明理由；5) 回写 `quality-guidelines.md` 不变量表。
 
-**Rule:** Every test that touches file I/O uses a temp directory — never write to the real `config/`.
+## Mock 策略
 
-`TestRepositoryPaths` locates the repository by the active single-source marker `config/launcher.json`, plus `README.md` and the Avalonia source root. Never anchor root discovery to retired `config.json`, `settings.json`, or `presets.json`; doing so makes structural tests fail only after the old files disappear.
+无 mock 框架，手写 test double：对话框注入替换 `Func<>`；文件 I/O 用临时目录；时间注入 `Func<DateTimeOffset>`。
 
----
+## Fixture 文件
 
-## Test Structure
+`LauncherPersistenceTestFixtures.cs`、`TestRepositoryPaths.cs`、`TempDirectory.cs`、`MainWindowEntryCardTestFactory.cs`、`MainWindowViewModelTests.Shared.cs`。规则：同一工厂 3+ 文件出现即移入 Shared。
 
-### Arrange-Act-Assert
+## Feature-service / VM 组件契约测试
 
-```csharp
-[Fact]
-public void Build_ValidEntry_ReturnsPlan()
-{
-    // Arrange
-    var entry = Entry() with { Name = "演示", Directory = @"D:\demo", Command = "codex" };
-
-    // Act
-    var plan = LaunchArgumentBuilder.Build(entry, validateDirectory: false, requireConfirmation: false);
-
-    // Assert
-    Assert.Equal("wt.exe", plan.Executable);
-    Assert.Contains("-d", plan.Arguments);
-}
-```
-
-### Theory vs Fact
-
-```csharp
-[Fact]        // Single scenario
-[Theory]      // Parameterized
-[InlineData("cards")]
-[InlineData("details")]
-[InlineData("names")]
-public void NormalizeId_ValidInput_ReturnsMatch(string input)
-{
-    var result = LauncherEntryViewModes.NormalizeId(input);
-    Assert.Equal(input, result);
-}
-```
-
----
-
-## Test Categories by Layer
-
-### Layer 0 Tests (Core — no deps)
-
-Test pure functions directly. No mocking needed.
-
-**Examples:**
-- `LaunchArgumentBuilderTests.cs` — Windows quoting rules
-- `LauncherEntryLayoutCalculatorTests.cs` — grid math
-- `LauncherEntryOrderTests.cs` — ordering rules
-- `LauncherEntryVisibilityTests.cs` — filter/sort logic
-
-### Layer 1-3 Tests (ViewModels)
-
-Test ViewModel commands with mock `Func<>` delegates:
-
-```csharp
-// Inject mock dialog that returns canned result
-viewModel.ConfirmLaunchAsync = confirmation => Task.FromResult(true);
-viewModel.RequestEntryDraftAsync = entry => Task.FromResult<EntryDraft?>(draft);
-```
-
-**Examples:**
-- `MainWindowViewModelTests.EntryTests.cs` — add/edit/delete flow
-- `MainWindowViewModelTests.SelectionTests.cs` — checkbox selection
-- `MainWindowViewModelTests.LaunchTests.cs` — single/batch launch
-- `MainWindowViewModelTests.DragTests.cs` — drag reorder
-
-### Layer 4 Tests (Views — extracted logic)
-
-Test extracted pure functions, not Avalonia controls.
-
-**Examples:**
-- `MainWindowDragInsertDecisionTests.cs` — pure drop target logic
-- `LauncherDragGhostLayoutCalculatorTests.cs` — ghost element layout math
-- `MainWindowEntryCardResolverTests.cs` — visual tree resolution
-- `MainWindowEntryRowDoubleTapTests.cs` — double-tap launch decision
-
-### Contract Tests
-
-Verify structural contracts that span layers:
-
-- `StatusTextContractTests.cs` — status text format contracts
-- `MainWindowViewModelTests.CollectionContractTests.cs` — collection invariants (read-only projection consistency, entry snapshot equivalence)
-- `MainWindowViewModelTests.DialogBoundaryTests.cs` — dialog delegate boundary contracts (null-handler rejection on `RequestEntryDraftAsync` / `ConfirmLaunchAsync` / etc.)
-- `MainWindowViewModelTests.PresetPersistenceTests.cs` — preset save/load round-trip
-
----
-
-## Architecture Rules (ArchUnitNET)
-
-**Source:** `tests/WTLauncher.Tests/ArchitectureRules.cs`
-
-Architecture invariants that prose `quality-guidelines.md` rules translate into executable checks. Violations fail `dotnet test` immediately, not after human review.
-
-**Packages:** `TngTech.ArchUnitNET` 0.13.3 + `TngTech.ArchUnitNET.xUnitV3` 0.13.3 (in `Directory.Packages.props`).
-
-**Rules currently encoded (R1-R10):**
-- R1: Core must not reference `Avalonia.*`
-- R2: Core must not reference `CommunityToolkit.*`
-- R3: Core must not depend on `WTLauncher.App.*` (dependency direction)
-- R4: ViewModels must not depend on `System.IO.File` (persistence gateway rule)
-- R5: Only `LauncherJson` + known readers (`LaunchArgumentBuilder`, `LauncherStore`) may depend on `System.IO.File` inside Core
-- R6: Core must not reference `WTLauncher.App.ViewModels.*` (belt-and-suspenders to R3)
-- R7: Preset feature services must not reference Views
-- R8: Entry feature services must not reference Views
-- R9: Preset feature services must not depend on `System.IO.File`
-- R10: Entry feature services must not depend on `System.IO.File`
-
-### Critical Gotcha: Type-Level vs Method-Level Rules
-
-ArchUnitNET's `MethodMembers` collection **only contains methods defined in loaded assemblies**. External framework methods (`System.IO.File.WriteAllText`, `System.IO.File.Exists`, etc.) appear **only** as `MethodCallDependency` targets, never as `MethodMembers`.
-
-A rule like this is a **silent no-op** — it matches an empty set and passes vacuously:
-
-```csharp
-// ❌ WRONG — vacuously true, never catches violations
-Types().That().Are(CoreLayer)
-    .Should().NotCallAny(
-        MethodMembers().That().HaveFullName("System.IO.File.WriteAllText"))
-    .Because("...");
-```
-
-Use the **type-level** formulation instead — it resolves via the `arch.Types` dependency edges and actually catches the violation:
-
-```csharp
-// ✅ Correct — type-level dependency check
-Types().That().Are(CoreLayer)
-    .Should().NotDependOnAnyTypesThat().HaveFullName("System.IO.File")
-    .Because("...");
-```
-
-The trade-off: type-level is coarser — it also catches read-only `File.Exists` callers, not just writers. If that matters, narrow with explicit per-type exemptions (see R5's `DoNotHaveFullName(...)` exclusions for `LaunchArgumentBuilder` and `LauncherStore`, which only do reads).
-
-### Critical Gotcha: `IObjectProvider` Is a Stateful Builder
-
-Each `[Fact]` method must build **fresh** predicates. ArchUnitNET's `IObjectProvider<T>` accumulates state across `That()` chains; reusing a static provider across multiple rules silently merges their conditions. Pattern in `ArchitectureRules.cs`: every test declares its own local `IArchRule rule = Types()...` inside the method body.
-
-### Adding a New Rule
-
-1. Add a new `[Fact]` method `R7_<Layer>_<Constraint>`.
-2. Build the predicate inline (don't reuse static providers — see gotcha above).
-3. Decide type-level vs method-level based on whether the target is in a loaded assembly.
-4. If exempting specific types, add `.And().DoNotHaveFullName("...")` clauses with a `Because(...)` comment naming the reason.
-5. Cross-reference the new rule from `quality-guidelines.md` invariants table.
-
----
-
-## Mocking Strategy
-
-**No mocking framework.** The project uses hand-rolled test doubles:
-
-1. **Dialog injection:** Replace `Func<>` delegates on ViewModel.
-2. **File I/O:** Use temp directories via `TestRepositoryPaths`.
-3. **Time:** `MainWindowViewModel` accepts `Func<DateTimeOffset>` — tests inject fixed clock.
-
-```csharp
-var viewModel = new MainWindowViewModel(
-    configPath, settingsPath, settings, launchWorkflow,
-    utcNow: () => new DateTimeOffset(2026, 1, 15, 0, 0, 0, TimeSpan.Zero));
-```
-
----
-
-## Test Fixture Files
-
-| File | Purpose |
-|------|---------|
-| `LauncherPersistenceTestFixtures.cs` | Shared persistence test helpers (`Entry()`, `PresetFile()` factories) |
-| `TestRepositoryPaths.cs` | Temp directory creation and path helpers |
-| `TempDirectory.cs` | IDisposable temp directory wrapper |
-| `MainWindowEntryCardTestFactory.cs` | Entry card factory for View tests |
-| `MainWindowViewModelTests.Shared.cs` | ViewModel test shared setup (`Entry()`, default settings) |
-
-**Rule:** If you write the same factory method in 3+ test files, move it to a Shared fixture.
-
----
-
-## Scenario: Feature-service and ViewModel-component contracts
-
-### 1. Scope / Trigger
-
-Use direct contract tests after extracting a feature service or a stable bindable component from `MainWindowViewModel`. The goal is to prove its public boundary without duplicating the existing persistence or GUI-smoke owners.
-
-### 2. Signatures
-
-```csharp
-Task<ServiceResult<T>> FeatureService.OperationAsync(...);
-ServiceResult<T> FeatureService.Mutate(...);
-IAsyncRelayCommand BindableComponent.ActionCommand { get; }
-```
-
-Test files follow `<ProductionType>Tests.cs`, for example `EntryServiceTests.cs`, `PresetServiceTests.cs`, and `LauncherCardGroupViewModelTests.cs`.
-
-### 3. Contracts
-
-- Service tests use the real service, real Core workflow and `StubDialogService`; no mocking framework.
-- Cover Success payload, user Canceled status, recoverable Failure status, validation rejection, and input aggregate non-mutation where applicable.
-- Component tests execute generated public commands and assert bindable properties, `PropertyChanged`, callback payload values and visible order.
-- Callback collections are point-in-time payloads: later component collection mutation must not rewrite an already-delivered list.
-- MainWindowViewModel tests remain the owner of snapshot/save/rollback and status integration; GUI smoke remains the owner of XAML rendering.
-
-### 4. Validation & Error Matrix
-
-| Boundary event | Required assertion |
-| --- | --- |
-| Dialog returns data | Exact normalized/snapshotted Success payload |
-| Dialog closes or rejects | Exact `ServiceCanceled<T>.Status` |
-| Dialog throws recoverably | Exact `ServiceFailure<T>.Status`; no state mutation |
-| Domain target is invalid/missing/locked | Failure and original aggregate unchanged |
-| Component command runs | Callback receives IDs/items in current visible order |
-| Bindable state changes | Property value and dependent notification both observed |
-
-### 5. Good/Base/Bad Cases
-
-- Good: delete service test asserts both snapshotted target and focus-cleanup ID.
-- Base: group component test asserts `CountLabel`, expand icon and callback order without creating a Window.
-- Bad: invoking a private command method through reflection or asserting XAML margin values in a unit test.
-
-### 6. Tests Required
-
-- Every public feature-service operation has at least one direct success or delegation test plus every applicable cancel/failure branch.
-- Every operation-specific typed payload has field-level assertions.
-- Every extracted bindable component has construction/property and command/callback tests.
-- Full Release tests and `tools/verify.ps1` must remain green; focused tests do not replace the production gate.
-
-### 7. Wrong vs Correct
-
-```csharp
-// Wrong: only a large owner test indirectly happens to cross the service.
-await viewModel.AddEntryCommand.ExecuteAsync(null);
-Assert.Equal(1, viewModel.TotalCount);
-
-// Correct: direct boundary test names the outcome and its payload.
-var result = await service.AddEntryAsync(...);
-var success = Assert.IsType<ServiceSuccess<LaunchEntry>>(result);
-Assert.Equal("one", success.Value.Id);
-```
-
-Do not change production visibility or add interfaces solely to make these tests convenient; use existing public commands and lightweight real owners/factories.
-
----
+服务测试用真实服务 + 真实 Core workflow + `StubDialogService`（无 mock 框架）；覆盖 Success payload、用户 Canceled、可恢复 Failure、校验拒绝、输入聚合非变异。组件测试执行生成公共命令，断言可绑定属性、`PropertyChanged`、回调 payload、可见顺序；回调集合是 point-in-time payload（后续 mutation 不改已交付列表）。MWVM 测试仍是 snapshot/save/rollback/status 集成所有者；GUI smoke 是 XAML 渲染所有者。Bad：反射调私有命令方法 / 单测断言 XAML margin。测试要求：每个公共 feature-service 操作至少一直接成功或委托测试 + 适用 cancel/failure 分支；每个 payload 字段级断言；每个提取组件有构造/属性 + 命令/回调测试；完整 Release 测试 + `tools/verify.ps1` 必须绿（聚焦测试不替代生产门禁）。
 
 ## Forbidden Patterns
 
-- ❌ **Tests that write to the real `config/` directory.**
-- ❌ **[Fact] that depends on file system order** — always sort before asserting.
-- ❌ **Sleep/delay in tests** — use fixed clock injection for time-dependent logic.
-- ❌ **Boolean assertions without failure message** — use `Assert.True(condition, "why it failed")`.
-- ❌ **Tests that require a running Avalonia window** — extract pure logic, test that.
+- ❌ 写真实 `config/`。
+- ❌ `[Fact]` 依赖文件系统顺序；断言前排序。
+- ❌ Sleep/Delay；用固定时钟注入。
+- ❌ 无失败消息的布尔断言；`Assert.True(cond, "why")`。
+- ❌ 依赖运行 Avalonia 窗口；抽纯逻辑测。

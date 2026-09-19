@@ -1,134 +1,58 @@
 # Test Quality Standards
 
-> What to test, coverage expectations, and quality gates.
+> 测什么、覆盖预期、质量门禁。测契约不测实现：行为变化时破，重构时不破。
 
----
+## 分层目录
 
-## Testing Philosophy
+| 层 | 目录 |
+|----|------|
+| CoreUnit | `CoreUnit/` |
+| Persistence | `Persistence/` |
+| ViewModelBehavior | `ViewModelBehavior/` |
+| Analyzer | `Analyzer/` |
+| Architecture | `Architecture/` |
+| UiContract | `UiContract/` |
+| PropertyTest | `PropertyTest/` |
+| Support | `Support/`（fixture，非测试） |
 
-**Test the contracts, not the implementation.** A test should break when behavior changes, not when you refactor.
+每测试类带 `[Trait("Category", TestCategories.<Layer>)]`。两类主导：逻辑测试（Core 纯函数输入→输出）与行为测试（VM 命令副作用 + 状态文本）。
 
-Test files live in one `WTLauncher.Tests` project, physically layered by category:
+## 必测场景
 
-| Layer | Directory | Purpose |
-|-------|-----------|---------|
-| `CoreUnit` | `CoreUnit/` | Pure Core rules, no filesystem/VM |
-| `Persistence` | `Persistence/` | Temp-file save/load/recovery |
-| `ViewModelBehavior` | `ViewModelBehavior/` | VM commands, state, dialog boundaries |
-| `Analyzer` | `Analyzer/` | Roslyn analyzer rules |
-| `Architecture` | `Architecture/` | ArchUnitNET invariants |
-| `UiContract` | `UiContract/` | Semantic XAML/UI contracts |
-| `PropertyTest` | `PropertyTest/` | CsCheck property tests |
-| `Support` | `Support/` | Shared fixtures/helpers, not tests |
+| 场景 | 必测 |
+|------|------|
+| 新 Core 纯函数 | ✅ |
+| 新持久化路径 | ✅ 成功 + 回滚 |
+| 新 VM 命令 | ✅ happy + cancel + error |
+| 新对话框 | ✅ 返回值（接受/取消/校验） |
+| 新 drag-drop | ✅ 决策逻辑 + ghost 布局 |
+| XAML-only 样式 | ❌ 视觉 smoke |
+| Ctrl+F / 快捷键 | ❌ 逻辑复杂才手测 |
 
-Every test class carries `[Trait("Category", TestCategories.<Layer>)]` so CI can run the fast lane without guessing from filenames.
+持久化测试：正常 round-trip（`Save`→`Load`）+ 保存失败（快照恢复 entries + settings + presets + custom order + selection）。单文件原子保存无部分失败路径（`File.Replace` 全有或全无）；回滚由 `AppStore.Mutate` 内部 + VM `RestoreVmStateFromStore()`。VM 命令测试：成功 / 取消 / 对话框错误 / 校验失败四路径。
 
-Two kinds of behavior dominate the suite:
-1. **Logic tests:** Pure functions with clear input → output (Core layer).
-2. **Behavior tests:** ViewModel commands produce correct side effects + status text.
+## 行尾契约
 
----
+持久化 JSON LF：`LauncherJson.NormalizeLineEndings` 在 `Save` 写时强制；`line-ending-policy` 检查 `.gitattributes`（非 `launcher.json` 字节）。
 
-## What Must Be Tested
+## 门禁
 
-| Scenario | Required? |
-|----------|-----------|
-| New Core pure function | ✅ Must have tests |
-| New persistence path | ✅ Must test success + rollback |
-| New ViewModel command | ✅ Must test happy + cancel + error paths |
-| New dialog window | ✅ Must test return values (accept, cancel, validation) |
-| New drag-drop behavior | ✅ Must test decision logic + ghost layout |
-| XAML-only styling change | ❌ Visual smoke only |
-| Ctrl+F / keyboard shortcut | ❌ Manual verification unless logic is complex |
+本地（提交前）：`dotnet build ... -c Release --no-restore -warnaserror`、`npm run test:fast`、`dotnet test ... -c Release --no-restore`、`npm run test:coverage`。全量（声称完成前）：`npm run verify`（restore → 全测 → publish → temp-config 冒烟 → coverage → 架构/分析器）。CI：`build-and-test` 跑 `test:fast`（CoreUnit + PropertyTest + Architecture + Analyzer）；`full-gate` 跑 `npm run verify`。E2E 封顶：`npm run smoke` 只断言主窗启动 + `WT Launcher` 标题，始终临时 `--config`。
 
----
+视觉 token 变更额外证明：`app-raw-hex-zero` 零 raw hex；临时 `#RRGGBB` fixture 被拒；`VisualTokenContractTests` 钉 token 所有权、资源注入、生产消费者、重复 XAML `12/14/16` 字体字面量移除。
 
-## What Tests Must Cover
+主窗动作层级变更：结构契约钉直接可见动作、迁入标记菜单的命令、菜单触发器 automation name、卡片"launch+more"边界；发布 GUI smoke 仍必需。
 
-### Persistence Tests
+对话框一致性变更：`DialogConsistencyContractTests` 钉三 token（`DialogTitleFontSize` / `DialogOuterPadding` / `DialogFooterTopMargin`）在 Core 且 `App.axaml.cs` 注入；`Title` 用 token；`CommandManagementWindow.axaml` 消费三 `{StaticResource}`；10 个程序化对话框用 token 外 padding 与 footer 上 margin（无 12/14/16/18/24 字面量）；`ConfirmLaunchWindow` 用 `Footer(0,...)`（父 Grid `RowSpacing=14`）；破坏性对话框 `Cancel(isDefault:true)` + 初始焦点 Cancel，Delete `Destructive(isDefault:false)` 不聚焦。
 
-Every new persistence path must test:
-1. **Normal save:** data round-trips correctly through `LauncherStore.Save` → `LauncherStore.Load`.
-2. **Save failure:** `LauncherStore.Save` throws → caller's snapshot restore returns VM state to pre-mutation values (entries + settings + presets + custom order + selection).
+## 测试计数预期
 
-Single-file atomic save means there is no partial-failure path — either all of `launcher.json` commits via `File.Replace` or none of it does. The rollback is automatic inside `AppStore.Mutate` (reverts `_state` on exception) and at the VM layer via `RestoreVmStateFromStore()`.
-
-**Reference:** `Persistence/AppStoreTests.cs`, `Persistence/LauncherStoreLoadFailureTests.cs`
-
-### ViewModel Command Tests
-
-Every command (Add/Edit/Delete/Launch/Reorder) must test:
-1. **Success:** command produces correct status text + state change.
-2. **Cancel:** user cancels dialog → status text reflects cancellation.
-3. **Dialog error:** dialog throws → status text reflects failure.
-4. **Validation failure:** invalid input → status text reflects validation error.
-
-**Reference:** `ViewModelBehavior/MainWindowViewModelTests.EntryTests.cs`, `ViewModelBehavior/MainWindowViewModelTests.DialogBoundaryTests.cs`
-
----
-
-## Line Ending Contract
-
-All persisted JSON uses LF (`\n`). `LauncherJson.NormalizeLineEndings` enforces it at write time inside `Save`, so every byte stream written through `LauncherStore.Save` is LF-normalized regardless of input. The repo-level `.gitattributes` LF policy is enforced by the `line-ending-policy` check in `scripts/verify.ts` (that check inspects `.gitattributes`, not `launcher.json` bytes). No per-test fixture method is needed.
-
----
-
-## Quality Gates
-
-### Local Gate (before commit)
-
-```bash
-dotnet build src/avalonia-launcher/WTLauncher.Avalonia.sln -c Release --no-restore -warnaserror
-npm run test:fast
-dotnet test src/avalonia-launcher/WTLauncher.Avalonia.sln -c Release --no-restore
-npm run test:coverage
-```
-
-### Full Gate (before claiming "done")
-
-```bash
-npm run verify
-```
-
-This runs: restore → full test → publish → temp-config critical-journey smoke → coverage gate → architecture/analyzer checks. Published GUI smoke runs on Windows.
-
-CI runs `npm run test:fast` (`CoreUnit` + `PropertyTest` + `Architecture` + `Analyzer`) in `build-and-test`; `full-gate` runs `npm run verify` as the only complete test/publish pass.
-
-The E2E layer is intentionally capped: `npm run smoke` asserts only process boot into the main window and the `WT Launcher` window title, always against a temp `--config`.
-
-For visual-token changes, the gate must additionally prove:
-
-- `WTLauncher.App/**/*.cs|*.axaml` has zero raw hex colors (`app-raw-hex-zero`).
-- A temporary `#RRGGBB` fixture is rejected by the same scanner.
-- `VisualTokenContractTests` pins Core token ownership, App resource injection, production consumers, and removal of repeated XAML `12/14/16` font literals.
-
-For main-window action-hierarchy changes, a structural contract must pin which actions remain directly visible, which existing commands moved into labeled menus, the automation names of menu triggers, and the card-level “launch + more” boundary. Published GUI smoke remains required to catch XAML parsing or resource failures.
-
-For dialog-consistency changes, `DialogConsistencyContractTests` must pin:
-
-- All three dialog tokens (`DialogTitleFontSize`, `DialogOuterPadding`, `DialogFooterTopMargin`) exist in Core and are injected in `App.axaml.cs`.
-- `LauncherDialogText.Title` consumes `LauncherDesignTokens.DialogTitleFontSize`; `CommandManagementWindow.axaml` consumes `{StaticResource DialogTitleFontSize}`, `{StaticResource DialogOuterPadding}`, and `{StaticResource DialogFooterMargin}`.
-- All 10 programmatic dialogs use `LauncherDesignTokens.DialogOuterPadding` for outer padding and `LauncherDesignTokens.DialogFooterTopMargin` for footer top margin — no hardcoded literals (12/14/16/18/24).
-- `ConfirmLaunchWindow` uses `Footer(0, ...)` because its parent Grid `RowSpacing=14` provides the spacing.
-- Destructive dialogs (`ConfirmEntryDeleteWindow`, `ConfirmPresetDeleteWindow`) have `Cancel(isDefault: true)` and initial focus on Cancel; Delete is `Destructive(isDefault: false)` and not focused.
-
----
-
-## Test Count Expectations
-
-| When | Expectation |
-|------|-------------|
-| Adding a Core helper | +1 test file minimum |
-| Adding a ViewModel command | +1 test scenario in existing file (or new area file) |
-| Adding a persistable data type | +1 persistence test (round-trip + failure) |
-| Bug fix | +1 regression test that fails before the fix |
-
----
+新增 Core helper +1 测试文件；新增 VM 命令 +1 场景；新增可持久化类型 +1 持久化测试（round-trip + failure）；bug 修复 +1 先失败回归测试。
 
 ## Forbidden Patterns
 
-- ❌ **Tests without assertions** — every test must have at least one `Assert`.
-- ❌ **Passing tests that don't test what the name says.**
-- ❌ **`Thread.Sleep()` or `Task.Delay()`** — use fixed clock injection.
-- ❌ **Tests that depend on test execution order** — each test creates its own temp directory.
-- ❌ **Skipping tests with `[Fact(Skip = "...")]`** — fix or delete, don't accumulate skipped tests.
+- ❌ 无断言测试（至少一个 `Assert`）。
+- ❌ 名不副实的通过测试。
+- ❌ `Thread.Sleep()` / `Task.Delay()`；用固定时钟注入。
+- ❌ 依赖执行顺序；每测试独立临时目录。
+- ❌ `[Fact(Skip=...)]` 累积；修或删。

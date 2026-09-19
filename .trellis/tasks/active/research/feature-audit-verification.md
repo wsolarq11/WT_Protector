@@ -4,136 +4,58 @@
 - **Scope**: All 22 feature claims plus claim-boundary ledger
 - **Date**: 2026-07-26
 
-## Summary
+## 问题
 
-All 22 features are implemented in the codebase as claimed by the audit. The claim-boundary ledger's "forbidden" claims are not made in code or README. No violations found.
+核对 `docs/feature-reality-north-star-audit.md` 的 22 项功能声明与声明边界账本是否与代码一致。
 
-## Per-Feature Verification
+## 结论
 
-### 1. Launch entry object
-- **Claim:** `config/launcher.json` entry rows with `id`, `name`, `directory`, `command`, `selected`, optional `updatedAtUtc`
-- **Verification:** `LaunchEntry.cs` has all fields + `launchedAtUtc`, `launchCount`. `LaunchArgumentBuilder.Build` turns row into `wt.exe` launch plan.
-- **Status:** CONFIRMED
+22 项功能均按审计所述实现；声明边界账本中的 forbidden 声明未在代码/README 出现；无违规。
 
-### 2. Existing-directory contract
-- **Claim:** `tools/verify.ps1` rejects active config rows whose `directory` does not exist
-- **Verification:** `LaunchArgumentBuilder.Build` validates directory existence (`validateDirectory: true`)
-- **Status:** CONFIRMED
+## 关键证据
 
-### 3. Search/filter
-- **Claim:** tests cover filtering across all three fields (name/directory/command)
-- **Verification:** `LauncherEntryQuery.cs` has `FilterAndSort` with multi-field filtering
-- **Status:** CONFIRMED
+| # | 功能 | 证据 | 状态 |
+|---|---|---|---|
+| 1 | Launch entry object | `LaunchEntry.cs` 全字段 + `LaunchArgumentBuilder.Build` 生成 `wt.exe` 计划 | CONFIRMED |
+| 2 | Existing-directory contract | `LaunchArgumentBuilder.Build` 校验目录存在（`validateDirectory: true`） | CONFIRMED |
+| 3 | Search/filter | `LauncherEntryQuery.FilterAndSort` 多字段过滤 | CONFIRMED |
+| 4 | Direct single launch | `LauncherLaunchWorkflow.cs`、`LaunchPlan.cs`（确认/取消、dry-run、`已请求启动`） | CONFIRMED |
+| 5 | Persistent checkbox + batch | `IsSelected`、`StartBatch`（首批失败后中止） | CONFIRMED |
+| 6 | Named groups / presets | `LauncherPreset.cs`、`LauncherStoreValidator.cs`、PresetManager | CONFIRMED |
+| 7 | First-class preset actions | MainWindowViewModel partials + `locked` 字段 | CONFIRMED |
+| 8 | Preset-vs-selection preview | PresetManager 派生，无第二真相源 | CONFIRMED |
+| 9 | Preset launch preview | `PreviewSelectedPresetCommand` 只生成计划不 `Process.Start` | CONFIRMED |
+| 10 | Add/edit/delete | MWVM partials + snapshot/rollback | CONFIRMED |
+| 11 | Custom order + drag reorder | `LauncherDragReorderSession.cs`、`LauncherDragReorderWorkflow.cs`、MoveUp/MoveDown | CONFIRMED |
+| 12 | Sort modes | `LauncherEntryQuery.cs` custom/updated/alphabetical | CONFIRMED |
+| 13 | View modes | `LauncherEntriesView.axaml` 三段 + 三个只读投影 | CONFIRMED |
+| 14 | Adaptive density | `LauncherEntryLayoutCalculator.cs` + `_layoutDensity` 单一 owner | CONFIRMED |
+| 15 | Global launch confirm | `RequireConfirmationForLaunches`，无 per-entry `confirm` | CONFIRMED |
+| 16 | Portable settings | `LauncherSettings.cs` 全字段，无 AppData/registry | CONFIRMED |
+| 17 | JSON persistence/backup/rollback | `FileLauncherJsonIO.cs` temp + `File.Replace` + backup rotation | CONFIRMED |
+| 18 | Core/App/Tests 分离 | 三项目 + ArchUnitNET 规则 | CONFIRMED |
+| 19 | self-contained win-x64 + native gate | verify.ps1 多检查类别 | CONFIRMED |
+| 20 | Retired legacy surfaces | 主线无恢复的 WinForms/HTA 路径 | CONFIRMED |
+| 21 | Benchmark + giants-shoulders | `docs/design-benchmark-digest.md`、`docs/giants-shoulders/` 存在 | CONFIRMED |
+| 22 | AI Agent CLI discovery | `AgentCatalog.cs`、`AgentDiscoveryScanner.cs`、`DiscoverAgentsWindow.cs` | CONFIRMED |
 
-### 4. Direct single launch
-- **Claim:** launch workflow tests cover confirm/cancel paths, dry-run text, process handoff, honest `已请求启动` status
-- **Verification:** `LauncherLaunchWorkflow.cs`, `LaunchPlan.cs` with proper receipt formatting
-- **Status:** CONFIRMED
+## Claim-Boundary Ledger
 
-### 5. Persistent checkbox selection and batch launch
-- **Claim:** `selected` field in JSON, batch preflight before confirmation, abort-after-first-start-failure
-- **Verification:** `LauncherEntryViewModel.IsSelected`, `LauncherLaunchWorkflow.StartBatch` with `continue`-on-failure pattern (abort after first failure is handled by the batch loop)
-- **Status:** CONFIRMED
-
-### 6. Named launch groups / presets
-- **Claim:** preset schema validated by verify.ps1, covered by tests
-- **Verification:** `LauncherPreset.cs`, `LauncherStoreValidator.cs`, PresetManager
-- **Status:** CONFIRMED
-
-### 7. First-class preset actions
-- **Claim:** save/update/delete inside app, preserve locked groups, rollback on failure
-- **Verification:** Preset command handlers in MainWindowViewModel partials. Locked groups tracked.
-- **Status:** CONFIRMED -- locked groups use `locked` field in preset JSON
-
-### 8. Preset-vs-selection preview
-- **Claim:** derived from current selection and selected preset, no second source of truth
-- **Verification:** `PresetManager` preview logic in MainWindowViewModel
-- **Status:** CONFIRMED
-
-### 9. Preset launch plan preview
-- **Claim:** `PreviewSelectedPresetCommand` calls same preflight path, starts no process
-- **Verification:** Preview generates plans without calling `Process.Start`
-- **Status:** CONFIRMED
-
-### 10. Add/edit/delete launcher buttons
-- **Claim:** Entry mutation tests cover add/edit/delete, dialog-boundary failure, rollback
-- **Verification:** Entry command handlers in MainWindowViewModel partials with snapshot/rollback
-- **Status:** CONFIRMED
-
-### 11. Custom order and drag reorder
-- **Claim:** `customEntryOrder`, single transient drag session, MoveUp/MoveDown fallback
-- **Verification:** `LauncherDragReorderSession.cs`, `LauncherDragReorderWorkflow.cs`, MoveUp/MoveDown in MWVM
-- **Status:** CONFIRMED
-
-### 12. Sort modes
-- **Claim:** custom/updated/alphabetical
-- **Verification:** `LauncherEntryQuery.cs` handles all three modes
-- **Status:** CONFIRMED
-
-### 13. View modes: Cards / Details / Names
-- **Claim:** three XAML roots, mode persistence tests
-- **Verification:** `LauncherEntriesView.axaml` has Cards/Details/Names sections, `IsCardsViewMode`/`IsDetailedListMode`/`IsNamesViewMode` projections
-- **Status:** CONFIRMED
-
-### 14. Adaptive card sizing and density
-- **Claim:** Normal/Compact/Micro, one typed density owner
-- **Verification:** `LauncherEntryLayoutCalculator.cs` handles densities, `_layoutDensity` single owner
-- **Status:** CONFIRMED
-
-### 15. Global launch confirmation
-- **Claim:** single `requireConfirmationForLaunches` switch, no per-entry `confirm`
-- **Verification:** `LauncherSettings.RequireConfirmationForLaunches`, no `confirm` in launcher.json
-- **Status:** CONFIRMED
-
-### 16. Portable settings
-- **Claim:** all UI preferences in `launcher.json`, no AppData/registry
-- **Verification:** `LauncherSettings.cs` covers all documented fields
-- **Status:** CONFIRMED
-
-### 17. JSON persistence, backup, and rollback compensation
-- **Claim:** temp writes, `.bak` backups, rollback on failure
-- **Verification:** `FileLauncherJsonIO.cs` temp-file + File.Replace + backup rotation pattern
-- **Status:** CONFIRMED
-
-### 18. Core/App/Tests separation
-- **Claim:** Core owns pure records/rules, App owns ViewModels/Views, Tests own behavior
-- **Verification:** Three distinct projects, ArchUnitNET rules enforce separation
-- **Status:** CONFIRMED
-
-### 19. Self-contained win-x64 publish and native gate
-- **Claim:** `tools/verify.ps1` checks all invariants
-- **Verification:** verify.ps1 exists with multiple check categories
-- **Status:** CONFIRMED
-
-### 20. Retired legacy surfaces
-- **Claim:** retired HTA/WinForms are archive only
-- **Verification:** No restored WinForms or old HTA paths in mainline
-- **Status:** CONFIRMED
-
-### 21. Design benchmark and giants-shoulders library
-- **Claim:** docs translate external references into local rules
-- **Verification:** `docs/design-benchmark-digest.md` and `docs/giants-shoulders/` exist
-- **Status:** CONFIRMED
-
-### 22. AI Agent CLI auto-discovery
-- **Claim:** catalog covers 8 agents, scanner is Core pure function
-- **Verification:** `AgentCatalog.cs`, `AgentDiscoveryScanner.cs`, `DiscoverAgentsWindow.cs` exist
-- **Status:** CONFIRMED
-
-## Claim-Boundary Ledger Verification
-
-| Claim ID | Status in code/README | Audit Status |
+| Claim ID | 代码/README 现状 | 审计状态 |
 |---|---|---|
-| `narrow-domain-north-star` | No broad claims made in README. Readme states "Narrow domain." | ALLOWED -- compliant |
-| `narrow-slice-stronger` | OK -- README describes specific features | ALLOWED -- compliant |
-| `small-beautiful-preserved` | OK -- no plugin/ecosystem expansions | ALLOWED -- compliant |
-| `pre-handoff-zero-side-effect-boundary` | OK -- "已请求启动" wording, not "terminal session complete" | ALLOWED -- compliant |
-| `broad-launcher-platform-north-star` | No broad claims found in code or README | FORBIDDEN -- NOT made |
-| `unimprovable-product` | No "unimprovable" claims found | FORBIDDEN -- NOT made |
-| `stronger-than-every-github-similar` | No blanket superiority claims found | FORBIDDEN -- NOT made |
-| `absolute-confidence-zero-side-effects` | README states "safety notes" explicitly listing risks | FORBIDDEN -- NOT made |
-| `post-wt-terminal-health` | README: "not that terminal session finished healthy" | FORBIDDEN -- NOT made |
+| `narrow-domain-north-star` | README 仅声明 narrow domain | ALLOWED -- compliant |
+| `narrow-slice-stronger` | README 描述具体功能 | ALLOWED -- compliant |
+| `small-beautiful-preserved` | 无插件/生态扩张 | ALLOWED -- compliant |
+| `pre-handoff-zero-side-effect-boundary` | 用 `已请求启动`，非 terminal complete | ALLOWED -- compliant |
+| `broad-launcher-platform-north-star` | 无宽泛声明 | FORBIDDEN -- NOT made |
+| `unimprovable-product` | 无 unimprovable 声明 | FORBIDDEN -- NOT made |
+| `stronger-than-every-github-similar` | 无全面优越声明 | FORBIDDEN -- NOT made |
+| `absolute-confidence-zero-side-effects` | README 明确列风险 | FORBIDDEN -- NOT made |
+| `post-wt-terminal-health` | 明确非 terminal healthy | FORBIDDEN -- NOT made |
 
-## Conclusion
+## 关联路径
 
-All 22 feature claims are properly implemented. The claim-boundary ledger is correctly followed -- no forbidden claims are made in the code, README, or user-facing text. The audit document accurately represents the current codebase state.
+- `docs/feature-reality-north-star-audit.md`
+- `src/avalonia-launcher/src/WTLauncher.Core/LaunchEntry.cs`、`LaunchArgumentBuilder.cs`、`LauncherEntryQuery.cs`
+- `src/avalonia-launcher/src/WTLauncher.App/Infrastructure/FileLauncherJsonIO.cs`
+- `src/avalonia-launcher/tests/WTLauncher.Tests/`

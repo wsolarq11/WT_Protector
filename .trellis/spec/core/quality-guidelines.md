@@ -1,208 +1,102 @@
 # Quality Guidelines — Core Layer
 
-> Code standards, testing requirements, and forbidden patterns for WTLauncher.Core.
+> 代码标准、测试要求、禁止模式；不变量由 `tests/WTLauncher.Tests/ArchitectureRules.cs`（R1-R10）+ Roslyn 分析器（WT1001-WT1006）强制。
 
----
+## Invariants（永不可破）
 
-## Invariants (Must Never Break)
+1. Core 禁引用 Avalonia（R1）。
+2. Core 禁引用 CommunityToolkit.Mvvm（R2）。
+3. Core 禁依赖 `WTLauncher.App`（R3、R6 兜底禁 App.ViewModels）。
+4. 持久化 JSON 一律 LF。
+5. `launcher.json` 每条 entry 的 `id` / `name` / `directory` / `command` 非空（`LauncherStore` 强制）。
+6. 每状态单一写所有者（view / sort / drag / card density）。
 
-1. **Core never references Avalonia** — enforced at test time by `ArchitectureRules.R1_Core_MustNotReference_Avalonia` (ArchUnitNET type-level dependency rule).
-2. **Core never references CommunityToolkit.Mvvm** — enforced by `ArchitectureRules.R2_Core_MustNotReference_CommunityToolkitMvvm`.
-3. **Core never references `WTLauncher.App`** (dependency direction) — enforced by `ArchitectureRules.R3_Core_MustNotDependOn_App` and `R6_Core_MustNotReference_AppViewModels`.
-4. **All persisted JSON uses LF (`\n`) line endings** — verified by `verify.ps1`.
-5. **`launcher.json` entries always have `id`, `name`, `directory`, `command` non-empty** — enforced by `LauncherStore`.
-6. **One source per state** — view mode, sort mode, drag session, card density each have exactly ONE writable owner.
+## 单一事实源
 
-The architecture rules live in `tests/WTLauncher.Tests/ArchitectureRules.cs`. See [Tests / Architecture Rules](../tests/test-patterns.md#architecture-rules-archunitnet) for the ArchUnitNET patterns and the type-level vs method-level gotcha.
-
-**Source:** `src/avalonia-launcher/README.md` — "Key invariants" section.
-
----
-
-## Single Source of Truth
-
-Per `DESIGN.md` token ownership rules:
-
-| State | Single Owner | Read-only Projection |
-|-------|-------------|---------------------|
+| 状态 | 唯一写所有者 | 只读投影 |
+|------|-------------|---------|
 | View mode | `_selectedDisplayMode` | `IsCardsViewMode` / `IsDetailedListMode` / `IsNamesViewMode` |
 | Sort mode | `_selectedSortMode` | `IsCustomSortMode` |
-| Card dimensions | `LayoutManager.CardLayout` (CardLayoutProvider) | `LauncherEntryViewModel.CardWidth` / `.CardHeight` / `.NameTileWidth` / `.NameTileHeight` |
+| Card 尺寸 | `LayoutManager.CardLayout`（CardLayoutProvider） | `LauncherEntryViewModel.CardWidth` / `.CardHeight` / `.NameTileWidth` / `.NameTileHeight` |
 | Card density | `LauncherEntryLayoutDensity` | `IsCompactLayout` / `IsMicroLayout` |
-| Drag cues | `DragCueState` | `IsDragPreviewTarget` / `IsDragPreviewSource` / `IsDragInsertBefore` / `IsDragInsertAfter` |
-| Drag session | `DragReorderSession?` | no loose fields allowed |
-| Selection | `IsSelected` (user) / `SetSelectionFromOwner` (batch) | no global bulk flag |
+| Drag cues | `DragCueState` | `IsDragPreviewTarget` / `.Source` / `.InsertBefore` / `.InsertAfter` |
+| Drag session | `DragReorderSession?` | 禁散字段 |
+| Selection | `IsSelected`（用户）/ `SetSelectionFromOwner`（批量） | 禁全局批量开关 |
 
-**Rule:** Read-only projections must be computed properties, not stored fields. Never store a second copy of state.
+规则：只读投影必须是计算属性，不存第二份状态。
 
----
+## 测试
 
-## Testing Requirements
+xUnit v3 + ArchUnitNET；计数随代码演进，跑 `ls tests/WTLauncher.Tests/*.cs | wc -l` + `dotnet test -c Release` 取现数。类别：Core 单测 / ViewModel / Drag-reorder / View 逻辑 / 契约集成 / Persistence / Architecture。范式：一生产类一测试文件；共享 fixture 在 `LauncherPersistenceTestFixtures.cs` / `TestRepositoryPaths.cs` / `TempDirectory.cs`；工厂方法造数据；成功 + 失败路径都测（每个持久化测试含回滚场景）。
 
-**Test framework:** xUnit (v3) + ArchUnitNET for architecture invariants
-**Test project:** `tests/WTLauncher.Tests/` — file/test counts evolve; run `ls tests/WTLauncher.Tests/*.cs | wc -l` and `dotnet test -c Release` for current numbers
-**Run gate:** `dotnet test -c Release` — all tests must pass before commit
+## 编译期强制（2026-07-24 / 26）
 
-### Test Categories
+| 规则 | ID | 范围 | 状态 |
+|------|----|------|------|
+| Core 禁引用 App.ViewModels/Views（含 using 与全限定名） | WT1001 | 仅 Core | Active |
+| `IStorePersistence.Save` / `LauncherStore.Save` 仅 `StoreGrain.Dispatch` | WT1003 | 生产代码（测试豁免） | Active |
+| `catch (Exception)` 必须带 `when` | WT1004 | 全源码（分析器项目除外） | Active |
+| `{StaticResource Key}` 必须已定义 | WT1005 | 全 `.axaml`（AdditionalFiles） | Active |
+| `LauncherJson.Save/Load<T>` 类型必须 `[JsonSerializable]` | WT1006 | App + Core | [Obsolete] 交叉引用 |
 
-| Category | Example files |
-|----------|--------------|
-| Core unit tests | `LaunchArgumentBuilderTests.cs`, `EntryDirectoryTests.cs`, `LauncherEntryLayoutCalculatorTests.cs`, `LauncherStoreLoadFailureTests.cs` |
-| ViewModel tests | `MainWindowViewModelTests.*.cs` (split by area) |
-| Drag / reorder tests | `LauncherDragReorderSessionTests.cs`, `LauncherDragReorderWorkflowTests.cs`, `LauncherDragGhostLayoutCalculatorTests.cs` |
-| View logic tests | `MainWindowEntryCardContextMenuTests.cs`, `MainWindowDragInsertDecisionTests.cs` |
-| Contract/integration tests | `StatusTextContractTests.cs`, `MainWindowViewModelTests.CollectionContractTests.cs`, `MainWindowViewModelTests.DialogBoundaryTests.cs` |
-| Persistence tests | `LauncherStoreLoadFailureTests.cs`, `AppStoreTests.cs`, `LauncherPersistenceTestFixtures.cs`, `MainWindowViewModelTests.SettingsTests.cs` |
-| Architecture invariants | `ArchitectureRules.cs` (ArchUnitNET R1-R10 — see [Tests / Architecture Rules](../tests/test-patterns.md#architecture-rules-archunitnet)) |
-
-Total counts evolve with the codebase — run `ls tests/WTLauncher.Tests/*.cs | wc -l` for the current file count and `dotnet test -c Release` for the current test count.
-
-### Test Patterns
-
-1. **One test file per production class.**
-2. **Shared test fixtures in `LauncherPersistenceTestFixtures.cs`, `TestRepositoryPaths.cs`, `TempDirectory.cs`.**
-3. **Factory methods for test data** — e.g., `PresetFile()`, `Entry()` in test shared files.
-4. **Tests verify both success and failure paths** — every persistence test has rollback scenarios.
-
----
-
-## Compile-Time Enforcement (2026-07-24, updated 2026-07-26)
-
-Custom Roslyn analyzers (`WTLauncher.Analyzers`) enforce invariants at build time:
-
-| Rule | ID | Scope | Status |
-|------|----|-------|--------|
-| Core must not reference `App.ViewModels`/`App.Views` | WT1001 | `WTLauncher.Core` only — catches `using` AND fully-qualified refs | ✅ Active |
-| `IStorePersistence.Save` / `LauncherStore.Save` only in `StoreGrain.Dispatch` | WT1003 | Production code (tests excluded) — checks both old and new write paths | ✅ Active |
-| `catch (Exception)` must have `when` filter | WT1004 | All source (analyzer project excluded) | ✅ Active |
-| `{StaticResource Key}` must be defined in `InjectDesignTokens` or XAML `x:Key` | WT1005 | All `.axaml` files via `AdditionalFiles` | ✅ Active |
-| `LauncherJson.Save/Load<T>` type must be `[JsonSerializable]` registered | WT1006 | App + Core source | ⚠️ [Obsolete] cross-reference |
-
-Added via `Directory.Build.props`: each non-analyzer project gets `OutputItemType="Analyzer"` with `ReferenceOutputAssembly="false"`. Analyzers run only in CI (`$(CI)=='true'`) or with `-p:ForceAnalysis=true` — local Debug builds skip analyzers for speed.
-
-### Analyzer wiring — critical invariant
-
-Adding a new Roslyn analyzer project to the solution is NOT enough. The consuming `.csproj` MUST include:
-```xml
-<ProjectReference Include="..\WTLauncher.Analyzers\WTLauncher.Analyzers.csproj"
-                  OutputItemType="Analyzer"
-                  ReferenceOutputAssembly="false" />
-```
-Without `OutputItemType="Analyzer"`, the analyzer DLL compiles but the compiler NEVER loads it — zero enforcement.
-
-Best practice: place this in `Directory.Build.props` (or `Directory.Build.targets`) for blanket coverage.
-Self-reference guard: include the condition `$(MSBuildProjectName) != 'WTLauncher.Analyzers'` to prevent the analyzer project from referencing itself.
+接线关键不变量：新分析器项目进 .sln 不够，消费 `.csproj` 必须 `ProjectReference ... OutputItemType="Analyzer" ReferenceOutputAssembly="false"`，否则 DLL 编译但从不加载。放 `Directory.Build.props` 统一覆盖；自引用守卫 `$(MSBuildProjectName) != 'WTLauncher.Analyzers'`。分析器仅 CI（`$(CI)=='true'`）或 `-p:ForceAnalysis=true` 运行。
 
 ## Forbidden Patterns
 
-- ❌ **`[ObservableProperty]` for ephemeral View-derived dimensions on ViewModels** — card sizes (`CardWidth`, `CardHeight`) are derived from window geometry, not persistent state. Storing them as per-VM mutable properties with defaults creates staleness risk when VMs are replaced. Use a shared `CardLayoutProvider` that is the single source of truth; VMs delegate to it via read-only properties. (Added 2026-07-25 CardLayoutProvider architecture — removed `LauncherEntryLayoutPresentation.cs`)
+- ❌ `[ObservableProperty]` 存 ephemeral View 派生尺寸（CardWidth/CardHeight）；用共享 `CardLayoutProvider` 单一源 + VM 只读委托（2026-07-25，删 `LauncherEntryLayoutPresentation.cs`）。
+- ❌ `dynamic` / `Dictionary<string, object>`。
+- ❌ 无解释注释的 `#pragma warning disable`。
+- ❌ 公共可变字段；用属性。
+- ❌ 静态可变状态；静态类均为无状态 helper。
+- ❌ `LauncherJson` 外直接 `File.WriteAllText`。
+- ❌ Core 加 NuGet 引用；仅 BCL。
+- ❌ 无校验静默 null→empty；坏数据应抛。
+- ❌ 无窄化的 `catch (Exception)`；VM 命令用 `when (ExceptionFilters.IsRecoverable(ex))`；UI 委托边界裸 catch 可接受（pitfalls §2.3）。
+- ❌ mutation 中 await 前捕获快照；快照必须在对话框确认后捕获（2026-06-23 B6）。
+- ❌ 文档硬编码数量（"13 条"/"55 类"）；写"持续更新"（pitfalls §3.1）。
+- ❌ positional record 冗余后备字段；用 init 默认 + auto-property。
+- ❌ `LauncherDesignTokens` 未消费的 `const`；每个 token 须有 `src/` 消费者，`grep -r <TokenName> src/ --include='*.cs' --include='*.axaml'` 验证。
+- ❌ 零订阅事件处理（无 `+=` 且无 XAML 接线的 `private void On*`）。
+- ❌ 共享数据载体缺编译期 mutation 守卫；用 `{ get; init; }` + `sealed record`（2026-06-23 immutability hardening）。
+- ❌ `SchemaVersion` 加 `[JsonIgnore]`；用 `[JsonPropertyName]` 不加 `[JsonRequired]` 向后兼容（2026-06-25 R1）。
+- ❌ Store.Load 仅缺文件时才恢复 `.bak`；文件存在但损坏（Json/InvalidData）也必须恢复（2026-06-25 R3）。
+- ❌ 接口实现忽略参数；未用参数注释 `// ponytail: unused parameter — [reason]`（2026-07-06）。
+- ❌ 忽略 `SaveConfig()` / `Save*()` 返回值（静默数据丢失）（2026-06-25 R6）。
+- ❌ 静态可变集合（`static List/Dictionary` + Clear/Add）；返回元组或不可变集合（2026-06-25 R14）。
+- ❌ 批处理阶段不对称失败策略（break vs continue）；同工作流同策略，不同需显式注明（2026-06-25 R9）。
+- ❌ 不透明内部标记注释（`// H4` / `// L32` / `// M11`）；写描述性注释（2026-06-25 R30）。
+- ❌ 文本处理缺 Unicode 规范化；`Normalize` / `Sanitize` 必须 `Normalize(NormalizationForm.FormKC)`（2026-06-25 R26）。
+- ❌ `Process.Start` 前缺命令行长度检查；`CreateProcessW` 上限 32767，builder 必须先校验并抛清晰错误（2026-06-25 R27）。
+- ❌ 异常→用户消息用黑名单；`ForUser()` 必须白名单（2026-06-26 H8）。
+- ❌ `[JsonRequired]` 新增后不同步全部 fixture（test factory、`verify.ps1` smoke、README 示例）。
 
-- ❌ **`dynamic` or `Dictionary<string, object>`** — always define typed records.
-- ❌ **`#pragma warning disable`** without a comment explaining why.
-- ❌ **Public mutable fields** — use properties.
-- ❌ **Static mutable state** — all static classes are stateless helpers.
-- ❌ **Direct `File.WriteAllText` outside `LauncherJson`** — always use the persistence wrapper.
-- ❌ **Adding a NuGet reference to Core** — Core must stay dependency-free (beyond BCL).
-- ❌ **Silent null-to-empty coercion without validation** — bad data should throw, not silently normalize.
-- ❌ **`catch (Exception)` without narrowing** — only catch specific types you can actually handle. In ViewModel command handlers, use `catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))` — the shared filter in `ExceptionFilters.cs` centralizes the fatal-exception exclusion. For UI delegate calls (dialog confirmations), bare `catch (Exception)` is acceptable because the delegate boundary is unknown. See [pitfalls §2.3](../guides/pitfalls.md#23-kiss-合并后-catch-过宽).
-- ❌ **Snapshot captured before `await` in mutation methods** — snapshot must be captured AFTER async dialog confirmation, not before. Capturing before creates a window where concurrent operations can be lost on rollback. (Added 2026-06-23 ultrareview B6)
-- ❌ **Hardcoded counts in documentation** ("13 条规则", "55 类") — always say "持续更新". See [pitfalls §3.1](../guides/pitfalls.md#31-不要在文档里硬编码n-条n-类).
-- ❌ **Redundant backing fields on positional records** — if a positional record uses `{ get; init; }` with validation, use auto-properties with init-assigned defaults (`public string X { get; init; } = RequireText(X, nameof(X));`), NOT manual backing fields that duplicate the validation. (Added 2026-06-23 Read Every Struct H2)
-- ❌ **Unused `const` tokens in `LauncherDesignTokens`** — every token must have at least one consumer in `src/` (excluding tests). Unused tokens are dead code and must be removed. Verify with `grep -r <TokenName> src/ --include='*.cs' --include='*.axaml'`. (Added 2026-06-23 Read Every Struct)
-- ❌ **Event handlers with zero subscriptions** — a `private void On*` method in code-behind that has no `+=` subscription and no XAML event wiring is dead code. Remove it. (Added 2026-06-23 Read Every Struct H27)
-- ❌ **Mutable data carriers without compile-time mutation guard** — `{ get; set; }` on types shared across ViewModels allows invisible shared-mutation bugs (e.g., `_entry.Selected = true` in one ViewModel silently diverges from another's copy). All shared data carriers must use `{ get; init; }` + `sealed record` — mutations produce a new instance via `with { }`, making every state change explicit and traceable. (Added 2026-06-23 — LaunchEntry immutability hardening)
-- ❌ **`[JsonIgnore]` on SchemaVersion fields** — prevents the version number from being written to and read from JSON, making `if (settings.SchemaVersion != Expected)` into dead code. Use `[JsonPropertyName]` without `[JsonRequired]` to allow backward compatibility (missing field → default). (Added 2026-06-25 UltraReview R1)
-- ❌ **Store.Load only recovering `.bak` on missing files** — must also recover when the file exists but is corrupt (`JsonException`/`InvalidDataException`). Wrap the deserialize+validate path in try-catch; on failure, attempt `.bak` recovery before throwing. (Added 2026-06-25 UltraReview R3)
-- ❌ **Interface implementation ignoring parameters** — every interface implementor must validate all method parameters. Don't silently ignore parameters because "the implementation doesn't need them." If a parameter is truly unused, annotate with `// ponytail: unused parameter — [reason]`. (Updated 2026-07-06 — IStore removed, general rule remains)
-- ❌ **Inconsistent Normalize behavior across ID types** — removed in 2026-07-06 ponytail audit. `LauncherEntryIds`/`LauncherPresetIds` deleted. Value objects use `Parse(throw)`; callers that need safe-default use `Normalize(catch)`. (Deleted 2026-07-06)
-- ❌ **Ignoring `SaveConfig()` / `Save*()` return values** — all persistence methods return `bool` indicating success. Callers must check the return value. A discarded `false` means silent data loss: in-memory state is updated but disk write failed. (Added 2026-06-25 UltraReview R6)
-- ❌ **Static mutable collections** — `static List<T>` / `static Dictionary<K,V>` with `Clear()`+`Add()` is thread-unsafe global state. Return tuples or immutable collections instead. (Added 2026-06-25 UltraReview R14)
-- ❌ **Asymmetric failure strategies in batch operations** — `break` vs `continue` in the same workflow class. All phases of a batch operation must use the same failure strategy. If they differ by design, document the reason explicitly. (Added 2026-06-25 UltraReview R9)
-- ❌ **Opaque internal marker comments** (`// H4`, `// L32`, `// M11`) — these reference external issue trackers and are meaningless in standalone code. Replace with descriptive comments explaining what and why. (Added 2026-06-25 UltraReview R30)
-- ❌ **No Unicode normalization in text-processing functions** — `Normalize()`/`Sanitize()` methods must include `string.Normalize(NormalizationForm.FormKC)` to handle fullwidth/halfwidth and composed/decomposed character equivalence. Without it, search and sort produce inconsistent results. (Added 2026-06-25 UltraReview R26)
-- ❌ **No command-line length check before Process.Start** — `CreateProcessW` has a 32767-character hard limit. Argument builders must validate final string length and throw a clear error before reaching Process.Start. (Added 2026-06-25 UltraReview R27)
-- ❌ **`defaultValue` bypassing validation in Store.Load** — removed in 2026-07-06 ponytail audit. Normalize pipeline deleted; `LoadWithRecovery` accepts raw default without re-validation. Trust JSON deserialization + value object validation at use time. (Deleted 2026-07-06)
-- ❌ **IStore bypass** — removed in 2026-07-06 ponytail audit. `IStore` interface + `JsonStore` wrapper deleted. Callers use `LauncherStore.Load/Save` directly. (Deleted 2026-07-06 ponytail-audit)
-- ❌ **Exception→user message using blacklist (deny-list) pattern** — `ForUser()` must use whitelist (allow-list): known-safe types pass through; everything else gets a generic message. A blacklist (`FileNotFoundException → safe, _ → raw`) leaks internal details for unmapped types. (Added 2026-06-26 UltraReview H8)
-- ❌ **JSON smoke/fixture configs missing `[JsonRequired]` fields** — when a `[JsonRequired]` attribute is added to any JSON model, all test fixtures (test factories, `verify.ps1` smoke, README examples) must be updated to include the new field. Missing fields cause `JsonException` at startup only in published builds. (Added 2026-06-26 UltraReview smoke fix)
+已删除禁止项（历史，防重引入）：跨 ID 类型 Normalize 不一致（2026-07-06 删除，值对象用 `Parse(throw)` / `Normalize(catch)`）；`defaultValue` 绕过校验（2026-07-06 删除，`LoadWithRecovery` 接受 raw default）；`IStore` 绕过（2026-07-06 删除，直接用 `LauncherStore.Load/Save`）。
 
-## Architecture Invariants (Compile-Time Enforcement)
+## 架构不变量
 
-These are not conventions — they are physically enforced by the build system.
-
-### 1. Null Safety
-```xml
-<!-- WTLauncher.Core.csproj -->
-<Nullable>enable</Nullable>
-<WarningsAsErrors>nullable</WarningsAsErrors>
-```
-Core layer treats nullable warnings as compile errors. NullReferenceException is physically impossible in the data layer.
-
-### 2. Immutable Data Flow
-```csharp
-// All shared data carriers use init-only properties + sealed record
-public sealed record LaunchEntry
-{
-    public string Id { get; init; } = "";
-    // ...
-}
-// Mutation = new instance — explicit, traceable, compiler-enforced
-entry = entry with { Selected = true };
-```
-The compiler rejects `entry.Selected = true` — shared-mutation bugs are physically impossible.
-
-### 3. Immutable Workflow Mutation via `ref`
-When a static workflow method needs to modify an immutable record's scalar properties (while the `List<T>` contents remain mutable), use `ref` parameters:
-```csharp
-public static LauncherPreset AddPreset(ref LauncherPresetFile presetFile, ...)
-{
-    presetFile.Presets.Add(preset);          // List<T> is mutable
-    presetFile = presetFile with { DefaultPresetId = preset.Id }; // scalar → with { }
-    return preset;
-}
-```
-The `ref` keyword makes the replacement explicit at every call site (`ref _presetFile`).
-
-### 4. CI Headless Detection
-```powershell
-$isCi = $env:CI -eq 'true'
-if ($isWindowsPlatform -and -not $isCi) { ... }  # GUI smoke skipped in CI
-```
-GitHub Actions sets `CI=true`. Use this to skip checks requiring a display (GUI smoke) or user-specific paths (config directory existence). The receipt reports `'skipped-ci-headless'` for audit trail.
-
----
-
-## Cross-Reference
-
-- [Pitfalls — 跨会话踩坑实录](../guides/pitfalls.md) — 50+ 真实 session 取证的坑与预防规则。涉及编码风格、工具使用、调试顺序的元教训。
-
----
+- Null 安全：`<Nullable>enable</Nullable>` + `<WarningsAsErrors>nullable</WarningsAsErrors>`；NullReferenceException 在数据层物理不可能。
+- 不可变数据流：`sealed record` + init-only；`entry.Selected = true` 编译期拒绝，mutation 走 `with { }`。
+- 不可变 workflow mutation：静态方法改 record 标量用 `ref` 参数（List 内容可变 + 标量 `with { }`），`ref` 使替换在调用点显式。
+- CI 无头检测：`$env:CI -eq 'true'` 跳过 GUI smoke / 用户路径检查，receipt 记 `skipped-ci-headless`。
 
 ## Code Review Checklist
 
-- [ ] Does new Core code reference Avalonia or CommunityToolkit? (If yes — reject.)
-- [ ] Are all new JSON fields decorated with `[JsonPropertyName]` and `[JsonRequired]`?
-- [ ] Are string defaults `""` (not `null`)?
-- [ ] Does every enum have a paired static helper class with `NormalizeId()` / `ToId()`?
-- [ ] Are new test fixtures added to the appropriate shared file?
-- [ ] Do new persistence paths use atomic temp-file writes?
-- [ ] Are Chinese status texts in the appropriate static class?
-- [ ] **Unicode safety**: Does any code truncate strings? → Must check surrogate pair boundaries via `char.IsHighSurrogate`.
-- [ ] **Unicode safety**: Does any code strip "unsafe" characters? → Must strip BOTH `UnicodeCategory.Control` AND `UnicodeCategory.Format`.
-- [ ] **Unicode safety**: Are cross-reference keys (IDs) normalized? → `Normalize(NormalizationForm.FormC)` before comparison.
-- [ ] **Percent injection**: Does `ExpandEnvironmentVariables` run AFTER FormKC normalization? → Check for fullwidth `%` (U+FF05 → U+0025).
-- [ ] **UNC paths**: Does any code accept user-controlled directory paths? → Reject UNC paths (`\\` prefix).
-- [ ] **PATH hijack**: Does any code resolve executables? → Never fall back to bare names resolved via `PATH`.
-- [ ] **Test assertions**: Are any `Assert.Equal(X, X)` self-comparisons? → Replace with concrete expected values.
-- [ ] **Test assertions**: Do JSON property checks verify BOTH missing AND extra fields? → Use bidirectional set comparison.
-- [ ] **Atomic saves**: Does the save path use `LauncherJson.Save` (temp file → atomic `File.Move(overwrite:true)` → backup rotation)? → Never `File.WriteAllText` directly. (Single-file store since 2026-07: launcher.json owns entries + presets + settings + defaultPresetId + window state together.)
-- [ ] **Backup recovery**: Is the retry OUTSIDE the try/catch? → Inside = infinite loop when backup is also corrupt.
-- [ ] **Schema version**: Are `!=` checks replaced with directional `<` and `>` checks? → Old reject + new upgrade message.
-- [ ] **`[JsonRequired]` propagation**: When adding `[JsonRequired]` to any model property, did you search and update ALL JSON fixtures? → `verify.ps1` smoke config, test factories, README examples, `config-lib.ps1` defaults. (Added 2026-06-26 UltraReview smoke fix)
-- [ ] **Stacked bugs**: When fixing a bug that unblocks a verify gate, did the SAME gate surface a SECOND bug? → The diagnostic onion pattern: the first bug masked the second. After fixing one gate failure, re-run the FULL gate — don't assume a clean pass. (Added 2026-06-26 UltraReview TimeSpan + schemaVersion double-bug)
-- [ ] **Atomic save**: `File.Replace` (backed by `MoveFileEx` with `MOVEFILE_REPLACE_EXISTING`, atomic on the same NTFS volume) when target exists; `File.Move` only for first-save. `File.Move(overwrite:true)` is NOT atomic. (Added 2026-06-28)
-- [ ] **Backup rotation order**: Copy-then-rotate, not rotate-then-copy. If rotation runs first and crashes, .bak is missing. (Added 2026-06-28)
-- [ ] **Cross-layer validation**: Same check in two layers MUST use same semantics (case-sensitivity, boundary: `> N` vs `>= N`). Share constants or methods. (Added 2026-06-28)
-- [ ] **Exception unwrap loop**: Must have max-iteration guard (`for i<16`) — null InnerException causes infinite loop. (Added 2026-06-28)
-- [ ] **NaN/Infinity guard**: All layout arithmetic must guard with `double.IsFinite`/`double.IsNaN` — NaN propagates through all ops. (Added 2026-06-28)
-- [ ] **Single-file over multi-file**: When config needs cross-section consistency, merge sections into one file + `File.Replace`. Do NOT implement journal/pre-commit/multi-file-commit protocols unless sections genuinely cannot live in one file. (Added 2026-06-28 single-file architecture refactoring)<｜end▁of▁thinking｜>
+- [ ] 新 Core 代码引用 Avalonia / CommunityToolkit？（是则拒）
+- [ ] 新 JSON 字段加 `[JsonPropertyName]` + `[JsonRequired]`？字符串默认 `""`？
+- [ ] enum 有配对 helper `NormalizeId()` / `ToId()`？
+- [ ] 新 fixture 入共享文件？新持久化路径用原子 temp 写？
+- [ ] Unicode：截断查代理对 `char.IsHighSurrogate`；剥字符剥 Control + Format；ID `Normalize(FormC)`。
+- [ ] % 注入：`ExpandEnvironmentVariables` 是否在 FormKC 后？（U+FF05→U+0025）
+- [ ] UNC：用户目录路径拒绝 `\\` 前缀？PATH hijack：可执行文件解析不回退裸名走 `PATH`？
+- [ ] 测试断言无 `Assert.Equal(X, X)` 自比较？JSON 属性检查同时验证 missing + extra（双向集合比较）？
+- [ ] 原子保存走 `LauncherJson.Save`（temp→`File.Replace`→备份轮转），禁 `File.WriteAllText`。
+- [ ] 备份恢复重试在原 try/catch 外？（内部 = 备份也损坏时死循环）
+- [ ] schema version 用方向性 `<` / `>` 检查？旧拒绝 + 新升级提示。
+- [ ] `[JsonRequired]` 传播：同步 `verify.ps1` smoke、test factory、README 示例、`config-lib.ps1` 默认（2026-06-26）。
+- [ ] 堆叠 bug：修一个 gate-blocking bug 后重跑完整 gate，不假设一次过（2026-06-26）。
+- [ ] `File.Replace`（`MoveFileEx MOVEFILE_REPLACE_EXISTING`）目标存在；`File.Move` 仅首次保存；`File.Move(overwrite:true)` 非原子（2026-06-28）。
+- [ ] 备份轮转 copy-then-rotate（2026-06-28）。
+- [ ] 跨层校验同语义（大小写、`>N` vs `>=N`）；共享常量/方法（2026-06-28）。
+- [ ] 异常解包循环带 `for i<16` 上限（null InnerException 死循环）（2026-06-28）。
+- [ ] NaN/Infinity：布局算术 `double.IsFinite` / `IsNaN` 守卫（2026-06-28）。
+- [ ] 单文件优于多文件：跨段一致性合并单文件 + `File.Replace`；禁 journal/预提交/多文件提交协议除非真无法单文件（2026-06-28）。

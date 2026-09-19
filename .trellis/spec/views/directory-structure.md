@@ -1,76 +1,44 @@
 # Directory Structure — Views Layer
 
-> How View files are organized in `WTLauncher.App/Views/`.
+> `Views/` 文件组织。计数由 `AGENTS.md` 结构基线 + `structure-baseline-consistency` 机器校验，本文件不硬编码漂移数字。
 
----
+## 文件布局
 
-## File Layout
+- `MainWindow.axaml(.cs)`：主窗口（三视图）+ code-behind。
+- `MainWindow.Drag.cs`：DragOver/Drop + ghost 工厂。
+- `MainWindowEntryCardResolver.cs`：卡片视觉树解析。
+- `LauncherControlBar.axaml(.cs)`：批量控制条。
+- `LauncherEntriesView.axaml(.cs)`：entries 视图宿主。
+- `FastWrapPanel.cs`：name-wall 布局自定义面板。
+- `DialogService.cs`：对话框注入 helper；`LauncherDialogText.cs`：共享对话框文本。
+- `Dialogs/DialogSharedStyles.axaml`：共享对话框样式；`Controls/StatusBar.axaml(.cs)`：状态栏。
+- 对话框（均 `.axaml(.cs)`）：`CommandEditDialog`、`CommandManagementWindow`、`ConfirmBatchLaunchWindow`、`ConfirmEntryDeleteWindow`、`ConfirmLaunchWindow`、`ConfirmPresetDeleteWindow`、`DirectoryEditDialog`、`DirectoryManagementWindow`、`DiscoverAgentsWindow`、`EntryDetailsWindow`、`ImportMigrationWindow`、`PresetDetailsWindow`、`QuickLaunchWindow`、`RunHistoryWindow`、`UpdateCheckWindow`。
 
-`Views/` — 44 files total (24 C# + 20 AXAML). Counts are machine-verified against
-`AGENTS.md` 结构基线 by gate check `structure-baseline-consistency`.
+## 所有权
 
-```
-Views/
-├── MainWindow.axaml / .axaml.cs      # Main window: XAML (three view modes) + code-behind
-├── MainWindow.Drag.cs                # Drag-over / drop event handlers + ghost factory
-├── MainWindowEntryCardResolver.cs    # Card visual tree resolution
-├── LauncherControlBar.axaml(.cs)     # Header batch controls bar
-├── LauncherEntriesView.axaml(.cs)    # Entries view host
-├── FastWrapPanel.cs                  # Custom panel for name-wall layout
-├── DialogService.cs                  # Dialog injection helper
-├── LauncherDialogText.cs             # Shared dialog text factory
-├── Dialogs/DialogSharedStyles.axaml  # Shared dialog styling
-├── Controls/StatusBar.axaml(.cs)     # Status bar control
-├── CommandEditDialog.axaml(.cs)      # Command template editor dialog
-├── CommandManagementWindow.axaml(.cs)# Command management window
-├── ConfirmBatchLaunchWindow.axaml(.cs)# Batch launch confirmation
-├── ConfirmEntryDeleteWindow.axaml(.cs)# Entry delete confirmation
-├── ConfirmLaunchWindow.axaml(.cs)    # Single launch confirmation
-├── ConfirmPresetDeleteWindow.axaml(.cs)# Preset delete confirmation
-├── DirectoryEditDialog.axaml(.cs)    # Directory edit dialog
-├── DirectoryManagementWindow.axaml(.cs)# Directory management window
-├── DiscoverAgentsWindow.axaml(.cs)   # Agent discovery window
-├── EntryDetailsWindow.axaml(.cs)     # Add/edit entry dialog
-├── ImportMigrationWindow.axaml(.cs)  # Import / migration window
-├── PresetDetailsWindow.axaml(.cs)    # Save/update preset dialog
-├── QuickLaunchWindow.axaml(.cs)      # Quick-launch window
-├── RunHistoryWindow.axaml(.cs)       # Run-history window
-└── UpdateCheckWindow.axaml(.cs)      # Update-check window
-```
+| 文件 | 职责 |
+|------|------|
+| `MainWindow.axaml` | XAML 布局（三视图、卡片模板、drag 视觉态） |
+| `MainWindow.axaml.cs` | 构造、对话框注入、键盘导航、窗口生命周期 |
+| `MainWindow.Drag.cs` | DragOver/Drop + ghost |
+| `MainWindowEntryCardResolver.cs` | 视觉树 hit-test |
+| `LauncherControlBar` | 批量控件 / 视图切换 |
+| `LauncherEntriesView` | 条目列表 / 卡片宿主 |
+| `*Window` / `*Dialog` | 每用户动作一窗 |
+| `LauncherDialogText` / `DialogService` | 共享对话框 helper |
+| `Controls/`、`Dialogs/` | 复用控件与共享样式 |
 
----
+## Naming
 
-## File Ownership
+主窗口 helper `MainWindow*.cs`；对话框 `Confirm*Window.cs` / `*DetailsWindow.cs` / `*EditDialog.axaml(.cs)`；View 层共享 `LauncherDialog*.cs`（`Launcher` 前缀）。
 
-| File | Ownership |
-|------|-----------|
-| `MainWindow.axaml` | XAML layout — three view modes, card templates, drag visual states |
-| `MainWindow.axaml.cs` | Constructor, dialog injection, keyboard navigation, window lifecycle |
-| `MainWindow.Drag.cs` | DragOver / Drop event handlers + ghost card factory |
-| `MainWindowEntryCardResolver.cs` | Visual-tree hit-test resolution for entry cards |
-| `LauncherControlBar.axaml(.cs)` | Header bar with batch controls / view-mode switching |
-| `LauncherEntriesView.axaml(.cs)` | Entries list/card host |
-| `*Window.axaml(.cs)` / `*Dialog.axaml(.cs)` | One window/dialog per user action — confirmation, editing, management |
-| `LauncherDialogText.cs`, `DialogService.cs` | Shared dialog helpers — avoid duplication across dialog windows |
-| `Controls/`, `Dialogs/` | Reusable controls and shared dialog styling |
+## Where to Put
 
----
-
-## Naming Conventions
-
-- **Main window + helpers:** `MainWindow*.cs` — prefix pattern for window-scoped helpers.
-- **Dialog windows:** `Confirm*Window.cs`, `*DetailsWindow.cs`, `*EditDialog.axaml(.cs)`.
-- **Shared helpers:** `LauncherDialog*.cs` — `Launcher` prefix for View-layer shared code.
-
----
-
-## Where to Put New Code
-
-| What you're adding | Where |
-|-------------------|-------|
-| New dialog window | New `*Window.axaml(.cs)` (or `*Dialog.axaml(.cs)`) + corresponding code-behind |
-| Shared dialog logic | `LauncherDialogText.cs` or `DialogService.cs` |
-| Drag visual behavior | `MainWindow.Drag.cs` |
-| Keyboard shortcut | `MainWindow.axaml.cs` — `OnWindowKeyDown` |
-| Reusable control | `Controls/` |
+| 新增 | 位置 |
+|------|------|
+| 新对话框 | `*Window.axaml(.cs)` 或 `*Dialog.axaml(.cs)` |
+| 共享对话框逻辑 | `LauncherDialogText.cs` / `DialogService.cs` |
+| drag 视觉 | `MainWindow.Drag.cs` |
+| 键盘快捷键 | `MainWindow.axaml.cs` `OnWindowKeyDown` |
+| 复用控件 | `Controls/` |
 | XAML style/DataTemplate | `MainWindow.axaml` |

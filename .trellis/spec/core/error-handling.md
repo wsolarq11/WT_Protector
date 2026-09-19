@@ -1,335 +1,80 @@
 # Error Handling — Core Layer
 
-> How errors are represented, validated, and surfaced across layers.
+> 失败 = 异常；用户可见 = 结构化简体中文状态文本。无自定义 `Result<T,E>`：预期错误（校验/未找到）与意外错误（I/O/契约/反序列化）都以异常表达，单用户启动器持久化失败是意外错误。
 
----
+决策锚点（2026-07-09 复核，任务 `07-09-result-types-migration`）：保留异常。价值对象 `Parse`、`ExceptionFilters.IsRecoverable`、`ExceptionMessageFormatter.ForUser`、`LauncherPersistenceStatus.*` 已构成层次化纪律。仅当出现高频预期错误路径（批量校验 API、插件动态加载）才重审 Result。
 
-## Error Representation
+## Status Text
 
-### Exception-based, with structured messages
+`MainWindowViewModel.cs` 内静态文本类：`LauncherMainWindowText`（就绪/加载/占位）、`LauncherPersistenceStatus`（保存/回滚失败）、`LauncherEntryStatus`（增删改）、`LauncherPresetStatus`、`LauncherSelectionStatus`、`LauncherSettingsStatus`、`LauncherSingleLaunchStatus`、`LauncherSingleLaunchReceiptText`、`LauncherBatchLaunchPlanText`、`LauncherBatchLaunchReceiptText`。
 
-The project uses **exceptions for failures** and **structured Chinese-language status text** for user-facing messages. There is no custom `Result<T, E>` type — failures throw, success returns.
+规则：
+1. 全部简体中文。
+2. 静态方法 + 类型化参数；调用点禁字符串插值。
+3. 方法参数 `ArgumentNullException.ThrowIfNull()`。
+4. 不含 PII/密钥；配置文件路径可显示。
 
-**Source:** `src/avalonia-launcher/src/WTLauncher.App/ViewModels/MainWindowViewModel.cs` (status text classes)
+## Validation
 
-### Re-audit confirmation (2026-07-09, task 07-09-result-types-migration)
-
-The 2026-07-09 schema-driven-architecture audit re-examined whether the exception flow should be migrated to `Result<T, StoreError>`. **Decision: keep exceptions.** The 2026-07-06 decision still holds.
+规则：
+1. 边界校验：JSON 反序列化管结构，值对象 `Parse` 管语义；Store 层不重复校验（Normalize 管线已于 2026-07-06 移除）。
+2. 配置/用户输入畸形 → `InvalidDataException`。
+3. 编程错误 → `ArgumentException` / `ArgumentNullException`。
+4. 错误信息含 index + 字段名。
 
-**Why exceptions remain correct for this codebase:**
-1. **Modern .NET practice (2025) confirms the split**: Result pattern for EXPECTED business-domain errors (validation, not-found, permission); exceptions for UNEXPECTED technical errors (I/O failure, contract violation, deserialization). Single-user launcher persistence failures are UNEXPECTED.
-2. **No bug to cut**: the test suite (count evolves; run `dotnet test -c Release` for current numbers) passes, and the audit cited no specific bug caused by exception flow. "Exception-based control flow" was a misread — the 20+ `catch` sites are error boundaries, not control-flow branches.
-3. **Cost > benefit**: ~50 throw sites + ~20 catch sites + ~50 tests would have to change to introduce a single-implementation `StoreError` abstraction (ponytail: no abstraction with one implementation).
-4. **Layered discipline already in place**: value-object `Parse` (Parse-Don't-Validate), `ExceptionFilters.IsRecoverable` (fatal/recoverable classifier), `ExceptionMessageFormatter.ForUser` (UI sanitization), `LauncherPersistenceStatus.*` (typed status factories).
+### Parse / Normalize（取代 Result<T,E>，2026-07-06）
 
-**When to revisit:** only if a high-frequency EXPECTED error path emerges (e.g., batch validation API, plugin dynamic loading). Until then, exceptions are correct.
+- `Parse` 非法输入抛 `FormatException`；绝不返回 null/Result。
+- `Normalize` catch `FormatException` 返回 `string.Empty`。
+- JSON converter 直接 `Parse`（异常以 `InvalidDataException` 传播）。
+- 需"非法即抛"用 `Parse`；需"非法给默认"用 `Normalize` 或 try/catch。
 
-**External references (2025 consensus):**
-- [Microsoft Learn — Best practices for exceptions](https://learn.microsoft.com/en-us/dotnet/standard/exceptions/best-practices-for-exceptions)
-- [Redgate Simple Talk — The Result Pattern in ASP.NET Core](https://www.red-gate.com/simple-talk/development/dotnet-development/the-result-pattern-in-asp-net-core-minimal-apis)
+## 异常类型表
 
-### Status Text Pattern
+| 异常 | 场景 |
+|------|------|
+| `ArgumentException` | 编程错误 |
+| `InvalidDataException` | 文件/输入损坏 |
+| `InvalidOperationException` | 对象状态错误 |
+| `IOException` | 文件 I/O 失败 |
 
-Every user-facing outcome has a static factory method in a dedicated text class:
+异常类型是公共 API；变更前审计所有 `Assert.Throws<T>`。
 
-```csharp
-public static class LauncherEntryStatus
-{
-    public static string Added(string entryName) =>
-        $"已新增按钮: {entryName}（已保存）";
-    // ...
-}
-```
+## Catch 纪律（gate 强制，commit `266aa6f`）
 
-**Text classes in `MainWindowViewModel.cs`:**
+`tools/verify.ps1` `no-bare-catch-exception` 拒绝 `src/avalonia-launcher/src/**/*.cs` 中任何无 `when` 过滤的 `catch (Exception)`。
 
-| Class | Responsibility |
-|-------|---------------|
-| `LauncherMainWindowText` | Ready, loaded, placeholder messages |
-| `LauncherPersistenceStatus` | Save/rollback failure messages |
-| `LauncherEntryStatus` | Add/edit/delete outcomes |
-| `LauncherPresetStatus` | Preset CRUD outcomes |
-| `LauncherSelectionStatus` | Selection change outcomes |
-| `LauncherSettingsStatus` | Settings change outcomes |
-| `LauncherSingleLaunchStatus` | Single launch outcomes |
-| `LauncherSingleLaunchReceiptText` | Single launch receipt formatting |
-| `LauncherBatchLaunchPlanText` | Batch plan preview |
-| `LauncherBatchLaunchReceiptText` | Batch launch receipt |
+- 可枚举逃逸 → 类型过滤：`catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SecurityException)`。
+- 不可枚举 → 分类器：`catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))` + `ErrorLog.Write(ex, "<Scope>.<Action>")` + 状态文本。
+- UI 委托边界（对话框确认）的裸 `catch (Exception)` 可接受（边界未知）。见 [pitfalls §2.3](../guides/pitfalls.md#23-kiss-合并后-catch-过宽)。
 
-### Rules for Status Text
+契约：
+- `ExceptionFilters.IsRecoverable(ex)`：对 OOM/StackOverflow/AccessViolation/SEH 返回 false（解包 Aggregate/TypeInitialization 最多 16 层）；DEBUG 下 NRE/IndexOutOfRange/ArgNull 重抛为 `InvalidOperationException` 强制崩溃。
+- `ErrorLog.Write(ex, context)`：写 `%LOCALAPPDATA%/WTLauncher/errors.log`，永不抛；并发写经 `Interlocked.Exchange` 丢弃不排队。
+- Scope：`"<Component>.<Action>"`。
 
-1. **All status text in Chinese (简体中文)** — matches target user language.
-2. **Status text uses static methods with typed arguments** — never string interpolation at call sites.
-3. **Always use `ArgumentNullException.ThrowIfNull()`** on method arguments.
-4. **Status text does NOT contain PII or secrets** — file paths are safe (config paths are user-visible).
+矩阵：可恢复 → catch 生效；OOM/SEH/AV → 传播崩溃（故意）；DEBUG 逻辑 bug → 强制崩溃；RELEASE 逻辑 bug → 记日志保持运行。
 
----
+## AggregateException 空 InnerException 坑
 
-## Validation Pattern
+`new AggregateException()` 可零内异常 → `InnerException` 为 null。解包循环必须带界 `for i<16` + null 时 `break`。`ExceptionFilters.IsRecoverable`（App）不重复解包，委托 `LauncherErrors.IsRecoverable`（Core，带界）。参考 bug：`ExceptionFilters.cs:19-20`（2026-07-26 修复，无界 while 会永久挂线程）。
 
-### Input Validation
+## 消息脱敏（2026-06-24）
 
-**Source:** `LauncherStore.cs`, `LauncherEntryDrafts.cs`
-
-```csharp
-private static string RequireEntryId(string? id, int index, HashSet<string> seenIds)
-{
-    var normalized = EntryId.RequireEntryId(id, nameof(id));
-    if (!seenIds.Add(normalized))
-        throw new InvalidDataException($"Launcher config entry {index} id is duplicate: {normalized}.");
-    return normalized;
-}
-```
-
-**Rules:**
-1. **Validate at the boundary** — `EntryId.Parse()`, `EntryName.Parse()` etc. validate at the point of creation. JSON deserialization handles structural validity; value objects handle semantic validity. Do NOT re-validate in the store layer. (Normalize pipeline removed 2026-07-06.)
-2. **Throw `InvalidDataException`** for malformed config/user input.
-3. **Throw `ArgumentException` / `ArgumentNullException`** for programming errors.
-4. **Include index and field name** in error messages for pinpoint debugging.
-
-### Parse Pattern (replaces Result<T,E>, 2026-07-06)
-
-Value objects use a `Parse(throw)` / `Normalize(catch)` pattern instead of the old `Result<T, E>`:
-
-```csharp
-// Parse — throws FormatException on invalid input
-public static EntryId Parse(string? raw)
-{
-    if (string.IsNullOrWhiteSpace(raw))
-        throw new FormatException("ID 不能为空。");
-    // ... validation ...
-    return new EntryId(trimmed);
-}
-
-// Normalize — returns empty on failure (no throw)
-public static string Normalize(string? value)
-{
-    try { return Parse(value).Value; }
-    catch (FormatException) { return string.Empty; }
-}
-```
-
-**Rules:**
-1. `Parse` throws `FormatException` for invalid input — never returns null or uses Result<T,E>.
-2. `Normalize` catches `FormatException` and returns `string.Empty` on failure.
-3. JSON converters call `Parse` directly (let exception propagate as `InvalidDataException`).
-4. Callers that need "throw on invalid" use `Parse`; callers that need "default on invalid" use `Normalize` or wrap in try/catch.
-
----
-
-## Single-File Atomic Save (2026-07-09)
-
-**Source:** `src/avalonia-launcher/src/WTLauncher.Core/LauncherJson.cs`
-
-The store is a **single file** (`config/launcher.json`) owning entries + presets + settings + defaultPresetId together. The previous three-file stage-all-then-commit protocol (config.json + presets.json + settings.json) is gone — there is nothing to coordinate across files.
-
-`LauncherJson.Save` is the single atomic write path:
-1. Write JSON to `launcher.json.tmp-{Guid:N}`.
-2. `File.Move(temp, launcher.json, overwrite: true)` — atomic on the same NTFS volume.
-3. Rotate `.bak` → `.bak.1` → `.bak.2` → delete (copy-then-rotate, not rotate-then-copy).
-4. `finally` block cleans up the temp file (wrapped in its own try/catch so cleanup failure cannot replace the original exception).
-
-ViewModels call `StoreGrain.Dispatch` which handles persistence internally (save-first-then-commit: the reducer result is persisted before memory is updated). If save throws, memory is left unchanged and the VM syncs via `RestoreVmStateFromStore()`.
-
-**When snapshot-rollback is still appropriate:** Single mutations that modify in-memory ViewModel state before the save. The snapshot restores the ViewModel, not the files (the files are protected by the atomic write inside `LauncherJson.Save`).
-
----
-
-## Exception Catching Discipline
-
-**Source:** `src/avalonia-launcher/src/WTLauncher.App/ViewModels/MainWindowViewModel.cs` (mutation command catch blocks)
-
-```csharp
-catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-```
-
-**Rule:** Catch **specific** exception types, not bare `Exception`. Use `when` filters for precision.
-
-**Exception type selection guide (2026-06-24):**
-
-| Exception | When to use |
-|-----------|-------------|
-| `ArgumentException` | Programming error — wrong argument passed by developer |
-| `InvalidDataException` | Corrupted/malformed data from file or user input |
-| `InvalidOperationException` | Object is in wrong state for the requested operation |
-| `IOException` | File I/O failure (disk full, permission denied, locked file) |
-
-**CRITICAL:** Exception types are public API. Changing them requires auditing all `Assert.Throws<T>` tests.
-
-### Catch Filter Convention (Gate-Enforced since `266aa6f`)
-
-**Scope / Trigger:** Any `catch` clause in `src/avalonia-launcher/src/**/*.cs`. The `tools/verify.ps1` check `no-bare-catch-exception` rejects any `catch (Exception)` or `catch (Exception ex)` whose source line lacks a `when` filter. This is the architectural enforcement of the bare-catch invariant.
-
-**Signatures:**
-
-```csharp
-// Narrow by exception type — preferred when the caller can enumerate the escapes
-catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SecurityException)
-{
-    // handle
-}
-
-// Orchestration-level — when escapes are not enumerable, narrow via classifier
-catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-{
-    ErrorLog.Write(ex, "<Scope>.<Action>");
-    StatusText = "<user-facing 简体中文 message>";
-}
-```
-
-**Contracts:**
-
-| Field | Type | Constraint |
-|-------|------|-----------|
-| `ExceptionFilters.IsRecoverable(ex)` | `bool` | Returns `false` for `OutOfMemoryException`, `StackOverflowException`, `AccessViolationException`, `SEHException` (after unwrapping `AggregateException` / `TypeInitializationException`, max 16 levels). DEBUG builds rethrow `NullReferenceException` / `IndexOutOfRangeException` / `ArgumentNullException` as `InvalidOperationException` so logic bugs crash during development. |
-| `ErrorLog.Write(ex, context)` | `void` | Writes to `%LOCALAPPDATA%/WTLauncher/errors.log`. Never throws. Internal narrow catches (`IOException \| UnauthorizedAccessException \| DirectoryNotFoundException`). Concurrent writes dropped via `Interlocked.Exchange`, not queued. |
-| Scope string | `string` | `"<Component>.<Action>"` shape — e.g. `"DiscoverAgents.Scan"`, `"DiscoverAgents.Dialog"`. |
-
-**Validation & Error Matrix:**
-
-| Condition | Behavior |
-|-----------|----------|
-| Recoverable exception thrown inside try | `when` returns `true` → catch engages → status text set → state cleared in `finally` |
-| Unrecoverable exception (OOM / SEH / AccessViolation) thrown | `when` returns `false` → catch skipped → exception propagates and crashes the process — intentional |
-| Logic bug (NRE / IndexOutOfBounds / ArgNull) in DEBUG | `IsRecoverable` itself throws `InvalidOperationException` → forced crash during development |
-| Logic bug in RELEASE | `IsRecoverable` returns `true` → catch engages → error logged → production stays up |
-
-**Good / Base / Bad Cases:**
-
-- **Good** — orchestration catch with classifier + log + status:
-  ```csharp
-  catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-  {
-      ErrorLog.Write(ex, "DiscoverAgents.Scan");
-      StatusText = "扫描过程中发生错误";
-  }
-  ```
-- **Base** — specific exception filter when types are enumerable:
-  ```csharp
-  catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-  {
-      ErrorLog.Write(ex, "LauncherJson.Save");
-      // ...
-  }
-  ```
-- **Bad** — bare catch (gate rejects at `tools/verify.ps1`):
-  ```csharp
-  catch (Exception) { /* swallow */ }      // ❌ gate fails
-  catch (Exception ex) { ... }             // ❌ gate fails
-  ```
-
-**Tests Required:**
-
-- **Recoverable-path test** — inject a recoverable exception through the seam (Func / mock / test hook), assert status text + state-cleared contract. Reference: `DiscoverAgentsViewModelTests.ScanAsync_WhenScanFuncThrowsRecoverable_SurfacesErrorAndClearsScanning` (`InvalidOperationException` injection → `StatusText == "扫描过程中发生错误"` + `IsScanning == false`).
-- **Unrecoverable-path test** — NOT REQUIRED. C# language semantics of `when (false)` guarantee the catch is skipped; `ExceptionFilters.IsRecoverable` predicate behavior is independently verified. Adding a test that throws a reserved runtime exception (`OutOfMemoryException` / `SEHException` / `AccessViolationException`) triggers `CA2201`, enforced as error via `-warnaserror` — analyzer theater for a behavior the language already guarantees.
-
-**Gotcha: AggregateException with null InnerException**
-
-> `AggregateException` can be constructed with zero inner exceptions (`new AggregateException()`). In this case, `InnerException` is null. Any unwrap loop that does `inner = inner.InnerException ?? inner` will infinite-loop because the null-coalescing operator returns the same reference, and the type check (`inner is AggregateException`) stays true.
->
-> **Always use a bounded unwrap with `for i<16` guard AND a `break` when `InnerException is null`:**
-> ```csharp
-> // CORRECT — bounded guard + break on null
-> for (var i = 0; i < 16 && ex is TypeInitializationException or AggregateException; i++)
-> {
->     if (ex.InnerException is null) break;
->     ex = ex.InnerException;
->     if (ex is AggregateException agg)
->         ex = agg.Flatten().InnerExceptions.FirstOrDefault() ?? ex;
-> }
-> ```
->
-> **ExceptionFilters.IsRecoverable (App layer) must NOT duplicate the unwrap logic.** It delegates to `LauncherErrors.IsRecoverable (Core)` which has the bounded guard. The DEBUG-only FailFast check in ExceptionFilters uses the same bounded `for i<16` pattern.
->
-> **Reference bug**: `ExceptionFilters.cs:19-20` (fixed 2026-07-26 ultrareview) — independent unbounded while loop with `inner.InnerException ?? inner` could hang the thread forever.
-
-**Wrong vs Correct:**
-
-```csharp
-// WRONG — gate rejects; swallows OOM/SEH behind status string
-catch (Exception)
-{
-    StatusText = "扫描过程中发生错误";
-}
-
-// CORRECT — narrowed via classifier; unrecoverable exceptions propagate
-catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
-{
-    ErrorLog.Write(ex, "DiscoverAgents.Scan");
-    StatusText = "扫描过程中发生错误";
-}
-```
-
----
-
-## Exception Message Sanitization (2026-06-24)
-
-**Source:** `MainWindowViewModel.ExceptionMessageFormatter`
-
-Exceptions displayed in the UI status bar MUST be sanitized to avoid leaking file paths:
-
-```csharp
-internal static class ExceptionMessageFormatter
-{
-    public static string ForUser(Exception exception) => exception switch
-    {
-        FileNotFoundException => "配置文件无法访问",
-        DirectoryNotFoundException => "配置目录无法访问",
-        UnauthorizedAccessException => "文件访问权限不足",
-        IOException => "文件操作失败",
-        _ => exception.Message,
-    };
-}
-```
-
-**Rules:**
-1. All status text methods taking `Exception` MUST route through `ExceptionMessageFormatter.ForUser()`.
-2. Never use raw `exception.Message` in `StatusText = $"...{exception.Message}"`.
-3. `FileNotFoundException.Message` includes the full file path — always sanitize.
-4. `LauncherPersistenceStatus.Failed()` is the reference implementation.
-
----
+`ExceptionMessageFormatter.ForUser()`：白名单透传（已知安全类型），其余给通用消息。禁裸 `exception.Message` 进 UI；`FileNotFoundException.Message` 含完整路径必脱敏。参考实现 `LauncherPersistenceStatus.Failed()`。
 
 ## Forbidden Patterns
 
-- ❌ **Bare `catch (Exception)`** — gate-enforced via `tools/verify.ps1` `no-bare-catch-exception` check (since `266aa6f`). Filter to specific types or use `catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))`.
-- ❌ **Swallowing exceptions silently** — always log/display to user.
-- ❌ **Returning `null` for "not found" without documentation** — use exceptions for unexpected absence.
-- ❌ **English status text** — all user-facing text in Chinese.
-- ❌ **Inline string concatenation for status** — use the static text factory method.
-- ❌ **Raw `exception.Message` in UI** — use `ExceptionMessageFormatter.ForUser()`.
-- ❌ **Catching `Exception` without `ExceptionFilters.IsRecoverable(ex)` in UI callbacks** — OOM/StackOverflow must propagate.
-- ❌ **`File.Delete` in `finally` block without its own try/catch** — a cleanup failure replaces the original exception. Always wrap cleanup in try/catch.
-- ❌ **`Debug.WriteLine` without `Trace.WriteLine` for diagnostics in Core layer** — `Debug.WriteLine` is stripped in Release builds. Core can't reference `ErrorLog` (App layer). Always pair with `Trace.WriteLine` for Release-safe diagnostics.
+- ❌ 裸 `catch (Exception)`（gate 强制）。
+- ❌ 吞异常；必记日志/显示。
+- ❌ 无文档的 `null` 表示"未找到"；意外缺失用异常。
+- ❌ 英文状态文本。
+- ❌ 状态文本内联拼接；用静态工厂。
+- ❌ UI 裸 `exception.Message`；用 `ForUser()`。
+- ❌ UI 回调 `catch (Exception)` 无 `IsRecoverable`；OOM/StackOverflow 必须传播。
+- ❌ `finally` 里 `File.Delete` 无自身 try/catch；清理失败会替换原异常。
+- ❌ Core 层 `Debug.WriteLine` 无 `Trace.WriteLine` 配对；Release 会剥离 Debug。
 
-## Finally-Block Safety (2026-06-25)
+## finally 安全（2026-06-25）
 
-Cleanup code in `finally` blocks must never throw, because a `finally` exception **replaces** the original exception from the `try` block:
-
-```csharp
-// CORRECT: wrap cleanup in its own try/catch
-finally
-{
-    try
-    {
-        if (File.Exists(tempPath))
-            File.Delete(tempPath);
-    }
-    catch
-    {
-        // Best-effort cleanup — don't replace the original exception.
-    }
-}
-```
-
-## Release Build Diagnostics (2026-06-25)
-
-Core layer (no App dependency) uses `Trace.WriteLine` as the Release-safe fallback:
-
-```csharp
-var msg = $"[LauncherJson] Backup rotation failed: {ex.Message}";
-Debug.WriteLine(msg);   // Debug builds only
-Trace.WriteLine(msg);   // Release builds with trace listener
-```
-
-App layer uses `ErrorLog.Write(ex, context)` which works in all build configurations.
+finally 内清理必须包自身 try/catch，否则 finally 异常替换 try 原始异常。Core 诊断用 `Debug.WriteLine` + `Trace.WriteLine` 配对；App 用 `ErrorLog.Write`。
