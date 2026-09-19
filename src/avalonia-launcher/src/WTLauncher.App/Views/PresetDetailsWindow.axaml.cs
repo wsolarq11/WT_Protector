@@ -1,7 +1,9 @@
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using WTLauncher.App.Features.Entries;
+using WTLauncher.App.Localization;
 using WTLauncher.App.ViewModels;
 
 namespace WTLauncher.App.Views;
@@ -15,6 +17,7 @@ public sealed partial class PresetDetailsWindow : Window
     {
         _validator = new EntryDraftValidator();
         InitializeComponent();
+        ApplyLocalizedChrome();
     }
 
     public PresetDetailsWindow(
@@ -29,14 +32,26 @@ public sealed partial class PresetDetailsWindow : Window
         _validator = validator ?? new EntryDraftValidator();
 
         InitializeComponent();
+        ApplyLocalizedChrome();
 
-        SummaryText.Text = $"将当前 {target.EntryCount} 个勾选项保存为可复用启动组。";
+        SummaryText.Text = LauncherLocalization.Format("presetDetails.summary", target.EntryCount);
 
         Opened += (_, _) =>
         {
             NameBox.Focus();
             Dispatcher.UIThread.Post(() => NameBox.SelectAll(), DispatcherPriority.Loaded);
         };
+    }
+
+    private void ApplyLocalizedChrome()
+    {
+        Title = LauncherLocalization.Format("presetDetails.title");
+        HeadingText.Text = LauncherLocalization.Format("presetDetails.heading");
+        NameLabel.Text = LauncherLocalization.Format("presetDetails.name");
+        CancelButton.Content = LauncherLocalization.Format("presetDetails.cancel");
+        AutomationProperties.SetName(CancelButton, LauncherLocalization.Format("presetDetails.cancelAutomation"));
+        SaveButton.Content = LauncherLocalization.Format("presetDetails.save");
+        AutomationProperties.SetName(SaveButton, LauncherLocalization.Format("presetDetails.saveAutomation"));
     }
 
     private void OnCancelClicked(object? sender, RoutedEventArgs e) => Close((string?)null);
@@ -51,7 +66,7 @@ public sealed partial class PresetDetailsWindow : Window
         var name = _validator.NormalizeText(NameBox.Text);
         if (name.Length == 0)
         {
-            ErrorText.Text = "请输入启动组名称。";
+            ErrorText.Text = LauncherLocalization.Format("presetDetails.nameRequired");
             ErrorText.IsVisible = true;
             NameBox.Focus();
             return;
@@ -59,7 +74,7 @@ public sealed partial class PresetDetailsWindow : Window
 
         if (_existingPresetNames.Contains(name))
         {
-            ErrorText.Text = "该名称已存在，请使用其他名称。";
+            ErrorText.Text = LauncherLocalization.Format("presetDetails.nameExists");
             ErrorText.IsVisible = true;
             NameBox.Focus();
             return;

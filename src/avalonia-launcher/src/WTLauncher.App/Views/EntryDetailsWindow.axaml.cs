@@ -1,11 +1,13 @@
 using System.IO;
 using System.Linq;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -31,6 +33,7 @@ public sealed partial class EntryDetailsWindow : Window
         _commandTemplates = null;
         _validator = new EntryDraftValidator();
         InitializeComponent();
+        ApplyLocalizedChrome();
     }
 
     public EntryDetailsWindow(
@@ -44,9 +47,10 @@ public sealed partial class EntryDetailsWindow : Window
         _validator = validator ?? new EntryDraftValidator();
 
         InitializeComponent();
+        ApplyLocalizedChrome();
 
-        Title = _isEdit ? "编辑按钮" : "新增按钮";
-        TitleText.Text = _isEdit ? "编辑启动按钮" : "新增启动按钮";
+        Title = LauncherLocalization.Format(_isEdit ? "entryDetails.editTitle" : "entryDetails.addTitle");
+        TitleText.Text = LauncherLocalization.Format(_isEdit ? "entryDetails.editHeading" : "entryDetails.addHeading");
 
         IdBox.Text = RequireInitialEntryId(prefill);
         IdBox.MaxLength = 256;
@@ -62,7 +66,7 @@ public sealed partial class EntryDetailsWindow : Window
         // the directory is browsable. Edit mode keeps the existing behavior.
         if (!_isEdit)
         {
-            IdBox.PlaceholderText = "留空自动生成";
+            IdBox.PlaceholderText = LauncherLocalization.Format("entryDetails.idPlaceholder");
             CommandBox.Text = "pwsh";
         }
 
@@ -71,13 +75,13 @@ public sealed partial class EntryDetailsWindow : Window
         if (_isEdit)
         {
             var hint = presetReferenceCount == 0
-                ? "此 ID 未被任何启动组引用"
-                : $"此 ID 被 {presetReferenceCount} 个启动组引用";
+                ? LauncherLocalization.Format("entryDetails.presetHintNone")
+                : LauncherLocalization.Format("entryDetails.presetHintCount", presetReferenceCount);
             PresetHintText.Text = hint;
             PresetHintText.IsVisible = true;
         }
 
-        SaveButton.Content = _isEdit ? "保存按钮" : "新增按钮";
+        SaveButton.Content = LauncherLocalization.Format(_isEdit ? "entryDetails.save" : "entryDetails.add");
 
         SetupTemplatePreview();
 
@@ -93,13 +97,28 @@ public sealed partial class EntryDetailsWindow : Window
         };
     }
 
+    private void ApplyLocalizedChrome()
+    {
+        IdLabel.Text = LauncherLocalization.Format("entryDetails.idLabel");
+        NameLabel.Text = LauncherLocalization.Format("entryDetails.nameLabel");
+        DirectoryLabel.Text = LauncherLocalization.Format("entryDetails.directoryLabel");
+        CommandLabel.Text = LauncherLocalization.Format("entryDetails.commandLabel");
+        ConfirmNote.Text = LauncherLocalization.Format("entryDetails.confirmNote");
+        SelectedBox.Content = LauncherLocalization.Format("entryDetails.selected");
+        BrowseDirectoryButton.Content = LauncherLocalization.Format("entryDetails.browse");
+        AutomationProperties.SetName(BrowseDirectoryButton, LauncherLocalization.Format("entryDetails.browseAutomation"));
+        CancelButton.Content = LauncherLocalization.Format("entryDetails.cancel");
+        AutomationProperties.SetName(CancelButton, LauncherLocalization.Format("entryDetails.cancelAutomation"));
+        AutomationProperties.SetName(SaveButton, LauncherLocalization.Format("entryDetails.saveAutomation"));
+    }
+
     private void SetupTemplatePreview()
     {
         if (_commandTemplates is null || _commandTemplates.Count == 0)
             return;
 
         var templateKeys = string.Join("、", _commandTemplates.Select(kv => $"${kv.Key}"));
-        TemplateSubtleText.Text = $"可用模板：{templateKeys}";
+        TemplateSubtleText.Text = LauncherLocalization.Format("entryDetails.templates", templateKeys);
         TemplateSubtleText.IsVisible = true;
 
         CommandBox.TextChanged += (_, _) =>
@@ -109,9 +128,9 @@ public sealed partial class EntryDetailsWindow : Window
             {
                 var key = cmd[1..];
                 if (_commandTemplates.TryGetValue(key, out var resolved))
-                    TemplatePreview.Text = $"\u2192 {resolved}";
+                    TemplatePreview.Text = LauncherLocalization.Format("entryDetails.templatePreview", resolved);
                 else
-                    TemplatePreview.Text = $"\u26a0 \u672a\u5b9a\u4e49\u7684\u6a21\u677f: ${key}";
+                    TemplatePreview.Text = LauncherLocalization.Format("entryDetails.templateUnknown", key);
                 TemplatePreview.IsVisible = true;
             }
             else
@@ -127,7 +146,7 @@ public sealed partial class EntryDetailsWindow : Window
             var key = initialCmd[1..];
             if (_commandTemplates.TryGetValue(key, out var resolved))
             {
-                TemplatePreview.Text = $"\u2192 {resolved}";
+                TemplatePreview.Text = LauncherLocalization.Format("entryDetails.templatePreview", resolved);
                 TemplatePreview.IsVisible = true;
             }
         }
@@ -146,7 +165,7 @@ public sealed partial class EntryDetailsWindow : Window
                 : null;
             var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
-                Title = "选择目录",
+                Title = LauncherLocalization.Format("directoryEdit.pickerTitle"),
                 AllowMultiple = false,
                 SuggestedStartLocation = startDir,
             });

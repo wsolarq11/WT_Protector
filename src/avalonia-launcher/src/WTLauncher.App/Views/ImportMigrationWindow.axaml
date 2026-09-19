@@ -3,7 +3,7 @@
         xmlns:vm="using:WTLauncher.App.ViewModels"
         x:Class="WTLauncher.App.Views.ImportMigrationWindow"
         x:DataType="vm:ImportConfigViewModel"
-        Title="导入配置"
+        Title="{Binding WindowTitle}"
         Width="820"
         Height="560"
         MinWidth="680"
@@ -14,8 +14,8 @@
     <TextBlock Text="{Binding Summary}" FontSize="{StaticResource FontSizeBody}" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" />
 
     <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="20">
-      <RadioButton Content="新增到现有配置" IsChecked="{Binding AddNewMode}" />
-      <RadioButton Content="替换为导入配置" IsChecked="{Binding ReplaceMode}" />
+      <RadioButton Content="{Binding AddNewLabel}" IsChecked="{Binding AddNewMode}" />
+      <RadioButton Content="{Binding ReplaceLabel}" IsChecked="{Binding ReplaceMode}" />
     </StackPanel>
 
     <ListBox Grid.Row="2" ItemsSource="{Binding Rows}" Background="Transparent">
@@ -28,12 +28,12 @@
             </StackPanel>
             <StackPanel Grid.Column="1" Spacing="2">
               <TextBlock Text="{Binding OriginalDirectory}" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis" />
-              <TextBlock Text="目录在本机不存在，可填写映射" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource BadgeWarningForegroundBrush}" IsVisible="{Binding IsMissing}" />
+              <TextBlock Text="{Binding $parent[Window].((vm:ImportConfigViewModel)DataContext).MissingHint}" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource BadgeWarningForegroundBrush}" IsVisible="{Binding IsMissing}" />
             </StackPanel>
-            <TextBox Grid.Column="2" Text="{Binding DirectoryOverride, Mode=TwoWay}" PlaceholderText="保持原路径" />
+            <TextBox Grid.Column="2" Text="{Binding DirectoryOverride, Mode=TwoWay}" PlaceholderText="{Binding $parent[Window].((vm:ImportConfigViewModel)DataContext).KeepPathPlaceholder}" />
             <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-              <CheckBox Content="跳过" IsChecked="{Binding IsSkipped}" />
-              <TextBlock Text="重复" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource BadgeWarningForegroundBrush}" IsVisible="{Binding IsDuplicate}" />
+              <CheckBox Content="{Binding $parent[Window].((vm:ImportConfigViewModel)DataContext).SkipLabel}" IsChecked="{Binding IsSkipped}" />
+              <TextBlock Text="{Binding $parent[Window].((vm:ImportConfigViewModel)DataContext).DuplicateLabel}" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource BadgeWarningForegroundBrush}" IsVisible="{Binding IsDuplicate}" />
             </StackPanel>
           </Grid>
         </DataTemplate>
@@ -41,8 +41,8 @@
     </ListBox>
 
     <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="{StaticResource DialogFooterMargin}">
-      <Button Classes="secondary" Content="取消" Click="OnCancelClicked" />
-      <Button Content="确认导入" Click="OnConfirmClicked" />
+      <Button Classes="secondary" Content="{Binding CancelLabel}" Click="OnCancelClicked" />
+      <Button Content="{Binding ConfirmLabel}" Click="OnConfirmClicked" />
     </StackPanel>
   </Grid>
 </Window>
