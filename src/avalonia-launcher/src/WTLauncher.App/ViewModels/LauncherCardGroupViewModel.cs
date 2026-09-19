@@ -38,6 +38,13 @@ public sealed partial class LauncherCardGroupViewModel : ObservableObject
     private bool _fillCardsViewportHeight = true;
 
     public string CountLabel => LauncherLocalization.Format("card.countLabel", Count);
+#pragma warning disable CA1822
+    public string GroupCollapseTooltip => LauncherLocalization.Format("card.groupCollapseTooltip");
+    public string LaunchAllLabel => LauncherLocalization.Format("card.launchAll");
+    public string LaunchAllTooltip => LauncherLocalization.Format("card.launchAllTooltip");
+    public string SaveAsPresetLabel => LauncherLocalization.Format("card.saveAsPreset");
+    public string SaveAsPresetTooltip => LauncherLocalization.Format("card.saveAsPresetTooltip");
+#pragma warning restore CA1822
 
     internal void SetCardGridProjection(
         int cardColumns,

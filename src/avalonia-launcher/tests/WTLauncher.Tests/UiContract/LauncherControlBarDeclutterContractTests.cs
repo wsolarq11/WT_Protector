@@ -49,8 +49,8 @@ public sealed class LauncherControlBarDeclutterContractTests
         foreach (var automationBinding in new[] { "BarSelectionMenuAutomation", "BarManageAutomation", "BarPresetMaintenanceAutomation" })
             XamlContractAssertions.AssertAttribute(xaml, "AutomationProperties.Name", "{Binding " + automationBinding + "}");
 
-        XamlContractAssertions.AssertAttribute(entriesXaml, "AutomationProperties.Name", "启动");
-        XamlContractAssertions.AssertAttribute(entriesXaml, "AutomationProperties.Name", "更多操作");
+        XamlContractAssertions.AssertAttribute(entriesXaml, "AutomationProperties.Name", "{Binding LaunchLabel}");
+        XamlContractAssertions.AssertAttribute(entriesXaml, "AutomationProperties.Name", "{Binding MoreLabel}");
         XamlContractAssertions.AssertNoAttribute(entriesXaml, "Content", "编辑");
         XamlContractAssertions.AssertNoAttribute(entriesXaml, "Content", "删除");
     }

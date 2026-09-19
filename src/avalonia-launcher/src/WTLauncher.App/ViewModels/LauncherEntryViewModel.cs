@@ -37,6 +37,18 @@ public sealed partial class LauncherEntryViewModel : ViewModelBase
 
 #pragma warning disable CA1822
     public string StaleBadge => LauncherLocalization.Format("entry.staleBadge");
+    public string StaleTooltip => LauncherLocalization.Format("entry.staleTooltip");
+    public string StaleDotTooltip => LauncherLocalization.Format("entry.staleDotTooltip");
+    public string LaunchLabel => LauncherLocalization.Format("entry.launch");
+    public string DryRunLabel => LauncherLocalization.Format("entry.dryRun");
+    public string MoveUpLabel => LauncherLocalization.Format("entry.moveUp");
+    public string MoveDownLabel => LauncherLocalization.Format("entry.moveDown");
+    public string CloneLabel => LauncherLocalization.Format("entry.clone");
+    public string EditLabel => LauncherLocalization.Format("entry.edit");
+    public string RepairPathLabel => LauncherLocalization.Format("entry.repairPath");
+    public string DeleteLabel => LauncherLocalization.Format("entry.delete");
+    public string MoreLabel => LauncherLocalization.Format("entry.more");
+    public string DragSortLabel => LauncherLocalization.Format("entry.dragSort");
 #pragma warning restore CA1822
 
     // Per-agent brand projection. Empty when the command doesn't match a

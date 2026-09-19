@@ -15,26 +15,23 @@
   <Border Padding="{StaticResource DialogOuterPadding}">
     <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
       <TextBlock Grid.Row="0"
-                 Classes="dialog-title"
-                 Text="发现并添加 AI Agent CLI 启动项"/>
+                 x:Name="HeadingText"
+                 Classes="dialog-title"/>
       <TextBlock Grid.Row="1"
                  x:Name="SubtitleText"
                  Margin="0,4,0,12"
                  TextWrapping="Wrap"
-                 Foreground="{StaticResource TextMutedBrush}"
-                 Text="扫描 PATH 上的 AI Agent CLI，或复用已有目录和命令模板快速创建启动项。"/>
+                 Foreground="{StaticResource TextMutedBrush}"/>
       <StackPanel Grid.Row="2"
                   Orientation="Horizontal"
                   Spacing="18"
                   Margin="0,0,0,10">
         <RadioButton x:Name="PathModeRadio"
                      GroupName="DiscoveryMode"
-                     Content="发现 AI Agent"
                      IsChecked="True"
                      IsCheckedChanged="OnPathModeToggled"/>
         <RadioButton x:Name="DirectoryModeRadio"
                      GroupName="DiscoveryMode"
-                     Content="从已有目录创建"
                      IsCheckedChanged="OnDirectoryModeToggled"/>
       </StackPanel>
       <Grid Grid.Row="3">
@@ -45,11 +42,9 @@
                        Foreground="{StaticResource TextMutedBrush}"/>
             <Button Grid.Column="1"
                     x:Name="ScanButton"
-                    Content="重新扫描"
                     Classes="secondary"
                     MinWidth="96"
-                    Click="OnScanClicked"
-                    automation:AutomationProperties.Name="重新扫描 AI Agent"/>
+                    Click="OnScanClicked"/>
           </Grid>
           <Border Margin="0,10,0,0"
                   BorderThickness="1"
@@ -64,9 +59,9 @@
         <StackPanel x:Name="DirectoryPanel"
                     IsVisible="False"
                     Spacing="{x:Static core:LauncherDesignTokens.DialogFooterSpacing}">
-          <TextBlock TextWrapping="Wrap"
-                     Foreground="{StaticResource TextMutedBrush}"
-                     Text="选择一个已在使用的目录："/>
+          <TextBlock x:Name="DirectoryHintText"
+                     TextWrapping="Wrap"
+                     Foreground="{StaticResource TextMutedBrush}"/>
           <Border BorderThickness="1"
                   CornerRadius="10"
                   BorderBrush="{StaticResource CardBorderBrush}"
@@ -75,21 +70,20 @@
               <StackPanel x:Name="DirectoryListPanel" Spacing="{x:Static core:LauncherDesignTokens.NameTileGap}"/>
             </ScrollViewer>
           </Border>
-          <TextBlock TextWrapping="Wrap"
-                     Foreground="{StaticResource TextMutedBrush}"
-                     Text="命令模板"/>
+          <TextBlock x:Name="CommandTemplateLabel"
+                     TextWrapping="Wrap"
+                     Foreground="{StaticResource TextMutedBrush}"/>
           <ComboBox x:Name="CommandPicker"
                     HorizontalAlignment="Stretch"
                     SelectionChanged="OnCommandTemplateChanged"/>
-          <TextBlock TextWrapping="Wrap"
-                     Foreground="{StaticResource TextMutedBrush}"
-                     Text="启动项名称"/>
+          <TextBlock x:Name="EntryNameLabel"
+                     TextWrapping="Wrap"
+                     Foreground="{StaticResource TextMutedBrush}"/>
           <TextBox x:Name="EntryNameBox"
-                   PlaceholderText="启动项名称"
                    TextChanged="OnEntryNameChanged"/>
-          <TextBlock TextWrapping="Wrap"
-                     Foreground="{StaticResource TextMutedBrush}"
-                     Text="命令预览"/>
+          <TextBlock x:Name="CommandPreviewLabel"
+                     TextWrapping="Wrap"
+                     Foreground="{StaticResource TextMutedBrush}"/>
           <Border Background="{StaticResource SurfaceBrush}"
                   CornerRadius="8"
                   Padding="10">
@@ -103,18 +97,15 @@
                   HorizontalAlignment="Right"
                   Spacing="{x:Static core:LauncherDesignTokens.SpacingSmall}"
                   Margin="{StaticResource DialogFooterMargin}">
-        <Button Content="取消"
+        <Button x:Name="CancelButton"
                 Classes="secondary"
                 MinWidth="96"
                 IsCancel="True"
-                Click="OnCancelClicked"
-                automation:AutomationProperties.Name="取消发现 AI Agent"/>
+                Click="OnCancelClicked"/>
         <Button x:Name="AddButton"
-                Content="添加选中"
                 Classes="primary"
                 MinWidth="132"
-                Click="OnAddClicked"
-                automation:AutomationProperties.Name="添加选中的 AI Agent"/>
+                Click="OnAddClicked"/>
       </StackPanel>
     </Grid>
   </Border>

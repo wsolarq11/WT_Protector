@@ -43,6 +43,7 @@ public sealed partial class DirectoryManagementViewModel : ObservableObject
     public string EmptyAutomation => LauncherLocalization.Format("dirmgmt.emptyAutomation");
     public string CloseLabel => LauncherLocalization.Format("dirmgmt.close");
     public string CloseAutomation => LauncherLocalization.Format("dirmgmt.closeAutomation");
+    public string StatusAutomation => LauncherLocalization.Format("dirmgmt.statusAutomation");
 #pragma warning restore CA1822
 
     public DirectoryManagementViewModel(

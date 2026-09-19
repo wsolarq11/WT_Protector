@@ -51,7 +51,7 @@
                    Text="{Binding StatusMessage}"
                    TextWrapping="Wrap"
                    Foreground="{StaticResource TextMutedBrush}"
-                   automation:AutomationProperties.Name="地址管理状态"/>
+                   automation:AutomationProperties.Name="{Binding StatusAutomation}"/>
       </StackPanel>
       <Border Grid.Row="3"
               BorderThickness="1"
