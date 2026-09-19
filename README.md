@@ -2,6 +2,8 @@
 
 A local Windows Terminal launcher for quickly opening saved workspaces with a chosen shell command.
 
+Documentation map: [`docs/README.md`](docs/README.md) — Active / Reference / Research / Archive 索引。
+
 ## What this project contains
 
 - `src/avalonia-launcher/` — active mainline Avalonia/.NET launcher source, tests, and publish gate.

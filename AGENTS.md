@@ -28,16 +28,17 @@ WT_Protector/
 │       │       └── Views/           → MainWindow.axaml 承载 Cards/Details/Names 三视图, 视图体在 LauncherEntriesView.axaml
 │       └── tests/WTLauncher.Tests/ → xUnit 测试（8层）。文件数/属性数见「结构基线」表
 ├── tools/                 → .NET 辅助工具（smoke-probe / uninstaller）
-├── docs/                  → 设计审计、基准对标、巨人肩膀库
+├── docs/                  → 文档唯一索引见 docs/README.md（Active / Reference / Research / Archive）
+│   ├── README.md          → 文档索引：当前事实、参考数据、研究、归档
 │   ├── feature-reality-north-star-audit.md → 22项功能审计 + 声明边界账本
 │   ├── business-wiring-boundaries.md         → 业务接线总账（View→VM→StoreGrain→外部进程）
-│   ├── wiring-map.md                       → 接线映射总账（门禁 wiring-map-consistency 校验其覆盖完整性）
+│   ├── wiring-map.md                       → 端口/workflow 台账（门禁校验覆盖完整性）
 │   ├── design-benchmark-digest.md          → 12项外部设计基准 → 本地验收规则
-│   ├── architectures/     → 架构提案与终局设计（trinity-endgame 等；历史提案，已标 DEPRECATED）
-│   ├── giants-shoulders/  → 巨人肩膀库（外部项目教训）
-│   ├── reference/         → GitHub对标快照 + 快捷方式退役清单
-│   ├── archive/           → 历史完成/审查文档归档（phase*-complete、ultrareview、feature-first-class-upgrade-audit 等）
-│   └── research/          → 探索性研究（含 wt-launcher-architecture-zero.md 退路方案，非行动方案）
+│   ├── test-structure.md                   → 测试层级与文件归属规则
+│   ├── giants-shoulders/  → 外部项目教训库
+│   ├── reference/         → 机器可读快照 + 快捷方式退役清单
+│   ├── research/          → 探索性研究（非行动方案）
+│   └── archive/           → 历史完成/审查文档归档（含 trinity 提案与审计快照）
 └── retired/               → 退役归档（旧HTA启动器 + WinForms设计教训）
     └── README.md          → 退役说明
 ```
@@ -81,7 +82,7 @@ WT_Protector/
 
 ## 藤曼路径 (Vine Trail) — 新会话导航
 
-任何新会话中，从本文件出发，按需深入：
+任何新会话中，从本文件出发，按需深入。文档查询入口：`docs/README.md`（Active / Reference / Research / Archive 索引）。
 
 1. **想了解项目全貌？** → `README.md`（配置 schema、安全说明、功能清单、实现状态）
 2. **想改源码？** → `src/avalonia-launcher/README.md`（5 层架构、关键不变量）
