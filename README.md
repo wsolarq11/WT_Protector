@@ -1,361 +1,99 @@
 # WT Launcher / WT Protector
 
-A local Windows Terminal launcher for quickly opening saved workspaces with a chosen shell command.
+Local Windows Terminal workspace launcher: open saved folders with a chosen shell command. Avalonia/.NET 10, win-x64 self-contained.
 
-Documentation map: [`docs/README.md`](docs/README.md) — Active / Reference / Research / Archive 索引。
-
-## What this project contains
-
-- `src/avalonia-launcher/` — active mainline Avalonia/.NET launcher source, tests, and publish gate.
-- `config/launcher.example.json` — machine-agnostic template of the unified launcher store (zero entries, locked `blank-manual` preset). The live `config/launcher.json` is git-ignored runtime state (it carries machine-local absolute paths); friends and fresh clones start from the example.
-- `docs/使用说明.txt` — friend-facing quick start (zero jargon, three steps to first launch). `npm run package:friend` packages it into the friend zip by globbing the single `docs/*.txt`.
-- `retired/` — archive-only storage (never restore): the legacy HTA launcher snapshot was removed 2026-07-06 (commit `825ecb5b`); its config and the WinForms design lessons remain.
-- `retired/config/config.json` — retired HTA-local config kept as archive/reference (the HTA that read it is gone).
-- `retired/design/winforms-launcher.md` — retired WinForms executable/source design lessons and receipts.
-- `docs/reference/shortcut-backup-manifest.json` — human-readable replacement for the deleted `WT_Shortcuts_Backup/` binary shortcut tree.
-- `docs/feature-reality-north-star-audit.md` — feature-by-feature reality mapping and north-star audit for the active launcher scope.
-- `docs/archive/feature-first-class-upgrade-audit.md` — archived all-capability real-problem and first-class upgrade audit (moved to `docs/archive/`).
-- `docs/business-wiring-boundaries.md` — business wiring ledger: each user path from View/ViewModel/StoreGrain to persistence or external process, with boundaries and known seams.
-- `.snow/` — git-ignored local runtime/index state; the gate asserts it stays ignored (`git ls-files -- .snow` is empty) and never validates its contents.
-- `.gitattributes` — repository line-ending policy; text is normalized as LF to avoid CRLF-only churn.
-- `.wt-protector.dsc.yaml` — WinGet Configuration file declaring fresh-machine prerequisites (Windows Terminal + PowerShell 7 + Node.js LTS); applied via `winget configure` or `npm run apply:config`.
-- `package.json` / `package-lock.json` / `scripts/` — Node/TypeScript scripting layer for release and verification commands; `scripts/release-contract.ts` is the CI release-contract execution body.
-- `tools/smoke-probe/` — .NET helper used by `npm run smoke` to launch the published GUI, check the window title, and close it without PowerShell.
-- `tools/uninstaller/` — .NET self-contained uninstaller source; `npm run install:portable` publishes it as `uninstaller.exe`.
-- `docs/reference/github-similar-projects-snapshot.json` — current GitHub similar-project evidence used by the feature north-star audit.
-- `npm run update:github-snapshot` — refreshes that market snapshot through `gh repo view`; the root gate rejects stale snapshots.
-- `docs/giants-shoulders/` — "巨人肩膀库": curated external project lessons and source links for future stack/reflection decisions.
-  The old root `WT Launcher.exe`, old `src/winforms-launcher/`, and old `spikes/` directory are intentionally retired. The former Avalonia spike is now the source mainline under `src/avalonia-launcher/`.
-
-## Architecture
-
-The project uses a 5-layer architecture under `src/avalonia-launcher/`:
-
-| Layer | Project | Responsibilities |
-|-------|---------|-----------------|
-| Core | `WTLauncher.Core` | Data records, `LaunchArgumentBuilder`, `LauncherJson` (atomic JSON persistence), `LauncherStore` (schema validation), `AgentDiscoveryScanner`, design tokens |
-| Commands | `WTLauncher.App/ViewModels/` | `MainWindowViewModel` + partials handle add/edit/delete/launch via `StoreGrain` |
-| Persistence | `StoreGrain` | Single state container (lock-serialized reads/mutations), rollback on save failure |
-| Orchestration | `MainWindowViewModel` | Single writable owner of UI state, delegates to Core rules and Services |
-| Views | `WTLauncher.App/Views/` | XAML, drag ghost, code-behind windowing only |
-
-Key architecture decisions:
-
-- **State management**: `StoreGrain` (single state container with `Dispatch`/`DispatchErrorOr` for mutations and `Select` for reads). CommunityToolkit.Mvvm `[ObservableProperty]`/`[RelayCommand]` for ViewModel bindings. Fluxor was removed 2026-07-24 (Scheme B commit `0c0b8771`).
-- **Persistence**: Single `config/launcher.json` file. Atomic writes via temp-file + `File.Replace`. Loose Read (unknown keys silently skipped for forward compatibility) + Strict Write (source-gen only writes known fields). AOT-safe via `JsonTypeInfo<T>` source-generated `LauncherJsonContext`.
-- **Exception handling**: `catch when (ExceptionFilters.IsRecoverable(ex))` for recoverable IO/security failures. `ErrorOr<T>` for domain-expected errors (validation, not-found). No bare `catch (Exception)`.
-- **Concurrency**: `StoreGrain` serializes state access through its `Grain<TState>` lock. `FileLauncherJsonIO` has an instance-level SemaphoreSlim on `Save` for defense-in-depth. `MemoizedSelector._hasCached` is volatile. `AgentDiscoveryScanner.Scan()` accepts CancellationToken.
+Documentation map: [`docs/README.md`](docs/README.md).
 
 ## Configuration schema
 
-The unified store (`config/launcher.json`) uses the `LauncherStoreFile` schema — top-level `entries[]`, `presets[]`, `settings{}`, `defaultPresetId`, plus an optional `runHistory[]` (recent-run records; written only when non-empty):
+Single authoritative store: `config/launcher.json` (`LauncherStoreFile`, `schemaVersion: 2`). Top level: `entries[]`, `presets[]`, `settings{}`, `defaultPresetId`, `runHistory[]`.
 
 ```json
 {
   "schemaVersion": 2,
-  "entries": [
-    {
-      "id": "example",
-      "name": "example",
-      "directory": "D:\\path\\to\\workspace",
-      "command": "$codex",
-      "selected": false,
-      "updatedAtUtc": "2026-05-18T09:30:00.0000000Z",
-      "launchedAtUtc": ""
-    }
-  ],
-  "settings": {
-    /* ... */
-  },
-  "presets": [
-    /* ... */
-  ],
+  "entries": [{
+    "id": "example",
+    "name": "example",
+    "directory": "D:\\path\\to\\workspace",
+    "command": "$codex",
+    "selected": false,
+    "updatedAtUtc": "2026-05-18T09:30:00.0000000Z",
+    "launchedAtUtc": ""
+  }],
+  "settings": {},
+  "presets": [],
   "defaultPresetId": "blank-manual"
 }
 ```
 
-Entry fields:
+Key rules:
 
-- `id` — stable human-readable identity for future grouping/sorting/migration.
-- `name` — display name in the launcher UI.
-- `directory` — working directory passed to `wt.exe -d`.
-- `command` — command passed to `pwsh -NoExit -EncodedCommand`（通过 base64 编码防注入）. Supports `$key` template references resolved from `settings.commandTemplates` (see below).
-- `selected` — persistent checkbox state used by the one-click/batch launch flow.
-- `updatedAtUtc` — optional ISO-8601 UTC timestamp refreshed when the app adds or edits a button, and used by the "更新时间" sort mode.
-- `launchedAtUtc` — optional ISO-8601 UTC timestamp written after each successful launch, and used by the "最近启动" sort mode.
+- `directory` is the working directory passed to `wt.exe -d`; it must exist on this machine.
+- `command` is passed through `pwsh -NoExit -EncodedCommand` (base64 quoting). `$key` references resolve against `settings.commandTemplates`; a missing key is a launch validation error, not silent.
+- `selected` is persistent checkbox state used by one-click/batch launch.
+- No obsolete per-entry `confirm` key: launch confirmation has one authority, `settings.requireConfirmationForLaunches`.
+- `presets[].entryIds` reference known entry ids only; duplicate or unknown ids are rejected.
+- `settings.sortMode ∈ {custom, recent, updated, alphabetical, frequent}`; `settings.entryViewMode ∈ {cards, details, names}`.
+- Unknown JSON keys are skipped at load (forward compat); source-gen writes only known fields (strict write).
+- `settings.window.width` / `height` must be positive.
 
-Active config entries must not contain the obsolete per-entry `confirm` key. Launch confirmation has one authority: `settings.requireConfirmationForLaunches` (nested in `launcher.json`).
+Live `config/launcher.json` is git-ignored runtime state; `config/launcher.example.json` is the machine-agnostic template. No AppData, no registry, no DB.
 
-All active JSON files must exist, require the documented camelCase keys, and reject missing, null, or blank mode keys. Unknown JSON keys are silently skipped at load time (Loose Read for forward compatibility). Source-gen serialization writes only known fields (Strict Write), making the C# record the effective schema contract.
-
-Nested `settings.window.width` and `settings.window.height` must be positive numbers; the gate (`npm run verify`) rejects non-positive geometry. At runtime, invalid values clamp to minimums via Math.Max.
-
-Named launch groups live inside the store under the `presets` array:
-
-```json
-{
-  "id": "blank-manual",
-  "name": "清空勾选 / 手动模式",
-  "entryIds": [],
-  "locked": true
-}
-```
-
-Preset fields:
-
-- `id` — stable human-readable launch group identity.
-- `entryIds` — stable entry ids; `npm run verify` rejects unknown or duplicate references.
-- `locked` — optional UI guard for system groups such as `blank-manual`; locked groups can still be applied but cannot be updated or deleted in the app.
-- `defaultPresetId` (top-level) — startup UI selection; applying it is explicit.
-
-Portable UI settings live inside the store under the `settings` object (shown here with the exact keys of `config/launcher.example.json`):
-
-```json
-{
-  "lastFilterText": "",
-  "sortMode": "custom",
-  "entryViewMode": "cards",
-  "cardsGroupKey": "none",
-  "requireConfirmationForLaunches": false,
-  "customEntryOrder": [],
-  "commandTemplates": {},
-  "searchHistory": [],
-  "backgroundMode": "solid",
-  "window": {
-    "width": 1180,
-    "height": 760
-  }
-}
-```
-
-Additional settings fields:
-
-- `sortMode` — `custom`, `recent`, `updated`, `alphabetical`, or `frequent`.
-- `entryViewMode` — `cards`, `details`, or `names`.
-- `requireConfirmationForLaunches` — global launch-confirmation toggle.
-- `cardsGroupKey` — optional Cards-view grouping dimension (defaults to `none`).
-- `backgroundMode` — optional background style key (defaults to `solid`).
-- `customEntryOrder` — stable entry-id order used by the "自定义拖拽" mode and persisted after drag-drop reorder.
-- `commandTemplates` — optional dictionary of reusable command templates. When a config entry's `command` starts with `$` followed by a key (e.g. `$codex`), the launcher resolves it to the template value from this map. Missing template keys cause a launch validation error.
-- `searchHistory` — optional deduplicated list of recent filter-text terms (most-recent first, capped at 20 terms). Maintained as a JSON array of strings and exposed in the UI via an AutoCompleteBox dropdown on the search input.
-- `quickLaunchHotkey` — optional global hotkey text such as `Ctrl+Alt+Space` (absent from the example file); `Ctrl`, `Alt`, `Shift`, `Win` plus `Space`/`A-Z`/`0-9` are accepted.
-- `runInTray` — optional boolean (absent from the example file); when true, closing the main window hides it to the tray and the tray menu is the explicit quit path.
-- `updateManifestUrl` — optional HTTP(S) or local file URL to an `update-manifest.json` (absent from the example file); the management menu's `检查更新` reads it and never rewrites `config/launcher.json`.
-
-## Friend handoff (2026-08-02)
-
-A ready-to-share zip is built with two commands (repository root):
+## Build and verification
 
 ```bash
-npm run release:build     # AOT exe → artifacts/publish/win-x64/
-npm run package:friend    # friend zip → artifacts/friend/WTLauncher-<version>.zip
+npm run verify            # full gate: static + local + native (skips native without .NET SDK) + snapshot (advisory)
+npm run verify:mainline   # Avalonia gate only
+npm run test:fast         # CoreUnit + PropertyTest + Architecture + Analyzer
+npm run test:coverage
+npm run test:launch-args
+npm run smoke             # published exe critical journey
+npm run release:build     # AOT exe -> artifacts/publish/win-x64/
+npm run release:contract  # CI release contract: locked restore + AOT publish + clean tree + receipt
 ```
 
-The zip contains the AOT exe, the quick-start `使用说明.txt` (three-step quick start, SmartScreen bypass included; resolved from `docs/` by `scripts/package-friend.ts` via a single-`*.txt` glob), and `config/launcher.example.json`. A friend unzips to any folder and double-clicks the exe; the app boots with an empty store and the first-run welcome panel guides adding the first workspace. The exe is unsigned — the quick start documents "更多信息 → 仍要运行". This zip flow needs no installer and touches no registry or AppData (see Safety notes).
+Distributable: `src/avalonia-launcher/artifacts/publish/win-x64/WTLauncher.App.exe`. `artifacts/verify-publish/` is the isolated verifier output, not the distributable.
+
+The verifier finishes with a JSON receipt: `schemaVersion`, `kind`, `status`, `repoHead`, `worktreeDirty`, `worktreeStatus`.
 
 ## Run the mainline app
-
-From the repository root:
 
 ```bash
 npm run start
 ```
 
-Optional explicit config path:
+Or explicit config:
 
 ```powershell
 .\src\avalonia-launcher\artifacts\publish\win-x64\WTLauncher.App.exe --config .\config\launcher.json
 ```
 
-Startup arguments are intentionally strict: the app accepts only one optional `--config <path>` pair (both `--config <path>` and `--config=<path>` forms are supported). Unknown `--`-prefixed arguments are collected as warnings and otherwise ignored for forward compatibility. Duplicate `--config` flags, missing config values, and non-`--`-prefixed positional arguments are rejected instead of silently choosing the wrong config.
-
-The app reads and writes `config/launcher.json` as the unified store (entries, presets, settings, `defaultPresetId`, and run history all in one file). It does not use AppData or the registry for launcher state.
-
-## Fresh-machine setup
-
-The launcher needs Windows Terminal + PowerShell 7 on the host. A WinGet Configuration file at repo root (`.wt-protector.dsc.yaml`) declares these prerequisites declaratively so a fresh Windows machine converges to the declared state in one command:
-
-```powershell
-winget configure --file .\.wt-protector.dsc.yaml
-```
-
-Or the thin wrapper (resolves the path, exposes a dry-run validate-only mode):
-
-```bash
-npm run apply:config
-npm run apply:config:dry
-```
-
-What the configuration does:
-
-- Asserts Windows 10 1809+ via `Microsoft.Windows.Developer/OsVersion` before applying anything.
-- Installs `Microsoft.WindowsTerminal` and `Microsoft.PowerShell` through the `Microsoft.WinGet.DSC/WinGetPackage` resource (idempotent — safe to re-run).
-- Optional AI agent CLIs (`opencode`, `aider`) are commented out; uncomment only after verifying the winget package id is current at `microsoft/winget-pkgs`, since publisher manifests change.
-
-WinGet Configuration vs the launcher — different concerns, complementary layers:
-
-- **WinGet Configuration** sets up the _machine_: "what's installed on this Windows host". Run once on a fresh machine.
-- **The launcher** manages the _workspace_: "which project folders open in `wt.exe` with which command". Daily use.
-
-Agent CLIs that ship via `irm | iex` (`claude`, `codex`, `cursor`, `antigravity`, `gemini`, `qwen-code`) are not winget packages today. Install them per the publisher's documented method, then run the launcher's "发现" (discover) button to import them as launch entries — the two layers compose: WinGet/irm installs the binary, the launcher wires it into a workspace button.
-
-## Build and verification
-
-Run the project gate from the repository root:
-
-```bash
-npm run verify
-```
-
-The verifier enforces a growing set of checks — see the `addCheck` calls in `scripts/checks/` for the canonical list, and the `AGENTS.md`「结构基线」table for the enforced step count. Summary by category:
-
-- **repo hygiene**: line-ending policy (LF), `.snow/` ignored local state, retired paths (`WT Launcher.exe`, `src/winforms-launcher/`, `spikes/`) do not return;
-- **mainline layout**: `src/avalonia-launcher/` has the solution, app project, tests project, and mainline verify script;
-- **documentation**: `README.md` section/boundary checks, `docs/feature-reality-north-star-audit.md` keeps 22/22 narrow-domain north-star coverage and the `not-complete-as-written` boundary, claim-boundary ledger separates allowed narrow-scope claims from forbidden broad/unimprovable/universal/absolute-side-effect/post-`wt.exe` claims;
-- **market evidence**: `docs/reference/github-similar-projects-snapshot.json` schema, representative repos, freshness metadata;
-- **launcher.json contract**: top-level `LauncherStoreFile` (schemaVersion=2) parses, unique entry `id`s, preset `entryIds` reference known entries only, every active entry `directory` exists on this machine;
-- **schema invariants**: `config-schema`, `presets-schema`, `settings-json`, `settings-single-source` (single canonical assembler), `no-stale-three-file-refs` (active docs must not reference abandoned three-file architecture);
-- **retirement hygiene**: shortcut-backup retirement, WinForms retired design (`retired/design/winforms-launcher.md`), HTA retired config;
-- **machine setup**: `.wt-protector.dsc.yaml` exists at repo root and carries the required DSC v3 schema markers (`configuration-dsc-schema/0.2`, `configurationVersion: 0.2.0`) plus the two required `WinGetPackage` resources (`Microsoft.WindowsTerminal`, `Microsoft.PowerShell`); structural validation only — run `npm run apply:config:dry` for winget's own schema validation when DSC v3 is installed;
-- **Avalonia mainline**: restore/test/isolated Native AOT verification publish passes; on Windows a hidden temp-config startup smoke of the published exe; non-Windows hosts skip GUI smoke after win-x64 Native AOT publish verification.
-
-The final verifier line is a JSON receipt with `schemaVersion`, `kind`, `status`, `repoHead`, `worktreeDirty`, and `worktreeStatus` fields before tool-specific evidence. The Avalonia mainline receipt uses the same schema and is checked by the root gate.
-
-Canonical distributable output:
-
-- executable: `src/avalonia-launcher/artifacts/publish/win-x64/WTLauncher.App.exe`
-- folder: `src/avalonia-launcher/artifacts/publish/win-x64/`
-- builder: `npm run release:build`
-
-Note: `src/avalonia-launcher/artifacts/verify-publish/win-x64/WTLauncher.App.exe` is only the isolated verifier publish target used by `npm run verify`, not the canonical distributable path.
-
-The verifier publishes into isolated ignored output under `src/avalonia-launcher/artifacts/verify-publish/win-x64/` so a running release executable does not block the gate. Build/publish the stable mainline executable without running the whole root gate:
-
-```bash
-npm run release:build
-```
-
-The central release contract runs the same locked-mode restore, Native AOT publish, clean-worktree assertion, and receipt/manifest validation that CI requires:
-
-```bash
-npm run release:contract
-```
-
-The TypeScript root gate is the full-gate CI body and reports the 46-check receipt:
-
-```bash
-npm run verify
-```
-
-The TypeScript mainline and focused-test entries are the canonical test commands:
-
-```bash
-npm run verify:mainline
-npm run test:fast
-npm run test:coverage
-npm run test:launch-args
-npm run smoke
-```
-
-The publish output is ignored local build output under:
-
-```text
-src/avalonia-launcher/artifacts/publish/win-x64/WTLauncher.App.exe
-```
-
-If that stable executable is already running, `scripts/build-release.ts` stops before publishing and reports the blocking PID(s); keep using `npm run verify` for routine gates, or close the running app before a stable release publish.
-
-## Testing
-
-Tests live in one `WTLauncher.Tests` project with physical layers under `src/avalonia-launcher/tests/WTLauncher.Tests/` and `[Trait("Category", ...)]` markers. The canonical map is `docs/test-structure.md`.
-
-```bash
-# Fast lane: CoreUnit + PropertyTest + Architecture + Analyzer
-npm run test:fast
-
-# Critical-path coverage gate
-npm run test:coverage
-
-# Temp-config critical-journey smoke (published exe)
-npm run smoke
-
-# Complete native gate
-npm run verify
-```
-
-CI uses `build-and-test` for build + fast lane, `release-contract` (via `npm run release:contract`) for the central AOT publish contract, and `full-gate` for the single complete verify/publish pass.
+Startup args are strict: one optional `--config <path>` pair (`--config path` and `--config=path` both accepted). Duplicate `--config`, missing value, and positional arguments are rejected; unknown `--` flags are warned and ignored.
 
 ## WinForms retirement
 
-The former WinForms mainline has been retired into documentation instead of kept as a second source tree:
-
-- old root executable: deleted;
-- old `src/winforms-launcher/Program.cs`: deleted;
-- useful design lessons and receipts: `retired/design/winforms-launcher.md`.
-
-Do not restore the old WinForms path unless the Avalonia mainline fails the same native gate and there is an explicit rollback decision.
+The former WinForms mainline is retired to documentation, not kept as a second source tree. Old root executable and `src/winforms-launcher/Program.cs` are deleted; retained lessons live in `retired/design/winforms-launcher.md`. Do not restore retired paths unless the Avalonia line fails the same native gate and there is an explicit rollback decision.
 
 ## Safety notes
 
 This launcher intentionally starts arbitrary local commands. Treat every config file as trusted local input.
 
-Important risks:
-
-- Launch confirmation is a global UI setting: when enabled, every item asks before launch; when disabled, every item launches directly.
-- `directory` must exist before the launcher starts an item.
-- Selected-item and launch-group batch launch preflight every target before confirmation or process start; plans that fail preflight are excluded and never started, the confirmation dialog shows the generated `wt.exe` command lines plus the failures, and if an external start fails after earlier starts the remaining items are still attempted (continue-on-failure); failures are collected and reported.
-- Single and batch launch write transient `启动回执` text for canceled, requested, or failed launch attempts; batch receipts show requested, failed, and skipped plans; `已请求启动` means `wt.exe` process start was requested, not that the terminal session finished healthy.
-- "预演" (in the launch-group control) runs the same current-group preflight and shows generated `wt.exe` command lines without starting processes or rewriting checkbox selection; if any plan is invalid, the preview still shows every valid generated command line as not started plus the failure list.
-- Command text is quoted before being passed to `wt.exe`, but it is still a shell command; review entries before launching.
-- Applying a preset only rewrites checkbox state; the launch-group "启动" button launches the selected preset entries directly without rewriting checkbox state first.
-- Applying, previewing, or launching a preset discards any uncommitted drag-sort preview first; a ghost reorder is never silently saved by a launch-group action.
-- The root `config/` directory is the canonical source.
-- JSON saves are written through temporary files with `.bak` backup for normal config/preset saves; `StoreGrain.Dispatch` persists before committing to memory, so a failed save leaves memory unchanged and surfaces the error to the caller.
-- Checkbox-selection and preset-apply config save failures stay visible as `配置保存失败` and roll back both in-memory selection and the tracked config file instead of reporting a successful apply/select/clear action.
-- Add/edit/delete and launch-group dialogs fail visibly and leave portable files unchanged if the dialog boundary itself is unavailable.
-- Deleting the current launch group selects the next default/current group explicitly and reports that group in status text instead of hiding the fallback selection.
-- Using the app writes local `config/launcher.json`; because it is git-ignored runtime state, app usage never dirties tracked files — review the working set before committing.
-- `retired/config/config.json` is a retired HTA-local config (the HTA was removed 2026-07-06) and is never read by the Avalonia mainline.
+- Launch confirmation is global: on means every item asks; off means every item launches directly.
+- Single/batch launch preflight every target before starting. Invalid plans are excluded and shown as failures; external start failures continue to remaining items and are collected.
+- "已请求启动" means the `wt.exe` process start was requested, not that the terminal session finished healthy.
+- "预演" shows generated `wt.exe` command lines without starting processes or rewriting selection.
+- Applying a preset only rewrites checkbox state; the group launch button launches selected entries directly.
+- Applying/previewing/launching a preset discards any uncommitted drag-sort preview first.
+- JSON saves go through temp-file + `File.Replace`; `StoreGrain.Dispatch` saves before committing memory, so a failed save leaves memory unchanged.
+- Config save failures stay visible as `配置保存失败` and roll back selection plus tracked config.
+- App usage writes only the git-ignored `config/launcher.json`; tracked files stay clean.
 
 ## Current implementation status
 
-The Avalonia mainline supports:
+The Avalonia mainline supports search, single/batch launch, adaptive cards, custom drag reorder, three density states, Cards/Details/Names views, add/edit/delete/clone, AI Agent CLI discovery, per-agent badges, launch groups/presets, five sort modes, command templates, global confirmation, quick-launch hotkey, tray icon, config export/import, run history, update checks, and a portable installer/uninstaller.
 
-- search with multi-word tokenized matching (space-separated keywords all must match) and direct card launch;
-- single launch and batch launch, with `launchedAtUtc` timestamp recorded on each successful start for "最近启动" sort;
-- adaptive card sizing so the visible buttons shrink to fit the current window region instead of forcing a second scroll path;
-- custom-order dragging with a cursor-following ghost and live reorder preview so the redistribution is visible before drop;
-- context-menu `上移排序` / `下移排序` actions so reorder is not trapped behind drag gestures; if a drag preview is active, menu reorder first discards that preview and resolves against the last committed order;
-- three density states (Normal / Compact / Micro) that keep card content readable while the scroll view remains the fallback;
-- a Cards / Details (“详细列表”) / Names (“名称墙”) view mode toggle for readable actions, dense scanning, and overview;
-- header actions for selecting all visible items or clearing the saved selection;
-- add/edit/delete/clone launch buttons inside the app, with every editable field saved back to portable config; right-click "复制" creates a deep copy of an entry;
-- **AI Agent CLI auto-discovery** ("发现" button): scans PATH for installed agent CLIs (claude / codex / cursor / antigravity / gemini / opencode / aider / qwen-code), detects versions, and imports selected ones as launcher entries in one click — already-added agents are greyed out and deduped;
-- **Per-agent brand badges**: each catalog-known agent shows a small colored badge (approximate brand color + 2-letter glyph) on its card and in the discovery dialog, so Claude / Codex / Cursor / etc. are visually distinguishable at a glance;
-- named launch groups/presets that replace the saved selection through explicit apply;
-- first-class launch group actions: save current selection as a new group, update the current group from current selection, and delete editable groups;
-- direct launch of the current group without rewriting checkbox selection first;
-- live preset-vs-selection difference feedback before applying a launch group — the apply button shows "已匹配" when the selection already equals the group, but stays enabled (re-applying also forces a config save);
-- five persisted sort modes: `自定义拖拽`, `最近启动`, `更新时间`, `首字母顺序`, and `使用频率` (frecency of launch count + recency);
-- command templates from `launcher.json` `settings.commandTemplates` for repeated shell commands, with unknown template keys rejected at launch-plan build time;
-- global launch confirmation;
-- global quick-launch hotkey with a dedicated overlay window (type-to-filter, Enter launch, Esc dismiss);
-- system tray icon with Open/Quit actions and close-to-tray behavior;
-- config export/import from the management menu: export all or currently selected entries as readable unified-store JSON, then import on another machine with explicit path mapping and add/replace conflict handling;
-- persistent recent-run history from the management menu with requested/failed/skipped/canceled status (100-entry cap, no terminal health claims);
-- explicit update checks through the management menu against a versioned `update-manifest.json` (local or `settings.updateManifestUrl`), with no automatic overwrite of portable config;
-- a portable installer script that creates Start Menu/optional Desktop shortcuts, writes an uninstaller, and preserves user `config` on uninstall;
+Claim boundary:
 
-- JSON persistence with temporary-file writes, `.bak` backup for normal config/preset saves, and save-first-then-commit rollback via `StoreGrain.Dispatch`;
-- persistent selected checkbox state for one-click/batch launch;
-- portable UI preferences in `launcher.json` `settings` object without AppData or registry writes;
-- Core/App/Tests separation around launch argument rules and config behavior;
-- self-contained `win-x64` publish through `dotnet publish`.
-
-Current gate state:
-
-- the feature audit currently classifies all 22 active feature mappings as narrow-domain north-star for the portable Windows Terminal workspace-launcher scope only;
-- the full absolute objective remains not complete as written because unimprovable-product, stronger-than-every-GitHub-similar, and absolute zero-side-effect claims are still blocked by current evidence;
-- no current native-gate blocker is known after a fresh `npm run verify` PASS;
-- this is not a claim that the launcher is unimprovable, stronger than every GitHub alternative, or capable of 0% side effects after starting arbitrary external processes;
-- for future visual-heavy layout changes, repeat screenshot-backed comfort passes without weakening the root `npm run verify` gate.
+- The feature audit classifies all 22 active feature mappings as narrow-domain north-star for the portable Windows Terminal workspace-launcher scope only.
+- The full absolute objective remains not complete as written because unimprovable-product, stronger-than-every-GitHub-similar, and absolute zero-side-effect claims are still blocked by current evidence.
+- This project does not claim to be unimprovable, stronger than every GitHub similar, or free of side effects after starting arbitrary external processes.

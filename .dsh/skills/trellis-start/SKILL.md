@@ -5,60 +5,50 @@ description: "Initializes an AI development session by reading workflow guides, 
 
 # Start Session
 
-Initialize a Trellis-managed development session. This platform has no session-start hook, so manually load the equivalent compact context by following these steps.
+初始化 Trellis 会话。dsh 无 session-start hook，需手动加载等价上下文。
 
----
-
-## Step 1: Current state
-Identity, git status, current task, active tasks, journal location.
+## Step 1: Current State
 
 ```bash
 python ./.trellis/scripts/get_context.py
 ```
 
-If this output includes a line beginning `Trellis update available:`, copy the full line verbatim when summarizing session context. Do not shorten operational command hints.
+若输出含 `Trellis update available:`，逐字保留该行，不要缩短命令提示。
 
-## Step 2: Workflow overview
-Compact Phase Index, request triage rules, planning artifact contract, and the step-detail command.
+## Step 2: Workflow Overview
 
 ```bash
 python ./.trellis/scripts/get_context.py --mode phase
 ```
 
-Full guide in `.trellis/workflow.md` (read on demand).
+完整指南在 `.trellis/workflow.md`（按需读）。
 
-## Step 3: Guideline indexes
-Discover packages + spec layers, then read each relevant index file.
+## Step 3: Guideline Indexes
 
 ```bash
 python ./.trellis/scripts/get_context.py --mode packages
 cat .trellis/spec/guides/index.md
-cat .trellis/spec/<package>/<layer>/index.md   # for each relevant layer
+cat .trellis/spec/<package>/<layer>/index.md
 ```
 
-Index files list the specific guideline docs to read when you actually start coding.
+index 列出实际编码前要读的具体 guideline。
 
-## Step 4: Decide next action
-From Step 1 you know the current task and status. Check the task directory:
+## Step 4: Decide Next Action
 
-- **Active task status `planning` + no `prd.md`** → Phase 1.1. Load the `trellis-brainstorm` skill.
-- **Active task status `planning` + `prd.md` exists** → stay in Phase 1. Lightweight tasks can be PRD-only; complex tasks need `design.md` + `implement.md`. Load the relevant Phase 1 step detail before `task.py start`.
-- **Active task status `in_progress`** → Phase 2 step 2.1. Load the step detail:
+- `planning` + 无 `prd.md` → Phase 1.1，加载 `trellis-brainstorm`
+- `planning` + 有 `prd.md` → 停留 Phase 1；复杂任务补 `design.md` + `implement.md`
+- `in_progress` → Phase 2.1：
   ```bash
   python ./.trellis/scripts/get_context.py --mode phase --step 2.1 --platform dsh
   ```
-- **No active task** → classify first. For simple conversation / small task, ask only whether this turn should create a Trellis task. For complex work, ask whether you may create a Trellis task and enter planning. If the user says no, skip Trellis for this session.
+- 无活动任务 → 先分类；简单任务只问是否建 Trellis 任务，复杂任务问是否进入规划
 
----
-
-## Skill routing (quick reference)
+## Skill Routing
 
 | User intent | Skill |
-|---|---|
-| New feature / unclear requirements | `trellis-brainstorm` |
-| About to write code | `trellis-before-dev` |
-| Done coding / quality check | `trellis-check` |
-| Stuck / fixed same bug multiple times | `trellis-break-loop` |
-| Learned something worth capturing | `trellis-update-spec` |
-
-Full rules + anti-rationalization table in `.trellis/workflow.md`.
+| --- | --- |
+| New feature / unclear | `trellis-brainstorm` |
+| About to code | `trellis-before-dev` |
+| Done coding | `trellis-check` |
+| Repeated bug | `trellis-break-loop` |
+| Learned something | `trellis-update-spec` |

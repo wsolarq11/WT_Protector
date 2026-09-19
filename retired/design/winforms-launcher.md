@@ -1,61 +1,32 @@
 # Retired WinForms launcher design
 
-Status: retired on 2026-05-17.
+- Status: Archived
+- Purpose: 保存 WinForms 主线删除前的设计教训与源码收据
+- Update when: 不更新，仅追溯
 
-This document absorbs the useful design lessons from the former root `WT Launcher.exe` and `src/winforms-launcher/Program.cs` before those implementation artifacts were deleted. The active code line is promoted from the Avalonia launcher into `src/avalonia-launcher/`.
+退役时间：2026-05-17。活动主线已迁入 `src/avalonia-launcher/`。
 
-## Source receipt
+## 源码收据
 
 | Artifact | Former path | SHA-256 | Bytes |
 | --- | --- | --- | ---: |
-| Built WinForms executable | `WT Launcher.exe` | `A3A575648D93679C0106A6D654BA91BE4A39CE4AFAF0464C87414C7BA1426C11` | 43008 |
-| WinForms source | `src/winforms-launcher/Program.cs` | `40A2609F8D49F5A18811B50857AE2EB08EF7910DCD825214CE00DFC145145F1F` | 75324 |
+| 可执行文件 | `WT Launcher.exe` | `A3A575648D93679C0106A6D654BA91BE4A39CE4AFAF0464C87414C7BA1426C11` | 43008 |
+| 源码 | `src/winforms-launcher/Program.cs` | `40A2609F8D49F5A18811B50857AE2EB08EF7910DCD825214CE00DFC145145F1F` | 75324 |
 
-The executable was a compiled snapshot, not an editable source of truth. The source was a single large `.NET Framework` WinForms file that had become harder to evolve than the Avalonia line.
+## Portable config discovery
 
-## What was worth keeping
+仓库根 `config/config.json` 优先，可执行文件本地配置兜底；UI 偏好存 sibling `settings.json`，不写 AppData/registry。启动契约：`id`、`name`、`directory`、`command`、`confirm`、`selected`；`selected` 是跨重启真实状态。
 
-1. **Portable config discovery**
-   - Prefer repository-root `config/config.json` beside `README.md`.
-   - Fall back to executable-local `config/config.json` for standalone copies.
-   - Keep UI preferences in sibling `config/settings.json` instead of AppData or registry.
+## Launch safety boundary
 
-2. **Human-readable launch contract**
-   - Launch items use stable `id`, display `name`, `directory`, `command`, `confirm`, and persistent `selected`.
-   - `selected` is real state, not throwaway UI state; one-click launch should respect it across restarts.
+先验证 `directory` 存在；拒绝空命令；集中引用 `wt.exe -d ... pwsh -NoExit -Command ...`；危险命令保持确认。
 
-3. **Launch safety boundary**
-   - Validate that `directory` exists before launch.
-   - Reject empty commands.
-   - Quote `wt.exe -d ... pwsh -NoExit -Command ...` arguments centrally.
-   - Keep `dangerously*` commands behind confirmation.
+低摩擦 UX 教训：减 chrome、卡片可读、长文本省略、悬停不移动卡片、批量选择可见且持久。验证习惯：根门禁应是可交互少的原生脚本，证明配置解析、危险命令硬化、启动参数规则、发布/构建可行性。
 
-4. **HTA-derived low-friction UX lessons**
-   - Reduce chrome.
-   - Keep cards readable.
-   - Truncate long paths/commands with ellipsis instead of layout shifting.
-   - Do not move cards on hover.
-   - Keep batch selection visible and persistent.
+## 退役原因
 
-5. **Verification habits**
-   - A root `tools/verify.ps1` should be the native no-interaction gate.
-   - The gate should prove config parsing, dangerous-command hardening, launch argument rules, and publish/build viability.
-
-## Why the implementation retired
-
-- One 75 KB `Program.cs` mixed config IO, launch quoting, rendering, layout, theme, edit dialogs, batch state, and persistence.
-- The UI was hand-painted with WinForms/GDI, so small comfort improvements required imperative redraw/layout work.
-- Reflection-based smoke tests around the compiled exe were useful but indirect.
-- The root executable was a generated artifact; keeping it as a primary path made source ownership less clear.
+单文件 75 KB `Program.cs` 混合配置 IO、启动引用、渲染、布局、主题、对话框、批量状态与持久化；GDI 手绘让小改都需命令式重绘；生成式根 exe 使源码所有权不清。
 
 ## Successor directive
 
-The Avalonia line should keep the contracts above, but implement them as separated Core/App/Tests surfaces:
-
-- config and launch rules in Core;
-- UI state and commands in view models;
-- dialogs/views in App;
-- tests around Core contracts and repository config behavior;
-- publish artifacts under ignored `artifacts/`, not as tracked root binaries.
-
-Do not restore the WinForms source or root `WT Launcher.exe` unless the Avalonia line fails the same native gate and an explicit rollback decision is made.
+Avalonia 主线沿用上述契约，但按 Core/App/Tests 分层；发布物放 ignored `artifacts/`。除非 Avalonia 主线失败同样的原生门禁且做出明确回滚决定，否则不恢复。
