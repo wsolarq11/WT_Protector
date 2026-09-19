@@ -58,6 +58,7 @@ public sealed record LauncherSettings
     public string UpdateManifestUrl { get; init; } = "";
 
     [JsonPropertyName("window")]
+    [JsonRequired]
     public LauncherWindowSettings Window { get; init; } = new();
 }
 

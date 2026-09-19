@@ -86,4 +86,21 @@ public sealed class LegacyMigrationTests
         Assert.Empty(migrated.Presets);
         Assert.Equal("", migrated.DefaultPresetId);
     }
+
+    [Fact]
+    public void MigrateFromLegacyFiles_WhenBakRenameFails_StillReturnsMigratedStore()
+    {
+        using var temp = new TempDirectory();
+        var configPath = WriteLegacyConfig(temp.Path);
+        // A directory at the .bak target makes File.Move throw, exercising the
+        // swallowed TryMoveToBak branch.
+        Directory.CreateDirectory(configPath + ".bak");
+
+        var migrated = LegacyMigration.MigrateFromLegacyFiles(temp.Path);
+
+        Assert.NotNull(migrated);
+        Assert.Single(migrated.Entries);
+        Assert.True(File.Exists(configPath));
+        Assert.True(Directory.Exists(configPath + ".bak"));
+    }
 }

@@ -229,37 +229,41 @@ export function checkLocalEntryDirectories(): void {
   addCheck("local-entry-directories", { entries: entries.length, missing: 0 });
 }
 
-export function checkLauncherStore(): Set<string> {
-  const storePath = requireRepoPath("config/launcher.json", "portable launcher store");
-  const store = readJson<Record<string, unknown>>(storePath);
+export interface LauncherStoreValidation {
+  entries: unknown[];
+  seenIds: Set<string>;
+  defaultPresetId: string;
+  presetCount: number;
+  referencedEntryIds: Set<string>;
+  settingsObject: Record<string, unknown>;
+  settingsOrder: unknown[];
+}
+
+/// Pure shape validation shared by the repo gate and invalid-value unit tests.
+export function validateLauncherStore(
+  store: Record<string, unknown>,
+  label = "launcher.json",
+): LauncherStoreValidation {
   if (Number(store.schemaVersion) !== 2) {
-    throw new Error("Unsupported launcher.json schemaVersion: " + store.schemaVersion);
+    throw new Error("Unsupported " + label + " schemaVersion: " + store.schemaVersion);
   }
   const entries = asArray(store.entries);
   const seenIds = new Set<string>();
-  let selectedFields = 0;
   entries.forEach((entry, index) => {
     if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
       throw new Error("Config item " + index + " must be an object");
     }
     const item = entry as Record<string, unknown>;
     const id = String(item.id ?? "");
-    selectedFields += 1;
     if (seenIds.has(id)) {
       throw new Error("Duplicate config id: " + id);
     }
     seenIds.add(id);
   });
-  addCheck("json", { path: "config\\launcher.json", items: entries.length });
-  addCheck("config-schema", {
-    uniqueIds: seenIds.size,
-    selectedFields,
-    selectedCapable: selectedFields === entries.length,
-  });
 
   const defaultPresetId = String(store.defaultPresetId ?? "");
   if (defaultPresetId.trim() === "") {
-    throw new Error("launcher.json defaultPresetId is required");
+    throw new Error(label + " defaultPresetId is required");
   }
   const presets = asArray(store.presets);
   const presetSeen = new Set<string>();
@@ -304,56 +308,50 @@ export function checkLauncherStore(): Set<string> {
     }
   }
   if (presetCount < 1) {
-    throw new Error("launcher.json must contain at least one preset");
+    throw new Error(label + " must contain at least one preset");
   }
   if (!presetSeen.has(defaultPresetId)) {
     throw new Error("defaultPresetId does not match any preset: " + defaultPresetId);
   }
   if (nonEmptyPresetCount < 1) {
-    throw new Error("launcher.json must contain at least one preset with entryIds");
+    throw new Error(label + " must contain at least one preset with entryIds");
   }
-  addCheck("presets-schema", {
-    path: "config\\launcher.json",
-    presets: presetCount,
-    defaultPresetId,
-    referencedEntries: referencedEntryIds.size,
-  });
 
   const settings = store.settings;
   if (typeof settings !== "object" || settings === null || Array.isArray(settings)) {
-    throw new Error("launcher.json settings is required");
+    throw new Error(label + " settings is required");
   }
   const settingsObject = settings as Record<string, unknown>;
   const windowSettings = settingsObject.window;
   if (typeof windowSettings !== "object" || windowSettings === null || Array.isArray(windowSettings)) {
-    throw new Error("launcher.json settings window is required");
+    throw new Error(label + " settings window is required");
   }
-  assertPositiveNumber((windowSettings as Record<string, unknown>).width, "launcher.json settings window width");
-  assertPositiveNumber((windowSettings as Record<string, unknown>).height, "launcher.json settings window height");
+  assertPositiveNumber((windowSettings as Record<string, unknown>).width, label + " settings window width");
+  assertPositiveNumber((windowSettings as Record<string, unknown>).height, label + " settings window height");
   const settingsOrder = asArray(settingsObject.customEntryOrder);
   const settingsOrderSeen = new Set<string>();
   for (const idValue of settingsOrder) {
     const id = String(idValue);
     if (!seenIds.has(id)) {
-      throw new Error("launcher.json settings customEntryOrder references missing config entry id: " + id);
+      throw new Error(label + " settings customEntryOrder references missing config entry id: " + id);
     }
     if (settingsOrderSeen.has(id)) {
-      throw new Error("launcher.json settings customEntryOrder has duplicate config entry id: " + id);
+      throw new Error(label + " settings customEntryOrder has duplicate config entry id: " + id);
     }
     settingsOrderSeen.add(id);
   }
   if (settingsOrder.length !== seenIds.size) {
-    throw new Error("launcher.json settings customEntryOrder should contain every config entry id once");
+    throw new Error(label + " settings customEntryOrder should contain every config entry id once");
   }
   const commandTemplates = settingsObject.commandTemplates;
   const templateKeys = new Set<string>();
   if (commandTemplates !== undefined && commandTemplates !== null) {
     if (typeof commandTemplates !== "object" || Array.isArray(commandTemplates)) {
-      throw new Error("launcher.json settings commandTemplates must be an object");
+      throw new Error(label + " settings commandTemplates must be an object");
     }
     for (const [key, value] of Object.entries(commandTemplates)) {
       if (typeof value !== "string" || value.trim() === "") {
-        throw new Error("launcher.json settings commandTemplates key '" + key + "' must be a non-empty string");
+        throw new Error(label + " settings commandTemplates key '" + key + "' must be a non-empty string");
       }
       templateKeys.add(key);
     }
@@ -368,15 +366,35 @@ export function checkLauncherStore(): Set<string> {
       }
     }
   }
+
+  return { entries, seenIds, defaultPresetId, presetCount, referencedEntryIds, settingsObject, settingsOrder };
+}
+
+export function checkLauncherStore(): Set<string> {
+  const storePath = requireRepoPath("config/launcher.json", "portable launcher store");
+  const store = readJson<Record<string, unknown>>(storePath);
+  const validation = validateLauncherStore(store);
+  addCheck("json", { path: "config\\launcher.json", items: validation.entries.length });
+  addCheck("config-schema", {
+    uniqueIds: validation.seenIds.size,
+    selectedFields: validation.entries.length,
+    selectedCapable: true,
+  });
+  addCheck("presets-schema", {
+    path: "config\\launcher.json",
+    presets: validation.presetCount,
+    defaultPresetId: validation.defaultPresetId,
+    referencedEntries: validation.referencedEntryIds.size,
+  });
   addCheck("settings-json", {
     path: "config\\launcher.json",
-    sortMode: settingsObject.sortMode,
-    entryViewMode: settingsObject.entryViewMode,
-    requireConfirmationForLaunches: settingsObject.requireConfirmationForLaunches,
-    customEntryOrder: settingsOrder.length,
-    hasWindow: settingsObject.window !== undefined && settingsObject.window !== null,
+    sortMode: validation.settingsObject.sortMode,
+    entryViewMode: validation.settingsObject.entryViewMode,
+    requireConfirmationForLaunches: validation.settingsObject.requireConfirmationForLaunches,
+    customEntryOrder: validation.settingsOrder.length,
+    hasWindow: validation.settingsObject.window !== undefined && validation.settingsObject.window !== null,
   });
-  return seenIds;
+  return validation.seenIds;
 }
 
 export function checkConfigExampleSchema(): void {

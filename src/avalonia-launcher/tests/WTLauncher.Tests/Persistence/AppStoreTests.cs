@@ -275,6 +275,21 @@ public sealed class StoreGrainTests
         Assert.Empty(store.Select(s => s.Entries));
     }
 
+    [Fact]
+    public void Constructor_WhenLoadFails_DispatchOverwritesPersistedStore()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        File.WriteAllText(path, "{}");
+        var persistence = new RecordingLoadFailurePersistence(new IOException("unreadable"));
+        var store = new StoreGrain(path, persistence);
+
+        store.Dispatch(state => state with { DefaultPresetId = "overwritten" });
+
+        Assert.Equal(1, persistence.SaveCount);
+        Assert.Equal("overwritten", persistence.LastSaved!.DefaultPresetId);
+    }
+
     private static string HashFile(string path)
     {
         var bytes = File.ReadAllBytes(path);
@@ -289,6 +304,26 @@ public sealed class ThrowingLoadPersistence(Exception exception) : IStorePersist
     public void Save(LauncherStoreFile store, string storePath, bool backup = true) => throw new NotSupportedException();
 
     public ErrorOr<LauncherStoreFile> LoadErrorOr(string storePath) => throw exception;
+
+    public string ResolveStorePath(string? explicitPath, string? currentDirectory = null, string? appBaseDirectory = null)
+        => explicitPath ?? string.Empty;
+}
+
+public sealed class RecordingLoadFailurePersistence(Exception loadException) : IStorePersistence
+{
+    public int SaveCount { get; private set; }
+
+    public LauncherStoreFile? LastSaved { get; private set; }
+
+    public LauncherStoreFile Load(string storePath, Action<Exception, string>? onRecovery = null) => throw loadException;
+
+    public void Save(LauncherStoreFile store, string storePath, bool backup = true)
+    {
+        SaveCount++;
+        LastSaved = store;
+    }
+
+    public ErrorOr<LauncherStoreFile> LoadErrorOr(string storePath) => throw loadException;
 
     public string ResolveStorePath(string? explicitPath, string? currentDirectory = null, string? appBaseDirectory = null)
         => explicitPath ?? string.Empty;

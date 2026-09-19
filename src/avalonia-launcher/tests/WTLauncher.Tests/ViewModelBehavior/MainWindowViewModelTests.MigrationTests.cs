@@ -173,4 +173,47 @@ public sealed partial class MainWindowViewModelTests
         var entry = Assert.Single(viewModel.Entries);
         Assert.Equal("three", entry.Id);
     }
+
+    [Fact]
+    public async Task ImportConfig_WhenSaveFails_KeepsOriginalStoreAndReportsError()
+    {
+        using var temp = new TempDirectory();
+        var existing = Directory.CreateDirectory(Path.Combine(temp.Path, "existing")).FullName;
+        var (config, settings, _) = CreatePortableFixture(temp, Entry("one", "One", existing));
+        var importPath = Path.Combine(temp.Path, "import.json");
+        LauncherStore.Save(
+            new LauncherStoreFile
+            {
+                SchemaVersion = 2,
+                Entries = [Entry("three", "Three", existing)],
+                Presets = [new LauncherPreset { Id = "three", Name = "Three", EntryIds = ["three"] }],
+                Settings = new LauncherSettings(),
+                DefaultPresetId = "three",
+            },
+            importPath,
+            backup: false);
+        var dialog = new StubDialogService
+        {
+            OnPickImportPath = () => Task.FromResult<string?>(importPath),
+            OnRequestImport = (_, _) => Task.FromResult<LauncherImportPlan?>(new LauncherImportPlan
+            {
+                Mode = LauncherImportMode.AddNew,
+            }),
+        };
+        var viewModel = CreateViewModel(config, settings, dialogService: dialog);
+        File.SetAttributes(config, FileAttributes.ReadOnly);
+
+        try
+        {
+            await viewModel.ImportConfigCommand.ExecuteAsync(null);
+        }
+        finally
+        {
+            File.SetAttributes(config, FileAttributes.Normal);
+        }
+
+        Assert.True(viewModel.IsStatusError, viewModel.StatusContent.ToString());
+        Assert.Single(viewModel.Entries);
+        Assert.Single(LauncherStore.Load(config).Entries);
+    }
 }

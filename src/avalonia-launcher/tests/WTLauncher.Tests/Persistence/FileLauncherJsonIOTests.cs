@@ -69,6 +69,27 @@ public sealed class FileLauncherJsonIOTests
         Assert.Contains("e1", bakContent);
     }
 
+    // ── Save swallows backup rotation failure and still writes primary ──
+
+    [Fact]
+    public void Save_WhenBackupRotationFails_StillWritesPrimary()
+    {
+        using var tmp = new TempDirectory();
+        var path = Path.Combine(tmp.Path, "launcher.json");
+        var io = new FileLauncherJsonIO();
+
+        io.Save(TestStore("e1"), path, backup: true);
+        // A directory at the oldest backup generation makes File.Delete throw,
+        // which surfaces to the backup-rotation catch and must be swallowed.
+        Directory.CreateDirectory(path + ".bak.2");
+
+        io.Save(TestStore("e2"), path, backup: true);
+
+        var loaded = io.LoadRequired<LauncherStoreFile>(path, "test");
+        Assert.Equal("e2", loaded.Entries[0].Id.ToString());
+        Assert.True(Directory.Exists(path + ".bak.2"));
+    }
+
     // ── LoadWithRecovery: backup fallback on corrupt file ──────────────
 
     [Fact]
