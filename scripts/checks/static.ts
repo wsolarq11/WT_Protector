@@ -309,7 +309,9 @@ export function checkNoHardcodedGateCounts(): void {
 
 export function checkNoImperativeViewUi(): void {
   const viewsDir = path.join(avaloniaRoot, "src", "WTLauncher.App", "Views");
-  const whitelisted = new Set(["FastWrapPanel.cs", "LauncherDialogText.cs", "MainWindowEntryCardResolver.cs", "MainWindow.Drag.cs"]);
+  // DiscoverAgentsWindow.axaml.cs 是唯一有意用代码动态渲染 UI 的视图:
+  // 代理发现结果数量未知,卡片布局只能在运行时构建。其余 View 一律走 XAML。
+  const whitelisted = new Set(["DiscoverAgentsWindow.axaml.cs", "LauncherDialogText.cs", "MainWindowEntryCardResolver.cs", "MainWindow.Drag.cs"]);
   const pattern = /\bnew\s+(TextBlock|Grid|StackPanel|Border|Button|TextBox|CheckBox|ComboBox|ScrollViewer)\b/;
   assertMatcherDetects(pattern, "var label = new TextBlock();", "no-imperative-view-ui");
   assertMatcherAllows(pattern, "var card = new EntryCardViewModel();", "no-imperative-view-ui");
@@ -317,7 +319,7 @@ export function checkNoImperativeViewUi(): void {
   let scannedFiles = 0;
   for (const filePath of walkFiles(viewsDir)) {
     const name = path.basename(filePath);
-    if (!filePath.endsWith(".cs") || name.endsWith(".axaml.cs") || whitelisted.has(name)) {
+    if (!filePath.endsWith(".cs") || whitelisted.has(name)) {
       continue;
     }
     scannedFiles += 1;

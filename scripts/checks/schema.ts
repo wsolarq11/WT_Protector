@@ -435,12 +435,10 @@ export function checkShortcutBackupRetirement(activeIds: Set<string>): void {
 
 export function checkConfigRequiredFields(): void {
   const coreRoot = repoPath("src/avalonia-launcher/src/WTLauncher.Core");
-  const requiredFields = new Set<string>();
-  const settingsRequiredFields = new Set<string>();
-  const windowRequiredFields = new Set<string>();
+  const requiredByRecord = new Map<string, Set<string>>();
   const propNamePattern = /\[JsonPropertyName\("(\w+)"\)\]/;
   const requiredPattern = /\[JsonRequired\]/;
-  const recordPattern = /public\s+(?:\w+\s+)*record\s+\w+/;
+  const recordPattern = /public\s+(?:sealed\s+)?record\s+(\w+)/;
 
   const csFiles = readdirSync(coreRoot, { recursive: true }) as string[];
   for (const file of csFiles) {
@@ -462,7 +460,7 @@ export function checkConfigRequiredFields(): void {
     let currentRecord = "";
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      const recordMatch = line.match(/public\s+(?:sealed\s+)?record\s+(\w+)/);
+      const recordMatch = line.match(recordPattern);
       if (recordMatch) {
         currentRecord = recordMatch[1];
       }
@@ -471,20 +469,39 @@ export function checkConfigRequiredFields(): void {
       }
       const nameMatch = lines[i - 1]?.match(propNamePattern);
       if (nameMatch) {
-        const jsonName = nameMatch[1];
-        requiredFields.add(jsonName);
-        if (currentRecord === "LauncherSettings") {
-          settingsRequiredFields.add(jsonName);
-        } else if (currentRecord === "LauncherWindowSettings") {
-          windowRequiredFields.add(jsonName);
-        }
+        const fields = requiredByRecord.get(currentRecord) ?? new Set<string>();
+        fields.add(nameMatch[1]);
+        requiredByRecord.set(currentRecord, fields);
       }
     }
   }
 
-  if (requiredFields.size === 0) {
-    throw new Error("Could not extract any [JsonRequired] fields from Core records");
+  // 只把真正的 launcher.json 记录纳入校验。LauncherPresetFile 是内存态，
+  // LauncherUpdateManifest 是独立发布清单，二者不属于 launcher.json schema。
+  const storeRecords = [
+    "LauncherStoreFile",
+    "LaunchEntry",
+    "LauncherPreset",
+    "LauncherSettings",
+    "LauncherWindowSettings",
+    "LauncherRunHistoryEntry",
+  ];
+  const requiredFields = new Set<string>();
+  for (const recordName of storeRecords) {
+    for (const field of requiredByRecord.get(recordName) ?? []) {
+      requiredFields.add(field);
+    }
   }
+  if (requiredFields.size === 0) {
+    throw new Error("Could not extract any [JsonRequired] fields from launcher-store records");
+  }
+
+  const storeRequired = requiredByRecord.get("LauncherStoreFile") ?? new Set<string>();
+  const entryRequired = requiredByRecord.get("LaunchEntry") ?? new Set<string>();
+  const presetRequired = requiredByRecord.get("LauncherPreset") ?? new Set<string>();
+  const settingsRequired = requiredByRecord.get("LauncherSettings") ?? new Set<string>();
+  const windowRequired = requiredByRecord.get("LauncherWindowSettings") ?? new Set<string>();
+  const historyRequired = requiredByRecord.get("LauncherRunHistoryEntry") ?? new Set<string>();
 
   const configs = [
     { path: "config/launcher.json", label: "launcher.json" },
@@ -494,8 +511,26 @@ export function checkConfigRequiredFields(): void {
 
   const results: Record<string, unknown> = {
     totalRequired: requiredFields.size,
-    settingsRequired: settingsRequiredFields.size,
-    windowRequired: windowRequiredFields.size,
+    settingsRequired: settingsRequired.size,
+    windowRequired: windowRequired.size,
+  };
+
+  const isObject = (value: unknown): value is Record<string, unknown> =>
+    typeof value === "object" && value !== null && !Array.isArray(value);
+
+  const collectMissing = (target: Record<string, unknown> | undefined, fields: Set<string>, prefix: string, index?: number): string[] => {
+    const missing: string[] = [];
+    const label = index === undefined ? prefix : `${prefix}[${index}]`;
+    if (target === undefined) {
+      missing.push(label);
+      return missing;
+    }
+    for (const field of fields) {
+      if (target[field] === undefined) {
+        missing.push(`${label}.${field}`);
+      }
+    }
+    return missing;
   };
 
   for (const config of configs) {
@@ -504,22 +539,41 @@ export function checkConfigRequiredFields(): void {
       continue;
     }
     const store = readJson<Record<string, unknown>>(repoPath(config.path));
-    const settings = store.settings as Record<string, unknown> | undefined;
     const missing: string[] = [];
 
-    for (const field of settingsRequiredFields) {
-      if (settings === undefined || settings[field] === undefined) {
-        missing.push(field);
+    missing.push(...collectMissing(store, storeRequired, config.label));
+
+    const entries = asArray(store.entries);
+    entries.forEach((entry, index) => {
+      if (!isObject(entry)) {
+        missing.push(`${config.label}.entries[${index}]`);
+        return;
       }
-    }
-    if (settings !== undefined) {
-      const windowSettings = settings.window as Record<string, unknown> | undefined;
-      for (const field of windowRequiredFields) {
-        if (windowSettings === undefined || windowSettings[field] === undefined) {
-          missing.push("window." + field);
-        }
+      missing.push(...collectMissing(entry, entryRequired, `${config.label}.entries`, index));
+    });
+
+    const presets = asArray(store.presets);
+    presets.forEach((preset, index) => {
+      if (!isObject(preset)) {
+        missing.push(`${config.label}.presets[${index}]`);
+        return;
       }
-    }
+      missing.push(...collectMissing(preset, presetRequired, `${config.label}.presets`, index));
+    });
+
+    const settings = isObject(store.settings) ? store.settings : undefined;
+    missing.push(...collectMissing(settings, settingsRequired, `${config.label}.settings`));
+    const windowSettings = settings !== undefined && isObject(settings.window) ? settings.window : undefined;
+    missing.push(...collectMissing(windowSettings, windowRequired, `${config.label}.settings.window`));
+
+    const runHistory = asArray(store.runHistory);
+    runHistory.forEach((item, index) => {
+      if (!isObject(item)) {
+        missing.push(`${config.label}.runHistory[${index}]`);
+        return;
+      }
+      missing.push(...collectMissing(item, historyRequired, `${config.label}.runHistory`, index));
+    });
 
     if (missing.length > 0) {
       throw new Error(
