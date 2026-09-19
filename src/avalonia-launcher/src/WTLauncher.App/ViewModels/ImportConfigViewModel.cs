@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -75,16 +76,16 @@ public sealed partial class ImportConfigViewModel : ObservableObject
         var missingCount = preview.Rows.Count(row => row.IsMissing);
         var warnings = new List<string>();
         if (duplicateCount > 0)
-            warnings.Add($"{duplicateCount} 个条目与现有条目 id 重复");
+            warnings.Add(LauncherLocalization.Format("import.duplicateIds", duplicateCount));
         if (missingCount > 0)
-            warnings.Add($"{missingCount} 个条目目录在本机不存在");
+            warnings.Add(LauncherLocalization.Format("import.missingDirs", missingCount));
         if (preview.InvalidPresetReferences.Count > 0)
-            warnings.Add($"{preview.InvalidPresetReferences.Count} 个预设引用无效，相关预设将被跳过");
+            warnings.Add(LauncherLocalization.Format("import.invalidPresetRefs", preview.InvalidPresetReferences.Count));
         if (preview.DuplicatePresetIds.Count > 0)
-            warnings.Add($"{preview.DuplicatePresetIds.Count} 个预设 id 与现有预设重复");
+            warnings.Add(LauncherLocalization.Format("import.duplicatePresetIds", preview.DuplicatePresetIds.Count));
         return warnings.Count == 0
-            ? "导入文件通过 schema 与引用检查。"
-            : "需要处理：" + string.Join("；", warnings);
+            ? LauncherLocalization.Format("import.valid")
+            : LauncherLocalization.Format("import.needHandling", string.Join("；", warnings));
     }
 }
 

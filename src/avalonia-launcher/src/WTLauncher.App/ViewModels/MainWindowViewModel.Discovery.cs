@@ -3,6 +3,7 @@ using System.Diagnostics;
 using CommunityToolkit.Mvvm.Input;
 using WTLauncher.App.Features;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -33,13 +34,13 @@ public sealed partial class MainWindowViewModel
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "DiscoverAgents.Dialog");
-            StatusContent = LauncherRefreshStatus.DialogOpenFailed("发现", ex);
+            StatusContent = LauncherRefreshStatus.DialogOpenFailed(LauncherLocalization.Format("dialog.discover"), ex);
             return;
         }
 
         if (selection is null)
         {
-            StatusContent = LauncherRefreshStatus.DialogCanceled("发现");
+            StatusContent = LauncherRefreshStatus.DialogCanceled(LauncherLocalization.Format("dialog.discover"));
             return;
         }
 
@@ -56,7 +57,7 @@ public sealed partial class MainWindowViewModel
         };
         if (selected.Count == 0)
         {
-            StatusContent = LauncherRefreshStatus.DialogCanceled("发现");
+            StatusContent = LauncherRefreshStatus.DialogCanceled(LauncherLocalization.Format("dialog.discover"));
             return;
         }
 

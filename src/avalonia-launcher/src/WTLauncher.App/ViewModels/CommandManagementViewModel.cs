@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -82,7 +83,7 @@ public sealed partial class CommandManagementViewModel : ObservableObject
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "CommandManagement.Apply");
-            StatusMessage = $"应用失败: {ExceptionMessageFormatter.ForUser(ex)}";
+            StatusMessage = LauncherLocalization.Format("maintenance.applyFailed", ExceptionMessageFormatter.ForUser(ex));
             return;
         }
 
@@ -118,7 +119,7 @@ public sealed partial class CommandManagementViewModel : ObservableObject
             return;
         if (SelectedCommandRow.ReferenceCount > 0)
         {
-            StatusMessage = $"无法删除：{SelectedCommandRow.ReferenceCount} 个 entry 仍在引用此命令。请先合并或修改引用。";
+            StatusMessage = LauncherLocalization.Format("cmdmgmt.cannotDeleteCommand", SelectedCommandRow.ReferenceCount);
             return;
         }
         Apply(new CommandManagementEdit.DeleteCommand(SelectedCommandRow.Command));
@@ -162,7 +163,7 @@ public sealed partial class CommandManagementViewModel : ObservableObject
             return;
         if (SelectedTemplateRow.ReferenceCount > 0)
         {
-            StatusMessage = $"无法删除：{SelectedTemplateRow.ReferenceCount} 个 entry 仍在引用此模板。请先修改这些 entry 或合并到其他模板。";
+            StatusMessage = LauncherLocalization.Format("cmdmgmt.cannotDeleteTemplate", SelectedTemplateRow.ReferenceCount);
             return;
         }
         Apply(new CommandManagementEdit.DeleteTemplate(SelectedTemplateRow.Key));

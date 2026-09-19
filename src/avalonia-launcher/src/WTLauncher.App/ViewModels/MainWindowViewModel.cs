@@ -10,6 +10,7 @@ using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Features.Presets;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 // ReSharper disable ArrangeObjectCreationWhenTypeEvident
 using WTLauncher.Core;
 
@@ -299,7 +300,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
                 {
                     ErrorLog.Write(
                         new InvalidDataException(
-                            $"启动组 \"{preset.Name}\" 引用了不存在的启动项 ID: {entryId}"),
+                            LauncherLocalization.Format("main.presetMissingEntry", preset.Name, entryId)),
                         "PresetValidation");
                 }
             }
@@ -324,7 +325,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
         if (saveFailure is not null)
         {
             var status = kind == LaunchSaveResultKind.SaveFailedAfterLaunch
-                ? LauncherStatusContent.Error($"已启动，但运行历史保存失败：{saveFailure}")
+                ? LauncherStatusContent.Error(LauncherLocalization.Format("main.runHistorySaveFailed", saveFailure))
                 : LauncherStatusContent.Error(saveFailure);
             ApplyStatusText(status);
             return new LaunchSaveResult(kind, saveFailure);

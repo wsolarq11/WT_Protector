@@ -1,3 +1,4 @@
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 namespace WTLauncher.App.ViewModels;
 
@@ -113,16 +114,16 @@ public static class LauncherEntryDrafts
 
 public static class LauncherEntryDraftStatus
 {
-    public static string IdRequired => "按钮 ID 不能为空";
+    public static string IdRequired => LauncherLocalization.Format("draft.idRequired");
 
-    public static string IdInvalid => "按钮 ID 不能使用 Windows 保留名、路径分隔符或 ..";
+    public static string IdInvalid => LauncherLocalization.Format("draft.idInvalid");
 
-    public static string NameRequired => "按钮名称不能为空";
+    public static string NameRequired => LauncherLocalization.Format("draft.nameRequired");
 
-    public static string DirectoryRequired => "按钮目录不能为空";
+    public static string DirectoryRequired => LauncherLocalization.Format("draft.directoryRequired");
 
-    public static string CommandRequired => "按钮命令不能为空";
+    public static string CommandRequired => LauncherLocalization.Format("draft.commandRequired");
 
     public static string DuplicateId(string entryId) =>
-        $"按钮 ID 已存在: {entryId}";
+        LauncherLocalization.Format("draft.idExists", entryId);
 }
