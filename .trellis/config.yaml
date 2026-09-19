@@ -156,3 +156,17 @@ channel:
 #
 # prompt_injection:
 #   skip_keyword: "no-trellis"   # "" disables the escape hatch entirely
+
+#-------------------------------------------------------------------------------
+# Update Skip (project-authored docs protected from trellis update)
+#-------------------------------------------------------------------------------
+# 这些文件是本仓自行撰写的内容，`trellis update` 不得改写。
+# 正常更新会跳过这些路径；破坏性迁移仍会按哈希冲突逐个询问，不会静默覆盖。
+update:
+  skip:
+    - .trellis/config.yaml
+    - .trellis/workflow.md
+    - .dsh/DSH.md
+    - .dsh/skills/trellis-continue/SKILL.md
+    - .dsh/skills/trellis-finish-work/SKILL.md
+    - .dsh/skills/trellis-start/SKILL.md
