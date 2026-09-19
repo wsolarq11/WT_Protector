@@ -31,6 +31,15 @@ public class DirectoryPathTests
     }
 
     [Fact]
+    public void Parse_RelativePath_NormalizesToAbsolute()
+    {
+        // 相对路径必须经 Path.GetFullPath 规范化为绝对路径,否则 Value 是相对路径,
+        // 后续 Directory.Exists / 启动定位会静默指向错误位置(security-audit-f1)。
+        var dir = DirectoryPath.Parse("foo");
+        Assert.True(System.IO.Path.IsPathRooted(dir.Value), $"expected absolute path, got relative: {dir.Value}");
+    }
+
+    [Fact]
     public void Parse_UncPath_Throws()
     {
         Assert.Throws<FormatException>(() => DirectoryPath.Parse(@"\\server\share\folder"));
