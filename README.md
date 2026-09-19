@@ -52,7 +52,7 @@ npm run release:build     # AOT exe -> artifacts/publish/win-x64/
 npm run release:contract  # CI release contract: locked restore + AOT publish + clean tree + receipt
 ```
 
-Distributable for normal users: `npm run package:friend` 产出的 `artifacts/friend/WTLauncher-<version>.zip`，内含单 exe、可选示例配置与快速开始；解压即用。`artifacts/publish/win-x64/` 是发布构建目录，其 `receipt.json` / `update-manifest.json` 是发布契约与更新元数据，不进入好友包。`artifacts/verify-publish/` 是隔离验证输出，不是交付物。
+Distributable for normal users: `npm run package:friend` 产出的 `artifacts/friend/WTLauncher-<version>.zip`，内含 exe、运行所需的 Avalonia/Skia 原生 DLL、可选示例配置与快速开始；解压即用。`artifacts/publish/win-x64/` 是发布构建目录，其 `receipt.json` / `update-manifest.json` 是发布契约与更新元数据，不进入好友包。`artifacts/verify-publish/` 是隔离验证输出，不是交付物。
 
 The verifier finishes with a JSON receipt: `schemaVersion`, `kind`, `status`, `repoHead`, `worktreeDirty`, `worktreeStatus`.
 
