@@ -64,7 +64,7 @@ dotnet publish src/avalonia-launcher/WTLauncher.Avalonia.sln -c Release -r win-x
 
 ## Gate Tiers
 
-`npm run verify` aggregates failures in one pass: `static` (blocks), `local` (machine-local facts), `native` (needs .NET SDK; skipped with reason), `snapshot` (advisory). Step count is documented only in `AGENTS.md` structure baseline.
+`npm run verify` aggregates failures in one pass: `static` (blocks), `local` (machine-local path facts, advisory), `native` (needs .NET SDK; skipped with reason), `snapshot` (advisory). Step count is documented only in `AGENTS.md` structure baseline.
 
 ## Trellis
 

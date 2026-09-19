@@ -42,7 +42,7 @@ Live `config/launcher.json` is git-ignored runtime state; `config/launcher.examp
 ## Build and verification
 
 ```bash
-npm run verify            # full gate: static + local + native (skips native without .NET SDK) + snapshot (advisory)
+npm run verify            # full gate: static blocks; local and snapshot are advisory; native skips without .NET SDK
 npm run verify:mainline   # Avalonia gate only
 npm run test:fast         # CoreUnit + PropertyTest + Architecture + Analyzer
 npm run test:coverage

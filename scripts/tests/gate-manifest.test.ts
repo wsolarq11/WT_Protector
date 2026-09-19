@@ -64,12 +64,24 @@ describe("gate summary formatting", () => {
 
   it("lists blocking failures with their tier and id", () => {
     const text = formatGateSummary(
-      [{ id: "local-entry-directories", tier: "local", message: "missing C:\\gone" }],
+      [{ id: "winforms-retired-design", tier: "static", message: "missing marker" }],
       [],
       [],
       "10.0.301",
     );
     expect(text).toContain("FAIL");
+    expect(text).toContain("[static] winforms-retired-design: missing marker");
+  });
+
+  it("keeps local-tier path failures advisory instead of blocking", () => {
+    const text = formatGateSummary(
+      [],
+      [{ id: "local-entry-directories", tier: "local", message: "missing C:\\gone" }],
+      [],
+      "10.0.301",
+    );
+    expect(text).toContain("PASS");
+    expect(text).toContain("Advisory (reported, does not block)");
     expect(text).toContain("[local] local-entry-directories: missing C:\\gone");
   });
 

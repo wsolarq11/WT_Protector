@@ -300,7 +300,9 @@ export async function runVerify(): Promise<VerifyReceipt> {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const record: GateFailure = { id: step.id, tier: step.tier, message };
-      if (step.tier === "snapshot") {
+      if (step.tier === "snapshot" || step.tier === "local") {
+        // snapshot 是外部人工数据时效;local 是本机路径存在性。二者都不描述代码正确性,
+        // 只作 advisory 报告,避免一台机器缺一个目录就瘫痪整条验证。
         advisory.push(record);
       } else {
         failures.push(record);
