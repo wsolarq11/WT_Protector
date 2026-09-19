@@ -12,7 +12,7 @@ A local Windows Terminal launcher for quickly opening saved workspaces with a ch
 - `retired/design/winforms-launcher.md` — retired WinForms executable/source design lessons and receipts.
 - `docs/reference/shortcut-backup-manifest.json` — human-readable replacement for the deleted `WT_Shortcuts_Backup/` binary shortcut tree.
 - `docs/feature-reality-north-star-audit.md` — feature-by-feature reality mapping and north-star audit for the active launcher scope.
-- `docs/feature-first-class-upgrade-audit.md` — current all-capability real-problem and first-class upgrade audit.
+- `docs/archive/feature-first-class-upgrade-audit.md` — archived all-capability real-problem and first-class upgrade audit (moved to `docs/archive/`).
 - `docs/business-wiring-boundaries.md` — business wiring ledger: each user path from View/ViewModel/StoreGrain to persistence or external process, with boundaries and known seams.
 - `.snow/` — git-ignored local runtime/index state; the gate asserts it stays ignored (`git ls-files -- .snow` is empty) and never validates its contents.
 - `.gitattributes` — repository line-ending policy; text is normalized as LF to avoid CRLF-only churn.
@@ -205,14 +205,14 @@ Run the project gate from the repository root:
 npm run verify
 ```
 
-The verifier currently enforces 46 checks — see the `addCheck` calls in `scripts/checks/` for the canonical list. Summary by category:
+The verifier enforces a growing set of checks — see the `addCheck` calls in `scripts/checks/` for the canonical list, and the `AGENTS.md`「结构基线」table for the enforced step count. Summary by category:
 
 - **repo hygiene**: line-ending policy (LF), `.snow/` ignored local state, retired paths (`WT Launcher.exe`, `src/winforms-launcher/`, `spikes/`) do not return;
 - **mainline layout**: `src/avalonia-launcher/` has the solution, app project, tests project, and mainline verify script;
 - **documentation**: `README.md` section/boundary checks, `docs/feature-reality-north-star-audit.md` keeps 22/22 narrow-domain north-star coverage and the `not-complete-as-written` boundary, claim-boundary ledger separates allowed narrow-scope claims from forbidden broad/unimprovable/universal/absolute-side-effect/post-`wt.exe` claims;
 - **market evidence**: `docs/reference/github-similar-projects-snapshot.json` schema, representative repos, freshness metadata;
 - **launcher.json contract**: top-level `LauncherStoreFile` (schemaVersion=2) parses, unique entry `id`s, preset `entryIds` reference known entries only, every active entry `directory` exists on this machine;
-- **schema invariants**: `config-schema`, `presets-schema`, `settings-json`, `settings-single-source-buildstorefile` (single canonical assembler), `no-stale-three-file-refs` (active docs must not reference abandoned three-file architecture);
+- **schema invariants**: `config-schema`, `presets-schema`, `settings-json`, `settings-single-source` (single canonical assembler), `no-stale-three-file-refs` (active docs must not reference abandoned three-file architecture);
 - **retirement hygiene**: shortcut-backup retirement, WinForms retired design (`retired/design/winforms-launcher.md`), HTA retired config;
 - **machine setup**: `.wt-protector.dsc.yaml` exists at repo root and carries the required DSC v3 schema markers (`configuration-dsc-schema/0.2`, `configurationVersion: 0.2.0`) plus the two required `WinGetPackage` resources (`Microsoft.WindowsTerminal`, `Microsoft.PowerShell`); structural validation only — run `npm run apply:config:dry` for winget's own schema validation when DSC v3 is installed;
 - **Avalonia mainline**: restore/test/isolated Native AOT verification publish passes; on Windows a hidden temp-config startup smoke of the published exe; non-Windows hosts skip GUI smoke after win-x64 Native AOT publish verification.

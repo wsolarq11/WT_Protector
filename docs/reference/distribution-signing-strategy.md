@@ -1,6 +1,6 @@
 # Distribution, Signing, and Update Strategy
 
-> Verified 2026-08-15 — 依据 .trellis/tasks/08-15-docs/verification-protocol.md 逐项查证后重写；以下脚本/代码/配置声明均已对照工作树核实。
+> Verified 2026-08-15 — 依据 .trellis/tasks/archive/2026-08/08-15-docs/verification-protocol.md 逐项查证后重写；以下脚本/代码/配置声明均已对照工作树核实。
 
 Scope: win-x64 portable builds. Installer/update logic must never create a second config authority; `config/launcher.json` remains the only source of truth.
 

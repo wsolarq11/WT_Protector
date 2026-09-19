@@ -18,24 +18,25 @@ WT_Protector/
 │   └── avalonia-launcher/ → 活动主线：Avalonia/.NET 源码 + 测试 + 构建
 │       ├── README.md      → 源码架构（5层模型）、构建与验证
 │       ├── src/
-│       │   ├── WTLauncher.Core/     → Layer 0: 纯数据/规则（51文件, 零Avalonia依赖）
-│       │   ├── WTLauncher.Analyzers/ → Roslyn 分析器（7文件, 架构规则强制）
+│       │   ├── WTLauncher.Core/     → Layer 0: 纯数据/规则（零Avalonia依赖）
+│       │   ├── WTLauncher.Analyzers/ → Roslyn 分析器（架构规则强制）
 │       │   └── WTLauncher.App/      → Layer 1-4: ViewModels + Features + Views
-│       │       ├── ViewModels/      → 65文件（MainWindowViewModel + 15 partial）
-│       │       ├── Features/        → 16文件（Entries/Presets/Status/Updates/Dialogs/ConfigExchange）
-│       │       ├── Infrastructure/  → 9文件（持久化 IO + IStorePersistence）
-│       │       ├── Platform/        → 3文件（平台接线）
-│       │       └── Views/           → 44文件（24 cs + 20 axaml; MainWindow.axaml 承载 Cards/Details/Names 三视图, 视图体在 LauncherEntriesView.axaml）
-│       ├── tests/WTLauncher.Tests/ → 129测试文件, xUnit（8层, 门禁实测 832 用例）
+│       │       ├── ViewModels/      → MainWindowViewModel + partials
+│       │       ├── Features/        → Entries/Presets/Status/Updates/Dialogs/ConfigExchange
+│       │       ├── Infrastructure/  → 持久化 IO + IStorePersistence
+│       │       ├── Platform/        → 平台接线
+│       │       └── Views/           → MainWindow.axaml 承载 Cards/Details/Names 三视图, 视图体在 LauncherEntriesView.axaml
+│       └── tests/WTLauncher.Tests/ → xUnit 测试（8层）。文件数/属性数见「结构基线」表
 ├── tools/                 → .NET 辅助工具（smoke-probe / uninstaller）
 ├── docs/                  → 设计审计、基准对标、巨人肩膀库
 │   ├── feature-reality-north-star-audit.md → 22项功能审计 + 声明边界账本
-│   ├── feature-first-class-upgrade-audit.md → 23项功能一等公民改造审计 (2026-06-10)
 │   ├── business-wiring-boundaries.md         → 业务接线总账（View→VM→StoreGrain→外部进程）
+│   ├── wiring-map.md                       → 接线映射总账（门禁 wiring-map-consistency 校验其覆盖完整性）
 │   ├── design-benchmark-digest.md          → 12项外部设计基准 → 本地验收规则
+│   ├── architectures/     → 架构提案与终局设计（trinity-endgame 等；历史提案，已标 DEPRECATED）
 │   ├── giants-shoulders/  → 巨人肩膀库（外部项目教训）
 │   ├── reference/         → GitHub对标快照 + 快捷方式退役清单
-│   ├── archive/           → 历史完成/审查文档归档（phase*-complete、ultrareview 等）
+│   ├── archive/           → 历史完成/审查文档归档（phase*-complete、ultrareview、feature-first-class-upgrade-audit 等）
 │   └── research/          → 探索性研究（含 wt-launcher-architecture-zero.md 退路方案，非行动方案）
 └── retired/               → 退役归档（旧HTA启动器 + WinForms设计教训）
     └── README.md          → 退役说明
@@ -45,7 +46,7 @@ WT_Protector/
 
 | 命令 / 工具                                     | 用途                                                                                                                                                                                                                                                                                                                                          | 何时用                                               |
 | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `npm run verify`                              | **全量门禁**：45 项检查（行尾策略、`.snow/` 忽略、退役路径、无 active PowerShell、无裸 catch、无硬编码颜色、主线布局、README、功能审计、声明边界、GitHub 快照、launcher.json/config/presets/settings 各 schema、快捷方式/WinForms/HTA 退役、Avalonia 测试+Native AOT 发布+GUI 冒烟、**结构基线**、release-lockfile-consistency、aot-toolchain-owned-by-sdk、settings-single-source、no-stale-three-file-refs、winget-config-schema、Views 免命令式 UI、安全审计 F1-F3、无瘦包装、VTK/Trinity 架构、AppStore 残留、架构规则、分析器连线） | 每次提交前；声称"完成"前                             |
+| `npm run verify`                              | **全量门禁**：分层步骤，步骤数以「结构基线」表为准（行尾策略、`.snow/` 忽略、退役路径、无 active PowerShell、无裸 catch、无硬编码颜色、主线布局、README、功能审计、声明边界、GitHub 快照形状+时效（时效为 advisory）、launcher.json/config/presets/settings 各 schema、条目目录本机存在性（local 层）、快捷方式/WinForms/HTA 退役、Avalonia 测试+Native AOT 发布+GUI 冒烟、**结构基线**、release-lockfile-consistency、aot-toolchain-owned-by-sdk、settings-single-source、no-stale-three-file-refs、winget-config-schema、Views 免命令式 UI、安全审计 F1-F3、无瘦包装、VTK/Trinity 架构、AppStore 残留、架构规则、分析器连线） | 每次提交前；声称"完成"前                             |
 | `npm run release:contract`                    | **中央发布契约**：locked-mode restore + Native AOT publish + clean worktree + receipt/manifest 校验                                                                                                                                                                                                                                        | CI 合并前；声称发布完成前                            |
 | `npm run apply:config` / `apply:config:dry`   | **新机配置包装器**：`winget configure --file .wt-protector.dsc.yaml`；dry-run 仅 validate                                                                                                                                                                                                                                                   | 拿到新 Windows 机器、想一键声明式安装前置依赖时      |
 | `npm run test:launch-args`                    | **聚焦测试**：仅运行 LaunchArgumentBuilder 测试                                                                                                                                                                                                                                                                                               | 快速验证启动参数逻辑                                 |
@@ -65,15 +66,15 @@ WT_Protector/
 | 基线项 | 数量 |
 |--------|------|
 | WTLauncher.Core C# files | 51 |
-| ViewModels C# files | 65 |
+| ViewModels C# files | 64 |
 | MainWindowViewModel partials | 15 |
-| Features C# files | 16 |
+| Features C# files | 15 |
 | Views C# files | 24 |
 | Views AXAML files | 20 |
 | WTLauncher.Analyzers C# files | 7 |
 | Tests C# files | 129 |
-| Test attributes [Fact]+[Theory] | 764 |
-| Gate checks (Add-Check) | 45 |
+| Test attributes [Fact]+[Theory] | 765 |
+| Gate steps (verify.ts) | 45 |
 
 > 更新协议：结构变化 → 跑门禁看 `structure-baseline-consistency` 报什么 → 同步改本表与
 > `scripts/checks/run.ts` 基线常量 → 门禁转绿。

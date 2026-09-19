@@ -229,8 +229,8 @@ MainWindowViewModel
 
 ## 接线理顺方案
 
-- 规划任务：`.trellis/tasks/08-15-wiring-system-plan/design.md`（档位 2：接线契约化）
-- 实施计划：`.trellis/tasks/08-15-wiring-system-plan/implement.md`
+- 规划任务：`.trellis/tasks/archive/2026-08/08-15-wiring-system-plan/design.md`（档位 2：接线契约化）
+- 实施计划：`.trellis/tasks/archive/2026-08/08-15-wiring-system-plan/implement.md`
 
 ## 已契约化的接线点（Phase 1-6）
 

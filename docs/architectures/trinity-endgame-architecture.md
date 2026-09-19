@@ -8,13 +8,13 @@
 >
 > **验证与落地记录 (2026-08-15)** — `.trellis/tasks/08-15-docs` 协议逐项核实：
 > - ✅ **本提案已于 2026-07-25 落地**：与本文档同提交 `beb47560 feat: implement Trinity endgame architecture — 3-zone refactoring`。
-> - ✅ 门禁 `trinity-architecture-integrity`（scripts/verify.ts）强制六组件存在，实测全部命中：`LauncherJsonSerializer`（Core/LauncherJsonSerializer.cs）、`LauncherStoreValidator`（Core/LauncherStoreValidator.cs）、`ILauncherJsonIO`（Core/ILauncherJsonIO.cs）、`IStorePersistence`（Core/IStorePersistence.cs）、`EntryProjection`（App/Features/Entries/EntryProjection.cs）、`AppStateMachine`（App/ViewModels/AppStateMachine.cs）。
+> - ✅ 门禁 `trinity-architecture-integrity`（scripts/verify.ts）当时强制六组件存在，实测全部命中：`LauncherJsonSerializer`（Core/LauncherJsonSerializer.cs）、`LauncherStoreValidator`（Core/LauncherStoreValidator.cs）、`ILauncherJsonIO`（Core/ILauncherJsonIO.cs）、`IStorePersistence`（Core/IStorePersistence.cs）、`EntryProjection`（App/Features/Entries/EntryProjection.cs，**已于 2026-09-17 删除**，见下）、`AppStateMachine`（App/ViewModels/AppStateMachine.cs，**已于 2026-09-17 删除**，见下）。
 > - ✅ 命名差异（草稿 vs 代码）：状态机实际类型为 `AppStateMachine`，枚举为 `AppUIState` / `AppUITrigger`（草稿写作 UIState/UITrigger）；“AppReducer/AppState”对应实现为 `StoreGrain.Dispatch(Func<LauncherStoreFile, LauncherStoreFile>)`（状态 = LauncherStoreFile，草稿签名一致）；`EntryProjection` 实际为 `SourceCache<LauncherEntryViewModel, string>`（键 vm.Id，草稿写作 SourceCache<string, LaunchEntry>），Filter→Sort→Bind 管道一致。
-> - ✅ 依赖落地：DynamicData 9.4.33、Stateless 5.20.0、CsCheck 4.2.0 均在 `Directory.Packages.props`；Stateless 生产使用于 `AppStateMachine` + `LauncherDragReorderWorkflow`；PBT 测试落地于 tests/PropertyTest/（LauncherEntryOrderPbtTests / LauncherJsonSerializerPbtTests / LauncherLayoutPbtTests / LauncherStoreValidatorPbtTests + CsCheckPropertyTests）。
+> - ⚠️ 依赖落地（**已过时，2026-09-17 更新**）：当时 DynamicData 9.4.33、Stateless 5.20.0、CsCheck 4.2.0 均在 `Directory.Packages.props`；**DynamicData 已随 `EntryProjection` 一并移除**，当前该文件仅存 Stateless 5.20.0 与 CsCheck 4.2.0。Stateless 生产使用于 `LauncherDragReorderWorkflow`（`AppStateMachine` 已于 2026-09-17 删除）；PBT 测试落地于 tests/PropertyTest/（LauncherEntryOrderPbtTests / LauncherJsonSerializerPbtTests / LauncherLayoutPbtTests / LauncherStoreValidatorPbtTests + CsCheckPropertyTests）。
 > - ✅ VTK 简化落地：`beb47560` 删除 EventJournal.cs（142 行，与 B.3 所述一致）、UiStateProjection.cs、LauncherEvent.cs、LauncherStoreProjector.cs、EventJsonContext.cs、EventStore/*；保留 Grain 线程模型（StoreGrain : Grain<LauncherStoreFile>）。
 > - ⚠️ 未按提案命名落地的门禁：Phase 4 提议的 `vtk-pure-functions` / `vtk-state-machine` / `vtk-no-codebehind-logic` / `vtk-compiled-bindings` 未采用；实际为 `trinity-architecture-integrity` + `vtk-architecture-integrity` + `vtk-no-appstore-residue`（既有 `no-imperative-view-ui` 覆盖 View 层逻辑）。
 > - ⚠️ Phase 3 的“全域 x:CompileBindings=True”未落地：Views 中无 `x:CompileBindings` 属性；`x:DataType` 见于 10 个 axaml 文件。
-> - 历史数字保留：“700 tests / 28 gate checks / 5 analyzers”、“gate 28/28”为 2026-07-25 时点记录（git 时点测量 beb47560：测试文件 98、[Fact]/[Theory] 属性 632、Add-Check 29）；当前结构基线见 AGENTS.md（129 测试文件 / 749 属性 / 45 门禁）。
+> - 历史数字保留：“700 tests / 28 gate checks / 5 analyzers”、“gate 28/28”为 2026-07-25 时点记录（git 时点测量 beb47560：测试文件 98、[Fact]/[Theory] 属性 632、Add-Check 29）；当前结构基线以 AGENTS.md「结构基线」表为唯一文档源，此处不再复制数字以免漂移。
 > - 提案正文（根因分析/迁移路径/置信度分析/消除映射）为 2026-07-25 时点提案记录，保留原文。
 
 
