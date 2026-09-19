@@ -1,5 +1,7 @@
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using WTLauncher.App.Localization;
 using WTLauncher.App.ViewModels;
 
 namespace WTLauncher.App.Views;
@@ -9,6 +11,7 @@ public sealed partial class ConfirmBatchLaunchWindow : Window
     public ConfirmBatchLaunchWindow()
     {
         InitializeComponent();
+        ApplyLocalizedChrome();
     }
 
     public ConfirmBatchLaunchWindow(LauncherBatchLaunchConfirmation confirmation)
@@ -17,24 +20,30 @@ public sealed partial class ConfirmBatchLaunchWindow : Window
 
         var hasFailures = confirmation.FailedCount > 0;
         InitializeComponent();
+        ApplyLocalizedChrome();
 
-        Title = hasFailures ? "预演失败 - 确认一键启动" : "确认一键启动";
+        Title = hasFailures
+            ? LauncherLocalization.Format("confirmBatch.titleWithFailures")
+            : LauncherLocalization.Format("confirmBatch.title");
         Height = hasFailures ? 640 : 520;
         MinHeight = hasFailures ? 460 : 340;
 
         TitleText.Text = hasFailures
-            ? $"{confirmation.TargetLabel}启动确认（{confirmation.FailedCount} 项预演失败）？"
-            : $"{confirmation.TargetLabel}启动确认？";
+            ? LauncherLocalization.Format("confirmBatch.titleTextWithFailures", confirmation.TargetLabel, confirmation.FailedCount)
+            : LauncherLocalization.Format("confirmBatch.titleText", confirmation.TargetLabel);
 
         var items = confirmation.Items;
         MessageText.Text = hasFailures
-            ? $"预演发现 {confirmation.FailedCount} 个失败项。仍有 {items.Count} 个有效{confirmation.TargetLabel}。请确认实际 wt.exe 命令。"
-            : $"将启动 {items.Count} 个{confirmation.TargetLabel}。请确认实际 wt.exe 命令。";
+            ? LauncherLocalization.Format("confirmBatch.messageWithFailures", confirmation.FailedCount, items.Count, confirmation.TargetLabel)
+            : LauncherLocalization.Format("confirmBatch.message", items.Count, confirmation.TargetLabel);
 
         PlansText.Text = LauncherBatchLaunchPlanText.Format(items);
 
-        LaunchButton.Content = hasFailures ? "仍然启动有效项" : "确认启动";
+        LaunchButton.Content = hasFailures
+            ? LauncherLocalization.Format("confirmBatch.launchValid")
+            : LauncherLocalization.Format("confirmBatch.confirm");
         LaunchButton.MinWidth = hasFailures ? 140 : 116;
+        AutomationProperties.SetName(LaunchButton, LauncherLocalization.Format("confirmBatch.confirmAutomation"));
 
         if (hasFailures)
         {
@@ -46,6 +55,13 @@ public sealed partial class ConfirmBatchLaunchWindow : Window
         }
 
         Opened += (_, _) => LaunchButton.Focus();
+    }
+
+    private void ApplyLocalizedChrome()
+    {
+        FailureHeader.Text = LauncherLocalization.Format("confirmBatch.failureHeader");
+        CancelButton.Content = LauncherLocalization.Format("confirmBatch.cancel");
+        AutomationProperties.SetName(CancelButton, LauncherLocalization.Format("confirmBatch.cancelAutomation"));
     }
 
     private void OnCancelClicked(object? sender, RoutedEventArgs e) => Close(false);

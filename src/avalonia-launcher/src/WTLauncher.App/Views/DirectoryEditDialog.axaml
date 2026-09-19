@@ -25,15 +25,12 @@
                    x:Name="Input"
                    FontFamily="Cascadia Code, Consolas, Courier New, monospace"
                    FontSize="{StaticResource FontSizeBody}"
-                   PlaceholderText="D:\path\to\directory"
                    Padding="10,8"/>
           <Button Grid.Column="2"
                   x:Name="BrowseButton"
-                  Content="浏览..."
                   Classes="secondary"
                   MinWidth="100"
-                  Click="OnBrowseClicked"
-                  automation:AutomationProperties.Name="浏览选择目录"/>
+                  Click="OnBrowseClicked"/>
         </Grid>
         <TextBlock x:Name="AffectedHint"
                    IsVisible="False"
@@ -52,17 +49,15 @@
                   HorizontalAlignment="Right"
                   Spacing="8"
                   Margin="{StaticResource DialogFooterMargin}">
-        <Button Content="取消"
+        <Button x:Name="CancelButton"
                 Classes="secondary"
                 MinWidth="96"
                 IsCancel="True"
-                Click="OnCancelClicked"
-                automation:AutomationProperties.Name="取消地址编辑"/>
-        <Button Content="确定"
+                Click="OnCancelClicked"/>
+        <Button x:Name="OkButton"
                 Classes="primary"
                 MinWidth="96"
-                Click="OnOkClicked"
-                automation:AutomationProperties.Name="确认地址编辑"/>
+                Click="OnOkClicked"/>
       </StackPanel>
     </Grid>
   </Border>

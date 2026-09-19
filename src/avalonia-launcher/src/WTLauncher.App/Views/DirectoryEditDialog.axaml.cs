@@ -1,7 +1,9 @@
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.App.ViewModels;
 
 namespace WTLauncher.App.Views;
@@ -11,11 +13,13 @@ public sealed partial class DirectoryEditDialog : Window
     public DirectoryEditDialog()
     {
         InitializeComponent();
+        ApplyLocalizedChrome();
     }
 
     public DirectoryEditDialog(string title, string label, string initialValue, int affectedEntryCount)
     {
         InitializeComponent();
+        ApplyLocalizedChrome();
 
         Title = title;
         TitleText.Text = title;
@@ -24,11 +28,22 @@ public sealed partial class DirectoryEditDialog : Window
 
         if (affectedEntryCount > 0)
         {
-            AffectedHint.Text = $"\u26a0 此地址被 {affectedEntryCount} 个 entry 引用 — 修改将自动同步所有引用 entry。";
+            AffectedHint.Text = LauncherLocalization.Format("directoryEdit.affectedHint", affectedEntryCount);
             AffectedHint.IsVisible = true;
         }
 
         Opened += (_, _) => Input.Focus();
+    }
+
+    private void ApplyLocalizedChrome()
+    {
+        Input.Watermark = LauncherLocalization.Format("directoryEdit.placeholder");
+        BrowseButton.Content = LauncherLocalization.Format("directoryEdit.browse");
+        AutomationProperties.SetName(BrowseButton, LauncherLocalization.Format("directoryEdit.browseAutomation"));
+        CancelButton.Content = LauncherLocalization.Format("directoryEdit.cancel");
+        AutomationProperties.SetName(CancelButton, LauncherLocalization.Format("directoryEdit.cancelAutomation"));
+        OkButton.Content = LauncherLocalization.Format("directoryEdit.ok");
+        AutomationProperties.SetName(OkButton, LauncherLocalization.Format("directoryEdit.okAutomation"));
     }
 
     private void OnCancelClicked(object? sender, RoutedEventArgs e) => Close(null);
@@ -42,7 +57,7 @@ public sealed partial class DirectoryEditDialog : Window
                 : null;
             var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
-                Title = "选择目录",
+                Title = LauncherLocalization.Format("directoryEdit.pickerTitle"),
                 AllowMultiple = false,
                 SuggestedStartLocation = startDir,
             });
@@ -60,7 +75,7 @@ public sealed partial class DirectoryEditDialog : Window
         var v = Input.Text?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(v))
         {
-            ErrorText.Text = "地址不能为空。";
+            ErrorText.Text = LauncherLocalization.Format("directoryEdit.required");
             ErrorText.IsVisible = true;
             return;
         }

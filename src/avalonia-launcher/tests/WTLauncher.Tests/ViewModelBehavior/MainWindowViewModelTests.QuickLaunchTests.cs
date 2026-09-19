@@ -24,7 +24,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.Contains("{Binding Query, Mode=TwoWay}", xaml, StringComparison.Ordinal);
         Assert.Contains("{Binding Results}", xaml, StringComparison.Ordinal);
         Assert.Contains("{Binding SelectedResult}", xaml, StringComparison.Ordinal);
-        Assert.Contains("PlaceholderText=\"输入名称、目录或命令，Enter 启动，Esc 关闭\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("PlaceholderText=\"{Binding Placeholder}\"", xaml, StringComparison.Ordinal);
     }
     [Fact]
     public void QuickLaunch_EmptyQuery_ShowsAllEntries()

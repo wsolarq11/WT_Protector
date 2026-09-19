@@ -3,7 +3,6 @@
         xmlns:automation="clr-namespace:Avalonia.Automation;assembly=Avalonia.Controls"
         xmlns:core="clr-namespace:WTLauncher.Core;assembly=WTLauncher.Core"
         x:Class="WTLauncher.App.Views.ConfirmLaunchWindow"
-        Title="确认启动"
         Width="680"
         Height="360"
         MinWidth="560"
@@ -19,9 +18,9 @@
                  x:Name="TitleText"
                  Classes="dialog-title"/>
       <TextBlock Grid.Row="1"
+                 x:Name="NoteText"
                  TextWrapping="Wrap"
-                 Foreground="{StaticResource TextMutedBrush}"
-                 Text="当前已开启启动确认，请确认后继续。"/>
+                 Foreground="{StaticResource TextMutedBrush}"/>
       <TextBox Grid.Row="2"
                x:Name="CommandText"
                IsReadOnly="True"
@@ -35,18 +34,15 @@
                   HorizontalAlignment="Right"
                   Spacing="{x:Static core:LauncherDesignTokens.SpacingSmall}"
                   Margin="{StaticResource DialogFooterMargin}">
-        <Button Content="取消"
+        <Button x:Name="CancelButton"
                 Classes="secondary"
                 MinWidth="90"
                 IsCancel="True"
-                Click="OnCancelClicked"
-                automation:AutomationProperties.Name="取消启动"/>
-        <Button Content="确认启动"
+                Click="OnCancelClicked"/>
+        <Button x:Name="LaunchButton"
                 Classes="primary"
                 MinWidth="110"
-                x:Name="LaunchButton"
-                Click="OnLaunchClicked"
-                automation:AutomationProperties.Name="确认启动"/>
+                Click="OnLaunchClicked"/>
       </StackPanel>
     </Grid>
   </Border>
