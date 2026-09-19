@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -18,7 +19,7 @@ public sealed class RunHistoryViewModel
             Rows.Add(new RunHistoryRowViewModel(entry));
         }
 
-        Summary = $"共 {history.Count} 条启动记录";
+        Summary = LauncherLocalization.Format("runHistory.summary", history.Count);
     }
 }
 
@@ -57,19 +58,19 @@ public sealed class RunHistoryRowViewModel
 
     private static string SourceLabel(string source) => source switch
     {
-        nameof(LauncherRunSource.Individual) => "单条",
-        nameof(LauncherRunSource.Selection) => "勾选",
-        nameof(LauncherRunSource.Preset) => "启动组",
-        nameof(LauncherRunSource.Group) => "分组",
+        nameof(LauncherRunSource.Individual) => LauncherLocalization.Format("runHistory.sourceIndividual"),
+        nameof(LauncherRunSource.Selection) => LauncherLocalization.Format("runHistory.sourceSelection"),
+        nameof(LauncherRunSource.Preset) => LauncherLocalization.Format("runHistory.sourcePreset"),
+        nameof(LauncherRunSource.Group) => LauncherLocalization.Format("runHistory.sourceGroup"),
         _ => source,
     };
 
     private static string StatusLabel(string status) => status switch
     {
-        nameof(LauncherRunStatus.Requested) => "已请求",
-        nameof(LauncherRunStatus.Failed) => "失败",
-        nameof(LauncherRunStatus.Skipped) => "跳过",
-        nameof(LauncherRunStatus.Canceled) => "取消",
+        nameof(LauncherRunStatus.Requested) => LauncherLocalization.Format("runHistory.statusRequested"),
+        nameof(LauncherRunStatus.Failed) => LauncherLocalization.Format("runHistory.statusFailed"),
+        nameof(LauncherRunStatus.Skipped) => LauncherLocalization.Format("runHistory.statusSkipped"),
+        nameof(LauncherRunStatus.Canceled) => LauncherLocalization.Format("runHistory.statusCanceled"),
         _ => status,
     };
 }

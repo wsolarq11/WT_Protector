@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using WTLauncher.App.Features.Updates;
+using WTLauncher.App.Localization;
 
 namespace WTLauncher.App.ViewModels;
 
@@ -12,7 +13,7 @@ public sealed partial class UpdateCheckViewModel : ObservableObject
     public string? ManifestUrl { get; }
 
     [ObservableProperty]
-    private string _status = "正在检查更新…";
+    private string _status = LauncherLocalization.Format("update.checking");
 
     [ObservableProperty]
     private bool _hasResult;
@@ -44,7 +45,7 @@ public sealed partial class UpdateCheckViewModel : ObservableObject
 
     public async Task CheckAsync()
     {
-        Status = "正在检查更新…";
+        Status = LauncherLocalization.Format("update.checking");
         HasResult = false;
         HasUpdate = false;
         IsUpToDate = false;
@@ -60,9 +61,9 @@ public sealed partial class UpdateCheckViewModel : ObservableObject
         IsUpToDate = !result.HasError && !result.HasUpdate;
         HasResult = !result.HasError;
         Status = result.HasError
-            ? "检查失败"
+            ? LauncherLocalization.Format("update.failed")
             : result.HasUpdate
-                ? "发现新版本"
-                : "当前已是最新版本";
+                ? LauncherLocalization.Format("update.available")
+                : LauncherLocalization.Format("update.current");
     }
 }

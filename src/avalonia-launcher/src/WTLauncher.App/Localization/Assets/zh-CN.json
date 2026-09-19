@@ -213,5 +213,80 @@
 
   "update.manifestUrlMissing": "未配置更新清单地址；可在 launcher.json 的 settings.updateManifestUrl 设置。",
 
-  "entry.copySuffix": " (副本)"
+  "entry.copySuffix": " (副本)",
+
+  "main.presetMissingEntry": "启动组 \"{0}\" 引用了不存在的启动项 ID: {1}",
+  "main.runHistorySaveFailed": "已启动，但运行历史保存失败：{0}",
+
+  "cmdmgmt.cannotDeleteCommand": "无法删除：{0} 个 entry 仍在引用此命令。请先合并或修改引用。",
+  "cmdmgmt.cannotDeleteTemplate": "无法删除：{0} 个 entry 仍在引用此模板。请先修改这些 entry 或合并到其他模板。",
+  "dirmgmt.cannotDeleteDirectory": "无法删除：{0} 个 entry 仍在引用此地址。请先合并或修改引用。",
+
+  "discover.waiting": "等待扫描",
+  "discover.none": "未发现任何已安装的 AI Agent",
+  "discover.found": "发现 {0} 个 AI Agent",
+
+  "import.duplicateIds": "{0} 个条目与现有条目 id 重复",
+  "import.missingDirs": "{0} 个条目目录在本机不存在",
+  "import.invalidPresetRefs": "{0} 个预设引用无效，相关预设将被跳过",
+  "import.duplicatePresetIds": "{0} 个预设 id 与现有预设重复",
+  "import.valid": "导入文件通过 schema 与引用检查。",
+  "import.needHandling": "需要处理：{0}",
+
+  "card.countLabel": "{0} 个",
+
+  "draft.idRequired": "按钮 ID 不能为空",
+  "draft.idInvalid": "按钮 ID 不能使用 Windows 保留名、路径分隔符或 ..",
+  "draft.nameRequired": "按钮名称不能为空",
+  "draft.directoryRequired": "按钮目录不能为空",
+  "draft.commandRequired": "按钮命令不能为空",
+  "draft.idExists": "按钮 ID 已存在: {0}",
+
+  "presetPreview.applyDefault": "应用启动组",
+  "presetPreview.none": "暂无启动组；可以继续手动勾选。",
+  "presetPreview.select": "请选择一个启动组查看差异。",
+  "presetPreview.missingTitle": "检查启动组",
+  "presetPreview.missingMessage": "启动组“{0}”引用了 {1} 个不存在的启动项；请先修 config\\launcher.json。",
+  "presetPreview.manualMode": "手动模式",
+  "presetPreview.clearSelection": "清空勾选",
+  "presetPreview.already": "已是“{0}”：当前没有勾选项。",
+  "presetPreview.willClear": "“{0}”会清空当前 {1} 个勾选项。",
+  "presetPreview.matched": "已匹配",
+  "presetPreview.matchedStatus": "已匹配启动组“{0}”：{1}/{2} 项。",
+  "presetPreview.partialStatus": "启动组“{0}”：已匹配 {1}/{2}，缺 {3}，额外 {4}；应用会替换当前勾选。",
+
+  "preset.labelSystem": "{0} (系统组, {1}项)",
+  "preset.label": "{0} ({1}项)",
+
+  "launch.confirmOn": "启动需确认",
+  "launch.confirmOff": "启动无需确认",
+  "launch.confirmTipOn": "所有启动项启动前统一确认。",
+  "launch.confirmTipOff": "所有启动项直接启动，不弹确认。",
+
+  "layout.customSort": "自定义拖拽",
+  "layout.recentSort": "最近启动",
+  "layout.updatedSort": "更新时间",
+  "layout.alphaSort": "首字母顺序",
+  "layout.frequentSort": "使用频率",
+  "layout.cardsView": "卡片",
+  "layout.detailsView": "详细列表",
+  "layout.namesView": "名称墙",
+  "layout.groupNone": "无分组",
+  "layout.groupCommand": "按 command",
+  "layout.groupDirectory": "按 directory",
+
+  "runHistory.summary": "共 {0} 条启动记录",
+  "runHistory.sourceIndividual": "单条",
+  "runHistory.sourceSelection": "勾选",
+  "runHistory.sourcePreset": "启动组",
+  "runHistory.sourceGroup": "分组",
+  "runHistory.statusRequested": "已请求",
+  "runHistory.statusFailed": "失败",
+  "runHistory.statusSkipped": "跳过",
+  "runHistory.statusCanceled": "取消",
+
+  "update.checking": "正在检查更新…",
+  "update.failed": "检查失败",
+  "update.available": "发现新版本",
+  "update.current": "当前已是最新版本"
 }

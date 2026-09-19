@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -23,18 +24,18 @@ public sealed partial class LayoutManager : ObservableObject
 
     private readonly ObservableCollection<LauncherSortModeViewModel> _sortModes =
     [
-        new(LauncherEntryQuery.CustomSortModeId, "自定义拖拽"),
-        new(LauncherEntryQuery.RecentSortModeId, "最近启动"),
-        new(LauncherEntryQuery.UpdatedSortModeId, "更新时间"),
-        new(LauncherEntryQuery.AlphabeticalSortModeId, "首字母顺序"),
-        new(LauncherEntryQuery.FrequentSortModeId, "使用频率"),
+        new(LauncherEntryQuery.CustomSortModeId, LauncherLocalization.Format("layout.customSort")),
+        new(LauncherEntryQuery.RecentSortModeId, LauncherLocalization.Format("layout.recentSort")),
+        new(LauncherEntryQuery.UpdatedSortModeId, LauncherLocalization.Format("layout.updatedSort")),
+        new(LauncherEntryQuery.AlphabeticalSortModeId, LauncherLocalization.Format("layout.alphaSort")),
+        new(LauncherEntryQuery.FrequentSortModeId, LauncherLocalization.Format("layout.frequentSort")),
     ];
 
     private readonly ObservableCollection<LauncherDisplayModeViewModel> _displayModes =
     [
-        new(LauncherEntryViewMode.Cards, "卡片"),
-        new(LauncherEntryViewMode.Details, "详细列表"),
-        new(LauncherEntryViewMode.Names, "名称墙"),
+        new(LauncherEntryViewMode.Cards, LauncherLocalization.Format("layout.cardsView")),
+        new(LauncherEntryViewMode.Details, LauncherLocalization.Format("layout.detailsView")),
+        new(LauncherEntryViewMode.Names, LauncherLocalization.Format("layout.namesView")),
     ];
 
     [ObservableProperty]
@@ -51,9 +52,9 @@ public sealed partial class LayoutManager : ObservableObject
 
     public IReadOnlyList<LauncherCardsGroupOption> CardsGroupOptions { get; } =
     [
-        new("无分组", LauncherCardsGroupKeys.None),
-        new("按 command", LauncherCardsGroupKeys.Command),
-        new("按 directory", LauncherCardsGroupKeys.Directory),
+        new(LauncherLocalization.Format("layout.groupNone"), LauncherCardsGroupKeys.None),
+        new(LauncherLocalization.Format("layout.groupCommand"), LauncherCardsGroupKeys.Command),
+        new(LauncherLocalization.Format("layout.groupDirectory"), LauncherCardsGroupKeys.Directory),
     ];
 
     public event Action? FilterChanged;

@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -46,7 +47,7 @@ public sealed partial class DirectoryManagementViewModel : ObservableObject
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "DirectoryManagement.Apply");
-            StatusMessage = $"应用失败: {ExceptionMessageFormatter.ForUser(ex)}";
+            StatusMessage = LauncherLocalization.Format("maintenance.applyFailed", ExceptionMessageFormatter.ForUser(ex));
             return;
         }
 
@@ -83,7 +84,7 @@ public sealed partial class DirectoryManagementViewModel : ObservableObject
             return;
         if (SelectedDirectoryRow.ReferenceCount > 0)
         {
-            StatusMessage = $"无法删除：{SelectedDirectoryRow.ReferenceCount} 个 entry 仍在引用此地址。请先合并或修改引用。";
+            StatusMessage = LauncherLocalization.Format("dirmgmt.cannotDeleteDirectory", SelectedDirectoryRow.ReferenceCount);
             return;
         }
         Apply(new DirectoryManagementEdit.DeleteDirectory(SelectedDirectoryRow.Directory));

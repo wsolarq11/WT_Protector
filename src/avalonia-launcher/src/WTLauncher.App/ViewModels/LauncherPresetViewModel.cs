@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -26,7 +27,9 @@ public sealed class LauncherPresetViewModel
 
     public bool IsLocked { get; }
 
-    public string Label => IsLocked ? $"{Name} (系统组, {EntryCount}项)" : $"{Name} ({EntryCount}项)";
+    public string Label => IsLocked
+        ? LauncherLocalization.Format("preset.labelSystem", Name, EntryCount)
+        : LauncherLocalization.Format("preset.label", Name, EntryCount);
 
     public override string ToString() => Label;
 

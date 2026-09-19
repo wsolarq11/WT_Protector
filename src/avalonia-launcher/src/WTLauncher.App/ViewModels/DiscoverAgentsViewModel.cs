@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -51,7 +52,7 @@ public sealed partial class DiscoverAgentsViewModel : ObservableObject
     private bool _isScanning;
 
     [ObservableProperty]
-    private string _statusText = "等待扫描";
+    private string _statusText = LauncherLocalization.Format("discover.waiting");
 
     [ObservableProperty]
     private int _selectedCount;
@@ -122,8 +123,8 @@ public sealed partial class DiscoverAgentsViewModel : ObservableObject
             }
 
             StatusText = result.Found.Length == 0
-                ? "未发现任何已安装的 AI Agent"
-                : $"发现 {result.Found.Length} 个 AI Agent";
+                ? LauncherLocalization.Format("discover.none")
+                : LauncherLocalization.Format("discover.found", result.Found.Length);
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {

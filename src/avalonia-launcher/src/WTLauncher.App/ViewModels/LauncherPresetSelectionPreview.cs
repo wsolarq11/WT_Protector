@@ -1,12 +1,13 @@
 using System.Collections.Frozen;
 using System.Collections.ObjectModel;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
 
 public sealed class LauncherPresetSelectionPreview
 {
-    public static string DefaultApplyButtonText => "应用启动组";
+    public static string DefaultApplyButtonText => LauncherLocalization.Format("presetPreview.applyDefault");
 
     private LauncherPresetSelectionPreview(
         IEnumerable<string> selectedIds,
@@ -57,8 +58,8 @@ public sealed class LauncherPresetSelectionPreview
             extraCount: 0,
             DefaultApplyButtonText,
             presetCount == 0
-                ? "暂无启动组；可以继续手动勾选。"
-                : "请选择一个启动组查看差异。");
+                ? LauncherLocalization.Format("presetPreview.none")
+                : LauncherLocalization.Format("presetPreview.select"));
     }
 
     public static LauncherPresetSelectionPreview ForPreset(
@@ -89,25 +90,25 @@ public sealed class LauncherPresetSelectionPreview
         if (missingConfigIds.Count > 0)
         {
             return Create(
-                "检查启动组",
-                $"启动组“{presetName}”引用了 {missingConfigIds.Count} 个不存在的启动项；请先修 config\\launcher.json。");
+                LauncherLocalization.Format("presetPreview.missingTitle"),
+                LauncherLocalization.Format("presetPreview.missingMessage", presetName, missingConfigIds.Count));
         }
 
         if (presetSet.Count == 0)
         {
             return Create(
-                extra == 0 ? "手动模式" : "清空勾选",
+                extra == 0 ? LauncherLocalization.Format("presetPreview.manualMode") : LauncherLocalization.Format("presetPreview.clearSelection"),
                 extra == 0
-                    ? $"已是“{presetName}”：当前没有勾选项。"
-                    : $"“{presetName}”会清空当前 {extra} 个勾选项。");
+                    ? LauncherLocalization.Format("presetPreview.already", presetName)
+                    : LauncherLocalization.Format("presetPreview.willClear", presetName, extra));
         }
 
         var isMatched = missing == 0 && extra == 0;
         return Create(
-            isMatched ? "已匹配" : DefaultApplyButtonText,
+            isMatched ? LauncherLocalization.Format("presetPreview.matched") : DefaultApplyButtonText,
             isMatched
-                ? $"已匹配启动组“{presetName}”：{matched}/{presetSet.Count} 项。"
-                : $"启动组“{presetName}”：已匹配 {matched}/{presetSet.Count}，缺 {missing}，额外 {extra}；应用会替换当前勾选。");
+                ? LauncherLocalization.Format("presetPreview.matchedStatus", presetName, matched, presetSet.Count)
+                : LauncherLocalization.Format("presetPreview.partialStatus", presetName, matched, presetSet.Count, missing, extra));
     }
 
 }

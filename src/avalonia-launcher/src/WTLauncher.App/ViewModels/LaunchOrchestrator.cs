@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using WTLauncher.App.Features;
 using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -54,11 +55,13 @@ public sealed partial class LaunchOrchestrator : ObservableObject, IDisposable
 
     public bool IsBatchLaunching => _batchCts is not null;
 
-    public string LaunchConfirmationToggleText => RequireConfirmationForLaunches ? "启动需确认" : "启动无需确认";
+    public string LaunchConfirmationToggleText => RequireConfirmationForLaunches
+        ? LauncherLocalization.Format("launch.confirmOn")
+        : LauncherLocalization.Format("launch.confirmOff");
 
     public string LaunchConfirmationToggleTip => RequireConfirmationForLaunches
-        ? "所有启动项启动前统一确认。"
-        : "所有启动项直接启动，不弹确认。";
+        ? LauncherLocalization.Format("launch.confirmTipOn")
+        : LauncherLocalization.Format("launch.confirmTipOff");
 
     /// <summary>CommandTemplates 可写 — CommandManagement 在提交后同步。</summary>
     public IReadOnlyDictionary<string, string>? CommandTemplates

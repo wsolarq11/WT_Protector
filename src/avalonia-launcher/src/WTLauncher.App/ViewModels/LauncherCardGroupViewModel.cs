@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -36,7 +37,7 @@ public sealed partial class LauncherCardGroupViewModel : ObservableObject
     [ObservableProperty]
     private bool _fillCardsViewportHeight = true;
 
-    public string CountLabel => $"{Count} 个";
+    public string CountLabel => LauncherLocalization.Format("card.countLabel", Count);
 
     internal void SetCardGridProjection(
         int cardColumns,
