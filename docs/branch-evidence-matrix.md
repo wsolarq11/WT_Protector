@@ -99,7 +99,8 @@ Update when: 门禁步骤、CI 流程、Trellis 更新逻辑、配置 schema 或
 | npm run release:build | 由 release:contract 执行：PASS，AOT publish 27,681,792 bytes | 实测确证 |
 | npm run release:contract | EXIT=0，status=PASS，worktreeClean=true | 实测确证 |
 | npm run update:github-snapshot | EXIT=1，gh 未认证 | 实测确证失败路径（缺 GH_TOKEN） |
-| npm run start / apply:config / install:portable / uninstall / package:friend / generate:icon | 未执行 | 源码静态推断（GUI/副作用/需交互） |
+| npm run package:friend | EXIT=0，zip 仅含 `WTLauncher.App.exe`、`使用说明.txt`、`config/launcher.example.json` | 实测确证 |
+| npm run start / apply:config / install:portable / uninstall / generate:icon | 未执行 | 源码静态推断（GUI/副作用/需交互） |
 
 ## Avalonia 源码层
 
@@ -149,7 +150,8 @@ Top 无覆盖分叉（源码静态推断，按静默错误风险降序）：
 | `CI=true` local tier | `local-entry-directories` 显式跳过，与 CI 覆盖一致 | 实测确证 | `CI=true npm run verify` receipt |
 | `update:github-snapshot` | 需 `gh auth`；本机 `gh 2.98.0` 未认证，EXIT=1 | 实测确证（缺认证失败路径） | 命令输出 `gh auth login` 提示 |
 | `apply:config` | 需 `winget`；本机无 winget，且 Appx 模块不可用 | 实测确证环境不可执行 | Appx 加载失败 0x80131539 |
-| GUI/副作用入口 | `start`、`install:portable`、`uninstall`、`package:friend`、`generate:icon`、`apply:config` | 源码静态推断（未执行） | `package.json:11-25` |
+| GUI/副作用入口 | `start`、`install:portable`、`uninstall`、`generate:icon`、`apply:config` | 源码静态推断（未执行） | `package.json:11-25` |
+| 便携好友包 | `package:friend` 只打 exe + 示例配置 + 使用说明，不含 `receipt.json` / `update-manifest.json` | 实测确证（本次展开 zip 复核） | `scripts/package-friend.ts:31-36` |
 
 仍只有远端可观测：三处 `upload-artifact if: always()`、`needs` 链前置失败跳过 full-gate、NuGet cache key 命中、`setup-node lts/*` 版本、fork PR 的 `if` 求值。
 

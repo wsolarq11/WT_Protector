@@ -29,12 +29,7 @@ async function pack(): Promise<Record<string, unknown>> {
   const bundle = path.join(staging, "WTLauncher");
   mkdirSync(path.join(bundle, "config"), { recursive: true });
 
-  for (const entry of readdirSync(publishDir)) {
-    if (entry === "receipt.json" || entry === "install-manifest.json") {
-      continue;
-    }
-    cpSync(path.join(publishDir, entry), path.join(bundle, entry), { recursive: true });
-  }
+  cpSync(exe, path.join(bundle, "WTLauncher.App.exe"));
   writeFileSync(path.join(bundle, path.basename(quickStart)), readFileSync(quickStart));
   writeFileSync(path.join(bundle, "config", "launcher.example.json"), readFileSync(exampleConfig));
 
