@@ -17,6 +17,11 @@ describe("build-release version derivation", () => {
     expect(deriveVersion("abcdef")).toBe("0.1.0-abcdef");
     expect(deriveVersion("abcdef-dirty")).toBe("0.1.0-abcdef");
   });
+
+  it("sanitizes numeric prerelease identifiers with leading zeros", () => {
+    expect(deriveVersion("0.1.0-0531719")).toBe("0.1.0-g0531719");
+    expect(deriveVersion("1.2.3-001.002")).toBe("1.2.3-g001.g002");
+  });
 });
 
 describe("shared Native AOT publish contract", () => {

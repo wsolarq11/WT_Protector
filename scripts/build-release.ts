@@ -33,10 +33,24 @@ export function deriveVersion(describe: string | null | undefined): string {
   }
   let version = source.replace(/^v/, "");
   if (/^\d+\.\d+\.\d+/.test(version)) {
-    return version.replace(/-dirty$/, ".dev");
+    return sanitizePrerelease(version.replace(/-dirty$/, ".dev"));
   }
   version = version.replace(/-dirty$/, "");
-  return `0.1.0-${version}`;
+  return sanitizePrerelease(`0.1.0-${version}`);
+}
+
+function sanitizePrerelease(version: string): string {
+  const separator = version.indexOf("-");
+  if (separator < 0) {
+    return version;
+  }
+  const core = version.slice(0, separator);
+  const suffix = version
+    .slice(separator + 1)
+    .split(".")
+    .map((part) => (/^\d+$/.test(part) && part.length > 1 && part.startsWith("0") ? `g${part}` : part))
+    .join(".");
+  return `${core}-${suffix}`;
 }
 
 export async function describeVersion(): Promise<string> {
