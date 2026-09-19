@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -71,8 +72,8 @@ public sealed partial class DirectoryManagementWindow : Window
     private async Task OpenRenameDialog(DirectoryRow row)
     {
         var dialog = new DirectoryEditDialog(
-            title: $"编辑地址: {row.Directory}",
-            label: "新地址 (支持手输或浏览)",
+            title: LauncherLocalization.Format("dirmgmt.editTitle", row.Directory),
+            label: LauncherLocalization.Format("dirmgmt.editLabel"),
             initialValue: row.Directory,
             affectedEntryCount: row.ReferenceCount);
         var result = await dialog.ShowDialog<string?>(this);
@@ -83,8 +84,8 @@ public sealed partial class DirectoryManagementWindow : Window
     private async Task OpenMergeDialog(DirectoryRow row)
     {
         var dialog = new DirectoryEditDialog(
-            title: $"合并到...: {row.Directory}",
-            label: "保留方地址 (输入或浏览)",
+            title: LauncherLocalization.Format("dirmgmt.mergeTitle", row.Directory),
+            label: LauncherLocalization.Format("dirmgmt.mergeLabel"),
             initialValue: string.Empty,
             affectedEntryCount: row.ReferenceCount);
         var result = await dialog.ShowDialog<string?>(this);

@@ -8,6 +8,7 @@ using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Features.Presets;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.App.Platform;
 using WTLauncher.App.ViewModels;
 using WTLauncher.App.Views;
@@ -230,13 +231,13 @@ public sealed partial class App : Application
             {
                 var messageBox = new Window
                 {
-                    Title = "启动失败",
+                    Title = LauncherLocalization.Format("app.startupFailureTitle"),
                     Width = 480,
                     Height = 200,
                     WindowStartupLocation = WindowStartupLocation.CenterScreen,
                     Content = new TextBlock
                     {
-                        Text = "启动失败：配置加载异常，请检查日志后重试。",
+                        Text = LauncherLocalization.Format("app.startupFailureText"),
                         Margin = new Thickness(24),
                         TextWrapping = TextWrapping.Wrap,
                     },

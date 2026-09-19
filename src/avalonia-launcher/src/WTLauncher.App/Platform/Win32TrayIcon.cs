@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using WTLauncher.App.Localization;
 
 namespace WTLauncher.App.Platform;
 
@@ -68,7 +69,7 @@ internal sealed class Win32TrayIcon : IDisposable
             GetModuleHandleW(null),
             IntPtr.Zero);
         if (_window == IntPtr.Zero)
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "无法创建托盘消息窗口。");
+            throw new Win32Exception(Marshal.GetLastWin32Error(), Win32PlatformDiagnostics.TrayWindowCreationFailed);
 
         _icon = ExtractApplicationIcon();
         _notifyData = new NOTIFYICONDATA
@@ -82,7 +83,7 @@ internal sealed class Win32TrayIcon : IDisposable
             SzTip = string.IsNullOrWhiteSpace(tooltip) ? "WT Launcher" : tooltip,
         };
         if (!Shell_NotifyIconW(NimAdd, ref _notifyData))
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "无法添加系统托盘图标。");
+            throw new Win32Exception(Marshal.GetLastWin32Error(), Win32PlatformDiagnostics.TrayIconAddFailed);
 
         _notifyData.UTimeoutOrVersion = NotifyIconVersion4;
         _ = Shell_NotifyIconW(NimSetVersion, ref _notifyData);
@@ -136,8 +137,8 @@ internal sealed class Win32TrayIcon : IDisposable
         _ = GetCursorPos(ref point);
 
         var menu = CreatePopupMenu();
-        _ = AppendMenuW(menu, MfString, OpenCommandId, "打开 WT Launcher");
-        _ = AppendMenuW(menu, MfString, QuitCommandId, "退出");
+        _ = AppendMenuW(menu, MfString, OpenCommandId, LauncherLocalization.Format("tray.open"));
+        _ = AppendMenuW(menu, MfString, QuitCommandId, LauncherLocalization.Format("tray.quit"));
 
         _ = SetForegroundWindow(_window);
         var command = TrackPopupMenu(menu, TpmReturnCmd | TpmRightButton | TpmNoNotify, point.X, point.Y, 0, _window, IntPtr.Zero);
@@ -161,7 +162,7 @@ internal sealed class Win32TrayIcon : IDisposable
             LpszClassName = WindowClassName,
         };
         if (RegisterClassW(ref windowClass) == 0)
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "无法注册托盘消息窗口类。");
+            throw new Win32Exception(Marshal.GetLastWin32Error(), Win32PlatformDiagnostics.TrayWindowClassRegistrationFailed);
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
