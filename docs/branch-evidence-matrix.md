@@ -209,3 +209,17 @@ Top 无覆盖分叉（源码静态推断，按静默错误风险降序）：
 | `settings.window` 运行态缺 `[JsonRequired]` → null，门禁却强制 | 两套契约不一致 |
 | `asArray` 单值包装让门禁比运行态宽容 | `common.ts:69-74` |
 | `schemaVersion=1` 运行态接受，门禁拒绝，且无升级路径 | `LauncherStoreValidator.cs:13-14` |
+
+## 视觉系统层
+
+| 分支 | 行为 | 判定 | 证据 |
+| --- | --- | --- | --- |
+| 画布大气渐变 | `BackgroundBrush` 从暖纸色渐变到冷石板色，替换纯色 | 实测确证 | `App.axaml.cs`；`smoke` boot 通过 |
+| 焦点光/地平线 | `CanvasLightBrush` + `HorizonBrush` 压在主窗口内容后 | 实测确证 | `MainWindow.axaml`；`smoke` boot 通过 |
+| 全局控件皮肤 | Button 悬停/按下位移、TextBox/ComboBox/AutoCompleteBox 焦点描边、ListBoxItem 选中、ContextMenu/MenuItem/ToolTip 圆角 | 实测确证 | `App.axaml`；`dotnet build -warnaserror` PASS |
+| 全局 destructive 按钮 | 从 DialogSharedStyles 移到 App.axaml，所有窗口共享 | 实测确证 | `App.axaml`；build PASS |
+| 控件阴影/圆角令牌 | `ControlBoxShadow`、`ControlCornerRadius`、`DropdownCornerRadius`、`DialogCornerRadius` | 实测确证 | `LauncherDesignTokens.cs`；`App.axaml.cs` |
+| 响应式密度 | 窗口尺寸变化仍由 `CardLayoutProvider` 切 Normal/Compact/Micro，不缩放文字 | 实测确证（既有逻辑） | `LauncherEntryViewModel.Layout.cs`；`verify` PASS |
+| reduced-motion / drag 过渡抑制 | 既有 `reduced-motion` 与 `suppress-drag-transitions` 样式保留 | 实测确证（路径存在） | `MainWindow.axaml` |
+
+视觉改动已把裸色值从 App 层移回 Core 令牌层，`app-raw-hex-zero` 复验 PASS。
