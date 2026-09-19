@@ -109,7 +109,7 @@ export function checkGithubSnapshot(): void {
     repoByName.set(fullName, repo);
   }
   const requiredRepos = [
-    "SyDroX/dev-layout",
+    "SyDroX/agentic-cli-toolkit",
     "augustdragon/terminal-manager",
     "noambrand/Launchpad-CLI",
     "kevinkicho/win-screen-setup",
@@ -118,7 +118,7 @@ export function checkGithubSnapshot(): void {
     "A-ema755/claude-dashboard",
     "adityacodepublic/wtsm-cli",
     "pramin/AgentSpace",
-    "joyahmed/devgo-app",
+    "joyahmed/devgo-winforms",
     "Flow-Launcher/Flow.Launcher",
     "Wox-launcher/Wox",
   ];
