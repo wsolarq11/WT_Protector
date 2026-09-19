@@ -10,9 +10,9 @@
       },
       "CsCheck": {
         "type": "Direct",
-        "requested": "[4.2.0, )",
-        "resolved": "4.2.0",
-        "contentHash": "US7KgJ58pb8zlQHMTj/exwjj7kIlGG7fGmaLz6SWQ9FE4k+C+qh53CGG/sldxOBZ7zlX3Z1JhrBJR9EMVQUDAA=="
+        "requested": "[4.8.0, )",
+        "resolved": "4.8.0",
+        "contentHash": "4XPnbCyJjm4Y9xymIlqoMe1MyaoIA2EwlJDvhtRsLLzlHkS0pSb2HiGTo3yvKYLeMajngPl82qWtUAPBce/3Ng=="
       },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
