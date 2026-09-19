@@ -21,8 +21,8 @@ public sealed partial class App : Application
 
     public override void Initialize()
     {
-        AvaloniaXamlLoader.Load(this);
         InjectDesignTokens();
+        AvaloniaXamlLoader.Load(this);
     }
 
     /// <summary>
@@ -109,7 +109,7 @@ public sealed partial class App : Application
         Resources["DropdownCornerRadius"] = new CornerRadius(LauncherDesignTokens.DropdownCornerRadius);
         Resources["DialogCornerRadius"] = new CornerRadius(LauncherDesignTokens.DialogCornerRadius);
         Resources["ButtonCornerRadius"] = new CornerRadius(LauncherDesignTokens.ButtonCornerRadius);
-        Resources["FocusBorderThickness"] = LauncherDesignTokens.FocusBorderThickness;
+        Resources["FocusBorderThickness"] = new Thickness(LauncherDesignTokens.FocusBorderThickness);
         Resources["SpacingFrame"] = new Thickness(LauncherDesignTokens.SpacingFrame);
         Resources["FontSizeSmall"] = LauncherDesignTokens.FontSizeSmall;
         Resources["FontSizeBody"] = LauncherDesignTokens.FontSizeBody;
