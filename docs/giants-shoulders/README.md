@@ -1,36 +1,32 @@
+Status: Active
+Purpose: 外部项目教训库入口与准入规则。
+Update when: 新增/移除教训条目或准入规则变化时。
+
 # 巨人肩膀库
 
-> Verified 2026-08-15 — 依据 .trellis/tasks/archive/2026-08/08-15-docs/verification-protocol.md 逐项查证后重写；本仓库相关声明均已对照工作树核实。
+把高信号外部项目教训放在本仓库一步之外，供技术选型与 UX 决策从已核对的引用出发，不重新发现。
+这是参考库，不是权威层；WT Launcher 的事实源仍是本仓库 `README.md` 与 `npm run verify`。
 
-Purpose: keep high-signal external project lessons one step away from this repository, so future stack and UX decisions can start from checked references instead of re-discovery.
+## 准入规则
 
-This is a reference library, not an authority layer. The active WT Launcher source of truth remains the current repository, its `README.md`, and its native gate:
+每篇条目记录：
+1. reviewed source：上游 URL、commit/tag/date、关键文件。
+2. observed stack：项目实际使用，不是猜测。
+3. 值得借用的教训：能映射到 WT Launcher 的小模式。
+4. 不照抄的复杂度/依赖/产品范围/许可/维护负担。
+5. 下一步本地验证：能证明该教训是否有用的最小 spike/gate。
 
-```bash
-npm run verify
-```
+## 现有条目
 
-## Admission rule
-
-Every entry in this library should record:
-
-1. **Reviewed source** — upstream URL, commit/tag/date, and important files.
-2. **Observed stack** — what the project actually uses, not what we guessed.
-3. **Lessons worth borrowing** — small patterns that map to WT Launcher.
-4. **What not to copy** — complexity, dependencies, product scope, licensing, or maintenance burden that does not fit.
-5. **Next local proof** — the smallest spike/gate that can prove whether the lesson helps this project.
-
-## Current entries
-
-| Entry | Why it matters |
+| 条目 | 为什么收录 |
 | --- | --- |
-| [CodexSwitch: Avalonia + .NET 10 + Native AOT](./codexswitch-avalonia-native-aot.md) | The external reference that justified promoting the Avalonia/.NET line into the current mainline `src/avalonia-launcher/`; the former single-file WinForms/GDI line is retired (`retired/design/winforms-launcher.md`) and must not be restored. |
-| [First-class launcher patterns](./launcher-first-class-patterns.md) | 12-tool industry survey (reviewed 2026-05-17) distilled into WT Launcher entries, presets, settings, and future status boundaries; the named launch-group slice has since landed in `config/launcher.json`. |
+| [codexswitch-avalonia-native-aot.md](./codexswitch-avalonia-native-aot.md) | 支持把 Avalonia/.NET 线提升为主线的外部参照；旧单文件 WinForms/GDI 线已退役（`retired/design/winforms-launcher.md`），不得恢复 |
+| [launcher-first-class-patterns.md](./launcher-first-class-patterns.md) | 12 工具行业调研提炼为 entries/presets/settings 与未来状态边界；命名启动组切片已落入 `config/launcher.json` |
 
-## How to use before changing WT Launcher
+## 使用方式
 
-1. Re-read the relevant entry and its source links.
-2. Re-check the current WT Launcher state with `git status --short` and `npm run verify`.
-3. Define a spike that does **not** replace the active executable until it proves first-order benefit.
-4. Compare against the active acceptance standard: quicker, simpler, more natural UX; same or stronger config/launch safety; same or cheaper verification.
-5. Adopt only if the spike wins under the same gate; otherwise archive the spike and keep the active path unchanged.
+1. 重读相关条目与来源链接。
+2. 用 `git status --short` 与 `npm run verify` 核对当前状态。
+3. 定义不替换当前可执行文件、直到证明一阶收益的 spike。
+4. 对照验收标准：更快/更简单/更自然 UX；相同或更强配置与启动安全；相同或更便宜验证。
+5. spike 在同一门禁下胜出才采纳，否则归档 spike、保持现行路径。

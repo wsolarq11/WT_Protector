@@ -1,46 +1,46 @@
-# Design benchmark digest
+Status: Active
+Purpose: 12 项外部设计基准翻译为本地验收规则。
+Update when: 基准来源、验收规则或 DESIGN.md Token 变化时。
 
-Last refreshed: 2026-07-05
+# 设计基准摘要
 
-Purpose: convert 12 external first-class design benchmarks into WT Launcher acceptance rules. This document is not a dependency list and does not authorize importing a foreign design system. It is a source-tracked yardstick for the repo-local `DESIGN.md`, Avalonia XAML, ViewModels, and release gates.
+本文把 12 项外部设计基准翻译为 WT Launcher 验收规则，不是依赖清单，不授权引入外部设计系统。
 
-## The 12 benchmark inputs
+## 12 项基准
 
-1. [Microsoft Windows app design](https://learn.microsoft.com/en-us/windows/apps/design/) — Windows-first behavior should feel native, accessible, and consistent across input types and form factors.
-2. [Microsoft Fluent 2](https://fluent2.microsoft.design/) — component foundations and accessibility resources should reduce local token drift rather than add ornamental chrome.
-3. [Apple Human Interface Guidelines: Feedback](https://developer.apple.com/design/human-interface-guidelines/feedback) — user actions need timely, proportional, accessible feedback; critical interruptions must stay rare.
-4. [Apple Human Interface Guidelines: Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility/) — interactions should remain perceivable, adaptable, and available through alternatives to gestures alone.
-5. [Material Design adaptive layout](https://developer.android.com/codelabs/adaptive-material-guidance) — layout should adapt to usable breakpoints and continue flexing between them instead of locking to rigid sizes.
-6. [WCAG 2.2](https://www.w3.org/TR/WCAG22/) — accessibility claims must be testable: perceivable, operable, understandable, and robust enough for keyboard, focus, contrast, target size, and dragging alternatives.
-7. [IBM Carbon](https://carbondesignsystem.com/) — design systems should combine working code, design tools, guidelines, and contribution discipline; local tokens need owners.
-8. [Atlassian Design System](https://atlassian.design/) — cohesive product UI depends on shared foundations: accessibility, content, spacing, grid, color, typography, iconography, elevation, borders, and radius.
-9. [GitHub Primer](https://primer.style/) — product UI should separate product components, brand components, primitives, and accessibility instead of mixing every concern in one layer.
-10. [Shopify Polaris web components](https://shopify.dev/docs/api/polaris/using-polaris-web-components) — admin-style tools benefit from semantic components, built-in keyboard/focus behavior, responsive values, and tokenized tone/spacing.
-11. [Adobe Spectrum 2](https://s2.spectrum.adobe.com/) — mature professional tools should be contextual, cohesive, performant, adaptive, inclusive, and detailed without becoming noisy.
-12. [GOV.UK Design System](https://design-system.service.gov.uk/) and [NN/g usability heuristics](https://www.nngroup.com/articles/ten-usability-heuristics/) — reuse proven accessible patterns, minimize recall, keep status visible, use user language, and prefer aesthetic-minimal interfaces.
+| # | 基准 | 本地含义 |
+| --- | --- | --- |
+| 1 | Microsoft Windows app design | Windows-first 行为应原生、可访问、跨输入一致 |
+| 2 | Microsoft Fluent 2 | 组件基础与可访问性资源用于减少本地 Token 漂移 |
+| 3 | Apple HIG: Feedback | 用户动作需及时、适度、可访问的反馈 |
+| 4 | Apple HIG: Accessibility | 交互可感知、可适应、有手势之外的替代 |
+| 5 | Material adaptive layout | 布局适配断点并持续伸缩 |
+| 6 | WCAG 2.2 | 可访问性主张可测试：键盘/焦点/对比度/目标尺寸/拖拽替代 |
+| 7 | IBM Carbon | 设计系统需代码+工具+指南+贡献纪律；本地 Token 需 owner |
+| 8 | Atlassian Design System | 内聚 UI 依赖共享基础：间距/网格/颜色/排版/图标/圆角等 |
+| 9 | GitHub Primer | 产品组件/品牌组件/原语/可访问性分层 |
+| 10 | Shopify Polaris | 语义组件、内建键盘/焦点、Token 化色调与间距 |
+| 11 | Adobe Spectrum 2 | 成熟工具应语境化、内聚、高性能、自适应、包容 |
+| 12 | GOV.UK + NN/g heuristics | 复用已验证可访问模式、减少记忆、状态可见、用户语言 |
 
-## WT Launcher acceptance translation
+## 验收规则
 
-- Native-first: keep the implementation in Avalonia/MVVM/XAML and Windows release gates; external systems are reference standards, not new dependencies.
-- One source per state: view modes, sort mode, drag session, drag cue, card density, available card area, and selection mutation paths must each have a single writable owner.
-- One source per visual token: drag insertion cue color/radius/opacity/hit-test behavior belongs to `drag-target` class; future visual tokens need a similarly named owner or should reuse existing styles.
-- Feedback is proportional: status bar feedback handles routine saves/launches; modal confirmation is reserved for explicit launch/delete decisions.
-- Gesture alternatives: drag reorder is an accelerator, while custom sort state, context menus, buttons, double-click row launch, and visible handles preserve non-drag paths.
-- Adaptive density: cards may shrink only until readability/recognition limits; after that the scroll fallback is intentional and must stay covered by tests.
-- View mode separation: Cards optimize readable action, `详细列表` optimizes dense field scanning, and `名称墙` optimizes overview. Do not force all jobs into one view.
-- Minimal chrome: prefer layout, typography, and one accent over additional cards, gradients, badges, or decorative layers.
-- Token restraint: use the existing 8 / 13 / 21 rhythm and local styles before adding a new token. A new token must remove duplication or encode a product invariant.
-- Testable design: each benchmark-derived rule needs at least one of: XAML contract test, ViewModel unit test, calculator unit test, verify/build receipt, or explicit documented gap.
+- 原生优先：Avalonia/MVVM/XAML + Windows 发布门禁；外部系统只是参考，不是新依赖。
+- 单一状态 owner：视图模式、排序、拖拽会话/提示、卡片密度、可用尺寸、选择变更各有一个可写 owner。
+- 单一视觉 Token owner：拖拽插入提示颜色/圆角/透明度/命中测试归 `drag-target`；新 Token 需命名 owner 或复用现有样式。
+- 反馈分级：状态栏处理常规保存/启动；模态确认仅用于启动/删除。
+- 手势替代：拖拽是加速路径；自定义排序、右键菜单、按钮、双击、可见手柄保留非拖拽路径。
+- 自适应密度：卡片只缩到可读下限，之后滚动兜底必须有测试覆盖。
+- 视图分离：Cards 可读动作、详细列表 密集扫描、名称墙 总览；不强行合一。
+- 少装饰：优先布局、排版、单一强调色，不加渐变/徽章/装饰层。
+- Token 克制：先用 8/13/21 节奏；新 Token 必须消除重复或编码产品不变量。
+- 可测试：每条规则至少对应 XAML 契约测试、VM 单测、计算器单测、门禁产物或显式缺口之一。
 
-## Current evidence in repo
+## 仓库证据
 
-- `DESIGN.md` is the canonical local design contract.
-- `src/avalonia-launcher/src/WTLauncher.App/Views/MainWindow.axaml` owns the visual surface and XAML style tokens.
-- `src/avalonia-launcher/src/WTLauncher.Core/LauncherDragGhostLayoutCalculator.cs` owns drag ghost size and pointer-follow geometry.
-- `src/avalonia-launcher/src/WTLauncher.App/ViewModels/MainWindowViewModel.cs` owns view state, layout inputs, selection, presets, and entry mutation orchestration.
-- `src/avalonia-launcher/tests/WTLauncher.Tests/*` locks core contracts for drag preview, context-menu reorder alternatives, details/names/cards modes, sizing fallback, and persistence.
-- `npm run verify` and `npm run release:contract` remain the release judge; screenshots/manual inspection are useful receipts but not replacements for the gate.
-
-## Optional visual receipts
-
-- Manual visual inspection of live drag ghost alignment and insert cue animation remains useful after visual-heavy changes, but it is no longer a blocking benchmark gap: source-tracked tests cover drag-cue/insert-decision structure (`UiContract/MainWindowDragInsertDecisionTests`), semantic token ownership (`UiContract/VisualTokenContractTests`), ghost pointer-follow geometry (`CoreUnit/LauncherDragGhostLayoutCalculatorTests` + `PropertyTest/LauncherLayoutPbtTests`), card shrink-to-readable-minimum with intentional scroll fallback (`ViewModelBehavior/MainWindowViewModelTests.LayoutTests`), and GUI smoke startup (`npm run smoke`).
+- `DESIGN.md` 是本地设计契约。
+- `Views/MainWindow.axaml` 拥有视觉表面与 XAML Token。
+- `LauncherDragGhostLayoutCalculator.cs` 拥有拖拽幽灵尺寸与跟随几何。
+- `MainWindowViewModel.cs` 拥有视图状态、布局输入、选择、预设与条目变更编排。
+- `tests/WTLauncher.Tests/*` 锁定拖拽预览、右键排序替代、三视图、尺寸兜底与持久化契约。
+- `npm run verify` 与 `npm run release:contract` 是发布判定；截图/人工检查是补充，不替代门禁。
