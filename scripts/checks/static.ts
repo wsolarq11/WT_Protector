@@ -746,13 +746,17 @@ export function checkNoActivePowerShellScripts(): void {
 
 export function checkCiFastLaneNoPublishDuplication(): void {
   const workflow = readText(".github/workflows/verify.yml");
-  if (!workflow.includes("npm run test:fast")) {
-    throw new Error("CI build-and-test must run npm run test:fast");
+  const required = ["name: CI", "npm run test:fast", "npm run verify", "npm run release:contract"];
+  for (const marker of required) {
+    if (!workflow.includes(marker)) {
+      throw new Error(`CI workflow must include: ${marker}`);
+    }
   }
-  // 靠 CI 步骤显示名判断重复 publish:显示名被改名时 includes 返回 false,会假绿。
-  // 这是有意接受的名字耦合,CI 结构改动后需人工复核本检查的匹配串。
-  if (workflow.includes("Publish (smoke check)")) {
-    throw new Error("CI build-and-test must not duplicate publish; full-gate owns publish");
+  if (workflow.includes("needs:")) {
+    throw new Error("CI workflow must be a single sequential job with no needs graph");
   }
-  addCheck("ci-fast-lane-no-publish-duplication", { pass: true });
+  if (workflow.includes("if: always()")) {
+    throw new Error("CI workflow must not use always() upload branching");
+  }
+  addCheck("ci-fast-lane-no-publish-duplication", { jobs: 1, publishOwnedBy: "npm run release:contract" });
 }

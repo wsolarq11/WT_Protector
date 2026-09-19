@@ -1,4 +1,4 @@
-name: CI / Native Gate
+name: CI
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: [main, master]
 
 jobs:
-  build-and-test:
-    name: Build & Test
+  verify:
+    name: Verify
     runs-on: windows-latest
     permissions:
       contents: read
@@ -22,20 +22,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.301"
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
-          restore-keys: |
-            nuget-${{ runner.os }}-
-
-      - name: Restore
-        run: dotnet restore src/avalonia-launcher/WTLauncher.Avalonia.sln -r win-x64 -p:EnableNativeAot=true --locked-mode
-
-      - name: Build
-        run: dotnet build src/avalonia-launcher/WTLauncher.Avalonia.sln --no-restore -warnaserror
+          cache: true
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -43,113 +30,32 @@ jobs:
           node-version: "lts/*"
           cache: npm
 
-      - name: Install Node dependencies
+      - name: Install dependencies
         run: npm ci
 
-      # TypeScript 脚本层的类型检查与 vitest 套件。此前 CI 从不执行这两条命令，
-      # 于是 scripts/ 的类型错误与全部 vitest 用例（含门禁清单契约测试）在 CI 上是盲区，
-      # 而 CLAUDE.md 把它们标为 "CI authority"。两条命令都是纯本地执行，无需 dotnet。
-      - name: Typecheck and unit tests (TypeScript layer)
+      - name: Typecheck and unit tests
         run: npm run typecheck && npm test
 
-      - name: Test (fast lane)
+      - name: Fast test lane
         run: npm run test:fast -- --logger "trx;LogFileName=wtlauncher-fast.trx"
 
-      - name: Upload test results
-        if: always()
-        continue-on-error: true
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: src/avalonia-launcher/tests/WTLauncher.Tests/TestResults/
-
-  nuget-audit:
-    name: NuGet Security Audit
-    runs-on: windows-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.0.301"
-
-      - name: Audit
+      - name: NuGet security audit
         run: |
           dotnet restore src/avalonia-launcher/WTLauncher.Avalonia.sln -r win-x64 -p:EnableNativeAot=true --locked-mode
           dotnet list src/avalonia-launcher/WTLauncher.Avalonia.sln package --vulnerable --include-transitive --no-restore
 
-  release-contract:
-    name: Release Contract
-    runs-on: windows-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: false
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.0.301"
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "lts/*"
-          cache: npm
-
-      - name: Run release contract
-        run: npm ci && npm run release:contract
-
-      - name: Upload release artifacts
-        if: always()
-        continue-on-error: true
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-contract-artifacts
-          path: src/avalonia-launcher/artifacts/publish/win-x64/
-
-  full-gate:
-    name: Full Native Gate (npm run verify)
-    runs-on: windows-latest
-    needs: [build-and-test, nuget-audit, release-contract]
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: false
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.0.301"
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "lts/*"
-          cache: npm
-
-      - name: Prepare CI launcher store
+      - name: Prepare launcher store
         shell: pwsh
         run: Copy-Item config/launcher.ci.json config/launcher.json -Force
 
-      - name: Run native gate
-        run: npm ci && npm run verify
+      - name: Full native gate
+        run: npm run verify
 
-      - name: Upload coverage report
-        if: always()
-        continue-on-error: true
+      - name: Release contract
+        run: npm run release:contract
+
+      - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
-          path: src/avalonia-launcher/artifacts/coverage/
+          name: release-artifacts
+          path: src/avalonia-launcher/artifacts/publish/win-x64/
