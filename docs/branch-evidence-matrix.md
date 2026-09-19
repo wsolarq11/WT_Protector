@@ -140,22 +140,19 @@ Top 无覆盖分叉（源码静态推断，按静默错误风险降序）：
 
 ## CI 工作流层
 
-`.github/workflows/verify.yml` 四个 job 的本地可复现性：
+`.github/workflows/verify.yml` 单 job 顺序链的本地可复现性：
 
 | job/分支 | 行为 | 判定 | 证据 |
 | --- | --- | --- | --- |
-| build-and-test | setup-dotnet 10.0.301、NuGet cache、`--locked-mode` restore、`-warnaserror` build、Node `npm ci`、`typecheck && npm test`、`test:fast` | 本地已复现等价链 | 本机 10.0.401：restore、build `-warnaserror`、`typecheck`、`npm test`、`test:fast` 全过 |
-| nuget-audit | `--locked-mode` restore + `dotnet list --vulnerable --include-transitive` | 实测确证 | 本机 audit 0 漏洞 |
-| release-contract | `npm ci && npm run release:contract`，上传 publish 产物 | 本地已复现契约 | `release:contract` PASS，worktreeClean=true |
-| full-gate | `needs` 前三 job；`if` PR/main/master；`Copy-Item launcher.ci.json launcher.json`；`npm ci && npm run verify`；上传 coverage | 仅 CI 独有：needs/if/Copy-Item/upload-artifact | 本地 `npm run verify` 已全量 PASS，但 CI 编排三处 upload 与 `needs` 链未本地复现 |
+| 单 job 顺序链 | checkout → setup-dotnet → setup-node → `npm ci` → `typecheck && npm test` → `test:fast` → NuGet audit → prepare launcher store → `npm run verify` → `npm run release:contract` → upload release artifacts | 源码静态推断（本地未跑 GitHub Actions） | `.github/workflows/verify.yml:1-56` |
 | SDK 分支 | `global.json` 钉 `10.0.301`，`rollForward: latestFeature` | 实测确证 | 本机解析到 10.0.401 |
 | `CI=true` local tier | `local-entry-directories` 显式跳过，与 CI 覆盖一致 | 实测确证 | `CI=true npm run verify` receipt |
 | `update:github-snapshot` | 需 `gh auth`；本机 `gh 2.98.0` 未认证，EXIT=1 | 实测确证（缺认证失败路径） | 命令输出 `gh auth login` 提示 |
 | `apply:config` | 需 `winget`；本机无 winget，且 Appx 模块不可用 | 实测确证环境不可执行 | Appx 加载失败 0x80131539 |
 | GUI/副作用入口 | `start`、`install:portable`、`uninstall`、`generate:icon`、`apply:config` | 源码静态推断（未执行） | `package.json:11-25` |
-| 便携好友包 | `package:friend` 只打 exe + 示例配置 + 使用说明，不含 `receipt.json` / `update-manifest.json` | 实测确证（本次展开 zip 复核） | `scripts/package-friend.ts:31-36` |
+| 便携好友包 | `package:friend` 只打 exe + 三个原生 DLL + 示例配置 + 使用说明，不含 `receipt.json` / `update-manifest.json` | 实测确证（本次展开 zip 复核） | `scripts/package-friend.ts:31-36` |
 
-仍只有远端可观测：三处 `upload-artifact if: always()`、`needs` 链前置失败跳过 full-gate、NuGet cache key 命中、`setup-node lts/*` 版本、fork PR 的 `if` 求值。
+已消除的远端独占分支：多 job `needs` 链、PR/main/master `if` 求值、三处 `upload-artifact if: always()`、`build-and-test` 与 `release-contract` 分 runner 的 lock 隔离。当前 CI 只剩 GitHub Actions 平台本身不可本地复现的调度事实。
 
 ## Trellis 工作流/更新层
 
