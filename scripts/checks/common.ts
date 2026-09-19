@@ -11,8 +11,32 @@ export interface GateCheck {
 
 export const checks: GateCheck[] = [];
 
+/// <summary>检查累加器。门禁是单次进程执行,但测试需要在同一进程内多次运行,
+/// 因此必须显式重置,否则 checks 会跨运行累积并污染数量基线。</summary>
+export function resetChecks(): void {
+  checks.length = 0;
+}
+
 export function addCheck(name: string, detail: Record<string, unknown>): void {
   checks.push({ name, detail });
+}
+
+/// <summary>记录一条被跳过的检查。跳过必须留痕:静默跳过会让"本地红/CI 绿"
+/// 这类裂脑无法在报告里被发现。</summary>
+export function addSkippedCheck(name: string, reason: string): void {
+  checks.push({ name, detail: { status: "skipped", reason } });
+}
+
+/// <summary>记录一条抛错的检查。失败同样留痕,这样累加器长度与执行清单保持对应,
+/// 数量基线不会因为"失败时不记录"而漂移。</summary>
+export function addFailedCheck(name: string, error: unknown): void {
+  checks.push({
+    name,
+    detail: {
+      status: "failed",
+      message: error instanceof Error ? error.message : String(error),
+    },
+  });
 }
 
 export function repoPath(relativePath: string): string {
@@ -85,6 +109,23 @@ export function containsRequiredMarkers(text: string, required: string[], contex
     if (!text.includes(marker)) {
       throw new Error(`${context} missing required marker: ${marker}`);
     }
+  }
+}
+
+/// <summary>自检(正向):断言"违规不存在"的检查,其匹配器必须先证明能命中一个已知违规样本。
+/// 匹配器写错或写得过严时,检查会永久放行——PASS 只说明"没有匹配到",不说明"没有违规"。
+/// 把这条自检内建进检查,"匹配器已失效"就变成门禁自身的失败,而不是静默假绿。</summary>
+export function assertMatcherDetects(pattern: RegExp, violationSample: string, label: string): void {
+  if (!pattern.test(violationSample)) {
+    throw new Error(`${label} matcher failed to detect its own violation fixture: ${violationSample}`);
+  }
+}
+
+/// <summary>自检(反向):匹配器不得命中一个合规样本。防过宽匹配——过宽会把合法代码判成违规,
+/// 进而诱导人去削弱或删除这条检查。</summary>
+export function assertMatcherAllows(pattern: RegExp, allowedSample: string, label: string): void {
+  if (pattern.test(allowedSample)) {
+    throw new Error(`${label} matcher matched its own allowed fixture: ${allowedSample}`);
   }
 }
 

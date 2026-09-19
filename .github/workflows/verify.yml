@@ -43,8 +43,17 @@ jobs:
           node-version: "lts/*"
           cache: npm
 
+      - name: Install Node dependencies
+        run: npm ci
+
+      # TypeScript 脚本层的类型检查与 vitest 套件。此前 CI 从不执行这两条命令，
+      # 于是 scripts/ 的类型错误与全部 vitest 用例（含门禁清单契约测试）在 CI 上是盲区，
+      # 而 CLAUDE.md 把它们标为 "CI authority"。两条命令都是纯本地执行，无需 dotnet。
+      - name: Typecheck and unit tests (TypeScript layer)
+        run: npm run typecheck && npm test
+
       - name: Test (fast lane)
-        run: npm ci && npm run test:fast -- --logger "trx;LogFileName=wtlauncher-fast.trx"
+        run: npm run test:fast -- --logger "trx;LogFileName=wtlauncher-fast.trx"
 
       - name: Upload test results
         if: always()

@@ -96,7 +96,7 @@ export async function gitStatus(repo = repoRoot, untrackedAll = false): Promise<
 export interface ToolReceipt {
   schemaVersion: 1;
   kind: string;
-  status: "PASS";
+  status: "PASS" | "FAIL";
   generatedAtUtc: string;
   repoHead: string;
   worktreeDirty: boolean;
@@ -104,17 +104,23 @@ export interface ToolReceipt {
   [key: string]: unknown;
 }
 
-export async function makeReceipt(kind: string, fields: Record<string, unknown>): Promise<ToolReceipt> {
+/// <summary>凭证结论必须能表达失败。此前 status 硬编码为 "PASS",凭证在失败时
+/// 依然宣称通过,下游只能靠进程退出码判断,凭证本身不可信。</summary>
+export async function makeReceipt(
+  kind: string,
+  fields: Record<string, unknown>,
+  outcome: "PASS" | "FAIL" = "PASS",
+): Promise<ToolReceipt> {
   const head = await gitHead();
-  const status = await gitStatus();
+  const worktreeStatus = await gitStatus();
   const receipt: ToolReceipt = {
     schemaVersion: 1,
     kind,
-    status: "PASS",
+    status: outcome,
     generatedAtUtc: new Date().toISOString(),
     repoHead: head,
-    worktreeDirty: status.length > 0,
-    worktreeStatus: status,
+    worktreeDirty: worktreeStatus.length > 0,
+    worktreeStatus,
   };
   for (const [key, value] of Object.entries(fields)) {
     if (key in receipt) {
