@@ -51,6 +51,46 @@ public sealed class EntryListViewModelSaveFailureTests
         Assert.Single(store.Select(s => s.Entries));
     }
 
+    [Fact]
+    public async Task EditEntryAsync_WhenSaveFails_KeepsOriginalEntryAndReportsSaveError()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "launcher.json");
+        var entry = new LaunchEntry { Id = "one", Name = "One", Directory = (DirectoryPath)@"D:\one", Command = "pwsh" };
+        LauncherStore.Save(new LauncherStoreFile
+        {
+            Entries = [entry],
+            Settings = new LauncherSettings(),
+            Presets = [],
+            DefaultPresetId = "",
+        }, path, backup: false);
+
+        File.SetAttributes(path, FileAttributes.ReadOnly);
+        var store = new StoreGrain(path, new FileStorePersistence());
+        var list = new EntryListViewModel(
+            new DeleteOnlyEntryService(),
+            () => DateTimeOffset.UtcNow,
+            store,
+            new CardLayoutProvider());
+        string? status = null;
+        list.StatusApplier = content => status = content.ToString();
+        list.DragPreviewDiscarder = () => { };
+        var item = new LauncherEntryViewModel(entry, list);
+
+        try
+        {
+            await list.EditEntryAsync(item);
+        }
+        finally
+        {
+            File.SetAttributes(path, FileAttributes.Normal);
+        }
+
+        Assert.NotNull(status);
+        Assert.Contains("存储保存失败", status, StringComparison.Ordinal);
+        Assert.Equal("one", store.Select(s => s.Entries[0].Id.Value));
+    }
+
     private sealed class DeleteOnlyEntryService : IEntryService
     {
         public Task<ServiceResult<LaunchEntry>> AddEntryAsync(
@@ -69,14 +109,19 @@ public sealed class EntryListViewModelSaveFailureTests
             int presetReferenceCount,
             Func<DateTimeOffset> utcNow) => throw new NotSupportedException();
 
-        public Task<ServiceResult<LaunchEntry>> EditEntryAsync(
+        public async Task<ServiceResult<LaunchEntry>> EditEntryAsync(
             LauncherEntryViewModel item,
             IEnumerable<LaunchEntry> existingEntries,
             LauncherPresetFile presetFile,
             LauncherSettings settings,
             IReadOnlyDictionary<string, string>? commandTemplates,
             int presetReferenceCount,
-            Func<DateTimeOffset> utcNow) => throw new NotSupportedException();
+            Func<DateTimeOffset> utcNow)
+        {
+            await Task.Yield();
+            var updated = item.SnapshotEntry() with { Id = "renamed", Name = "Renamed" };
+            return new ServiceSuccess<LaunchEntry>(updated);
+        }
 
         public async Task<ServiceResult<EntryDeleteApproval>> DeleteEntryAsync(
             LauncherEntryViewModel item,

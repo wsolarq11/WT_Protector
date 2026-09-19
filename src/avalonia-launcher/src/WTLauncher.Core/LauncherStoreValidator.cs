@@ -4,27 +4,38 @@ namespace WTLauncher.Core;
 /// Zone 0: Pure schema validation for LauncherStoreFile.
 /// No file I/O, no side effects.
 ///
-/// Example
-/// -------
-/// LauncherStoreValidator.ThrowIfInvalid(store);
+/// Runtime hard-fails only on invariants that make the UI identity or window
+/// layout unsafe: schema version, duplicate/empty entry ids, and non-positive
+/// window bounds. Preset-reference and template-reference problems remain
+/// soft UI warnings on purpose (see MainWindowViewModel.Validate* methods):
+/// a hand-edited launcher.json must stay openable so the user can repair it.
 /// </summary>
 public static class LauncherStoreValidator
 {
     public const int ExpectedSchemaVersion = 2;
-    public const int MinimumSupportedSchemaVersion = 1;
 
-    /// <summary>Validates schema version. Throws InvalidDataException on failure.</summary>
+    /// <summary>Validates runtime-fatal invariants. Throws InvalidDataException on failure.</summary>
     public static void ThrowIfInvalid(LauncherStoreFile store)
     {
-        if (store.SchemaVersion > ExpectedSchemaVersion)
+        if (store.SchemaVersion != ExpectedSchemaVersion)
+        {
             throw new InvalidDataException(
-                $"Launcher store schema version {store.SchemaVersion} is from a newer version of the app. " +
-                "Please upgrade WT Launcher.");
+                $"Launcher store schema version {store.SchemaVersion} is unsupported. " +
+                $"Expected version {ExpectedSchemaVersion}.");
+        }
 
-        if (store.SchemaVersion < MinimumSupportedSchemaVersion)
+        var entryIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var entry in store.Entries)
+        {
+            if (!entryIds.Add(entry.Id.Value))
+                throw new InvalidDataException($"Launcher store contains duplicate entry id: {entry.Id.Value}.");
+        }
+
+        var window = store.Settings.Window;
+        if (window.Width <= 0 || window.Height <= 0)
+        {
             throw new InvalidDataException(
-                $"Launcher store schema version {store.SchemaVersion} is too old. " +
-                $"Minimum supported version is {MinimumSupportedSchemaVersion}. " +
-                "Regenerate config or use an older app version.");
+                $"Launcher store window dimensions must be positive; got width {window.Width}, height {window.Height}.");
+        }
     }
 }
