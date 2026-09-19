@@ -17,7 +17,7 @@ interface RepoNote {
 
 const repoNotes: RepoNote[] = [
   {
-    fullName: "SyDroX/dev-layout",
+    fullName: "SyDroX/agentic-cli-toolkit",
     classification: "direct WT workspace launcher",
     yardstickVerdict: "direct-narrow-weaker",
     strongerAxes: ["fixed Claude Code multi-repo layout", "session resume", "cd blocking"],
@@ -80,7 +80,7 @@ const repoNotes: RepoNote[] = [
     wtLauncherAxes: ["smaller WT handoff scope", "portable JSON groups", "native gate"],
   },
   {
-    fullName: "joyahmed/devgo-app",
+    fullName: "joyahmed/devgo-winforms",
     classification: "WSL-first developer launcher",
     yardstickVerdict: "adjacent-axis-stronger",
     strongerAxes: ["WSL", "VS Code", "tmux workflows", "installer ambition"],
