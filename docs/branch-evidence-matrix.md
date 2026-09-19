@@ -14,7 +14,7 @@ Update when: 门禁步骤、CI 流程、Trellis 更新逻辑、配置 schema 或
 
 ## 门禁层：45 步
 
-本 session 已装 .NET 10.0.401 SDK（`C:\Program Files\dotnet`），实测默认 `npm run verify` 全量 PASS：`dotnetSdk=10.0.401`、`failures=0`、`advisory=1`、`skipped=0`；Avalonia 主线 870 个测试全部通过。winget 尝试安装失败：本机 Windows 10 19045 的 Appx 模块不可用（0x80131539），`apply:config` 分支仍不可执行。
+本 session 已装 .NET 10.0.401 SDK（`C:\Program Files\dotnet`），实测默认 `npm run verify` 全量 PASS：`dotnetSdk=10.0.401`、`failures=0`、`advisory=1`、`skipped=0`；Avalonia 主线 870 个测试全部通过。winget 1.29.290 已安装，`apply:config` 与 `apply:config:dry` 均实测通过。
 
 ### Static：38 步
 
@@ -103,7 +103,8 @@ Update when: 门禁步骤、CI 流程、Trellis 更新逻辑、配置 schema 或
 | npm run package:friend | EXIT=0，zip 含 exe、`av_libglesv2.dll`、`libHarfBuzzSharp.dll`、`libSkiaSharp.dll`、`使用说明.txt`、`config/launcher.example.json`；不含 `receipt.json` / `update-manifest.json` | 实测确证 |
 | exe 单独运行 | 失败：`DllNotFoundException: libSkiaSharp`，证明原生 DLL 是运行依赖 | 实测确证 |
 | npm run start | EXIT=1（boot 后主动杀进程），窗口标题 `WT Launcher`，进程正常退出残留为 0 | 实测确证 boot 路径 |
-| npm run apply:config:dry | EXIT=1：winget 缺失，且 Appx 模块不可用（0x80131539） | 实测确证环境不可执行 |
+| npm run apply:config:dry | EXIT=0，winget configure validate 通过 | 实测确证 |
+| npm run apply:config | EXIT=0，安装/验证 Windows Terminal、PowerShell 7、Node.js LTS | 实测确证 |
 | npm run install:portable | EXIT=0（临时目录 + `--skip-shortcuts`）；安装目录只含 exe、三个原生 DLL、`install-manifest.json`、`uninstaller.exe`，已排除 `receipt.json`/`update-manifest.json` | 实测确证 |
 | npm run uninstall | EXIT=0，删除安装目录 | 实测确证 |
 | npm run generate:icon | EXIT=0，`app.ico` 重生成多尺寸（16/24/32/48/64/128/256） | 实测确证 |
@@ -152,8 +153,8 @@ Top 无覆盖分叉（源码静态推断，按静默错误风险降序；本 ses
 | SDK 分支 | `global.json` 钉 `10.0.301`，`rollForward: latestFeature` | 实测确证 | 本机解析到 10.0.401 |
 | `CI=true` local tier | `local-entry-directories` 显式跳过，与 CI 覆盖一致 | 实测确证 | `CI=true npm run verify` receipt |
 | `update:github-snapshot` | 需 `gh auth`；本机 `gh 2.98.0` 未认证，EXIT=1 | 实测确证（缺认证失败路径） | 命令输出 `gh auth login` 提示 |
-| `apply:config` | 需 `winget`；本机无 winget，且 Appx 模块不可用 | 实测确证环境不可执行 | Appx 加载失败 0x80131539 |
-| GUI/副作用入口 | `start`、`install:portable`、`uninstall`、`generate:icon`、`apply:config` | 实测确证（本 session 已执行；`apply:config` 因 winget 缺失失败） | `package.json:11-25` |
+| `apply:config` | winget 1.29.290 已装，`--accept-configuration-agreements --disable-interactivity` 非交互执行 | 实测确证 | `scripts/apply-machine-config.ts:13-15` |
+| GUI/副作用入口 | `start`、`install:portable`、`uninstall`、`generate:icon`、`apply:config` | 实测确证（本 session 已全部执行） | `package.json:11-25` |
 | 便携好友包 | `package:friend` 只打 exe + 三个原生 DLL + 示例配置 + 使用说明，不含 `receipt.json` / `update-manifest.json` | 实测确证（本次展开 zip 复核） | `scripts/package-friend.ts:31-36` |
 
 已消除的远端独占分支：多 job `needs` 链、PR/main/master `if` 求值、三处 `upload-artifact if: always()`、`build-and-test` 与 `release-contract` 分 runner 的 lock 隔离。当前 CI 只剩 GitHub Actions 平台本身不可本地复现的调度事实。
