@@ -13,15 +13,15 @@ public sealed class LauncherControlBarDeclutterContractTests
 
         foreach (var visibleAction in new[]
         {
-            "一键启动已勾选",
-            "新增按钮",
-            "发现",
-            "选择与刷新",
-            "管理",
-            "启动组维护",
+            "BarLaunchSelected",
+            "BarAddEntry",
+            "BarDiscover",
+            "BarSelectionMenu",
+            "BarManage",
+            "BarPresetMaintenance",
         })
         {
-            XamlContractAssertions.AssertAttribute(xaml, "Content", visibleAction);
+            XamlContractAssertions.AssertAttribute(xaml, "Content", "{Binding " + visibleAction + "}");
         }
 
         foreach (var command in new[]
@@ -46,8 +46,8 @@ public sealed class LauncherControlBarDeclutterContractTests
         Assert.Contains("menu.Open(control);", codeBehind, StringComparison.Ordinal);
         Assert.Contains("e.Handled = true;", codeBehind, StringComparison.Ordinal);
 
-        foreach (var automationName in new[] { "选择与刷新菜单", "管理菜单", "启动组维护菜单" })
-            XamlContractAssertions.AssertAttribute(xaml, "AutomationProperties.Name", automationName);
+        foreach (var automationBinding in new[] { "BarSelectionMenuAutomation", "BarManageAutomation", "BarPresetMaintenanceAutomation" })
+            XamlContractAssertions.AssertAttribute(xaml, "AutomationProperties.Name", "{Binding " + automationBinding + "}");
 
         XamlContractAssertions.AssertAttribute(entriesXaml, "AutomationProperties.Name", "启动");
         XamlContractAssertions.AssertAttribute(entriesXaml, "AutomationProperties.Name", "更多操作");
