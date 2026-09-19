@@ -43,7 +43,7 @@
                   IsVisible="False"
                   Margin="0,10,0,0"
                   Spacing="{x:Static core:LauncherDesignTokens.NameTileGap}">
-        <TextBlock Text="预演失败项:"
+        <TextBlock x:Name="FailureHeader"
                    FontWeight="Bold"
                    Foreground="{StaticResource TextMutedBrush}"/>
         <Border BorderThickness="1"
@@ -67,17 +67,14 @@
                   HorizontalAlignment="Right"
                   Spacing="{x:Static core:LauncherDesignTokens.SpacingSmall}"
                   Margin="{StaticResource DialogFooterMargin}">
-        <Button Content="取消"
+        <Button x:Name="CancelButton"
                 Classes="secondary"
                 MinWidth="96"
                 IsCancel="True"
-                Click="OnCancelClicked"
-                automation:AutomationProperties.Name="取消一键启动"/>
-        <Button Content="确认启动"
-                Classes="primary"
+                Click="OnCancelClicked"/>
+        <Button Classes="primary"
                 x:Name="LaunchButton"
-                Click="OnLaunchClicked"
-                automation:AutomationProperties.Name="确认一键启动"/>
+                Click="OnLaunchClicked"/>
       </StackPanel>
     </Grid>
   </Border>

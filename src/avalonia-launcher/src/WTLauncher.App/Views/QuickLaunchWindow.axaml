@@ -3,7 +3,7 @@
         xmlns:vm="using:WTLauncher.App.ViewModels"
         x:Class="WTLauncher.App.Views.QuickLaunchWindow"
         x:DataType="vm:QuickLaunchViewModel"
-        Title="WT Launcher - 快速启动"
+        Title="{Binding WindowTitle}"
         Width="720"
         Height="520"
         MinWidth="560"
@@ -15,7 +15,7 @@
   <Grid RowDefinitions="Auto,*" RowSpacing="10" Margin="{StaticResource DialogOuterPadding}">
     <TextBox x:Name="QueryBox"
              Text="{Binding Query, Mode=TwoWay}"
-             PlaceholderText="输入名称、目录或命令，Enter 启动，Esc 关闭"
+             PlaceholderText="{Binding Placeholder}"
              FontSize="{StaticResource FontSizeEmphasis}"
              Padding="12,10" />
 
@@ -37,7 +37,7 @@
                     Padding="6,2"
                     IsVisible="{Binding IsStaleDirectory}"
                     VerticalAlignment="Center">
-              <TextBlock Text="失效" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource BadgeWarningForegroundBrush}" />
+              <TextBlock Text="{Binding StaleBadge}" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource BadgeWarningForegroundBrush}" />
             </Border>
           </Grid>
         </DataTemplate>

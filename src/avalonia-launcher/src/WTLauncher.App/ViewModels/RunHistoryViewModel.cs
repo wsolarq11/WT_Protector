@@ -10,6 +10,12 @@ public sealed class RunHistoryViewModel
 
     public string Summary { get; }
 
+#pragma warning disable CA1822
+    public string WindowTitle => LauncherLocalization.Format("runHistory.title");
+
+    public string RequestSubmittedNote => LauncherLocalization.Format("runHistory.requestSubmittedNote");
+#pragma warning restore CA1822
+
     public RunHistoryViewModel(IReadOnlyList<LauncherRunHistoryEntry> history)
     {
         ArgumentNullException.ThrowIfNull(history);

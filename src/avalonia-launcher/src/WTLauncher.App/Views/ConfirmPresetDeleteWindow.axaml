@@ -2,7 +2,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:automation="clr-namespace:Avalonia.Automation;assembly=Avalonia.Controls"
         x:Class="WTLauncher.App.Views.ConfirmPresetDeleteWindow"
-        Title="删除启动组"
         Width="560"
         Height="280"
         MinWidth="460"
@@ -15,8 +14,8 @@
   <Border Padding="{StaticResource DialogOuterPadding}">
     <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="12">
       <TextBlock Grid.Row="0"
-                 Classes="dialog-title"
-                 Text="删除这个启动组？"/>
+                 x:Name="HeadingText"
+                 Classes="dialog-title"/>
       <TextBlock Grid.Row="1"
                  x:Name="BodyText"
                  TextWrapping="Wrap"
@@ -29,19 +28,16 @@
                   HorizontalAlignment="Right"
                   Spacing="8"
                   Margin="{StaticResource DialogFooterMargin}">
-        <Button Content="取消"
-                Classes="secondary"
+        <Button Classes="secondary"
                 MinWidth="90"
                 IsDefault="True"
                 IsCancel="True"
                 x:Name="CancelButton"
-                Click="OnCancelClicked"
-                automation:AutomationProperties.Name="取消删除启动组"/>
-        <Button Content="删除启动组"
-                Classes="destructive"
+                Click="OnCancelClicked"/>
+        <Button Classes="destructive"
                 MinWidth="110"
-                Click="OnDeleteClicked"
-                automation:AutomationProperties.Name="确认删除启动组"/>
+                x:Name="DeleteButton"
+                Click="OnDeleteClicked"/>
       </StackPanel>
     </Grid>
   </Border>

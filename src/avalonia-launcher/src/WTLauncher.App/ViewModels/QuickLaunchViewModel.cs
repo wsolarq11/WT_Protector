@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -15,6 +16,14 @@ public sealed partial class QuickLaunchViewModel : ObservableObject
     private readonly MainWindowViewModel _owner;
 
     public ObservableCollection<LauncherEntryViewModel> Results { get; } = [];
+
+#pragma warning disable CA1822
+    public string WindowTitle => LauncherLocalization.Format("quick.title");
+
+    public string Placeholder => LauncherLocalization.Format("quick.placeholder");
+
+    public string StaleBadge => LauncherLocalization.Format("quick.staleBadge");
+#pragma warning restore CA1822
 
     [ObservableProperty]
     private string _query = "";

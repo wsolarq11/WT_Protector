@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -33,6 +34,10 @@ public sealed partial class LauncherEntryViewModel : ViewModelBase
     public string Directory => _entry.Directory.Value;
 
     public string Command => _entry.Command;
+
+#pragma warning disable CA1822
+    public string StaleBadge => LauncherLocalization.Format("entry.staleBadge");
+#pragma warning restore CA1822
 
     // Per-agent brand projection. Empty when the command doesn't match a
     // catalog-known agent (user-added custom entries stay unbadged).

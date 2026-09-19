@@ -3,7 +3,7 @@
         xmlns:vm="using:WTLauncher.App.ViewModels"
         x:Class="WTLauncher.App.Views.UpdateCheckWindow"
         x:DataType="vm:UpdateCheckViewModel"
-        Title="检查更新"
+        Title="{Binding WindowTitle}"
         Width="520"
         Height="300"
         MinWidth="420"
@@ -15,6 +15,6 @@
     <TextBlock Text="{Binding CurrentVersion}" FontSize="{StaticResource FontSizeBody}" Foreground="{StaticResource TextMutedBrush}" />
     <TextBlock Text="{Binding ErrorMessage}" FontSize="{StaticResource FontSizeBody}" Foreground="{StaticResource BadgeWarningForegroundBrush}" TextWrapping="Wrap" IsVisible="{Binding HasError}" />
     <TextBlock Text="{Binding LatestVersion}" FontSize="{StaticResource FontSizeBody}" Foreground="{StaticResource TextPrimaryBrush}" IsVisible="{Binding HasResult}" />
-    <TextBlock Text="更新动作保持显式；不会自动覆盖 config/launcher.json。" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" />
+    <TextBlock Text="{Binding Note}" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" />
   </StackPanel>
 </Window>

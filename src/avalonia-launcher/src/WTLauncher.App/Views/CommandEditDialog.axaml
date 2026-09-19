@@ -45,17 +45,15 @@
                   HorizontalAlignment="Right"
                   Spacing="8"
                   Margin="{StaticResource DialogFooterMargin}">
-        <Button Content="取消"
+        <Button x:Name="CancelButton"
                 Classes="secondary"
                 MinWidth="96"
                 IsCancel="True"
-                Click="OnCancelClicked"
-                automation:AutomationProperties.Name="取消编辑"/>
-        <Button Content="确定"
+                Click="OnCancelClicked"/>
+        <Button x:Name="OkButton"
                 Classes="primary"
                 MinWidth="96"
-                Click="OnOkClicked"
-                automation:AutomationProperties.Name="确认编辑"/>
+                Click="OnOkClicked"/>
       </StackPanel>
     </Grid>
   </Border>

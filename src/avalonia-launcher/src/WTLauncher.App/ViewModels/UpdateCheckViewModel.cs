@@ -10,6 +10,12 @@ public sealed partial class UpdateCheckViewModel : ObservableObject
 
     public string CurrentVersion { get; }
 
+#pragma warning disable CA1822
+    public string WindowTitle => LauncherLocalization.Format("update.title");
+
+    public string Note => LauncherLocalization.Format("update.note");
+#pragma warning restore CA1822
+
     public string? ManifestUrl { get; }
 
     [ObservableProperty]

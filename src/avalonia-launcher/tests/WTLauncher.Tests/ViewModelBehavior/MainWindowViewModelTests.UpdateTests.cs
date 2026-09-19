@@ -16,7 +16,7 @@ public sealed partial class MainWindowViewModelTests
 
         Assert.Contains("CheckForUpdatesCommand", controlBar, StringComparison.Ordinal);
         Assert.Contains("Binding ErrorMessage", window, StringComparison.Ordinal);
-        Assert.Contains("不会自动覆盖 config/launcher.json", window, StringComparison.Ordinal);
+        Assert.Contains("Binding Note", window, StringComparison.Ordinal);
     }
 
     [Fact]
