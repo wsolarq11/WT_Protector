@@ -11,7 +11,9 @@ async function main(): Promise<void> {
     },
   });
   const yaml = path.join(repoRoot, ".wt-protector.dsc.yaml");
-  const args = values["dry-run"] ? ["configure", "validate", "-f", yaml] : ["configure", "-f", yaml];
+  const args = values["dry-run"]
+    ? ["configure", "validate", "-f", yaml]
+    : ["configure", "-f", yaml, "--accept-configuration-agreements", "--disable-interactivity"];
   const result = await execa("winget", args, { stdio: "inherit", reject: false });
   process.exitCode = result.exitCode ?? 1;
 }
