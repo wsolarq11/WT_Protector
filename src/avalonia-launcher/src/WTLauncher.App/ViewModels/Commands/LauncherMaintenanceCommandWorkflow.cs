@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -45,7 +46,7 @@ public sealed partial class LauncherMaintenanceCommandWorkflow : ICommandEditApp
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "CommandManagement.OpenDialog");
-            _context.Status.Apply(LauncherRefreshStatus.DialogOpenFailed("命令管理", ex));
+            _context.Status.Apply(LauncherRefreshStatus.DialogOpenFailed(LauncherLocalization.Format("dialog.commandManagement"), ex));
         }
     }
 
@@ -65,7 +66,7 @@ public sealed partial class LauncherMaintenanceCommandWorkflow : ICommandEditApp
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "CommandManagement.Apply");
-            return FailureResult($"应用失败: {ExceptionMessageFormatter.ForUser(ex)}");
+            return FailureResult(LauncherLocalization.Format("maintenance.applyFailed", ExceptionMessageFormatter.ForUser(ex)));
         }
 
         var saveFailure = transaction.Commit(applied.StoreFile);
@@ -93,7 +94,7 @@ public sealed partial class LauncherMaintenanceCommandWorkflow : ICommandEditApp
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "DirectoryManagement.OpenDialog");
-            _context.Status.Apply(LauncherRefreshStatus.DialogOpenFailed("地址管理", ex));
+            _context.Status.Apply(LauncherRefreshStatus.DialogOpenFailed(LauncherLocalization.Format("dialog.directoryManagement"), ex));
         }
     }
 
@@ -113,7 +114,7 @@ public sealed partial class LauncherMaintenanceCommandWorkflow : ICommandEditApp
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
             ErrorLog.Write(ex, "DirectoryManagement.Apply");
-            return DirectoryFailure($"应用失败: {ExceptionMessageFormatter.ForUser(ex)}");
+            return DirectoryFailure(LauncherLocalization.Format("maintenance.applyFailed", ExceptionMessageFormatter.ForUser(ex)));
         }
 
         var saveFailure = transaction.Commit(_host.BuildStoreFile());
@@ -133,7 +134,7 @@ public sealed partial class LauncherMaintenanceCommandWorkflow : ICommandEditApp
                 var oldCmd = r.OldCommand;
                 var newCmd = r.NewCommand;
                 if (string.Equals(oldCmd, newCmd, StringComparison.OrdinalIgnoreCase))
-                    return new CommandManagementApplied("新命令与原命令相同,无变更。", _host.BuildStoreFile());
+                    return new CommandManagementApplied(LauncherLocalization.Format("maintenance.renameCommandNoChange"), _host.BuildStoreFile());
 
                 var matched = 0;
                 foreach (var item in _entries.MutableEntries)
@@ -146,8 +147,8 @@ public sealed partial class LauncherMaintenanceCommandWorkflow : ICommandEditApp
                     }
                 }
                 var renameStatus = matched == 0
-                    ? $"未找到 command 为 '{oldCmd}' 的 entry。"
-                    : $"已将 {matched} 个 entry 的命令从 '{oldCmd}' 改为 '{newCmd}'。";
+                    ? LauncherLocalization.Format("maintenance.commandNotFound", oldCmd)
+                    : LauncherLocalization.Format("maintenance.commandRenamed", matched, oldCmd, newCmd);
                 return new CommandManagementApplied(renameStatus, _host.BuildStoreFile());
             }
 
@@ -156,7 +157,7 @@ public sealed partial class LauncherMaintenanceCommandWorkflow : ICommandEditApp
                 var loser = m.LoserCommand;
                 var keeper = m.KeeperCommand;
                 if (string.Equals(loser, keeper, StringComparison.OrdinalIgnoreCase))
-                    return new CommandManagementApplied("保留方与失效方相同,无法合并。", _host.BuildStoreFile());
+                    return new CommandManagementApplied(LauncherLocalization.Format("maintenance.mergeSame"), _host.BuildStoreFile());
 
                 var matched = 0;
                 foreach (var item in _entries.MutableEntries)
@@ -168,23 +169,23 @@ public sealed partial class LauncherMaintenanceCommandWorkflow : ICommandEditApp
                         matched++;
                     }
                 }
-                var mergeStatus = $"已将 {matched} 个 entry 的命令从 '{loser}' 合并到 '{keeper}'。";
+                var mergeStatus = LauncherLocalization.Format("maintenance.commandMerged", matched, loser, keeper);
                 return new CommandManagementApplied(mergeStatus, _host.BuildStoreFile());
             }
 
             case CommandManagementEdit.DeleteCommand:
                 return new CommandManagementApplied(
-                    "已删除未引用的 command (仅清理视图,无 entry 受影响)。",
+                    LauncherLocalization.Format("maintenance.commandDeleted"),
                     _host.BuildStoreFile());
 
             case CommandManagementEdit.UpdateTemplateKey uk:
             {
                 var settings = _context.Store.Select(s => s.Settings);
                 if (string.Equals(uk.OldKey, uk.NewKey, StringComparison.OrdinalIgnoreCase))
-                    return new CommandManagementApplied("新 Key 与原 Key 相同,无变更。", _host.BuildStoreFile());
+                    return new CommandManagementApplied(LauncherLocalization.Format("maintenance.templateKeyNoChange"), _host.BuildStoreFile());
 
                 if (settings.CommandTemplates.ContainsKey(uk.NewKey))
-                    throw new InvalidOperationException($"Key '{uk.NewKey}' 已存在。");
+                    throw new InvalidOperationException(LauncherLocalization.Format("maintenance.keyExists", uk.NewKey));
 
                 var newTemplates = settings.CommandTemplates
                     .Remove(uk.OldKey)
@@ -203,7 +204,7 @@ public sealed partial class LauncherMaintenanceCommandWorkflow : ICommandEditApp
                     }
                 }
                 var keyStoreFile = _host.BuildStoreFile() with { Settings = settings with { CommandTemplates = newTemplates } };
-                var keyStatus = $"模板 Key '{uk.OldKey}' → '{uk.NewKey}',自动同步 {cascaded} 个 entry 引用。";
+                var keyStatus = LauncherLocalization.Format("maintenance.templateKeyUpdated", uk.OldKey, uk.NewKey, cascaded);
                 return new CommandManagementApplied(keyStatus, keyStoreFile);
             }
 
@@ -211,10 +212,10 @@ public sealed partial class LauncherMaintenanceCommandWorkflow : ICommandEditApp
             {
                 var settings = _context.Store.Select(s => s.Settings);
                 if (!settings.CommandTemplates.ContainsKey(uv.Key))
-                    throw new InvalidOperationException($"模板 Key '{uv.Key}' 不存在。");
+                    throw new InvalidOperationException(LauncherLocalization.Format("maintenance.templateKeyMissing", uv.Key));
                 var newTemplates = settings.CommandTemplates.SetItem(uv.Key, uv.NewExpandedValue);
                 var valueStoreFile = _host.BuildStoreFile() with { Settings = settings with { CommandTemplates = newTemplates } };
-                var valueStatus = $"模板 '{uv.Key}' 展开内容已更新。";
+                var valueStatus = LauncherLocalization.Format("maintenance.templateValueUpdated", uv.Key);
                 return new CommandManagementApplied(valueStatus, valueStoreFile);
             }
 
@@ -222,10 +223,10 @@ public sealed partial class LauncherMaintenanceCommandWorkflow : ICommandEditApp
             {
                 var settings = _context.Store.Select(s => s.Settings);
                 if (settings.CommandTemplates.ContainsKey(a.Key))
-                    throw new InvalidOperationException($"Key '{a.Key}' 已存在。");
+                    throw new InvalidOperationException(LauncherLocalization.Format("maintenance.keyExists", a.Key));
                 var newTemplates = settings.CommandTemplates.Add(a.Key, a.ExpandedValue);
                 var addStoreFile = _host.BuildStoreFile() with { Settings = settings with { CommandTemplates = newTemplates } };
-                var addStatus = $"已添加模板 '{a.Key}'。";
+                var addStatus = LauncherLocalization.Format("maintenance.templateAdded", a.Key);
                 return new CommandManagementApplied(addStatus, addStoreFile);
             }
 
@@ -233,15 +234,15 @@ public sealed partial class LauncherMaintenanceCommandWorkflow : ICommandEditApp
             {
                 var settings = _context.Store.Select(s => s.Settings);
                 if (!settings.CommandTemplates.ContainsKey(d.Key))
-                    throw new InvalidOperationException($"模板 Key '{d.Key}' 不存在。");
+                    throw new InvalidOperationException(LauncherLocalization.Format("maintenance.templateKeyMissing", d.Key));
                 var newTemplates = settings.CommandTemplates.Remove(d.Key);
                 var deleteStoreFile = _host.BuildStoreFile() with { Settings = settings with { CommandTemplates = newTemplates } };
-                var deleteStatus = $"已删除模板 '{d.Key}'。";
+                var deleteStatus = LauncherLocalization.Format("maintenance.templateDeleted", d.Key);
                 return new CommandManagementApplied(deleteStatus, deleteStoreFile);
             }
 
             default:
-                throw new InvalidOperationException($"未知 edit 类型: {edit.GetType().Name}");
+                throw new InvalidOperationException(LauncherLocalization.Format("maintenance.unknownEdit", edit.GetType().Name));
         }
     }
 
@@ -252,7 +253,7 @@ public sealed partial class LauncherMaintenanceCommandWorkflow : ICommandEditApp
             case DirectoryManagementEdit.RenameDirectory r:
             {
                 if (string.Equals(r.OldDirectory, r.NewDirectory, StringComparison.OrdinalIgnoreCase))
-                    return "新地址与原地址相同,无变更。";
+                    return LauncherLocalization.Format("maintenance.directorySame");
 
                 var matched = 0;
                 foreach (var item in _entries.MutableEntries)
@@ -265,14 +266,14 @@ public sealed partial class LauncherMaintenanceCommandWorkflow : ICommandEditApp
                     }
                 }
                 return matched == 0
-                    ? $"未找到 directory 为 '{r.OldDirectory}' 的 entry。"
-                    : $"已将 {matched} 个 entry 的地址改为 '{r.NewDirectory}'。";
+                    ? LauncherLocalization.Format("maintenance.directoryNotFound", r.OldDirectory)
+                    : LauncherLocalization.Format("maintenance.directoryRenamed", matched, r.NewDirectory);
             }
 
             case DirectoryManagementEdit.MergeDirectories m:
             {
                 if (string.Equals(m.LoserDirectory, m.KeeperDirectory, StringComparison.OrdinalIgnoreCase))
-                    return "保留方与失效方相同,无法合并。";
+                    return LauncherLocalization.Format("maintenance.mergeSame");
 
                 var matched = 0;
                 foreach (var item in _entries.MutableEntries)
@@ -284,14 +285,14 @@ public sealed partial class LauncherMaintenanceCommandWorkflow : ICommandEditApp
                         matched++;
                     }
                 }
-                return $"已将 {matched} 个 entry 的地址合并到 '{m.KeeperDirectory}'。";
+                return LauncherLocalization.Format("maintenance.directoryMerged", matched, m.KeeperDirectory);
             }
 
             case DirectoryManagementEdit.DeleteDirectory:
-                return "已删除未引用的地址(仅清理视图,无 entry 受影响)。";
+                return LauncherLocalization.Format("maintenance.directoryDeleted");
 
             default:
-                throw new InvalidOperationException($"未知 edit 类型: {edit.GetType().Name}");
+                throw new InvalidOperationException(LauncherLocalization.Format("maintenance.unknownEdit", edit.GetType().Name));
         }
     }
 

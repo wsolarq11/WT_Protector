@@ -4,6 +4,7 @@ using WTLauncher.App.Features;
 using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Features.Presets;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -119,7 +120,7 @@ public sealed partial class LauncherPresetCommandWorkflow
 
         await _launch.LaunchBatchAsync(
             GetPresetEntries(selectedPreset.EntryIds),
-            $"启动组“{selectedPreset.Name}”条目",
+            LauncherLocalization.Format("preset.entryItemsLabel", selectedPreset.Name),
             LauncherPresetStatus.NoPresetEntries(selectedPreset.Name),
             count => LauncherPresetStatus.LaunchCanceled(selectedPreset.Name, count),
             ex => LauncherPresetStatus.LaunchFailed(selectedPreset.Name, ex),
@@ -171,7 +172,7 @@ public sealed partial class LauncherPresetCommandWorkflow
 
         await _launch.LaunchBatchAsync(
             entries,
-            confirmationTargetLabel: $"分组 \"{entries[0].Command}\"",
+            confirmationTargetLabel: LauncherLocalization.Format("preset.groupLabel", entries[0].Command),
             emptyStatus: LauncherRefreshStatus.GroupNoEntries,
             canceledStatus: _ => LauncherRefreshStatus.CanceledBatch,
             failedStatus: LauncherSelectionStatus.BatchLaunchFailed,

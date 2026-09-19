@@ -173,5 +173,45 @@
   "bar.deletePresetAutomation": "删除当前启动组",
   "bar.staleTooltip": "目录已失效，请重新选择路径或删除",
   "bar.stalePrefix": "失效 ",
-  "bar.staleSuffix": " 项"
+  "bar.staleSuffix": " 项",
+
+  "dialog.commandManagement": "命令管理",
+  "dialog.directoryManagement": "地址管理",
+  "dialog.import": "导入",
+  "dialog.export": "导出",
+  "dialog.discover": "发现",
+
+  "exchange.noSelected": "没有勾选条目，请先勾选要导出的条目。",
+  "exchange.replaced": "已替换为导入配置。",
+  "exchange.addedEntries": "已新增导入条目与启动组。",
+  "exchange.exported": "已导出 {0} 个条目。",
+
+  "preset.entryItemsLabel": "启动组“{0}”条目",
+  "preset.groupLabel": "分组 \"{0}\"",
+  "selection.itemLabel": "已勾选项",
+
+  "maintenance.applyFailed": "应用失败: {0}",
+  "maintenance.renameCommandNoChange": "新命令与原命令相同,无变更。",
+  "maintenance.commandNotFound": "未找到 command 为 '{0}' 的 entry。",
+  "maintenance.commandRenamed": "已将 {0} 个 entry 的命令从 '{1}' 改为 '{2}'。",
+  "maintenance.mergeSame": "保留方与失效方相同,无法合并。",
+  "maintenance.commandMerged": "已将 {0} 个 entry 的命令从 '{1}' 合并到 '{2}'。",
+  "maintenance.commandDeleted": "已删除未引用的 command (仅清理视图,无 entry 受影响)。",
+  "maintenance.templateKeyNoChange": "新 Key 与原 Key 相同,无变更。",
+  "maintenance.keyExists": "Key '{0}' 已存在。",
+  "maintenance.templateKeyUpdated": "模板 Key '{0}' → '{1}',自动同步 {2} 个 entry 引用。",
+  "maintenance.templateKeyMissing": "模板 Key '{0}' 不存在。",
+  "maintenance.templateValueUpdated": "模板 '{0}' 展开内容已更新。",
+  "maintenance.templateAdded": "已添加模板 '{0}'。",
+  "maintenance.templateDeleted": "已删除模板 '{0}'。",
+  "maintenance.unknownEdit": "未知 edit 类型: {0}",
+  "maintenance.directorySame": "新地址与原地址相同,无变更。",
+  "maintenance.directoryNotFound": "未找到 directory 为 '{0}' 的 entry。",
+  "maintenance.directoryRenamed": "已将 {0} 个 entry 的地址改为 '{1}'。",
+  "maintenance.directoryMerged": "已将 {0} 个 entry 的地址合并到 '{1}'。",
+  "maintenance.directoryDeleted": "已删除未引用的地址(仅清理视图,无 entry 受影响)。",
+
+  "update.manifestUrlMissing": "未配置更新清单地址；可在 launcher.json 的 settings.updateManifestUrl 设置。",
+
+  "entry.copySuffix": " (副本)"
 }
