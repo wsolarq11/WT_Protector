@@ -45,6 +45,35 @@ public sealed partial class CommandManagementViewModel : ObservableObject
     public bool HasSelectedCommand => SelectedCommandRow is not null;
     public bool HasSelectedTemplate => SelectedTemplateRow is not null;
 
+#pragma warning disable CA1822
+    public string WindowTitle => LauncherLocalization.Format("cmdmgmt.title");
+    public string Heading => LauncherLocalization.Format("cmdmgmt.heading");
+    public string Description => LauncherLocalization.Format("cmdmgmt.description");
+    public string CommandTab => LauncherLocalization.Format("cmdmgmt.commandTab");
+    public string CommandTabAutomation => LauncherLocalization.Format("cmdmgmt.commandTabAutomation");
+    public string TemplateTab => LauncherLocalization.Format("cmdmgmt.templateTab");
+    public string TemplateTabAutomation => LauncherLocalization.Format("cmdmgmt.templateTabAutomation");
+    public string EditRenameLabel => LauncherLocalization.Format("cmdmgmt.editRename");
+    public string EditRenameAutomation => LauncherLocalization.Format("cmdmgmt.editRenameAutomation");
+    public string DeleteLabel => LauncherLocalization.Format("cmdmgmt.delete");
+    public string DeleteAutomation => LauncherLocalization.Format("cmdmgmt.deleteAutomation");
+    public string NewTemplateLabel => LauncherLocalization.Format("cmdmgmt.newTemplate");
+    public string NewTemplateAutomation => LauncherLocalization.Format("cmdmgmt.newTemplateAutomation");
+    public string UpdateKeyLabel => LauncherLocalization.Format("cmdmgmt.updateKey");
+    public string UpdateKeyAutomation => LauncherLocalization.Format("cmdmgmt.updateKeyAutomation");
+    public string UpdateValueLabel => LauncherLocalization.Format("cmdmgmt.updateValue");
+    public string UpdateValueAutomation => LauncherLocalization.Format("cmdmgmt.updateValueAutomation");
+    public string DeleteTemplateLabel => LauncherLocalization.Format("cmdmgmt.deleteTemplate");
+    public string DeleteTemplateAutomation => LauncherLocalization.Format("cmdmgmt.deleteTemplateAutomation");
+    public string ReferencePrefix => LauncherLocalization.Format("cmdmgmt.referencePrefix");
+    public string EmptyCommandsLabel => LauncherLocalization.Format("cmdmgmt.emptyCommands");
+    public string EmptyCommandsAutomation => LauncherLocalization.Format("cmdmgmt.emptyCommandsAutomation");
+    public string EmptyTemplatesLabel => LauncherLocalization.Format("cmdmgmt.emptyTemplates");
+    public string EmptyTemplatesAutomation => LauncherLocalization.Format("cmdmgmt.emptyTemplatesAutomation");
+    public string CloseLabel => LauncherLocalization.Format("cmdmgmt.close");
+    public string CloseAutomation => LauncherLocalization.Format("cmdmgmt.closeAutomation");
+#pragma warning restore CA1822
+
     public CommandManagementViewModel(
         IReadOnlyList<CommandRow> initialCommandRows,
         IReadOnlyList<TemplateRow> initialTemplateRows,

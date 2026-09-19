@@ -28,6 +28,23 @@ public sealed partial class DirectoryManagementViewModel : ObservableObject
     public bool HasSelectedDirectory => SelectedDirectoryRow is not null;
     public bool HasNoDirectoryRows => DirectoryRows.Count == 0;
 
+#pragma warning disable CA1822
+    public string WindowTitle => LauncherLocalization.Format("dirmgmt.title");
+    public string Heading => LauncherLocalization.Format("dirmgmt.heading");
+    public string Description => LauncherLocalization.Format("dirmgmt.description");
+    public string EditRenameLabel => LauncherLocalization.Format("dirmgmt.editRename");
+    public string EditRenameAutomation => LauncherLocalization.Format("dirmgmt.editRenameAutomation");
+    public string MergeLabel => LauncherLocalization.Format("dirmgmt.merge");
+    public string MergeAutomation => LauncherLocalization.Format("dirmgmt.mergeAutomation");
+    public string DeleteLabel => LauncherLocalization.Format("dirmgmt.delete");
+    public string DeleteAutomation => LauncherLocalization.Format("dirmgmt.deleteAutomation");
+    public string ReferencePrefix => LauncherLocalization.Format("dirmgmt.referencePrefix");
+    public string EmptyLabel => LauncherLocalization.Format("dirmgmt.empty");
+    public string EmptyAutomation => LauncherLocalization.Format("dirmgmt.emptyAutomation");
+    public string CloseLabel => LauncherLocalization.Format("dirmgmt.close");
+    public string CloseAutomation => LauncherLocalization.Format("dirmgmt.closeAutomation");
+#pragma warning restore CA1822
+
     public DirectoryManagementViewModel(
         IReadOnlyList<DirectoryRow> initialRows,
         IDirectoryEditApplier applyEdit)

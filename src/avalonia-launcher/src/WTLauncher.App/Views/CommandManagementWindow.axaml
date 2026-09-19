@@ -5,7 +5,7 @@
         xmlns:vm="clr-namespace:WTLauncher.App.ViewModels"
         x:Class="WTLauncher.App.Views.CommandManagementWindow"
         x:DataType="vm:CommandManagementViewModel"
-        Title="命令管理"
+        Title="{Binding WindowTitle}"
         Width="820"
         Height="600"
         MinWidth="560"
@@ -22,27 +22,27 @@
   <Border Padding="{StaticResource DialogOuterPadding}">
     <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
       <TextBlock Grid.Row="0"
-                 Text="命令与模板集中管理"
+                 Text="{Binding Heading}"
                  Classes="dialog-title"/>
       <TextBlock Grid.Row="1"
                  Margin="0,4,0,12"
                  TextWrapping="Wrap"
                  Foreground="{StaticResource TextMutedBrush}"
-                 Text="Tab 1 列出 command 引用并同步重命名；Tab 2 管理 commandTemplates，Key 与展开内容变更会立即影响引用。"/>
+                 Text="{Binding Description}"/>
       <Grid Grid.Row="2" RowDefinitions="Auto,Auto" Margin="0,0,0,8">
         <StackPanel Orientation="Horizontal" Spacing="6">
-          <Button Content="命令引用"
+          <Button Content="{Binding CommandTab}"
                   MinWidth="130"
                   Classes="secondary tab"
                   Classes.active="{Binding IsCommandTabActive}"
                   Command="{Binding SelectCommandTabCommand}"
-                  automation:AutomationProperties.Name="命令引用标签页"/>
-          <Button Content="命令模板"
+                  automation:AutomationProperties.Name="{Binding CommandTabAutomation}"/>
+          <Button Content="{Binding TemplateTab}"
                   MinWidth="130"
                   Classes="secondary tab"
                   Classes.active="{Binding IsTemplateTabActive}"
                   Command="{Binding SelectTemplateTabCommand}"
-                  automation:AutomationProperties.Name="命令模板标签页"/>
+                  automation:AutomationProperties.Name="{Binding TemplateTabAutomation}"/>
           <TextBlock Margin="12,6,0,0"
                      Text="{Binding StatusMessage}"
                      TextWrapping="Wrap"
@@ -54,36 +54,36 @@
                     Spacing="6"
                     Margin="0,6,0,0"
                     IsVisible="{Binding IsCommandTabActive}">
-          <Button Content="编辑/重命名"
+          <Button Content="{Binding EditRenameLabel}"
                   Classes="secondary"
                   MinWidth="90"
                   IsEnabled="{Binding HasSelectedCommand}"
                   Click="OnRenameCommandClicked"
-                  automation:AutomationProperties.Name="编辑或重选命令引用"/>
-          <Button Content="删除"
+                  automation:AutomationProperties.Name="{Binding EditRenameAutomation}"/>
+          <Button Content="{Binding DeleteLabel}"
                   Classes="secondary"
                   MinWidth="90"
                   IsEnabled="{Binding HasSelectedCommand}"
                   Command="{Binding DeleteCommandCommand}"
-                  automation:AutomationProperties.Name="删除命令引用"/>
+                  automation:AutomationProperties.Name="{Binding DeleteAutomation}"/>
         </StackPanel>
         <StackPanel Grid.Row="1"
                     Orientation="Horizontal"
                     Spacing="6"
                     Margin="0,6,0,0"
                     IsVisible="{Binding IsTemplateTabActive}">
-          <Button Content="新模板" Classes="secondary" MinWidth="90"
+          <Button Content="{Binding NewTemplateLabel}" Classes="secondary" MinWidth="90"
                   Click="OnAddTemplateClicked"
-                  automation:AutomationProperties.Name="添加新命令模板"/>
-          <Button Content="改 Key" Classes="secondary" MinWidth="90"
+                  automation:AutomationProperties.Name="{Binding NewTemplateAutomation}"/>
+          <Button Content="{Binding UpdateKeyLabel}" Classes="secondary" MinWidth="90"
                   IsEnabled="{Binding HasSelectedTemplate}" Click="OnUpdateTemplateKeyClicked"
-                  automation:AutomationProperties.Name="修改命令模板的键名"/>
-          <Button Content="改展开内容" Classes="secondary" MinWidth="110"
+                  automation:AutomationProperties.Name="{Binding UpdateKeyAutomation}"/>
+          <Button Content="{Binding UpdateValueLabel}" Classes="secondary" MinWidth="110"
                   IsEnabled="{Binding HasSelectedTemplate}" Click="OnUpdateTemplateValueClicked"
-                  automation:AutomationProperties.Name="修改命令模板的展开内容"/>
-          <Button Content="删除" Classes="secondary" MinWidth="90"
+                  automation:AutomationProperties.Name="{Binding UpdateValueAutomation}"/>
+          <Button Content="{Binding DeleteTemplateLabel}" Classes="secondary" MinWidth="90"
                   IsEnabled="{Binding HasSelectedTemplate}" Command="{Binding DeleteTemplateCommand}"
-                  automation:AutomationProperties.Name="删除命令模板"/>
+                  automation:AutomationProperties.Name="{Binding DeleteTemplateAutomation}"/>
         </StackPanel>
       </Grid>
       <Border Grid.Row="3"
@@ -115,7 +115,7 @@
                         </ItemsControl.ItemTemplate>
                       </ItemsControl>
                       <TextBlock Grid.Column="4" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextMutedBrush}">
-                        <Run Text="引用 "/><Run Text="{Binding ReferenceCount}"/>
+                        <Run Text="{Binding $parent[Window].((vm:CommandManagementViewModel)DataContext).ReferencePrefix}"/><Run Text="{Binding ReferenceCount}"/>
                       </TextBlock>
                     </Grid>
                   </Border>
@@ -124,9 +124,9 @@
             </ListBox>
             <TextBlock IsVisible="{Binding HasNoCommandRows}"
                        Margin="8,12"
-                       Text="(无 command — 还没有任何启动按钮)"
+                       Text="{Binding EmptyCommandsLabel}"
                        Foreground="{StaticResource TextMutedBrush}"
-                       automation:AutomationProperties.Name="无命令引用，还没有任何启动按钮"/>
+                       automation:AutomationProperties.Name="{Binding EmptyCommandsAutomation}"/>
           </Grid>
           <Grid IsVisible="{Binding IsTemplateTabActive}">
             <ListBox Classes="management-list"
@@ -144,7 +144,7 @@
                                  FontFamily="Cascadia Code, Consolas, Courier New, monospace"
                                  Text="{Binding ExpandedValue}"/>
                       <TextBlock Grid.Column="4" FontSize="{StaticResource FontSizeSmall}" Foreground="{StaticResource TextMutedBrush}">
-                        <Run Text="引用 "/><Run Text="{Binding ReferenceCount}"/>
+                        <Run Text="{Binding $parent[Window].((vm:CommandManagementViewModel)DataContext).ReferencePrefix}"/><Run Text="{Binding ReferenceCount}"/>
                       </TextBlock>
                     </Grid>
                   </Border>
@@ -153,15 +153,15 @@
             </ListBox>
             <TextBlock IsVisible="{Binding HasNoTemplateRows}"
                        Margin="8,12"
-                       Text="(无模板 — 添加一个模板来批量定义命令参数)"
+                       Text="{Binding EmptyTemplatesLabel}"
                        Foreground="{StaticResource TextMutedBrush}"
-                       automation:AutomationProperties.Name="无命令模板，添加一个模板来批量定义命令参数"/>
+                       automation:AutomationProperties.Name="{Binding EmptyTemplatesAutomation}"/>
           </Grid>
         </Grid>
       </Border>
       <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="{StaticResource DialogFooterMargin}">
-        <Button Content="关闭" Classes="primary" MinWidth="110" Click="OnCloseClicked"
-                automation:AutomationProperties.Name="关闭命令管理窗口"/>
+        <Button Content="{Binding CloseLabel}" Classes="primary" MinWidth="110" Click="OnCloseClicked"
+                automation:AutomationProperties.Name="{Binding CloseAutomation}"/>
       </StackPanel>
     </Grid>
   </Border>
