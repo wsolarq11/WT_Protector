@@ -36,12 +36,39 @@ public sealed partial class App : Application
         Resources["PrimaryBrush"]     = new SolidColorBrush(Color.Parse(LauncherDesignTokens.PrimaryColor));
         Resources["DestructiveBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.DestructiveColor));
         Resources["ErrorBrush"]       = new SolidColorBrush(Color.Parse(LauncherDesignTokens.ErrorColor));
-        Resources["BackgroundBrush"]  = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BackgroundColor));
         Resources["TextPrimaryBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.TextPrimaryColor));
         Resources["TextMutedBrush"]   = new SolidColorBrush(Color.Parse(LauncherDesignTokens.TextMutedColor));
         Resources["CardBorderBrush"]  = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BorderColor));
         Resources["BorderBrush"]      = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BorderColor));
         Resources["SurfaceBrush"]     = new SolidColorBrush(Color.Parse(LauncherDesignTokens.SurfaceColor));
+
+        // ── Atmospheric perspective canvas ─────────────────
+        // BackgroundBrush becomes a warm-to-cool gradient: foreground items stay
+        // high-contrast while the canvas recedes, matching oil-painting aerial depth.
+        Resources["BackgroundBrush"] = new LinearGradientBrush
+        {
+            StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+            EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+            GradientStops =
+            {
+                new GradientStop(Color.Parse(LauncherDesignTokens.BackgroundTopColor), 0),
+                new GradientStop(Color.Parse(LauncherDesignTokens.BackgroundBottomColor), 1),
+            },
+        };
+        Resources["CanvasLightBrush"] = new RadialGradientBrush
+        {
+            Center = new RelativePoint(0.24, 0.12, RelativeUnit.Relative),
+            GradientOrigin = new RelativePoint(0.24, 0.12, RelativeUnit.Relative),
+            RadiusX = new RelativeScalar(0.95, RelativeUnit.Relative),
+            RadiusY = new RelativeScalar(0.95, RelativeUnit.Relative),
+            GradientStops =
+            {
+                new GradientStop(Color.Parse(LauncherDesignTokens.CanvasLightColor), 0),
+                new GradientStop(Color.Parse(LauncherDesignTokens.CanvasLightEndColor), 1),
+            },
+        };
+        Resources["HorizonBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.HorizonColor));
+        Resources["FocusBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.FocusGlowColor));
 
         // ── Semantic state colors ──────────────────────────
         Resources["HoverBackgroundBrush"]            = new SolidColorBrush(Color.Parse(LauncherDesignTokens.HoverBackgroundColor));
@@ -78,6 +105,12 @@ public sealed partial class App : Application
         // ── Dimensions / Spacing ────────────────────────────
         Resources["CardBorderRadius"] = new CornerRadius(LauncherDesignTokens.CardBorderRadius);
         Resources["CardPadding"] = new Thickness(LauncherDesignTokens.CardPadding);
+        Resources["ControlCornerRadius"] = new CornerRadius(LauncherDesignTokens.ControlCornerRadius);
+        Resources["DropdownCornerRadius"] = new CornerRadius(LauncherDesignTokens.DropdownCornerRadius);
+        Resources["DialogCornerRadius"] = new CornerRadius(LauncherDesignTokens.DialogCornerRadius);
+        Resources["ButtonCornerRadius"] = new CornerRadius(LauncherDesignTokens.ButtonCornerRadius);
+        Resources["FocusBorderThickness"] = LauncherDesignTokens.FocusBorderThickness;
+        Resources["SpacingFrame"] = new Thickness(LauncherDesignTokens.SpacingFrame);
         Resources["FontSizeSmall"] = LauncherDesignTokens.FontSizeSmall;
         Resources["FontSizeBody"] = LauncherDesignTokens.FontSizeBody;
         Resources["FontSizeEmphasis"] = LauncherDesignTokens.FontSizeEmphasis;
@@ -94,6 +127,7 @@ public sealed partial class App : Application
 
         // ── BoxShadow ───────────────────────────────────────
         Resources["CardBoxShadow"] = BoxShadows.Parse($"0 8 24 0 {LauncherDesignTokens.BoxShadowColor}");
+        Resources["ControlBoxShadow"] = BoxShadows.Parse($"0 3 10 0 {LauncherDesignTokens.ControlShadowColor}");
         Resources["NoBoxShadow"] = BoxShadows.Parse("0 0 0 0 Transparent");
 
         // ── Acrylic material colors ──────────────────────

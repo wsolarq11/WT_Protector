@@ -7,5 +7,124 @@
   </Application.Resources>
   <Application.Styles>
     <FluentTheme />
+
+    <!--
+      ── Oil-perspective global control skin ──────────────────────────────
+      Foreground controls carry elevation + focal glow; the canvas recedes
+      through BackgroundBrush. Shared by every window unless a local class
+      overrides a property.
+    -->
+
+    <!-- Typography baseline -->
+    <Style Selector="TextBlock.h1">
+      <Setter Property="FontSize" Value="28"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+    </Style>
+    <Style Selector="TextBlock.muted">
+      <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+      <Setter Property="FontSize" Value="13"/>
+    </Style>
+
+    <!-- Buttons: shared depth motion; class styles only override color/shape -->
+    <Style Selector="Button">
+      <Setter Property="CornerRadius" Value="{StaticResource ButtonCornerRadius}"/>
+      <Setter Property="Padding" Value="14,8"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="RenderTransform" Value="translateY(0)"/>
+      <Setter Property="Transitions">
+        <Transitions>
+          <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12"/>
+          <BrushTransition Property="Background" Duration="0:0:0.12"/>
+          <BrushTransition Property="BorderBrush" Duration="0:0:0.12"/>
+          <DoubleTransition Property="Opacity" Duration="0:0:0.12"/>
+        </Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="Button:pointerover">
+      <Setter Property="RenderTransform" Value="translateY(-1px)"/>
+    </Style>
+    <Style Selector="Button:pressed">
+      <Setter Property="RenderTransform" Value="translateY(0)"/>
+      <Setter Property="Opacity" Value="0.9"/>
+    </Style>
+    <Style Selector="Button.destructive">
+      <Setter Property="Background" Value="{StaticResource DestructiveBrush}"/>
+      <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
+    </Style>
+
+    <!-- Text entry: foreground plane with elevation, focal border on focus -->
+    <Style Selector="TextBox">
+      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}"/>
+      <Setter Property="Padding" Value="12,9"/>
+      <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+      <Setter Property="MinHeight" Value="36"/>
+    </Style>
+    <Style Selector="TextBox:focus">
+      <Setter Property="BorderBrush" Value="{StaticResource FocusBrush}"/>
+      <Setter Property="BorderThickness" Value="{StaticResource FocusBorderThickness}"/>
+    </Style>
+
+    <!-- Dropdowns: rounded, elevated, same focal border on focus -->
+    <Style Selector="ComboBox">
+      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="{StaticResource DropdownCornerRadius}"/>
+      <Setter Property="MinHeight" Value="36"/>
+    </Style>
+    <Style Selector="ComboBox:focus">
+      <Setter Property="BorderBrush" Value="{StaticResource FocusBrush}"/>
+      <Setter Property="BorderThickness" Value="{StaticResource FocusBorderThickness}"/>
+    </Style>
+    <Style Selector="AutoCompleteBox">
+      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="{StaticResource DropdownCornerRadius}"/>
+      <Setter Property="MinHeight" Value="36"/>
+    </Style>
+    <Style Selector="AutoCompleteBox:focus">
+      <Setter Property="BorderBrush" Value="{StaticResource FocusBrush}"/>
+      <Setter Property="BorderThickness" Value="{StaticResource FocusBorderThickness}"/>
+    </Style>
+
+    <!-- List rows: selection and hover keep the foreground/midground split -->
+    <Style Selector="ListBoxItem">
+      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Padding" Value="6"/>
+    </Style>
+    <Style Selector="ListBoxItem:pointerover">
+      <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
+    </Style>
+    <Style Selector="ListBoxItem:selected">
+      <Setter Property="Background" Value="{StaticResource SelectionBackgroundBrush}"/>
+    </Style>
+
+    <!-- Menus and tooltips: elevated foreground surfaces -->
+    <Style Selector="ContextMenu">
+      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}"/>
+      <Setter Property="Padding" Value="6"/>
+    </Style>
+    <Style Selector="MenuItem">
+      <Setter Property="Padding" Value="12,7"/>
+      <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    <Style Selector="MenuItem:pointerover">
+      <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
+    </Style>
+    <Style Selector="ToolTip">
+      <Setter Property="Background" Value="{StaticResource TextPrimaryBrush}"/>
+      <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Padding" Value="10,6"/>
+    </Style>
   </Application.Styles>
 </Application>
