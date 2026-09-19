@@ -21,6 +21,11 @@ public sealed class MainWindowStatusPresentationContractTests
         XamlContractAssertions.AssertAttribute(statusBarXaml, "Data", "{StaticResource IconStatusX}");
         XamlContractAssertions.AssertAttribute(statusBarXaml, "Data", "{StaticResource IconStatusCircle}");
         XamlContractAssertions.AssertAttribute(statusBarXaml, "Text", "{Binding StatusText}");
-        XamlContractAssertions.AssertAttribute(statusBarXaml, "AutomationProperties.Name", "状态信息");
+        XamlContractAssertions.AssertNoAttribute(statusBarXaml, "AutomationProperties.Name", "状态信息");
+        XamlContractAssertions.AssertNoAttribute(statusBarXaml, "AutomationProperties.Name", "状态级别");
+
+        var statusBarCodeBehind = File.ReadAllText(TestRepositoryPaths.StatusBarCodeBehind);
+        Assert.Contains("status.message", statusBarCodeBehind, StringComparison.Ordinal);
+        Assert.Contains("status.level", statusBarCodeBehind, StringComparison.Ordinal);
     }
 }
