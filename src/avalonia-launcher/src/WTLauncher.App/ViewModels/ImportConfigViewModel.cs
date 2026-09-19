@@ -13,6 +13,18 @@ public sealed partial class ImportConfigViewModel : ObservableObject
 
     public string Summary { get; }
 
+#pragma warning disable CA1822
+    public string WindowTitle => LauncherLocalization.Format("import.windowTitle");
+    public string AddNewLabel => LauncherLocalization.Format("import.addNew");
+    public string ReplaceLabel => LauncherLocalization.Format("import.replace");
+    public string MissingHint => LauncherLocalization.Format("import.missingHint");
+    public string KeepPathPlaceholder => LauncherLocalization.Format("import.keepPathPlaceholder");
+    public string SkipLabel => LauncherLocalization.Format("import.skip");
+    public string DuplicateLabel => LauncherLocalization.Format("import.duplicateLabel");
+    public string CancelLabel => LauncherLocalization.Format("import.cancel");
+    public string ConfirmLabel => LauncherLocalization.Format("import.confirm");
+#pragma warning restore CA1822
+
     [ObservableProperty]
     private bool _addNewMode = true;
 
