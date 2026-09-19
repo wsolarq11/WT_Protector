@@ -26,11 +26,13 @@ Non-goals: 不做跨平台设计系统；不迁移状态到 AppData/registry；�
 
 ## Visual Language
 
-- Color: 主按钮蓝色强调；确认开关用中性色；拖拽高亮青蓝提示线
-- Typography: 标题 SemiBold；路径/命令等宽；详细列表单行文字、行高固定
-- Spacing: 8 / 13 / 21 收敛节奏
-- Shape: 卡片圆角克制；拖拽幽灵略增阴影与透明度
-- Motion: 只做短过渡，降低重排突兀感
+视觉系统采用油画透视三层纵深，完整映射见 `docs/visual-perspective-system.md`。
+
+- Color: 主按钮蓝色强调；确认开关用中性色；拖拽高亮青蓝提示线；画布从暖纸色渐变到冷石板色。
+- Typography: 标题 SemiBold；路径/命令等宽；详细列表单行文字、行高固定。
+- Spacing: 8 / 13 / 21 / 34 收敛节奏。
+- Shape: 卡片圆角克制；控件圆角 10/12/16 分层；拖拽幽灵略增阴影与透明度。
+- Motion: 只做短过渡，前景悬停 1px 抬升，降低重排突兀感。
 
 ## Components
 

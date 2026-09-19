@@ -60,7 +60,9 @@ WT_Protector/
 3. 想做 UI/UX 决策？→ `DESIGN.md`
 4. 想审计功能边界？→ `docs/feature-reality-north-star-audit.md`
 5. 想参考外部设计？→ `docs/design-benchmark-digest.md` + `docs/giants-shoulders/`
-6. 想查任何文档？→ `docs/README.md`
+6. 想改视觉样式？→ `docs/visual-perspective-system.md`
+7. 想统一架构决策？→ `docs/decision-ladder.md`
+8. 想查任何文档？→ `docs/README.md`
 
 ## 核心规则
 
