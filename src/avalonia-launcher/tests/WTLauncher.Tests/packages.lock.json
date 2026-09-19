@@ -368,11 +368,6 @@
           "System.Composition.Runtime": "8.0.0"
         }
       },
-      "System.Reactive": {
-        "type": "Transitive",
-        "resolved": "6.1.0",
-        "contentHash": "M5cCC1ZMkZr9jbSQGTHnVkb5TDN67qWCV7AP8TAHdGkvDlu0puT5NzemESNn9+HkYIDpWpocP68/i+/ame2/2w=="
-      },
       "System.ValueTuple": {
         "type": "Transitive",
         "resolved": "4.6.1",
@@ -467,7 +462,6 @@
           "Avalonia.Fonts.Inter": "[12.1.0, )",
           "Avalonia.Themes.Fluent": "[12.1.0, )",
           "CommunityToolkit.Mvvm": "[8.4.2, )",
-          "DynamicData": "[9.4.33, )",
           "Stateless": "[5.20.0, )",
           "WTLauncher.Core": "[1.0.0, )"
         }
@@ -526,15 +520,6 @@
         "requested": "[8.4.2, )",
         "resolved": "8.4.2",
         "contentHash": "WadCzGEc2U+3e20avRLng4qNtt4zoOGWrdUISqJWrHe3/FSnrYjuM5Sb4yQb09LhkBXrrI4Zt3dLKgRMbItsrg=="
-      },
-      "DynamicData": {
-        "type": "CentralTransitive",
-        "requested": "[9.4.33, )",
-        "resolved": "9.4.33",
-        "contentHash": "JpjbJOhwdZjmA0Y0USZH1jpJ8EHkzPNDKfEVuiaRVbtuPpheNSTbJ7ik1PkrLcDqnSu+uMP999FOHZAfoVndUA==",
-        "dependencies": {
-          "System.Reactive": "6.1.0"
-        }
       },
       "ErrorOr": {
         "type": "CentralTransitive",

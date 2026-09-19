@@ -550,7 +550,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IEntryListVi
     {
         _storeSubscription?.Dispose();
         _storeGrain.Reloaded -= OnStoreReloaded;
-        _list.Dispose();
         _launchOrchestrator.Dispose();
     }
 }

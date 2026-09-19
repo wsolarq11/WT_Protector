@@ -19,7 +19,6 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" />
     <PackageVersion Include="System.Composition" Version="8.0.0" />
     <PackageVersion Include="ErrorOr" Version="2.1.1" />
-    <PackageVersion Include="DynamicData" Version="9.4.33" />
     <PackageVersion Include="CsCheck" Version="4.2.0" />
     <PackageVersion Include="Stateless" Version="5.20.0" />
     <PackageVersion Include="OneOf" Version="3.0.271" />

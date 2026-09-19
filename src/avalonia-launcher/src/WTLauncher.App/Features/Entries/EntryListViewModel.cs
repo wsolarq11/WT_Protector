@@ -10,15 +10,15 @@ namespace WTLauncher.App.Features.Entries;
 
 /// <summary>Single owner of the entry collection (both full and visible
 /// projections), CRUD operations, and UI bridge delegates.
-/// Uses <see cref="EntryProjection"/> for the visible projection.
+/// The visible collection is rebuilt by MainWindowViewModel.Layout.cs through
+/// LauncherEntryQuery.FilterAndSort.
 ///
 /// Migration note: MutableEntries/MutableVisibleEntries remain as internal
 /// backward-compat for Drag/Layout partials (Phase 3 migrates them).</summary>
-public sealed partial class EntryListViewModel : ObservableObject, IEntryListViewModel, IEntryCardHost, IDisposable
+public sealed partial class EntryListViewModel : ObservableObject, IEntryListViewModel, IEntryCardHost
 {
     private readonly ObservableCollection<LauncherEntryViewModel> _entries = [];
     private readonly ObservableCollection<LauncherEntryViewModel> _visibleEntries = [];
-    private readonly EntryProjection _projection;
     private readonly IEntryService _entryService;
     private readonly StoreGrain _storeGrain;
     private readonly Func<DateTimeOffset> _utcNow;
@@ -26,7 +26,7 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
 
     public ReadOnlyObservableCollection<LauncherEntryViewModel> Entries { get; }
 
-    /// <summary>Visible entries. Phase 2: backed by DynamicData projection.</summary>
+    /// <summary>Visible entries, in the order produced by the layout rebuild.</summary>
     public ReadOnlyObservableCollection<LauncherEntryViewModel> VisibleEntries { get; }
 
     /// <summary>Mutable access for MWVM partial files (drag reorder, sync, etc.).</summary>
@@ -42,7 +42,7 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
 
     CardLayoutProvider IEntryCardHost.CardLayout => _cardLayout;
 
-    public int VisibleCount => _projection.VisibleEntries.Count;
+    public int VisibleCount => _visibleEntries.Count;
     public bool IsVisibleEmpty => VisibleCount == 0;
     public int StaleDirectoryCount => _entries.Count(static e => LauncherDirectoryHealth.IsMissing(e.SnapshotEntry()));
     public bool HasStaleDirectories => StaleDirectoryCount > 0;
@@ -74,7 +74,6 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
         _storeGrain = storeGrain ?? throw new ArgumentNullException(nameof(storeGrain));
         _cardLayout = cardLayout ?? throw new ArgumentNullException(nameof(cardLayout));
-        _projection = new EntryProjection();
         Entries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_entries);
         VisibleEntries = new ReadOnlyObservableCollection<LauncherEntryViewModel>(_visibleEntries);
     }
@@ -96,30 +95,17 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
             _visibleEntries.Add(vm);
         }
         TotalCount = _entries.Count;
-        _projection.LoadEntries(entries, this);
         RefreshDirectoryHealth();
         EntriesChanged?.Invoke();
     }
 
     internal void NotifyCountChanged() => CountChanged?.Invoke();
 
-    /// <summary>Sync the projection after entries change (add/edit/delete/clone).</summary>
-    internal void SyncProjection()
-    {
-        _projection.LoadEntries(_entries.Select(e => e.SnapshotEntry()), this);
-    }
-
     internal void RefreshDirectoryHealth()
     {
         OnPropertyChanged(nameof(StaleDirectoryCount));
         OnPropertyChanged(nameof(HasStaleDirectories));
     }
-
-    /// <summary>Set search filter — propagates automatically via DynamicData.</summary>
-    internal void SetSearchFilter(string text) => _projection.SetFilter(text);
-
-    /// <summary>Set sort mode — propagates automatically via DynamicData.</summary>
-    internal void SetSortMode(string mode) => _projection.SetSortMode(mode);
 
     // ── public CRUD (IEntryListViewModel) ──
 
@@ -254,7 +240,6 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         _entries.Remove(item);
         TotalCount = _entries.Count;
         StatusApplier(LauncherEntryStatus.Deleted(target.EntryName));
-        SyncProjection();
         RefreshDirectoryHealth();
         EntriesChanged?.Invoke();
     }
@@ -294,7 +279,6 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         _entries.Add(vm);
         TotalCount = _entries.Count;
         StatusApplier(statusFactory(entry));
-        SyncProjection();
         RefreshDirectoryHealth();
         EntriesChanged?.Invoke();
     }
@@ -350,7 +334,6 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
 
         item.ReplaceEntryFromOwner(updated, updated.UpdatedAtUtc);
         StatusApplier(LauncherEntryStatus.Updated(item.Name));
-        SyncProjection();
         RefreshDirectoryHealth();
         EntriesChanged?.Invoke();
     }
@@ -382,10 +365,4 @@ public sealed partial class EntryListViewModel : ObservableObject, IEntryListVie
         EntryMoverDown(entry);
     bool IEntryCardHost.CanMoveEntryDown(LauncherEntryViewModel entry) =>
         EntryMoverDownChecker(entry);
-
-    /// <summary>释放 EntryProjection（Rx 订阅和 DynamicData 缓存）。</summary>
-    public void Dispose()
-    {
-        _projection.Dispose();
-    }
 }
