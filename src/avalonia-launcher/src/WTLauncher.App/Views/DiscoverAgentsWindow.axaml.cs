@@ -1,11 +1,13 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -29,6 +31,7 @@ public sealed partial class DiscoverAgentsWindow : Window
     {
         _viewModel = null!;
         InitializeComponent();
+        ApplyLocalizedChrome();
     }
 
     public DiscoverAgentsWindow(DiscoverAgentsViewModel viewModel)
@@ -38,6 +41,7 @@ public sealed partial class DiscoverAgentsWindow : Window
         DataContext = viewModel;
 
         InitializeComponent();
+        ApplyLocalizedChrome();
 
         InitDirectoryPanel();
         InitCommandPicker();
@@ -54,6 +58,24 @@ public sealed partial class DiscoverAgentsWindow : Window
         };
     }
 
+    private void ApplyLocalizedChrome()
+    {
+        HeadingText.Text = LauncherLocalization.Format("discover.heading");
+        SubtitleText.Text = LauncherLocalization.Format("discover.subtitle");
+        PathModeRadio.Content = LauncherLocalization.Format("discover.pathMode");
+        DirectoryModeRadio.Content = LauncherLocalization.Format("discover.directoryMode");
+        ScanButton.Content = LauncherLocalization.Format("discover.rescan");
+        AutomationProperties.SetName(ScanButton, LauncherLocalization.Format("discover.rescanAutomation"));
+        DirectoryHintText.Text = LauncherLocalization.Format("discover.directoryHint");
+        CommandTemplateLabel.Text = LauncherLocalization.Format("discover.commandTemplateLabel");
+        EntryNameLabel.Text = LauncherLocalization.Format("discover.entryNameLabel");
+        EntryNameBox.PlaceholderText = LauncherLocalization.Format("discover.entryNamePlaceholder");
+        CommandPreviewLabel.Text = LauncherLocalization.Format("discover.commandPreviewLabel");
+        CancelButton.Content = LauncherLocalization.Format("discover.cancel");
+        AutomationProperties.SetName(CancelButton, LauncherLocalization.Format("discover.cancelAutomation"));
+        AutomationProperties.SetName(AddButton, LauncherLocalization.Format("discover.addSelected"));
+    }
+
     private void InitDirectoryPanel()
     {
         var directories = new StackPanel { Spacing = 6 };
@@ -62,7 +84,10 @@ public sealed partial class DiscoverAgentsWindow : Window
             var radio = new RadioButton
             {
                 GroupName = "ExistingDirectory",
-                Content = $"{row.Directory}  \u00b7  被 {row.ReferenceCount} 个启动项使用",
+                Content = LauncherLocalization.Format(
+                    "discover.referenceCount",
+                    row.Directory,
+                    row.ReferenceCount),
             };
             radio.IsCheckedChanged += (_, _) =>
             {
@@ -148,8 +173,10 @@ public sealed partial class DiscoverAgentsWindow : Window
         DirectoryPanel.IsVisible = _viewModel.IsExistingDirectoryMode;
         AddButton.IsEnabled = _viewModel.CanConfirm;
         AddButton.Content = _viewModel.IsExistingDirectoryMode
-            ? "创建启动项"
-            : _viewModel.SelectedCount == 0 ? "添加选中" : $"添加选中 ({_viewModel.SelectedCount})";
+            ? LauncherLocalization.Format("discover.createEntry")
+            : _viewModel.SelectedCount == 0
+                ? LauncherLocalization.Format("discover.addSelected")
+                : LauncherLocalization.Format("discover.addSelectedCount", _viewModel.SelectedCount);
         CommandPreview.Text = _viewModel.CommandPreview;
     }
 
@@ -162,7 +189,7 @@ public sealed partial class DiscoverAgentsWindow : Window
         {
             panel.Children.Add(new TextBlock
             {
-                Text = "\uff08\u6682\u65e0\u53d1\u73b0\u9879 \u2014 \u70b9\u51fb\u300c\u91cd\u65b0\u626b\u63cf\u300d\uff09",
+                Text = LauncherLocalization.Format("discover.empty"),
                 FontSize = 12,
                 Foreground = (Brush)Application.Current!.FindResource("TextMutedBrush")!,
                 Margin = new Thickness(8, 12, 8, 12),
@@ -237,7 +264,7 @@ public sealed partial class DiscoverAgentsWindow : Window
         };
 
         var versionText = string.IsNullOrEmpty(row.Version)
-            ? "\uff08\u7248\u672c\u672a\u77e5\uff09"
+            ? LauncherLocalization.Format("discover.versionUnknown")
             : row.Version;
         var versionBlock = new TextBlock
         {
@@ -259,7 +286,7 @@ public sealed partial class DiscoverAgentsWindow : Window
 
         var alreadyLabel = new TextBlock
         {
-            Text = "\u5df2\u6dfb\u52a0",
+            Text = LauncherLocalization.Format("discover.alreadyAdded"),
             FontSize = 11,
             FontWeight = FontWeight.SemiBold,
             Foreground = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BadgeSuccessForegroundColor)),
@@ -287,7 +314,7 @@ public sealed partial class DiscoverAgentsWindow : Window
         {
             var ib = new Button
             {
-                Content = "\u4fe1\u606f",
+                Content = LauncherLocalization.Format("discover.info"),
                 FontSize = 12,
                 Padding = new Thickness(6, 2),
                 Classes = { "secondary" },

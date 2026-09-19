@@ -47,7 +47,7 @@
                      Text="{Binding StatusMessage}"
                      TextWrapping="Wrap"
                      Foreground="{StaticResource TextMutedBrush}"
-                     automation:AutomationProperties.Name="命令管理状态"/>
+                     automation:AutomationProperties.Name="{Binding StatusAutomation}"/>
         </StackPanel>
         <StackPanel Grid.Row="1"
                     Orientation="Horizontal"

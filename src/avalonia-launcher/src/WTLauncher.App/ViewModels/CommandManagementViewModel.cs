@@ -72,6 +72,7 @@ public sealed partial class CommandManagementViewModel : ObservableObject
     public string EmptyTemplatesAutomation => LauncherLocalization.Format("cmdmgmt.emptyTemplatesAutomation");
     public string CloseLabel => LauncherLocalization.Format("cmdmgmt.close");
     public string CloseAutomation => LauncherLocalization.Format("cmdmgmt.closeAutomation");
+    public string StatusAutomation => LauncherLocalization.Format("cmdmgmt.statusAutomation");
 #pragma warning restore CA1822
 
     public CommandManagementViewModel(

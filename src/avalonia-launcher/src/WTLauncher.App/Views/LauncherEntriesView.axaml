@@ -37,7 +37,7 @@
                         Command="{Binding ToggleExpandedCommand}"
                         Padding="8,2"
                         MinWidth="32"
-                        ToolTip.Tip="折叠/展开">
+                        ToolTip.Tip="{Binding GroupCollapseTooltip}">
                   <Grid>
                     <Path Data="{StaticResource IconChevronDown}"
                           Stroke="{StaticResource SecondaryButtonForegroundBrush}"
@@ -72,16 +72,16 @@
                 </Border>
                 <Button Grid.Column="4"
                         Classes="secondary"
-                        Content="启动所有"
+                        Content="{Binding LaunchAllLabel}"
                         Command="{Binding LaunchAllCommand}"
                         Padding="8,2"
-                        ToolTip.Tip="启动组内所有 entry"/>
+                        ToolTip.Tip="{Binding LaunchAllTooltip}"/>
                 <Button Grid.Column="5"
                         Classes="secondary"
-                        Content="存为启动组"
+                        Content="{Binding SaveAsPresetLabel}"
                         Command="{Binding SaveAsPresetCommand}"
                         Padding="8,2"
-                        ToolTip.Tip="把组内所有 entry 保存为 preset"/>
+                        ToolTip.Tip="{Binding SaveAsPresetTooltip}"/>
               </Grid>
             </Border>
             <!-- Nested cards in this group -->
@@ -114,34 +114,34 @@
                     <!-- L51: Keyboard accelerators for context menu discoverability -->
                     <Border.ContextMenu>
                       <ContextMenu>
-                        <MenuItem Header="启动"
-                                  AutomationProperties.Name="启动"
+                        <MenuItem Header="{Binding LaunchLabel}"
+                                  AutomationProperties.Name="{Binding LaunchLabel}"
                                   Command="{Binding LaunchCommand}"/>
-                        <MenuItem Header="预演"
-                                  AutomationProperties.Name="预演"
+                        <MenuItem Header="{Binding DryRunLabel}"
+                                  AutomationProperties.Name="{Binding DryRunLabel}"
                                   Command="{Binding DryRunCommand}"/>
-                        <MenuItem Header="上移排序"
-                                  AutomationProperties.Name="上移排序"
+                        <MenuItem Header="{Binding MoveUpLabel}"
+                                  AutomationProperties.Name="{Binding MoveUpLabel}"
                                   InputGesture="Ctrl+Up"
                                   Command="{Binding MoveUpCommand}"/>
-                        <MenuItem Header="下移排序"
-                                  AutomationProperties.Name="下移排序"
+                        <MenuItem Header="{Binding MoveDownLabel}"
+                                  AutomationProperties.Name="{Binding MoveDownLabel}"
                                   InputGesture="Ctrl+Down"
                                   Command="{Binding MoveDownCommand}"/>
-                        <MenuItem Header="复制"
-                                  AutomationProperties.Name="复制"
+                        <MenuItem Header="{Binding CloneLabel}"
+                                  AutomationProperties.Name="{Binding CloneLabel}"
                                   InputGesture="Ctrl+D"
                                   Command="{Binding CloneCommand}"/>
-                        <MenuItem Header="编辑"
-                                  AutomationProperties.Name="编辑"
+                        <MenuItem Header="{Binding EditLabel}"
+                                  AutomationProperties.Name="{Binding EditLabel}"
                                   InputGesture="F2"
                                   Command="{Binding EditCommand}"/>
-                        <MenuItem Header="重新选择路径"
-                                  AutomationProperties.Name="重新选择路径"
+                        <MenuItem Header="{Binding RepairPathLabel}"
+                                  AutomationProperties.Name="{Binding RepairPathLabel}"
                                   IsVisible="{Binding IsStaleDirectory}"
                                   Command="{Binding RepairDirectoryCommand}"/>
-                        <MenuItem Header="删除"
-                                  AutomationProperties.Name="删除"
+                        <MenuItem Header="{Binding DeleteLabel}"
+                                  AutomationProperties.Name="{Binding DeleteLabel}"
                                   InputGesture="Delete"
                                   Command="{Binding DeleteCommand}"/>
                       </ContextMenu>
@@ -157,10 +157,10 @@
                               Margin="0,6,6,0"
                               IsVisible="{Binding IsStaleDirectory}"
                               ZIndex="20"
-                              ToolTip.Tip="目录已失效，右键可重新选择路径">
+                              ToolTip.Tip="{Binding StaleTooltip}">
                         <TextBlock FontSize="{StaticResource FontSizeSmall}"
                                    Foreground="{StaticResource BadgeWarningForegroundBrush}"
-                                   Text="失效"/>
+                                   Text="{Binding StaleBadge}"/>
                       </Border>
                       <Border Grid.RowSpan="4"
                               Classes="drag-insert"
@@ -217,14 +217,14 @@
                             Classes="entry-actions"
                             ColumnDefinitions="*,Auto">
                         <Button Classes="primary"
-                                Content="启动"
-                                AutomationProperties.Name="启动"
+                                Content="{Binding LaunchLabel}"
+                                AutomationProperties.Name="{Binding LaunchLabel}"
                                 Command="{Binding LaunchCommand}"/>
                         <Button Grid.Column="1"
                                 Classes="secondary more"
                                 Margin="8,0,0,0"
-                                ToolTip.Tip="更多操作"
-                                AutomationProperties.Name="更多操作"
+                                ToolTip.Tip="{Binding MoreLabel}"
+                                AutomationProperties.Name="{Binding MoreLabel}"
                                 Click="OnEntryMoreClicked">
                           <Path Data="{StaticResource IconMoreVertical}"
                                 Stroke="{StaticResource SecondaryButtonForegroundBrush}"
@@ -240,8 +240,8 @@
                         <Border Classes="entry-drag-handle"
                                 Cursor="Hand"
                                 HorizontalAlignment="Right"
-                                ToolTip.Tip="拖拽排序"
-                                AutomationProperties.Name="拖拽排序"
+                                ToolTip.Tip="{Binding DragSortLabel}"
+                                AutomationProperties.Name="{Binding DragSortLabel}"
                                 PointerPressed="OnEntryDragPointerPressed">
                           <Path Data="{StaticResource IconGripVertical}"
                                 Stroke="{StaticResource DragHandleTextBrush}"
@@ -267,12 +267,12 @@
          R4: filtered-empty (entries exist, none match) keeps the text line;
          zero entries at all is handled by the shared welcome panel below. -->
     <TextBlock x:Name="EmptyStateCardsText"
-               AutomationProperties.Name="无可见按钮"
+               AutomationProperties.Name="{Binding NoMatchAutomation}"
                HorizontalAlignment="Center"
                VerticalAlignment="Center"
                FontSize="{StaticResource FontSizeEmphasis}"
                Foreground="{StaticResource TextMutedBrush}"
-               Text="没有匹配的启动项"
+               Text="{Binding NoMatchText}"
                IsVisible="{Binding IsFilteredEmpty}"/>
   </Grid>
   </ScrollViewer>
@@ -305,13 +305,13 @@
                       Focusable="False"/>
             <TextBlock Grid.Column="1"
                        Classes="detail-header-text"
-                       Text="名称"/>
+                       Text="{Binding DetailNameLabel}"/>
             <TextBlock Grid.Column="2"
                        Classes="detail-header-text"
-                       Text="目录"/>
+                       Text="{Binding DetailDirectoryLabel}"/>
             <TextBlock Grid.Column="3"
                        Classes="detail-header-text"
-                       Text="命令"/>
+                       Text="{Binding DetailCommandLabel}"/>
           </Grid>
         </Border>
 
@@ -333,34 +333,34 @@
                 <!-- L51: Keyboard accelerators for context menu discoverability -->
                 <Border.ContextMenu>
                   <ContextMenu>
-                    <MenuItem Header="启动"
-                              AutomationProperties.Name="启动"
+                    <MenuItem Header="{Binding LaunchLabel}"
+                              AutomationProperties.Name="{Binding LaunchLabel}"
                               Command="{Binding LaunchCommand}"/>
-                    <MenuItem Header="预演"
-                              AutomationProperties.Name="预演"
+                    <MenuItem Header="{Binding DryRunLabel}"
+                              AutomationProperties.Name="{Binding DryRunLabel}"
                               Command="{Binding DryRunCommand}"/>
-                    <MenuItem Header="上移排序"
-                              AutomationProperties.Name="上移排序"
+                    <MenuItem Header="{Binding MoveUpLabel}"
+                              AutomationProperties.Name="{Binding MoveUpLabel}"
                               InputGesture="Ctrl+Up"
                               Command="{Binding MoveUpCommand}"/>
-                    <MenuItem Header="下移排序"
-                              AutomationProperties.Name="下移排序"
+                    <MenuItem Header="{Binding MoveDownLabel}"
+                              AutomationProperties.Name="{Binding MoveDownLabel}"
                               InputGesture="Ctrl+Down"
                               Command="{Binding MoveDownCommand}"/>
-                    <MenuItem Header="复制"
-                              AutomationProperties.Name="复制"
+                    <MenuItem Header="{Binding CloneLabel}"
+                              AutomationProperties.Name="{Binding CloneLabel}"
                               InputGesture="Ctrl+D"
                               Command="{Binding CloneCommand}"/>
-                    <MenuItem Header="编辑"
-                              AutomationProperties.Name="编辑"
+                    <MenuItem Header="{Binding EditLabel}"
+                              AutomationProperties.Name="{Binding EditLabel}"
                               InputGesture="F2"
                               Command="{Binding EditCommand}"/>
-                        <MenuItem Header="重新选择路径"
-                                  AutomationProperties.Name="重新选择路径"
+                        <MenuItem Header="{Binding RepairPathLabel}"
+                                  AutomationProperties.Name="{Binding RepairPathLabel}"
                                   IsVisible="{Binding IsStaleDirectory}"
                                   Command="{Binding RepairDirectoryCommand}"/>
-                    <MenuItem Header="删除"
-                              AutomationProperties.Name="删除"
+                    <MenuItem Header="{Binding DeleteLabel}"
+                              AutomationProperties.Name="{Binding DeleteLabel}"
                               InputGesture="Delete"
                               Command="{Binding DeleteCommand}"/>
                   </ContextMenu>
@@ -416,7 +416,7 @@
                             VerticalAlignment="Center">
                       <TextBlock FontSize="{StaticResource FontSizeSmall}"
                                  Foreground="{StaticResource BadgeWarningForegroundBrush}"
-                                 Text="失效"/>
+                                 Text="{Binding StaleBadge}"/>
                     </Border>
                   </StackPanel>
 
@@ -432,12 +432,12 @@
                               Spacing="8"
                               VerticalAlignment="Center">
                     <Button Classes="primary"
-                            Content="启动"
-                            AutomationProperties.Name="启动"
+                            Content="{Binding LaunchLabel}"
+                            AutomationProperties.Name="{Binding LaunchLabel}"
                             Command="{Binding LaunchCommand}"/>
                     <Button Classes="secondary more"
-                            ToolTip.Tip="更多操作"
-                            AutomationProperties.Name="更多操作"
+                            ToolTip.Tip="{Binding MoreLabel}"
+                            AutomationProperties.Name="{Binding MoreLabel}"
                             Click="OnEntryMoreClicked">
                       <Path Data="{StaticResource IconMoreVertical}"
                             Stroke="{StaticResource SecondaryButtonForegroundBrush}"
@@ -449,8 +449,8 @@
                     </Button>
                     <Border Classes="entry-drag-handle"
                             Cursor="Hand"
-                            ToolTip.Tip="拖拽排序"
-                            AutomationProperties.Name="拖拽排序"
+                            ToolTip.Tip="{Binding DragSortLabel}"
+                            AutomationProperties.Name="{Binding DragSortLabel}"
                             PointerPressed="OnEntryDragPointerPressed">
                       <Path Data="{StaticResource IconGripVertical}"
                             Stroke="{StaticResource DragHandleTextBrush}"
@@ -469,12 +469,12 @@
       </Grid>
     </Border>
   <TextBlock x:Name="EmptyStateDetailsText"
-             AutomationProperties.Name="无可见按钮"
+             AutomationProperties.Name="{Binding NoMatchAutomation}"
              HorizontalAlignment="Center"
              VerticalAlignment="Center"
              FontSize="{StaticResource FontSizeEmphasis}"
              Foreground="{StaticResource TextMutedBrush}"
-             Text="没有匹配的启动项"
+             Text="{Binding NoMatchText}"
              IsVisible="{Binding IsFilteredEmpty}"/>
   </Grid>
 
@@ -505,34 +505,34 @@
             <!-- L51: Keyboard accelerators for context menu discoverability -->
             <Border.ContextMenu>
               <ContextMenu>
-                <MenuItem Header="启动"
-                          AutomationProperties.Name="启动"
+                <MenuItem Header="{Binding LaunchLabel}"
+                          AutomationProperties.Name="{Binding LaunchLabel}"
                           Command="{Binding LaunchCommand}"/>
-                <MenuItem Header="预演"
-                          AutomationProperties.Name="预演"
+                <MenuItem Header="{Binding DryRunLabel}"
+                          AutomationProperties.Name="{Binding DryRunLabel}"
                           Command="{Binding DryRunCommand}"/>
-                <MenuItem Header="上移排序"
-                          AutomationProperties.Name="上移排序"
+                <MenuItem Header="{Binding MoveUpLabel}"
+                          AutomationProperties.Name="{Binding MoveUpLabel}"
                           InputGesture="Ctrl+Up"
                           Command="{Binding MoveUpCommand}"/>
-                <MenuItem Header="下移排序"
-                          AutomationProperties.Name="下移排序"
+                <MenuItem Header="{Binding MoveDownLabel}"
+                          AutomationProperties.Name="{Binding MoveDownLabel}"
                           InputGesture="Ctrl+Down"
                           Command="{Binding MoveDownCommand}"/>
-                <MenuItem Header="复制"
-                          AutomationProperties.Name="复制"
+                <MenuItem Header="{Binding CloneLabel}"
+                          AutomationProperties.Name="{Binding CloneLabel}"
                           InputGesture="Ctrl+D"
                           Command="{Binding CloneCommand}"/>
-                <MenuItem Header="编辑"
-                          AutomationProperties.Name="编辑"
+                <MenuItem Header="{Binding EditLabel}"
+                          AutomationProperties.Name="{Binding EditLabel}"
                           InputGesture="F2"
                           Command="{Binding EditCommand}"/>
-                        <MenuItem Header="重新选择路径"
-                                  AutomationProperties.Name="重新选择路径"
+                        <MenuItem Header="{Binding RepairPathLabel}"
+                                  AutomationProperties.Name="{Binding RepairPathLabel}"
                                   IsVisible="{Binding IsStaleDirectory}"
                                   Command="{Binding RepairDirectoryCommand}"/>
-                <MenuItem Header="删除"
-                          AutomationProperties.Name="删除"
+                <MenuItem Header="{Binding DeleteLabel}"
+                          AutomationProperties.Name="{Binding DeleteLabel}"
                           InputGesture="Delete"
                           Command="{Binding DeleteCommand}"/>
               </ContextMenu>
@@ -571,11 +571,11 @@
                         CornerRadius="4"
                         Background="{StaticResource BadgeWarningBackgroundBrush}"
                         IsVisible="{Binding IsStaleDirectory}"
-                        ToolTip.Tip="目录失效"/>
+                        ToolTip.Tip="{Binding StaleDotTooltip}"/>
                 <Border Classes="entry-drag-handle"
                         Cursor="Hand"
-                        ToolTip.Tip="拖拽排序"
-                        AutomationProperties.Name="拖拽排序"
+                        ToolTip.Tip="{Binding DragSortLabel}"
+                        AutomationProperties.Name="{Binding DragSortLabel}"
                         PointerPressed="OnEntryDragPointerPressed">
                   <Path Data="{StaticResource IconGripVertical}"
                         Stroke="{StaticResource TextMutedBrush}"
@@ -592,12 +592,12 @@
       </ItemsControl.ItemTemplate>
     </ItemsControl>
     <TextBlock x:Name="EmptyStateNamesText"
-               AutomationProperties.Name="无可见按钮"
+               AutomationProperties.Name="{Binding NoMatchAutomation}"
                HorizontalAlignment="Center"
                VerticalAlignment="Center"
                FontSize="{StaticResource FontSizeEmphasis}"
                Foreground="{StaticResource TextMutedBrush}"
-               Text="没有匹配的启动项"
+               Text="{Binding NoMatchText}"
                IsVisible="{Binding IsFilteredEmpty}"/>
     </Grid>
   </ScrollViewer>
@@ -611,10 +611,10 @@
               Spacing="10"
               MaxWidth="460">
     <TextBlock Classes="h1"
-               Text="欢迎使用 WT Launcher"
+               Text="{Binding WelcomeTitle}"
                HorizontalAlignment="Center"/>
     <TextBlock Classes="muted"
-               Text="把常用项目做成卡片,点一下就在 Windows Terminal 里打开。先从添加第一个工作区开始。"
+               Text="{Binding WelcomeBody}"
                TextWrapping="Wrap"
                TextAlignment="Center"
                HorizontalAlignment="Center"/>
@@ -623,12 +623,12 @@
                 HorizontalAlignment="Center"
                 Margin="0,10,0,0">
       <Button Classes="primary"
-              Content="添加第一个工作区"
-              AutomationProperties.Name="添加第一个工作区"
+              Content="{Binding AddFirstLabel}"
+              AutomationProperties.Name="{Binding AddFirstAutomation}"
               Command="{Binding AddEntryCommand}"/>
       <Button Classes="secondary"
-              Content="发现已安装工具"
-              AutomationProperties.Name="发现已安装工具"
+              Content="{Binding DiscoverToolsLabel}"
+              AutomationProperties.Name="{Binding DiscoverToolsAutomation}"
               Command="{Binding DiscoverAgentsCommand}"/>
     </StackPanel>
   </StackPanel>

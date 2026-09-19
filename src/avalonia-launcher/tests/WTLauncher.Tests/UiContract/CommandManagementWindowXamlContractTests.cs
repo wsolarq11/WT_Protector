@@ -17,7 +17,7 @@ public sealed class CommandManagementWindowXamlContractTests
         XamlContractAssertions.AssertAttribute(xaml, "DataType", "core:TemplateRow");
         XamlContractAssertions.AssertAttribute(xaml, "SelectedItem", "{Binding SelectedCommandRow, Mode=TwoWay}");
         XamlContractAssertions.AssertAttribute(xaml, "SelectedItem", "{Binding SelectedTemplateRow, Mode=TwoWay}");
-        XamlContractAssertions.AssertAttribute(xaml, "AutomationProperties.Name", "命令管理状态");
+        XamlContractAssertions.AssertAttribute(xaml, "AutomationProperties.Name", "{Binding StatusAutomation}");
 
         Assert.DoesNotContain("RenderCommandRows", codeBehind, StringComparison.Ordinal);
         Assert.DoesNotContain("RenderTemplateRows", codeBehind, StringComparison.Ordinal);
