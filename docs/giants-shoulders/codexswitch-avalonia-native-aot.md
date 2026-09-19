@@ -1,134 +1,81 @@
-# CodexSwitch: Avalonia + .NET 10 + Native AOT
+Status: Reference
+Purpose: 记录 CodexSwitch（Avalonia + .NET 10 + Native AOT）的核对观察与可借/不借边界。
+Update when: 上游核对或本地技术栈结论变化时。
 
-Reviewed on: 2026-05-17
-Upstream repository: <https://github.com/AIDotNet/CodexSwitch>
-Reviewed upstream commit: `6152418fd1de7779010d4786b79060e651649109`
-Reviewed UI submodule commit: `cbb5aaae69b498e5f6b324d8c9632a55bc2dbd29` (`CodexSwitchUI`)
-Local verification used: `git ls-remote https://github.com/AIDotNet/CodexSwitch.git HEAD refs/heads/master`
+# CodexSwitch：Avalonia + .NET 10 + Native AOT
 
-> Verification note (2026-08-15): upstream reachability re-checked — `git ls-remote` succeeds, current master HEAD = `ab93a928…` (differs from the reviewed commit, expected for a dated review). The reviewed commit/submodule hashes remain dated review records; their existence was not independently re-verified (GitHub API rate-limited at check time). All `src/avalonia-launcher/` path claims below were re-verified against the working tree.
+- 上游仓库：<https://github.com/AIDotNet/CodexSwitch>
+- 核对 commit：`6152418fd1de7779010d4786b79060e651649109`
+- UI 子模块 commit：`cbb5aaae69b498e5f6b324d8c9632a55bc2dbd29`（`CodexSwitchUI`）
+- 核对方式：`git ls-remote https://github.com/AIDotNet/CodexSwitch.git HEAD refs/heads/master`
 
-## Why this belongs here
+## 为什么收录
 
-WT Launcher retired its former single-file WinForms/GDI line and promoted the Avalonia/.NET line into `src/avalonia-launcher/` (promotion commit `aba9bcbf`, 2026-05-17; retired design kept in `retired/design/winforms-launcher.md`). This note remains useful as the reference that justified that migration and as a guard against blindly copying unrelated CodexSwitch product scope.
+WT Launcher 退役了旧单文件 WinForms/GDI 线，把 Avalonia/.NET 线提升为 `src/avalonia-launcher/`。
+本条目是该迁移的外部参照，也是防止盲抄 CodexSwitch 产品范围的护栏。
 
-CodexSwitch is useful because it shows a modern C# desktop route without moving to Electron, WebView2, or Tauri:
+CodexSwitch 的价值：证明现代 C# 桌面无需 Electron/WebView2/Tauri：
+.NET 10 + Avalonia 12 + XAML + MVVM/CommunityToolkit.Mvvm + CodexSwitchUI + Lucide.Avalonia + xUnit +
+自包含 Native AOT + 多平台 CI。教训不是"抄 CodexSwitch"，而是 C# 桌面能拿到现代布局、样式、组件、
+可测状态与发布纪律。
 
-```text
-.NET 10
-Avalonia 12
-XAML UI
-MVVM / CommunityToolkit.Mvvm
-CodexSwitchUI component library
-Lucide.Avalonia icons
-xUnit tests
-self-contained Native AOT publish
-multi-platform CI packaging
-```
+## 观察到的技术栈
 
-The lesson is not "copy CodexSwitch". The lesson is that a C# desktop app can get modern layout, styling, components, testable state, and release discipline without WinForms hand drawing.
+（下表为上游核对 commit 的观察记录，每行链接到核对源码文件；本仓库不可本地验证。）
 
-## Observed stack evidence
-
-> External research: the table below records what was observed in the upstream repository at the reviewed commit. Each row links to the reviewed source file; none of it is locally verifiable in this repo.
-
-| Area | Observed in CodexSwitch | Source |
+| 领域 | 观察 | 来源 |
 | --- | --- | --- |
-| Desktop UI framework | `Avalonia`, `Avalonia.Desktop`, `Avalonia.Themes.Fluent`, `Avalonia.Fonts.Inter` | [`CodexSwitch.csproj`](https://github.com/AIDotNet/CodexSwitch/blob/6152418fd1de7779010d4786b79060e651649109/CodexSwitch/CodexSwitch.csproj) |
-| Runtime target | `TargetFramework` = `net10.0`; `OutputType` = `WinExe` | [`CodexSwitch.csproj`](https://github.com/AIDotNet/CodexSwitch/blob/6152418fd1de7779010d4786b79060e651649109/CodexSwitch/CodexSwitch.csproj) |
-| Native publish posture | `PublishAot=true`, `TrimMode=full`, `--self-contained true` in CI publish | [`CodexSwitch.csproj`](https://github.com/AIDotNet/CodexSwitch/blob/6152418fd1de7779010d4786b79060e651649109/CodexSwitch/CodexSwitch.csproj), [`ci.yml`](https://github.com/AIDotNet/CodexSwitch/blob/6152418fd1de7779010d4786b79060e651649109/.github/workflows/ci.yml) |
-| MVVM support | `CommunityToolkit.Mvvm`; `MainWindowViewModel` uses generated observable properties/commands | [`Directory.Packages.props`](https://github.com/AIDotNet/CodexSwitch/blob/6152418fd1de7779010d4786b79060e651649109/Directory.Packages.props), [`MainWindowViewModel.cs`](https://github.com/AIDotNet/CodexSwitch/blob/6152418fd1de7779010d4786b79060e651649109/CodexSwitch/ViewModels/MainWindowViewModel.cs) |
-| Icon system | `Lucide.Avalonia` | [`Directory.Packages.props`](https://github.com/AIDotNet/CodexSwitch/blob/6152418fd1de7779010d4786b79060e651649109/Directory.Packages.props) |
-| UI structure | `Views/`, `ViewModels/`, `Controls/`, `Styles/`, XAML pages/dialogs/shell | [`MainWindow.axaml`](https://github.com/AIDotNet/CodexSwitch/blob/6152418fd1de7779010d4786b79060e651649109/CodexSwitch/Views/MainWindow.axaml), [`HomePage.axaml`](https://github.com/AIDotNet/CodexSwitch/blob/6152418fd1de7779010d4786b79060e651649109/CodexSwitch/Views/Pages/HomePage.axaml) |
-| Component library | `CodexSwitchUI` submodule with controls, themes, tokens, docs, tests | [`CodexSwitchUI` submodule](https://github.com/AIDotNet/CodexSwitchUI/tree/cbb5aaae69b498e5f6b324d8c9632a55bc2dbd29) |
-| Test discipline | xUnit project covers config, protocol, usage, i18n, updates, UI infrastructure | [`CodexSwitch.Tests.csproj`](https://github.com/AIDotNet/CodexSwitch/blob/6152418fd1de7779010d4786b79060e651649109/CodexSwitch.Tests/CodexSwitch.Tests.csproj), [`README.zh-CN.md`](https://github.com/AIDotNet/CodexSwitch/blob/6152418fd1de7779010d4786b79060e651649109/README.zh-CN.md) |
-| Release packaging | Windows Inno Setup, Linux AppImage, macOS DMG/signing/notarization paths | [`Package-ReleaseArtifact.ps1`](https://github.com/AIDotNet/CodexSwitch/blob/6152418fd1de7779010d4786b79060e651649109/build/Package-ReleaseArtifact.ps1), [`ci.yml`](https://github.com/AIDotNet/CodexSwitch/blob/6152418fd1de7779010d4786b79060e651649109/.github/workflows/ci.yml) |
+| 桌面 UI 框架 | `Avalonia`、`Avalonia.Desktop`、`Avalonia.Themes.Fluent`、`Avalonia.Fonts.Inter` | `CodexSwitch.csproj` |
+| 运行时目标 | `TargetFramework` = `net10.0`；`OutputType` = `WinExe` | `CodexSwitch.csproj` |
+| Native 发布 | `PublishAot=true`、`TrimMode=full`、CI `--self-contained true` | `CodexSwitch.csproj`、`ci.yml` |
+| MVVM | `CommunityToolkit.Mvvm`；生成属性/命令 | `Directory.Packages.props`、`MainWindowViewModel.cs` |
+| 图标 | `Lucide.Avalonia` | `Directory.Packages.props` |
+| UI 结构 | `Views/`、`ViewModels/`、`Controls/`、`Styles/`、XAML 页/对话框/壳 | `MainWindow.axaml`、`HomePage.axaml` |
+| 组件库 | `CodexSwitchUI` 子模块：控件、主题、Token、文档、测试 | `CodexSwitchUI` 子模块 |
+| 测试 | xUnit 覆盖 config/protocol/usage/i18n/updates/UI 基础设施 | `CodexSwitch.Tests.csproj`、`README.zh-CN.md` |
+| 发布打包 | Windows Inno Setup、Linux AppImage、macOS DMG/签名/公证 | `Package-ReleaseArtifact.ps1`、`ci.yml` |
 
-## Lessons worth borrowing for WT Launcher
+## 值得借用的教训
 
-### 1. Keep UI out of hand-drawn WinForms
+1. UI 脱离手绘 WinForms：卡片、悬停、截断、统计、对话框在手工绘制下成本高；Avalonia 让卡片成为带
+   布局/绑定/样式/主题资源的组件。
+2. 启动器状态走 MVVM：状态建模为 VM，命令逻辑可不开 GUI 测试。本地落地为 `MainWindowViewModel`
+   （`ViewModels/` 下 partial + `LayoutManager` + `EntryListViewModel`）。
+3. Token/组件一等化：卡片、状态、批量栏、对话框是独立文件与绑定。本地组件：`Views/LauncherEntriesView.axaml`、
+   `Views/Controls/StatusBar.axaml.cs`、`Views/ConfirmBatchLaunchWindow.axaml`、`ConfirmLaunchWindow`、
+   `CommandEditDialog`、`EntryDetailsWindow`、`QuickLaunchWindow`。
+4. 发布证明贴近应用：本地入口是 `scripts/build-release.ts`（Native AOT 已落地）；先用普通 win-x64 自包含发布
+   证明产品，再优化发布姿态。
 
-The retired WinForms line proved that cards, hover, truncation, stats, and dialogs become expensive when manually painted. Avalonia lets a launcher card become an actual component with layout, binding, styles, and theme resources.
+## 不照抄的边界
 
-Current local translation (paths verified 2026-08-15):
-
-```text
-src/avalonia-launcher/
-  src/WTLauncher.App/       Avalonia shell, pages, dialogs, styles
-  src/WTLauncher.Core/      config parsing, launch argument builder, safety policy
-  tests/WTLauncher.Tests/   xUnit tests for core behavior
-```
-
-### 2. Use MVVM for launcher state
-
-Instead of keeping UI state as form fields and event handlers, model it as a view model. The sketch below is the lesson in generic form:
-
-```text
-LauncherViewModel
-  Entries
-  FilterText
-  SelectedEntries
-  LastLaunched
-  LaunchCommand
-  EditCommand
-  DeleteCommand
-  BatchLaunchCommand
-```
-
-In WT Launcher this is realized as `MainWindowViewModel` (with 15 partial files under `ViewModels/`, plus `LayoutManager` and `EntryListViewModel`) — command logic is testable without opening a GUI.
-
-### 3. Treat design tokens/components as first-class
-
-CodexSwitch has a component/theme layer. WT Launcher should not copy that whole library, but it should copy the principle: cards, status, batch bar, and dialogs are components with their own files and bindings. Current local components (verified names): card entries live in `Views/LauncherEntriesView.axaml`, status feedback in `Views/Controls/StatusBar.axaml.cs`, batch-launch confirmation in `Views/ConfirmBatchLaunchWindow.axaml`, and dialogs such as `ConfirmLaunchWindow`, `CommandEditDialog`, `EntryDetailsWindow`, `QuickLaunchWindow`. Because these are components, UX iteration does not require editing launch logic.
-
-### 4. Keep release proof close to the app
-
-CodexSwitch uses `dotnet restore`, `dotnet build`, `dotnet test`, and `dotnet publish`. WT Launcher keeps a local PowerShell front door:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build-release.ps1
-```
-
-Native AOT was deliberately deferred at review time (2026-05-17): the mainline first proved normal self-contained `win-x64` publish. That deferral has since ended — `tools/build-release.ps1` now publishes win-x64 Native AOT (`dotnet publish … -r win-x64 -p:EnableNativeAot=true`; landed 2026-07-12, refined 2026-07-21, fixed 2026-08-02). AOT friction is therefore no longer a reason to defer the shape — but the original sequencing remains the correct historical lesson: prove the product before optimizing the publish posture.
-
-## What not to copy blindly
-
-| CodexSwitch trait | Why not copy directly into WT Launcher |
+| CodexSwitch 特征 | 为什么不直接抄 |
 | --- | --- |
-| Local AI proxy, protocol adapters, OAuth, usage dashboard | WT Launcher is a local command launcher; these are unrelated product scope. |
-| Full multi-platform packaging matrix | WT Launcher is currently Windows-first; start with `win-x64` only. |
-| Native AOT from the first spike | Was true at review time; AOT has since landed in the mainline (see lesson 4). The principle survives: avoid avoidable friction before the product is proven. |
-| Large sidebar/dashboard shape | The HTA lesson says WT Launcher wants less chrome, not more. |
-| Submodule/component-library dependency | Useful pattern, but WT Launcher should begin with local minimal components. |
-| Upstream code copying | The upstream README stated no license file was declared at review time (2026-05-17); use ideas and public docs, not copied source. |
+| 本地 AI 代理、协议适配器、OAuth、用量面板 | 与本地命令启动器无关的产品范围 |
+| 全平台打包矩阵 | 当前 Windows-first，只做 win-x64 |
+| 一开始就 Native AOT | 本地已落地；原则是产品证明前避免无谓摩擦 |
+| 大侧栏/仪表盘形态 | HTA 教训：少装饰 |
+| 子模块/组件库依赖 | 从本地最小组件开始 |
+| 直接复制上游源码 | 核对时上游未声明 license；用思想与公开文档，不抄源码 |
 
-## Current local state
+## 本地现状
 
-The former candidate spike has been promoted:
+已提升的主线：`src/avalonia-launcher/`（`WTLauncher.Avalonia.sln` + `src/WTLauncher.App` +
+`src/WTLauncher.Core` + `tests/WTLauncher.Tests`）。退役 WinForms 线记于 `retired/design/winforms-launcher.md`；
+旧根 `WT Launcher.exe` 与 `src/winforms-launcher/` 不存在，不得恢复（门禁 `retired-paths-removed`）。
 
-```text
-src/avalonia-launcher/
-  WTLauncher.Avalonia.sln
-  src/WTLauncher.App/
-  src/WTLauncher.Core/
-  tests/WTLauncher.Tests/
-```
+## 与其他候选的结论
 
-The retired WinForms line is documented in `retired/design/winforms-launcher.md`; the old root `WT Launcher.exe` and `src/winforms-launcher/` do not exist in the working tree and should not return unless there is an explicit rollback decision (the gate enforces `retired-paths-removed`).
-
-## Decision lens versus other candidates
-
-| Stack | Local conclusion after studying CodexSwitch |
+| 技术栈 | 结论 |
 | --- | --- |
-| Retired WinForms | Keep only the design lessons; do not restore as a parallel source tree. |
-| WebView2 | Fastest route to HTA-like HTML/CSS feel, but introduces JS bridge and web/runtime boundary. |
-| Avalonia | Current mainline for a long-lived C# native desktop launcher with modern UI and testable state. |
-| Tauri | Strong long-term web/Rust route, but heavier migration for this small Windows launcher. |
-| WPF / WinUI 3 | Better than WinForms, but less compelling than Avalonia for cross-platform modern .NET and component reuse. |
-| Electron | UI-friendly but too heavy for a small local launcher. |
+| 退役 WinForms | 只留设计教训，不恢复 |
+| WebView2 | 最快接近 HTA 观感，但引入 JS 桥与 web 边界 |
+| Avalonia | 当前主线：现代 C# 桌面 + 可测状态 |
+| Tauri | 长期 web/Rust 路线，对本小启动器迁移偏重 |
+| WPF / WinUI 3 | 优于 WinForms，但跨平台现代 .NET 与组件复用不及 Avalonia |
+| Electron | UI 友好但过重 |
 
-## Official references for future study
+## 官方参考
 
 - Avalonia overview: <https://docs.avaloniaui.net/docs/overview/what-is-avalonia>
 - Avalonia getting started: <https://docs.avaloniaui.net/docs/get-started/test-drive/introduction>
