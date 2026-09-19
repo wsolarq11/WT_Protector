@@ -29,7 +29,9 @@ npm ci
 npm run typecheck
 npm test
 
-# Full native gate — 46 checks (growing), must be green before any "done" claim
+# Full native gate — must be green before any "done" claim.
+# Step count is NOT restated here: AGENTS.md "结构基线" is the single documented
+# source, and the gate validates that table plus its own manifest.
 npm run verify
 
 # Central release contract: locked-mode restore + AOT publish + clean worktree + receipt validation
@@ -102,7 +104,7 @@ Source under `src/avalonia-launcher/src/`. Layers depend only on lower layers.
 | 3 — Orchestration | `MainWindowViewModel` (the single writable owner of UI state) | delegates reusable rules to Core, injects dialog `Func<>`s through `MainWindow` ctor | Keep a second copy of state that drifts from the single owner |
 | 4 — Views | `WTLauncher.App/Views/` (`MainWindow.axaml` hosts the 3 view modes — Cards / Details / Names — whose bodies live in `LauncherEntriesView.axaml`) | XAML, drag ghost + insert indicators, code-behind = windowing only (drag hit-test, dialog injection, keyboard nav) | Business decisions / `if` statements about launch logic |
 
-Tests: `src/avalonia-launcher/tests/WTLauncher.Tests/` — xUnit, 764 `[Fact]`/`[Theory]` attributes across all layers (incl. Roslyn analyzer suite; the gate runs 832 cases). These are the mainline gate.
+Tests: `src/avalonia-launcher/tests/WTLauncher.Tests/` — xUnit, `[Fact]`/`[Theory]` attributes across all layers (incl. Roslyn analyzer suite). Attribute and case counts are deliberately not restated here: the `AGENTS.md`「结构基线」table is the single documented source and the gate enforces it. These tests are the mainline gate.
 
 ## Non-negotiable invariants (these bite when broken)
 
@@ -114,6 +116,49 @@ Tests: `src/avalonia-launcher/tests/WTLauncher.Tests/` — xUnit, 764 `[Fact]`/`
 - **`catch (Exception)` is forbidden.** Narrow to the known exception types (`IOException`, `UnauthorizedAccessException`, `SecurityException`, …). Bare catches swallow real bugs.
 - **`directory` must exist.** The gate rejects stale launcher buttons (every active entry's `directory` must exist on this machine).
 - **No obsolete per-entry `confirm` key.** Launch confirmation has one authority: `settings.requireConfirmationForLaunches`. There is no per-entry danger metadata.
+
+## Gate tiers (added 2026-09-17)
+
+`npm run verify` is a tiered, failure-aggregating runner (`scripts/verify.ts`,
+manifest in `scripts/gate-steps.ts`). It reports every failure in one pass instead
+of stopping at the first one. Tiers:
+
+- `static` — pure file/text checks; no external dependencies. Failure blocks.
+- `local` — machine-local facts (entry `directory` existence). Skipped on CI with a
+  recorded reason, because CI overlays `config/launcher.ci.json`.
+- `native` — needs the .NET 10 SDK. Skipped with a recorded reason when absent,
+  instead of surfacing a misleading `NETSDK1045` as a code failure.
+- `snapshot` — external data freshness (GitHub benchmark snapshot). Advisory only;
+  it never blocks code verification. Refresh with `npm run update:github-snapshot`.
+
+The gate also self-checks its manifest: `gate-steps.ts` ids must match
+`verify.ts` implementations one-for-one, and every step must record a result.
+Step count is not restated anywhere except the AGENTS.md structure-baseline table.
+
+## Removed architecture debt: EntryProjection (2026-09-17)
+
+`WTLauncher.App/Features/Entries/EntryProjection.cs` was a **third, unwired**
+implementation of filter+sort. It is now deleted. What it was, and why removal
+was safe:
+
+- The real visible collection is `EntryListViewModel._visibleEntries`, rebuilt by
+  `MainWindowViewModel.Layout.cs` via `LauncherEntryQuery.FilterAndSort` (parsed
+  `DateTimeOffset` ordering; supports `custom` and `frequent`).
+- Its DynamicData pipeline never reached the UI: its filter/sort subjects were
+  never written, and `SetFilter`/`SetSortMode` had **no callers**.
+- `EntryListViewModel.VisibleCount` now reads `_visibleEntries.Count` directly,
+  matching its interface contract ("visible entry count, after filter").
+- Its `recent`/`updated` branches compared `LaunchedAtUtc`/`UpdatedAtUtc` as
+  **strings** (ordinal), diverging from chronological order once offsets mixed
+  (legacy `+08:00` data vs newly written `+00:00`). Reproduced:
+  `2026-08-15T11:06:14.4061757+08:00` (03:06 UTC) sorted ahead of
+  `2026-08-15T04:00:00.0000000+00:00` (04:00 UTC) under ordinal descending.
+- The `DynamicData` package reference is gone from `WTLauncher.App.csproj` and
+  `Directory.Packages.props`; both `packages.lock.json` trees were regenerated
+  with `dotnet restore -r win-x64 -p:EnableNativeAot=true --force-evaluate`.
+  Run `dotnet test` with `--no-restore` afterwards: an implicit restore uses
+  default parameters and rewrites the lock files without the win-x64 RID.
+- `trinity-architecture-integrity` now enforces four components instead of six.
 
 ## Config schema — quick reference
 
@@ -138,7 +183,7 @@ Trellis tasks are **not** required for small fixes; `init`-style documentation, 
 - `README.md` — full feature list, safety notes, schema, current implementation status. Read this before any user-facing change.
 - `DESIGN.md` — brand, principles, the four-box header alignment rule, three-view-mode contract, single-source token/component ownership table. Read before any visual/UX change.
 - `AGENTS.md` — repo map and the "vine trail" navigation. The `<!-- TRELLIS:START -->…:END -->` block is managed by `trellis update`; don't edit inside it.
-- `docs/feature-reality-north-star-audit.md` — 22-feature north-star audit + claim-boundary ledger (what narrow claims are allowed vs. forbidden broad/unimprovable/universal claims). The gate validates this file's structure.
+- `docs/feature-reality-north-star-audit.md` — 22-feature north-star audit + claim-boundary ledger (what narrow claims are allowed vs. forbidden broad/unimprovable/universal claims). The gate does not parse this file's structure: it only requires the file to exist as a `no-stale-three-file-refs` scan target. The claim boundary itself is enforced on `README.md`, which must keep its four boundary sentences.
 - `docs/giants-shoulders/` — external project lessons (CodexSwitch + Avalonia + Native AOT, etc.) for stack decisions.
 
 ## Common ways to break the gate

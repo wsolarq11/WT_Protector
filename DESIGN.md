@@ -5,7 +5,7 @@
 - Status: Active
 - Last refreshed: 2026-07-23
 - Primary product surfaces: `src/avalonia-launcher/src/WTLauncher.App/Views/MainWindow.axaml` + code-behind + `src/avalonia-launcher/src/WTLauncher.App/ViewModels/*`
-- Evidence reviewed: `README.md`, `src/avalonia-launcher/README.md`, `docs/design-benchmark-digest.md`, current Avalonia mainline implementation, `tools/verify.ps1`, `tools/build-release.ps1`, Microsoft Windows controls guidance for ToggleSwitch / ListView / GridView / Win32 List-View details modes, Microsoft Fluent 2 layout guidance, Apple HIG layout guidance, Material Design layout guidance
+- Evidence reviewed: `README.md`, `src/avalonia-launcher/README.md`, `docs/design-benchmark-digest.md`, current Avalonia mainline implementation, `scripts/verify.ts`, `scripts/build-release.ts`, Microsoft Windows controls guidance for ToggleSwitch / ListView / GridView / Win32 List-View details modes, Microsoft Fluent 2 layout guidance, Apple HIG layout guidance, Material Design layout guidance
 
 ## Brand
 

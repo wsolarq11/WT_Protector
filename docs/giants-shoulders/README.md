@@ -1,6 +1,6 @@
 # 巨人肩膀库
 
-> Verified 2026-08-15 — 依据 .trellis/tasks/08-15-docs/verification-protocol.md 逐项查证后重写；本仓库相关声明均已对照工作树核实。
+> Verified 2026-08-15 — 依据 .trellis/tasks/archive/2026-08/08-15-docs/verification-protocol.md 逐项查证后重写；本仓库相关声明均已对照工作树核实。
 
 Purpose: keep high-signal external project lessons one step away from this repository, so future stack and UX decisions can start from checked references instead of re-discovery.
 

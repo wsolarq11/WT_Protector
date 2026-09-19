@@ -1,7 +1,7 @@
 # Feature reality and north-star audit
 
 Reviewed on: 2026-06-24
-Facts re-verified against current source: 2026-08-15 (ledger: `.trellis/tasks/08-15-docs/ledgers/feature-reality-north-star-audit.md`)
+Facts re-verified against current source: 2026-08-15 (ledger: `.trellis/tasks/archive/2026-08/08-15-docs/ledgers/feature-reality-north-star-audit.md`)
 
 Purpose: evaluate whether each active WT Launcher feature mapping solves a real user problem and whether the implementation is already a domain north star. This is an audit document, not marketing copy.
 
