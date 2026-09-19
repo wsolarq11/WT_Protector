@@ -1,103 +1,73 @@
 # Avalonia Launcher Mainline
 
-This is the active source line for WT Launcher. It was promoted from the former spike after the WinForms executable/source line was retired into `retired/design/winforms-launcher.md`.
+Active source line for WT Launcher. Promoted from the former spike after the WinForms line retired to `retired/design/winforms-launcher.md`.
 
-## Run for experience
-
-From the repository root:
+## Run
 
 ```bash
 npm run start
 ```
 
-The app reads the repository-root `config/launcher.json` (entries + presets + settings + defaultPresetId + runHistory as one atomic unit) and persists all mutations there. The header batch controls can select all visible filtered entries, clear the saved selection, or one-click launch the saved checked set.
+Reads and writes repository-root `config/launcher.json` as one atomic unit.
 
 ## Verify
 
-From the repository root:
-
 ```bash
-npm run verify
-```
-
-Or run only the Avalonia mainline gate:
-
-```bash
-npm run verify:mainline
-```
-
-TypeScript mainline and focused-test entry points:
-
-```bash
-npm run verify
-npm run verify:mainline
+npm run verify           # full repo gate
+npm run verify:mainline  # Avalonia gate only
 npm run test:fast
 npm run test:coverage
 npm run test:launch-args
 npm run smoke
 ```
 
-The local mainline gate runs:
+Mainline gate order: locked AOT restore → `dotnet test -c Release` → isolated AOT publish → hidden temp-config smoke on Windows. Stable output: `artifacts/publish/win-x64/`; verifier output: `artifacts/verify-publish/win-x64/`. Release contract: `npm run release:contract`.
 
-1. `dotnet restore -r win-x64 -p:EnableNativeAot=true --locked-mode`
-2. `dotnet test -c Release`
-3. `dotnet publish -c Release -r win-x64 -p:EnableNativeAot=true --self-contained true` into isolated verification output
-4. a hidden temp-config startup smoke of the published exe on Windows; non-Windows hosts skip that GUI-only step after tests and win-x64 publish verification
+## 5-Layer Architecture
 
-Verification publish output is ignored under `artifacts/verify-publish/win-x64/`. Stable release output from `npm run release:build` is ignored under `artifacts/publish/win-x64/`. The central release contract is `npm run release:contract` from the repository root: locked-mode AOT restore, `--no-restore` publish, clean-worktree assertion, and receipt/manifest validation.
+Each layer depends only on layers below it.
 
-## Current acceptance question
-
-This line has replaced the WinForms source tree as the mainline. Further work should improve the Avalonia UX directly while preserving the root `npm run verify` gate and the portable config contract.
-
-## Architecture layers
-
-The codebase is organized in five logical layers. Each layer depends only on the layers below it.
-
-### Layer 0 — Pure data & contracts (Core)
+### Layer 0 — Core
 
 `src/WTLauncher.Core/`
 
-- `LaunchEntry`, `LaunchPlan`, `LauncherPreset` — immutable-shaped records
-- `LaunchArgumentBuilder` — `wt.exe` argument construction with Windows-style quoting
-- `LauncherJson` — atomic temp-file + `File.Replace` JSON persistence with `.bak` backup (static facade delegating to `ILauncherJsonIO`)
-- `LauncherEntryOrder`, `LauncherEntryLayoutCalculator` — pure ordering/layout rules reused outside one ViewModel branch
+- `LaunchEntry`, `LaunchPlan`, `LauncherPreset` records
+- `LaunchArgumentBuilder` — `wt.exe` quoting
+- `LauncherJson` — temp-file + `File.Replace` atomic persistence
+- `LauncherEntryOrder`, `LauncherEntryLayoutCalculator` — pure ordering/layout rules
 
-### Layer 1 — Command-local mutations (ViewModels)
+### Layer 1 — Commands
 
-`src/WTLauncher.App/ViewModels/MainWindowViewModel.cs`
+`ViewModels/MainWindowViewModel*.cs`
 
-- Entry add/edit/delete command handlers own the short validation → mutate → save sequence.
-- Shared rules stay in narrow helpers such as `LauncherEntryDrafts`; avoid a second ViewModel workflow when there is only one caller.
+- add/edit/delete/launch handlers: validate → mutate → save
+- shared rules in narrow helpers such as `LauncherEntryDrafts`
 
-### Layer 2 — Persistence + rollback (StoreGrain + ViewModels)
+### Layer 2 — Persistence + Rollback
 
-`src/WTLauncher.App/Infrastructure/StoreGrain.cs` + `MainWindowViewModel.RestoreVmStateFromStore()`
+`Infrastructure/StoreGrain.cs` + `MainWindowViewModel.RestoreVmStateFromStore()`
 
-- `StoreGrain.Dispatch` handles rollback via save-first-then-commit: the reducer result is persisted (through `FileStorePersistence` → `FileLauncherJsonIO`, temp-file + `File.Replace` + `.bak`) before memory is updated; on save failure memory is unchanged and the caller sees the error.
-- `RestoreVmStateFromStore()` re-syncs ViewModel state after a rollback.
-- Coordinates `launcher.json` (entries + presets + settings + defaultPresetId + runHistory) as one atomic unit.
+- `StoreGrain.Dispatch`: reducer → save to disk → apply to memory; save failure leaves memory unchanged
+- `RestoreVmStateFromStore()` re-syncs after rollback
+- coordinates `launcher.json` as one atomic unit
 
-> The former `AppStore` class was removed by the VTuber-Killer migration (2026-07-24); `StoreGrain.Dispatch` is the only write path.
+### Layer 3 — Orchestration
 
-### Layer 3 — ViewModel orchestration
+`MainWindowViewModel`
 
-`src/WTLauncher.App/ViewModels/MainWindowViewModel.cs`
+- single writable owner of launcher UI state
+- receives dialog/services through constructor; `MainWindow` receives the ViewModel
 
-- The single writable owner of launcher UI state
-- Delegates reusable rules to Core helpers and persistence/rollback boundaries
-- Receives dialog confirmation and services (`IDialogService`, `IEntryService`, `IPresetService`) through its constructor; `MainWindow` receives the ViewModel
+### Layer 4 — Views
 
-### Layer 4 — Views & drag-drop
+`Views/`
 
-`src/WTLauncher.App/Views/`
+- XAML three modes: Cards / Details / Names (`MainWindow.axaml` hosts, `LauncherEntriesView.axaml` holds bodies)
+- drag reorder: `MainWindow.Drag.cs` + Core layout math + `LauncherDragReorderWorkflow`
+- focused helpers: `MainWindowEntryCardResolver`, `FastWrapPanel`, `FillGridPanel`
 
-- XAML with three view modes: Cards / Details / Names (`MainWindow.axaml` hosts the modes; the view bodies live in `LauncherEntriesView.axaml`)
-- Drag reorder: `MainWindow.Drag.cs` (`ShowDragGhost`/`MoveDragGhost`/`HideDragGhost` with an OverlayLayer ghost + insert preview), layout math in Core (`LauncherDragGhostLayoutCalculator`), reorder-session state in the ViewModel (`LauncherDragReorderWorkflow`)
-- Focused view helpers (`MainWindowEntryCardResolver`, `FastWrapPanel`, `FillGridPanel`) handle shared drag hit-test, names-wall wrapping, and card fill-grid layout; one-off menu guards stay in `MainWindow`
+### Key Invariants
 
-### Key invariants
-
-- One source per state: view modes, sort mode, drag session, card density each have a single owner
+- one source per state: view mode, sort mode, drag session, card density
 - Core never references Avalonia or CommunityToolkit.Mvvm
-- Workflows return explicit result data; UI callbacks stay at the window/dialog seam
+- workflows return explicit result data; UI callbacks stay at window/dialog seam

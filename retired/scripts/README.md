@@ -1,20 +1,11 @@
 # Retired PowerShell Tooling
 
-This directory preserves the historical PowerShell scripts removed during the
-TypeScript migration. The active scripting layer is Node/TypeScript under
-`scripts/`; product launch still uses Windows Terminal and PowerShell 7 as the
-runtime shell.
+- Status: Archived
+- Purpose: 保存 TypeScript 迁移前删除的 PowerShell 脚本
+- Update when: 不更新
 
-Active commands:
+活动脚本层是 `scripts/` 下的 Node/TypeScript；产品运行壳仍是 Windows Terminal + PowerShell 7。
 
-- `npm run verify`
-- `npm run release:contract`
-- `npm run start`
-- `npm run apply:config`
-- `npm run install:portable`
-- `npm run uninstall`
-- `npm run package:friend`
-- `npm run update:github-snapshot`
+活动命令：`npm run verify`、`release:contract`、`start`、`apply:config`、`install:portable`、`uninstall`、`package:friend`、`update:github-snapshot`。
 
-These retired scripts are archive-only and must not be restored into active
-tooling paths.
+本目录脚本不得恢复到活动路径。

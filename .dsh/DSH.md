@@ -1,56 +1,34 @@
 # Trellis on DeepSeek Harness (dsh)
 
-dsh is a **class-2 pull-based** Trellis host: no session-start hook auto-injects
-workflow context, so the agent loads the Trellis skills on demand through its
-skill-loader tool.
+- Status: Active
+- Purpose: dsh 平台的 Trellis 接入说明
+- Update when: dsh 能力或技能布局变化时
+
+dsh 是 class-2 pull-based 宿主：没有 session-start hook 自动注入，agent 通过 skill loader 按需加载 Trellis 技能。
 
 | Capability | Status |
 | --- | --- |
-| Skills (`.agents/skills/trellis-*/SKILL.md`) | Works — dsh discovers this shared root natively |
-| Entry skills (`.dsh/skills/trellis-*/SKILL.md`) | Works — dsh's own project skill root (highest rank) |
-| Context hooks | None — pull-based: skills read `.trellis/` files directly |
-| Sub-agents | None shipped — implement/check/research run inline via the workflow skills |
+| Skills `.agents/skills/trellis-*/SKILL.md` | 可用，dsh 原生发现 |
+| Entry skills `.dsh/skills/trellis-*/SKILL.md` | 可用，最高优先级 |
+| Context hooks | 无，pull-based 直读 `.trellis/` |
+| Sub-agents | 无，implement/check/research 走 workflow 技能内联 |
 
-## Quick start
+## Quick Start
 
 ```bash
 trellis init --dsh -u your-name
-dsh web        # or: dsh --profile headless "start a Trellis task for ..."
+dsh web
 ```
 
-In dsh:
+在 dsh 中：描述工作 → agent 加载 `trellis-start`（读 `.trellis/` 状态并路由到 brainstorm / before-dev / check / update-spec）。继续用 `trellis-continue`，收尾说 "finish the trellis task" 加载 `trellis-finish-work`。
 
-1. Open a session in the project root and describe the work in natural
-   language. For a new task the agent should load the `trellis-start` skill,
-   which reads the current task state from `.trellis/` and routes to
-   `trellis-brainstorm` (unclear requirements), `trellis-before-dev` (about to
-   write code), `trellis-check` (done coding), or `trellis-update-spec`
-   (learned something worth capturing).
-2. Entry skills are `trellis-start` / `trellis-continue` / `trellis-finish-work`
-   in `.dsh/skills/`. You can also ask for them by name at any time.
-3. Type `/trellis:finish-work` is a slash-command convention from other hosts —
-   dsh has no slash palette, so say "finish the trellis task" instead, and the
-   agent loads `trellis-finish-work`.
+## File Map
 
-## File map
-
-- `.agents/skills/` — auto-triggered workflow skills (`trellis-before-dev`,
-  `trellis-brainstorm`, `trellis-check`, `trellis-break-loop`,
-  `trellis-update-spec`) plus the bundled `trellis-meta` /
-  `trellis-spec-bootstrap` / `trellis-session-insight` skills. Byte-identical
-  to Codex / Gemini CLI / Pi / Kimi writes into the same shared root.
-- `.dsh/skills/` — dsh-private entry skills (`trellis-start` /
-  `trellis-continue` / `trellis-finish-work`).
-- `.trellis/` — specs, tasks, workspace memory, and the shared scripts the
-  skills invoke (`get_context.py`, `task.py`, ...).
+- `.agents/skills/` — 自动触发的 workflow 技能 + bundled meta/spec-bootstrap/session-insight
+- `.dsh/skills/` — dsh 私有 entry skills：start / continue / finish-work
+- `.trellis/` — specs、tasks、workspace memory、共享脚本（`get_context.py`、`task.py` 等）
 
 ## Notes
 
-- Skill scripts pass `--platform dsh` to `get_context.py`; the value is used
-  as a platform-scoped context key.
-- The shipped `minimal` agent preset composes only `bash` +
-  `str_replace_editor`; the default presets include `web_search` and the
-  filesystem/terminal tools the skills assume.
-- dsh has no project-level sub-agent definition surface, so Trellis ships no
-  `trellis-implement` / `trellis-check` / `trellis-research` agent prompts
-  here — the workflow skills run those phases inline in the main session.
+- 技能脚本传 `--platform dsh` 给 `get_context.py` 作为平台上下文键
+- dsh 无项目级 sub-agent 定义面，因此不装 `trellis-implement/check/research` agent 提示
