@@ -7,7 +7,7 @@ import { publishDir, readJson, repoRoot } from "./config-lib.js";
 const require = createRequire(import.meta.url);
 const archiverModule = require("archiver") as typeof import("archiver");
 
-async function pack(): Promise<Record<string, unknown>> {
+export async function packFriend(): Promise<Record<string, unknown>> {
   const exe = path.join(publishDir, "WTLauncher.App.exe");
   const manifestPath = path.join(publishDir, "update-manifest.json");
   const quickStartFiles = readdirSync(path.join(repoRoot, "docs")).filter((file) => file.endsWith(".txt"));
@@ -62,6 +62,6 @@ async function pack(): Promise<Record<string, unknown>> {
 
 const isMain = Boolean(process.argv[1]) && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
-  const receipt = await pack();
+  const receipt = await packFriend();
   console.log(JSON.stringify(receipt));
 }

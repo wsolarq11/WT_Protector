@@ -25,7 +25,8 @@
     "package:friend": "tsx scripts/package-friend.ts",
     "update:github-snapshot": "tsx scripts/update-github-similar-projects-snapshot.ts",
     "release:build": "tsx scripts/build-release.ts",
-    "release:contract": "tsx scripts/release-contract.ts"
+    "release:contract": "tsx scripts/release-contract.ts",
+    "make": "tsx scripts/build-product.ts"
   },
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",
