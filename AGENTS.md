@@ -48,8 +48,8 @@ WT_Protector/
 | Views C# files | 24 |
 | Views AXAML files | 20 |
 | WTLauncher.Analyzers C# files | 7 |
-| Tests C# files | 136 |
-| Test attributes [Fact]+[Theory] | 797 |
+| Tests C# files | 137 |
+| Test attributes [Fact]+[Theory] | 800 |
 | Gate steps (verify.ts) | 45 |
 
 更新协议：结构变化 → 跑 `npm run verify` 看 `structure-baseline-consistency` 报错 → 同步改本表与 `scripts/checks/run.ts` → 转绿。

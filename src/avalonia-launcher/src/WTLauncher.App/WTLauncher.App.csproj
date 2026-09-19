@@ -41,4 +41,7 @@
   <ItemGroup>
     <ProjectReference Include="..\WTLauncher.Core\WTLauncher.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Localization\Assets\zh-CN.json" LogicalName="WTLauncher.App.Localization.zh-CN.json" />
+  </ItemGroup>
 </Project>
