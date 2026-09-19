@@ -242,6 +242,19 @@
   "import.cancel": "取消",
   "import.confirm": "确认导入",
 
+  "dialog.exportPickerTitle": "导出配置",
+  "dialog.importPickerTitle": "导入配置",
+  "dialog.configFileType": "WT Launcher 配置",
+
+  "status.level": "状态级别",
+  "status.message": "状态信息",
+
+  "tray.open": "打开 WT Launcher",
+  "tray.quit": "退出",
+
+  "app.startupFailureTitle": "启动失败",
+  "app.startupFailureText": "启动失败：配置加载异常，请检查日志后重试。",
+
   "card.countLabel": "{0} 个",
 
   "draft.idRequired": "按钮 ID 不能为空",
@@ -441,6 +454,10 @@
   "dirmgmt.close": "关闭",
   "dirmgmt.closeAutomation": "关闭地址管理窗口",
   "dirmgmt.statusAutomation": "地址管理状态",
+  "dirmgmt.editTitle": "编辑地址: {0}",
+  "dirmgmt.editLabel": "新地址 (支持手输或浏览)",
+  "dirmgmt.mergeTitle": "合并到...: {0}",
+  "dirmgmt.mergeLabel": "保留方地址 (输入或浏览)",
 
   "cmdmgmt.title": "命令管理",
   "cmdmgmt.heading": "命令与模板集中管理",
@@ -469,6 +486,15 @@
   "cmdmgmt.close": "关闭",
   "cmdmgmt.closeAutomation": "关闭命令管理窗口",
   "cmdmgmt.statusAutomation": "命令管理状态",
+  "cmdmgmt.editCommandTitle": "编辑命令: {0}",
+  "cmdmgmt.editCommandLabel": "新命令 (可填 $key 引用模板, 或裸命令)",
+  "cmdmgmt.newTemplateTitle": "新模板",
+  "cmdmgmt.templateKeyLabel": "模板 Key (不含 $ 前缀)",
+  "cmdmgmt.templateValueLabel": "展开内容 (例: codex --enable goals ...)",
+  "cmdmgmt.updateKeyTitle": "改 Key: ${0}",
+  "cmdmgmt.updateKeyLabel": "新 Key (entry 引用会自动同步)",
+  "cmdmgmt.updateValueTitle": "改展开: ${0}",
+  "cmdmgmt.updateValueLabel": "展开内容",
 
   "discover.heading": "发现并添加 AI Agent CLI 启动项",
   "discover.subtitle": "扫描 PATH 上的 AI Agent CLI，或复用已有目录和命令模板快速创建启动项。",

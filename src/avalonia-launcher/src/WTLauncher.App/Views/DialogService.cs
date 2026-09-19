@@ -3,6 +3,7 @@ using Avalonia.Platform.Storage;
 using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Features.Entries;
 using WTLauncher.App.Features.Updates;
+using WTLauncher.App.Localization;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -79,12 +80,12 @@ public sealed class DialogService : IDialogService
     {
         var file = await Owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            Title = "导出配置",
+            Title = LauncherLocalization.Format("dialog.exportPickerTitle"),
             SuggestedFileName = "wt-launcher-export.json",
             DefaultExtension = "json",
             FileTypeChoices =
             [
-                new FilePickerFileType("WT Launcher 配置") { Patterns = ["*.json"] },
+                new FilePickerFileType(LauncherLocalization.Format("dialog.configFileType")) { Patterns = ["*.json"] },
             ],
         });
         return file?.TryGetLocalPath();
@@ -94,11 +95,11 @@ public sealed class DialogService : IDialogService
     {
         var files = await Owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "导入配置",
+            Title = LauncherLocalization.Format("dialog.importPickerTitle"),
             AllowMultiple = false,
             FileTypeFilter =
             [
-                new FilePickerFileType("WT Launcher 配置") { Patterns = ["*.json"] },
+                new FilePickerFileType(LauncherLocalization.Format("dialog.configFileType")) { Patterns = ["*.json"] },
             ],
         });
         return files.Count > 0 ? files[0].TryGetLocalPath() : null;

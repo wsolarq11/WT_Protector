@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using WTLauncher.App.Infrastructure;
+using WTLauncher.App.Localization;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -109,8 +110,8 @@ public sealed partial class CommandManagementWindow : Window
     private async Task OpenRenameCommandDialog(CommandRow row)
     {
         var dialog = new CommandEditDialog(
-            title: $"编辑命令: {row.Command}",
-            label: "新命令 (可填 $key 引用模板, 或裸命令)",
+            title: LauncherLocalization.Format("cmdmgmt.editCommandTitle", row.Command),
+            label: LauncherLocalization.Format("cmdmgmt.editCommandLabel"),
             initialValue: row.Command,
             templateKeys: _viewModel.TemplateKeys);
         var result = await dialog.ShowDialog<string?>(this);
@@ -121,11 +122,11 @@ public sealed partial class CommandManagementWindow : Window
     private async Task OpenAddTemplateDialog()
     {
         var dialog = new CommandEditDialog(
-            title: "新模板",
-            label: "模板 Key (不含 $ 前缀)",
+            title: LauncherLocalization.Format("cmdmgmt.newTemplateTitle"),
+            label: LauncherLocalization.Format("cmdmgmt.templateKeyLabel"),
             initialValue: string.Empty,
             templateKeys: Array.Empty<string>(),
-            secondLabel: "展开内容 (例: codex --enable goals ...)");
+            secondLabel: LauncherLocalization.Format("cmdmgmt.templateValueLabel"));
         var result = await dialog.ShowDialog<(string Key, string Value)>(this);
         if (!string.IsNullOrWhiteSpace(result.Key))
             _viewModel.AddTemplateCommand.Execute($"{result.Key}\t{result.Value}");
@@ -134,8 +135,8 @@ public sealed partial class CommandManagementWindow : Window
     private async Task OpenUpdateTemplateKeyDialog(TemplateRow row)
     {
         var dialog = new CommandEditDialog(
-            title: $"改 Key: ${row.Key}",
-            label: "新 Key (entry 引用会自动同步)",
+            title: LauncherLocalization.Format("cmdmgmt.updateKeyTitle", row.Key),
+            label: LauncherLocalization.Format("cmdmgmt.updateKeyLabel"),
             initialValue: row.Key,
             templateKeys: _viewModel.TemplateKeys.Except([row.Key]).ToList());
         var result = await dialog.ShowDialog<string?>(this);
@@ -146,8 +147,8 @@ public sealed partial class CommandManagementWindow : Window
     private async Task OpenUpdateTemplateValueDialog(TemplateRow row)
     {
         var dialog = new CommandEditDialog(
-            title: $"改展开: ${row.Key}",
-            label: "展开内容",
+            title: LauncherLocalization.Format("cmdmgmt.updateValueTitle", row.Key),
+            label: LauncherLocalization.Format("cmdmgmt.updateValueLabel"),
             initialValue: row.ExpandedValue,
             templateKeys: Array.Empty<string>(),
             isMultiline: true);

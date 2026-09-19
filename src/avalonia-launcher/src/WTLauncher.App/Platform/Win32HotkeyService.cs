@@ -42,11 +42,11 @@ internal sealed class Win32HotkeyService : IDisposable
             GetModuleHandleW(null),
             IntPtr.Zero);
         if (_window == IntPtr.Zero)
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "无法创建全局热键消息窗口。");
+            throw new Win32Exception(Marshal.GetLastWin32Error(), Win32PlatformDiagnostics.HotkeyWindowCreationFailed);
 
         _registered = RegisterHotKey(_window, HotkeyId, modifiers, key);
         if (!_registered)
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "全局热键注册失败，可能已被其他程序占用。");
+            throw new Win32Exception(Marshal.GetLastWin32Error(), Win32PlatformDiagnostics.HotkeyRegistrationFailed);
     }
 
     public void Dispose()
@@ -83,7 +83,7 @@ internal sealed class Win32HotkeyService : IDisposable
             LpszClassName = WindowClassName,
         };
         if (RegisterClassW(ref windowClass) == 0)
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "无法注册全局热键消息窗口类。");
+            throw new Win32Exception(Marshal.GetLastWin32Error(), Win32PlatformDiagnostics.HotkeyWindowClassRegistrationFailed);
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
