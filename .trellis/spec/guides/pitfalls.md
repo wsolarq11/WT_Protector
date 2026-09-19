@@ -87,6 +87,16 @@ Edit "String to replace not found" → 不修参数，直接 Write 全文件。
 | **更新注意** | `.codex/hooks.json` 是 intentional local customization。未来运行 `trellis update` 时审查并合并，不用 `--force` 覆盖 |
 | **详细契约** | `docs/trellis-codex-setup-audit.md` |
 
+### 1.8 用管道取退出码会失真
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-09-17 WT_Protector 门禁重构 session：`npm run verify 2>&1 \| Select-String ...` 之后 `$LASTEXITCODE` 报 0，而凭证实际是 `status: FAIL`、真实退出码 1 |
+| **症状** | 命令明确失败，验证脚本却认为通过——被伪造的是 CI 唯一的判据 |
+| **根因** | PowerShell 管道中 `$LASTEXITCODE` 反映管道末端 cmdlet 的状态，不是被管道化的原生命令退出码 |
+| **预防** | 要把原生命令移出管道再取码：`npm run verify > out.json 2>$null; $code = $LASTEXITCODE`。需要筛选输出时，先落文件，再对文件 `Select-String` |
+| **适用** | 任何"跑命令 + 读退出码 + 顺手过滤输出"的场景。退出码失真等于伪造验证结论，比不验证更危险 |
+
 ---
 
 ## 2. WT_Protector 项目坑
@@ -309,6 +319,123 @@ private async void OnXxxClicked(object? sender, RoutedEventArgs e)
 | **根因** | `MemoizedSelector` 的缓存键 `(availableSize, visibleCount)` 不包含对象身份。`Refresh()` → `ReplaceEntries()` 创建全新的 `LauncherEntryViewModel` 对象，但缓存命中跳过 `ApplyCardSize` 计算，新 VM 保持错误的默认尺寸 300x164 |
 | **修复** | **架构重构**为 `CardLayoutProvider` 单一事实源：所有 VM 通过 `IEntryCardHost.CardLayout` 只读委托到共享 provider。移除 `MemoizedSelector`、移除 `[ObservableProperty]` 默认值、删除 `LauncherEntryLayoutPresentation.cs` |
 | **预防** | 从窗口几何/条目数派生的尺寸永远不要作为 `[ObservableProperty]` 存储在 VM 上。使用共享 `CardLayoutProvider`，VM 只读读取。`memoizedSelector` 模式在本仓库已删除——计算廉价（<1μs）不需要缓存。 |
+
+### 2.18 防漂移检查自身的输入漂移 → 静默假绿
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-09-17 门禁重构 session，`scripts/checks/static.ts` 的 `checkNoStaleThreeFileRefs` |
+| **问题** | 该检查扫描 6 个文档查找 `config/config.json` 等退役引用，但列表里的 `docs/feature-first-class-upgrade-audit.md` 已被归档到 `docs/archive/`。代码写的是 `if (!fileExists(doc)) continue;`——静默跳过。于是检查实际只扫了 5 个文档，却照常报 PASS。门禁的"绿"是假绿 |
+| **根因** | 用来防文档漂移的检查，自身依赖一份"会漂移的硬编码输入"（路径列表）；而它对输入缺失采取静默 `continue`。检查目标失效时，检查不失败，只是**悄悄缩小覆盖面** |
+| **修复** | 路径改为 `docs/archive/feature-first-class-upgrade-audit.md`；静默 `continue` 改为目标缺失即抛错（`const missing = activeDocs.filter(d => !fileExists(d)); if (missing.length > 0) throw ...`）；detail 由长字符串改为 `{ scannedDocs, missing }` |
+| **预防** | 任何"扫描一组文件/组件"的检查，其目标列表**必须**在缺失时报错。允许的跳过只有两类：(1) 内容过滤（跳过注释行、`obj/`、`bin/`）；(2) 跳过但把原因写进 addCheck 的 detail。**"目标本身不存在"不属于跳过**，它意味着检查已失效 |
+| **适用** | 本仓库所有 `check*` 函数（`scripts/checks/*.ts`）。已抽查：`checkTestStructureLayering`、`checkRetiredPathsRemoved`、`checkTrinityArchitectureIntegrity` 均采用"缺失即抛错"写法，这是正确范式；`checkNoStaleThreeFileRefs` 是唯一例外，已修 |
+| **与 §3.1 的关系** | §3.1 说"不要硬编码数量"。精确化：禁止的是**无校验机制**的数量（写了数字却没人验，必漂移）。`AGENTS.md`「结构基线」表的数字有 `structure-baseline-consistency` 逐项校验兜底，属"有校验的单一源"，不在此列。判断标准是"有没有机制保证它正确"，不是"有没有数字" |
+
+---
+
+### 2.19 `dotnet test`/`build` 的隐式还原会改写 `packages.lock.json`
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-09-17 门禁重构 session，删除 `EntryProjection` + `DynamicData` 后 |
+| **问题** | 用 `dotnet restore -r win-x64 -p:EnableNativeAot=true --locked-mode` 校验通过、`git status -- '*.lock.json'` 为空。随后直接跑 `dotnet test`（不带 `--no-restore`），4 个 `packages.lock.json` 全部变成 `M`。还原用的是**默认参数**（无 RID、无 AOT 开关），写出的 lock 不含 `win-x64` 运行时条目，与仓库中带 RID 的 lock 不一致 |
+| **根因** | `dotnet test`/`build`/`publish` 默认执行隐式还原（implicit restore），且**只沿用命令行传入的属性**。省略 `-r win-x64 -p:EnableNativeAot=true` 时，还原以不同参数运行，lock 内容随之改变 |
+| **修复** | 任何 C# 构建/测试一律加 `--no-restore`，并在之前显式用完整参数还原：`dotnet restore <sln> -r win-x64 -p:EnableNativeAot=true --locked-mode`。删除/新增包后才用 `--force-evaluate` 重新生成，生成后立刻用 `--locked-mode` 复验 |
+| **预防** | 判断 lock 是否被误改的唯一可靠方式：`git status --porcelain -- '*.lock.json'`（空 = 干净）。失败时的典型指纹是 `NU1004` 报"锁定文件的运行时标识符: win-x64 / 项目的运行时标识符: "，即缺 RID 还原留下的痕迹 |
+| **适用** | 本仓库 `src/avalonia-launcher/**/packages.lock.json`（4 个）。CI 的 `release-lockfile-consistency` 走 `--locked-mode`，本地误改 lock 会让该检查在 CI/门禁上炸 |
+
+补充（2026-09-17 实测，勿重复踩坑）：`dotnet restore --force-evaluate` 在 Windows 上会把 4 个 lock 全部写成 CRLF，而仓库提交形态是 LF（`.gitattributes`: `text=auto eol=lf`）。实测结论：这**不影响 git 判定** —— 内容等价时 `git status` 不报修改。两次独立实验：单独改 mtime、以及重跑 `--force-evaluate`，都只报真实内容变更的那 2 个文件。代价仅是每条 git 命令多打印 "CRLF will be replaced by LF" 警告。判断 lock 是否被误改的**唯一权威判据**是 `git diff --numstat -- '*.lock.json'`（应恰为 App 14 行、Tests 15 行删除，无新增）。
+
+---
+
+### 2.20 门禁 stdout 被 native 子进程污染 — JSON receipt 无法机器解析
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-09-17 门禁重构 session，装上 .NET 10 SDK 后 `npm run verify` 首次完整运行 native 层 |
+| **问题** | `scripts/verify.ts` 把人类摘要写 stderr、JSON receipt 写 stdout（设计正确）。但 native 层检查用 `execa(..., { stdio: "inherit" })` 跑 dotnet，子进程 stdout 直通父进程 stdout，于是 `dotnet test`/`publish` 的日志混在 JSON 之前，`ConvertFrom-Json` 报 `Unexpected character encountered while parsing value: 正` |
+| **根因** | `stdio: "inherit"` 让父子进程共享同一条 stdout。"数据输出"（receipt）与"日志输出"（子进程）语义不同却落在同一流上 |
+| **修复** | receipt 前后加定界行 `=== VERIFY RECEIPT JSON BEGIN ===` / `=== VERIFY RECEIPT JSON END ===`，消费者按标记定位，不依赖"stdout 只有 JSON"这个已被污染的前提。未改动 `execChecked` 的 stdio 语义（那会牵动 `publish-lib.ts`/`test-coverage.ts`/`verify-mainline.ts` 共 4 处） |
+| **预防** | 任何"既打印机器可读数据、又调用会写 stdout 的子进程"的脚本，都不能假设 stdout 纯净：要么给数据加定界标记，要么把子进程日志导到 stderr。CI 只看 exit code，所以该缺陷只在"本地想解析 receipt"时暴露 |
+| **适用** | `scripts/verify.ts`；同类风险见 `scripts/release-contract.ts`、`scripts/build-release.ts`。此缺陷在无 .NET SDK 的机器上被 native 层 skip 掩盖了整整一轮 session |
+
+---
+
+### 2.21 `global.json` 放在子目录等于没有钉固
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-09-17 门禁重构 session，仓库的 SDK 版本钉固长期未生效 |
+| **问题** | 仓库原有一份 `src/avalonia-launcher/global.json`（`{"sdk":{"version":"10.0.100","rollForward":"latestMajor"}}`，`git show HEAD:` 可复现）。但本仓库所有 dotnet 命令都从**仓库根**执行（如 `dotnet test src/avalonia-launcher/WTLauncher.Avalonia.sln`）。`global.json` 只约束其所在目录及子目录，而 dotnet 从 cwd **向上**查找 `global.json`——从仓库根出发永远走不到 `src/avalonia-launcher/` 那一份，钉固形同虚设 |
+| **根因** | `global.json` 是"向下生效、向上查找"的配置：它约束自己所在的那棵子树，调用方必须在它**下面或同级**。把配置文件放进被调用者的子目录，方向正好相反 |
+| **修复** | 删除 `src/avalonia-launcher/global.json`，在仓库根新建 `global.json`：`{"sdk":{"version":"10.0.301","rollForward":"latestFeature"}}`。`version` 取 CI 已固定的版本（`.github/workflows/verify.yml` 4 处 `dotnet-version: "10.0.301"`），`rollForward: latestFeature` 允许同一 major.minor 内更高的 feature band（本机 10.0.401 因此可用），同时挡住跨 major 漂移 |
+| **预防** | 判定"钉固是否生效"的唯一可靠办法：在**实际执行命令的那个 cwd** 里跑 `dotnet --version`，看是否被 `global.json` 约束。不要假设"仓库里存在 global.json"等于"钉固生效"。同一陷阱适用于 `.editorconfig`、`Directory.Build.props`、`.npmrc` 等所有"向上查找"的配置 |
+| **适用** | 本仓库根 `global.json`；任何从仓库根调用子目录项目的多项目仓库 |
+
+---
+
+### 2.22 整文件回滚会连带丢弃同一文件里需要的改动
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-09-17 门禁重构 session，删除 `DynamicData` 之后 |
+| **问题** | 先用正确参数重生成 lock（含 DynamicData 移除，共 29 行删除），随后用 `git restore` 清掉 `dotnet test` 隐式还原造成的污染。`git restore` 是**整文件**粒度，把两次改动的差异一并抹掉，连"必须保留的 DynamicData 移除"也退回原状。此后 lock 与已删除该引用的 `WTLauncher.App.csproj` 不一致，而 `--locked-mode` **不报错**——NuGet 容忍 lock 中多余的包条目——于是"锁文件一致"这条结论看着是绿的，实则陈旧了整整一轮验收 |
+| **根因** | 同一文件在短时间内承载了**两类**改动：一类要丢弃（隐式还原污染），一类要保留（依赖变更）。整文件回滚无法区分二者 |
+| **修复** | 重新执行 `dotnet restore -r win-x64 -p:EnableNativeAot=true --force-evaluate`，`git diff --stat` 确认为 29 行删除，再以 `--locked-mode` 复验（exit 0） |
+| **预防** | 回滚前先问一句："这个文件的**全部**改动都是我不想要的吗？"若既有要丢的也有要留的，用 `git restore -p`（交互式分块）或先固化要保留的部分。对生成物（lock、receipt、manifest）尤其危险：一次 `--force-evaluate` 与一次隐式还原写的是**同一路径**，回滚脚本无法辨认作者意图 |
+| **适用** | 本仓库 4 个 `packages.lock.json`；同类：`artifacts/` 下的 receipt/manifest，任何"工具生成 + 人工回滚"共存的产物 |
+
+---
+
+### 2.23 断言"违规不存在"的检查必须自证能命中违规 — 否则永久假绿
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-09-17 门禁审计 session，扫 `scripts/checks/static.ts`（其时门禁 45 步）。用真实违规样本逐一喂入 8 条正则检查验证活性，暴露出三处结构性缺陷：(1) `no-thin-wrapper-delegation` 只用 `regex.exec()` 取**首个**匹配，首个匹配若为合法的同名包装(`wrapMethod === wrapTarget`)就 `continue` 掉整个文件，其后真缺陷永不暴露；(2) `no-imperative-view-ui` 的 detail 记的是硬编码 `viewsScanned: true`，不是任何实测值；(3) 7 条 walk 型检查在扫描目录为空/过滤条件写错时零违规通过，与"确实没有违规"无法区分 |
+| **问题** | 检查的 PASS 有两个互斥含义："确实没有违规"与"匹配器或扫描目标已失效"。后者永远绿，而它声称守着的约束实际无人守，且不会自己暴露（§2.18 是同类实例） |
+| **根因** | "断言违规不存在"的证据链是 `匹配器 × 扫描目标`，两者都是代码、都会漂移：正则随代码风格或命名约定变化而失效，扫描集随目录移动而变空。检查只断言了结果为空，从未断言证据链本身有效 |
+| **修复** | `checks/common.ts` 新增 `assertMatcherDetects` / `assertMatcherAllows`（沿用 `checkAppRawHexZero` 原有的 fixture 先例，非新机制），接入 8 条正则/谓词检查：每条必须命中一个已知违规样本、放行一个合法样本。7 条 walk 型检查改记真实 `scannedFiles`，为 0 即抛错；`no-imperative-view-ui` 的伪造值换成真实计数（实测 2）；`no-thin-wrapper-delegation` 改 `matchAll` 遍历全部匹配并报 `文件:行号` |
+| **预防** | 任何新增的"断言违规不存在"检查，三件套必须同时到位：正向 fixture（能命中违规）、反向 fixture（不误伤合法写法）、`scannedFiles > 0` 断言。**自检必须用非全局副本**：`test()` 会推进全局正则的 `lastIndex`，而 `matchAll` 从 `lastIndex` 起扫 —— 同一正则对象"先自检、后扫描"会让每个文件都从错误起点开始 |
+| **适用** | static/文本层全部门禁检查。schema 类检查同理：其**提取**步骤（如从 Core 记录抽 `[JsonRequired]` 字段）必须带"抽到 0 条即抛错"的守卫，否则提取失效等价于检查失效 |
+
+---
+
+### 2.24 测了却不留痕，等于没测 — 门禁丢弃主线耗时
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-09-17 同一 session。`verify-mainline.ts` 一直在测 `perf: { testSeconds, publishSeconds }`，但 `checks/run.ts` 抄录主线 receipt 进 detail 时只挑了部分字段，`perf` 与 `bytes` 被静默丢弃，门禁 receipt 里长期是 `perf: null`。补回后立刻推翻两个此前只能靠猜的判断：AOT 发布 5.28s（**不是**瓶颈）、全量 847 用例 18.88s、整门禁 WALL 53.8s |
+| **问题** | 测量值在生产路径被丢弃，于是"该优化哪一步"只能凭直觉，而直觉可能与实测相反；`run.ts` 里那条"等验证时间预算紧张时再评估"的已知优化注释，也因此从未有过数字支撑（54s 门禁里它值十几秒） |
+| **根因** | 抄录式代码（把 A 结构的字段挑进 B 结构）没有任何机制保证字段覆盖完整：新增字段默认"不被抄"，且无检查会发现 |
+| **修复** | `checkAvaloniaMainlineVerify` 的 detail 补 `perf` 与 `bytes`，耗时随 receipt 流出 |
+| **预防** | 跨结构抄录优先整体展开或逐字段对账；至少保证关键测量有一处持久留痕（receipt/日志）。与 M10「收集数据但不消费 = 纯浪费」同源 |
+| **适用** | 所有 receipt/manifest 的派生与汇总代码 |
+
+---
+
+### 2.25 文档引用可移动路径 — 归档一次全断，要变成门禁事实
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-09-17 同一 session。扫描活跃文档发现 8 处 `.trellis/tasks/08-15-*/...md` 引用全部失效：Trellis 把完成任务目录移入 `.trellis/tasks/archive/2026-08/` 后，ponytail-assessment、gate-coverage-assessment、business-wiring-boundaries 等 7 份文档的"验证台账"指针全部指向不存在的旧路径，且无任何检查发现 |
+| **问题** | 文档把可移动路径当证据引用；移动发生时引用静默变死，读者照路径找不到证据链。这不是一次性缺陷，Trellis 归档是周期性流程，每次归档都可能再打断一批引用 |
+| **根因** | 引用的"可解析性"从未被断言过。既有的 no-stale-three-file-refs 守的是引用**内容**（三文件架构），守"引用指向的文件**存在**"这件事的检查缺位 |
+| **修复** | 新增门禁 `task-ledger-citations-resolve`（static 层）：扫描仓库根 `*.md` + `docs/**/*.md`（排除 docs/archive），凡匹配 `.trellis/tasks/*.md` 的引用必须可解析，否则报错并列出 `文件 -> 失效路径`。带正向/反向自检与 `scannedDocs > 0` 守卫（§2.23 三件套）。同步修正 8 处引用到 `archive/2026-08/` 真实路径 |
+| **预防** | 引用 Trellis 任务台账时，任务归档后要立刻同步引用路径——新检查把这件事变成门禁失败，而不是留给下一个读者踩空。归档月份桶（`archive/YYYY-MM/`）一旦形成就不再移动，当前路径稳定 |
+| **适用** | 任何指向 `.trellis/tasks/**` 或其它"会移动的目录"的文档引用；同类：被活跃文档引用的 `docs/archive/`、`retired/` 文件 |
+
+---
+
+### 2.26 删检查 vs 删产品代码 — 引用密度 + 分析器硬编码是判据
+
+| 属性 | 值 |
+|---|---|
+| **证据** | 2026-09-17 同一 session。`checkVtkArchitectureIntegrity` 守 StoreGrain 存在（29 处引用 + 分析器硬编码 `"StoreGrain"` → 编译器保证，删检查）；`AppStateMachine.cs` 守 trinity 组件（定义文件外 0 引用 → 死代码，删产品文件）；trinity 其余 4 组件（2-12 处外部引用，无分析器硬编码 → 检查保留，防内联/合并） |
+| **问题** | "检查是否冗余"和"组件是否死代码"不能靠感觉判断。删错方向要么留下守死代码的门禁（浪费），要么删掉守活组件的架构锚（架构分离失去防线） |
+| **判据** | 1) 组件被广泛引用（数十处）+ 分析器硬编码其名 → 存在性由编译器/分析器保证，纯存在性检查冗余，删检查。2) 组件定义文件外 0 引用 → 死代码，删产品文件。3) 组件有少量引用（个位数到十几）+ 无分析器硬编码 → 编译器只保证引用一致性，不保证架构分离（防内联/合并），检查保留 |
+| **门禁 name 对齐** | step id 与 addCheck name 曾经三套名字（gate-steps 短 id / addCheck 长名 / 文档旧长名），receipt 无法按 id 反查。修复：addCheck name 统一对齐 step id；`assertEveryStepAccounted` 加"每个非豁免 step 必须有同名记录"断言；`launcher-store` 一步四记是唯一豁免 |
+| **预防** | 每次"删检查/删组件"决策前，先跑外部引用计数（排除定义文件），再查有无分析器硬编码该类型名，按三条判据定夺。删除产品文件后 sha256 变化 + 门禁 WALL 翻倍是预期冷编译，不是行为回归 |
 
 ---
 
