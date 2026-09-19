@@ -131,7 +131,7 @@ function matchesFilter(filePath: string, filter: string): boolean {
 export function checkStructureBaselineConsistency(): void {
   const baselineRows: BaselineRow[] = [
     { label: "WTLauncher.Core C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.Core", filter: "*.cs", count: 51 },
-    { label: "ViewModels C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\ViewModels", filter: "*.cs", count: 64 },
+    { label: "ViewModels C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\ViewModels", filter: "*.cs", count: 65 },
     { label: "MainWindowViewModel partials", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\ViewModels", filter: "MainWindowViewModel.*.cs", count: 15 },
     { label: "Features C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\Features", filter: "*.cs", count: 15 },
     { label: "Views C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\Views", filter: "*.cs", count: 24 },
