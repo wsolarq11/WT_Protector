@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. Repo-wide navigation and invariants live in `AGENTS.md`; the documentation index lives in `docs/README.md`.
 
 ## MCP Knowledge Graph
 
@@ -180,11 +180,9 @@ Trellis tasks are **not** required for small fixes; `init`-style documentation, 
 
 ## Where to look for the why
 
-- `README.md` — full feature list, safety notes, schema, current implementation status. Read this before any user-facing change.
-- `DESIGN.md` — brand, principles, the four-box header alignment rule, three-view-mode contract, single-source token/component ownership table. Read before any visual/UX change.
-- `AGENTS.md` — repo map and the "vine trail" navigation. The `<!-- TRELLIS:START -->…:END -->` block is managed by `trellis update`; don't edit inside it.
-- `docs/feature-reality-north-star-audit.md` — 22-feature north-star audit + claim-boundary ledger (what narrow claims are allowed vs. forbidden broad/unimprovable/universal claims). The gate does not parse this file's structure: it only requires the file to exist as a `no-stale-three-file-refs` scan target. The claim boundary itself is enforced on `README.md`, which must keep its four boundary sentences.
-- `docs/giants-shoulders/` — external project lessons (CodexSwitch + Avalonia + Native AOT, etc.) for stack decisions.
+- `docs/README.md` — Active / Reference / Research / Archive 索引；查任何文档从这里开始。
+- `AGENTS.md` — repo map、结构基线、vine trail、Trellis workflow。
+- `src/avalonia-launcher/README.md` — 5-layer architecture and build details.
 
 ## Common ways to break the gate
 
