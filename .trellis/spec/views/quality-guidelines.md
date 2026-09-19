@@ -1,219 +1,48 @@
 # Quality Guidelines — Views Layer
 
-> Code standards, forbidden patterns, and review checklist for `WTLauncher.App/Views/`.
+> 代码标准、禁止模式、review 清单（`WTLauncher.App/Views/`）。
 
----
+## Code-Behind 边界
 
-## View Code-Behind Boundaries
+允许：对话框注入、键盘事件路由（`OnWindowKeyDown` / Ctrl+F / Escape）、drag 事件接线、窗口生命周期（SizeChanged / Closing / Opened）、右键 `ContextMenu.Open()`。
+禁止：业务决策（如"该条目是否确认启动"）、直接变异 VM 集合、调持久化方法、含数据有效性条件逻辑。
 
-Code-behind is allowed to handle:
-- **Dialog injection** (wiring `Func<>` delegates in constructor)
-- **Keyboard event routing** (`OnWindowKeyDown`, Ctrl+F, Escape)
-- **Drag-drop event wiring** (DragOver, Drop handlers)
-- **Window lifecycle** (SizeChanged, Closing, Opened)
-- **Context menu opening** (right-click → `ContextMenu.Open()`)
+## XAML 标准
 
-Code-behind must NOT:
-- **Make business decisions** (e.g., "should this entry show confirmation?")
-- **Directly mutate ViewModel collections** (no `viewModel.Entries.Add()`)
-- **Call persistence methods** (no `LauncherStore.Save()`)
-- **Contain conditional logic about data validity**
+- 资源引用：`{StaticResource PrimaryBrush}` / `{StaticResource CardBorderRadius}`；禁 `#2563EB` / `CornerRadius="13"` 字面量。`WTLauncher.App` 生产 `.cs` / `.axaml` 禁 `#RRGGBB` / `#AARRGGBB`；先复用 token，加 Core token 仅限独特稳定语义角色；框架值（空阴影）在 `App.InjectDesignTokens()` 建一次。根门禁 `app-raw-hex-zero` 拒绝临时 raw-hex fixture，禁引入白名单绕过所有权规则。
+- 类驱动视觉态：`Classes.drag-insert="{Binding IsDragInsertBefore}"`；类名定义于 `MainWindowEntryClasses` 等静态容器；不用 inline `Setter`。
+- 三视图：Cards/Details/Names 同时只显示一个（`MainWindowEntriesRootSelection.Select`）。
+- 主窗动作层级：高频直接可见（launch selected / add entry / discover / preset apply-preview-launch）；维护动作入标记 overflow 菜单（select/clear/refresh、command/address 管理、preset save/update/delete）。overflow 触发器 = 标准文本 `Button` + `ContextMenu` + automation name + 单一 view-only click handler；菜单项绑现有 VM 命令，禁代理命令/复制业务逻辑。
 
----
+## 性能规则
 
-## XAML Standards
+- 应用内 reorder 用 Pointer capture，禁 OLE `DragDrop.DoDragDropAsync`（嵌套 Win32 消息循环优先输入消息，降级渲染回调 → 卡顿）。Pointer 事件走 Avalonia 正常渲染循环；配 `ForceCleanup()`（`PointerReleased` + `PointerCaptureLost` 双路径释放，全部 handler try-catch 兜底）。
+- drag 热路径零 layout、零视觉树遍历：移动元素用 `RenderTransform`（`TranslateTransform`），禁 `Canvas.SetLeft/SetTop`（触发 InvalidateArrange）与影响测量的 `IsVisible` 绑定；用 render 属性（`Opacity`）。
+- 性能诊断先消除后优化：先隐藏目标组件（`IsVisible=false`）测 delta；隐藏 450+ 元素零差异 → 瓶颈不在渲染，查消息循环 / I/O / GC；不优化未证实的瓶颈（pitfalls §2.6）。
+- 卡片布局：Core 整数数学 O(n)；尺寸委托 `CardLayoutProvider` 单一源，无每 VM 可变态、无 memoization（计算廉价）。不变量：`CardWidth` / `CardHeight` / `NameTileWidth` / `NameTileHeight` 是 `LauncherEntryViewModel` 只读属性委托 `CardLayoutProvider`；provider 由 `LayoutManager` 拥有经 `IEntryCardHost.CardLayout` 暴露；`Recalculate(availableSize, count)` 是唯一 mutation（`ApplyFilter()` / `UpdateCardsAvailableSize()` 调用）；禁把 ephemeral View 尺寸存为带默认的 `[ObservableProperty]`（staleness 风险）。
 
-### Resource References
+## 测试 Views
 
-```xml
-<!-- GOOD: StaticResource from design tokens -->
-<Border Background="{StaticResource PrimaryBrush}"
-        CornerRadius="{StaticResource CardBorderRadius}" />
+测提取的纯函数，非 Avalonia 控件：`LauncherDragGhostLayoutCalculatorTests`、`MainWindowDragInsertDecisionTests`、`MainWindowEntryCardResolverTests`、`MainWindowEntryCardContextMenuTests`、`MainWindowEntryRowDoubleTapTests`、`MainWindowViewModelTests.ModesTests`。范式：决策逻辑抽静态方法测试；XAML 绑定/视觉由 `verify.ps1` GUI smoke 验证。
 
-<!-- BAD: Hardcoded value -->
-<Border Background="#2563EB" CornerRadius="13" />
-```
+## 视图状态保持
 
-`WTLauncher.App` production `.cs` and `.axaml` files must contain no `#RRGGBB` or `#AARRGGBB` literals. Reuse an existing token first; add a Core token only for a distinct, stable semantic role. Framework-only values such as an empty shadow are created once in `App.InjectDesignTokens()`:
+三视图切换重建视觉树，滚动位置若不显式保存即丢失。范式：VM 持有滚动态 `Dictionary<LauncherEntryViewMode,double> _scrollOffsets`（`SaveScrollOffset` / `GetScrollOffset`），切换时存取；禁 code-behind 字段缓存（模板切换即垃圾）。
 
-```csharp
-Resources["NoBoxShadow"] = BoxShadows.Parse("0 0 0 0 Transparent");
-```
+## Preflight 失败确认（E8, 2026-06-23）
 
-```xml
-<Setter Property="BoxShadow" Value="{StaticResource NoBoxShadow}"/>
-```
-
-The root `scripts/verify.ts` gate reports `app-raw-hex-zero` and rejects a temporary raw-hex fixture, so an allowlist must not be introduced to bypass the ownership rule.
-
-### Class-based Visual States
-
-```xml
-<!-- GOOD: Classes driven by ViewModel bindings -->
-<Border Classes.drag-insert="{Binding IsDragInsertBefore}" />
-<Border Classes.compact="{Binding IsCompactLayout}" />
-```
-
-**Rule:** Visual states use CSS-like classes, not inline `Setter` blocks. Class names are defined in `MainWindowEntryClasses` or similar static containers.
-
-### Three View Modes
-
-Cards, Details, Names — only ONE is visible at a time:
-
-```csharp
-// MainWindowEntriesRootSelection.Select()
-Control Select(bool isDetailedList, bool isNamesView, Control details, Control names, Control cards)
-```
-
-**Source:** `MainWindow.axaml.cs` — `MainWindowEntriesRootSelection`
-
-### Main-window action hierarchy
-
-Keep high-frequency actions directly visible and place maintenance actions in labeled overflow menus:
-
-- Direct: launch selected, add entry, discover, preset apply/preview/launch.
-- Overflow: select/clear/refresh, command/address management, preset save/update/delete.
-
-An overflow trigger is a standard text `Button` with a `ContextMenu`, an automation name, and one shared view-only click handler. Menu items bind the existing ViewModel commands; do not create proxy commands or duplicate business logic in code-behind.
-
-```csharp
-if (sender is Control { ContextMenu: { } menu } control)
-{
-    menu.Open(control);
-    e.Handled = true;
-}
-```
-
----
-
-## Performance Rules
-
-### In-App Reorder: Use Pointer Capture, Not OLE DragDrop
-
-OLE `DragDrop.DoDragDropAsync` starts a nested Win32 message loop that prioritises
-input messages over render callbacks, causing drag stutter regardless of how
-lightweight the visual tree is. For in-app card/item reorder:
-
-```csharp
-// ❌ OLE drag-drop — nested message loop kills render scheduling
-await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move);
-
-// ✅ Pointer capture — fires on Avalonia's normal render loop
-pointer.Capture(this);
-// PointerMoved → update ghost + insert line
-// PointerReleased / PointerCaptureLost → commit
-```
-
-**Source:** `MainWindow.Drag.cs` P6 — full pointer-capture architecture with
-`ForceCleanup()` pattern for guaranteed pointer release on any exit path.
-
-### Drag Hot Path: Zero Layout, Zero Visual-Tree Walk
-
-Every element moved during drag must use `RenderTransform`, never
-`Canvas.SetLeft/SetTop` or property bindings that trigger `InvalidateMeasure`:
-
-```csharp
-// ❌ Triggers InvalidateArrange on parent → layout cascade
-Canvas.SetLeft(ghost, x);
-
-// ✅ Purely visual — compositor-only operation
-ghost.RenderTransform = new TranslateTransform(x, y);
-```
-
-```xml
-<!-- ❌ AffectsMeasure → InvalidateMeasure propagates to panel -->
-<Border IsVisible="{Binding IsDragInsertBefore}" />
-
-<!-- ✅ Render property — zero layout impact -->
-<Border Opacity="{Binding IsDragInsertOpacityBefore}" />
-```
-
-### Performance Diagnosis: Eliminate Before Optimising
-
-When a component is slow, **first hide it entirely** (`IsVisible=false`) and
-measure the performance delta. If hiding 450+ visual elements makes zero
-difference, the bottleneck is not in rendering — look at message loops, I/O,
-or GC. Do not optimise code you haven't proven is the bottleneck.
-
-**Source:** `pitfalls.md` §2.6 — full methodology with session evidence.
-
-### Card Layout Calculation
-
-Card sizing is cheap integer math in Core, not measure/arrange passes:
-
-```csharp
-// LauncherEntryLayoutCalculator computes rows/columns in O(n)
-// Sizes are delegated to CardLayoutProvider — single source of truth,
-// no per-VM mutable state, no memoization needed (calculation is trivially fast).
-```
-
-**Key invariants:**
-- `CardWidth`/`CardHeight`/`NameTileWidth`/`NameTileHeight` are **read-only properties** on `LauncherEntryViewModel` that delegate to `CardLayoutProvider`
-- `CardLayoutProvider` is owned by `LayoutManager` and exposed via `IEntryCardHost.CardLayout`
-- `CardLayoutProvider.Recalculate(availableSize, count)` is the only mutation path — called from `ApplyFilter()` and `UpdateCardsAvailableSize()`
-- Never store ephemeral View-derived dimensions as `[ObservableProperty]` with defaults on ViewModels — this creates staleness risk (see `LauncherEntryLayoutPresentation.cs` removal in git history)
-
----
-
-## Testing Views
-
-View-logic tests live in `WTLauncher.Tests/` and test **extracted pure functions**, not Avalonia controls:
-
-| Test file | What it tests |
-|-----------|--------------|
-| `LauncherDragGhostLayoutCalculatorTests.cs` | Ghost element layout math |
-| `MainWindowDragInsertDecisionTests.cs` | Drop target resolution + insert position logic |
-| `MainWindowEntryCardResolverTests.cs` | Visual tree card detection |
-| `MainWindowEntryCardContextMenuTests.cs` | XAML class/name contracts |
-| `MainWindowEntryRowDoubleTapTests.cs` | Double-tap launch decision |
-| `MainWindowViewModelTests.ModesTests.cs` | View mode (cards/details/names) switching contracts |
-
-**Pattern:** Extract the decision logic into a static method, test that. The XAML binding/visual behavior is verified by the `verify.ps1` GUI smoke step.
-
----
-
----
-
-## View State Preservation
-
-When switching between Cards/Details/Names, Avalonia rebuilds the visual tree. Scroll position perishes unless explicitly preserved.
-
-### Pattern: ViewModel-backed scroll state (F13b, 2026-06-23)
-
-```csharp
-// ViewModel owns scroll state (survives template switch)
-private readonly Dictionary<LauncherEntryViewMode, double> _scrollOffsets = new();
-public void SaveScrollOffset(LauncherEntryViewMode mode, double offset)
-    => _scrollOffsets[mode] = offset;
-public double GetScrollOffset(LauncherEntryViewMode mode)
-    => _scrollOffsets.TryGetValue(mode, out var v) ? v : 0;
-```
-
-**Contract**: Scroll state in ViewModel. Save on mode change, restore on layout updated. Never cache scroll offset in View code-behind fields — they become garbage on template switch.
-
-## Preflight Failure Confirmation (E8, 2026-06-23)
-
-```csharp
-// OLD (removed): skip confirmation when FailedCount > 0
-// if (preflight.Report.FailedCount == 0 && !await Confirm...)
-
-// NEW: always confirm when preflight has failures
-if (!RequireConfirmationForLaunches && preflight.Report.FailedCount == 0)
-    return true;  // skip only when clean preflight + toggle off
-```
-
-`StartBatch` no longer unconditionally skips valid items when preflight partially fails. Users decide via the confirmation dialog.
+`StartBatch` 不再因 preflight 部分失败无条件跳过有效条目；失败时始终弹确认让用户决定（仅 clean preflight + 关闭确认时跳过）。
 
 ## Code Review Checklist
 
-- [ ] No business logic in code-behind.
-- [ ] No hardcoded colors/sizes in XAML — all from `{StaticResource}`.
-- [ ] New dialog follows the `typed param → ShowDialog<T>` pattern.
-- [ ] New drag visual uses `drag-target` class, not duplicated tokens.
-- [ ] DragOver handler does not trigger full list refresh.
-- [ ] Keyboard alternatives exist for drag-only operations.
-- [ ] Dialog layout reuses `LauncherDialogButtons`/`LauncherDialogText` where applicable.
-- [ ] **XAML TimeSpan**: All `Duration`/`MinimumPopulateDelay` values use explicit `h:m:s.ms` format, never bare integers. `"150"` = 150 days in `TimeSpan.Parse`, not 150ms. Use `"0:0:0.150"`.
-- [ ] **NaN/Infinity guard**: All `MeasureOverride`/`ArrangeOverride` must guard `availableSize.Width`/`.Height` with `double.IsFinite` and `double.IsNaN` before using in calculations or passing to child `.Measure()`.
-- [ ] **Dialog default button**: Destructive confirmation dialogs (delete) must make Cancel the `isDefault: true` button. Only safe/affirmative dialogs (launch, save) may make the primary action the default.
-- [ ] **Exception filter unwrap**: Any `while` loop that unwraps exception wrappers (TypeInitializationException, AggregateException) must have a max-iteration guard (e.g., `for (var i = 0; i < 16 && ...)` ) to prevent infinite loops from null-InnerException cycles.
+- [ ] code-behind 无业务逻辑。
+- [ ] XAML 无硬编码颜色/尺寸，全 `{StaticResource}`。
+- [ ] 新对话框走 `typed param → ShowDialog<T>`。
+- [ ] 新 drag 视觉用 `drag-target` class。
+- [ ] DragOver 不触发全列表刷新。
+- [ ] drag 操作有键盘替代。
+- [ ] 对话框布局复用 `LauncherDialogButtons` / `LauncherDialogText`。
+- [ ] XAML TimeSpan 显式 `h:m:s.ms`，禁裸整数（`"150"` = 150 天非 150ms，用 `"0:0:0.150"`）。
+- [ ] `MeasureOverride` / `ArrangeOverride` 用 `double.IsFinite` / `IsNaN` 守卫可用尺寸。
+- [ ] 破坏性确认对话框 Cancel `isDefault:true`；仅安全/肯定对话框 Primary 为默认。
+- [ ] 异常解包 while 循环带 `for i<16` 上限。

@@ -1,42 +1,30 @@
 # Core Layer Development Guidelines
 
-> `WTLauncher.Core` — pure data, contracts, and rules with zero UI dependencies.
-
----
-
-## Overview
-
-The Core layer (`src/avalonia-launcher/src/WTLauncher.Core/`) is the foundation of the launcher. It must never reference Avalonia, CommunityToolkit.Mvvm, or any UI framework. Every type here is either a data record, a pure function, or a static helper with no side effects beyond file I/O (in persistence helpers).
-
-**Reference files:**
-- `src/avalonia-launcher/src/WTLauncher.Core/LaunchEntry.cs` — canonical data record shape
-- `src/avalonia-launcher/src/WTLauncher.Core/LauncherJson.cs` — JSON persistence facade (delegates to LauncherJsonSerializer + FileLauncherJsonIO)
-- `src/avalonia-launcher/src/WTLauncher.Core/LauncherJsonSerializer.cs` — Zone 0 pure JSON serializer (no I/O)
-- `src/avalonia-launcher/src/WTLauncher.Core/LauncherStoreValidator.cs` — Zone 0 pure schema validator
-- `src/avalonia-launcher/src/WTLauncher.Core/ILauncherJsonIO.cs` — Zone 0 boundary port for JSON I/O
-- `src/avalonia-launcher/src/WTLauncher.Core/IStorePersistence.cs` — Zone 0 boundary port for store I/O
-- `src/avalonia-launcher/src/WTLauncher.Core/LauncherDesignTokens.cs` — single source of design constants
-
----
+> `WTLauncher.Core` — 纯数据/契约/规则，零 UI 依赖。禁止引用 Avalonia、CommunityToolkit.Mvvm、`WTLauncher.App`。
 
 ## Guidelines Index
 
-| Guide | Description |
-|-------|-------------|
-| [Directory Structure](./directory-structure.md) | 5-layer architecture and project layout |
-| [Data Types](./data-types.md) | Records, enums, design tokens, immutable data |
-| [Persistence](./persistence.md) | JSON persistence, atomic writes, .bak rotation |
-| [Error Handling](./error-handling.md) | Validation, exception types, status text patterns |
-| [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns, invariants |
+| Guide | 内容 |
+|-------|------|
+| [Directory Structure](./directory-structure.md) | 5 层架构与项目布局 |
+| [Data Types](./data-types.md) | record / enum / design token / 值对象 |
+| [Persistence](./persistence.md) | 单文件 JSON、原子写、备份轮转 |
+| [Error Handling](./error-handling.md) | 校验、异常类型、状态文本 |
+| [Quality Guidelines](./quality-guidelines.md) | 不变量、禁止模式、Review 清单 |
 
----
+## Pre-Development Checklist
+
+- [ ] 改 Core 前先读本层 5 份指南与 [Pitfalls](../guides/pitfalls.md) 第 1、2 章。
+- [ ] 新类型是否零 UI 依赖？能否脱离 Avalonia 测试？能则留在 Core，否则上移 ViewModels。
+- [ ] 新 JSON 字段：加 `[JsonPropertyName]` + `[JsonRequired]`，字符串默认 `""`。
+- [ ] 新常量先 `grep` 确认是否已存在于 `LauncherDesignTokens`。
+
+## Quality Check
+
+- [ ] `dotnet test -c Release` 全绿；提交前 `npm run verify`。
+- [ ] 不违反 `ArchitectureRules` R1-R10；Core 不引用 Avalonia / CommunityToolkit.Mvvm / App。
+- [ ] 对照 `quality-guidelines.md`「Forbidden Patterns」逐条自检。
 
 ## Core Principle
 
-**"Bad programmers worry about the code. Good programmers worry about data structures."**
-
-The Core layer exists so that business rules are testable without spinning up a window. Every time a rule creeps into a ViewModel that could live in Core, ask: "Can I test this without Avalonia?" If yes, move it down to Core.
-
----
-
-**Language**: All documentation in **English**.
+> 数据结构优先于代码。能在 Core 测试的规则不下沉到 ViewModel。

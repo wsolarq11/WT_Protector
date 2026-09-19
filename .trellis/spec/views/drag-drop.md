@@ -1,103 +1,37 @@
 # Drag & Drop — Views Layer
 
-> Ghost factory, insert indicators, and drag session management. FLIP animation removed (2026-06-23 ultrareview B1).
+> ghost 工厂、插入指示器、drag session 管理。FLIP 动画已移除（2026-06-23 B1）。
 
----
+## 架构链
 
-## Drag Architecture
+`MainWindow.Drag.cs`（事件：DragOver 更新指示器 / Drop 提交）→ `LauncherDragReorderWorkflow`（协调 ghost 布局 + reorder）→ `LauncherDragReorderSession`（全部 drag 状态唯一所有者）。
 
-```
-User starts drag on card
-    │
-    ▼
-MainWindow.Drag.cs (event handlers)
-    │  DragOver → update insert indicator
-    │  Drop → commit reorder
-    │
-    ▼
-LauncherDragReorderWorkflow (ViewModels)
-    │  Coordinates ghost layout + reorder logic
-    │
-    ▼
-LauncherDragReorderSession (ViewModels)
-    │  Single owner of all drag state
-```
+## Ghost 工厂
 
----
+`MainWindow.Drag.cs`：克隆拖动卡片为 overlay，60-80% 透明度、同源卡片尺寸、固定指针偏移、全部颜色取自 `LauncherDesignTokens`。尺寸/偏移由 `LauncherDragGhostLayoutCalculator`（Core）计算。
 
-## Ghost Factory
+## 插入指示器
 
-**Source:** `src/avalonia-launcher/src/WTLauncher.App/Views/MainWindow.Drag.cs`
-
-Creates a visual clone of the dragged card as an overlay with:
-- Reduced opacity (60-80%)
-- Same dimensions as the source card
-- Offset from pointer by a fixed delta
-- **All colors from `LauncherDesignTokens`** (not hardcoded brushes)
-
-Ghost dimensions and pointer offset are computed by `LauncherDragGhostLayoutCalculator` (Core layer) — see below.
-
----
-
-## Insert Indicator
-
-**Source:** `MainWindow.axaml` + `MainWindow.Drag.cs`
-
-The insert indicator is a visual line/border that appears between cards during DragOver. Its state is managed by `DragCueState` on each `LauncherEntryViewModel`.
-
-### Token Ownership (from DESIGN.md)
-
-- Visual token: `drag-target` class — single source for color, radius, opacity, hit-test.
-- Three views (Cards/Details/Names) only differ in **direction, size, positioning** — never redefine colors.
-- `IsDragInsertBefore` / `IsDragInsertAfter` are **read-only projections** of `DragCueState`.
-
----
+状态由每个 `LauncherEntryViewModel` 的 `DragCueState` 管理。Token 所有权（DESIGN.md）：`drag-target` class 是颜色/圆角/透明度/hit-test 唯一源；三视图只改方向/尺寸/位置，不重定义颜色；`IsDragInsertBefore` / `IsDragInsertAfter` 是 `DragCueState` 只读投影。
 
 ## DragReorderSession
 
-**Source:** `src/avalonia-launcher/src/WTLauncher.App/ViewModels/LauncherDragReorderSession.cs`
+`LauncherDragReorderSession` 持有全部 drag 状态（snapshot / source / target / last preview），禁散字段。规则：一切 drag 状态在一个 `DragReorderSession?` 字段；想加 `_dragSource` / `_dragTarget` 就停手。测试：`LauncherDragReorderSessionTests.cs`、`LauncherDragReorderWorkflowTests.cs`。
 
-```csharp
-public sealed class LauncherDragReorderSession
-{
-    // Single owner of ALL drag state
-    // snapshot, source, target, last preview
-    // NO loose fields scattered across ViewModel
-}
-```
+## 键盘 reorder
 
-**Companion:** `src/avalonia-launcher/src/WTLauncher.App/ViewModels/LauncherDragReorderWorkflow.cs` — coordinates the multi-step drag workflow (snapshot → preview → commit) on top of the session.
+`MoveUp()` / `MoveDown()` + `CanMoveUp()` / `CanMoveDown()` 是 drag 的键盘可访问替代（当前在 MainWindowViewModel 单文件）。
 
-**Rule:** All drag state lives in ONE `DragReorderSession?` field. If you find yourself adding a `_dragSource` or `_dragTarget` field to the ViewModel, stop — it already exists in the session.
+## 幽灵布局计算
 
-**Tests:** `LauncherDragReorderSessionTests.cs`, `LauncherDragReorderWorkflowTests.cs`.
-
----
-
-## Keyboard Reorder (Non-Drag Alternative)
-
-**Source:** `src/avalonia-launcher/src/WTLauncher.App/ViewModels/MainWindowViewModel.cs`
-
-Entries support `MoveUp()` / `MoveDown()` commands with `CanMoveUp()` / `CanMoveDown()` guards. These are the keyboard-accessible alternatives to drag reorder. (Until the god-class is split, these commands live in the single MainWindowViewModel file.)
-
----
-
-## Drag Ghost Layout Calculator
-
-**Source:** `src/avalonia-launcher/src/WTLauncher.Core/LauncherDragGhostLayoutCalculator.cs`
-
-Pure Core-layer calculation of ghost dimensions and pointer offset. Lives in Core because it's testable without any UI framework.
-
-**Test coverage:** `LauncherDragGhostLayoutCalculatorTests.cs`
-
----
+`LauncherDragGhostLayoutCalculator`（Core 纯函数），测试 `LauncherDragGhostLayoutCalculatorTests.cs`。
 
 ## Forbidden Patterns
 
-- ❌ **Drag state scattered across multiple ViewModel fields** — use `DragReorderSession`.
-- ❌ **Insert indicator colors duplicated per view mode** — use `drag-target` class.
-- ❌ **Ghost opacity/size hardcoded in code-behind** — use `LauncherDragGhostLayoutCalculator`.
-- ❌ **Ghost colors hardcoded** — use `LauncherDesignTokens` (fixed 2026-06-23 ultrareview Q7).
-- ❌ **Drag as the ONLY way to reorder** — always keep MoveUp/MoveDown as keyboard fallback.
-- ❌ **`_dragCardCache` fallback pattern** — removed 2026-06-23 ultrareview B2. Visual hit-test (`GetVisualAt`) is the correct fallback.
-- ❌ **`CommitDragReorder` 成功后跳过 `ApplyFilter`** — 卡片视图绑定 `VisibleGroups`（由 `ApplyFilter` → `RebuildVisibleGroups` 构建），跳过则卡片位置不更新。`CommitDragReorder` 必须无条件调用 `ApplyFilter()`。所有条件跳过必须验证 `VisibleGroups` / `VisibleCount` / `IsVisibleEmpty` 等派生投影已被重建。
+- ❌ drag 状态散在多个 VM 字段；用 `DragReorderSession`。
+- ❌ 插入指示器颜色按视图复制；用 `drag-target` class。
+- ❌ code-behind 硬编码 ghost 透明度/尺寸；用 `LauncherDragGhostLayoutCalculator`。
+- ❌ ghost 颜色硬编码；用 `LauncherDesignTokens`（2026-06-23 Q7）。
+- ❌ drag 是唯一 reorder 方式；保留 MoveUp/MoveDown。
+- ❌ `_dragCardCache` fallback（2026-06-23 B2 删除）；用视觉 hit-test `GetVisualAt`。
+- ❌ `CommitDragReorder` 成功后跳过 `ApplyFilter`；必须无条件 `ApplyFilter()`（卡片视图绑 `VisibleGroups`）。任何条件跳过须验证 `VisibleGroups` / `VisibleCount` / `IsVisibleEmpty` 等派生投影已重建。

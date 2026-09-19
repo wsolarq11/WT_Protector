@@ -1,764 +1,94 @@
 # MVVM Pattern — Views Layer
 
-> View ↔ ViewModel contract, dialog injection, and design token flow.
+> View↔ViewModel 契约、对话框注入、design token 流。
 
----
+## Wiring Contract（2026-08-15，取代旧 Func/Action 注入）
 
-## Wiring Contract Update (2026-08-15)
+- `IDialogService` 打开窗口；对话框契约禁暴露 `Func<...>` / `Action<...>` 桥。
+- `IProjectionSynchronizer.SynchronizeProjections(ProjectionSyncMode)` 是唯一投影重建入口（`VisibleOnly` / `Mutation` / `FullReload`）；调用方禁直接调私有 `ApplyFilter` / `RebuildVisibleGroups`。
+- `ILaunchCoordinatorContext : IProjectionSynchronizer`；`SaveConfig(LaunchSaveResultKind)` 返回 `LaunchSaveResult`（区分外部启动副作用后的保存失败）。
+- `IConfigExchangeService` 包导入/导出文件 IO；`IUpdateManifestReader` 包 HTTP(S)/本地 manifest 读取。
+- `MainWindowViewModel` 接收 `StoreGrain`、`IDialogService`、`IEntryService`、`IPresetService`、`Func<DateTimeOffset>`、可选 `IConfigExchangeService`。
 
-> The older Func/Action dialog-injection guidance below is retained as history. The current contracts supersede it.
+## 组合根（App.axaml.cs）
 
-- `IDialogService` opens windows; dialog contracts must not expose `Func<...>` or `Action<...>` bridges.
-- `IProjectionSynchronizer.SynchronizeProjections(ProjectionSyncMode)` is the single projection rebuild entry for `VisibleOnly`, `Mutation`, and `FullReload`. Callers must not invoke private `ApplyFilter` or `RebuildVisibleGroups` directly.
-- `ILaunchCoordinatorContext : IProjectionSynchronizer`; `SaveConfig(LaunchSaveResultKind)` returns `LaunchSaveResult`, distinguishing saves that fail after an external launch side effect.
-- `IConfigExchangeService` wraps import/export file IO; `IUpdateManifestReader` wraps HTTP(S)/local update manifest reads.
-- `MainWindowViewModel` receives `StoreGrain`, `IDialogService`, `IEntryService`, `IPresetService`, `Func<DateTimeOffset>`, and optional `IConfigExchangeService`.
+`InjectDesignTokens()`（LauncherDesignTokens→XAML Resources）→ `OnFrameworkInitializationCompleted()`：`ResolveConfigPath → Load → new LaunchWorkflow → new DialogService → new EntryService(dialogService) → new PresetService(dialogService) → new MainWindowViewModel(interfaces) → new MainWindow(vm) → dialogService.Initialize(mainWindow)`。
 
-## Architecture
+## Feature-Service 构造与 VM 所有权
 
-```
-App.axaml.cs (composition root)
-    │
-    ├─ InjectDesignTokens() ─── LauncherDesignTokens → XAML Resources
-    │
-    └─ OnFrameworkInitializationCompleted()
-        ├─ LauncherStore.ResolveConfigPath()
-        ├─ LauncherStore.Load()
-        ├─ new LauncherLaunchWorkflow()
-        ├─ new DialogService()
-        ├─ new EntryService(dialogService)
-        ├─ new PresetService(dialogService)
-        ├─ new MainWindowViewModel(...interfaces...)
-        └─ new MainWindow(viewModel)
-            └─ dialogService.Initialize(mainWindow)
-```
+契约：`App.axaml.cs` 是生产组合根，构造具体服务；VM 只收接口，禁 `new EntryService` / `new PresetService`；feature service 是无状态 workflow 所有者，不拥有可观察聚合、不直接持久化；VM 保留可绑定状态、命令、CQ-02 事务应用、状态/回执映射、属性通知顺序；已有 Core 所有者或注入 workflow 直接复用，不加只转发一个方法的服务。矩阵：注入服务 null → 构造抛 `ArgumentNullException`；服务返回校验/取消状态 → VM 只发布状态不变异不持久化；服务返回更新不可变状态 → VM 经 mutation 事务应用；Store 提交失败 → VM 恢复完整快照并保留保存错误；提取需整个 VM/回调袋 → 保持编排，seam 不稳定。测试：服务直测覆盖成功/取消/可恢复失败；R7-R10 防 Entry/Preset 服务引用 Views 或 `System.IO.File`。
 
-**Source:** `src/avalonia-launcher/src/WTLauncher.App/App.axaml.cs`
+## Dialog Injection
 
----
-
-## Scenario: Feature-service construction and ViewModel ownership
-
-### 1. Scope / Trigger
-
-Apply this contract whenever a workflow is extracted from `MainWindowViewModel` or a new feature service is added.
-
-### 2. Signatures
-
-```csharp
-public MainWindowViewModel(
-    string storePath,
-    LauncherStoreFile storeFile,
-    LauncherLaunchWorkflow launchWorkflow,
-    IDialogService dialogService,
-    IEntryService entryService,
-    IPresetService presetService,
-    Func<DateTimeOffset> utcNow);
-```
-
-### 3. Contracts
-
-- `App.axaml.cs` is the production composition root and constructs concrete feature services.
-- `MainWindowViewModel` receives interfaces and must not `new EntryService` or `new PresetService`.
-- Feature services are stateless workflow owners. They do not own the observable aggregate and do not persist directly.
-- ViewModel retains bindable state, commands, CQ-02 transaction application, status/receipt mapping and property notification order.
-- Reuse an existing Core owner or injected workflow directly; do not add a service that only forwards one method.
-
-### 4. Validation & Error Matrix
-
-| Condition | Required behavior |
-| --- | --- |
-| Any injected service is null | Constructor throws `ArgumentNullException` |
-| Service returns validation/cancel status | ViewModel publishes status without mutating/persisting |
-| Service returns updated immutable state | ViewModel applies it through the mutation transaction |
-| Store commit fails | ViewModel restores the complete snapshot and preserves the save error |
-| Proposed extraction needs the whole ViewModel/callback bag | Keep it as orchestration; the seam is not stable |
-
-### 5. Good/Base/Bad Cases
-
-- Good: `PresetService` owns CRUD, eligibility, reference counting and selection-preview rules.
-- Base: `LauncherEntryQuery.FilterAndSort` remains a direct one-line Core call; collection synchronization remains in ViewModel.
-- Bad: adding `LayoutService.FilterAndSort(...) => LauncherEntryQuery.FilterAndSort(...)` with no new contract.
-
-### 6. Tests Required
-
-- Direct service tests cover success, cancel/validation and recoverable failure where applicable.
-- `ArchitectureRules` R7–R10 prevent Entry/Preset services from referencing Views or `System.IO.File`.
-- Existing ViewModel tests prove binding, persistence and rollback behavior remain compatible.
-
-### 7. Wrong vs Correct
-
-```csharp
-// Wrong: hidden concrete construction inside the ViewModel.
-_presetService = new PresetService(dialogService);
-
-// Correct: composition root constructs; ViewModel validates the interface.
-_presetService = presetService ?? throw new ArgumentNullException(nameof(presetService));
-```
-
----
-
-## Dialog Injection Pattern
-
-ViewModels never create Windows directly. The `MainWindow` constructor injects `Func<>` delegates that wrap dialog `ShowDialog<>` calls:
-
-```csharp
-// In MainWindow constructor:
-viewModel.ConfirmLaunchAsync = confirmation =>
-    new ConfirmLaunchWindow(confirmation).ShowDialog<bool>(this);
-
-viewModel.ConfirmBatchLaunchAsync = confirmation =>
-    new ConfirmBatchLaunchWindow(confirmation).ShowDialog<bool>(this);
-
-viewModel.RequestEntryDraftAsync = entry =>
-    new EntryDetailsWindow(entry, ...).ShowDialog<EntryDraft?>(this);
-```
-
-**Why:**
-1. ViewModels stay testable — tests inject mock `Func<>` that return canned results.
-2. View layer owns the window lifecycle — no `Window` references leak into ViewModels.
-3. One composition point — all dialog wiring visible in one place.
-
-**Source:** `MainWindow.axaml.cs` lines 25-30.
-
----
+VM 永不 `new Window()`；`MainWindow` 构造注入 delegate 包 `ShowDialog<>`。理由：VM 可测（mock delegate 返回固定结果）、View 拥有窗口生命周期、单一组合点。旧 Func/Action 桥已由 `IDialogService` 取代（保留为历史）。
 
 ## Design Token Flow
 
-```
-LauncherDesignTokens (Core, const)
-    │
-    ▼
-App.axaml.cs InjectDesignTokens()
-    │  SolidColorBrush(Color.Parse(token))
-    │  new CornerRadius(token)
-    │  new Thickness(token)
-    ▼
-Application.Resources (XAML runtime dictionary)
-    │
-    ▼
-MainWindow.axaml bindings: {StaticResource PrimaryBrush}
-```
+`LauncherDesignTokens(Core const) → App.axaml.cs InjectDesignTokens()`（`Color.Parse` / `CornerRadius` / `Thickness`）→ `Application.Resources` → XAML `{StaticResource PrimaryBrush}`。规则：XAML 禁硬编码颜色/尺寸，一律引用 token 资源键。
 
-**Rule:** Never hardcode a color/size value in XAML. Always reference a resource key defined by `LauncherDesignTokens`.
+## ViewModelBase + 确定性生命周期
 
-**Source:** `App.axaml.cs` lines 24-69.
+- 每个 VM 必须继承 `ViewModelBase`（非裸 `ObservableObject`）。
+- 所有事件/IObservable 订阅经 `AddDisposable` 注册，Dispose 自动取消；禁匿名 lambda 永不解绑。
+- 替换 ObservableCollection 中的 VM 时先 Dispose 旧条目（`foreach vm.Dispose(); _entries.Clear();`）。
+- 单源状态：VM 禁持有 `StoreGrain.Select()` 副本；只读投影派生（`CurrentSettings => _storeGrain.Select(...)`）；禁 `_settings` 字段复制。
 
----
+## ViewModel↔View 绑定
 
-## ViewModelBase + 确定性生命周期 (CFA Step 3)
+单向 `{Binding StatusText}` / `{Binding LaunchCommand}`；双向 `{Binding FilterText, Mode=TwoWay}`。Selection：`LauncherEntryViewModel.IsSelected` setter 调 `_owner.UpdateSelection()` 立即持久化。
 
-### Convention
+## 声明式管理窗口 + 模态编辑器路由
 
-Every ViewModel **must** inherit `ViewModelBase` (not raw `ObservableObject`) to enable deterministic cleanup:
+稳定布局/行渲染放编译 XAML（`ItemsSource` / `SelectedItem` / 类型化 `DataTemplate`）；集合 mutation 替换后通知空态投影，code-behind 禁 clear/rebuild 控件；code-behind 可开 owner 相对模态编辑器并把返回值路由到 VM 命令；公共无参构造仅为 Avalonia 加载 XAML，生产用类型化构造。矩阵：tab/选择/删除命令/可见性 = VM 绑定；行渲染与选中边框 = XAML/DataTemplate；双击/工具栏开编辑器 = code-behind；校验/mutation/持久化/回滚 = VM/Core。Bad：`RenderRows()` 清 StackPanel 重建子节点。
 
-```csharp
-public sealed partial class LauncherEntryViewModel : ViewModelBase  // ✅
-public sealed partial class SomeViewModel : ObservableObject        // ❌
-```
+## ObservableObject
 
-### 订阅管理
+VM 继承 `ObservableObject`（CommunityToolkit.Mvvm）；`[ObservableProperty]` 生成属性 + 通知，`[RelayCommand]` 生成命令。规则：CommunityToolkit.Mvvm 是 ViewModels 唯一允许的第三方依赖。
 
-所有事件/IObservable 订阅必须通过 `AddDisposable` 注册，在 ViewModel 被 Dispose 时自动取消：
+## 类型化权威状态内容
 
-```csharp
-// ✅ Good: 通过 AddDisposable 管理生命周期
-PropertyChangedEventHandler handler = OnCardLayoutPropertyChanged;
-_owner.CardLayout.PropertyChanged += handler;
-AddDisposable(new DisposableAction(() => _owner.CardLayout.PropertyChanged -= handler));
+`LauncherStatusContent(string Text, LauncherStatusTone Tone)` 是 MainWindow 唯一可写状态权威；text/tone/indicator/boolean XAML 投影只读。`ServiceCanceled<T>(LauncherStatusContent Status)` / `ServiceFailure<T>(...)` 原样传输类型化内容。workflow formatter 拥有精确文案 + 显式 tone，生产代码禁从中文关键字推断 tone。CQ-02 save helper 内部可保留字符串错误传输，MainWindow 边界显式包为 Error。禁 timer/queue/history/持久化字段/后台任务。矩阵：空文案 → 构造抛；取消 → Warning；部分成功/跳过 → Warning；保存/加载/对话框/校验/启动失败 → Error；完成 → Success；就绪/加载/预览/进行中 → Neutral。Bad：`Classify(StatusText)` 扫描"失败/已保存"改 tone。
 
-// ❌ Bad: 匿名 lambda 永不取消
-_owner.CardLayout.PropertyChanged += (_, e) => OnPropertyChanged(e.PropertyName!);
-```
+## AutoCompleteBox 搜索
 
-### 集合替换
+搜索框用 `AutoCompleteBox`（非 TextBox）。属性：`ItemsSource={Binding SearchHistoryItems}`、`MinimumPrefixLength=1`、`MinimumPopulateDelay=0:0:0.150`、`IsTextCompletionEnabled=False`。规则：`ItemsSource` 绑 `IReadOnlyList<string>`（内置 StartsWith 大小写不敏感）；`IsTextCompletionEnabled=False` 防内联自动补全；`MinimumPopulateDelay` 用显式 `h:m:s.ms`（裸 `150` = 150 天）；XAML 不设 `FilterMode`。差异：AutoCompleteBox 无 `SelectAll()`（Ctrl+F 只 `Focus()`）；`IsDropDownOpen` 区分下拉打开/关闭。
 
-替换 ObservableCollection 中的 ViewModel 条目时，必须 Dispose 旧条目：
+## Commit-on-Enter
 
-```csharp
-// ✅ Good: Dispose 旧 VM 释放事件订阅
-foreach (var vm in _entries) vm.Dispose();
-_entries.Clear();
+搜索历史只在 Enter 写入：`OnWindowKeyDown` Enter + source=SearchTextBox + `!IsDropDownOpen` → `RecordSearchTerm()` → `LauncherSearchHistory.Record()`（Normalize + 去重 + 置顶）→ `MaximumTerms`(20) → snapshot/rollback 持久化。不在 `OnFilterTextChanged` 写（每次按键触发；`LastFilterText` 持久化是有意设计，搜索历史是"确认"语义）。
 
-// ❌ Bad: 旧 VM 仍被事件源引用，GC 无法回收
-_entries.Clear();
-```
+## StoreGrain save-first-then-commit
 
-### 单源状态 (CFA Step 1)
+签名：`Dispatch(Func<LauncherStoreFile,LauncherStoreFile>)`、`DispatchErrorOr(...)`；失败后 VM `RestoreVmStateFromStore()`。契约：reducer 结果先经 `IStorePersistence`（`FileStorePersistence` → `FileLauncherJsonIO`，temp + `File.Replace` + `.bak`）落盘，再在 `Grain<TState>` 锁内更新内存；保存失败内存不变、异常传播（或 `DispatchErrorOr` 转 `ErrorOr`）。失败后缓存本地态（`_settings` / `_list.MutableEntries`）必须 `RestoreVmStateFromStore()`：重读 `_settings`、presets、entries，再 `EnsureCustomOrderContainsEntries()` + `RefreshAllProjections()`。历史：`AppStore.Mutate`（快照前→revert）已被 2026-07-24 VTK 迁移移除。矩阵：reducer 成功 + 保存成功 → 盘先更新内存后更新，订阅者通知；reducer 成功保存失败 → 内存不变、`DispatchErrorOr` 返回 `LauncherErrors.ConfigSaveFailed`、VM restore；reducer 抛 → 立即传播，内存文件不变。
 
-ViewModel **禁止**持有与 `StoreGrain.Select()` 重复的状态副本：
+## 类型化 feature-service 结果
 
-```csharp
-// ✅ Good: 只读投影从 StoreGrain 派生
-public LauncherSettings Settings => CurrentSettings;
-private void ApplyFilter() { ... CurrentSettings.CustomEntryOrder ... }
+`ServiceResult<T>` = `ServiceSuccess<T>` / `ServiceCanceled<T>` / `ServiceFailure<T>`。契约：`ServiceSuccess<T>.Value` 非空；Cancel/Failure 的 `Status` 非空 `LauncherStatusContent` 显式 tone；对话框 null/false → Canceled，可恢复异常/校验拒绝 → Failure，合法数据 → Success；VM 匹配三分支 + 不可达 default；持久化/快照/mutation/保存/回滚留在服务外；操作特定 payload 用不可变 sealed record 非匿名元组。Bad：`(LaunchEntry? Entry, string? Status)` 双可空。
 
-// ❌ Bad: _settings 字段复制 StoreGrain 状态 → 双源漂移
-private LauncherSettings _settings;
-```
+## MainWindow XAML 模块窄 owner 契约
 
-**Source:** `ViewModelBase.cs`, `DisposableAction.cs`
+`LauncherControlBar` / `LauncherEntriesView`：模块用 `MainWindowViewModel` 作 `x:DataType` 继承 DataContext，不镜像 VM 状态；公共控件只读访问，限于已证窗口行为；子 code-behind 只转发原始 sender/event args，MainWindow 保留 launch/context-menu/drag eligibility/scroll 决策；禁跨模块字符串 `FindControl`。Bad：`FindControl<ItemsControl>("CardsEntriesItemsControl")`；正确：类型化只读访问器。
 
----
+## 协作类 + 桥接委托
 
-## ViewModel ↔ View Binding
+职责域独立但依赖 MWVM 内部方法时，提取为 `ObservableObject` 协作类，经桥接委托通信。方向：MWVM→协作类 = `internal Func<>` / `Action<>`；协作类→MWVM = `PropertyChanged` 订阅；协作类→协作类 = `event Action?` 自定义事件（MWVM 中转）。构造顺序：1) new 协作类（委托全 null）→ 2) 设初始属性（`OnXxxChanged` 内 `if (Xxx is null) return;` 跳过）→ 3) 赋值桥接委托 → 4) 订阅事件。规则：`[ObservableProperty]` 的 `OnXxxChanged` 必须 null 守卫跳过构造期；禁 `SetXxxDirect(bool)`（触发 MVVMTK0034）。检查清单：协作类确需独立（>3 相关私有字段 + 操作）；桥接只暴露 MWVM 已有方法；遵循构造顺序；CA1001 误报用 `#pragma warning disable` + 解释确定性释放。
 
-### One-way: ViewModel → View
+Design Decision：保留 partial 文件作为编排层（RelayCommand 必须定义在 partial 类上被 source generator 识别）。区分：Manager 协作类 = 状态 + 业务 + 事件输出；MWVM partial = 编排（命令路由 + CanExecute + 事件处理 + 持久化协调）。partial 只应含编排；>5 行业务判断 → 下移 Manager/Core。
 
-```xml
-<TextBlock Text="{Binding StatusText}" />
-<Button Command="{Binding LaunchCommand}" />
-```
+## 状态单一源（2026-07-24）
 
-### Two-way: View ↔ ViewModel
+VM 禁持有 StoreGrain 副本；读走 `StoreGrain.Select`，写走 `Dispatch` / `DispatchErrorOr`。过渡态 `_settings` 仅构造期工作副本。编译期强制 WT1002/1003。
 
-```xml
-<TextBox Text="{Binding FilterText, Mode=TwoWay}" />
-```
+## Drag 工作流 FSM（2026-07-24）
 
-### Selection Pattern
-
-`LauncherEntryViewModel.IsSelected` setter calls `_owner.UpdateSelection()`, which immediately persists:
-
-```csharp
-public bool IsSelected
-{
-    get => _isSelected;
-    set
-    {
-        if (SetProperty(ref _isSelected, value))
-            _owner.UpdateSelection(this, value);  // → save config
-    }
-}
-```
-
-**Source:** `LauncherEntryViewModel.cs` lines 33-41.
-
-## Scenario: Declarative management window with modal editor routing
-
-### 1. Scope / Trigger
-
-Use this when a management Window has stable tabs, toolbars, list rows and empty states but still needs owner-relative modal editors.
-
-### 2. Signatures
-
-```csharp
-public ObservableCollection<CommandRow> CommandRows { get; }
-public CommandRow? SelectedCommandRow { get; set; }
-public bool HasNoCommandRows => CommandRows.Count == 0;
-
-public CommandManagementWindow(); // Avalonia runtime loader
-public CommandManagementWindow(CommandManagementViewModel viewModel); // production owner
-```
-
-### 3. Contracts
-
-- Stable layout and row rendering live in compiled XAML using `ItemsSource`, `SelectedItem` and typed `DataTemplate`.
-- Collection mutations notify empty-state projections after replacement; code-behind never clears/rebuilds controls.
-- Code-behind may open owner-relative modal editors and route returned values into existing ViewModel commands.
-- The public parameterless constructor exists only so Avalonia can reach the XAML resource; production composition uses the typed constructor.
-
-### 4. Validation & Error Matrix
-
-| Event | Owner |
-| --- | --- |
-| tab switch, selection, delete command, visibility | ViewModel binding |
-| list row rendering and selected border | XAML/DataTemplate |
-| double-tap or toolbar opens modal editor | code-behind |
-| validation, mutation, persistence, rollback | ViewModel/Core owner |
-
-### 5. Good/Base/Bad Cases
-
-- Good: `ListBox SelectedItem` binds two-way to the existing selected row and its template owns all row pixels.
-- Base: a click handler reads the selected row only to open `ShowDialog<T>(this)`.
-- Bad: `RenderRows()` clears a StackPanel and reconstructs every child after each collection change.
-
-### 6. Tests Required
-
-- ViewModel tests cover tab and empty/selection projections.
-- XAML structure test proves typed templates, collection bindings, selection bindings and automation status.
-- Structure test rejects retired render/build helpers and manual `PropertyChanged` subscriptions.
-- Full publish and GUI smoke prove XAML resources and the public loader constructor resolve.
-
-### 7. Wrong vs Correct
-
-```csharp
-// Wrong: the View mirrors observable state by rebuilding controls.
-rows.CollectionChanged += (_, _) => RenderRows();
-
-// Correct: XAML observes the collection directly.
-ItemsSource="{Binding CommandRows}"
-SelectedItem="{Binding SelectedCommandRow, Mode=TwoWay}"
-```
-
----
-
-## ObservableObject Pattern
-
-All ViewModels extend `ObservableObject` from CommunityToolkit.Mvvm:
-
-```csharp
-public sealed partial class MainWindowViewModel : ObservableObject
-{
-    [ObservableProperty]
-    private string _statusText = "...";
-    // Generates: public string StatusText { get; set; }
-    //           + PropertyChanged notification
-}
-```
-
-Commands use `[RelayCommand]`:
-
-```csharp
-[RelayCommand]
-private Task LaunchAsync() => _owner.LaunchAsync(this);
-// Generates: public IAsyncRelayCommand LaunchCommand { get; }
-```
-
-**Rule:** CommunityToolkit.Mvvm is the ONLY third-party dependency allowed in ViewModels.
-
-## Scenario: Typed authoritative status content
-
-### 1. Scope / Trigger
-
-Use this when MainWindow publishes user-facing operation status with semantic success, warning or error emphasis.
-
-### 2. Signatures
-
-~~~csharp
-public sealed record LauncherStatusContent(string Text, LauncherStatusTone Tone);
-public LauncherStatusContent StatusContent { get; set; }
-public string StatusText => StatusContent.Text;
-public LauncherStatusTone StatusTone => StatusContent.Tone;
-
-public sealed record ServiceCanceled<T>(LauncherStatusContent Status);
-public sealed record ServiceFailure<T>(LauncherStatusContent Status);
-~~~
-
-### 3. Contracts
-
-- StatusContent is the only writable MainWindow status authority; text, tone, indicator and boolean XAML projections are read-only.
-- Workflow formatter methods own both exact user text and explicit tone. Production code never infers tone from Chinese keyword markers.
-- ServiceCanceled and ServiceFailure transport the typed content unchanged; success payload and persistence ownership remain separate.
-- CQ-02 save helpers may retain string error transport internally. The MainWindow boundary wraps such strings explicitly as Error.
-- No timer, queue, history, persistence field or background task is permitted.
-
-### 4. Validation & Error Matrix
-
-| Condition | Required result |
-| --- | --- |
-| Status text is null, empty or whitespace | LauncherStatusContent constructor throws |
-| User cancels an operation | Warning |
-| Operation partially succeeds or skips items | Warning |
-| Save/load/dialog/validation/launch fails | Error |
-| Mutation or launch completes | Success |
-| Ready, loaded, preview or in-progress information | Neutral |
-
-### 5. Good/Base/Bad Cases
-
-- Good: LauncherEntryStatus.Updated returns StatusContent with Success.
-- Base: launch receipt text stays a multiline string because it is not the authoritative status value.
-- Bad: Classify(StatusText) scans for 失败 or 已保存 and silently changes tone when copy changes.
-
-### 6. Tests Required
-
-- Content tests cover missing-text validation and all four named tone factories.
-- Formatter tests assert both Text and Tone for cancellation, partial success and failure overlap.
-- Service-result tests prove typed content is preserved by identity.
-- ViewModel test asserts one StatusContent change notifies StatusText, tone, indicator and boolean projections.
-- Full publish and GUI smoke prove existing XAML bindings remain valid.
-
-### 7. Wrong vs Correct
-
-~~~csharp
-// Wrong: copy controls presentation semantics.
-StatusText = "已添加 2 个（1 个跳过）";
-public LauncherStatusTone StatusTone => Classify(StatusText);
-
-// Correct: the owning workflow makes the semantic decision.
-StatusContent = LauncherStatusContent.Warning("已添加 2 个（1 个跳过）");
-~~~
----
-
-## AutoCompleteBox for Search
-
-**Decision:** 搜索框使用 `AutoCompleteBox` 而非 `TextBox`。AutoCompleteBox 内置前缀匹配过滤、键盘导航（↓↑/Enter/Escape）、下拉建议列表、和 MinimumPopulateDelay 防抖。
-
-**关键属性配置：**
-
-```xml
-<AutoCompleteBox x:Name="SearchTextBox"
-                 Text="{Binding FilterText, Mode=TwoWay}"
-                 ItemsSource="{Binding SearchHistoryItems}"
-                 MinimumPrefixLength="1"
-                 MinimumPopulateDelay="150"
-                 IsTextCompletionEnabled="False"/>
-```
-
-**规则：**
-1. `ItemsSource` 绑定到 ViewModel 的 `IReadOnlyList<string>` 属性——AutoCompleteBox 内置 `StartsWith`（大小写不敏感）过滤器匹配当前输入。
-2. `IsTextCompletionEnabled="False"` ——不禁用内联自动补全，用户输入不被自动替换。
-3. `MinimumPopulateDelay="150"` ——150ms 去抖，防止每次按键都刷新下拉。
-4. **不在 XAML 中设置 `FilterMode`** ——默认 `StartsWith` 已是大小写不敏感。
-
-**与 TextBox 的差异：**
-- AutoCompleteBox **没有 `SelectAll()` 方法**。Ctrl+F 聚焦搜索框时只做 `Focus()`，不选全文本。
-- `IsDropDownOpen` 属性可区分"下拉打开（用户浏览建议）"和"下拉关闭（用户输入文本）"。
-
-**Source:** `MainWindow.axaml` lines 329-336, `MainWindowViewModel.Layout.cs` `SearchHistoryItems`.
-
----
-
-## Commit-on-Enter Pattern
-
-搜索历史写入使用"commit"语义——只在 Enter 键时写入，不在每次按键时写入：
-
-```
-Code-behind OnWindowKeyDown:
-  Enter + Source is SearchTextBox + !SearchTextBox.IsDropDownOpen
-    → viewModel.RecordSearchTerm()
-      → LauncherSearchHistory.Record()（Normalize + 去重 + 最新置顶）
-      → LauncherSearchHistory.MaximumTerms（上限 20 条）
-      → snapshot/rollback 持久化
-```
-
-**为什么不在 `OnFilterTextChanged` 里写搜索历史？** `FilterText` 每次按键都触发——LastFilterText 持久化是有意设计（保存/恢复搜索框文本）。但搜索历史应该是用户"确认"的搜索词（按 Enter 的动作），不是每次按键。
-
-**Source:** `MainWindow.axaml.cs` `OnWindowKeyDown`, `LauncherSearchHistory.cs`, `MainWindowViewModel.Layout.cs` `RecordSearchTerm()`.
-
----
-
-## Scenario: StoreGrain mutation with save-first-then-commit rollback
-
-### 1. Scope / Trigger
-
-Use this contract when a ViewModel mutation changes in-memory state that must persist to the unified launcher store. Rollback is built into `StoreGrain.Dispatch` — the reducer result is persisted to disk BEFORE memory is updated, so a failed save leaves memory unchanged and surfaces the error to the caller (verified in `WTLauncher.App/Infrastructure/StoreGrain.cs`).
-
-### 2. Signatures
-
-```csharp
-// The single write path (analyzer-enforced: DispatchMustBeOnlyWritePathAnalyzer)
-public void Dispatch(Func<LauncherStoreFile, LauncherStoreFile> reducer);
-public ErrorOr<Success> DispatchErrorOr(Func<LauncherStoreFile, LauncherStoreFile> reducer);
-
-// ViewModel-level sync after a failed save
-private void RestoreVmStateFromStore();
-```
-
-### 3. Contracts
-
-- `StoreGrain.Dispatch` applies the reducer, saves the result through `IStorePersistence` (→ `FileStorePersistence` → `FileLauncherJsonIO`, temp-file + `File.Replace` + `.bak`), and only then updates in-memory state inside the `Grain<TState>` lock. On save failure, memory is NOT updated and the exception propagates (or becomes an `ErrorOr` failure via `DispatchErrorOr`).
-- After a failed `Dispatch`/save, callers that cache local state (e.g., `_settings`, `_list.MutableEntries`) must call `RestoreVmStateFromStore()` to re-sync from `StoreGrain.Select`.
-- `RestoreVmStateFromStore` re-reads `_settings`, presets, and entries from the grain, then calls `EnsureCustomOrderContainsEntries()` and `RefreshAllProjections()`.
-- Historical note: the former `AppStore.Mutate` (snapshot-before → revert) was removed by the VTuber-Killer migration (2026-07-24); save-first-then-commit replaced it.
-
-### 4. Validation & Error Matrix
-
-| Condition | Required result |
-| --- | --- |
-| reducer succeeds + save succeeds | Disk updated, then memory updated atomically inside the grain lock; subscribers notified |
-| reducer succeeds but save fails (recoverable) | Memory unchanged; caller sees the error (`DispatchErrorOr` returns `LauncherErrors.ConfigSaveFailed`); VM calls `RestoreVmStateFromStore()` |
-| reducer itself throws | Exception propagates immediately; memory and file unchanged |
-
-### 5. Good/Base/Bad Cases
-
-- Good: entry mutation saves → grain notifies subscriber → VM re-reads `_settings` and preset state.
-- Base: save failure → memory unchanged → VM calls `RestoreVmStateFromStore()` → state matches pre-mutation.
-- Bad: mutating store state AND local state independently, forgetting to re-sync on failure.
-
-### 6. Tests Required
-
-- `StoreGrainTests` (file: `tests/Persistence/AppStoreTests.cs` — legacy filename): success does not revert; failure leaves memory unchanged; subscriber called only on success.
-- Every mutation family keeps a save-failure regression asserting `RestoreVmStateFromStore()` restores full state after a failed save.
-
-### 7. Implementation
-
-```csharp
-// StoreGrain.Dispatch mutation flow (simplified, StoreGrain.cs)
-var after = Mutate(state =>
-{
-    var newState = reducer(state);
-    _persistence.Save(newState, _storePath, backup: true); // save FIRST
-    return newState; // only then does Mutate commit to memory
-});
-try { StateChanged?.Invoke(after); }
-catch (Exception ex) when (LauncherErrors.IsRecoverable(ex)) { ErrorLog.Write(ex, "StoreGrain.StateChanged"); }
-```
-
-```csharp
-// ViewModel restore
-private void RestoreVmStateFromStore()
-{
-    _settings = _storeGrain.Select(s => s.Settings);
-    _presetManager.Load(...);
-    _list.ReplaceEntries(_storeGrain.Select(s => s.Entries));
-    EnsureCustomOrderContainsEntries();
-    RefreshAllProjections();
-}
-```
-
-
----
-
-## Scenario: Typed feature-service outcomes
-
-### 1. Scope / Trigger
-
-Use this contract when an App feature service operation can succeed, be canceled by the user, or fail recoverably and the ViewModel must branch on that outcome. Raw dialog adapters may retain nullable/bool window semantics; translate them at the feature-service boundary.
-
-### 2. Signatures
-
-```csharp
-public abstract record ServiceResult<T>;
-public sealed record ServiceSuccess<T> : ServiceResult<T>;
-public sealed record ServiceCanceled<T> : ServiceResult<T>;
-public sealed record ServiceFailure<T> : ServiceResult<T>;
-
-Task<ServiceResult<LaunchEntry>> IEntryService.AddEntryAsync(...);
-Task<ServiceResult<string>> IPresetService.RequestNewPresetAsync(...);
-ServiceResult<PresetMutation> IPresetService.AddPreset(...);
-```
-
-### 3. Contracts
-
-- `ServiceSuccess<T>.Value` is non-null and carries the complete data required for the caller's success path.
-- `ServiceCanceled<T>.Status` and `ServiceFailure<T>.Status` are non-null `LauncherStatusContent` values with explicit tone.
-- Dialog `null`/`false` becomes Canceled; recoverable exceptions and validation rejection become Failure; valid data becomes Success.
-- ViewModels match all three branches and use an unreachable default. Persistence, snapshot, mutation, save, and rollback remain outside the service.
-- Operation-specific success shapes use immutable sealed payload records instead of anonymous tuples.
-
-### 4. Validation & Error Matrix
-
-| Condition | Required result |
-| --- | --- |
-| Dialog closes or rejects confirmation | `ServiceCanceled<T>` with the existing cancellation text and Warning tone |
-| Dialog throws a recoverable exception | Log it and return `ServiceFailure<T>` with sanitized text and Error tone |
-| Draft/name/domain validation rejects input | `ServiceFailure<T>`; do not mutate caller state |
-| Domain workflow returns the expected payload | `ServiceSuccess<T>` with a non-null immutable payload |
-| Store save fails after success | ViewModel transaction restores its snapshot; service result is not rewritten |
-
-### 5. Good/Base/Bad Cases
-
-- Good: entry deletion success carries the snapshotted delete target and optional focused entry ID.
-- Base: preset name success carries the normalized string; cancel and failure carry only status.
-- Bad: `(LaunchEntry? Entry, string? Status)` permits both fields to be null or non-null and forces callers to infer the state.
-
-### 6. Tests Required
-
-- Result constructors reject null success payloads and null cancel/failure status content; content itself rejects blank text.
-- Each service family directly tests success, user cancellation, validation/recoverable failure, and operation-specific payload fields.
-- ViewModel regressions continue to assert status text, focus cleanup, preset fallback, persistence failure, and complete rollback.
-
-### 7. Wrong vs Correct
-
-```csharp
-// Wrong: four representable states, only two intended.
-var (entry, status) = await service.AddEntryAsync(...);
-if (entry is not null) { ... }
-else if (status is not null) StatusText = status;
-
-// Correct: every outcome is named and handled explicitly.
-switch (await service.AddEntryAsync(...))
-{
-    case ServiceSuccess<LaunchEntry> success: Add(success.Value); break;
-    case ServiceCanceled<LaunchEntry> canceled: StatusContent = canceled.Status; break;
-    case ServiceFailure<LaunchEntry> failure: StatusContent = failure.Status; break;
-    default: throw new UnreachableException();
-}
-```
-
-Do not grow this into a global exception taxonomy or replace direct Core contracts that do not require caller branching.
-
-## Scenario: Main-window XAML module with narrow owner contract
-
-### 1. Scope / Trigger
-
-Use this when a stable MainWindow region is large enough to own its XAML but window-level keyboard, scroll, context-menu or drag orchestration must remain in MainWindow.
-
-### 2. Signatures
-
-~~~csharp
-public sealed partial class LauncherControlBar : UserControl
-{
-    public AutoCompleteBox SearchBox { get; }
-    public ComboBox DisplayModeBox { get; }
-}
-
-public sealed partial class LauncherEntriesView : UserControl
-{
-    public event EventHandler<RoutedEventArgs>? EntryMoreClicked;
-    public event EventHandler<TappedEventArgs>? EntryRowDoubleTapped;
-    public event EventHandler<PointerPressedEventArgs>? EntryDragPointerPressed;
-}
-~~~
-
-### 3. Contracts
-
-- The module uses MainWindowViewModel as its compiled x:DataType and inherits the same DataContext; it never mirrors ViewModel state.
-- Public control access is read-only and limited to controls required by proven window behavior.
-- Child code-behind forwards original sender/event args only. MainWindow retains launch, context-menu, drag eligibility and scroll decisions.
-- Cross-module lookup by string FindControl is forbidden.
-
-### 4. Validation & Error Matrix
-
-| Condition | Required behavior |
-| --- | --- |
-| Avalonia loads the module | Public parameterless constructor calls InitializeComponent() |
-| Window needs focus/selection/scroll control | Use the module's typed read-only accessor |
-| XAML raises more/double-tap/pointer input | Forward the original event to the subscribed MainWindow handler |
-| Module would need copied state or a callback bag | Keep the orchestration in MainWindow; the proposed seam is too broad |
-
-### 5. Good/Base/Bad Cases
-
-- Good: EntriesView.EntryDragPointerPressed += OnEntryDragPointerPressed.
-- Base: the status panel stays in MainWindow because it is small and window-authoritative.
-- Bad: MainWindow.FindControl by child name, or a child ViewModel that mirrors selection.
-
-### 6. Tests Required
-
-- Structure test proves module composition, typed DataContext, named-control ownership and event forwarding.
-- Structure test rejects migrated templates and named controls remaining in MainWindow.
-- Release tests plus publish and GUI smoke prove compiled resources and loader constructors resolve.
-
-### 7. Wrong vs Correct
-
-~~~csharp
-// Wrong: fragile visual-tree reach-through.
-var cards = this.FindControl<ItemsControl>("CardsEntriesItemsControl");
-
-// Correct: explicit narrow contract.
-private ItemsControl CardsEntriesItemsControl => EntriesView.CardsItems;
-~~~
-
----
-
-## Collaborator Class with Bridge Delegates Pattern
-
-当 MWVM 的一个职责域足够独立（状态 + 操作 + 验证），但依赖 MWVM 的内部方法（如 `SaveConfig`、`ApplyFilter`、`DiscardDragReorderPreview`）时，提取为 **ObservableObject 协作类**，通过 **桥接委托** 与 MWVM 通信。
-
-### 协作类模式
-
-```csharp
-public sealed partial class EntryManager : ObservableObject
-{
-    // MWVM 设置的桥接委托
-    internal Func<LauncherSettings> SettingsGetter = null!;
-    internal Action<LauncherStatusContent> StatusApplier = null!;
-    // ...
-
-    // 协作类自己的事件（一对多通知）
-    internal event Action? EntriesChanged;
-    internal event Action? CountChanged;
-}
-
-public sealed partial class LaunchOrchestrator : ObservableObject
-{
-    [ObservableProperty]
-    private bool _requireConfirmationForLaunches;
-
-    internal Func<bool> SaveConfig = null!;
-    // ...
-}
-```
-
-### 通信方向
-
-| 方向 | 机制 | 例子 |
-|------|------|------|
-| MWVM → 协作类 | `internal Func<>` / `Action<>` 委托 | `SettingsPersister`、`FilterApplier`、`SaveConfig` |
-| 协作类 → MWVM | `PropertyChanged` 事件订阅 | `_launchOrchestrator.PropertyChanged += ...` |
-| 协作类 → 协作类 | `event Action?` 自定义事件 | `EntriesChanged` → MWVM 中转 |
-
-### 构造顺序（防止构造时持久化）
-
-```csharp
-// 1. new 协作类（所有桥接委托为 null）
-_launchOrchestrator = new LaunchOrchestrator(...);
-
-// 2. 设置初始属性值（OnXxxChanged 中 if (Xxx is null) return; 返回）
-_launchOrchestrator.RequireConfirmationForLaunches = _settings.RequireConfirmationForLaunches;
-
-// 3. 赋值桥接委托
-_launchOrchestrator.SettingsPersister = TryPersistSettingsChange;
-_launchOrchestrator.FilterApplier = ApplyFilter;
-
-// 4. 订阅事件
-_launchOrchestrator.PropertyChanged += (_, e) => { OnPropertyChanged(e.PropertyName!); };
-```
-
-**关键规则：** `[ObservableProperty]` 的 `OnXxxChanged` partial 方法中必须用 `null` 守卫跳过构造期——不能在析取后才赋值初始属性。切勿创建绕过生成器的 `SetXxxDirect(bool)` 方法（触发 MVVMTK0034）。
-
-### 检查清单
-
-- [ ] 协作类是否真的需要独立存在？先确认 MWVM 没有膨胀到需要提取（>3 个相关私有字段 + 操作）
-- [ ] 桥接委托是否只暴露 MWVM 已有的方法？不要为协作类创建 MWVM 原本没有的新方法
-- [ ] `[ObservableProperty]` 是否遵循构造顺序规则？初始化在委托赋值前
-- [ ] CA1001 是否因 `CancellationTokenSource` 等字段误报？如果是，用 `#pragma warning disable` + 解释确定性释放
-
-### Design Decision: Partial Files as Orchestration Layers
-
-**Context**: MWVM 组合重构 (Stages 1-6) 提取了 5 个 Manager 协作类后，MainWindowViewModel 仍有 13 个 partial 文件（约1800 行）包含 RelayCommand、CanExecute、事件处理和接口实现代码。
-
-**Options Considered**:
-1. 合并所有 partial 代码进 MainWindowViewModel.cs - 但会导致主文件从 453 行膨胀回约 2000 行，违背 orchestration 约 500 行的设计目标
-2. 删除 partial 文件、让命令分散在各 Manager 中 - 但 RelayCommand 必须定义在 partial 类上才能被 source generator 识别
-3. **保留 partial 文件** - 按命令域 (Presets/Batch/Layout/Drag/Grouping 等) 分文件，代码仍在 MainWindowViewModel 类上
-
-**Decision**: 保留 partial 文件。理由是：
-- RelayCommand / ObservableProperty 依赖 partial class source generator，代码必须定义在 MainWindowViewModel 类上
-- 按域分文件的 partial 模式提供天然的组织边界，比单文件更易维护
-- 主文件 453 行的核心目标已达成；partial 文件中的编排代码不是残余
-
-**关键区分**：
-- Manager 协作类 = 持有状态 + 业务逻辑 + 事件输出
-- MainWindowViewModel partial 文件 = 编排代码 (命令路由 + CanExecute + 事件处理 + 持久化协调)
-
-**Convention**: partial 文件只应包含编排代码。如果某个 partial 中出现超过 5 行的业务逻辑判断，说明应该将逻辑下移到对应的 Manager 协作类和 Core 层。
-
-## State Single-Sourcing Pattern (2026-07-24, Phase 1 triple-cut-arch)
-
-ViewModel 不得持有 `StoreGrain` 状态的副本。所有状态读取通过 `StoreGrain.Select`，所有写入通过 `StoreGrain.Dispatch` / `DispatchErrorOr`:
-
-```csharp
-// ✅ Correct: projection from single store
-internal LauncherSettings CurrentSettings => _storeGrain.Select(s => s.Settings);
-
-// ❌ Wrong: local field duplicates store state
-private LauncherSettings _settings;
-```
-
-**Transition state:** `_settings` field temporarily retained as working copy during construction. Full elimination requires DragWorkflow refactor (reads/writes through StoreGrain).
-
-**Compile-time enforcement:** Rule WT1002/1003 in `WTLauncher.Analyzers` reject direct `LauncherStore.Save` calls outside `StoreGrain.Dispatch`.
-
-## Drag Workflow as Finite State Machine (2026-07-24, Phase 4)
-
-拖拽工作流使用 `Stateless` 库建模为形式化状态机：
-
-```
-Idle → Dragging → Committing → Idle
-            ↕ (Preview re-entry)
-       → Idle (Cancel)
-```
-
-非法转换（如 Idle 状态下 Commit）由 FSM 禁止。状态机守卫调用现有的 `LauncherDragReorderSession` 逻辑。
-
-```csharp
-// State machine configuration in constructor:
-_machine.Configure(DragState.Idle).Permit(DragTrigger.Begin, DragState.Dragging);
-_machine.Configure(DragState.Dragging)
-    .PermitReentry(DragTrigger.Preview)
-    .Permit(DragTrigger.Commit, DragState.Committing)
-    .Permit(DragTrigger.Cancel, DragState.Idle);
-_machine.Configure(DragState.Committing).Permit(DragTrigger.Done, DragState.Idle);
-```
+`Stateless` 建模：`Idle → Dragging → Committing → Idle`，`Dragging ↔ Idle`（Preview 重入 / Cancel）。非法转换（Idle 下 Commit）FSM 禁止；守卫调用 `LauncherDragReorderSession` 逻辑。
 
 ## Forbidden Patterns
 
-- ❌ **ViewModel creates a `new Window()`** — dialogs always injected via `Func<>`.
-- ❌ **XAML contains hardcoded colors/sizes** — use `{StaticResource}` from design tokens.
-- ❌ **Code-behind contains business `if/else`** — delegate to ViewModel.
-- ❌ **View references Core types as data contracts** — Views only bind to ViewModel properties.
-- ❌ **在 SearchTextBox 上调用 `SelectAll()`** — AutoCompleteBox 无此方法。仅用 `Focus()`.
-- ❌ **ViewModel 持有 `_settings` 字段** — 使用 `CurrentSettings` 从 StoreGrain 读取。
-- ❌ **手写状态机守卫** — 使用 `Stateless` `StateMachine<TState,TTrigger>` 形式化建模。
+- ❌ VM `new Window()`；对话框注入。
+- ❌ XAML 硬编码颜色/尺寸；用 token `{StaticResource}`。
+- ❌ code-behind 业务 `if/else`；委托 VM。
+- ❌ View 引用 Core 类型作数据契约；只绑 VM 属性。
+- ❌ SearchTextBox 上 `SelectAll()`（AutoCompleteBox 无此方法）；只 `Focus()`。
+- ❌ VM 持有 `_settings`；用 `CurrentSettings`。
+- ❌ 手写状态机守卫；用 `Stateless` `StateMachine<TState,TTrigger>`。
