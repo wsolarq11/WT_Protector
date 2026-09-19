@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using WTLauncher.App.Features;
+using WTLauncher.App.Localization;
 using WTLauncher.Core;
 
 namespace WTLauncher.App.ViewModels;
@@ -45,4 +46,57 @@ public sealed partial class MainWindowViewModel
     public IReadOnlyList<LauncherCardsGroupOption> CardsGroupOptions => _layoutManager.CardsGroupOptions;
     public LauncherCardsGroupOption? SelectedCardsGroupOption { get => _layoutManager.SelectedCardsGroupOption; set => _layoutManager.SelectedCardsGroupOption = value; }
     public string CardsGroupKey { get => _layoutManager.CardsGroupKey; set => _layoutManager.CardsGroupKey = value; }
+
+    // Localized control-bar text resolves through the embedded JSON language pack.
+    // These are intentionally instance properties for compiled XAML binding, so
+    // CA1822 does not apply even though they do not read instance fields.
+#pragma warning disable CA1822
+    public string BarSubtitle => LauncherLocalization.Format("bar.subtitle");
+    public string BarSelectedPrefix => LauncherLocalization.Format("bar.selectedPrefix");
+    public string BarSelectedSuffix => LauncherLocalization.Format("bar.selectedSuffix");
+    public string BarSelectionMenu => LauncherLocalization.Format("bar.selectionMenu");
+    public string BarSelectionMenuAutomation => LauncherLocalization.Format("bar.selectionMenuAutomation");
+    public string BarSelectAll => LauncherLocalization.Format("bar.selectAll");
+    public string BarClearSelection => LauncherLocalization.Format("bar.clearSelection");
+    public string BarReload => LauncherLocalization.Format("bar.reload");
+    public string BarLaunchSelected => LauncherLocalization.Format("bar.launchSelected");
+    public string BarSearch => LauncherLocalization.Format("bar.search");
+    public string BarSearchPlaceholder => LauncherLocalization.Format("bar.searchPlaceholder");
+    public string BarSort => LauncherLocalization.Format("bar.sort");
+    public string BarView => LauncherLocalization.Format("bar.view");
+    public string BarPresetGroup => LauncherLocalization.Format("bar.presetGroup");
+    public string BarPresetPlaceholder => LauncherLocalization.Format("bar.presetPlaceholder");
+    public string BarPreview => LauncherLocalization.Format("bar.preview");
+    public string BarLaunch => LauncherLocalization.Format("bar.launch");
+    public string BarAddEntry => LauncherLocalization.Format("bar.addEntry");
+    public string BarCardsGroup => LauncherLocalization.Format("bar.cardsGroup");
+    public string BarDiscover => LauncherLocalization.Format("bar.discover");
+    public string BarManage => LauncherLocalization.Format("bar.manage");
+    public string BarManageAutomation => LauncherLocalization.Format("bar.manageAutomation");
+    public string BarExportAll => LauncherLocalization.Format("bar.exportAll");
+    public string BarExportAllAutomation => LauncherLocalization.Format("bar.exportAllAutomation");
+    public string BarExportSelected => LauncherLocalization.Format("bar.exportSelected");
+    public string BarExportSelectedAutomation => LauncherLocalization.Format("bar.exportSelectedAutomation");
+    public string BarImport => LauncherLocalization.Format("bar.import");
+    public string BarImportAutomation => LauncherLocalization.Format("bar.importAutomation");
+    public string BarRunHistory => LauncherLocalization.Format("bar.runHistory");
+    public string BarRunHistoryAutomation => LauncherLocalization.Format("bar.runHistoryAutomation");
+    public string BarCheckUpdate => LauncherLocalization.Format("bar.checkUpdate");
+    public string BarCheckUpdateAutomation => LauncherLocalization.Format("bar.checkUpdateAutomation");
+    public string BarCommands => LauncherLocalization.Format("bar.commands");
+    public string BarCommandsAutomation => LauncherLocalization.Format("bar.commandsAutomation");
+    public string BarAddress => LauncherLocalization.Format("bar.address");
+    public string BarAddressAutomation => LauncherLocalization.Format("bar.addressAutomation");
+    public string BarPresetMaintenance => LauncherLocalization.Format("bar.presetMaintenance");
+    public string BarPresetMaintenanceAutomation => LauncherLocalization.Format("bar.presetMaintenanceAutomation");
+    public string BarSaveAsNewPreset => LauncherLocalization.Format("bar.saveAsNewPreset");
+    public string BarSaveAsNewPresetAutomation => LauncherLocalization.Format("bar.saveAsNewPresetAutomation");
+    public string BarUpdatePreset => LauncherLocalization.Format("bar.updatePreset");
+    public string BarUpdatePresetAutomation => LauncherLocalization.Format("bar.updatePresetAutomation");
+    public string BarDeletePreset => LauncherLocalization.Format("bar.deletePreset");
+    public string BarDeletePresetAutomation => LauncherLocalization.Format("bar.deletePresetAutomation");
+    public string BarStaleTooltip => LauncherLocalization.Format("bar.staleTooltip");
+    public string BarStalePrefix => LauncherLocalization.Format("bar.stalePrefix");
+    public string BarStaleSuffix => LauncherLocalization.Format("bar.staleSuffix");
+#pragma warning restore CA1822
 }

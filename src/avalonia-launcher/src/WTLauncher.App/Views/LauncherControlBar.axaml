@@ -7,12 +7,12 @@
   <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
     <StackPanel>
       <TextBlock Classes="h1" Text="WT Launcher"/>
-      <TextBlock Classes="muted" Text="绿色便携启动器 · 搜索、勾选、一键启动"/>
+      <TextBlock Classes="muted" Text="{Binding BarSubtitle}"/>
     </StackPanel>
     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Top">
       <Border Background="{StaticResource BadgeSuccessBackgroundBrush}" CornerRadius="14" Padding="12,8" VerticalAlignment="Center">
         <TextBlock Foreground="{StaticResource BadgeSuccessForegroundBrush}">
-          <Run Text="已勾选 "/><Run Text="{Binding SelectedCount}"/><Run Text=" 项"/>
+          <Run Text="{Binding BarSelectedPrefix}"/><Run Text="{Binding SelectedCount}"/><Run Text="{Binding BarSelectedSuffix}"/>
         </TextBlock>
       </Border>
       <ToggleSwitch IsChecked="{Binding RequireConfirmationForLaunches, Mode=TwoWay}"
@@ -21,25 +21,25 @@
                     VerticalAlignment="Center"/>
       <Button x:Name="SelectionActionsButton"
               Classes="secondary"
-              Content="选择与刷新"
-              automation:AutomationProperties.Name="选择与刷新菜单"
+              Content="{Binding BarSelectionMenu}"
+              automation:AutomationProperties.Name="{Binding BarSelectionMenuAutomation}"
               Click="OnOverflowMenuClicked">
         <Button.ContextMenu>
           <ContextMenu>
-            <MenuItem Header="全选可见"
-                      automation:AutomationProperties.Name="全选可见"
+            <MenuItem Header="{Binding BarSelectAll}"
+                      automation:AutomationProperties.Name="{Binding BarSelectAll}"
                       Command="{Binding SelectVisibleCommand}"/>
-            <MenuItem Header="清空选择"
-                      automation:AutomationProperties.Name="清空选择"
+            <MenuItem Header="{Binding BarClearSelection}"
+                      automation:AutomationProperties.Name="{Binding BarClearSelection}"
                       Command="{Binding ClearSelectionCommand}"/>
             <Separator/>
-            <MenuItem Header="重新加载"
-                      automation:AutomationProperties.Name="重新加载"
+            <MenuItem Header="{Binding BarReload}"
+                      automation:AutomationProperties.Name="{Binding BarReload}"
                       Command="{Binding RefreshCommand}"/>
           </ContextMenu>
         </Button.ContextMenu>
       </Button>
-      <Button Classes="primary" Content="一键启动已勾选" Command="{Binding LaunchSelectedCommand}"/>
+      <Button Classes="primary" Content="{Binding BarLaunchSelected}" Command="{Binding LaunchSelectedCommand}"/>
     </StackPanel>
     <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0" Classes="muted" Text="{Binding ConfigPathDisplay}"/>
     <Grid x:Name="ControlBoxesGrid"
@@ -47,10 +47,10 @@
           ColumnDefinitions="1.8*,1*,1*,2.8*" ColumnSpacing="12" Margin="0,12,0,0">
       <Border Classes="control-box">
         <StackPanel>
-          <TextBlock Classes="control-box-label" Text="搜索"/>
+          <TextBlock Classes="control-box-label" Text="{Binding BarSearch}"/>
           <AutoCompleteBox x:Name="SearchTextBox"
-                           automation:AutomationProperties.Name="搜索"
-                           PlaceholderText="搜索名称、目录或命令"
+                           automation:AutomationProperties.Name="{Binding BarSearch}"
+                           PlaceholderText="{Binding BarSearchPlaceholder}"
                            Text="{Binding FilterText, Mode=TwoWay}"
                            ItemsSource="{Binding SearchHistoryItems}"
                            MinimumPrefixLength="1"
@@ -61,7 +61,7 @@
       </Border>
       <Border Grid.Column="1" Classes="control-box">
         <StackPanel>
-          <TextBlock Classes="control-box-label" Text="排序"/>
+          <TextBlock Classes="control-box-label" Text="{Binding BarSort}"/>
           <ComboBox ItemsSource="{Binding SortModes}"
                     SelectedItem="{Binding SelectedSortMode, Mode=TwoWay}"
                     HorizontalAlignment="Stretch"/>
@@ -69,7 +69,7 @@
       </Border>
       <Border Grid.Column="2" Classes="control-box">
         <StackPanel>
-          <TextBlock Classes="control-box-label" Text="视图"/>
+          <TextBlock Classes="control-box-label" Text="{Binding BarView}"/>
           <ComboBox x:Name="DisplayModeComboBox"
                     ItemsSource="{Binding DisplayModes}"
                     SelectedItem="{Binding SelectedDisplayMode, Mode=TwoWay}"
@@ -78,78 +78,78 @@
       </Border>
       <Border Grid.Column="3" Classes="control-box">
         <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
-          <TextBlock Grid.ColumnSpan="4" Classes="control-box-label" Text="启动组"/>
+          <TextBlock Grid.ColumnSpan="4" Classes="control-box-label" Text="{Binding BarPresetGroup}"/>
           <ComboBox Grid.Row="1" ItemsSource="{Binding Presets}"
                     SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
-                    HorizontalAlignment="Stretch" VerticalAlignment="Center" PlaceholderText="选择启动组"/>
+                    HorizontalAlignment="Stretch" VerticalAlignment="Center" PlaceholderText="{Binding BarPresetPlaceholder}"/>
           <Button Grid.Row="1" Grid.Column="1" Classes="secondary"
                   Content="{Binding ApplyPresetButtonText}" Command="{Binding ApplyPresetCommand}"/>
-          <Button Grid.Row="1" Grid.Column="2" Classes="secondary" Content="预演"
+          <Button Grid.Row="1" Grid.Column="2" Classes="secondary" Content="{Binding BarPreview}"
                   Command="{Binding PreviewSelectedPresetCommand}"/>
-          <Button Grid.Row="1" Grid.Column="3" Classes="primary" Content="启动"
-                  AutomationProperties.Name="启动" Command="{Binding LaunchSelectedPresetCommand}"/>
+          <Button Grid.Row="1" Grid.Column="3" Classes="primary" Content="{Binding BarLaunch}"
+                  AutomationProperties.Name="{Binding BarLaunch}" Command="{Binding LaunchSelectedPresetCommand}"/>
         </Grid>
       </Border>
     </Grid>
     <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
-      <Button Classes="primary" Content="新增按钮" Command="{Binding AddEntryCommand}"/>
+      <Button Classes="primary" Content="{Binding BarAddEntry}" Command="{Binding AddEntryCommand}"/>
       <Border Classes="control-box" IsVisible="{Binding IsCardsViewMode}" Padding="8,4" CornerRadius="6"
               BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
         <StackPanel>
-          <TextBlock Classes="control-box-label" Text="Cards 分组"/>
+          <TextBlock Classes="control-box-label" Text="{Binding BarCardsGroup}"/>
           <ComboBox ItemsSource="{Binding CardsGroupOptions}"
                     SelectedItem="{Binding SelectedCardsGroupOption, Mode=TwoWay}"
                     DisplayMemberBinding="{Binding Display}" MinWidth="120" VerticalAlignment="Center"/>
         </StackPanel>
       </Border>
-      <Button Classes="secondary" Content="发现" Command="{Binding DiscoverAgentsCommand}"/>
+      <Button Classes="secondary" Content="{Binding BarDiscover}" Command="{Binding DiscoverAgentsCommand}"/>
       <Button x:Name="ManagementActionsButton"
               Classes="secondary"
-              Content="管理"
-              automation:AutomationProperties.Name="管理菜单"
+              Content="{Binding BarManage}"
+              automation:AutomationProperties.Name="{Binding BarManageAutomation}"
               Click="OnOverflowMenuClicked">
         <Button.ContextMenu>
           <ContextMenu>
-            <MenuItem Header="导出全部"
-                      automation:AutomationProperties.Name="导出全部配置"
+            <MenuItem Header="{Binding BarExportAll}"
+                      automation:AutomationProperties.Name="{Binding BarExportAllAutomation}"
                       Command="{Binding ExportAllConfigCommand}"/>
-            <MenuItem Header="导出选中"
-                      automation:AutomationProperties.Name="导出选中配置"
+            <MenuItem Header="{Binding BarExportSelected}"
+                      automation:AutomationProperties.Name="{Binding BarExportSelectedAutomation}"
                       Command="{Binding ExportSelectedConfigCommand}"/>
-            <MenuItem Header="导入配置"
-                      automation:AutomationProperties.Name="导入配置"
+            <MenuItem Header="{Binding BarImport}"
+                      automation:AutomationProperties.Name="{Binding BarImportAutomation}"
                       Command="{Binding ImportConfigCommand}"/>
-            <MenuItem Header="最近启动"
-                      automation:AutomationProperties.Name="最近启动记录"
+            <MenuItem Header="{Binding BarRunHistory}"
+                      automation:AutomationProperties.Name="{Binding BarRunHistoryAutomation}"
                       Command="{Binding OpenRunHistoryCommand}"/>
-            <MenuItem Header="检查更新"
-                      automation:AutomationProperties.Name="检查更新"
+            <MenuItem Header="{Binding BarCheckUpdate}"
+                      automation:AutomationProperties.Name="{Binding BarCheckUpdateAutomation}"
                       Command="{Binding CheckForUpdatesCommand}"/>
-            <MenuItem Header="命令与模板"
-                      automation:AutomationProperties.Name="命令与模板管理"
+            <MenuItem Header="{Binding BarCommands}"
+                      automation:AutomationProperties.Name="{Binding BarCommandsAutomation}"
                       Command="{Binding OpenCommandManagementCommand}"/>
-            <MenuItem Header="地址"
-                      automation:AutomationProperties.Name="地址管理"
+            <MenuItem Header="{Binding BarAddress}"
+                      automation:AutomationProperties.Name="{Binding BarAddressAutomation}"
                       Command="{Binding OpenDirectoryManagementCommand}"/>
           </ContextMenu>
         </Button.ContextMenu>
       </Button>
       <Button x:Name="PresetActionsButton"
               Classes="secondary"
-              Content="启动组维护"
-              automation:AutomationProperties.Name="启动组维护菜单"
+              Content="{Binding BarPresetMaintenance}"
+              automation:AutomationProperties.Name="{Binding BarPresetMaintenanceAutomation}"
               Click="OnOverflowMenuClicked">
         <Button.ContextMenu>
           <ContextMenu>
-            <MenuItem Header="保存为新启动组"
-                      automation:AutomationProperties.Name="保存为新启动组"
+            <MenuItem Header="{Binding BarSaveAsNewPreset}"
+                      automation:AutomationProperties.Name="{Binding BarSaveAsNewPresetAutomation}"
                       Command="{Binding SaveSelectionAsPresetCommand}"/>
-            <MenuItem Header="更新当前启动组"
-                      automation:AutomationProperties.Name="更新当前启动组"
+            <MenuItem Header="{Binding BarUpdatePreset}"
+                      automation:AutomationProperties.Name="{Binding BarUpdatePresetAutomation}"
                       Command="{Binding UpdateSelectedPresetCommand}"/>
             <Separator/>
-            <MenuItem Header="删除当前启动组"
-                      automation:AutomationProperties.Name="删除当前启动组"
+            <MenuItem Header="{Binding BarDeletePreset}"
+                      automation:AutomationProperties.Name="{Binding BarDeletePresetAutomation}"
                       Command="{Binding DeleteSelectedPresetCommand}"/>
           </ContextMenu>
         </Button.ContextMenu>
@@ -157,9 +157,9 @@
       <Border Background="{StaticResource BadgeWarningBackgroundBrush}" CornerRadius="14" Padding="12,7"
               Margin="12,0,0,0" VerticalAlignment="Center"
               IsVisible="{Binding HasStaleDirectories}"
-              ToolTip.Tip="目录已失效，请重新选择路径或删除">
+              ToolTip.Tip="{Binding BarStaleTooltip}">
         <TextBlock Foreground="{StaticResource BadgeWarningForegroundBrush}">
-          <Run Text="失效 "/><Run Text="{Binding StaleDirectoryCount}"/><Run Text=" 项"/>
+          <Run Text="{Binding BarStalePrefix}"/><Run Text="{Binding StaleDirectoryCount}"/><Run Text="{Binding BarStaleSuffix}"/>
         </TextBlock>
       </Border>
       <Border Background="{StaticResource BadgeInfoBackgroundBrush}" CornerRadius="14" Padding="12,7"
