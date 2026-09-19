@@ -62,6 +62,13 @@ public class DirectoryPathTests
     }
 
     [Fact]
+    public void Parse_DevicePath_Throws()
+    {
+        Assert.Throws<FormatException>(() => DirectoryPath.Parse(@"\\.\C:\device"));
+        Assert.Throws<FormatException>(() => DirectoryPath.Parse(@"\??\C:\device"));
+    }
+
+    [Fact]
     public void JsonConverter_RoundTrip_Works()
     {
         var temp = System.IO.Path.GetTempPath();

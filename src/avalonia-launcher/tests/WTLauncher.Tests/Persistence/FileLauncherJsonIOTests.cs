@@ -123,6 +123,49 @@ public sealed class FileLauncherJsonIOTests
     // ── Disposed IO doesn't leak ──────────────────────────────────────
 
     [Fact]
+    public void LoadWithRecovery_WhenBackupRecoveryFails_ThrowsOriginalLoadException()
+    {
+        using var tmp = new TempDirectory();
+        var path = Path.Combine(tmp.Path, "launcher.json");
+        var io = new FileLauncherJsonIO();
+
+        io.Save(TestStore("e1"), path, backup: true);
+        io.Save(TestStore("e2"), path, backup: true);
+        File.WriteAllText(path, "primary-bad");
+        File.WriteAllText(path + ".bak", "backup-bad");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            io.LoadWithRecovery(path, p =>
+            {
+                var content = File.ReadAllText(p);
+                throw new InvalidDataException(content == "primary-bad" ? "primary" : "backup");
+            }, "test-recovery", new LauncherStoreFile()));
+
+        Assert.Equal("primary", exception.Message);
+    }
+
+    [Fact]
+    public void LoadWithRecovery_WhenPrimaryMissing_RecoversFromBackupChain()
+    {
+        using var tmp = new TempDirectory();
+        var path = Path.Combine(tmp.Path, "launcher.json");
+        var io = new FileLauncherJsonIO();
+
+        io.Save(TestStore("e1"), path, backup: true);
+        io.Save(TestStore("e2"), path, backup: true);
+        File.Delete(path);
+
+        var recovered = io.LoadWithRecovery(path,
+            p => JsonSerializer.Deserialize<LauncherStoreFile>(
+                File.ReadAllText(p),
+                LauncherJsonContext.Default.LauncherStoreFile)!,
+            "test-recovery",
+            new LauncherStoreFile());
+
+        Assert.Single(recovered.Entries);
+    }
+
+    [Fact]
     public void Dispose_DoesNotThrow()
     {
         var io = new FileLauncherJsonIO();

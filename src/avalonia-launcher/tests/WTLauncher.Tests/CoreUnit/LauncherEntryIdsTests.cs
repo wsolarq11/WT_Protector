@@ -164,4 +164,19 @@ public sealed class LauncherEntryIdsTests
         Assert.True(EntryId.SameNormalized(" a ", "a"));
         Assert.False(EntryId.SameNormalized("\u0430", "a")); // Cyrillic normalizes but doesn't match Latin
     }
+
+    [Fact]
+    public void Parse_RejectsWindowsReservedName()
+    {
+        Assert.Throws<FormatException>(() => EntryId.Parse("CON"));
+        Assert.Throws<FormatException>(() => EntryId.Parse("nul"));
+    }
+
+    [Fact]
+    public void Parse_RejectsPathSeparatorsAndDotDot()
+    {
+        Assert.Throws<FormatException>(() => EntryId.Parse("one\\two"));
+        Assert.Throws<FormatException>(() => EntryId.Parse("one/two"));
+        Assert.Throws<FormatException>(() => EntryId.Parse("one..two"));
+    }
 }

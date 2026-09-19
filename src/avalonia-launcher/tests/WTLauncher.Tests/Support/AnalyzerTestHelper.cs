@@ -78,6 +78,14 @@ internal static class AnalyzerTestHelper
         string? assemblyName = null,
         params string[] additionalSources)
         where TAnalyzer : DiagnosticAnalyzer, new()
+        => RunWithAdditionalTexts<TAnalyzer>(source, [], assemblyName, additionalSources);
+
+    internal static IReadOnlyList<Diagnostic> RunWithAdditionalTexts<TAnalyzer>(
+        string source,
+        AdditionalText[] additionalTexts,
+        string? assemblyName = null,
+        params string[] additionalSources)
+        where TAnalyzer : DiagnosticAnalyzer, new()
     {
         var trees = new List<SyntaxTree>(1 + additionalSources.Length)
         {
@@ -96,7 +104,7 @@ internal static class AnalyzerTestHelper
         var analyzer = new TAnalyzer();
         var withAnalyzers = compilation.WithAnalyzers(
             ImmutableArray.Create<DiagnosticAnalyzer>(analyzer),
-            new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty));
+            new AnalyzerOptions(ImmutableArray.CreateRange(additionalTexts)));
 
         return withAnalyzers
             .GetAllDiagnosticsAsync()

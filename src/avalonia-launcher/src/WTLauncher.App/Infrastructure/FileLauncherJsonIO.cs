@@ -68,7 +68,7 @@ public sealed class FileLauncherJsonIO : ILauncherJsonIO, IDisposable
                         onRecovery?.Invoke(loadException, recoveryContext);
                         return recovered;
                     }
-                    catch (Exception recoveryEx) when (recoveryEx is IOException or UnauthorizedAccessException)
+                    catch (Exception recoveryEx) when (LauncherErrors.IsRecoverable(recoveryEx))
                     {
                         // Backup recovery failed — log and fall through to throw original loadException.
                         Debug.WriteLine($"[LauncherJson] Backup recovery failed: {recoveryEx.Message}");
@@ -94,7 +94,7 @@ public sealed class FileLauncherJsonIO : ILauncherJsonIO, IDisposable
                 onRecovery?.Invoke(new InvalidDataException($"Config file was missing and recovered from backup chain ({backupPathForMissing})."), recoveryContext);
                 return recovered;
             }
-            catch (Exception recoveryEx) when (recoveryEx is IOException or UnauthorizedAccessException)
+            catch (Exception recoveryEx) when (LauncherErrors.IsRecoverable(recoveryEx))
             {
                 // Backup chain entry failed — try the next backup generation.
                 Debug.WriteLine($"[LauncherJson] Backup chain recovery failed: {recoveryEx.Message}");

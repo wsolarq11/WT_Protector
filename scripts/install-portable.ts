@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -92,7 +92,12 @@ export async function runInstallPortable(options: {
 
   rmSync(installDir, { recursive: true, force: true });
   mkdirSync(installDir, { recursive: true });
-  cpSync(sourceDir, installDir, { recursive: true });
+  for (const entry of readdirSync(sourceDir)) {
+    if (entry === "receipt.json" || entry === "update-manifest.json" || entry === "install-manifest.json") {
+      continue;
+    }
+    cpSync(path.join(sourceDir, entry), path.join(installDir, entry), { recursive: true });
+  }
   const targetExe = path.join(installDir, "WTLauncher.App.exe");
 
   const uninstaller = await buildUninstaller();
