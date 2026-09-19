@@ -160,8 +160,10 @@ channel:
 #-------------------------------------------------------------------------------
 # Update Skip (project-authored docs protected from trellis update)
 #-------------------------------------------------------------------------------
-# 这些文件是本仓自行撰写的内容，`trellis update` 不得改写。
-# 正常更新会跳过这些路径；破坏性迁移仍会按哈希冲突逐个询问，不会静默覆盖。
+# 这些文件是本仓自行撰写的内容，普通 `trellis update` 不得改写。
+# 破坏性升级若用 `trellis update --migrate -f` 会绕过 skip 并整体覆盖，禁止使用；
+# 交互式 `trellis update --migrate` 会逐文件询问。
+# config.yaml 在 skip 中会失去未来新增配置段的自动追加，升级后需人工对照合并。
 update:
   skip:
     - .trellis/config.yaml
