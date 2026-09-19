@@ -42,7 +42,7 @@ WT_Protector/
 | 基线项 | 数量 |
 |--------|------|
 | WTLauncher.Core C# files | 51 |
-| ViewModels C# files | 64 |
+| ViewModels C# files | 65 |
 | MainWindowViewModel partials | 15 |
 | Features C# files | 15 |
 | Views C# files | 24 |

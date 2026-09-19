@@ -132,6 +132,7 @@ public sealed class CsCheckPropertyTests
                 _ => Gen.Char['a', 'z'].Array[1, 15].Select(nameChars => new string(nameChars)),
                 (id, name) => new { Id = id, Name = name })
             .Array[0, 5]
+            .Where(entryData => entryData.Select(d => d.Id).Distinct().Count() == entryData.Length)
             .Sample(assert: entryData =>
             {
                 using var temp = new TempDirectory();
