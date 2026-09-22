@@ -15,6 +15,7 @@ import {
   checkAotToolchainOwnedBySdk,
   checkAppRawHexZero,
   checkCiFastLaneNoPublishDuplication,
+  checkCommandTableConsistency,
   checkDialogServiceNoFuncAction,
   checkHtaRetiredConfig,
   checkLineEndingPolicy,
@@ -202,6 +203,7 @@ export const gateSteps: GateStep[] = [
   { id: "no-stale-three-file-refs", tier: "static", run: () => checkNoStaleThreeFileRefs() },
   { id: "task-ledger-citations-resolve", tier: "static", run: () => checkTaskLedgerCitationsResolve() },
   { id: "no-hardcoded-gate-counts", tier: "static", run: () => checkNoHardcodedGateCounts() },
+  { id: "command-table-consistency", tier: "static", run: () => checkCommandTableConsistency() },
   {
     id: "settings-single-source",
     tier: "static",

@@ -35,6 +35,7 @@ export const gateStepIds = [
   "no-stale-three-file-refs",
   "task-ledger-citations-resolve",
   "no-hardcoded-gate-counts",
+  "command-table-consistency",
   "settings-single-source",
   "winget-config-schema",
   "no-imperative-view-ui",
