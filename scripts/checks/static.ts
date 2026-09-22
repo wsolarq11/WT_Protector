@@ -165,19 +165,51 @@ export function checkReadme(): void {
     ["Configuration schema", "Build and verification", "Run the mainline app", "WinForms retirement", "Safety notes", "Current implementation status"],
     "README.md",
   );
+  // claim-boundary 用语义锚而非逐字锚:锁"边界声明存在 + 指向权威审计 + 否定性语义",
+  // 措辞可改,但"不声称不可改进 / 有副作用 / 未完成"的语义不可丢。逐字锁会让 README
+  // 一次措辞调整就红门禁,而这里真正要防的是"边界声明被悄悄弱化"。
   containsRequiredMarkers(
     text,
     [
-      "all 22 active feature mappings as narrow-domain north-star",
-      "portable Windows Terminal workspace-launcher scope only",
-      "full absolute objective remains not complete as written",
-      "unimprovable-product, stronger-than-every-GitHub-similar, and absolute zero-side-effect claims",
+      "feature-reality-north-star-audit",
+      "does not claim",
+      "side effect",
+      "not complete",
     ],
-    "README.md current objective boundary",
+    "README.md claim boundary",
   );
-  // 这 4 句是 claim-boundary 的内容锚,不是样例锁:README 改措辞时这里必须同步改,
-  // 否则门禁把"边界声明被弱化"错报成"标记缺失"。这是有意接受的内容耦合。
-  addCheck("readme", { sections: 6, fullObjectiveBoundary: "not-complete-as-written" });
+  addCheck("readme", { sections: 6, claimBoundary: "semantic-anchors" });
+}
+
+export function checkCommandTableConsistency(): void {
+  const agents = readText("AGENTS.md");
+  const toolboxMatch = agents.match(/## 脚本工具箱[\s\S]*?## 结构基线/);
+  if (!toolboxMatch) {
+    throw new Error("command-table-consistency: AGENTS.md 脚本工具箱 section missing");
+  }
+  const commandPattern = /npm run ([A-Za-z0-9:_-]+)/g;
+  // 自检用非全局副本:test() 会推进全局正则 lastIndex,污染后续 matchAll 的扫描起点。
+  assertMatcherDetects(new RegExp(commandPattern.source), "`npm run verify`", "command-table-consistency");
+  assertMatcherAllows(new RegExp(commandPattern.source), "npm ci", "command-table-consistency");
+  const listed = new Set([...toolboxMatch[0].matchAll(commandPattern)].map((match) => match[1]));
+  if (listed.size === 0) {
+    throw new Error("command-table-consistency scanned 0 npm run commands: AGENTS.md 脚本工具箱 format may be broken");
+  }
+  const pkg = JSON.parse(readText("package.json")) as { scripts?: Record<string, string> };
+  const scripts = new Set(Object.keys(pkg.scripts ?? {}));
+  const tableOnly = [...listed].filter((name) => !scripts.has(name)).sort();
+  const packageOnly = [...scripts].filter((name) => !listed.has(name)).sort();
+  if (tableOnly.length > 0 || packageOnly.length > 0) {
+    throw new Error(
+      `command-table-consistency drift: AGENTS.md table-only ${tableOnly.join(", ") || "none"}; package.json-only ${packageOnly.join(", ") || "none"}. 脚本工具箱必须镜像 package.json scripts。`,
+    );
+  }
+  addCheck("command-table-consistency", {
+    tableCommands: listed.size,
+    packageScripts: scripts.size,
+    tableOnly: tableOnly.join(", "),
+    packageOnly: packageOnly.join(", "),
+  });
 }
 
 export function checkNoStaleThreeFileRefs(): void {

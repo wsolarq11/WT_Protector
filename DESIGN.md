@@ -1,8 +1,11 @@
+Status: Active
+Purpose: 设计契约：品牌、视觉语言、组件所有权、Token 与无障碍/响应式规则。
+Update when: UI/UX、视觉 Token 或组件所有权变化时。
+
 # Design
 
-## Source of Truth
+## Evidence
 
-- Status: Active
 - Last refreshed: 2026-07-23
 - Product surfaces: `src/avalonia-launcher/src/WTLauncher.App/Views/MainWindow.axaml` + code-behind + `ViewModels/*`
 - Evidence: `src/avalonia-launcher/README.md`, `docs/design-benchmark-digest.md`, mainline implementation, gate scripts, Microsoft Fluent 2 / Apple HIG / Material layout guidance

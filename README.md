@@ -1,8 +1,12 @@
+Status: Active
+Purpose: 人类用户入口：产品是什么、配置 schema、构建运行、安全口径、实现状态。
+Update when: 用户可见行为、配置 schema 或安装使用流程变化时。
+
 # WT Launcher / WT Protector
 
 Local Windows Terminal workspace launcher: open saved folders with a chosen shell command. Avalonia/.NET 10, win-x64 self-contained.
 
-Documentation map: [`docs/README.md`](docs/README.md).
+Documentation map: [`docs/README.md`](docs/README.md)。AI 导航与完整命令清单见 [`AGENTS.md`](AGENTS.md)。
 
 ## Configuration schema
 
@@ -41,17 +45,17 @@ Live `config/launcher.json` is git-ignored runtime state; `config/launcher.examp
 
 ## Build and verification
 
+完整命令清单见 [`AGENTS.md` 脚本工具箱](AGENTS.md)（机器源 `package.json`）。用户与维护者常用：
+
 ```bash
 npm ci                     # 一次性安装脚本依赖
 npm run make               # 唯一产品编译命令：build + smoke + friend zip
 npm run verify             # full gate: static blocks; local and snapshot are advisory; native skips without .NET SDK
-npm run verify:mainline    # Avalonia gate only
-npm run test:fast          # CoreUnit + PropertyTest + Architecture + Analyzer
-npm run test:coverage
-npm run test:launch-args
+npm run start              # 运行主线应用
 npm run smoke              # published exe critical journey
-npm run release:build      # AOT exe -> artifacts/publish/win-x64/
-npm run release:contract   # CI release contract: locked restore + AOT publish + clean tree + receipt
+npm run install:portable   # 便携安装（npm run uninstall 卸载）
+npm run package:friend     # 好友交接 zip
+npm run release:contract   # CI 发布契约：locked restore + AOT publish + clean tree + receipt
 ```
 
 Distributable for normal users: `npm run package:friend` 产出的 `artifacts/friend/WTLauncher-<version>.zip`，内含 exe、运行所需的 Avalonia/Skia 原生 DLL、可选示例配置与快速开始；解压即用。`artifacts/publish/win-x64/` 是发布构建目录，其 `receipt.json` / `update-manifest.json` 是发布契约与更新元数据，不进入好友包。`artifacts/verify-publish/` 是隔离验证输出，不是交付物。
@@ -94,7 +98,7 @@ This launcher intentionally starts arbitrary local commands. Treat every config 
 
 The Avalonia mainline supports search, single/batch launch, adaptive cards, custom drag reorder, three density states, Cards/Details/Names views, add/edit/delete/clone, AI Agent CLI discovery, per-agent badges, launch groups/presets, five sort modes, command templates, global confirmation, quick-launch hotkey, tray icon, config export/import, run history, update checks, and a portable installer/uninstaller.
 
-Claim boundary:
+Claim boundary (authoritative audit: [`docs/feature-reality-north-star-audit.md`](docs/feature-reality-north-star-audit.md)):
 
 - The feature audit classifies all 22 active feature mappings as narrow-domain north-star for the portable Windows Terminal workspace-launcher scope only.
 - The full absolute objective remains not complete as written because unimprovable-product, stronger-than-every-GitHub-similar, and absolute zero-side-effect claims are still blocked by current evidence.
