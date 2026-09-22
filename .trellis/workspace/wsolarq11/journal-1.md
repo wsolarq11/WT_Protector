@@ -255,3 +255,26 @@ Migrated auxiliary scripts to TS; added .NET smoke probe and self-contained unin
 - P4 CI 4 作业去重 + 三模式观察（需远端验证）
 - `local-entry-directories` 用户数据（`config/launcher.json` item 6）
 - `.trellis/tasks/active` 死引用 1 处走 Trellis 流程
+
+
+## Session 11: 文档单一源重构 + 命令表门禁 + 治理成本框架
+<!-- trellis-session: v=2 fp=590b37dabd3bd00e -->
+
+**Date**: 2026-09-22
+**Task**: 文档单一源重构 + 命令表门禁 + 治理成本框架
+**Branch**: `main`
+
+### Summary
+
+收敛入口文档到单一源；命令表双向门禁；checkReadme 语义锚；治理成本框架固化到 decision-ladder；接线台账体检未漂移；门禁过剩审计结论无删减。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `371d8025` | restructure docs around single-source entries; add command-table consistency gate |
+| `d4d1cd3e` | record governance cost framework in decision ladder |
+
+### Status
+
+[OK] **Completed**

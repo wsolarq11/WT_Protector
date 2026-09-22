@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 10
-- **Last Active**: 2026-09-17
+- **Total Sessions**: 11
+- **Last Active**: 2026-09-22
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~228 | Active |
+| `journal-1.md` | ~280 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 11 | 2026-09-22 | 文档单一源重构 + 命令表门禁 + 治理成本框架 | `371d8025`, `d4d1cd3e` | `main` |
 | 10 | 2026-09-17 | 门禁彻底加固 + 死代码清除 | (uncommitted) | `main` |
 | 9 | 2026-08-20 | 税项清理：六个维度简化 | `1ed818b5` | `main` |
 | 8 | 2026-08-16 | Auxiliary TS migration and PowerShell cleanup | `55439a2b` | `main` |
