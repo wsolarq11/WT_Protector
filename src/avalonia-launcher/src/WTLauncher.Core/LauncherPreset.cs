@@ -9,12 +9,8 @@ namespace WTLauncher.Core;
 /// into <see cref="LauncherStoreFile"/> which carries presets inline.</summary>
 public sealed record LauncherPresetFile
 {
-    [JsonPropertyName("defaultPresetId")]
-    [JsonRequired]
     public string DefaultPresetId { get; init; } = "";
 
-    [JsonPropertyName("presets")]
-    [JsonRequired]
     public ImmutableList<LauncherPreset> Presets { get; init; } = ImmutableList<LauncherPreset>.Empty;
 }
 

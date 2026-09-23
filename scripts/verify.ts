@@ -35,6 +35,7 @@ import {
   checkSecurityAuditF3,
   checkSettingsSingleSourceBuildStoreFile,
   checkSnowIgnoredLocalState,
+  checkStructureBaselineUpToDate,
   checkTaskLedgerCitationsResolve,
   checkTestStructureLayering,
   checkTrinityArchitectureIntegrity,
@@ -61,7 +62,6 @@ import {
   checkAvaloniaMainlineVerify,
   checkCoverageGate,
   checkReleaseLockfileConsistency,
-  checkStructureBaselineConsistency,
 } from "./checks/run.js";
 
 /** 门禁分层。分层决定失败是否阻断,以及缺少依赖时如何留痕。 */
@@ -231,7 +231,7 @@ export const gateSteps: GateStep[] = [
   { id: "main-vm-line-budget", tier: "static", run: () => checkMainVmLineBudget() },
   { id: "workflow-no-callback-bag", tier: "static", run: () => checkWorkflowNoCallbackBag() },
   { id: "no-active-powershell-scripts", tier: "static", run: () => checkNoActivePowerShellScripts() },
-  { id: "structure-baseline-consistency", tier: "static", run: () => checkStructureBaselineConsistency() },
+  { id: "structure-baseline-up-to-date", tier: "static", run: () => checkStructureBaselineUpToDate() },
 ];
 
 /** 清单自检:实现清单与 gate-steps.ts 的 id 序列必须逐一对应。
