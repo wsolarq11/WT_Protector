@@ -37,6 +37,12 @@ Update when: 目录、代码分层、函数职责、文档分类或单一源分�
 - 门禁是负债不是资产：每加一个 = 加一个要维护的漂移源 + 一个把文档焊死的点；焊点累积会杀死可重构性。定期按引用密度判据（`.trellis/spec/guides/pitfalls.md` §2.26）审计删过剩门禁。
 - 可重构性 > 完整性：文档能被放心重构，比所有事实都被门禁钉死更重要。
 
+## 复杂度收敛（2026-09 立项）
+
+取证：归档任务里架构/重构/清理类占比 >60%，一个月内 6 次范式切换（unified-store → fluxor → eventsourcing → cqrs → trinity → arch-cut），DESIGN.md 无任何复杂度理由。判为第二系统效应的过度设计，非有意投资。
+
+方向：砍偶然复杂度，不治理复杂度的镜像（文档）。治理层已砍 2 个门禁（`no-hardcoded-gate-counts`、`no-stale-three-file-refs`，46→44）；架构层收敛（删中间层、删事件溯源/Fluxor）待分阶段立项，需回归验证。
+
 ## 目录架构
 
 - `src/avalonia-launcher/` 是唯一活动源码，`retired/` 永不恢复。
