@@ -8,6 +8,19 @@ Local Windows Terminal workspace launcher: open saved folders with a chosen shel
 
 Documentation map: [`docs/README.md`](docs/README.md)。AI 导航与完整命令清单见 [`AGENTS.md`](AGENTS.md)。
 
+## 快速上手
+
+1. 解压到任意位置，双击 `WTLauncher.App.exe`。若 Windows 提示「Windows 已保护你的电脑」，点「更多信息」→「仍要运行」。
+2. 点「添加第一个工作区」，填名称、选目录（点「浏览...」）、命令保持默认 pwsh，保存。
+3. 点卡片即在 Windows Terminal 打开。搜索框按名称或路径过滤；勾选多张卡片后点「一键启动已勾选」可批量打开。
+
+常见问题：
+
+- 点卡片没反应、提示找不到 `wt.exe`：先装 Windows Terminal（`winget install --id Microsoft.WindowsTerminal`），装完重开本软件。
+- 提示「目录不存在」：项目文件夹被移动或改名。右键卡片 →「编辑」→ 重新选目录。
+- 数据在哪、怎么备份：全部数据在软件文件夹里的 `config/launcher.json` 一个文件；备份即复制它，重置即删除它。
+- 会改电脑其他东西吗：不会。不写注册表、不用 AppData，所有状态都在自己的 `config` 文件夹；删掉整个文件夹即完全卸载。
+
 ## Configuration schema
 
 Single authoritative store: `config/launcher.json` (`LauncherStoreFile`, `schemaVersion: 2`). Top level: `entries[]`, `presets[]`, `settings{}`, `defaultPresetId`, `runHistory[]`.

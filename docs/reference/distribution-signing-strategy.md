@@ -18,7 +18,7 @@ Update when: 发布路径、manifest schema、签名或更新策略变化时。
 
 ## 签名策略
 
-- 无代码签名证书时发布产物保持未签名；SmartScreen 绕过（更多信息 → 仍要运行）记于 `README.md` 与发布 `使用说明.txt`；
+- 无代码签名证书时发布产物保持未签名；SmartScreen 绕过（更多信息 → 仍要运行）记于 `README.md`；
   门禁仍要求 publish 成功。
 - 有证书时计划在 publish 后对 `WTLauncher.App.exe` 用 `signtool sign` 签名并把签名哈希写入 `update-manifest.json`。
   此步为提案：`scripts/` 与 `.github/workflows/` 无 signtool 代码；`build-release.ts` 记录的是未签名产物 SHA-256。
