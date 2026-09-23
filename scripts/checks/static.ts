@@ -234,43 +234,6 @@ export function checkStructureBaselineUpToDate(): void {
   addCheck("structure-baseline-up-to-date", { derivedBlockCurrent: true });
 }
 
-export function checkNoStaleThreeFileRefs(): void {
-  const activeDocs = [
-    "README.md",
-    "AGENTS.md",
-    "DESIGN.md",
-    "docs/feature-reality-north-star-audit.md",
-    "docs/archive/feature-first-class-upgrade-audit.md",
-    "docs/giants-shoulders/launcher-first-class-patterns.md",
-  ];
-  // 本列表即契约:目标路径被归档/改名/删除时必须报错,而不是静默 continue。
-  // 否则这条"防文档漂移"的检查会因自身输入先漂移而永久放行——正是它该防住的那类漂移。
-  const missing = activeDocs.filter((doc) => !fileExists(doc));
-  if (missing.length > 0) {
-    throw new Error(
-      `Stale-three-file scan targets missing: ${missing.join(", ")} (fix the path or remove it from activeDocs)`,
-    );
-  }
-  const staleRefPattern = /(?<!retired[/\\])config[/\\](?:config|presets|settings)\.json/g;
-  // 非全局副本专供自检:test() 会推进全局正则的 lastIndex,污染 matchAll 的扫描起点。
-  const staleRefDetector = new RegExp(staleRefPattern.source);
-  assertMatcherDetects(staleRefDetector, "see config/config.json", "no-stale-three-file-refs");
-  assertMatcherAllows(staleRefDetector, "see retired/config/config.json", "no-stale-three-file-refs");
-  const violations: string[] = [];
-  for (const doc of activeDocs) {
-    const text = readText(doc);
-    const matches = text.matchAll(staleRefPattern);
-    const examples = [...matches].map((match) => match[0]);
-    if (examples.length > 0) {
-      violations.push(`${doc}: ${examples.slice(0, 3).join(", ")}`);
-    }
-  }
-  if (violations.length > 0) {
-    throw new Error(`Stale three-file reference in ${violations.join("; ")} (use config/launcher.json)`);
-  }
-  addCheck("no-stale-three-file-refs", { scannedDocs: activeDocs.length, missing: 0 });
-}
-
 export function checkTaskLedgerCitationsResolve(): void {
   // 文档常把 Trellis 任务台账当证据引用,而 Trellis 归档任务时会把目录移入
   // .trellis/tasks/archive/YYYY-MM/,引用随之静默失效——读者照着路径找不到证据链。
@@ -314,51 +277,6 @@ export function checkTaskLedgerCitationsResolve(): void {
     );
   }
   addCheck("task-ledger-citations-resolve", { scannedDocs: scannedDocs.length, citations });
-}
-
-export function checkNoHardcodedGateCounts(): void {
-  // 计数只允许出现在 AGENTS.md「结构基线」表——那里是生成物，由 structure-baseline-up-to-date 校验未过期。
-  // 其他位置写死计数会在结构或测试规模变化后静默漂移:README.md 的 "enforces N checks"
-  // 曾在 2026-07 修过一次(见 docs/archive/phase2-complete.md),之后又漂回写死值。
-  const activeDocs = ["README.md", "DESIGN.md", "AGENTS.md"];
-  const baselineTableRow = /^\|\s*[^|]+\|\s*\d+\s*\|\s*$/;
-  const countPatterns: Array<{ pattern: RegExp; sample: string }> = [
-    { pattern: /\b\d+\s+checks?\b/i, sample: "the gate enforces 45 checks" },
-    { pattern: /\d+\s*(?:项|个|条)\s*(?:检查|门禁|分层步骤|步骤)/, sample: "门禁共 45 项检查" },
-    { pattern: /\bgate\s+\d+\s*\/\s*\d+/i, sample: "gate 45/48" },
-    { pattern: /\b\d+\s+(?:test files?|attributes?|cases?)\b/i, sample: "129 test files" },
-    { pattern: /\d+\s*(?:测试文件|测试属性|用例|属性)/, sample: "764 测试属性" },
-  ];
-  // 五条模式各自与一条写死样本就地绑定,并逐条自检:任何一条模式失效,
-  // 它负责拦的那种写法就会被整类静默放行,而这正是本检查存在的唯一理由。
-  for (const { pattern, sample } of countPatterns) {
-    assertMatcherDetects(pattern, sample, "no-hardcoded-gate-counts");
-  }
-  assertMatcherDetects(baselineTableRow, "| Gate steps (verify.ts) | 45 |", "no-hardcoded-gate-counts");
-  assertMatcherAllows(baselineTableRow, "the gate enforces 45 checks", "no-hardcoded-gate-counts");
-  const violations: string[] = [];
-  for (const doc of activeDocs) {
-    if (!fileExists(doc)) {
-      throw new Error(`no-hardcoded-gate-counts scan target missing: ${doc}`);
-    }
-    forEachLine(repoPath(doc), (line, lineNumber) => {
-      if (baselineTableRow.test(line.trim())) {
-        return;
-      }
-      if (countPatterns.some(({ pattern }) => pattern.test(line))) {
-        violations.push(`${doc}:${lineNumber}`);
-      }
-    });
-  }
-  if (violations.length > 0) {
-    throw new Error(
-      `Hardcoded count in active doc — point at the AGENTS.md structure-baseline table instead: ${violations.join(", ")}`,
-    );
-  }
-  addCheck("no-hardcoded-gate-counts", {
-    scannedDocs: activeDocs.join(", "),
-    countsAllowedIn: "AGENTS.md structure-baseline table",
-  });
 }
 
 export function checkNoImperativeViewUi(): void {

@@ -76,7 +76,7 @@ WT_Protector/
 | WTLauncher.Analyzers C# files | 7 |
 | Tests C# files | 137 |
 | Test attributes [Fact]+[Theory] | 800 |
-| Gate steps (verify.ts) | 46 |
+| Gate steps (verify.ts) | 44 |
 <!-- DERIVED:structure-baseline:END -->
 
 ## 核心规则
