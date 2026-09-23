@@ -29,6 +29,8 @@ tools/**/TestResults/
 omx_wiki/session-log-*.md
 *.db
 .claude/
+.codex/
+.codebase-memory/
 config/*.legacybak
 config/*.legacybak2
 
