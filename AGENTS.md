@@ -12,7 +12,8 @@ Local Windows Terminal workspace launcher: open saved folders with a chosen shel
 | --- | --- |
 | 人类用户 | `README.md` |
 | AI 代理 | 本文件 |
-| Claude Code | `CLAUDE.md`（薄入口，只留 Claude 特有信息） |
+| DeepSeek Harness | `.dsh/DSH.md` |
+| Claude Code | `CLAUDE.md`（薄入口） |
 | 设计决策 | `DESIGN.md` |
 | 深度知识 | `docs/`（索引 `docs/README.md`） |
 
@@ -21,9 +22,10 @@ Local Windows Terminal workspace launcher: open saved folders with a chosen shel
 ```
 WT_Protector/
 ├── AGENTS.md              ← 本文件：AI 导航中枢 + 结构基线 + 项目级不变量唯一源
-├── README.md              ← 用户/产品文档：配置 schema、验证、运行、安全、状态
+├── README.md              ← 用户/产品文档：快速上手、配置 schema、验证、运行、安全、状态
 ├── DESIGN.md              ← 设计契约：品牌、原则、组件所有权、Token
-├── CLAUDE.md              ← Claude Code 薄入口：只留 MCP graph 与本地迭代命令，其余指向本文件
+├── CLAUDE.md              ← Claude Code 薄入口：导航 + 本地迭代命令，其余指向本文件
+├── .dsh/DSH.md            ← DeepSeek Harness 的 Trellis 接入说明
 ├── .wt-protector.dsc.yaml ← WinGet Configuration：新机前置依赖
 ├── config/launcher.json   ← 唯一运行时状态（entries/presets/settings/defaultPresetId/runHistory）
 ├── package.json / scripts/ ← Node/TypeScript 脚本层（命令机器源 + verify / build-release / release-contract / smoke）
@@ -105,6 +107,7 @@ WT_Protector/
 | 参考外部设计 | `docs/design-benchmark-digest.md` + `docs/giants-shoulders/` |
 | 统一架构 / 单一源决策 | `docs/decision-ladder.md` |
 | 踩坑 / 代码层规范 | `.trellis/spec/` |
+| dsh 平台 Trellis 接入 | `.dsh/DSH.md` |
 | 查任何文档 | `docs/README.md` |
 
 <!-- TRELLIS:START -->

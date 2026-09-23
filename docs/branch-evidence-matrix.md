@@ -100,7 +100,7 @@ Update when: 门禁步骤、CI 流程、Trellis 更新逻辑、配置 schema 或
 | npm run release:contract | EXIT=0，status=PASS，worktreeClean=true | 实测确证 |
 | npm run update:github-snapshot | EXIT=0，gh 已登录 `wsolarq11`，12 repos 刷新成功 | 实测确证 |
 | npm run make | EXIT=0：dirty-tree advisory + release-build PASS + critical-journey launch/title PASS + friend zip 19,235,792 bytes | 实测确证 |
-| npm run package:friend | EXIT=0，zip 含 exe、`av_libglesv2.dll`、`libHarfBuzzSharp.dll`、`libSkiaSharp.dll`、`使用说明.txt`、`config/launcher.example.json`；不含 `receipt.json` / `update-manifest.json` | 实测确证 |
+| npm run package:friend | EXIT=0，zip 含 exe、`av_libglesv2.dll`、`libHarfBuzzSharp.dll`、`libSkiaSharp.dll`、`README.md`、`config/launcher.example.json`；不含 `receipt.json` / `update-manifest.json` | 实测确证 |
 | exe 单独运行 | 失败：`DllNotFoundException: libSkiaSharp`，证明原生 DLL 是运行依赖 | 实测确证 |
 | npm run start | EXIT=1（boot 后主动杀进程），窗口标题 `WT Launcher`，进程正常退出残留为 0 | 实测确证 boot 路径 |
 | npm run apply:config:dry | EXIT=0，winget configure validate 通过 | 实测确证 |
@@ -155,7 +155,7 @@ Top 无覆盖分叉（源码静态推断，按静默错误风险降序；本 ses
 | `update:github-snapshot` | `gh auth login --web` 设备流已认证 `wsolarq11`，快照刷新 12 repos | 实测确证 | `gh auth status` + 快照 `capturedAtUtc` |
 | `apply:config` | winget 1.29.290 已装，`--accept-configuration-agreements --disable-interactivity` 非交互执行 | 实测确证 | `scripts/apply-machine-config.ts:13-15` |
 | GUI/副作用入口 | `start`、`install:portable`、`uninstall`、`generate:icon`、`apply:config` | 实测确证（本 session 已全部执行） | `package.json:11-25` |
-| 便携好友包 | `package:friend` 只打 exe + 三个原生 DLL + 示例配置 + 使用说明，不含 `receipt.json` / `update-manifest.json` | 实测确证（本次展开 zip 复核） | `scripts/package-friend.ts:31-36` |
+| 便携好友包 | `package:friend` 只打 exe + 三个原生 DLL + 示例配置 + `README.md`，不含 `receipt.json` / `update-manifest.json` | 实测确证（本次展开 zip 复核） | `scripts/package-friend.ts:31-36` |
 | setup-dotnet 缓存键 | `cache-dependency-path` 显式列 App/Core/Analyzers/Tests 四个 `packages.lock.json`，避免根目录默认查找失败与多锁文件缓存错配 | 实测确证（主 CI 绿） | `.github/workflows/verify.yml:21-30` |
 | Dependabot 锁文件刷新 | 对 `dependabot[bot]` PR 执行 `dotnet restore -r win-x64 -p:EnableNativeAot=true --force-evaluate` 并提交锁文件，消除默认 restore 丢失 RID/AOT 图导致的 NU1004 | 实测确证（#18/#20/#21 CI 绿） | `.github/workflows/dependabot-lockfile.yml` |
 | 预发布版本消毒 | `deriveVersion` 将 `0.1.0-0531719` 等前导零数字预发布标识转成 `0.1.0-g0531719`，修复 `NETSDK1018 Invalid NuGet version string` | 实测确证（主 CI 绿） | `scripts/build-release.ts:29-52`；`scripts/tests/build-release.test.ts` |

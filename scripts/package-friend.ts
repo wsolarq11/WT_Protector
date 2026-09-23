@@ -10,11 +10,8 @@ const archiverModule = require("archiver") as typeof import("archiver");
 export async function packFriend(): Promise<Record<string, unknown>> {
   const exe = path.join(publishDir, "WTLauncher.App.exe");
   const manifestPath = path.join(publishDir, "update-manifest.json");
-  const quickStartFiles = readdirSync(path.join(repoRoot, "docs")).filter((file) => file.endsWith(".txt"));
-  if (quickStartFiles.length !== 1) {
-    throw new Error(`Expected exactly one quick-start .txt in docs/, found ${quickStartFiles.length}`);
-  }
-  const quickStart = path.join(repoRoot, "docs", quickStartFiles[0]);
+  // 快速上手说明已并入 README.md（单一用户文档源），不再维护独立的 docs/*.txt。
+  const quickStart = path.join(repoRoot, "README.md");
   const exampleConfig = path.join(repoRoot, "config", "launcher.example.json");
   for (const required of [exe, manifestPath, quickStart, exampleConfig]) {
     if (!existsSync(required)) {

@@ -2,10 +2,6 @@
 
 导航、命令人工视图、项目级不变量唯一源在 `AGENTS.md`；文档索引在 `docs/README.md`；五层架构唯一源在 `src/avalonia-launcher/README.md`；代码层规范在 `.trellis/spec/`；踩坑见 `.trellis/spec/guides/pitfalls.md`。
 
-## MCP Knowledge Graph
-
-If the codebase-memory-mcp server is configured, pass project name `D-_AI_-_projects-WT_Protector` to graph tools (`get_architecture`, `search_graph`, `trace_path`, `get_code_snippet`, `query_graph`). No `list_projects` tool. This name is not verifiable from repo files; trust the live MCP config.
-
 ## 本地迭代命令
 
 ```bash

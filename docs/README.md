@@ -21,7 +21,6 @@ Update when: 文档新增、移动、归档或用途变化时。
 | [branch-evidence-matrix.md](branch-evidence-matrix.md) | 全仓显隐分支实测矩阵 | 门禁/CI/Trellis/配置/源码分支证据变化 |
 | [visual-perspective-system.md](visual-perspective-system.md) | 油画透视视觉系统 | 视觉令牌、控件样式、响应式规则变化 |
 | [decision-ladder.md](decision-ladder.md) | 决策阶梯与变化闭包（单一源分配） | 架构分层、函数职责、文档分类规则变化 |
-| [使用说明.txt](使用说明.txt) | 用户快速上手 | 安装或使用流程变化 |
 
 ## Reference
 
@@ -36,7 +35,7 @@ Update when: 文档新增、移动、归档或用途变化时。
 
 ## Research
 
-探索性记录，非行动方案。
+探索性记录，非行动方案。此处只列仓库级架构调研；Trellis 任务级研究（含编码标准）在 `.trellis/research/`，由 Trellis 任务上下文管理，不在本索引范围。
 
 | 文档 | 用途 |
 | --- | --- |
