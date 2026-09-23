@@ -37,11 +37,11 @@ Update when: 目录、代码分层、函数职责、文档分类或单一源分�
 - 门禁是负债不是资产：每加一个 = 加一个要维护的漂移源 + 一个把文档焊死的点；焊点累积会杀死可重构性。定期按引用密度判据（`.trellis/spec/guides/pitfalls.md` §2.26）审计删过剩门禁。
 - 可重构性 > 完整性：文档能被放心重构，比所有事实都被门禁钉死更重要。
 
-## 复杂度收敛（2026-09 立项）
+## 复杂度收敛（2026-09 取证，含修正）
 
-取证：归档任务里架构/重构/清理类占比 >60%，一个月内 6 次范式切换（unified-store → fluxor → eventsourcing → cqrs → trinity → arch-cut），DESIGN.md 无任何复杂度理由。判为第二系统效应的过度设计，非有意投资。
+取证（修正）：归档任务名的 6 次范式切换（unified-store → fluxor → eventsourcing → cqrs → trinity → arch-cut）是**历史探索过程**，不是当前状态。`arch-cut` 已把事件溯源/Fluxor/CQRS 代码删净（grep 零匹配）。当前是收敛的 MVVM：Core 51 + App 121 + Analyzers 7，无过度抽象骨架可砍。
 
-方向：砍偶然复杂度，不治理复杂度的镜像（文档）。治理层已砍 2 个门禁（`no-hardcoded-gate-counts`、`no-stale-three-file-refs`，46→44）；架构层收敛（删中间层、删事件溯源/Fluxor）待分阶段立项，需回归验证。
+方向：架构无需再砍——它已经收敛。治理层已砍 2 个门禁（`no-hardcoded-gate-counts`、`no-stale-three-file-refs`，46→44）；剩余治理密度是「探索的沉淀」而非「过度设计的镜像」，边际收益递减，停手。教训：归档任务名反映历史而非现状，任何「当前代码过度设计」的推断必须经代码取证，不能由任务名推断。
 
 ## 目录架构
 
