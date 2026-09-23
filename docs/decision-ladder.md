@@ -18,20 +18,21 @@ Update when: 目录、代码分层、函数职责、文档分类或单一源分�
 
 | 层 | 唯一源 | 消费方 | 禁区 |
 | --- | --- | --- | --- |
-| 文件目录 | `AGENTS.md` 结构基线表 + `scripts/checks/run.ts` 基线常量 | `structure-baseline-consistency` | 手改目录后不改基线 |
+| 文件目录 | `scripts/generate-structure-baseline.ts`（生成 AGENTS.md 结构基线派生表） | `structure-baseline-up-to-date` | 手改 AGENTS.md 结构基线派生表 |
+| 配置 schema | Core record 定义（`LauncherStoreFile`/`LauncherSettings`/`LauncherPreset`/`LaunchEntry`）+ `LauncherStoreValidator` + `LauncherJsonContext` | `README.md` 人类摘要、`config/launcher.example.json` 模板 | 在 README 或模板里手写字段定义 |
 | 代码分层 | `src/avalonia-launcher/README.md` 五层架构 | Analyzer 层规则、门禁 | 跨层直接调用、造第二个可写状态源；其他入口文档复制架构表 |
 | 函数职责 | 每个文件首导出的核心入口 + 后续函数按调用图拓扑排列 | `grep ^func`/`^public` 的执行叙事 | 模糊命名、过早抽象、重复逻辑 |
 | 视觉 | `docs/visual-perspective-system.md` + `LauncherDesignTokens.cs` | `App.axaml` 全局皮肤 | XAML 裸色值、窗口内联重复皮肤 |
-| 命令 | `package.json`（机器源）+ `AGENTS.md` 脚本工具箱（唯一人工视图） | `README.md`/`CLAUDE.md`/`src/avalonia-launcher/README.md` 只引用 | 各入口文档各自重列命令清单 |
-| 项目不变量 | `AGENTS.md` 核心规则 | `README.md` 安全口径（用户视角）、`.trellis/spec/`（代码层） | 第二份不变量表（如 `CLAUDE.md` 自列） |
-| 门禁分层 | `AGENTS.md` | `CLAUDE.md` 只引用 | 另一份 gate tier 说明 |
+| 命令 | `package.json`（机器源）+ `AGENTS.md` 脚本工具箱（唯一人工视图） | `README.md`/`src/avalonia-launcher/README.md` 只引用 | 各入口文档各自重列命令清单 |
+| 项目不变量 | `AGENTS.md` 核心规则 | `README.md` 安全口径（用户视角）、`.trellis/spec/`（代码层） | 第二份不变量表 |
+| 门禁分层 | `AGENTS.md` | 其他入口只引用 | 另一份 gate tier 说明 |
 | 文档 | `docs/README.md` 索引 | 藤曼路径、`task-ledger-citations-resolve` | 归档后仍留在 Active、旧三文件引用、`Status` 头与目录与索引分节三者不一致 |
 
 ## 治理成本
 
 加门禁前先过盈亏平衡点：漂移定价与治理定价都算完，再选手段。
 
-- 漂移定价看读者：AI 读者盲目信任不试错，AI 入口文档（`AGENTS.md`/`CLAUDE.md`）必须准，值得锚定；人类读者会试错纠偏，人类入口可略旧，约定即可。
+- 漂移定价看读者：AI 读者盲目信任不试错，AI 入口文档（`AGENTS.md`）必须准，值得锚定；人类读者会试错纠偏，人类入口可略旧，约定即可。
 - 手段按成本从低到高：不做 → 流程约束（归档登记旧路径）→ 少量关键锚点（`wiring-map` 类名）→ 双向门禁（命令表镜像）→ 真生成（脚本产出文档）。能用便宜的不用贵的。
 - 门禁是负债不是资产：每加一个 = 加一个要维护的漂移源 + 一个把文档焊死的点；焊点累积会杀死可重构性。定期按引用密度判据（`.trellis/spec/guides/pitfalls.md` §2.26）审计删过剩门禁。
 - 可重构性 > 完整性：文档能被放心重构，比所有事实都被门禁钉死更重要。

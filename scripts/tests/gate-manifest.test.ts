@@ -49,8 +49,8 @@ describe("gate manifest", () => {
     expect(ids.indexOf("launcher-store")).toBeLessThan(ids.indexOf("shortcut-backup-retirement"));
   });
 
-  it("ends with structure-baseline-consistency so baseline drift is reported last", () => {
-    expect(gateSteps[gateSteps.length - 1]?.id).toBe("structure-baseline-consistency");
+  it("ends with structure-baseline-up-to-date so stale derived data is reported last", () => {
+    expect(gateSteps[gateSteps.length - 1]?.id).toBe("structure-baseline-up-to-date");
   });
 });
 

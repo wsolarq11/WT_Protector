@@ -23,6 +23,7 @@
     "apply:config": "tsx scripts/apply-machine-config.ts",
     "apply:config:dry": "tsx scripts/apply-machine-config.ts --dry-run",
     "generate:icon": "tsx scripts/generate-icon.ts",
+    "gen:structure-baseline": "tsx scripts/generate-structure-baseline.ts",
     "install:portable": "tsx scripts/install-portable.ts",
     "uninstall": "tsx scripts/install-portable.ts --uninstall",
     "package:friend": "tsx scripts/package-friend.ts",

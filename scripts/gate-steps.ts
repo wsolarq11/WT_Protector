@@ -51,5 +51,5 @@ export const gateStepIds = [
   "main-vm-line-budget",
   "workflow-no-callback-bag",
   "no-active-powershell-scripts",
-  "structure-baseline-consistency",
+  "structure-baseline-up-to-date",
 ] as const;

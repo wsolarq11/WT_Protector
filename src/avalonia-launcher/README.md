@@ -17,6 +17,7 @@ Each layer depends only on layers below it.
 `src/WTLauncher.Core/`
 
 - `LaunchEntry`, `LaunchPlan`, `LauncherPreset` records
+- `LauncherPresetFile` — in-memory VM pairing (`DefaultPresetId` + `Presets`), not the JSON shape; presets persist inline in `LauncherStoreFile`
 - `LaunchArgumentBuilder` — `wt.exe` quoting
 - `LauncherJson` — temp-file + `File.Replace` atomic persistence
 - `LauncherEntryOrder`, `LauncherEntryLayoutCalculator` — pure ordering/layout rules

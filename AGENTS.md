@@ -13,7 +13,6 @@ Local Windows Terminal workspace launcher: open saved folders with a chosen shel
 | 人类用户 | `README.md` |
 | AI 代理 | 本文件 |
 | DeepSeek Harness | `.dsh/DSH.md` |
-| Claude Code | `CLAUDE.md`（薄入口） |
 | 设计决策 | `DESIGN.md` |
 | 深度知识 | `docs/`（索引 `docs/README.md`） |
 
@@ -24,7 +23,6 @@ WT_Protector/
 ├── AGENTS.md              ← 本文件：AI 导航中枢 + 结构基线 + 项目级不变量唯一源
 ├── README.md              ← 用户/产品文档：快速上手、配置 schema、验证、运行、安全、状态
 ├── DESIGN.md              ← 设计契约：品牌、原则、组件所有权、Token
-├── CLAUDE.md              ← Claude Code 薄入口：导航 + 本地迭代命令，其余指向本文件
 ├── .dsh/DSH.md            ← DeepSeek Harness 的 Trellis 接入说明
 ├── .wt-protector.dsc.yaml ← WinGet Configuration：新机前置依赖
 ├── config/launcher.json   ← 唯一运行时状态（entries/presets/settings/defaultPresetId/runHistory）
@@ -37,7 +35,7 @@ WT_Protector/
 
 ## 脚本工具箱
 
-命令机器源是 `package.json`；本表是其完整镜像，`command-table-consistency` 门禁双向校验一致。`README.md`/`CLAUDE.md`/`src/avalonia-launcher/README.md` 只引用本表，不各自重列。
+命令机器源是 `package.json`；本表是其完整镜像，`command-table-consistency` 门禁双向校验一致。`README.md`/`src/avalonia-launcher/README.md` 只引用本表，不各自重列。
 
 | 命令 | 用途 |
 | --- | --- |
@@ -60,11 +58,13 @@ WT_Protector/
 | `npm run typecheck` | 脚本层 TypeScript 类型检查 |
 | `npm run test` | 脚本层 vitest 单测 |
 | `npm run generate:icon` | 生成应用图标 |
+| `npm run gen:structure-baseline` | 重新生成结构基线派生表 |
 
 ## 结构基线（Structure Baseline）
 
-仓库结构事实的唯一文档源。`structure-baseline-consistency` 校验文件系统与本表一致；结构变化时必须同步更新本表与 `scripts/checks/run.ts` 基线常量。
+仓库结构事实的派生视图。本表由 `npm run gen:structure-baseline` 生成，勿手工编辑；`structure-baseline-up-to-date` 门禁校验生成物未过期。
 
+<!-- DERIVED:structure-baseline:START -->
 | 基线项 | 数量 |
 |--------|------|
 | WTLauncher.Core C# files | 51 |
@@ -77,8 +77,7 @@ WT_Protector/
 | Tests C# files | 137 |
 | Test attributes [Fact]+[Theory] | 800 |
 | Gate steps (verify.ts) | 46 |
-
-更新协议：结构变化 → 跑 `npm run verify` 看 `structure-baseline-consistency` 报错 → 同步改本表与 `scripts/checks/run.ts` → 转绿。
+<!-- DERIVED:structure-baseline:END -->
 
 ## 核心规则
 

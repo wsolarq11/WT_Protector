@@ -1,16 +1,8 @@
-import path from "node:path";
-import { repoRoot, solutionPath } from "../config-lib.js";
+import { solutionPath } from "../config-lib.js";
 import { restoreSolutionNativeAot } from "../publish-lib.js";
 import { runVerifyMainline } from "../verify-mainline.js";
 import { runCoverageGate } from "../test-coverage.js";
-import {
-  addCheck,
-  countMatches,
-  execChecked,
-  readText,
-  walkFiles,
-} from "./common.js";
-import { gateStepIds } from "../gate-steps.js";
+import { addCheck, execChecked } from "./common.js";
 
 export async function checkReleaseLockfileConsistency(): Promise<void> {
   await restoreSolutionNativeAot(true);
@@ -105,107 +97,3 @@ export async function checkAnalyzerWiring(): Promise<void> {
   ]);
   addCheck("analyzer-wiring", { pass: true });
 }
-
-interface BaselineRow {
-  label: string;
-  path: string;
-  filter: string;
-  count: number;
-}
-
-function matchesFilter(filePath: string, filter: string): boolean {
-  const name = path.basename(filePath);
-  if (filter === "*.cs") {
-    return name.endsWith(".cs");
-  }
-  if (filter === "*.axaml") {
-    return name.endsWith(".axaml");
-  }
-  if (filter === "MainWindowViewModel.*.cs") {
-    const prefix = "MainWindowViewModel.";
-    return name.startsWith(prefix) && name.slice(prefix.length).includes(".") && name.endsWith(".cs");
-  }
-  return name.includes(filter.replaceAll("*", ""));
-}
-
-export function checkStructureBaselineConsistency(): void {
-  const baselineRows: BaselineRow[] = [
-    { label: "WTLauncher.Core C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.Core", filter: "*.cs", count: 51 },
-    { label: "ViewModels C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\ViewModels", filter: "*.cs", count: 65 },
-    { label: "MainWindowViewModel partials", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\ViewModels", filter: "MainWindowViewModel.*.cs", count: 15 },
-    { label: "Features C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\Features", filter: "*.cs", count: 15 },
-    { label: "Views C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\Views", filter: "*.cs", count: 24 },
-    { label: "Views AXAML files", path: "src\\avalonia-launcher\\src\\WTLauncher.App\\Views", filter: "*.axaml", count: 20 },
-    { label: "WTLauncher.Analyzers C# files", path: "src\\avalonia-launcher\\src\\WTLauncher.Analyzers", filter: "*.cs", count: 7 },
-    { label: "Tests C# files", path: "src\\avalonia-launcher\\tests\\WTLauncher.Tests", filter: "*.cs", count: 137 },
-  ];
-  const baselineTestAttributes = 800;
-  const violations: string[] = [];
-
-  for (const row of baselineRows) {
-    const directory = path.join(repoRoot, row.path);
-    const actual = walkFiles(directory).filter((file) => {
-      const normalized = file.replaceAll("\\", "/");
-      return (
-        matchesFilter(file, row.filter) &&
-        !normalized.includes("/obj/") &&
-        !normalized.includes("/bin/") &&
-        !normalized.includes("/TestResults/")
-      );
-    }).length;
-    if (actual !== row.count) {
-      violations.push(`${row.label}: baseline ${row.count}, found ${actual}`);
-    }
-  }
-
-  const testDir = path.join(repoRoot, "src", "avalonia-launcher", "tests", "WTLauncher.Tests");
-  let factCount = 0;
-  let theoryCount = 0;
-  for (const file of walkFiles(testDir)) {
-    const normalized = file.replaceAll("\\", "/");
-    if (
-      !file.endsWith(".cs") ||
-      normalized.includes("/obj/") ||
-      normalized.includes("/bin/") ||
-      normalized.includes("/TestResults/")
-    ) {
-      continue;
-    }
-    const text = readText(file);
-    factCount += countMatches(text, /\[Fact/g);
-    theoryCount += countMatches(text, /\[Theory/g);
-  }
-  if (factCount + theoryCount !== baselineTestAttributes) {
-    violations.push(
-      `test attributes: baseline ${baselineTestAttributes}, found ${factCount + theoryCount} (${factCount} Fact + ${theoryCount} Theory)`,
-    );
-  }
-
-  const agentsBaselineText = readText("AGENTS.md");
-  for (const row of baselineRows) {
-    if (!agentsBaselineText.includes(`| ${row.label} | ${row.count} |`)) {
-      violations.push(`AGENTS.md structure-baseline missing/outdated row: | ${row.label} | ${row.count} |`);
-    }
-  }
-  if (!agentsBaselineText.includes(`| Test attributes [Fact]+[Theory] | ${baselineTestAttributes} |`)) {
-    violations.push(`AGENTS.md structure-baseline missing/outdated row: | Test attributes [Fact]+[Theory] | ${baselineTestAttributes} |`);
-  }
-  const baselineCheckCount = gateStepIds.length;
-  if (!agentsBaselineText.includes(`| Gate steps (verify.ts) | ${baselineCheckCount} |`)) {
-    violations.push(`AGENTS.md structure-baseline missing/outdated row: | Gate steps (verify.ts) | ${baselineCheckCount} |`);
-  }
-  if (violations.length > 0) {
-    throw new Error(
-      `Structure baseline drift: ${violations.join("; ")}. Update scripts/verify.ts baseline constants AND the AGENTS.md structure-baseline table together.`,
-    );
-  }
-  addCheck("structure-baseline-consistency", {
-    rows: baselineRows.length,
-    testAttributes: baselineTestAttributes,
-    gateSteps: baselineCheckCount,
-    enforcedSource: "AGENTS.md structure-baseline table",
-  });
-}
-
-
-

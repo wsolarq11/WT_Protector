@@ -35,7 +35,7 @@ Update when: 文档新增、移动、归档或用途变化时。
 
 ## Research
 
-探索性记录，非行动方案。此处只列仓库级架构调研；Trellis 任务级研究（含编码标准）在 `.trellis/research/`，由 Trellis 任务上下文管理，不在本索引范围。
+探索性记录，非行动方案。此处只列仓库级架构调研；Trellis 任务级研究（含编码标准）在 `.trellis/research/`，任务台账（PRD/归档）在 `.trellis/tasks/`（含 `archive/`），都由 Trellis 任务上下文管理，不在本索引范围。
 
 | 文档 | 用途 |
 | --- | --- |
@@ -51,5 +51,5 @@ Update when: 文档新增、移动、归档或用途变化时。
 
 1. Active 文档头部保留 `Status`、`Purpose`、`Update when` 三行。
 2. 生命周期判据：`Status` 头、所在目录、索引分节三者必须一致（`Status: Reference` 的文档须位于 `reference/` 且列在 Reference 分节）。
-3. 结构与门禁计数只允许出现在 `AGENTS.md` 结构基线表。
+3. 结构与门禁计数只允许出现在 `AGENTS.md` 结构基线派生表（`gen:structure-baseline` 生成）。
 4. 文档引用必须可解析；归档后只在 `archive/README.md` 登记旧路径。

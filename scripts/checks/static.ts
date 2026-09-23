@@ -16,6 +16,11 @@ import {
   walkFiles,
   walkFilesExcluding,
 } from "./common.js";
+import {
+  generateStructureBaseline,
+  structureBaselineEndMarker,
+  structureBaselineStartMarker,
+} from "../generate-structure-baseline.js";
 
 function relDisplay(filePath: string): string {
   return filePath.replaceAll(repoRoot, "").replace(/^[\\/]+/, "");
@@ -212,6 +217,23 @@ export function checkCommandTableConsistency(): void {
   });
 }
 
+export function checkStructureBaselineUpToDate(): void {
+  const agents = readText("AGENTS.md");
+  const startIdx = agents.indexOf(structureBaselineStartMarker);
+  const endIdx = agents.indexOf(structureBaselineEndMarker);
+  if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) {
+    throw new Error("structure-baseline-up-to-date: AGENTS.md DERIVED markers missing");
+  }
+  const current = agents.slice(startIdx + structureBaselineStartMarker.length, endIdx).trim();
+  const expected = generateStructureBaseline().trim();
+  if (current !== expected) {
+    throw new Error(
+      "structure-baseline-up-to-date: AGENTS.md derived block is stale. Run `npm run gen:structure-baseline`.",
+    );
+  }
+  addCheck("structure-baseline-up-to-date", { derivedBlockCurrent: true });
+}
+
 export function checkNoStaleThreeFileRefs(): void {
   const activeDocs = [
     "README.md",
@@ -295,10 +317,10 @@ export function checkTaskLedgerCitationsResolve(): void {
 }
 
 export function checkNoHardcodedGateCounts(): void {
-  // 计数只允许出现在 AGENTS.md「结构基线」表——那里由 structure-baseline-consistency 逐项校验。
+  // 计数只允许出现在 AGENTS.md「结构基线」表——那里是生成物，由 structure-baseline-up-to-date 校验未过期。
   // 其他位置写死计数会在结构或测试规模变化后静默漂移:README.md 的 "enforces N checks"
   // 曾在 2026-07 修过一次(见 docs/archive/phase2-complete.md),之后又漂回写死值。
-  const activeDocs = ["README.md", "CLAUDE.md", "DESIGN.md", "AGENTS.md"];
+  const activeDocs = ["README.md", "DESIGN.md", "AGENTS.md"];
   const baselineTableRow = /^\|\s*[^|]+\|\s*\d+\s*\|\s*$/;
   const countPatterns: Array<{ pattern: RegExp; sample: string }> = [
     { pattern: /\b\d+\s+checks?\b/i, sample: "the gate enforces 45 checks" },

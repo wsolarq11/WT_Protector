@@ -10,7 +10,7 @@ Update when: 新增/删除 workflow 或端口时。
 Views → MainWindowViewModel（命令表面 + UI 状态投影）
   → Commands/*.cs（业务 workflow）
   → ICommandExecutionContext / ICommandHost / IDialogService（窄端口）
-  → StoreGrain（save-first-then-commit）→ FileLauncherJsonIO → config/launcher.json
+  → StoreGrain（save-first-then-commit）→ FileStorePersistence → FileLauncherJsonIO → config/launcher.json
 ```
 
 ## 端口
