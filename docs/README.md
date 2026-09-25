@@ -18,6 +18,7 @@ Update when: 文档新增、移动、归档或用途变化时。
 | [wiring-map.md](wiring-map.md) | workflow 与端口唯一台账 | 新增端口或 workflow |
 | [design-benchmark-digest.md](design-benchmark-digest.md) | 12 项外部设计基准 → 本地验收规则 | 基准或验收规则变化 |
 | [test-structure.md](test-structure.md) | 测试体系唯一设计源：漂移模型、四层结构、取舍规则、现状映射 | 测试分层或取舍规则变化 |
+| [test-suite-reduction-plan.md](test-suite-reduction-plan.md) | 测试体系从约 800 收敛到约 200 的执行方案 | 削减进度、判据或验收变化 |
 | [branch-evidence-matrix.md](branch-evidence-matrix.md) | 全仓显隐分支实测矩阵 | 门禁/CI/Trellis/配置/源码分支证据变化 |
 | [visual-perspective-system.md](visual-perspective-system.md) | 视觉系统 | 视觉令牌、控件样式、响应式规则变化 |
 | [decision-ladder.md](decision-ladder.md) | 决策阶梯与变化闭包（单一源分配） | 架构分层、函数职责、文档分类规则变化 |
