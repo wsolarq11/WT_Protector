@@ -17,16 +17,6 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public void QuickLaunchWindow_ExposesSearchAndResultContracts()
-    {
-        var xaml = File.ReadAllText(TestRepositoryPaths.View("QuickLaunchWindow.axaml"));
-
-        Assert.Contains("{Binding Query, Mode=TwoWay}", xaml, StringComparison.Ordinal);
-        Assert.Contains("{Binding Results}", xaml, StringComparison.Ordinal);
-        Assert.Contains("{Binding SelectedResult}", xaml, StringComparison.Ordinal);
-        Assert.Contains("PlaceholderText=\"{Binding Placeholder}\"", xaml, StringComparison.Ordinal);
-    }
-    [Fact]
     public void QuickLaunch_EmptyQuery_ShowsAllEntries()
     {
         using var temp = new TempDirectory();

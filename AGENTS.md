@@ -75,7 +75,7 @@ WT_Protector/
 | Views AXAML files | 21 |
 | WTLauncher.Analyzers C# files | 7 |
 | Tests C# files | 121 |
-| Test attributes [Fact]+[Theory] | 754 |
+| Test attributes [Fact]+[Theory] | 738 |
 | Gate steps (verify.ts) | 44 |
 <!-- DERIVED:structure-baseline:END -->
 

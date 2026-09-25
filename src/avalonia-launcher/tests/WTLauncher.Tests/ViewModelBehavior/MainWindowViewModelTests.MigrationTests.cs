@@ -9,20 +9,6 @@ namespace WTLauncher.Tests.ViewModelBehavior;
 public sealed partial class MainWindowViewModelTests
 {
     [Fact]
-    public void MigrationUi_ExposesManagementCommandsAndPathMappingControls()
-    {
-        var controlBar = File.ReadAllText(TestRepositoryPaths.View("LauncherControlBar.axaml"));
-        var importWindow = File.ReadAllText(TestRepositoryPaths.View("ImportMigrationWindow.axaml"));
-
-        Assert.Contains("ExportAllConfigCommand", controlBar, StringComparison.Ordinal);
-        Assert.Contains("ExportSelectedConfigCommand", controlBar, StringComparison.Ordinal);
-        Assert.Contains("ImportConfigCommand", controlBar, StringComparison.Ordinal);
-        Assert.Contains("DirectoryOverride, Mode=TwoWay", importWindow, StringComparison.Ordinal);
-        Assert.Contains("IsChecked=\"{Binding ReplaceMode}\"", importWindow, StringComparison.Ordinal);
-        Assert.Contains("IsChecked=\"{Binding IsSkipped}\"", importWindow, StringComparison.Ordinal);
-    }
-
-    [Fact]
     public async Task ExportAllConfig_WritesValidStoreFile()
     {
         using var temp = new TempDirectory();

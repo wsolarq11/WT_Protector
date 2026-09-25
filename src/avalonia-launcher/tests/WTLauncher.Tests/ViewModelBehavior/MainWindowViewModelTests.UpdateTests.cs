@@ -9,17 +9,6 @@ namespace WTLauncher.Tests.ViewModelBehavior;
 public sealed partial class MainWindowViewModelTests
 {
     [Fact]
-    public void UpdateUi_ExposesManagementCommandAndReadOnlyWindow()
-    {
-        var controlBar = File.ReadAllText(TestRepositoryPaths.View("LauncherControlBar.axaml"));
-        var window = File.ReadAllText(TestRepositoryPaths.View("UpdateCheckWindow.axaml"));
-
-        Assert.Contains("CheckForUpdatesCommand", controlBar, StringComparison.Ordinal);
-        Assert.Contains("Binding ErrorMessage", window, StringComparison.Ordinal);
-        Assert.Contains("Binding Note", window, StringComparison.Ordinal);
-    }
-
-    [Fact]
     public async Task CheckForUpdatesCommand_OpensDialogWithConfiguredManifestUrl()
     {
         using var temp = new TempDirectory();

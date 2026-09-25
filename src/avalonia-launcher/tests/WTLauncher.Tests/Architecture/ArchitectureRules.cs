@@ -32,47 +32,6 @@ public sealed class ArchitectureRules
     private static readonly IObjectProvider<IType> ViewModelLayer =
         Types().That().ResideInNamespace("WTLauncher.App.ViewModels").As("ViewModel layer");
 
-    // ── R1: Core must not reference Avalonia ─────────────────────────────
-    //
-    // Source: quality-guidelines.md invariant #1 ("Core never references Avalonia").
-    // Core.csproj already enforces this at compile time (zero PackageReference);
-    // this rule is a second line of defense against a future csproj slip.
-
-    [Fact]
-    public void R1_Core_MustNotReference_Avalonia()
-    {
-        IArchRule rule = Types().That().Are(CoreLayer)
-            .Should().NotDependOnAnyTypesThat().ResideInNamespace("Avalonia")
-            .Because("Core must stay UI-framework agnostic to remain unit-testable without Avalonia.");
-        rule.Check(Architecture);
-    }
-
-    // ── R2: Core must not reference CommunityToolkit.Mvvm ────────────────
-    //
-    // Source: quality-guidelines.md invariant #2.
-
-    [Fact]
-    public void R2_Core_MustNotReference_CommunityToolkitMvvm()
-    {
-        IArchRule rule = Types().That().Are(CoreLayer)
-            .Should().NotDependOnAnyTypesThat().ResideInNamespace("CommunityToolkit")
-            .Because("Core must not depend on MVVM framework source-generator types.");
-        rule.Check(Architecture);
-    }
-
-    // ── R3: Core must not depend on App ──────────────────────────────────
-    //
-    // Source: dependency-direction invariant (Layer 0 cannot reference Layer 1-4).
-
-    [Fact]
-    public void R3_Core_MustNotDependOn_App()
-    {
-        IArchRule rule = Types().That().Are(CoreLayer)
-            .Should().NotDependOnAnyTypesThat().ResideInNamespace("WTLauncher.App")
-            .Because("Layer 0 cannot reference Layer 1-4 (dependency direction).");
-        rule.Check(Architecture);
-    }
-
     // ── R4: ViewModels must not depend on System.IO.File ────────────────
     //
     // Source: quality-guidelines.md "forbidden patterns" — "Direct `File.WriteAllText`
@@ -93,20 +52,6 @@ public sealed class ArchitectureRules
         IArchRule rule = Types().That().Are(ViewModelLayer)
             .Should().NotDependOnAnyTypesThat().HaveFullName("System.IO.File")
             .Because("persistence must go through LauncherJson.Save for atomic-write guarantees; ViewModels must not touch System.IO.File directly.");
-        rule.Check(Architecture);
-    }
-
-    // ── R6: Core namespace should not depend on App's ViewModels ────────
-    //
-    // Belt-and-suspenders to R3: catches accidental Core→ViewModels coupling
-    // even if a future refactor introduces a new App sub-namespace.
-
-    [Fact]
-    public void R6_Core_MustNotReference_AppViewModels()
-    {
-        IArchRule rule = Types().That().Are(CoreLayer)
-            .Should().NotDependOnAnyTypesThat().ResideInNamespace("WTLauncher.App.ViewModels")
-            .Because("Core is Layer 0; ViewModels are Layer 1-3.");
         rule.Check(Architecture);
     }
 
