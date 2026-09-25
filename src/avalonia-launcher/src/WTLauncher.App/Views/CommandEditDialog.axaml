@@ -51,7 +51,7 @@
                 IsCancel="True"
                 Click="OnCancelClicked"/>
         <Button x:Name="OkButton"
-                Classes="primary"
+                Classes="accent"
                 MinWidth="96"
                 Click="OnOkClicked"/>
       </StackPanel>

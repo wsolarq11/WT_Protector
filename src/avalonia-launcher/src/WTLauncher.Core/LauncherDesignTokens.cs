@@ -7,15 +7,10 @@ namespace WTLauncher.Core;
 public static class LauncherDesignTokens
 {
     // ── Colors ──────────────────────────────────────────────
-    public const string PrimaryColor = "#2563EB";          // primary buttons, accent
+    public const string ActiveBorderColor = "#2563EB";   // active/selected emphasis border (tabs, list rows, swatches)
     public const string DestructiveColor = "#DC2626";      // delete/danger actions
     public const string ErrorColor = "#B22222";           // error text (Firebrick, contrast 5.24:1 AA)
     public const string BackgroundColor = "#F8FAFC";       // window background
-    public const string BackgroundTopColor = "#FBF8F2";    // atmospheric canvas top: warm paper light
-    public const string BackgroundBottomColor = "#EAF0F7"; // atmospheric canvas bottom: cool slate recession
-    public const string CanvasLightColor = "#FFFDF8";      // radial focal light on the canvas
-    public const string CanvasLightEndColor = "#00FFFDF8"; // transparent tail of the focal light
-    public const string HorizonColor = "#DCE3EE";          // subtle perspective horizon line
     public const string TextPrimaryColor = "#0F172A";      // headings, primary text
     public const string TextMutedColor = "#4B5563";        // secondary/muted text (contrast 5.8:1 AA)
     public const string BorderColor = "#E2E8F0";           // card/item borders
@@ -71,6 +66,7 @@ public static class LauncherDesignTokens
     public const double FocusBorderThickness = 2;
 
     // ── Typography ─────────────────────────────────────────
+    public const double FontSizeCaption = 11;
     public const double FontSizeSmall = 12;
     public const double FontSizeBody = 14;
     public const double FontSizeEmphasis = 16;

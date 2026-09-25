@@ -9,10 +9,9 @@
     <FluentTheme />
 
     <!--
-      ── Oil-perspective global control skin ──────────────────────────────
-      Foreground controls carry elevation + focal glow; the canvas recedes
-      through BackgroundBrush. Shared by every window unless a local class
-      overrides a property.
+      ── Global control skin ─────────────────────────────────────────────
+      Foreground controls carry elevation + focus; shared by every window
+      unless a local class overrides a property.
     -->
 
     <!-- Typography baseline -->
@@ -51,6 +50,31 @@
     <Style Selector="Button.destructive">
       <Setter Property="Background" Value="{StaticResource DestructiveBrush}"/>
       <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
+    </Style>
+
+    <!-- Accent button: interaction states read the user-chosen accent ramp,
+         injected at runtime from LauncherSettings.AccentColor (default sky-700).
+         FluentTheme's accent class follows the OS accent color (often gray),
+         so we override every interaction state explicitly. -->
+    <Style Selector="Button.accent /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource AccentNormalBrush}"/>
+      <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource AccentNormalBrush}"/>
+    </Style>
+    <Style Selector="Button.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}"/>
+      <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource AccentHoverBrush}"/>
+    </Style>
+    <Style Selector="Button.accent:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource AccentPressedBrush}"/>
+      <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource AccentPressedBrush}"/>
+    </Style>
+    <Style Selector="Button.accent:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource AccentDisabledBackgroundBrush}"/>
+      <Setter Property="Foreground" Value="{DynamicResource AccentDisabledForegroundBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource AccentDisabledBackgroundBrush}"/>
     </Style>
 
     <!-- Text entry: foreground plane with elevation, focal border on focus -->

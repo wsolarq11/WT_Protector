@@ -39,6 +39,12 @@ public static class LauncherSettingsDefaults
     /// <summary>Declared default background mode.</summary>
     public const string BackgroundMode = "solid";
 
+    /// <summary>Declared default accent color (hex, #RRGGBB).</summary>
+    public const string AccentColor = AccentColorRamp.DefaultAccentColor;
+
+    /// <summary>Declared default accent palette (hex, #RRGGBB), seeded from the built-in preset colors.</summary>
+    public static readonly ImmutableList<string> AccentPresets = ImmutableList.CreateRange(AccentColorRamp.PresetColors);
+
     private const string SettingsSectionKey = "settings";
     private const string QuickLaunchHotkeyJsonKey = "quickLaunchHotkey";
     private const string RunInTrayJsonKey = "runInTray";
@@ -48,6 +54,8 @@ public static class LauncherSettingsDefaults
     private const string CommandTemplatesJsonKey = "commandTemplates";
     private const string SearchHistoryJsonKey = "searchHistory";
     private const string BackgroundModeJsonKey = "backgroundMode";
+    private const string AccentColorJsonKey = "accentColor";
+    private const string AccentPresetsJsonKey = "accentPresets";
 
     /// <summary>
     /// Applies the declared defaults to settings whose JSON keys are missing,
@@ -88,6 +96,8 @@ public static class LauncherSettingsDefaults
             CommandTemplates = NormalizeCommandTemplates(settings.CommandTemplates, presentKeys),
             SearchHistory = NormalizeSearchHistory(settings.SearchHistory, presentKeys),
             BackgroundMode = NormalizeBackgroundMode(settings.BackgroundMode, presentKeys),
+            AccentColor = NormalizeAccentColor(settings.AccentColor, presentKeys),
+            AccentPresets = NormalizeAccentPresets(settings.AccentPresets, presentKeys),
         };
 
         return next == settings ? store : store with { Settings = next };
@@ -117,6 +127,32 @@ public static class LauncherSettingsDefaults
 
     private static string NormalizeBackgroundMode(string? value, IReadOnlySet<string> presentKeys) =>
         presentKeys.Contains(BackgroundModeJsonKey) ? value ?? BackgroundMode : BackgroundMode;
+
+    private static string NormalizeAccentColor(string? value, IReadOnlySet<string> presentKeys)
+    {
+        if (!presentKeys.Contains(AccentColorJsonKey))
+            return AccentColorRamp.DefaultAccentColor;
+        return AccentColorRamp.TryNormalize(value, out var normalized)
+            ? normalized
+            : AccentColorRamp.DefaultAccentColor;
+    }
+
+    private static ImmutableList<string> NormalizeAccentPresets(ImmutableList<string>? value, IReadOnlySet<string> presentKeys)
+    {
+        if (!presentKeys.Contains(AccentPresetsJsonKey) || value is null)
+            return AccentPresets;
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var builder = ImmutableList.CreateBuilder<string>();
+        foreach (var item in value)
+        {
+            if (!AccentColorRamp.TryNormalize(item, out var normalized) || !seen.Add(normalized))
+                continue;
+            builder.Add(normalized);
+        }
+
+        return builder.Count == 0 ? AccentPresets : builder.ToImmutable();
+    }
 
     private static IReadOnlySet<string> ParsePresentSettingsKeys(string rawJson)
     {

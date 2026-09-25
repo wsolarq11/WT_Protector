@@ -20,7 +20,7 @@ public sealed class LauncherPresetViewModelTests
         var viewModel = new LauncherPresetViewModel(preset);
 
         Assert.Equal(2, viewModel.EntryCount);
-        Assert.Equal("Daily (2项)", viewModel.Label);
+        Assert.Equal("Daily（2 项）", viewModel.Label);
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public sealed class LauncherPresetViewModelTests
         Assert.Equal("Daily", viewModel.Name);
         Assert.Equal(["one"], viewModel.EntryIds);
         Assert.True(viewModel.IsLocked);
-        Assert.Equal("Daily (系统组, 1项)", viewModel.Label);
+        Assert.Equal("Daily（系统组，1 项）", viewModel.Label);
     }
 
     [Fact]

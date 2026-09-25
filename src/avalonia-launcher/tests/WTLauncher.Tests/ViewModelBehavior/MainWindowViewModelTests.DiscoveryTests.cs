@@ -148,7 +148,7 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.DiscoverAgentsCommand.ExecuteAsync(null);
 
         Assert.Contains(viewModel.Entries, entry => entry.Id == "three" && entry.Name == "Three");
-        Assert.Contains("已新增按钮", viewModel.StatusText);
+        Assert.Contains("已新增启动项", viewModel.StatusText);
         Assert.Contains(LauncherStore.Load(config).Entries, entry => entry.Id == "three");
     }
 

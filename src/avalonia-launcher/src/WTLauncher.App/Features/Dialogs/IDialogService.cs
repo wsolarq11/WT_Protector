@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
 
@@ -32,4 +33,5 @@ public interface IDialogService
     public Task<LauncherImportPlan?> RequestImportAsync(LauncherStoreFile current, LauncherStoreFile imported);
     public Task OpenRunHistoryAsync(IReadOnlyList<LauncherRunHistoryEntry> history);
     public Task OpenUpdateCheckAsync(string currentVersion, string? manifestUrl);
+    public Task<AccentColorResult?> OpenAccentColorAsync(string currentColor, ImmutableList<string> presets);
 }

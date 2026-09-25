@@ -4,112 +4,88 @@
              xmlns:vm="clr-namespace:WTLauncher.App.ViewModels"
              x:Class="WTLauncher.App.Views.LauncherControlBar"
              x:DataType="vm:MainWindowViewModel">
-  <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
-    <StackPanel>
-      <TextBlock Classes="h1" Text="WT Launcher"/>
-      <TextBlock Classes="muted" Text="{Binding BarSubtitle}"/>
-    </StackPanel>
-    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Top">
-      <Border Background="{StaticResource BadgeSuccessBackgroundBrush}" CornerRadius="14" Padding="12,8" VerticalAlignment="Center">
+  <Grid RowDefinitions="Auto,Auto">
+    <!-- 命令栏：一行吃下高频，低频全部收进 ⋯ -->
+    <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="8">
+      <AutoCompleteBox x:Name="SearchTextBox"
+                       automation:AutomationProperties.Name="{Binding BarSearch}"
+                       PlaceholderText="{Binding BarSearchPlaceholder}"
+                       Text="{Binding FilterText, Mode=TwoWay}"
+                       ItemsSource="{Binding SearchHistoryItems}"
+                       MinimumPrefixLength="1"
+                       MinimumPopulateDelay="0:0:0.150"
+                       IsTextCompletionEnabled="False"
+                       Padding="12,8" VerticalAlignment="Center"/>
+      <ComboBox Grid.Column="1"
+                automation:AutomationProperties.Name="{Binding BarSort}"
+                ItemsSource="{Binding SortModes}"
+                SelectedItem="{Binding SelectedSortMode, Mode=TwoWay}"
+                MinWidth="100" VerticalAlignment="Center"/>
+      <ComboBox Grid.Column="2" x:Name="DisplayModeComboBox"
+                automation:AutomationProperties.Name="{Binding BarView}"
+                ItemsSource="{Binding DisplayModes}"
+                SelectedItem="{Binding SelectedDisplayMode, Mode=TwoWay}"
+                MinWidth="90" VerticalAlignment="Center"/>
+      <ComboBox Grid.Column="3"
+                automation:AutomationProperties.Name="{Binding BarCardsGroup}"
+                IsVisible="{Binding IsCardsViewMode}"
+                ItemsSource="{Binding CardsGroupOptions}"
+                SelectedItem="{Binding SelectedCardsGroupOption, Mode=TwoWay}"
+                DisplayMemberBinding="{Binding Display}" MinWidth="90" VerticalAlignment="Center"/>
+      <ComboBox Grid.Column="4"
+                automation:AutomationProperties.Name="{Binding BarPresetGroup}"
+                ItemsSource="{Binding Presets}"
+                SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
+                MinWidth="110" VerticalAlignment="Center" PlaceholderText="{Binding BarPresetPlaceholder}"/>
+      <Button Grid.Column="5" Classes="secondary" VerticalAlignment="Center"
+              Content="{Binding ApplyPresetButtonText}" Command="{Binding ApplyPresetCommand}"/>
+      <Border Grid.Column="6" Background="{StaticResource BadgeSuccessBackgroundBrush}" CornerRadius="14"
+              Padding="10,6" VerticalAlignment="Center">
         <TextBlock Foreground="{StaticResource BadgeSuccessForegroundBrush}">
           <Run Text="{Binding BarSelectedPrefix}"/><Run Text="{Binding SelectedCount}"/><Run Text="{Binding BarSelectedSuffix}"/>
         </TextBlock>
       </Border>
-      <ToggleSwitch IsChecked="{Binding RequireConfirmationForLaunches, Mode=TwoWay}"
-                    Content="{Binding LaunchConfirmationToggleText}"
-                    ToolTip.Tip="{Binding LaunchConfirmationToggleTip}"
-                    VerticalAlignment="Center"/>
-      <Button x:Name="SelectionActionsButton"
-              Classes="secondary"
-              Content="{Binding BarSelectionMenu}"
-              automation:AutomationProperties.Name="{Binding BarSelectionMenuAutomation}"
+      <Button Grid.Column="7" Classes="accent" VerticalAlignment="Center"
+              Content="{Binding BarLaunchSelected}" Command="{Binding LaunchSelectedCommand}"/>
+      <Button Grid.Column="8" Classes="secondary" VerticalAlignment="Center" Content="⋯"
+              automation:AutomationProperties.Name="{Binding BarManageAutomation}"
               Click="OnOverflowMenuClicked">
         <Button.ContextMenu>
           <ContextMenu>
+            <MenuItem Header="{Binding BarAddEntry}"
+                      automation:AutomationProperties.Name="{Binding BarAddEntry}"
+                      Command="{Binding AddEntryCommand}"/>
+            <MenuItem Header="{Binding BarDiscover}"
+                      automation:AutomationProperties.Name="{Binding BarDiscover}"
+                      Command="{Binding DiscoverAgentsCommand}"/>
+            <Separator/>
+            <MenuItem Header="{Binding BarPreview}"
+                      automation:AutomationProperties.Name="{Binding BarPreview}"
+                      Command="{Binding PreviewSelectedPresetCommand}"/>
+            <MenuItem Header="{Binding BarSaveAsNewPreset}"
+                      automation:AutomationProperties.Name="{Binding BarSaveAsNewPresetAutomation}"
+                      Command="{Binding SaveSelectionAsPresetCommand}"/>
+            <MenuItem Header="{Binding BarUpdatePreset}"
+                      automation:AutomationProperties.Name="{Binding BarUpdatePresetAutomation}"
+                      Command="{Binding UpdateSelectedPresetCommand}"/>
+            <MenuItem Header="{Binding BarDeletePreset}"
+                      automation:AutomationProperties.Name="{Binding BarDeletePresetAutomation}"
+                      Command="{Binding DeleteSelectedPresetCommand}"/>
+            <Separator/>
             <MenuItem Header="{Binding BarSelectAll}"
                       automation:AutomationProperties.Name="{Binding BarSelectAll}"
                       Command="{Binding SelectVisibleCommand}"/>
             <MenuItem Header="{Binding BarClearSelection}"
                       automation:AutomationProperties.Name="{Binding BarClearSelection}"
                       Command="{Binding ClearSelectionCommand}"/>
-            <Separator/>
             <MenuItem Header="{Binding BarReload}"
                       automation:AutomationProperties.Name="{Binding BarReload}"
                       Command="{Binding RefreshCommand}"/>
-          </ContextMenu>
-        </Button.ContextMenu>
-      </Button>
-      <Button Classes="primary" Content="{Binding BarLaunchSelected}" Command="{Binding LaunchSelectedCommand}"/>
-    </StackPanel>
-    <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0" Classes="muted" Text="{Binding ConfigPathDisplay}"/>
-    <Grid x:Name="ControlBoxesGrid"
-          Grid.Row="2" Grid.ColumnSpan="2"
-          ColumnDefinitions="1.8*,1*,1*,2.8*" ColumnSpacing="12" Margin="0,12,0,0">
-      <Border Classes="control-box">
-        <StackPanel>
-          <TextBlock Classes="control-box-label" Text="{Binding BarSearch}"/>
-          <AutoCompleteBox x:Name="SearchTextBox"
-                           automation:AutomationProperties.Name="{Binding BarSearch}"
-                           PlaceholderText="{Binding BarSearchPlaceholder}"
-                           Text="{Binding FilterText, Mode=TwoWay}"
-                           ItemsSource="{Binding SearchHistoryItems}"
-                           MinimumPrefixLength="1"
-                           MinimumPopulateDelay="0:0:0.150"
-                           IsTextCompletionEnabled="False"
-                           FontSize="{StaticResource FontSizeEmphasis}" Padding="12,8"/>
-        </StackPanel>
-      </Border>
-      <Border Grid.Column="1" Classes="control-box">
-        <StackPanel>
-          <TextBlock Classes="control-box-label" Text="{Binding BarSort}"/>
-          <ComboBox ItemsSource="{Binding SortModes}"
-                    SelectedItem="{Binding SelectedSortMode, Mode=TwoWay}"
-                    HorizontalAlignment="Stretch"/>
-        </StackPanel>
-      </Border>
-      <Border Grid.Column="2" Classes="control-box">
-        <StackPanel>
-          <TextBlock Classes="control-box-label" Text="{Binding BarView}"/>
-          <ComboBox x:Name="DisplayModeComboBox"
-                    ItemsSource="{Binding DisplayModes}"
-                    SelectedItem="{Binding SelectedDisplayMode, Mode=TwoWay}"
-                    HorizontalAlignment="Stretch"/>
-        </StackPanel>
-      </Border>
-      <Border Grid.Column="3" Classes="control-box">
-        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
-          <TextBlock Grid.ColumnSpan="4" Classes="control-box-label" Text="{Binding BarPresetGroup}"/>
-          <ComboBox Grid.Row="1" ItemsSource="{Binding Presets}"
-                    SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
-                    HorizontalAlignment="Stretch" VerticalAlignment="Center" PlaceholderText="{Binding BarPresetPlaceholder}"/>
-          <Button Grid.Row="1" Grid.Column="1" Classes="secondary"
-                  Content="{Binding ApplyPresetButtonText}" Command="{Binding ApplyPresetCommand}"/>
-          <Button Grid.Row="1" Grid.Column="2" Classes="secondary" Content="{Binding BarPreview}"
-                  Command="{Binding PreviewSelectedPresetCommand}"/>
-          <Button Grid.Row="1" Grid.Column="3" Classes="primary" Content="{Binding BarLaunch}"
-                  AutomationProperties.Name="{Binding BarLaunch}" Command="{Binding LaunchSelectedPresetCommand}"/>
-        </Grid>
-      </Border>
-    </Grid>
-    <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
-      <Button Classes="primary" Content="{Binding BarAddEntry}" Command="{Binding AddEntryCommand}"/>
-      <Border Classes="control-box" IsVisible="{Binding IsCardsViewMode}" Padding="8,4" CornerRadius="6"
-              BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
-        <StackPanel>
-          <TextBlock Classes="control-box-label" Text="{Binding BarCardsGroup}"/>
-          <ComboBox ItemsSource="{Binding CardsGroupOptions}"
-                    SelectedItem="{Binding SelectedCardsGroupOption, Mode=TwoWay}"
-                    DisplayMemberBinding="{Binding Display}" MinWidth="120" VerticalAlignment="Center"/>
-        </StackPanel>
-      </Border>
-      <Button Classes="secondary" Content="{Binding BarDiscover}" Command="{Binding DiscoverAgentsCommand}"/>
-      <Button x:Name="ManagementActionsButton"
-              Classes="secondary"
-              Content="{Binding BarManage}"
-              automation:AutomationProperties.Name="{Binding BarManageAutomation}"
-              Click="OnOverflowMenuClicked">
-        <Button.ContextMenu>
-          <ContextMenu>
+            <Separator/>
+            <MenuItem Header="{Binding LaunchConfirmationToggleText}"
+                      automation:AutomationProperties.Name="{Binding LaunchConfirmationToggleText}"
+                      IsChecked="{Binding RequireConfirmationForLaunches, Mode=TwoWay}"/>
+            <Separator/>
             <MenuItem Header="{Binding BarExportAll}"
                       automation:AutomationProperties.Name="{Binding BarExportAllAutomation}"
                       Command="{Binding ExportAllConfigCommand}"/>
@@ -131,45 +107,35 @@
             <MenuItem Header="{Binding BarAddress}"
                       automation:AutomationProperties.Name="{Binding BarAddressAutomation}"
                       Command="{Binding OpenDirectoryManagementCommand}"/>
+            <MenuItem Header="{Binding BarAccentColor}"
+                      automation:AutomationProperties.Name="{Binding BarAccentColorAutomation}"
+                      Command="{Binding OpenAccentColorCommand}"/>
           </ContextMenu>
         </Button.ContextMenu>
       </Button>
-      <Button x:Name="PresetActionsButton"
-              Classes="secondary"
-              Content="{Binding BarPresetMaintenance}"
-              automation:AutomationProperties.Name="{Binding BarPresetMaintenanceAutomation}"
-              Click="OnOverflowMenuClicked">
-        <Button.ContextMenu>
-          <ContextMenu>
-            <MenuItem Header="{Binding BarSaveAsNewPreset}"
-                      automation:AutomationProperties.Name="{Binding BarSaveAsNewPresetAutomation}"
-                      Command="{Binding SaveSelectionAsPresetCommand}"/>
-            <MenuItem Header="{Binding BarUpdatePreset}"
-                      automation:AutomationProperties.Name="{Binding BarUpdatePresetAutomation}"
-                      Command="{Binding UpdateSelectedPresetCommand}"/>
-            <Separator/>
-            <MenuItem Header="{Binding BarDeletePreset}"
-                      automation:AutomationProperties.Name="{Binding BarDeletePresetAutomation}"
-                      Command="{Binding DeleteSelectedPresetCommand}"/>
-          </ContextMenu>
-        </Button.ContextMenu>
-      </Button>
-      <Border Background="{StaticResource BadgeWarningBackgroundBrush}" CornerRadius="14" Padding="12,7"
-              Margin="12,0,0,0" VerticalAlignment="Center"
-              IsVisible="{Binding HasStaleDirectories}"
-              ToolTip.Tip="{Binding BarStaleTooltip}">
-        <TextBlock Foreground="{StaticResource BadgeWarningForegroundBrush}">
-          <Run Text="{Binding BarStalePrefix}"/><Run Text="{Binding StaleDirectoryCount}"/><Run Text="{Binding BarStaleSuffix}"/>
-        </TextBlock>
-      </Border>
-      <Border Background="{StaticResource BadgeInfoBackgroundBrush}" CornerRadius="14" Padding="12,7"
-              Margin="12,0,0,0" VerticalAlignment="Center">
-        <TextBlock Foreground="{StaticResource BadgeInfoForegroundBrush}">
-          <Run Text="{Binding VisibleCount}"/><Run Text=" / "/><Run Text="{Binding TotalCount}"/>
-        </TextBlock>
-      </Border>
-    </StackPanel>
-    <TextBlock Grid.Row="4" Grid.ColumnSpan="2" Margin="0,8,0,0" Classes="muted"
-               Text="{Binding PresetSelectionStatusText}"/>
+    </Grid>
+
+    <!-- 底部状态行：可信信号 + 状态 -->
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="0,6,0,0">
+      <TextBlock Classes="muted" Text="{Binding ConfigPathDisplay}" TextTrimming="CharacterEllipsis"
+                 VerticalAlignment="Center"/>
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+        <Border Background="{StaticResource BadgeWarningBackgroundBrush}" CornerRadius="14" Padding="10,6"
+                VerticalAlignment="Center"
+                IsVisible="{Binding HasStaleDirectories}"
+                ToolTip.Tip="{Binding BarStaleTooltip}">
+          <TextBlock Foreground="{StaticResource BadgeWarningForegroundBrush}">
+            <Run Text="{Binding BarStalePrefix}"/><Run Text="{Binding StaleDirectoryCount}"/><Run Text="{Binding BarStaleSuffix}"/>
+          </TextBlock>
+        </Border>
+        <Border Background="{StaticResource BadgeInfoBackgroundBrush}" CornerRadius="14" Padding="10,6"
+                VerticalAlignment="Center">
+          <TextBlock Foreground="{StaticResource BadgeInfoForegroundBrush}">
+            <Run Text="{Binding VisibleCount}"/><Run Text=" / "/><Run Text="{Binding TotalCount}"/>
+          </TextBlock>
+        </Border>
+        <TextBlock Classes="muted" Text="{Binding PresetSelectionStatusText}" VerticalAlignment="Center"/>
+      </StackPanel>
+    </Grid>
   </Grid>
 </UserControl>

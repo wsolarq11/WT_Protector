@@ -45,7 +45,7 @@
                 IsCancel="True"
                 x:Name="CancelButton"
                 Click="OnCancelClicked"/>
-        <Button Classes="primary"
+        <Button Classes="accent"
                 MinWidth="110"
                 x:Name="SaveButton"
                 Click="OnSaveClicked"/>

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
@@ -20,6 +21,7 @@ internal sealed class StubDialogService : IDialogService
     public Func<LauncherStoreFile, LauncherStoreFile, Task<LauncherImportPlan?>>? OnRequestImport { get; set; }
     public Func<IReadOnlyList<LauncherRunHistoryEntry>, Task>? OnOpenRunHistory { get; set; }
     public Func<string, string?, Task>? OnOpenUpdateCheck { get; set; }
+    public Func<string, ImmutableList<string>, Task<AccentColorResult?>>? OnOpenAccentColor { get; set; }
 
     public Task<bool> ConfirmLaunchAsync(LauncherSingleLaunchConfirmation confirmation) =>
         OnConfirmLaunch?.Invoke(confirmation) ?? Task.FromResult(false);
@@ -66,4 +68,7 @@ internal sealed class StubDialogService : IDialogService
 
     public Task OpenUpdateCheckAsync(string currentVersion, string? manifestUrl) =>
         OnOpenUpdateCheck?.Invoke(currentVersion, manifestUrl) ?? Task.CompletedTask;
+
+    public Task<AccentColorResult?> OpenAccentColorAsync(string currentColor, ImmutableList<string> presets) =>
+        OnOpenAccentColor?.Invoke(currentColor, presets) ?? Task.FromResult<AccentColorResult?>(null);
 }

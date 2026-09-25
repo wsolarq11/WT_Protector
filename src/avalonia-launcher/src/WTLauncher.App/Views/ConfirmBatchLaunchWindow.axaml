@@ -72,7 +72,7 @@
                 MinWidth="96"
                 IsCancel="True"
                 Click="OnCancelClicked"/>
-        <Button Classes="primary"
+        <Button Classes="accent"
                 x:Name="LaunchButton"
                 Click="OnLaunchClicked"/>
       </StackPanel>

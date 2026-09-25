@@ -105,7 +105,7 @@
                   HorizontalAlignment="Right"
                   Margin="{StaticResource DialogFooterMargin}">
         <Button Content="{Binding CloseLabel}"
-                Classes="primary"
+                Classes="accent"
                 MinWidth="110"
                 Click="OnCloseClicked"
                 automation:AutomationProperties.Name="{Binding CloseAutomation}"/>
