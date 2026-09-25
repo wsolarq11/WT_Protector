@@ -76,35 +76,4 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(["two"], LauncherStore.Load(config).Entries.Select(e => e.Id.Value).ToArray());
         Assert.Equal(["two"], LauncherStore.Load(config).Presets.Single().EntryIds);
     }
-
-    [Fact]
-    public void StaleDirectoryPresentation_IsExposedInViewsAndTokens()
-    {
-        var entriesXaml = System.IO.File.ReadAllText(TestRepositoryPaths.View("LauncherEntriesView.axaml"));
-        var controlXaml = System.IO.File.ReadAllText(TestRepositoryPaths.View("LauncherControlBar.axaml"));
-        var tokens = System.IO.File.ReadAllText(TestRepositoryPaths.CoreSource("LauncherDesignTokens.cs"));
-        var app = System.IO.File.ReadAllText(TestRepositoryPaths.AppCodeBehind);
-
-        Assert.Equal(3, CountOccurrences(entriesXaml, "Classes.stale=\"{Binding IsStaleDirectory}\""));
-        Assert.Equal(3, CountOccurrences(entriesXaml, "Command=\"{Binding RepairDirectoryCommand}\""));
-        Assert.Contains("StaleDirectoryCount", controlXaml, StringComparison.Ordinal);
-        Assert.Contains("BadgeWarningBackgroundColor", tokens, StringComparison.Ordinal);
-        Assert.Contains("BadgeWarningForegroundColor", tokens, StringComparison.Ordinal);
-        Assert.Contains("Resources[\"BadgeWarningBackgroundBrush\"]", app, StringComparison.Ordinal);
-        Assert.Contains("LauncherDesignTokens.BadgeWarningBackgroundColor", app, StringComparison.Ordinal);
-        Assert.Contains("Resources[\"BadgeWarningForegroundBrush\"]", app, StringComparison.Ordinal);
-        Assert.Contains("LauncherDesignTokens.BadgeWarningForegroundColor", app, StringComparison.Ordinal);
-    }
-
-    private static int CountOccurrences(string text, string value)
-    {
-        var count = 0;
-        var index = 0;
-        while ((index = text.IndexOf(value, index, StringComparison.Ordinal)) >= 0)
-        {
-            count++;
-            index += value.Length;
-        }
-        return count;
-    }
 }

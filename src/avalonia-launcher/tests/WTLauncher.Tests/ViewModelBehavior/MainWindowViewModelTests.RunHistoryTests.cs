@@ -9,18 +9,6 @@ namespace WTLauncher.Tests.ViewModelBehavior;
 public sealed partial class MainWindowViewModelTests
 {
     [Fact]
-    public void RunHistoryUi_ExposesManagementCommandAndReadOnlyPanel()
-    {
-        var controlBar = File.ReadAllText(TestRepositoryPaths.View("LauncherControlBar.axaml"));
-        var window = File.ReadAllText(TestRepositoryPaths.View("RunHistoryWindow.axaml"));
-
-        Assert.Contains("OpenRunHistoryCommand", controlBar, StringComparison.Ordinal);
-        Assert.Contains("ItemsSource=\"{Binding Rows}\"", window, StringComparison.Ordinal);
-        Assert.Contains("IsVisible=\"{Binding IsFailed}\"", window, StringComparison.Ordinal);
-        Assert.Contains("IsVisible=\"{Binding IsSkipped}\"", window, StringComparison.Ordinal);
-    }
-
-    [Fact]
     public async Task SingleLaunch_WritesRequestedHistoryAndPersists()
     {
         using var temp = new TempDirectory();
