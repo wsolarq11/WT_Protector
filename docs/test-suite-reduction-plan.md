@@ -43,6 +43,26 @@ Update when: 削减进度、判据、已知难点或验收标准变化时。
 - `ViewModelBehavior/`：`Launcher*WorkflowTests` 系列可能重复覆盖同一接线（红线 1）。
 - `CoreUnit/`：`ServiceResult`、`ErrorOr` 等纯 getter/纯转发测试（红线 1）。
 
+## B 执行进度（已提交 4 批）
+
+- batch 1（e6c9d260）：删 UiContract 8 文件（红线 4 UI 结构）+ CoreUnit 10 文件（红线 1 转发器 + 红线 3 文案），811→754 属性。
+- batch 2（054366f2）：删 Architecture R1/R2/R3/R6 + ServiceContract 2 实现测试 + StatusTextContract 5 文案 + 5 个 XAML 结构测试，754→738 属性。
+- batch 3（664a3306）：删 7 个 Launcher*WorkflowTests（红线 2 锁实现 + 红线 1 层间重复），738→728 属性。
+- batch 4（28db73b7）：删 LauncherBatchLaunchReceiptTextTests（红线 3 文案）+ PresetService 2 转发器测试（红线 1），728→720 属性。
+
+合计：139→113 文件 / 811→720 属性 / 898→798 展开测试。每批 `npm run verify` 全绿 + 基线更新。
+
+## B 的诚实结论
+
+忠实执行五红线 + 删测试三问 + 宁缺毋滥后，明确命中红线的测试已全部删除（UI 结构、手写架构规则、转发器、实现测试、纯文案）。剩余 720 属性测试是真实漂移守护：
+
+- 契约层（Persistence 配置往返 + CoreUnit 数据契约 + 端到端黄金用例）：约 330 属性。
+- 决策层（CoreUnit 纯函数 + PropertyTest 属性测试）：约 130 属性。
+- 编译器层（Analyzer 分析器行为）：约 39 属性。
+- VM 行为层（ViewModelBehavior 命令决策：回滚/快照/通知 + 黄金用例）：约 220 属性。
+
+"约 200" 需要五红线之外的激进削减（合并回滚分支、削减 VM 命令分支覆盖、把成功路径归冒烟层），这已超出"宁缺毋滥：拿不准的一律不删"的约束。剩余削减需人工决策，不在自动收敛范围内。
+
 ## 验收
 
 - `npm run verify` 全绿。
