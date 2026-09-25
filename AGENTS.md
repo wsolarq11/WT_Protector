@@ -45,7 +45,7 @@ WT_Protector/
 | `npm run release:contract` | 发布契约：locked restore + AOT publish + clean tree + receipt |
 | `npm run release:build` | 发布构建：AOT exe → artifacts/publish/win-x64/ |
 | `npm run start` | 运行主线应用 |
-| `npm run test:fast` | CoreUnit + PropertyTest + Architecture + Analyzer 聚焦测试 |
+| `npm run test:fast` | CoreUnit + PropertyTest + Analyzer 聚焦测试 |
 | `npm run test:coverage` | 覆盖率门禁 |
 | `npm run test:launch-args` | 启动参数测试 |
 | `npm run smoke` | 已发布 exe 关键路径冒烟 |
@@ -73,10 +73,10 @@ WT_Protector/
 | Features C# files | 15 |
 | Views C# files | 26 |
 | Views AXAML files | 21 |
-| WTLauncher.Analyzers C# files | 8 |
-| Tests C# files | 114 |
-| Test attributes [Fact]+[Theory] | 723 |
-| Gate steps (verify.ts) | 44 |
+| WTLauncher.Analyzers C# files | 9 |
+| Tests C# files | 113 |
+| Test attributes [Fact]+[Theory] | 717 |
+| Gate steps (verify.ts) | 43 |
 <!-- DERIVED:structure-baseline:END -->
 
 ## 核心规则

@@ -4,7 +4,7 @@ import { parseArgs } from "node:util";
 import { execa } from "execa";
 import { solutionPath } from "./config-lib.js";
 
-const filter = "Category=CoreUnit|Category=PropertyTest|Category=Architecture|Category=Analyzer";
+const filter = "Category=CoreUnit|Category=PropertyTest|Category=Analyzer";
 
 async function main(): Promise<void> {
   const { values } = parseArgs({

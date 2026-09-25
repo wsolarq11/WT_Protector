@@ -34,7 +34,6 @@ describe("gate manifest", () => {
       "release-lockfile-consistency",
       "avalonia-mainline-verify",
       "coverage-gate",
-      "architecture-rule-check",
       "analyzer-wiring",
     ]);
   });
