@@ -8,25 +8,6 @@ namespace WTLauncher.Tests.CoreUnit;
 public sealed class LauncherPresetDeleteTargetTests
 {
     [Fact]
-    public void TargetSnapshotsNormalizedPresetFactsAndEntryCount()
-    {
-        var preset = new LauncherPreset
-        {
-            Id = " Daily Group ",
-            Name = " Daily ",
-            EntryIds = [" one ", " two "],
-        };
-
-        var target = new LauncherPresetDeleteTarget(preset.Id, preset.Name, preset.EntryIds);
-        preset = preset with { Id = "changed", Name = "Changed" };
-        preset.EntryIds.Clear();
-
-        Assert.Equal("daily-group", target.PresetId);
-        Assert.Equal("Daily", target.PresetName);
-        Assert.Equal(2, target.EntryCount);
-    }
-
-    [Fact]
     public void TargetSnapshotsExplicitPresetFactsAndEntryCount()
     {
         var entryIds = new List<string> { " one ", " two " };

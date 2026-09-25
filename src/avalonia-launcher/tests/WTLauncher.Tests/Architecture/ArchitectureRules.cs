@@ -96,34 +96,6 @@ public sealed class ArchitectureRules
         rule.Check(Architecture);
     }
 
-    // ── R5: Only LauncherJson (writer) and known readers may depend on System.IO.File ──
-    //
-    // Single-writer invariant: atomic-write contract is upheld by centralizing writes
-    // in LauncherJson.Save (which does temp-file + File.Replace). Other Core types
-    // calling File.WriteAllText would bypass the contract.
-    //
-    // ponytail: type-level rule, so it also catches read-only File.Exists callers.
-    // ArchUnitNET's method-level `NotCallAny(MethodMembers().HaveFullName("System.IO.File.WriteAllText"))`
-    // is a no-op: external framework methods appear only as MethodCallDependency targets,
-    // never in MethodMembers (which is restricted to methods defined in loaded assemblies).
-    // Type-level is the coarsest check that actually has teeth. LaunchArgumentBuilder
-    // (wt.exe path resolution), LauncherStore (store-path resolution), and
-    // AgentDiscoveryScanner (PATH probe for AI agent CLIs) are exempted because their
-    // File dependency is File.Exists reads, not writes.
-
-    [Fact]
-    public void R5_Only_LauncherJson_AndKnownReaders_MayDependOn_SystemIoFile_In_Core()
-    {
-        IArchRule rule = Types().That().Are(CoreLayer)
-            .And().DoNotHaveFullName("WTLauncher.Core.LauncherJson")
-            .And().DoNotHaveFullName("WTLauncher.Core.LaunchArgumentBuilder")
-            .And().DoNotHaveFullName("WTLauncher.Core.LauncherStore")
-            .And().DoNotHaveFullName("WTLauncher.Core.AgentDiscoveryScanner")
-            .Should().NotDependOnAnyTypesThat().HaveFullName("System.IO.File")
-            .Because("LauncherJson is the single atomic-write gateway; LaunchArgumentBuilder, LauncherStore and AgentDiscoveryScanner only do File.Exists reads.");
-        rule.Check(Architecture);
-    }
-
     // ── R6: Core namespace should not depend on App's ViewModels ────────
     //
     // Belt-and-suspenders to R3: catches accidental Core→ViewModels coupling

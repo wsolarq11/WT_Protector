@@ -67,15 +67,15 @@ WT_Protector/
 <!-- DERIVED:structure-baseline:START -->
 | 基线项 | 数量 |
 |--------|------|
-| WTLauncher.Core C# files | 51 |
-| ViewModels C# files | 65 |
-| MainWindowViewModel partials | 15 |
+| WTLauncher.Core C# files | 53 |
+| ViewModels C# files | 66 |
+| MainWindowViewModel partials | 16 |
 | Features C# files | 15 |
-| Views C# files | 24 |
-| Views AXAML files | 20 |
+| Views C# files | 26 |
+| Views AXAML files | 21 |
 | WTLauncher.Analyzers C# files | 7 |
-| Tests C# files | 137 |
-| Test attributes [Fact]+[Theory] | 800 |
+| Tests C# files | 139 |
+| Test attributes [Fact]+[Theory] | 811 |
 | Gate steps (verify.ts) | 44 |
 <!-- DERIVED:structure-baseline:END -->
 
