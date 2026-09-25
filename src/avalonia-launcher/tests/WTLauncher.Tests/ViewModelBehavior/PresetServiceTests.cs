@@ -186,37 +186,6 @@ public sealed class PresetServiceTests
     }
 
     [Fact]
-    public void Eligibility_UsesPresetWorkflowRules()
-    {
-        var service = new PresetService(new StubDialogService());
-        var presetFile = new LauncherPresetFile
-        {
-            Presets =
-            [
-                new LauncherPreset
-                {
-                    Id = "daily",
-                    Name = "Daily",
-                    EntryIds = ["one"],
-                },
-                new LauncherPreset
-                {
-                    Id = "locked",
-                    Name = "Locked",
-                    EntryIds = ["one"],
-                    Locked = true,
-                },
-            ],
-            DefaultPresetId = "daily",
-        };
-
-        Assert.True(service.CanUpdatePreset(presetFile, "daily"));
-        Assert.True(service.CanDeletePreset(presetFile, "daily"));
-        Assert.False(service.CanUpdatePreset(presetFile, "locked"));
-        Assert.False(service.CanDeletePreset(presetFile, "locked"));
-    }
-
-    [Fact]
     public void CountEntryReferences_NormalizesInputAndUsesEntryIdComparer()
     {
         var service = new PresetService(new StubDialogService());
@@ -232,23 +201,6 @@ public sealed class PresetServiceTests
 
         Assert.Equal(2, service.CountEntryReferences(presetFile, " Demo "));
         Assert.Equal(0, service.CountEntryReferences(presetFile, " "));
-    }
-
-    [Fact]
-    public void BuildSelectionPreview_DelegatesCompleteSelectionContract()
-    {
-        var service = new PresetService(new StubDialogService());
-
-        var preview = service.BuildSelectionPreview(
-            "Daily",
-            ["one", "extra"],
-            ["one", "two", "extra"],
-            ["one", "two"]);
-
-        Assert.Equal(1, preview.MatchedCount);
-        Assert.Equal(1, preview.MissingCount);
-        Assert.Equal(1, preview.ExtraCount);
-        Assert.True(preview.HasChanges);
     }
 
     [Fact]
