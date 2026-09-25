@@ -139,7 +139,7 @@ public sealed partial class MainWindowViewModelTests
         StartDefaultDragPreview(viewModel, launcherSettings);
         await viewModel.AddEntryCommand.ExecuteAsync(null);
 
-        Assert.Equal("新增按钮对话框失败: dialog unavailable", viewModel.StatusText);
+        Assert.Equal("新增启动项对话框失败: dialog unavailable", viewModel.StatusText);
         AssertNoEntryMutation(config, presets, launcherSettings, viewModel);
 
         StartDefaultDragPreview(viewModel, launcherSettings);

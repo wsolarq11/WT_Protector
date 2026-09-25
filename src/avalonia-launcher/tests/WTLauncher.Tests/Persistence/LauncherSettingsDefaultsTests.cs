@@ -20,6 +20,9 @@ namespace WTLauncher.Tests.Persistence;
 [Trait("Category", TestCategories.Persistence)]
 public sealed class LauncherSettingsDefaultsTests
 {
+    private static readonly string[] ExplicitPresetsFixture = ["#0EA5E0", "#DC2626"];
+    private static readonly string[] DedupedPresetsFixture = ["#0EA5E0"];
+
     [Fact]
     public void MissingOptionalSettingsKeys_Load_AppliesDeclaredDefaults()
     {
@@ -137,24 +140,6 @@ public sealed class LauncherSettingsDefaultsTests
     }
 
     [Fact]
-    public void MissingLastFilterText_Load_FallsBackToEmpty()
-    {
-        // After removing [JsonRequired] from lastFilterText, a missing key
-        // must resolve to the default empty string.
-        using var temp = new TempDirectory();
-        var path = Path.Combine(temp.Path, "store.json");
-        File.WriteAllText(path, StoreJson(
-            quickLaunchHotkey: null,
-            runInTray: null,
-            updateManifestUrl: null,
-            lastFilterText: null));    // key absent
-
-        var store = LauncherStore.Load(path);
-
-        Assert.Equal("", store.Settings.LastFilterText);
-    }
-
-    [Fact]
     public void ExplicitLastFilterText_Load_IsHonored()
     {
         using var temp = new TempDirectory();
@@ -187,23 +172,6 @@ public sealed class LauncherSettingsDefaultsTests
     }
 
     [Fact]
-    public void MissingCardsGroupKey_Load_FallsBackToNone()
-    {
-        using var temp = new TempDirectory();
-        var path = Path.Combine(temp.Path, "store.json");
-        File.WriteAllText(path, StoreJson(
-            quickLaunchHotkey: null,
-            runInTray: null,
-            updateManifestUrl: null,
-            lastFilterText: null,
-            cardsGroupKey: null));    // key absent
-
-        var store = LauncherStore.Load(path);
-
-        Assert.Equal(LauncherCardsGroupKeys.None, store.Settings.CardsGroupKey);
-    }
-
-    [Fact]
     public void NullCardsGroupKey_Load_FallsBackToNone()
     {
         using var temp = new TempDirectory();
@@ -218,23 +186,6 @@ public sealed class LauncherSettingsDefaultsTests
         var store = LauncherStore.Load(path);
 
         Assert.Equal(LauncherCardsGroupKeys.None, store.Settings.CardsGroupKey);
-    }
-
-    [Fact]
-    public void MissingCommandTemplates_Load_FallsBackToEmpty()
-    {
-        using var temp = new TempDirectory();
-        var path = Path.Combine(temp.Path, "store.json");
-        File.WriteAllText(path, StoreJson(
-            quickLaunchHotkey: null,
-            runInTray: null,
-            updateManifestUrl: null,
-            lastFilterText: null,
-            commandTemplates: null));    // key absent
-
-        var store = LauncherStore.Load(path);
-
-        Assert.Equal(ImmutableDictionary<string, string>.Empty, store.Settings.CommandTemplates);
     }
 
     [Fact]
@@ -255,23 +206,6 @@ public sealed class LauncherSettingsDefaultsTests
     }
 
     [Fact]
-    public void MissingSearchHistory_Load_FallsBackToEmpty()
-    {
-        using var temp = new TempDirectory();
-        var path = Path.Combine(temp.Path, "store.json");
-        File.WriteAllText(path, StoreJson(
-            quickLaunchHotkey: null,
-            runInTray: null,
-            updateManifestUrl: null,
-            lastFilterText: null,
-            searchHistory: null));    // key absent
-
-        var store = LauncherStore.Load(path);
-
-        Assert.Equal(ImmutableList<string>.Empty, store.Settings.SearchHistory);
-    }
-
-    [Fact]
     public void NullSearchHistory_Load_FallsBackToEmpty()
     {
         using var temp = new TempDirectory();
@@ -289,23 +223,6 @@ public sealed class LauncherSettingsDefaultsTests
     }
 
     [Fact]
-    public void MissingBackgroundMode_Load_FallsBackToSolid()
-    {
-        using var temp = new TempDirectory();
-        var path = Path.Combine(temp.Path, "store.json");
-        File.WriteAllText(path, StoreJson(
-            quickLaunchHotkey: null,
-            runInTray: null,
-            updateManifestUrl: null,
-            lastFilterText: null,
-            backgroundMode: null));    // key absent
-
-        var store = LauncherStore.Load(path);
-
-        Assert.Equal("solid", store.Settings.BackgroundMode);
-    }
-
-    [Fact]
     public void NullBackgroundMode_Load_FallsBackToSolid()
     {
         using var temp = new TempDirectory();
@@ -320,6 +237,78 @@ public sealed class LauncherSettingsDefaultsTests
         var store = LauncherStore.Load(path);
 
         Assert.Equal("solid", store.Settings.BackgroundMode);
+    }
+
+    [Fact]
+    public void MissingAccentColor_Load_DefaultsToBadgeBlue()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "store.json");
+        File.WriteAllText(path, StoreJson());   // accentColor key absent
+
+        var store = LauncherStore.Load(path);
+
+        Assert.Equal(AccentColorRamp.DefaultAccentColor, store.Settings.AccentColor);
+    }
+
+    [Fact]
+    public void ExplicitAccentColor_Load_IsHonored()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "store.json");
+        File.WriteAllText(path, StoreJson(accentColor: "\"#2563EB\""));
+
+        var store = LauncherStore.Load(path);
+
+        Assert.Equal("#2563EB", store.Settings.AccentColor);
+    }
+
+    [Fact]
+    public void InvalidAccentColor_Load_FallsBackToDefault()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "store.json");
+        File.WriteAllText(path, StoreJson(accentColor: "\"not-a-color\""));
+
+        var store = LauncherStore.Load(path);
+
+        Assert.Equal(AccentColorRamp.DefaultAccentColor, store.Settings.AccentColor);
+    }
+
+    [Fact]
+    public void MissingAccentPresets_Load_DefaultsToBuiltInPalette()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "store.json");
+        File.WriteAllText(path, StoreJson());   // accentPresets key absent
+
+        var store = LauncherStore.Load(path);
+
+        Assert.Equal(AccentColorRamp.PresetColors, store.Settings.AccentPresets);
+    }
+
+    [Fact]
+    public void ExplicitAccentPresets_Load_IsHonored()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "store.json");
+        File.WriteAllText(path, StoreJson(accentPresets: "[\"#0EA5E0\",\"#DC2626\"]"));
+
+        var store = LauncherStore.Load(path);
+
+        Assert.Equal(ExplicitPresetsFixture, store.Settings.AccentPresets);
+    }
+
+    [Fact]
+    public void InvalidAccentPresets_Load_FiltersInvalidAndDedupes()
+    {
+        using var temp = new TempDirectory();
+        var path = Path.Combine(temp.Path, "store.json");
+        File.WriteAllText(path, StoreJson(accentPresets: "[\"#0EA5E0\",\"not-a-color\",\"#0ea5e0\"]"));
+
+        var store = LauncherStore.Load(path);
+
+        Assert.Equal(DedupedPresetsFixture, store.Settings.AccentPresets);
     }
 
     [Fact]
@@ -359,7 +348,9 @@ public sealed class LauncherSettingsDefaultsTests
         string? cardsGroupKey = null,
         string? commandTemplates = null,
         string? searchHistory = null,
-        string? backgroundMode = null)
+        string? backgroundMode = null,
+        string? accentColor = null,
+        string? accentPresets = null)
     {
         var settingsFields = string.Join(",", new[]
         {
@@ -372,6 +363,8 @@ public sealed class LauncherSettingsDefaultsTests
             commandTemplates is null ? null : $"\"commandTemplates\":{commandTemplates}",
             searchHistory is null ? null : $"\"searchHistory\":{searchHistory}",
             backgroundMode is null ? null : $"\"backgroundMode\":{backgroundMode}",
+            accentColor is null ? null : $"\"accentColor\":{accentColor}",
+            accentPresets is null ? null : $"\"accentPresets\":{accentPresets}",
             "\"window\":{\"width\":1180,\"height\":760}",
             quickLaunchHotkey is null ? null : $"\"quickLaunchHotkey\":{quickLaunchHotkey}",
             runInTray is null ? null : $"\"runInTray\":{runInTray}",

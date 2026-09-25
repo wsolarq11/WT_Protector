@@ -16,7 +16,7 @@
     <StyleInclude Source="/Views/Dialogs/DialogSharedStyles.axaml"/>
     <Style Selector="Button.tab.active">
       <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource ActiveBorderBrush}"/>
     </Style>
   </Window.Styles>
   <Border Padding="{StaticResource DialogOuterPadding}">
@@ -160,7 +160,7 @@
         </Grid>
       </Border>
       <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="{StaticResource DialogFooterMargin}">
-        <Button Content="{Binding CloseLabel}" Classes="primary" MinWidth="110" Click="OnCloseClicked"
+        <Button Content="{Binding CloseLabel}" Classes="accent" MinWidth="110" Click="OnCloseClicked"
                 automation:AutomationProperties.Name="{Binding CloseAutomation}"/>
       </StackPanel>
     </Grid>

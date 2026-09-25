@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using WTLauncher.App.Features.Dialogs;
@@ -125,4 +126,7 @@ public sealed class DialogService : IDialogService
             manifestUrl);
         return new UpdateCheckWindow(vm).ShowDialog<object?>(Owner);
     }
+
+    public Task<AccentColorResult?> OpenAccentColorAsync(string currentColor, ImmutableList<string> presets) =>
+        new AccentColorWindow(currentColor, presets).ShowDialog<AccentColorResult?>(Owner);
 }

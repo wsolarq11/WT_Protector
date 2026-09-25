@@ -87,6 +87,8 @@ public sealed partial class MainWindowViewModel
     public string BarCommandsAutomation => LauncherLocalization.Format("bar.commandsAutomation");
     public string BarAddress => LauncherLocalization.Format("bar.address");
     public string BarAddressAutomation => LauncherLocalization.Format("bar.addressAutomation");
+    public string BarAccentColor => LauncherLocalization.Format("bar.accentColor");
+    public string BarAccentColorAutomation => LauncherLocalization.Format("bar.accentColorAutomation");
     public string BarPresetMaintenance => LauncherLocalization.Format("bar.presetMaintenance");
     public string BarPresetMaintenanceAutomation => LauncherLocalization.Format("bar.presetMaintenanceAutomation");
     public string BarSaveAsNewPreset => LauncherLocalization.Format("bar.saveAsNewPreset");

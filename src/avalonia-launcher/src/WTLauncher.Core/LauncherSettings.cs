@@ -57,6 +57,16 @@ public sealed record LauncherSettings
     [JsonPropertyName("updateManifestUrl")]
     public string UpdateManifestUrl { get; init; } = "";
 
+    /// <summary>User-chosen accent color (hex, #RRGGBB). Defaults to the "11/11" entry-count badge blue.</summary>
+    [JsonPropertyName("accentColor")]
+    public string AccentColor { get; init; } = AccentColorRamp.DefaultAccentColor;
+
+    /// <summary>User-managed accent palette (hex, #RRGGBB). Seeded from
+    /// <see cref="AccentColorRamp.PresetColors"/>; the picker adds picked custom
+    /// colors and removes unwanted swatches.</summary>
+    [JsonPropertyName("accentPresets")]
+    public ImmutableList<string> AccentPresets { get; init; } = ImmutableList.CreateRange(AccentColorRamp.PresetColors);
+
     [JsonPropertyName("window")]
     [JsonRequired]
     public LauncherWindowSettings Window { get; init; } = new();

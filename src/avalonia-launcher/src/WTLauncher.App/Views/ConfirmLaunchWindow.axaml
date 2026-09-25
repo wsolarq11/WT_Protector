@@ -40,7 +40,7 @@
                 IsCancel="True"
                 Click="OnCancelClicked"/>
         <Button x:Name="LaunchButton"
-                Classes="primary"
+                Classes="accent"
                 MinWidth="110"
                 Click="OnLaunchClicked"/>
       </StackPanel>

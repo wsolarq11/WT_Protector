@@ -81,7 +81,7 @@
                   IsCancel="True"
                   Click="OnCancelClicked"/>
           <Button x:Name="SaveButton"
-                  Classes="primary"
+                  Classes="accent"
                   MinWidth="96"
                   Click="OnSaveClicked"/>
         </StackPanel>

@@ -87,7 +87,7 @@ public class ResourceKeyAnalyzer : DiagnosticAnalyzer
 
     /// <summary>
     /// Collects StaticResource key references from .axaml AdditionalTexts
-    /// (e.g., <c>{StaticResource PrimaryBrush}</c>).
+    /// (e.g., <c>{StaticResource ActiveBorderBrush}</c>).
     /// </summary>
     private static HashSet<string> CollectXamlReferences(CompilationAnalysisContext compilationContext)
     {

@@ -188,7 +188,7 @@
       <Setter Property="Opacity" Value="0.9"/>
       <Setter Property="IsHitTestVisible" Value="False"/>
     </Style>
-    <Style Selector="Border.card.detail-row Button.primary">
+    <Style Selector="Border.card.detail-row Button.accent">
       <Setter Property="Padding" Value="8,2"/>
       <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
       <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
@@ -249,11 +249,11 @@
     <Style Selector="Border.card.micro Grid.entry-footer">
       <Setter Property="Margin" Value="0,6,0,0"/>
     </Style>
-    <Style Selector="Border.card.compact Button.primary">
+    <Style Selector="Border.card.compact Button.accent">
       <Setter Property="Padding" Value="14,7"/>
       <Setter Property="CornerRadius" Value="9"/>
     </Style>
-    <Style Selector="Border.card.micro Button.primary">
+    <Style Selector="Border.card.micro Button.accent">
       <Setter Property="Padding" Value="12,6"/>
       <Setter Property="CornerRadius" Value="9"/>
     </Style>
@@ -289,23 +289,6 @@
       <Setter Property="Padding" Value="6,2"/>
       <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
     </Style>
-    <Style Selector="Button.primary">
-      <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
-      <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
-      <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="Padding" Value="16,8"/>
-      <Setter Property="CornerRadius" Value="10"/>
-      <Setter Property="HorizontalContentAlignment" Value="Center"/>
-      <Setter Property="VerticalContentAlignment" Value="Center"/>
-    </Style>
-    <Style Selector="Button.secondary">
-      <Setter Property="Background" Value="{StaticResource SecondaryButtonBackgroundBrush}"/>
-      <Setter Property="Foreground" Value="{StaticResource SecondaryButtonForegroundBrush}"/>
-      <Setter Property="Padding" Value="14,8"/>
-      <Setter Property="CornerRadius" Value="10"/>
-      <Setter Property="HorizontalContentAlignment" Value="Center"/>
-      <Setter Property="VerticalContentAlignment" Value="Center"/>
-    </Style>
     <Style Selector="Border.control-box">
       <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
       <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
@@ -324,16 +307,6 @@
   </Window.Styles>
 
   <Grid>
-    <!-- Atmospheric perspective canvas: focal light + horizon line behind all chrome. -->
-    <Border IsHitTestVisible="False"
-            Background="{StaticResource CanvasLightBrush}"
-            Opacity="0.55"/>
-    <Border IsHitTestVisible="False"
-            Background="{StaticResource HorizonBrush}"
-            Opacity="0.45"
-            VerticalAlignment="Top"
-            Height="1"
-            Margin="24,18,24,0"/>
     <Grid RowDefinitions="Auto,*,Auto" Margin="24,20">
     <views:LauncherControlBar x:Name="ControlBar"/>
 

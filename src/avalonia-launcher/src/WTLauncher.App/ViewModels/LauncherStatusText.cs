@@ -380,6 +380,9 @@ public static class LauncherSettingsStatus
             ? LauncherStatusContent.Success(LauncherLocalization.Format("settings.launchConfirmationAll"))
             : LauncherStatusContent.Success(LauncherLocalization.Format("settings.launchConfirmationDirect"));
 
+    public static LauncherStatusContent AccentColorSaved(string hex) =>
+        LauncherStatusContent.Success(LauncherLocalization.Format("settings.accentColorSaved", hex));
+
     public static LauncherStatusContent WindowBoundsSaveFailed =>
         LauncherStatusContent.Error(LauncherLocalization.Format("settings.windowBoundsSaveFailed"));
 }

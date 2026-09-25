@@ -1,0 +1,65 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:core="clr-namespace:WTLauncher.Core;assembly=WTLauncher.Core"
+        xmlns:views="clr-namespace:WTLauncher.App.Views"
+        x:Class="WTLauncher.App.Views.AccentColorWindow"
+        Width="460"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource SurfaceBrush}">
+  <Window.Styles>
+    <StyleInclude Source="/Views/Dialogs/DialogSharedStyles.axaml"/>
+  </Window.Styles>
+  <Border Padding="{StaticResource DialogOuterPadding}">
+    <StackPanel Spacing="14">
+      <TextBlock x:Name="TitleText" Classes="dialog-title"/>
+
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock x:Name="PaletteLabel" Classes="section-label" Grid.Column="0" VerticalAlignment="Center"/>
+        <Button x:Name="ResetPaletteButton" Classes="secondary" Grid.Column="1" Click="OnResetPaletteClicked"/>
+      </Grid>
+      <ItemsControl x:Name="SwatchList">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel/>
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="views:AccentSwatch">
+            <Border Width="36" Height="36" Margin="0,0,8,8" CornerRadius="8"
+                    Background="{Binding Background}"
+                    BorderBrush="{Binding BorderBrush}"
+                    BorderThickness="{Binding BorderThickness}"
+                    Tag="{Binding Hex}"
+                    ContextMenu="{Binding Menu}"
+                    PointerPressed="OnSwatchPressed"/>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <TextBlock x:Name="CustomLabel" Classes="section-label"/>
+      <StackPanel Orientation="Horizontal" Spacing="10">
+        <Border x:Name="PreviewSwatch"
+                Width="36" Height="36" CornerRadius="8"
+                BorderThickness="1"
+                BorderBrush="{StaticResource CardBorderBrush}"
+                VerticalAlignment="Center"/>
+        <TextBox x:Name="HexInput"
+                 MinWidth="140"
+                 VerticalAlignment="Center"
+                 TextChanged="OnHexChanged"/>
+        <Button x:Name="AddToPaletteButton"
+                Classes="secondary"
+                VerticalAlignment="Center"
+                Click="OnAddToPaletteClicked"/>
+      </StackPanel>
+
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                  Spacing="{x:Static core:LauncherDesignTokens.SpacingSmall}"
+                  Margin="{StaticResource DialogFooterMargin}">
+        <Button x:Name="CancelButton" Classes="secondary" MinWidth="90" IsCancel="True" Click="OnCancelClicked"/>
+        <Button x:Name="ConfirmButton" Classes="accent" MinWidth="110" IsDefault="True" Click="OnConfirmClicked"/>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</Window>

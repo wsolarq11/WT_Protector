@@ -103,7 +103,7 @@
                 IsCancel="True"
                 Click="OnCancelClicked"/>
         <Button x:Name="AddButton"
-                Classes="primary"
+                Classes="accent"
                 MinWidth="132"
                 Click="OnAddClicked"/>
       </StackPanel>

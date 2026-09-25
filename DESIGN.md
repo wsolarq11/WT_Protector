@@ -29,9 +29,9 @@ Non-goals: 不做跨平台设计系统；不迁移状态到 AppData/registry；�
 
 ## Visual Language
 
-视觉系统采用油画透视三层纵深，完整映射见 `docs/visual-perspective-system.md`。
+视觉系统遵循三条规则（画布中性、单一强调色、焦点不散），完整映射见 `docs/visual-perspective-system.md`。
 
-- Color: 主按钮蓝色强调；确认开关用中性色；拖拽高亮青蓝提示线；画布从暖纸色渐变到冷石板色。
+- Color: 强调色用户可调（默认 #0369A1，12 色中国古典色板）；激活/选中描边用 ActiveBorderBrush；拖拽高亮青蓝提示线；画布单一中性色。
 - Typography: 标题 SemiBold；路径/命令等宽；详细列表单行文字、行高固定。
 - Spacing: 8 / 13 / 21 / 34 收敛节奏。
 - Shape: 卡片圆角克制；控件圆角 10/12/16 分层；拖拽幽灵略增阴影与透明度。
@@ -51,6 +51,7 @@ New/changed:
 - 四框控制行：搜索、排序、视图、启动组，单个父 Grid 管理，列比例 `1.8* / 1* / 1* / 2.8*`
 - 搜索 AutoCompleteBox：`searchHistory` 下拉，Enter 写入历史
 - 全局启动确认 ToggleSwitch：立即保存，所有启动项同一规则
+- 强调色选择器 AccentColorWindow：用户可调 accent 并编辑 12 色古典色板，立即持久化并热刷新
 
 ## Token / Component Ownership
 

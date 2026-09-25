@@ -223,8 +223,7 @@ Top 无覆盖分叉（源码静态推断，按静默错误风险降序；本 ses
 
 | 分支 | 行为 | 判定 | 证据 |
 | --- | --- | --- | --- |
-| 画布大气渐变 | `BackgroundBrush` 从暖纸色渐变到冷石板色，替换纯色 | 实测确证 | `App.axaml.cs`；`smoke` boot 通过 |
-| 焦点光/地平线 | `CanvasLightBrush` + `HorizonBrush` 压在主窗口内容后 | 实测确证 | `MainWindow.axaml`；`smoke` boot 通过 |
+| 画布纯色 | `BackgroundBrush` 单一中性色 `BackgroundColor`，无渐变/装饰层 | 实测确证 | `App.axaml.cs`；`smoke` boot 通过 |
 | 全局控件皮肤 | Button 悬停/按下位移、TextBox/ComboBox/AutoCompleteBox 焦点描边、ListBoxItem 选中、ContextMenu/MenuItem/ToolTip 圆角 | 实测确证 | `App.axaml`；`dotnet build -warnaserror` PASS |
 | 全局 destructive 按钮 | 从 DialogSharedStyles 移到 App.axaml，所有窗口共享 | 实测确证 | `App.axaml`；build PASS |
 | 控件阴影/圆角令牌 | `ControlBoxShadow`、`ControlCornerRadius`、`DropdownCornerRadius`、`DialogCornerRadius` | 实测确证 | `LauncherDesignTokens.cs`；`App.axaml.cs` |

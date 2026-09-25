@@ -34,7 +34,7 @@ public sealed partial class App : Application
     private void InjectDesignTokens()
     {
         // ── Base colors ────────────────────────────────────
-        Resources["PrimaryBrush"]     = new SolidColorBrush(Color.Parse(LauncherDesignTokens.PrimaryColor));
+        Resources["ActiveBorderBrush"]  = new SolidColorBrush(Color.Parse(LauncherDesignTokens.ActiveBorderColor));
         Resources["DestructiveBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.DestructiveColor));
         Resources["ErrorBrush"]       = new SolidColorBrush(Color.Parse(LauncherDesignTokens.ErrorColor));
         Resources["TextPrimaryBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.TextPrimaryColor));
@@ -43,32 +43,9 @@ public sealed partial class App : Application
         Resources["BorderBrush"]      = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BorderColor));
         Resources["SurfaceBrush"]     = new SolidColorBrush(Color.Parse(LauncherDesignTokens.SurfaceColor));
 
-        // ── Atmospheric perspective canvas ─────────────────
-        // BackgroundBrush becomes a warm-to-cool gradient: foreground items stay
-        // high-contrast while the canvas recedes, matching oil-painting aerial depth.
-        Resources["BackgroundBrush"] = new LinearGradientBrush
-        {
-            StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
-            EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
-            GradientStops =
-            {
-                new GradientStop(Color.Parse(LauncherDesignTokens.BackgroundTopColor), 0),
-                new GradientStop(Color.Parse(LauncherDesignTokens.BackgroundBottomColor), 1),
-            },
-        };
-        Resources["CanvasLightBrush"] = new RadialGradientBrush
-        {
-            Center = new RelativePoint(0.24, 0.12, RelativeUnit.Relative),
-            GradientOrigin = new RelativePoint(0.24, 0.12, RelativeUnit.Relative),
-            RadiusX = new RelativeScalar(0.95, RelativeUnit.Relative),
-            RadiusY = new RelativeScalar(0.95, RelativeUnit.Relative),
-            GradientStops =
-            {
-                new GradientStop(Color.Parse(LauncherDesignTokens.CanvasLightColor), 0),
-                new GradientStop(Color.Parse(LauncherDesignTokens.CanvasLightEndColor), 1),
-            },
-        };
-        Resources["HorizonBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.HorizonColor));
+        // ── Canvas ─────────────────────────────────────────
+        // Flat neutral background: cards carry the hierarchy, not a gradient.
+        Resources["BackgroundBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BackgroundColor));
         Resources["FocusBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.FocusGlowColor));
 
         // ── Semantic state colors ──────────────────────────
@@ -83,6 +60,9 @@ public sealed partial class App : Application
         // ── Secondary button ───────────────────────────────
         Resources["SecondaryButtonBackgroundBrush"]  = new SolidColorBrush(Color.Parse(LauncherDesignTokens.SecondaryButtonBackgroundColor));
         Resources["SecondaryButtonForegroundBrush"]  = new SolidColorBrush(Color.Parse(LauncherDesignTokens.SecondaryButtonForegroundColor));
+
+        // ── Accent button ramp (default; overwritten once settings load) ──
+        ApplyAccentRamp(Resources, AccentColorRamp.DefaultAccentColor);
 
         // ── Control box ────────────────────────────────────
         Resources["ControlBoxLabelBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.ControlBoxLabelColor));
@@ -113,6 +93,7 @@ public sealed partial class App : Application
         Resources["FocusBorderThickness"] = new Thickness(LauncherDesignTokens.FocusBorderThickness);
         Resources["SpacingFrame"] = new Thickness(LauncherDesignTokens.SpacingFrame);
         Resources["FontSizeSmall"] = LauncherDesignTokens.FontSizeSmall;
+        Resources["FontSizeCaption"] = LauncherDesignTokens.FontSizeCaption;
         Resources["FontSizeBody"] = LauncherDesignTokens.FontSizeBody;
         Resources["FontSizeEmphasis"] = LauncherDesignTokens.FontSizeEmphasis;
         Resources["DialogTitleFontSize"] = LauncherDesignTokens.DialogTitleFontSize;
@@ -134,6 +115,25 @@ public sealed partial class App : Application
         // ── Acrylic material colors ──────────────────────
         Resources["AcrylicTintColor"] = Color.Parse(LauncherDesignTokens.BackgroundColor);
         Resources["AcrylicFallbackColor"] = Color.Parse(LauncherDesignTokens.BackgroundColor);
+    }
+
+    /// <summary>
+    /// Injects (or refreshes) the five accent-button brushes derived from a
+    /// single base color. DynamicResource bindings in App.axaml pick up the
+    /// new values immediately, so re-calling this after a color change
+    /// re-skins every accent button live.
+    /// </summary>
+    public static void ApplyAccentRamp(IResourceDictionary resources, string baseHex)
+    {
+        if (!AccentColorRamp.TryNormalize(baseHex, out var normalized))
+            normalized = AccentColorRamp.DefaultAccentColor;
+
+        var ramp = AccentColorRamp.FromHex(normalized);
+        resources["AccentNormalBrush"] = new SolidColorBrush(Color.Parse(ramp.Normal));
+        resources["AccentHoverBrush"] = new SolidColorBrush(Color.Parse(ramp.Hover));
+        resources["AccentPressedBrush"] = new SolidColorBrush(Color.Parse(ramp.Pressed));
+        resources["AccentDisabledBackgroundBrush"] = new SolidColorBrush(Color.Parse(ramp.DisabledBackground));
+        resources["AccentDisabledForegroundBrush"] = new SolidColorBrush(Color.Parse(ramp.DisabledForeground));
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -190,6 +190,10 @@ public sealed partial class App : Application
                 var storeGrain = new StoreGrain(storePath, storePersistence);
 #pragma warning restore CA2000
                 var storeFile = storeGrain.Select(s => s);
+
+                // Re-skin accent buttons from the persisted user color (falls
+                // back to the injected default when the config omits the key).
+                ApplyAccentRamp(Resources, storeFile.Settings.AccentColor);
 
                 var launchWorkflow = LauncherLaunchWorkflow.Create();
                 var dialogService = new DialogService();
