@@ -48,6 +48,9 @@ public class LayerDependencyAnalyzer : DiagnosticAnalyzer
 
     private static readonly DependencyRule[] Rules =
     [
+        // Core must not reference the UI layers (formerly WT1001 LayerViolationAnalyzer).
+        new("WTLauncher.Core", false, "WTLauncher.App.ViewModels", false, []),
+        new("WTLauncher.Core", false, "WTLauncher.App.Views", false, []),
         // R4: ViewModels must not touch System.IO.File (persistence goes through LauncherJson.Save).
         new("WTLauncher.App.ViewModels", false, "System.IO.File", true, []),
         // R7/R8: Presets / Entries services own workflows, not pixels.

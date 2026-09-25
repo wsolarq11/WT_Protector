@@ -50,9 +50,10 @@ Update when: 削减进度、判据、已知难点或验收标准变化时。
 - batch 3（664a3306）：删 7 个 Launcher*WorkflowTests（红线 2 锁实现 + 红线 1 层间重复），738→728 属性。
 - batch 4（28db73b7）：删 LauncherBatchLaunchReceiptTextTests（红线 3 文案）+ PresetService 2 转发器测试（红线 1），728→720 属性。
 - batch 5（4ee895a9）：新增 `LocalizationKeyAnalyzer`（WT1007），文案 key 漂移升格编译期强制（补删文案测试后欠的账），+3 属性。
-- batch 6（待提交）：新增 `LayerDependencyAnalyzer`（WT1008），Architecture 手写规则（R4/R7-R14 + ServiceContract 源码锁）升格编译期强制，删 Architecture 目录 + ArchUnitNET 包 + architecture-rule-check 门禁，723→717 属性。
+- batch 6（69982f53）：新增 `LayerDependencyAnalyzer`（WT1008），Architecture 手写规则（R4/R7-R14 + ServiceContract 源码锁）升格编译期强制，删 Architecture 目录 + ArchUnitNET 包 + architecture-rule-check 门禁，723→717 属性。
+- batch 7（待提交）：WT1001（LayerViolationAnalyzer，语法级 Core→UI 检查）合并进 WT1008 语义级规则表，砍掉重复的层依赖分析器，717→713 属性。
 
-合计：139→113 文件 / 811→717 属性 / 898→789 展开测试。每批 `npm run verify` 全绿 + 基线更新。
+合计：139→112 文件 / 811→713 属性 / 898→785 展开测试。每批 `npm run verify` 全绿 + 基线更新。
 
 ## B 的诚实结论
 
@@ -60,7 +61,7 @@ Update when: 削减进度、判据、已知难点或验收标准变化时。
 
 - 契约层（Persistence 配置往返 + CoreUnit 数据契约 + 端到端黄金用例）：约 330 属性。
 - 决策层（CoreUnit 纯函数 + PropertyTest 属性测试）：约 130 属性。
-- 编译器层（Analyzer 分析器行为）：约 39 属性。
+- 编译器层（Analyzer 分析器行为）：约 35 属性。
 - VM 行为层（ViewModelBehavior 命令决策：回滚/快照/通知 + 黄金用例）：约 220 属性。
 
 "约 200" 需要五红线之外的激进削减（合并回滚分支、削减 VM 命令分支覆盖、把成功路径归冒烟层），这已超出"宁缺毋滥：拿不准的一律不删"的约束。剩余削减需人工决策，不在自动收敛范围内。
