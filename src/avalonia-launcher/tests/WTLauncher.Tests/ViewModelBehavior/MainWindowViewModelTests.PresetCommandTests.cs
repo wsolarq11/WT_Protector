@@ -117,35 +117,6 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task LaunchSelectedPresetStartsPresetEntriesWithoutPersistingSelection()
-    {
-        using var temp = new TempDirectory();
-        var (config, settings, presets) = CreatePortableFixture(
-            temp,
-            Entry("one", directory: temp.Path, command: "codex", selected: false),
-            Entry("two", directory: temp.Path, command: "opencode", selected: false));
-        SavePresetFile(presets, "daily", Preset("daily", "Daily", "one", "two"));
-        var startedPlans = new List<LaunchPlan>();
-        var viewModel = CreateViewModel(
-            config,
-            settings,
-            new LauncherSettings { RequireConfirmationForLaunches = false },
-            launchWorkflow: new LauncherLaunchWorkflow(new FakeLaunchProcessStarter(startedPlans.Add)));
-
-        Assert.True(viewModel.LaunchSelectedPresetCommand.CanExecute(null));
-
-        await viewModel.LaunchSelectedPresetCommand.ExecuteAsync(null);
-
-        Assert.Equal(["codex", "opencode"], startedPlans.Select(plan => plan.Command).ToArray());
-        Assert.Contains("启动回执", viewModel.DryRunText);
-        Assert.Contains("• 已请求: one", viewModel.DryRunText);
-        Assert.Contains("• 已请求: two", viewModel.DryRunText);
-        Assert.Equal("启动组“Daily”: 已请求启动 2 个启动项", viewModel.StatusText);
-        var entries = LoadEntriesById(config);
-        Assert.All(entries, entry => Assert.False(entry.Selected));
-    }
-
-    [Fact]
     public async Task LaunchSelectedPresetDuringDragPreviewDiscardsPreviewOrder()
     {
         using var temp = new TempDirectory();

@@ -193,17 +193,6 @@ public sealed class StoreGrainTests
     }
 
     [Fact]
-    public void StorePath_ReturnsConstructorPath()
-    {
-        using var temp = new TempDirectory();
-        var path = Path.Combine(temp.Path, "launcher.json");
-        LauncherStore.Save(SampleStore(), path);
-        var store = new StoreGrain(path, new FileStorePersistence());
-
-        Assert.Equal(path, store.StorePath);
-    }
-
-    [Fact]
     public void Reloaded_NotifiesAfterReloadFromDisk()
     {
         using var temp = new TempDirectory();

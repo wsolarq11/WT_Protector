@@ -1,79 +1,62 @@
 Status: Active
-Purpose: 测试层级定义与文件归属规则。
-Update when: 测试目录、分类或验证命令变化时。
+Purpose: 测试体系唯一设计源：漂移模型、四层结构、取舍规则、现状映射。
+Update when: 测试分层、取舍规则或验证命令变化时。
 
-# 测试结构地图
+# 测试体系设计
 
-每个测试文件必须能归入一个测试层级。文件计数与属性数以 `AGENTS.md` 结构基线表为准，本文不写死。
+## 一句话
 
-## 测试层级（8 层）
+钱只花在"静默且昂贵"的漂移上；响亮且便宜的交给肉眼。
 
-| 分类 | 目标 | 判定规则 | 典型文件 |
+## 模型：漂移矩阵
+
+测试不是验证代码对，是锁住会静默漂移、且漂移代价大的东西。每种漂移按「静默 × 昂贵」分级，投入按级分配。
+
+| 漂移 | 静默 | 昂贵 | 处置 |
 | --- | --- | --- | --- |
-| Support | 共享 fixture/辅助类型，不是测试 | 文件名为 TempDirectory、StubDialogService、TestRepositoryPaths 等 | Support/ 目标目录 |
-| CoreUnit | Core 纯逻辑：搜索、排序、分组、启动参数、历史、更新清单 | 只依赖 Core，不碰文件系统与 VM | LauncherEntryQueryTests、LauncherEntryOrderTests、LaunchArgumentBuilderTests |
-| Persistence | 保存/加载/回滚/损坏恢复/JSON 契约 | 涉及临时文件、LauncherStore、FileLauncherJsonIO | FileLauncherJsonIOTests、LauncherStoreLoadFailureTests、LauncherJsonContextRegistrationTests |
-| ViewModelBehavior | VM 命令、状态、选择、批启动、对话框边界 | 引用 App ViewModel 和 Stub 服务 | MainWindowViewModelTests.*、LauncherLaunchWorkflowTests |
-| Analyzer | Roslyn analyzer 规则 | 文件名 *AnalyzerTests | CatchExceptionAnalyzerTests、LayerViolationAnalyzerTests |
-| Architecture | ArchUnitNET/架构不变量 | 文件名 ArchitectureRules 或明确架构规则 | ArchitectureRules.cs |
-| UiContract | XAML/UI 结构契约（XML 语义断言） | 文件名含 Contract、Xaml、Window、StatusPresentation | LauncherControlBarDeclutterContractTests、DialogConsistencyContractTests |
-| PropertyTest | 属性/随机测试 | 文件名含 Pbt 或使用 CsCheck | CsCheckPropertyTests、LauncherEntryOrderPbtTests |
+| 数据契约（配置 schema、字段、默认值、序列化格式） | 静默，错了不崩但数据悄悄坏 | 昂贵，用户数据损坏 | 编译器强制 + 黄金用例 |
+| 行为决策（排序、匹配打分、分组、归一化、命令解析） | 半静默，错了不崩但功能悄悄错 | 昂贵，核心功能 | 决策点单测 + 属性测试 |
+| 架构（层依赖、单一源、resource key 一致） | 静默，架构腐化不崩 | 昂贵，维护成本 | 分析器强制，零手写 |
+| 文案（UI 文案与 key 对应） | 半静默，显示错但不崩 | 便宜 | 生成门禁 |
+| 展示（布局、间距、控件样式） | 响亮，一跑就看见 | 便宜 | 冒烟 + 肉眼 |
 
-## 文件归属规则
+## 结构：四层
 
-- 一个文件只属于一个分类。
-- 辅助类型不写测试属性，不进业务分类。
-- 同时覆盖 Core 与 VM 时按被测行为主要层级归入 VM 分类。
-- 命名冲突由本文判定。
+按强制强度从高到低：
 
-## 目录
+1. **编译器层**（最高，不是测试，是分析器/生成器）——锁架构漂移和文案漂移。层依赖、单一源、resource key 一致、schema diff，全用分析器 + 生成物，零手写，编译期即炸。
+2. **契约层**（次高，最少、最值钱、永不删）——锁数据契约。产品主链黄金用例 + 配置往返（序列化 → 反序列化 = 原值，缺字段补默认、非法值回退）。
+3. **决策层**（中，锁行为决策的分支和边界）——纯函数单测 + 属性测试。能用性质描述的用性质，一行顶一百个例子。
+4. **冒烟层**（最低）——发布后 exe 跑起来：能开、能加、能启动、能关。
 
-```text
-tests/WTLauncher.Tests/
-├── Support/
-├── CoreUnit/
-├── Persistence/
-├── ViewModelBehavior/
-├── Analyzer/
-├── Architecture/
-├── UiContract/
-└── PropertyTest/
-```
+## 规则
 
-例外：`ArchitectureRules.cs` 位于 `Architecture/` 但保留根命名空间，避免遮蔽 ArchUnitNET 类型。
+### 五条红线（什么不进）
 
-## 验证命令
+1. 不测搬运工——转发属性、字符串拼接、getter/setter，零信息量。
+2. 不测实现——内部字典、索引、缓存怎么做的，锁实现即陈腐温床。
+3. 不测文案——文案进 resource key 生成门禁。
+4. 不测 UI 结构——布局、控件位置进冒烟。
+5. 不手写架构规则——用分析器 + 生成，手写必重叠腐化。
 
-```bash
-dotnet build src/avalonia-launcher/WTLauncher.Avalonia.sln -c Release --no-restore -warnaserror
-dotnet test src/avalonia-launcher/WTLauncher.Avalonia.sln -c Release --no-restore
-```
+### 删测试三问（每个测试都要能答）
 
-```bash
-npm run test:fast
-```
+- 它失败时，我该改什么？答不上 = 删。
+- 它锁的是行为还是实现？锁实现 = 删。
+- 删了它，门禁还拦得住吗？拦得住 = 删。
 
-快速层含 `CoreUnit`、`PropertyTest`、`Architecture`、`Analyzer`，不含临时文件/VM 集成层。
+### 文化
 
-## 关键旅程 E2E 冒烟
+删测试和加测试是同等的功劳。测试数量不是 KPI；"每个测试都对准一个会静默且昂贵地漂移的东西"才是。
 
-```bash
-npm run smoke
-```
+## 现状映射
 
-冒烟固定 2 条断言：进程启动进入主窗口、窗口标题为 `WT Launcher`；用临时 `launcher.json` 和 `--config`，
-不触碰真实配置。`npm run verify:mainline` 已接入该冒烟。exe 为门禁 publish 产物（`artifacts/` 为 git-ignored，
-仓库不落盘），需先运行门禁 publish 步骤生成。
+当前 8 层向四层的迁移方向：
 
-## 覆盖率门禁
-
-```bash
-npm run test:coverage
-```
-
-关键路径清单在 `tools/coverage-gate.json`。全仓总覆盖率只报告、不设硬目标；`npm run verify` 执行该门禁。
-
-## CI 反馈分层
-
-- `build-and-test`：build + 快速层 + 上传 TRX，不做完整 publish。
-- `full-gate`：唯一完整验收阶段，运行 `npm run verify`。
+| 现状层级 | 去向 | 动作 |
+| --- | --- | --- |
+| Analyzer、Architecture | 编译器层 | 架构规则合并进分析器，去重（R 系列手写规则已现重叠） |
+| Persistence、ViewModelBehavior（主链） | 契约层 | 保留黄金用例 + 配置往返，砍搬运工 |
+| CoreUnit、PropertyTest、ViewModelBehavior（决策） | 决策层 | 保留决策点 + 属性，砍锁实现项 |
+| UiContract | 编译器层 + 冒烟层 | resource key 一致转分析器，UI 结构断言转冒烟 |
+| Support | 保留 | 辅助类型，不算测试 |

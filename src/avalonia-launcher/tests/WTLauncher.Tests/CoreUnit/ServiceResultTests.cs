@@ -18,13 +18,4 @@ public sealed class ServiceResultTests
         Assert.Throws<ArgumentNullException>(() => new ServiceFailure<string>(null!));
     }
 
-    [Fact]
-    public void NonSuccessPreservesTypedStatus()
-    {
-        var canceled = LauncherStatusContent.Warning("已取消");
-        var failed = LauncherStatusContent.Error("失败");
-
-        Assert.Same(canceled, new ServiceCanceled<string>(canceled).Status);
-        Assert.Same(failed, new ServiceFailure<string>(failed).Status);
-    }
 }

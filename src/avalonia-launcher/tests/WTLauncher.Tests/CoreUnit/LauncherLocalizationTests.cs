@@ -7,12 +7,6 @@ namespace WTLauncher.Tests.CoreUnit;
 public sealed class LauncherLocalizationTests
 {
     [Fact]
-    public void Format_KnownKey_ReturnsZhCnTemplate()
-    {
-        Assert.Equal("就绪", LauncherLocalization.Format("main.ready"));
-    }
-
-    [Fact]
     public void Format_WithArgs_SubstitutesPositionalValues()
     {
         var text = LauncherLocalization.Format("main.loaded", 2, 3);
