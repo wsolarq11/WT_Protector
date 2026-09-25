@@ -42,10 +42,47 @@ public sealed class LauncherQuickMatchTests
         Assert.True(LauncherQuickMatch.Score("pc", entry) > 0);
     }
 
-    private static LaunchEntry Entry(string name, string? directory = null, string command = "pwsh") =>
+    [Fact]
+    public void Typo_WithinEditDistance_GetsBonusBelowExactMatch()
+    {
+        var entry = Entry("codex");
+
+        var exact = LauncherQuickMatch.Score("codex", entry);
+        var typo = LauncherQuickMatch.Score("codix", entry);
+
+        Assert.True(typo > 0);
+        Assert.True(exact > typo);
+    }
+
+    [Fact]
+    public void Pinyin_FullPinyin_MatchesChineseName()
+    {
+        var entry = Entry("上海项目", id: "shanghai-project");
+
+        Assert.True(LauncherQuickMatch.Score("shanghai", entry) > 0);
+        Assert.True(LauncherQuickMatch.Score("shanghaixiangmu", entry) > 0);
+    }
+
+    [Fact]
+    public void Pinyin_Initials_MatchesChineseName()
+    {
+        var entry = Entry("上海项目", id: "shanghai-project");
+
+        Assert.True(LauncherQuickMatch.Score("shxm", entry) > 0);
+    }
+
+    [Fact]
+    public void Pinyin_Directory_MatchesChineseDirectory()
+    {
+        var entry = Entry("alpha", directory: @"D:\项目\上海", id: "alpha-sh");
+
+        Assert.True(LauncherQuickMatch.Score("shanghai", entry) > 0);
+    }
+
+    private static LaunchEntry Entry(string name, string? directory = null, string command = "pwsh", string? id = null) =>
         new()
         {
-            Id = name,
+            Id = id ?? name,
             Name = name,
             Directory = directory is null ? DirectoryPath.Empty : (DirectoryPath)directory,
             Command = command,

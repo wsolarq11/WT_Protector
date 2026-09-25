@@ -176,6 +176,17 @@ public static class LauncherEntryQuery
         return EntryId.Comparer.Compare(RequireEntryId(entryA), RequireEntryId(entryB));
     }
 
+    /// <summary>
+    /// Frecency of a single entry at the given instant. Used by quick-launch ranking
+    /// so the hotkey overlay and the main window share one decay curve.
+    /// </summary>
+    public static double ComputeFrecency(LaunchEntry entry, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        var launchedAt = ParseLaunchedAt(entry.LaunchedAtUtc);
+        return ComputeFrecency(entry.LaunchCount, now - launchedAt);
+    }
+
     private static double ComputeFrecency(int count, TimeSpan delta)
     {
         if (count <= 0) return 0;

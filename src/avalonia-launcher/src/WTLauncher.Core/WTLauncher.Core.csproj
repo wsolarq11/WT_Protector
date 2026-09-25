@@ -10,4 +10,8 @@
     <PackageReference Include="ErrorOr" />
     <PackageReference Include="MSBuild.CompilerCache" PrivateAssets="all" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- 汉字拼音数据（Unihan 提取，每码位一行）。生成物，勿手改。 -->
+    <EmbeddedResource Include="HanziPinyinData.txt" />
+  </ItemGroup>
 </Project>

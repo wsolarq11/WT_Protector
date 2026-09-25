@@ -35,7 +35,9 @@ public sealed partial class MainWindowViewModelTests
         string? directory = null,
         string command = "pwsh",
         bool selected = false,
-        string updatedAtUtc = "") =>
+        string updatedAtUtc = "",
+        int launchCount = 0,
+        string launchedAtUtc = "") =>
         new()
         {
             Id = string.IsNullOrWhiteSpace(id) ? EntryId.Empty : id,
@@ -44,6 +46,8 @@ public sealed partial class MainWindowViewModelTests
             Command = command,
             Selected = selected,
             UpdatedAtUtc = updatedAtUtc,
+            LaunchCount = launchCount,
+            LaunchedAtUtc = launchedAtUtc,
         };
 
     private static (string Config, string Settings, string Presets) CreatePortableFixture(
