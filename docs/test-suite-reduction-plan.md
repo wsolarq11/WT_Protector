@@ -39,7 +39,7 @@ Update when: 削减进度、判据、已知难点或验收标准变化时。
 ## 已知难点（按命中红线的层排查）
 
 - `UiContract/`：`MainWindowXamlModularityContractTests`、`PanelsTests`、`DialogConsistencyContractTests` 命中红线 4。
-- `Architecture/`：`ArchitectureRules.cs` 命中红线 5（已删 R5，其余规则逐个评估是否与分析器重复）。
+- `Architecture/`：已整个删除。手写架构规则（ArchitectureRules R4/R7-R14 + ServiceContract 源码锁）全部升格为 `LayerDependencyAnalyzer`（WT1008）编译器强制，ArchUnitNET 包与 architecture-rule-check 门禁一并移除。
 - `ViewModelBehavior/`：`Launcher*WorkflowTests` 系列可能重复覆盖同一接线（红线 1）。
 - `CoreUnit/`：`ServiceResult`、`ErrorOr` 等纯 getter/纯转发测试（红线 1）。
 
@@ -49,8 +49,10 @@ Update when: 削减进度、判据、已知难点或验收标准变化时。
 - batch 2（054366f2）：删 Architecture R1/R2/R3/R6 + ServiceContract 2 实现测试 + StatusTextContract 5 文案 + 5 个 XAML 结构测试，754→738 属性。
 - batch 3（664a3306）：删 7 个 Launcher*WorkflowTests（红线 2 锁实现 + 红线 1 层间重复），738→728 属性。
 - batch 4（28db73b7）：删 LauncherBatchLaunchReceiptTextTests（红线 3 文案）+ PresetService 2 转发器测试（红线 1），728→720 属性。
+- batch 5（4ee895a9）：新增 `LocalizationKeyAnalyzer`（WT1007），文案 key 漂移升格编译期强制（补删文案测试后欠的账），+3 属性。
+- batch 6（待提交）：新增 `LayerDependencyAnalyzer`（WT1008），Architecture 手写规则（R4/R7-R14 + ServiceContract 源码锁）升格编译期强制，删 Architecture 目录 + ArchUnitNET 包 + architecture-rule-check 门禁，723→717 属性。
 
-合计：139→113 文件 / 811→720 属性 / 898→798 展开测试。每批 `npm run verify` 全绿 + 基线更新。
+合计：139→113 文件 / 811→717 属性 / 898→789 展开测试。每批 `npm run verify` 全绿 + 基线更新。
 
 ## B 的诚实结论
 

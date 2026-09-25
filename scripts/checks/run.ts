@@ -70,24 +70,6 @@ export async function checkCoverageGate(): Promise<void> {
   });
 }
 
-export async function checkArchitectureRuleCheck(): Promise<void> {
-  // --no-build alone does NOT imply --no-restore: without it, this step runs an
-  // implicit restore with default parameters (no win-x64 RID, no AOT marker) and
-  // rewrites packages.lock.json, breaking release-lockfile-consistency. Verified
-  // 2026-09-17: the gate left all four lock files modified.
-  await execChecked("Architecture rule tests", "dotnet", [
-    "test",
-    solutionPath,
-    "-c",
-    "Release",
-    "--filter",
-    "FullyQualifiedName~ArchitectureRules",
-    "--no-build",
-    "--no-restore",
-  ]);
-  addCheck("architecture-rule-check", { pass: true });
-}
-
 export async function checkAnalyzerWiring(): Promise<void> {
   await execChecked("Analyzer wiring build", "dotnet", [
     "build",

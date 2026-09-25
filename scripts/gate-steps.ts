@@ -30,7 +30,6 @@ export const gateStepIds = [
   "release-lockfile-consistency",
   "avalonia-mainline-verify",
   "coverage-gate",
-  "architecture-rule-check",
   "analyzer-wiring",
   "task-ledger-citations-resolve",
   "command-table-consistency",

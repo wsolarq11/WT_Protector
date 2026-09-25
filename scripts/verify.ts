@@ -56,7 +56,6 @@ import {
 } from "./checks/schema.js";
 import {
   checkAnalyzerWiring,
-  checkArchitectureRuleCheck,
   checkAvaloniaMainlineVerify,
   checkCoverageGate,
   checkReleaseLockfileConsistency,
@@ -196,7 +195,6 @@ export const gateSteps: GateStep[] = [
   { id: "release-lockfile-consistency", tier: "native", run: () => checkReleaseLockfileConsistency() },
   { id: "avalonia-mainline-verify", tier: "native", run: () => checkAvaloniaMainlineVerify() },
   { id: "coverage-gate", tier: "native", run: () => checkCoverageGate() },
-  { id: "architecture-rule-check", tier: "native", run: () => checkArchitectureRuleCheck() },
   { id: "analyzer-wiring", tier: "native", run: () => checkAnalyzerWiring() },
   { id: "task-ledger-citations-resolve", tier: "static", run: () => checkTaskLedgerCitationsResolve() },
   { id: "command-table-consistency", tier: "static", run: () => checkCommandTableConsistency() },

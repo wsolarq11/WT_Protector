@@ -663,7 +663,7 @@ export function checkUpdateManifestGeneration(): void {
 
 export function checkTestStructureLayering(): void {
   const testRoot = path.join(avaloniaRoot, "tests", "WTLauncher.Tests");
-  const layers = ["Support", "CoreUnit", "Persistence", "ViewModelBehavior", "Analyzer", "Architecture", "UiContract", "PropertyTest"];
+  const layers = ["Support", "CoreUnit", "Persistence", "ViewModelBehavior", "Analyzer", "UiContract", "PropertyTest"];
   for (const layer of layers) {
     const layerDir = path.join(testRoot, layer);
     if (!existsSync(layerDir)) {
