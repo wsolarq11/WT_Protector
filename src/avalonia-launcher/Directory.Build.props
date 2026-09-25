@@ -13,7 +13,8 @@
     <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
   </PropertyGroup>
 
-  <!-- Phase 2: Custom Roslyn analyzers (WT1001-WT1006) for compile-time architecture enforcement.
+  <!-- Phase 2: Custom Roslyn analyzers (WT1001, WT1003-WT1007) for compile-time
+       architecture + localization-key enforcement.
        WTLauncher.Tests manages its own dual-role reference (analyzer + runtime types for the
        in-process analyzer test suite); a second ReferenceOutputAssembly=false entry here would
        collide with it and break the reference copy in the test output folder. -->

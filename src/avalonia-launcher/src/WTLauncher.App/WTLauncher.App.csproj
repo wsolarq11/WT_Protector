@@ -33,6 +33,10 @@
   </ItemGroup>
   <ItemGroup>
     <AdditionalFiles Include="**/*.axaml" />
+    <!-- LocalizationKeyAnalyzer (WT1006) cross-checks LauncherLocalization.Format
+         keys against this pack; it is both an embedded runtime resource and a
+         compile-time AdditionalFile for the analyzer. -->
+    <AdditionalFiles Include="Localization\Assets\zh-CN.json" />
   </ItemGroup>
   <ItemGroup>
     <!-- R1: runtime window icon (title bar/taskbar) via avares://WTLauncher.App/Assets/app.ico -->
