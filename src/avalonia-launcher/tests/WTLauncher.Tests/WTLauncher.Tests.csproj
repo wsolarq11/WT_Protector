@@ -27,7 +27,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\WTLauncher.App\WTLauncher.App.csproj" />
     <!-- Dual role for the analyzer project: OutputItemType=Analyzer makes the
-         custom analyzers run on test code (WT1001-WT1006 enforcement), while the
+         custom analyzers run on test code (WT1003-WT1008 enforcement), while the
          plain reference below gives the in-process analyzer test suite the
          assembly. Both entries are required — MSBuild keeps them as distinct
          items (different OutputItemType), and the test output must carry the dll. -->
