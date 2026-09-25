@@ -61,6 +61,40 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public void QuickLaunch_EmptyQuery_RanksByFrecency()
+    {
+        using var temp = new TempDirectory();
+        var recent = DateTimeOffset.UtcNow.AddMinutes(-10).ToString("O");
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("rare", "Rare Entry"),
+            Entry("frequent", "Frequent Entry", launchCount: 5, launchedAtUtc: recent));
+        var viewModel = CreateViewModel(config, settings);
+        var quickLaunch = new QuickLaunchViewModel(viewModel);
+
+        Assert.Equal(2, quickLaunch.Results.Count);
+        Assert.Equal("Frequent Entry", quickLaunch.Results[0].Name);
+        Assert.Equal("Rare Entry", quickLaunch.Results[1].Name);
+    }
+
+    [Fact]
+    public void QuickLaunch_Query_FrequentEntrySurfacesAboveEqualMatch()
+    {
+        using var temp = new TempDirectory();
+        var recent = DateTimeOffset.UtcNow.AddMinutes(-10).ToString("O");
+        var (config, settings, _) = CreatePortableFixture(
+            temp,
+            Entry("alpha-rare", "Alpha Crawler", command: "alpha"),
+            Entry("beta-frequent", "Beta Crawler", command: "beta", launchCount: 5, launchedAtUtc: recent));
+        var viewModel = CreateViewModel(config, settings);
+        var quickLaunch = new QuickLaunchViewModel(viewModel);
+
+        quickLaunch.Query = "crawler";
+
+        Assert.Equal("Beta Crawler", quickLaunch.Results[0].Name);
+    }
+
+    [Fact]
     public void QuickLaunch_MoveSelection_StaysWithinResults()
     {
         using var temp = new TempDirectory();

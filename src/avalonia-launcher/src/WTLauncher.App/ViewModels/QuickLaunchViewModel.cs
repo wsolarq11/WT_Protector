@@ -75,9 +75,10 @@ public sealed partial class QuickLaunchViewModel : ObservableObject
     private void RefreshResults()
     {
         Results.Clear();
+        var now = DateTimeOffset.UtcNow;
         foreach (var entry in _owner.Entries
             .Where(e => LauncherQuickMatch.IsMatch(Query, e.SnapshotEntry()))
-            .OrderByDescending(e => LauncherQuickMatch.Score(Query, e.SnapshotEntry()))
+            .OrderByDescending(e => Rank(e, now))
             .ThenBy(e => e.Name)
             .Take(30))
         {
@@ -85,5 +86,19 @@ public sealed partial class QuickLaunchViewModel : ObservableObject
         }
 
         SelectedResult = Results.FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Empty query ranks by pure frecency; a non-empty query ranks by match quality
+    /// scaled by a frecency bonus so frequently-launched entries surface first.
+    /// </summary>
+    private double Rank(LauncherEntryViewModel entry, DateTimeOffset now)
+    {
+        var snapshot = entry.SnapshotEntry();
+        var score = LauncherQuickMatch.Score(Query, snapshot);
+        var frecency = LauncherEntryQuery.ComputeFrecency(snapshot, now);
+        if (score == 0)
+            return frecency;
+        return score * (1 + frecency);
     }
 }
