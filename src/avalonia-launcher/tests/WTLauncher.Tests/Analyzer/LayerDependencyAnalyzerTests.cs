@@ -1,7 +1,9 @@
 using WTLauncher.Analyzers;
+using WTLauncher.Tests;
 
 namespace WTLauncher.Tests.Analyzer;
 
+[Trait("Category", TestCategories.Analyzer)]
 public sealed class LayerDependencyAnalyzerTests
 {
     [Fact]
@@ -113,6 +115,26 @@ public sealed class LayerDependencyAnalyzerTests
 
         var wt1008 = Assert.Single(diagnostics, d => d.Id == LayerDependencyAnalyzer.DiagnosticId);
         Assert.Contains("WTLauncher.Core.LauncherStore", wt1008.GetMessage(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void View_ReferencingSystemIoFile_ReportsDiagnostic()
+    {
+        var source = """
+            namespace WTLauncher.App.Views
+            {
+                using System.IO;
+                public class SomeWindow
+                {
+                    public void M() => File.ReadAllText("x");
+                }
+            }
+            """;
+
+        var diagnostics = AnalyzerTestHelper.Run<LayerDependencyAnalyzer>(source);
+
+        var wt1008 = Assert.Single(diagnostics, d => d.Id == LayerDependencyAnalyzer.DiagnosticId);
+        Assert.Contains("System.IO.File", wt1008.GetMessage(), StringComparison.Ordinal);
     }
 
     [Fact]

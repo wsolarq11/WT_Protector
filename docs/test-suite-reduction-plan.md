@@ -52,8 +52,9 @@ Update when: 削减进度、判据、已知难点或验收标准变化时。
 - batch 5（4ee895a9）：新增 `LocalizationKeyAnalyzer`（WT1007），文案 key 漂移升格编译期强制（补删文案测试后欠的账），+3 属性。
 - batch 6（69982f53）：新增 `LayerDependencyAnalyzer`（WT1008），Architecture 手写规则（R4/R7-R14 + ServiceContract 源码锁）升格编译期强制，删 Architecture 目录 + ArchUnitNET 包 + architecture-rule-check 门禁，723→717 属性。
 - batch 7（f62e07ec）：WT1001（LayerViolationAnalyzer，语法级 Core→UI 检查）合并进 WT1008 语义级规则表，砍掉重复的层依赖分析器，717→713 属性。
+- batch 8（待提交）：分析器测试审计 + 架构边界完整性审计。归层修正 CommandUsage/DirectoryUsage 测试（16 属性，Core 业务类误放 Analyzer → CoreUnit）；WT1008 补 3 条边界（Infrastructure→Views、ViewModels→Views、Views→System.IO.File）；补 LayerDependency/ResourceKey 的 Trait，713→714 属性。
 
-合计：139→112 文件 / 811→713 属性 / 898→785 展开测试。每批 `npm run verify` 全绿 + 基线更新。
+合计：139→112 文件 / 811→714 属性 / 898→786 展开测试。每批 `npm run verify` 全绿 + 基线更新。
 
 ## B 的诚实结论
 

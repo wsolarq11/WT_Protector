@@ -5,9 +5,9 @@ using WTLauncher.Core;
 #pragma warning disable CA1861
 
 using WTLauncher.Tests;
-namespace WTLauncher.Tests.Analyzer;
+namespace WTLauncher.Tests.CoreUnit;
 
-[Trait("Category", TestCategories.Analyzer)]
+[Trait("Category", TestCategories.CoreUnit)]
 public sealed class CommandUsageAnalyzerTests
 {
     private static LaunchEntry Entry(string id, string command, string? name = null) =>
