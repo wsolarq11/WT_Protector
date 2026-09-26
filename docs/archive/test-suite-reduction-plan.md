@@ -1,6 +1,6 @@
-Status: Active
-Purpose: 测试体系收敛与反向审计修正的执行记录，供新会话接手。
-Update when: 削减进度、判据、已知难点或验收标准变化时。
+Status: Archived
+Purpose: 测试体系收敛与反向审计修正的执行记录（已完成，终点 727）。
+Update when: 不维护。
 
 # 测试套件收敛方案（选项 B）
 
