@@ -45,6 +45,25 @@ Update when: 测试分层、取舍规则或验证命令变化时。
 - 它锁的是行为还是实现？锁实现 = 删。
 - 删了它，门禁还拦得住吗？拦得住 = 删。
 
+### 值对象/文案类判定表（反向审计固化，勿再犯）
+
+删"值对象 / 文案"类测试前先分清它测哪一类。三个词各混了多类东西，误删的根子都是把"有决策"当成"纯转发/纯文案"。
+
+**"文案"混两类：**
+- 纯排版：`string.Join` + `Format(key)` 拼多行，无 if/switch/三元 → 删。
+- 文案生成决策：按数据分类/分支。例 `StatusFor` 用 `FailureIndices.Contains` + `index < RequestedCount + FailureCount` 判"已请求/失败/未启动"（R9 交错语义）→ 保留。
+
+**"空校验"混三类：**
+- 语言级：`ThrowIfNull` / `ArgumentException.ThrowIfNullOrWhiteSpace` → 删（测的是 .NET 标准库）。
+- 转发：调 Core 的 `Require*` / `ToRequiredUniqueList`，它们自己做空白拒绝 → 删（转发器）。
+- 业务级：类自己写 `if (Normalize 后 Length == 0) throw new XxxException("业务消息")`，因为 Core 的 `Normalize*` / `ToRequiredUniqueList` 只归一化、不拒绝空 → 保留（值对象行为契约）。
+
+**"快照"混两类：**
+- 值拷贝：string/int 天然快照，或 Core 返回新 list 的副作用 → 删（转发）。
+- 防御性拷贝：App 层自己 `ToArray()` / 新 list 包装，外部改输入不影响内部 → 保留（行为契约）。
+
+**一句话判据：这个 throw / 分支 / 拷贝，是 .NET 或 Core 已经保证的，还是这个类自己写的？自己写的、带业务消息的 = 行为契约 = 保留。**
+
 ### 文化
 
 删测试和加测试是同等的功劳。测试数量不是 KPI；"每个测试都对准一个会静默且昂贵地漂移的东西"才是。
