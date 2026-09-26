@@ -19,6 +19,7 @@
 | `ponytail-assessment.md` | 历史 ponytail 局限评估 | `docs/ponytail-assessment.md` |
 | `ponytail-upgrade-assessment.md` | 历史 ponytail 升级评估 | `docs/ponytail-upgrade-assessment.md` |
 | `roadmap-testing-structure.md` | 历史测试结构路线图 | `docs/roadmap-testing-structure.md` |
+| `test-suite-reduction-plan.md` | 测试收敛执行记录（终点 727，约 200 废弃） | `docs/test-suite-reduction-plan.md` |
 | `trellis-codex-setup-audit.md` | 历史 Trellis/Codex 配置审计 | `docs/trellis-codex-setup-audit.md` |
 | `trinity-endgame-architecture.md` | 历史 Trinity 终局架构提案 | `docs/architectures/trinity-endgame-architecture.md` |
 | `ultrareview-2026-07-23-fluxor-skeleton.md` | 历史 Fluxor 骨架审查 | 原本就在归档 |
