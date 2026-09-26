@@ -246,15 +246,15 @@ Migrated auxiliary scripts to TS; added .NET smoke probe and self-contained unin
 
 ### Status
 
-[P] **In Progress** — 改动已全量验证，提交与收尾在用户侧
+[OK] **Completed** — 5 条待办在 09-19/09-23 提交全部落地（见下方逐条对应）
 
 ### Next Steps
 
-- 分批提交约 70 项未提交（产品代码 / 门禁机制 / 文档 / Trellis 工具链四组）
-- P3 文档归档（历史提案文档）需决策
-- P4 CI 4 作业去重 + 三模式观察（需远端验证）
-- `local-entry-directories` 用户数据（`config/launcher.json` item 6）
-- `.trellis/tasks/active` 死引用 1 处走 Trellis 流程
+- 分批提交约 70 项未提交 → 09-19 大批提交落地（i18n / 文档压缩 / CI 收敛）
+- P3 文档归档 → `cfda8d28` docs: archive historical docs and add index
+- P4 CI 4 作业去重 → `b4123e25` ci: collapse to one sequential verify job
+- `local-entry-directories` 用户数据 → `f0e43155` fix(verify): make local entry directory failures advisory
+- `.trellis/tasks/active` 死引用 → `2d7685b7` chore: archive stale trellis tasks
 
 
 ## Session 11: 文档单一源重构 + 命令表门禁 + 治理成本框架
@@ -274,6 +274,63 @@ Migrated auxiliary scripts to TS; added .NET smoke probe and self-contained unin
 |------|---------|
 | `371d8025` | restructure docs around single-source entries; add command-table consistency gate |
 | `d4d1cd3e` | record governance cost framework in decision ladder |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 12: 治理收缩 + 测试收敛 + 少即是多落地
+<!-- trellis-session: v=2 fp=1fbaf4799713a7d3 -->
+
+**Date**: 2026-09-26
+**Task**: 治理收缩 + 测试收敛 + 少即是多落地
+**Branch**: `main`
+
+### Summary
+
+09-23 治理收缩：退休 CLAUDE.md 与 claude/codex 平台文件、归档 stale Trellis 任务、切 meta-gates、收敛文档到 dsh 单平台、纠正复杂度审计（架构早已收敛）。09-25 产品功能：quick-match 拼音容错 frecency、accent color picker + 单行命令栏。09-25/26 测试收敛：选项 B 从 811 收敛到 727 属性，手写架构规则升格 WT1008、文案 key 升格 WT1007 编译期强制，反向审计恢复误删。
+
+### Main Changes
+
+- 治理收缩（09-23）：退休 CLAUDE.md 与 claude/codex 平台文件，归档 stale Trellis 任务，切 meta-gates，文档收敛到 dsh 单平台
+- 产品功能（09-25）：launcher quick-match（拼音/容错/frecency），accent color picker + 单行命令栏 + 扁平背景 + 复制统一
+- 测试收敛（09-25/26）：选项 B 从 811 收敛到 727 属性，手写架构规则升格 WT1008、文案 key 升格 WT1007（编译期强制），反向审计恢复误删
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6e06c4ef` | chore: retire claude/codex/codebase-memory trellis platform files |
+| `ab959491` | docs: consolidate doc ecosystem onto dsh single platform |
+| `2d7685b7` | chore: archive stale trellis tasks and ultrareview research |
+| `9ae8c79f` | refactor: govern less — generate derived baseline, retire CLAUDE.md, fix cold-start gaps |
+| `dee7658c` | refactor: cut meta-gates, start collapsing accidental complexity |
+| `18475881` | docs: correct complexity audit — architecture already converged |
+| `4099cff5` | feat: launcher quick-match — pinyin, typo tolerance, frecency |
+| `4fc2b623` | feat: accent color picker, one-row command bar, flat background, copy unification |
+| `092207d2` | test: converge suite — drop redundant tests, rewrite test-structure source |
+| `5cc6c1b9` | chore: build scripts and portable runner bats |
+| `c427ce0e` | docs: hand off test-suite reduction plan (option B) |
+| `e6c9d260` | test: drop UiContract UI-structure tests + CoreUnit forwarding/copy tests (option B batch 1) |
+| `054366f2` | test: prune hand-written architecture rules + XAML-structure tests (option B batch 2) |
+| `664a3306` | test: drop workflow-field passthrough tests duplicated by command tests (option B batch 3) |
+| `28db73b7` | test: drop receipt-copy tests + PresetService passthrough tests (option B batch 4) |
+| `73571f6d` | docs: record option B progress and honest conclusion |
+| `4ee895a9` | feat: enforce localization-key consistency at compile time (WT1007) |
+| `69982f53` | feat: lift hand-written architecture rules to compile-time analyzer (WT1008) |
+| `f62e07ec` | refactor: merge WT1001 into WT1008, one layer-dependency analyzer |
+| `2b4d6eeb` | docs: sync analyzer ID lists after WT1001 merge into WT1008 |
+| `5fd6a41f` | chore: drop dead System.IO using in EntryDetailsWindow code-behind |
+| `044ca0ca` | refactor: fix test layer placement + close WT1008 boundary gaps |
+| `e7ecf8bd` | test: restore two mis-deleted groups found by reverse audit |
+| `3eac83dc` | test: finish reverse audit - restore remaining mis-deletions, codify judgement |
+| `5d7ae4ef` | docs: retire the 200-test target, codify the stop condition |
+| `55408779` | docs: archive the finished test-suite reduction plan |
+
+### Testing
+
+- [OK] npm run verify 全绿，结构基线更新
 
 ### Status
 

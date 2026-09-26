@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 11
-- **Last Active**: 2026-09-22
+- **Total Sessions**: 12
+- **Last Active**: 2026-09-26
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~280 | Active |
+| `journal-1.md` | ~337 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 12 | 2026-09-26 | 治理收缩 + 测试收敛 + 少即是多落地 | `6e06c4ef`, `ab959491`, `2d7685b7`, `9ae8c79f`, `dee7658c`, `18475881`, `4099cff5`, `4fc2b623`, `092207d2`, `5cc6c1b9`, `c427ce0e`, `e6c9d260`, `054366f2`, `664a3306`, `28db73b7`, `73571f6d`, `4ee895a9`, `69982f53`, `f62e07ec`, `2b4d6eeb`, `5fd6a41f`, `044ca0ca`, `e7ecf8bd`, `3eac83dc`, `5d7ae4ef`, `55408779` | `main` |
 | 11 | 2026-09-22 | 文档单一源重构 + 命令表门禁 + 治理成本框架 | `371d8025`, `d4d1cd3e` | `main` |
 | 10 | 2026-09-17 | 门禁彻底加固 + 死代码清除 | (uncommitted) | `main` |
 | 9 | 2026-08-20 | 税项清理：六个维度简化 | `1ed818b5` | `main` |
