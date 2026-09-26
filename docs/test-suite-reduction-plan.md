@@ -53,13 +53,14 @@ Update when: 削减进度、判据、已知难点或验收标准变化时。
 - batch 6（69982f53）：新增 `LayerDependencyAnalyzer`（WT1008），Architecture 手写规则（R4/R7-R14 + ServiceContract 源码锁）升格编译期强制，删 Architecture 目录 + ArchUnitNET 包 + architecture-rule-check 门禁，723→717 属性。
 - batch 7（f62e07ec）：WT1001（LayerViolationAnalyzer，语法级 Core→UI 检查）合并进 WT1008 语义级规则表，砍掉重复的层依赖分析器，717→713 属性。
 - batch 8（044ca0ca）：分析器测试审计 + 架构边界完整性审计。归层修正 CommandUsage/DirectoryUsage 测试（16 属性，Core 业务类误放 Analyzer → CoreUnit）；WT1008 补 3 条边界（Infrastructure→Views、ViewModels→Views、Views→System.IO.File）；补 LayerDependency/ResourceKey 的 Trait，713→714 属性。
-- batch 9（反向审计修复）：回头逐条审计 batch 1-4 的删除，恢复 2 处误删——`LauncherBatchLaunchReceiptTextTests`（6 测试，`StatusFor` 的 R9 交错算术决策 `index < RequestedCount + FailureCount` 被误判为纯排版文案，实际是"按 report 分类每个条目状态"的决策）+ `LauncherPresetSaveTargetTests` 的空拒绝/快照（2 测试，空拒绝是 SaveTarget 自己的业务约束、快照是行为契约，非转发给 EntryId）。714→722 属性。
+- batch 9（e7ecf8b）：回头逐条审计 batch 1-4 的删除，恢复 2 处误删——`LauncherBatchLaunchReceiptTextTests`（6 测试，`StatusFor` 的 R9 交错算术决策 `index < RequestedCount + FailureCount` 被误判为纯排版文案，实际是"按 report 分类每个条目状态"的决策）+ `LauncherPresetSaveTargetTests` 的空拒绝/快照（2 测试，空拒绝是 SaveTarget 自己的业务约束、快照是行为契约，非转发给 EntryId）。714→722 属性。
+- batch 10（反向审计收尾）：把 batch 1-4 的 92 属性逐个复核到底，恢复其余误删——`LauncherPresetDeleteTargetTests` 的 `RequirePresetId` 空拒绝、`LauncherSingleLaunchReceiptTextTests` 的 `RequireName` 空拒绝、`LauncherBatchLaunchConfirmationTests` 的 `RequireTargetLabel` 空拒绝 + `items.ToArray()` 快照、`CardLayoutProviderTests` 的单一事实源数据流。根因判据固化进 test-structure.md「值对象/文案类判定表」（空校验分语言级/转发/业务级三类，业务级 `if(Normalize 后空) throw 带消息` = 行为契约保留）。722→727 属性。
 
-合计：139→114 文件 / 811→722 属性 / 898→794 展开测试。每批 `npm run verify` 全绿 + 基线更新。
+合计：139→118 文件 / 811→727 属性 / 898→799 展开测试。每批 `npm run verify` 全绿 + 基线更新。
 
 ## B 的诚实结论
 
-忠实执行五红线 + 删测试三问 + 宁缺毋滥后，明确命中红线的测试已全部删除（UI 结构、手写架构规则、转发器、实现测试、纯文案）。剩余 722 属性测试是真实漂移守护：
+忠实执行五红线 + 删测试三问 + 宁缺毋滥后，明确命中红线的测试已全部删除（UI 结构、手写架构规则、转发器、实现测试、纯排版）。剩余 727 属性测试是真实漂移守护：
 
 - 契约层（Persistence 配置往返 + CoreUnit 数据契约 + 端到端黄金用例）：约 330 属性。
 - 决策层（CoreUnit 纯函数 + PropertyTest 属性测试）：约 130 属性。
