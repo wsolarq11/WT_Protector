@@ -1,12 +1,12 @@
 using WTLauncher.Core;
 
 using WTLauncher.Tests;
-namespace WTLauncher.Tests.Analyzer;
+namespace WTLauncher.Tests.CoreUnit;
 
 // ponytail: inline arrays in test inputs — perf-irrelevant in tests.
 #pragma warning disable CA1861
 
-[Trait("Category", TestCategories.Analyzer)]
+[Trait("Category", TestCategories.CoreUnit)]
 public sealed class DirectoryUsageAnalyzerTests
 {
     private static LaunchEntry Entry(string id, string directory, string? name = null) =>

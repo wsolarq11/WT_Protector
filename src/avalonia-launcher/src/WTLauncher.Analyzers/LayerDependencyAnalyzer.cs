@@ -68,6 +68,11 @@ public class LayerDependencyAnalyzer : DiagnosticAnalyzer
             ["WTLauncher.Core.LaunchArgumentBuilder", "WTLauncher.Core.AgentDiscoveryScanner"]),
         // R14: StoreGrain uses IStorePersistence, not LauncherStore statics.
         new("WTLauncher.App.Infrastructure.StoreGrain", true, "WTLauncher.Core.LauncherStore", true, []),
+        // Views are the top layer; nothing below may reference them directly.
+        new("WTLauncher.App.Infrastructure", false, "WTLauncher.App.Views", false, []),
+        new("WTLauncher.App.ViewModels", false, "WTLauncher.App.Views", false, []),
+        // Views must not touch the file system; IO routes through persistence ports.
+        new("WTLauncher.App.Views", false, "System.IO.File", true, []),
         // ServiceContract: business services must not depend on the UI framework.
         new("WTLauncher.App.Features.Entries", false, "Avalonia.Controls", false, []),
         new("WTLauncher.App.Features.Presets", false, "Avalonia.Controls", false, []),

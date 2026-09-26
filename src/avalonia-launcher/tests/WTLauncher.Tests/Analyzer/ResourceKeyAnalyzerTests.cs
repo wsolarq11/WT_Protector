@@ -1,9 +1,11 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using WTLauncher.Analyzers;
+using WTLauncher.Tests;
 
 namespace WTLauncher.Tests.Analyzer;
 
+[Trait("Category", TestCategories.Analyzer)]
 public sealed class ResourceKeyAnalyzerTests
 {
     [Fact]
