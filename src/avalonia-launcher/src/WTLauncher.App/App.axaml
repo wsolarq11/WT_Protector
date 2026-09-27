@@ -1,12 +1,13 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:semi="https://irihi.tech/semi"
              x:Class="WTLauncher.App.App"
              RequestedThemeVariant="Default">
   <Application.Resources>
     <!-- Design Tokens — injected at runtime from WTLauncher.Core.LauncherDesignTokens.cs via App.axaml.cs -->
   </Application.Resources>
   <Application.Styles>
-    <FluentTheme />
+    <semi:SemiTheme Locale="zh-CN" />
 
     <!--
       ── Global control skin ─────────────────────────────────────────────
@@ -25,31 +26,26 @@
       <Setter Property="FontSize" Value="13"/>
     </Style>
 
-    <!-- Buttons: shared depth motion; class styles only override color/shape -->
-    <Style Selector="Button">
-      <Setter Property="CornerRadius" Value="{StaticResource ButtonCornerRadius}"/>
-      <Setter Property="Padding" Value="14,8"/>
-      <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="RenderTransform" Value="translateY(0)"/>
-      <Setter Property="Transitions">
-        <Transitions>
-          <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12"/>
-          <BrushTransition Property="Background" Duration="0:0:0.12"/>
-          <BrushTransition Property="BorderBrush" Duration="0:0:0.12"/>
-          <DoubleTransition Property="Opacity" Duration="0:0:0.12"/>
-        </Transitions>
-      </Setter>
-    </Style>
-    <Style Selector="Button:pointerover">
-      <Setter Property="RenderTransform" Value="translateY(-1px)"/>
-    </Style>
-    <Style Selector="Button:pressed">
-      <Setter Property="RenderTransform" Value="translateY(0)"/>
-      <Setter Property="Opacity" Value="0.9"/>
-    </Style>
-    <Style Selector="Button.destructive">
+    <!-- Accent/destructive buttons keep their project color semantics on the Semi base.
+         /template/ overrides are required: Semi's own hover/pressed styles target
+         PART_ContentPresenter directly, so a plain Button.Background setter would
+         be overridden and the red would fade to gray on hover. -->
+    <Style Selector="Button.destructive /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="{StaticResource DestructiveBrush}"/>
       <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource DestructiveBrush}"/>
+    </Style>
+    <Style Selector="Button.destructive:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource DestructiveBrush}"/>
+      <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource DestructiveBrush}"/>
+      <Setter Property="Opacity" Value="0.86"/>
+    </Style>
+    <Style Selector="Button.destructive:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource DestructiveBrush}"/>
+      <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource DestructiveBrush}"/>
+      <Setter Property="Opacity" Value="0.72"/>
     </Style>
 
     <!-- Accent button: interaction states read the user-chosen accent ramp,
@@ -77,78 +73,5 @@
       <Setter Property="BorderBrush" Value="{DynamicResource AccentDisabledBackgroundBrush}"/>
     </Style>
 
-    <!-- Text entry: foreground plane with elevation, focal border on focus -->
-    <Style Selector="TextBox">
-      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
-      <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}"/>
-      <Setter Property="Padding" Value="12,9"/>
-      <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
-      <Setter Property="MinHeight" Value="36"/>
-    </Style>
-    <Style Selector="TextBox:focus">
-      <Setter Property="BorderBrush" Value="{StaticResource FocusBrush}"/>
-      <Setter Property="BorderThickness" Value="{StaticResource FocusBorderThickness}"/>
-    </Style>
-
-    <!-- Dropdowns: rounded, elevated, same focal border on focus -->
-    <Style Selector="ComboBox">
-      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
-      <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="CornerRadius" Value="{StaticResource DropdownCornerRadius}"/>
-      <Setter Property="MinHeight" Value="36"/>
-    </Style>
-    <Style Selector="ComboBox:focus">
-      <Setter Property="BorderBrush" Value="{StaticResource FocusBrush}"/>
-      <Setter Property="BorderThickness" Value="{StaticResource FocusBorderThickness}"/>
-    </Style>
-    <Style Selector="AutoCompleteBox">
-      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
-      <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="CornerRadius" Value="{StaticResource DropdownCornerRadius}"/>
-      <Setter Property="MinHeight" Value="36"/>
-    </Style>
-    <Style Selector="AutoCompleteBox:focus">
-      <Setter Property="BorderBrush" Value="{StaticResource FocusBrush}"/>
-      <Setter Property="BorderThickness" Value="{StaticResource FocusBorderThickness}"/>
-    </Style>
-
-    <!-- List rows: selection and hover keep the foreground/midground split -->
-    <Style Selector="ListBoxItem">
-      <Setter Property="CornerRadius" Value="8"/>
-      <Setter Property="Padding" Value="6"/>
-    </Style>
-    <Style Selector="ListBoxItem:pointerover">
-      <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
-    </Style>
-    <Style Selector="ListBoxItem:selected">
-      <Setter Property="Background" Value="{StaticResource SelectionBackgroundBrush}"/>
-    </Style>
-
-    <!-- Menus and tooltips: elevated foreground surfaces -->
-    <Style Selector="ContextMenu">
-      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
-      <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}"/>
-      <Setter Property="Padding" Value="6"/>
-    </Style>
-    <Style Selector="MenuItem">
-      <Setter Property="Padding" Value="12,7"/>
-      <Setter Property="CornerRadius" Value="6"/>
-    </Style>
-    <Style Selector="MenuItem:pointerover">
-      <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
-    </Style>
-    <Style Selector="ToolTip">
-      <Setter Property="Background" Value="{StaticResource TextPrimaryBrush}"/>
-      <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
-      <Setter Property="BorderThickness" Value="0"/>
-      <Setter Property="CornerRadius" Value="8"/>
-      <Setter Property="Padding" Value="10,6"/>
-    </Style>
   </Application.Styles>
 </Application>

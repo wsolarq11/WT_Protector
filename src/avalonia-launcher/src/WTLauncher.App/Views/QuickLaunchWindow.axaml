@@ -33,7 +33,7 @@
             </StackPanel>
             <Border Grid.Column="1"
                     Background="{StaticResource BadgeWarningBackgroundBrush}"
-                    CornerRadius="6"
+                    CornerRadius="{StaticResource BadgeCornerRadius}"
                     Padding="6,2"
                     IsVisible="{Binding IsStaleDirectory}"
                     VerticalAlignment="Center">

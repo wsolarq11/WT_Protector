@@ -44,6 +44,7 @@
                    Padding="10,8"/>
           <Button x:Name="BrowseDirectoryButton"
                   Grid.Column="1"
+                  Classes="secondary"
                   VerticalAlignment="Center"
                   Click="OnBrowseDirectoryClicked"/>
         </Grid>

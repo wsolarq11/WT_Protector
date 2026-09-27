@@ -24,7 +24,7 @@
                  Foreground="{StaticResource TextMutedBrush}"/>
       <Border Grid.Row="2"
               BorderThickness="1"
-              CornerRadius="10"
+              CornerRadius="{StaticResource ControlCornerRadius}"
               BorderBrush="{StaticResource CardBorderBrush}"
               Padding="12">
         <ScrollViewer>
@@ -47,7 +47,7 @@
                    FontWeight="Bold"
                    Foreground="{StaticResource TextMutedBrush}"/>
         <Border BorderThickness="1"
-                CornerRadius="10"
+                CornerRadius="{StaticResource ControlCornerRadius}"
                 BorderBrush="{StaticResource CardBorderBrush}"
                 Padding="12">
           <ScrollViewer>

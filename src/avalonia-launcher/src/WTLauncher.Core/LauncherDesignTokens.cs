@@ -29,10 +29,6 @@ public static class LauncherDesignTokens
     // ── Drag indicator ─────────────────────────────────────
     public const string DragHighlightColor = "#38BDF8";          // drag target border & insert indicator
 
-    // ── Secondary button ───────────────────────────────────
-    public const string SecondaryButtonBackgroundColor = "#EEF2FF"; // secondary button background
-    public const string SecondaryButtonForegroundColor = "#1D4ED8"; // secondary button text
-
     // ── Control box ────────────────────────────────────────
     public const string ControlBoxLabelColor = "#475569";        // control box label text
 
@@ -63,6 +59,7 @@ public static class LauncherDesignTokens
     public const double DropdownCornerRadius = 12;
     public const double DialogCornerRadius = 16;
     public const double ButtonCornerRadius = 10;
+    public const double BadgeCornerRadius = 14;   // status badge pill radius
     public const double FocusBorderThickness = 2;
 
     // ── Typography ─────────────────────────────────────────
