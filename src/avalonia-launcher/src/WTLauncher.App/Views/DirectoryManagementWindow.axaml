@@ -55,7 +55,7 @@
       </StackPanel>
       <Border Grid.Row="3"
               BorderThickness="1"
-              CornerRadius="10"
+              CornerRadius="{StaticResource ControlCornerRadius}"
               BorderBrush="{StaticResource CardBorderBrush}"
               Padding="8">
         <Grid>

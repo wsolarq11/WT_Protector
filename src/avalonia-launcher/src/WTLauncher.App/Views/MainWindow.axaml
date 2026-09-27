@@ -194,14 +194,12 @@
       <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
     </Style>
     <Style Selector="Border.card.detail-row Button.more">
-      <Setter Property="Padding" Value="7,2"/>
-      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
+      <Setter Property="Padding" Value="6,0"/>
       <Setter Property="MinWidth" Value="28"/>
-      <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+      <Setter Property="MinHeight" Value="28"/>
     </Style>
     <Style Selector="Border.card.detail-row Border.entry-drag-handle">
-      <Setter Property="Padding" Value="5,0"/>
-      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
+      <Setter Property="Padding" Value="6,0"/>
     </Style>
     <Style Selector="TextBlock.card-title">
       <Setter Property="FontSize" Value="18"/>
@@ -228,9 +226,6 @@
     <Style Selector="Grid.entry-actions">
       <Setter Property="Margin" Value="0,13,0,0"/>
     </Style>
-    <Style Selector="Grid.entry-footer">
-      <Setter Property="Margin" Value="0,8,0,0"/>
-    </Style>
     <Style Selector="Border.card.compact TextBlock.entry-dir">
       <Setter Property="Margin" Value="0,10,0,0"/>
     </Style>
@@ -240,14 +235,8 @@
     <Style Selector="Border.card.compact Grid.entry-actions">
       <Setter Property="Margin" Value="0,10,0,0"/>
     </Style>
-    <Style Selector="Border.card.compact Grid.entry-footer">
-      <Setter Property="Margin" Value="0,6,0,0"/>
-    </Style>
     <Style Selector="Border.card.micro Grid.entry-actions">
       <Setter Property="Margin" Value="0,8,0,0"/>
-    </Style>
-    <Style Selector="Border.card.micro Grid.entry-footer">
-      <Setter Property="Margin" Value="0,6,0,0"/>
     </Style>
     <Style Selector="Border.card.compact Button.accent">
       <Setter Property="Padding" Value="14,7"/>
@@ -257,37 +246,26 @@
       <Setter Property="Padding" Value="12,6"/>
       <Setter Property="CornerRadius" Value="9"/>
     </Style>
+    <!-- Ghost icon button: transparent until hover, neutral gray glyph -->
     <Style Selector="Button.more">
-      <Setter Property="Padding" Value="12,8"/>
-      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="Theme" Value="{StaticResource BorderlessButton}"/>
+      <Setter Property="Padding" Value="8"/>
+      <Setter Property="MinWidth" Value="32"/>
+      <Setter Property="MinHeight" Value="32"/>
       <Setter Property="HorizontalContentAlignment" Value="Center"/>
       <Setter Property="VerticalContentAlignment" Value="Center"/>
-      <Setter Property="MinWidth" Value="40"/>
     </Style>
-    <Style Selector="Border.card.compact Button.more">
-      <Setter Property="Padding" Value="11,6"/>
-      <Setter Property="MinWidth" Value="38"/>
-      <Setter Property="CornerRadius" Value="9"/>
+    <Style Selector="Button.more:pointerover /template/ Path">
+      <Setter Property="Stroke" Value="{StaticResource TextPrimaryBrush}"/>
     </Style>
-    <!-- L39: Minimum 32px height for reasonable touch/mouse hit target even at micro density -->
-    <Style Selector="Border.card.micro Button.more">
-      <Setter Property="Padding" Value="10,6"/>
-      <Setter Property="MinWidth" Value="36"/>
-      <Setter Property="MinHeight" Value="32"/>
-      <Setter Property="CornerRadius" Value="9"/>
-    </Style>
+    <!-- Drag handle: ghost grip — transparent, light fill only on hover -->
     <Style Selector="Border.entry-drag-handle">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Padding" Value="6"/>
+    </Style>
+    <Style Selector="Border.entry-drag-handle:pointerover">
       <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
-      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
-      <Setter Property="Padding" Value="8,4"/>
-    </Style>
-    <Style Selector="Border.card.compact Border.entry-drag-handle">
-      <Setter Property="Padding" Value="7,3"/>
-      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
-    </Style>
-    <Style Selector="Border.card.micro Border.entry-drag-handle">
-      <Setter Property="Padding" Value="6,2"/>
-      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
     </Style>
     <Style Selector="Border.control-box">
       <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>

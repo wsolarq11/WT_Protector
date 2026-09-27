@@ -57,10 +57,6 @@ public sealed partial class App : Application
         // ── Drag indicator ─────────────────────────────────
         Resources["DragHighlightBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.DragHighlightColor));
 
-        // ── Secondary button ───────────────────────────────
-        Resources["SecondaryButtonBackgroundBrush"]  = new SolidColorBrush(Color.Parse(LauncherDesignTokens.SecondaryButtonBackgroundColor));
-        Resources["SecondaryButtonForegroundBrush"]  = new SolidColorBrush(Color.Parse(LauncherDesignTokens.SecondaryButtonForegroundColor));
-
         // ── Accent button ramp (default; overwritten once settings load) ──
         ApplyAccentRamp(Resources, AccentColorRamp.DefaultAccentColor);
 
@@ -75,9 +71,6 @@ public sealed partial class App : Application
         Resources["BadgeWarningBackgroundBrush"]  = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BadgeWarningBackgroundColor));
         Resources["BadgeWarningForegroundBrush"]  = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BadgeWarningForegroundColor));
 
-        // ── Drag handle ────────────────────────────────────
-        Resources["DragHandleTextBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.DragHandleTextColor));
-
         // ── Per-agent brand badge ──────────────────────────
         Resources["BrandBadgeSize"] = LauncherDesignTokens.BrandBadgeSize;
         Resources["BrandBadgeCornerRadius"] = new CornerRadius(LauncherDesignTokens.BrandBadgeCornerRadius);
@@ -90,6 +83,7 @@ public sealed partial class App : Application
         Resources["DropdownCornerRadius"] = new CornerRadius(LauncherDesignTokens.DropdownCornerRadius);
         Resources["DialogCornerRadius"] = new CornerRadius(LauncherDesignTokens.DialogCornerRadius);
         Resources["ButtonCornerRadius"] = new CornerRadius(LauncherDesignTokens.ButtonCornerRadius);
+        Resources["BadgeCornerRadius"] = new CornerRadius(LauncherDesignTokens.BadgeCornerRadius);
         Resources["FocusBorderThickness"] = new Thickness(LauncherDesignTokens.FocusBorderThickness);
         Resources["SpacingFrame"] = new Thickness(LauncherDesignTokens.SpacingFrame);
         Resources["FontSizeSmall"] = LauncherDesignTokens.FontSizeSmall;

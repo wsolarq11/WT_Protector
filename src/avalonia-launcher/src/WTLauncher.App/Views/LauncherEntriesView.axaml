@@ -33,14 +33,14 @@
                     ColumnSpacing="8"
                     VerticalAlignment="Center">
                 <Button Grid.Column="0"
-                        Classes="secondary"
+                        Classes="more"
                         Command="{Binding ToggleExpandedCommand}"
                         Padding="8,2"
                         MinWidth="32"
                         ToolTip.Tip="{Binding GroupCollapseTooltip}">
                   <Grid>
                     <Path Data="{StaticResource IconChevronDown}"
-                          Stroke="{StaticResource SecondaryButtonForegroundBrush}"
+                          Stroke="{StaticResource TextMutedBrush}"
                           StrokeThickness="2"
                           Fill="Transparent"
                           HorizontalAlignment="Center"
@@ -48,7 +48,7 @@
                           Width="16" Height="16"
                           IsVisible="{Binding IsExpanded}"/>
                     <Path Data="{StaticResource IconChevronRight}"
-                          Stroke="{StaticResource SecondaryButtonForegroundBrush}"
+                          Stroke="{StaticResource TextMutedBrush}"
                           StrokeThickness="2"
                           Fill="Transparent"
                           HorizontalAlignment="Center"
@@ -65,7 +65,7 @@
                            VerticalAlignment="Center"/>
                 <Border Grid.Column="2"
                         Background="{StaticResource BadgeInfoBackgroundBrush}"
-                        CornerRadius="8"
+                        CornerRadius="{StaticResource BadgeCornerRadius}"
                         Padding="8,2"
                         VerticalAlignment="Center">
                   <TextBlock Text="{Binding CountLabel}" FontSize="{StaticResource FontSizeCaption}"/>
@@ -146,11 +146,11 @@
                                   Command="{Binding DeleteCommand}"/>
                       </ContextMenu>
                     </Border.ContextMenu>
-                    <Grid RowDefinitions="Auto,*,Auto,Auto">
+                    <Grid RowDefinitions="Auto,*,Auto">
                       <Border Grid.RowSpan="4"
                               Classes="stale-badge"
                               Background="{StaticResource BadgeWarningBackgroundBrush}"
-                              CornerRadius="6"
+                              CornerRadius="{StaticResource BadgeCornerRadius}"
                               Padding="6,2"
                               HorizontalAlignment="Right"
                               VerticalAlignment="Top"
@@ -215,36 +215,34 @@
                       </StackPanel>
                       <Grid Grid.Row="2"
                             Classes="entry-actions"
-                            ColumnDefinitions="*,Auto">
+                            ColumnDefinitions="*,Auto,Auto">
                         <Button Classes="accent"
                                 Content="{Binding LaunchLabel}"
                                 AutomationProperties.Name="{Binding LaunchLabel}"
                                 Command="{Binding LaunchCommand}"/>
                         <Button Grid.Column="1"
-                                Classes="secondary more"
+                                Classes="more"
                                 Margin="8,0,0,0"
                                 ToolTip.Tip="{Binding MoreLabel}"
                                 AutomationProperties.Name="{Binding MoreLabel}"
                                 Click="OnEntryMoreClicked">
                           <Path Data="{StaticResource IconMoreVertical}"
-                                Stroke="{StaticResource SecondaryButtonForegroundBrush}"
+                                Stroke="{StaticResource TextMutedBrush}"
                                 StrokeThickness="2"
                                 Fill="Transparent"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 Width="16" Height="16"/>
                         </Button>
-                      </Grid>
-                      <Grid Grid.Row="3"
-                            Classes="entry-footer">
-                        <Border Classes="entry-drag-handle"
+                        <Border Grid.Column="2"
+                                Classes="entry-drag-handle"
                                 Cursor="Hand"
-                                HorizontalAlignment="Right"
+                                Margin="4,0,0,0"
                                 ToolTip.Tip="{Binding DragSortLabel}"
                                 AutomationProperties.Name="{Binding DragSortLabel}"
                                 PointerPressed="OnEntryDragPointerPressed">
                           <Path Data="{StaticResource IconGripVertical}"
-                                Stroke="{StaticResource DragHandleTextBrush}"
+                                Stroke="{StaticResource TextMutedBrush}"
                                 StrokeThickness="2"
                                 Fill="Transparent"
                                 HorizontalAlignment="Center"
@@ -410,7 +408,7 @@
                                ToolTip.Tip="{Binding Directory}"
                                Text="{Binding Directory}"/>
                     <Border Background="{StaticResource BadgeWarningBackgroundBrush}"
-                            CornerRadius="4"
+                            CornerRadius="{StaticResource BadgeCornerRadius}"
                             Padding="4,1"
                             IsVisible="{Binding IsStaleDirectory}"
                             VerticalAlignment="Center">
@@ -435,12 +433,12 @@
                             Content="{Binding LaunchLabel}"
                             AutomationProperties.Name="{Binding LaunchLabel}"
                             Command="{Binding LaunchCommand}"/>
-                    <Button Classes="secondary more"
+                    <Button Classes="more"
                             ToolTip.Tip="{Binding MoreLabel}"
                             AutomationProperties.Name="{Binding MoreLabel}"
                             Click="OnEntryMoreClicked">
                       <Path Data="{StaticResource IconMoreVertical}"
-                            Stroke="{StaticResource SecondaryButtonForegroundBrush}"
+                            Stroke="{StaticResource TextMutedBrush}"
                             StrokeThickness="2"
                             Fill="Transparent"
                             HorizontalAlignment="Center"
@@ -453,7 +451,7 @@
                             AutomationProperties.Name="{Binding DragSortLabel}"
                             PointerPressed="OnEntryDragPointerPressed">
                       <Path Data="{StaticResource IconGripVertical}"
-                            Stroke="{StaticResource DragHandleTextBrush}"
+                            Stroke="{StaticResource TextMutedBrush}"
                             StrokeThickness="2"
                             Fill="Transparent"
                             HorizontalAlignment="Center"

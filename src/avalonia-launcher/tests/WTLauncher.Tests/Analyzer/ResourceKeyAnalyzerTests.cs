@@ -36,6 +36,30 @@ public sealed class ResourceKeyAnalyzerTests
         Assert.Contains("MissingBrush", wt1005.GetMessage(), StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void ExternalThemeResourceKey_DoesNotReport()
+    {
+        var source = """
+            public static class AppResources
+            {
+                public static void Inject()
+                {
+                    Resources["PrimaryBrush"] = "#000000";
+                }
+            }
+            """;
+        var xaml = """
+            <Button Theme="{StaticResource BorderlessButton}"/>
+            <TextBlock Foreground="{StaticResource PrimaryBrush}"/>
+            """;
+
+        var diagnostics = AnalyzerTestHelper.RunWithAdditionalTexts<ResourceKeyAnalyzer>(
+            source,
+            [new InMemoryAdditionalText("App.axaml", xaml)]);
+
+        Assert.DoesNotContain(diagnostics, d => d.Id == ResourceKeyAnalyzer.DiagnosticId);
+    }
+
     private sealed class InMemoryAdditionalText(string path, string text) : AdditionalText
     {
         public override string Path => path;

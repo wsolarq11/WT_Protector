@@ -33,6 +33,19 @@ public class ResourceKeyAnalyzer : DiagnosticAnalyzer
         @"\bx:Key\s*=\s*""([^""]+)""",
         RegexOptions.Compiled);
 
+    /// <summary>
+    /// StaticResource keys provided by external theme libraries (Semi.Avalonia).
+    /// These live inside a NuGet package, so the analyzer cannot see their x:Key
+    /// definitions and must treat them as known-valid.
+    /// </summary>
+    private static readonly HashSet<string> ExternalThemeResourceKeys = new(StringComparer.Ordinal)
+    {
+        // Semi.Avalonia button ControlTheme variants (Semi Controls/Button.axaml)
+        "SolidButton",
+        "OutlineButton",
+        "BorderlessButton",
+    };
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [Rule];
 
     public override void Initialize(AnalysisContext context)
@@ -53,7 +66,7 @@ public class ResourceKeyAnalyzer : DiagnosticAnalyzer
 
             foreach (var key in referencedKeys)
             {
-                if (!definedKeys.Contains(key))
+                if (!definedKeys.Contains(key) && !ExternalThemeResourceKeys.Contains(key))
                 {
                     compilationContext.ReportDiagnostic(Diagnostic.Create(
                         Rule, Location.None, key));

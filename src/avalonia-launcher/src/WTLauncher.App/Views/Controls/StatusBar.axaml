@@ -10,7 +10,7 @@
           Classes.status-warning="{Binding IsStatusWarning}"
           Classes.status-error="{Binding IsStatusError}"
           Background="{StaticResource SurfaceBrush}"
-          CornerRadius="16"
+          CornerRadius="{StaticResource DialogCornerRadius}"
           BorderBrush="{StaticResource CardBorderBrush}"
           BorderThickness="1"
           Padding="16">

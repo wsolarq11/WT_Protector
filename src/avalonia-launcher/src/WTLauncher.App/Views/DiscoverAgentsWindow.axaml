@@ -48,7 +48,7 @@
           </Grid>
           <Border Margin="0,10,0,0"
                   BorderThickness="1"
-                  CornerRadius="10"
+                  CornerRadius="{StaticResource ControlCornerRadius}"
                   BorderBrush="{StaticResource CardBorderBrush}"
                   Padding="8">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -63,7 +63,7 @@
                      TextWrapping="Wrap"
                      Foreground="{StaticResource TextMutedBrush}"/>
           <Border BorderThickness="1"
-                  CornerRadius="10"
+                  CornerRadius="{StaticResource ControlCornerRadius}"
                   BorderBrush="{StaticResource CardBorderBrush}"
                   Padding="10">
             <ScrollViewer MaxHeight="220">

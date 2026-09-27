@@ -39,7 +39,7 @@
                 MinWidth="110" VerticalAlignment="Center" PlaceholderText="{Binding BarPresetPlaceholder}"/>
       <Button Grid.Column="5" Classes="secondary" VerticalAlignment="Center"
               Content="{Binding ApplyPresetButtonText}" Command="{Binding ApplyPresetCommand}"/>
-      <Border Grid.Column="6" Background="{StaticResource BadgeSuccessBackgroundBrush}" CornerRadius="14"
+      <Border Grid.Column="6" Background="{StaticResource BadgeSuccessBackgroundBrush}" CornerRadius="{StaticResource BadgeCornerRadius}"
               Padding="10,6" VerticalAlignment="Center">
         <TextBlock Foreground="{StaticResource BadgeSuccessForegroundBrush}">
           <Run Text="{Binding BarSelectedPrefix}"/><Run Text="{Binding SelectedCount}"/><Run Text="{Binding BarSelectedSuffix}"/>
@@ -47,9 +47,16 @@
       </Border>
       <Button Grid.Column="7" Classes="accent" VerticalAlignment="Center"
               Content="{Binding BarLaunchSelected}" Command="{Binding LaunchSelectedCommand}"/>
-      <Button Grid.Column="8" Classes="secondary" VerticalAlignment="Center" Content="⋯"
+      <Button Grid.Column="8" Classes="more" VerticalAlignment="Center"
               automation:AutomationProperties.Name="{Binding BarManageAutomation}"
               Click="OnOverflowMenuClicked">
+        <Path Data="{StaticResource IconMoreVertical}"
+              Stroke="{StaticResource TextMutedBrush}"
+              StrokeThickness="2"
+              Fill="Transparent"
+              Width="16" Height="16"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"/>
         <Button.ContextMenu>
           <ContextMenu>
             <MenuItem Header="{Binding BarAddEntry}"
@@ -120,7 +127,7 @@
       <TextBlock Classes="muted" Text="{Binding ConfigPathDisplay}" TextTrimming="CharacterEllipsis"
                  VerticalAlignment="Center"/>
       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
-        <Border Background="{StaticResource BadgeWarningBackgroundBrush}" CornerRadius="14" Padding="10,6"
+        <Border Background="{StaticResource BadgeWarningBackgroundBrush}" CornerRadius="{StaticResource BadgeCornerRadius}" Padding="10,6"
                 VerticalAlignment="Center"
                 IsVisible="{Binding HasStaleDirectories}"
                 ToolTip.Tip="{Binding BarStaleTooltip}">
@@ -128,7 +135,7 @@
             <Run Text="{Binding BarStalePrefix}"/><Run Text="{Binding StaleDirectoryCount}"/><Run Text="{Binding BarStaleSuffix}"/>
           </TextBlock>
         </Border>
-        <Border Background="{StaticResource BadgeInfoBackgroundBrush}" CornerRadius="14" Padding="10,6"
+        <Border Background="{StaticResource BadgeInfoBackgroundBrush}" CornerRadius="{StaticResource BadgeCornerRadius}" Padding="10,6"
                 VerticalAlignment="Center">
           <TextBlock Foreground="{StaticResource BadgeInfoForegroundBrush}">
             <Run Text="{Binding VisibleCount}"/><Run Text=" / "/><Run Text="{Binding TotalCount}"/>

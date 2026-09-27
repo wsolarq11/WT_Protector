@@ -81,6 +81,6 @@ New/changed:
 
 ## Implementation Constraints
 
-- Avalonia 12 + 现有 code-behind / MVVM / XAML；不新增独立设计系统
+- Avalonia 12 + 现有 code-behind / MVVM / XAML；控件主题复用 Semi.Avalonia（`SemiTheme`），不新增独立设计系统，仅保留 accent/destructive 两个项目语义色类覆盖在 Semi 模板之上
 - DragOver 只在目标或方向变化时更新，避免无差别重排
 - 发布/verify receipt 至少记录 `WTLauncher.App.dll` hash；exe 只是 apphost 外壳
