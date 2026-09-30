@@ -335,3 +335,42 @@ Migrated auxiliary scripts to TS; added .NET smoke probe and self-contained unin
 ### Status
 
 [OK] **Completed**
+
+
+## Session 13: 图标几何注入 + 控件 well 化 + 卡片 hover 上浮修复
+<!-- trellis-session: v=2 fp=fa2955e97b82426b -->
+
+**Date**: 2026-09-30
+**Task**: 图标几何注入 + 控件 well 化 + 卡片 hover 上浮修复
+**Branch**: `main`
+
+### Summary
+
+引入 LucideIconGeometry 统一图标缩放与描边；Button.more 与拖拽手柄改为 32x32 常显 well（绘制框==命中框）；修复卡片 hover 上浮顶部边框被内层 ItemsControl clip 裁掉的问题。
+
+### Main Changes
+
+- 图标几何注入：LucideIconGeometry 替换 8 个裸 StreamGeometry，描边宽度收敛为 IconStroke16/14/12 资源，配 LucideIconGeometryTests
+- 控件 well 化：Button.more / Border.entry-drag-handle 改 32x32 常显 well，名称墙磁贴 well 18x18、圆角 4
+- destructive 按钮成熟化：hover/pressed 改 AccentColorRamp 同源 HSL 精确色值，补 :disabled 灰化
+- 卡片 hover 上浮修复：预留 P 加到最内层 FillGridPanel，ScrollViewer 负 margin 借位，删多余 ClipToBounds，单一源公式 P=L+O+AA=4
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `52254486` | feat: 图标几何注入 + 控件 well 化 + 卡片 hover 上浮修复 |
+| `2b1e029f` | chore: 刷新结构基线并记录 hover 修复会话交接 |
+
+### Testing
+
+- [OK] npm run verify:mainline PASS（816 测试 / AOT 发布 / GUI smoke）
+- [OK] 远端 CI 全绿（run 36700819670），仓库已转回私有
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 搁置项见 HANDOFF：数据迁移登记器、外部库四张未来牌等，等触发条件
