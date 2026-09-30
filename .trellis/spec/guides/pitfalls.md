@@ -212,6 +212,11 @@
 - 判据：广泛引用 + 分析器硬编码 → 删检查；定义文件外 0 引用 → 删产品死代码；少量引用无硬编码 → 保留检查防内联/合并
 - 预防：删前跑外部引用计数 + 查分析器硬编码；`addCheck` name 统一对齐 step id
 
+### §2.27 私有仓库触发 CI 必须先转公开
+- 证据：2026-09-30 拖拽整卡化收口，run `36724477560` 私有 push 触发 CI failure（`runner_id=0` / `steps=0`，runner 从未分配），转公开 rerun 后 success
+- 根因：私有仓库 Actions 账单拦截（`recent account payments have failed`）导致 runner 不分配，失败与代码无关；先私有跑再转公开，白白多一次失败 run + 重跑等待
+- 预防：凡将触发 CI 的 push/rerun，前置动作一律先转公开（`gh repo edit wsolarq11/WT_Protector --visibility public --accept-visibility-change-consequences`），CI 绿后再转回私有；识别账单拦截 = job 的 `runner_id=0` 且 `steps` 为空
+
 ## 3. 关联项目可迁移教训
 
 ### §3.1 不要在文档里硬编码"N 条/N 类"
