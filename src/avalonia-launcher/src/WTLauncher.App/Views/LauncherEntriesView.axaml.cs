@@ -17,6 +17,10 @@ public sealed partial class LauncherEntriesView : UserControl
 
     public event EventHandler<PointerPressedEventArgs>? EntryDragPointerPressed;
 
+    public event EventHandler<PointerEventArgs>? EntryDragPointerMoved;
+
+    public event EventHandler<PointerReleasedEventArgs>? EntryDragPointerReleased;
+
     public ScrollViewer CardsScroll => CardsScrollViewer;
 
     public ItemsControl CardsItems => CardsEntriesItemsControl;
@@ -35,4 +39,10 @@ public sealed partial class LauncherEntriesView : UserControl
 
     private void OnEntryDragPointerPressed(object? sender, PointerPressedEventArgs e) =>
         EntryDragPointerPressed?.Invoke(sender, e);
+
+    private void OnEntryDragPointerMoved(object? sender, PointerEventArgs e) =>
+        EntryDragPointerMoved?.Invoke(sender, e);
+
+    private void OnEntryDragPointerReleased(object? sender, PointerReleasedEventArgs e) =>
+        EntryDragPointerReleased?.Invoke(sender, e);
 }

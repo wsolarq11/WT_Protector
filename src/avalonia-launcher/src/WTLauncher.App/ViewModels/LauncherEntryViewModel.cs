@@ -48,7 +48,6 @@ public sealed partial class LauncherEntryViewModel : ViewModelBase
     public string RepairPathLabel => LauncherLocalization.Format("entry.repairPath");
     public string DeleteLabel => LauncherLocalization.Format("entry.delete");
     public string MoreLabel => LauncherLocalization.Format("entry.more");
-    public string DragSortLabel => LauncherLocalization.Format("entry.dragSort");
 #pragma warning restore CA1822
 
     // Per-agent brand projection. Empty when the command doesn't match a

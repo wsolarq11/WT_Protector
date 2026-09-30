@@ -40,9 +40,6 @@ public static class LauncherDesignTokens
     public const string BadgeWarningBackgroundColor = "#FEF3C7"; // warning badge background
     public const string BadgeWarningForegroundColor = "#B45309"; // warning badge text
 
-    // ── Drag handle ────────────────────────────────────────
-    public const string DragHandleTextColor = "#334155";        // drag handle label text
-
     // ── Per-agent brand badge ──────────────────────────────
     public const double BrandBadgeSize = 22;                    // brand badge width/height on cards
     public const double BrandBadgeCornerRadius = 6;             // brand badge corner radius

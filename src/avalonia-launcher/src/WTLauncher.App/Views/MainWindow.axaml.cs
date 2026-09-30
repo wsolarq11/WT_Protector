@@ -112,6 +112,8 @@ public sealed partial class MainWindow : Window
         EntriesView.EntryMoreClicked += OnEntryMoreClicked;
         EntriesView.EntryRowDoubleTapped += OnEntryRowDoubleTapped;
         EntriesView.EntryDragPointerPressed += OnEntryDragPointerPressed;
+        EntriesView.EntryDragPointerMoved += OnEntryDragPointerMoved;
+        EntriesView.EntryDragPointerReleased += OnEntryDragPointerReleased;
     }
 
     private static void ApplyReducedMotion()
@@ -175,7 +177,7 @@ public sealed partial class MainWindow : Window
         if (sender is not Control { DataContext: LauncherEntryViewModel entry })
             return;
 
-        if (!MainWindowEntryRowDoubleTap.ShouldLaunchFromSource(e.Source))
+        if (!MainWindowCardGesture.IsGestureEligible(e.Source))
             return;
 
         if (entry.LaunchCommand.CanExecute(null))
@@ -311,6 +313,8 @@ public sealed partial class MainWindow : Window
             EntriesView.EntryMoreClicked -= OnEntryMoreClicked;
             EntriesView.EntryRowDoubleTapped -= OnEntryRowDoubleTapped;
             EntriesView.EntryDragPointerPressed -= OnEntryDragPointerPressed;
+            EntriesView.EntryDragPointerMoved -= OnEntryDragPointerMoved;
+            EntriesView.EntryDragPointerReleased -= OnEntryDragPointerReleased;
 
             if (DataContext is MainWindowViewModel viewModel)
             {
@@ -405,8 +409,6 @@ public sealed partial class MainWindow : Window
 public static class MainWindowEntryClasses
 {
     public const string Card = "card";
-
-    public const string DragHandle = "entry-drag-handle";
 }
 
 internal static class GridExtensions
@@ -423,23 +425,6 @@ internal static class GridExtensions
     {
         Grid.SetColumn(control, column);
         return control;
-    }
-}
-
-public static class MainWindowEntryRowDoubleTap
-{
-    public static bool ShouldLaunchFromSource(object? source)
-    {
-        foreach (var control in MainWindowVisualTree.ControlsFromSource(source))
-        {
-            if (control is Button or CheckBox)
-                return false;
-
-            if (control is Border border && border.Classes.Contains(MainWindowEntryClasses.DragHandle))
-                return false;
-        }
-
-        return true;
     }
 }
 

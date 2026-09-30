@@ -334,7 +334,6 @@
   "entry.repairPath": "重新选择路径",
   "entry.delete": "删除",
   "entry.more": "更多操作",
-  "entry.dragSort": "拖拽排序",
 
   "card.groupCollapseTooltip": "折叠/展开",
   "card.launchAll": "启动所有",

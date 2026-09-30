@@ -113,7 +113,10 @@
                           Classes.keyboard-focused="{Binding IsKeyboardFocused}"
                           Classes.stale="{Binding IsStaleDirectory}"
                           HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch">
+                          VerticalAlignment="Stretch"
+                          PointerPressed="OnEntryDragPointerPressed"
+                          PointerMoved="OnEntryDragPointerMoved"
+                          PointerReleased="OnEntryDragPointerReleased">
                     <!-- L51: Keyboard accelerators for context menu discoverability -->
                     <Border.ContextMenu>
                       <ContextMenu>
@@ -218,7 +221,7 @@
                       </StackPanel>
                       <Grid Grid.Row="2"
                             Classes="entry-actions"
-                            ColumnDefinitions="*,Auto,Auto">
+                            ColumnDefinitions="*,Auto">
                         <Button Classes="accent"
                                 HorizontalAlignment="Stretch"
                                 Content="{Binding LaunchLabel}"
@@ -238,21 +241,6 @@
                                 VerticalAlignment="Center"
                                 Width="16" Height="16"/>
                         </Button>
-                        <Border Grid.Column="2"
-                                Classes="entry-drag-handle"
-                                Cursor="Hand"
-                                Margin="4,0,0,0"
-                                ToolTip.Tip="{Binding DragSortLabel}"
-                                AutomationProperties.Name="{Binding DragSortLabel}"
-                                PointerPressed="OnEntryDragPointerPressed">
-                          <Path Data="{StaticResource IconGripVertical}"
-                                Stroke="{StaticResource TextMutedBrush}"
-                                StrokeThickness="{StaticResource IconStroke16}"
-                                Fill="Transparent"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Width="16" Height="16"/>
-                        </Border>
                       </Grid>
                     </Grid>
                   </Border>
@@ -331,7 +319,10 @@
                       Classes.stale="{Binding IsStaleDirectory}"
                       ClipToBounds="True"
                       HorizontalAlignment="Stretch"
-                      DoubleTapped="OnEntryRowDoubleTapped">
+                      DoubleTapped="OnEntryRowDoubleTapped"
+                      PointerPressed="OnEntryDragPointerPressed"
+                      PointerMoved="OnEntryDragPointerMoved"
+                      PointerReleased="OnEntryDragPointerReleased">
                 <!-- L51: Keyboard accelerators for context menu discoverability -->
                 <Border.ContextMenu>
                   <ContextMenu>
@@ -449,19 +440,6 @@
                             VerticalAlignment="Center"
                             Width="16" Height="16"/>
                     </Button>
-                    <Border Classes="entry-drag-handle"
-                            Cursor="Hand"
-                            ToolTip.Tip="{Binding DragSortLabel}"
-                            AutomationProperties.Name="{Binding DragSortLabel}"
-                            PointerPressed="OnEntryDragPointerPressed">
-                      <Path Data="{StaticResource IconGripVertical}"
-                            Stroke="{StaticResource TextMutedBrush}"
-                            StrokeThickness="{StaticResource IconStroke16}"
-                            Fill="Transparent"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Width="16" Height="16"/>
-                    </Border>
                   </StackPanel>
                 </Grid>
               </Border>
@@ -503,7 +481,10 @@
                   Width="{Binding NameTileWidth}"
                   Height="{Binding NameTileHeight}"
                   ClipToBounds="True"
-                  DoubleTapped="OnEntryRowDoubleTapped">
+                  DoubleTapped="OnEntryRowDoubleTapped"
+                  PointerPressed="OnEntryDragPointerPressed"
+                  PointerMoved="OnEntryDragPointerMoved"
+                  PointerReleased="OnEntryDragPointerReleased">
             <!-- L51: Keyboard accelerators for context menu discoverability -->
             <Border.ContextMenu>
               <ContextMenu>
@@ -574,19 +555,6 @@
                         Background="{StaticResource BadgeWarningBackgroundBrush}"
                         IsVisible="{Binding IsStaleDirectory}"
                         ToolTip.Tip="{Binding StaleDotTooltip}"/>
-                <Border Classes="entry-drag-handle"
-                        Cursor="Hand"
-                        ToolTip.Tip="{Binding DragSortLabel}"
-                        AutomationProperties.Name="{Binding DragSortLabel}"
-                        PointerPressed="OnEntryDragPointerPressed">
-                  <Path Data="{StaticResource IconGripVerticalSmall}"
-                        Stroke="{StaticResource TextMutedBrush}"
-                        StrokeThickness="{StaticResource IconStroke12}"
-                        Fill="Transparent"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Width="12" Height="12"/>
-                </Border>
               </StackPanel>
             </Grid>
           </Border>

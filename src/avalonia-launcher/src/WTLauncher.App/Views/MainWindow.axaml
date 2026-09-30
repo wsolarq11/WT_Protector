@@ -41,6 +41,7 @@
       <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="BoxShadow" Value="{StaticResource CardBoxShadow}"/>
+      <Setter Property="Cursor" Value="SizeAll"/>
       <Setter Property="RenderTransform" Value="{StaticResource CardHoverLiftRestTransform}"/>
       <Setter Property="Transitions">
         <Transitions>
@@ -57,6 +58,14 @@
     </Style>
     <Style Selector="Border.card:pointerover">
       <Setter Property="RenderTransform" Value="{StaticResource CardHoverLiftTransform}"/>
+    </Style>
+    <!-- The whole card is a drag handle (Cursor=SizeAll), but interactive controls
+         inside it must keep their click/check cursor instead of inheriting SizeAll. -->
+    <Style Selector="Border.card Button">
+      <Setter Property="Cursor" Value="Arrow"/>
+    </Style>
+    <Style Selector="Border.card CheckBox">
+      <Setter Property="Cursor" Value="Arrow"/>
     </Style>
     <!-- Suppress hover lift during drag preview to avoid visual conflict -->
     <Style Selector="Border.card.drag-source:pointerover">
@@ -146,14 +155,6 @@
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
       <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-    </Style>
-    <!-- Name tiles are only 24px tall, so the well shrinks to 18 to fit inside the
-         tile's 18px content box (24 - 2 border - 4 vertical padding). Still a visible
-         box equal to its own hit area, just at name-wall scale. -->
-    <Style Selector="Border.card.name-tile Border.entry-drag-handle">
-      <Setter Property="Width" Value="18"/>
-      <Setter Property="Height" Value="18"/>
-      <Setter Property="CornerRadius" Value="4"/>
     </Style>
     <Style Selector="ListBox.details-list">
       <Setter Property="Background" Value="Transparent"/>
@@ -266,20 +267,6 @@
          through the solid well. Pin it to the hover fill — the cursor carries the press
          state, same as the reference implementation. -->
     <Style Selector="Button.more:pressed /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
-      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
-    </Style>
-    <!-- Drag handle: the same visible well, so hit area == drawn area. -->
-    <Style Selector="Border.entry-drag-handle">
-      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
-      <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="CornerRadius" Value="{StaticResource ButtonCornerRadius}"/>
-      <Setter Property="Width" Value="32"/>
-      <Setter Property="Height" Value="32"/>
-      <Setter Property="Padding" Value="0"/>
-    </Style>
-    <Style Selector="Border.entry-drag-handle:pointerover">
       <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
       <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
     </Style>
