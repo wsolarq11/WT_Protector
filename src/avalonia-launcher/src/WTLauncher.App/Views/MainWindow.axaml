@@ -15,15 +15,9 @@
         MinHeight="{StaticResource WindowMinHeight}"
         Background="{StaticResource BackgroundBrush}">
   <Window.Resources>
-    <!-- Lucide icon geometries (ISC license, https://lucide.dev) -->
-    <StreamGeometry x:Key="IconGripVertical">M 9,4 A 1,1 0 1,1 9,6 A 1,1 0 1,1 9,4 M 9,11 A 1,1 0 1,1 9,13 A 1,1 0 1,1 9,11 M 9,18 A 1,1 0 1,1 9,20 A 1,1 0 1,1 9,18 M 15,4 A 1,1 0 1,1 15,6 A 1,1 0 1,1 15,4 M 15,11 A 1,1 0 1,1 15,13 A 1,1 0 1,1 15,11 M 15,18 A 1,1 0 1,1 15,20 A 1,1 0 1,1 15,18</StreamGeometry>
-    <StreamGeometry x:Key="IconMoreVertical">M 12,4 A 1,1 0 1,1 12,6 A 1,1 0 1,1 12,4 M 12,11 A 1,1 0 1,1 12,13 A 1,1 0 1,1 12,11 M 12,18 A 1,1 0 1,1 12,20 A 1,1 0 1,1 12,18</StreamGeometry>
-    <StreamGeometry x:Key="IconChevronDown">M 6 9 L 12 15 L 18 9</StreamGeometry>
-    <StreamGeometry x:Key="IconChevronRight">M 9 6 L 15 12 L 9 18</StreamGeometry>
-    <StreamGeometry x:Key="IconStatusCheck">M 20 6 L 9 17 L 5 12</StreamGeometry>
-    <StreamGeometry x:Key="IconStatusX">M 18 6 L 6 18 M 6 6 L 18 18</StreamGeometry>
-    <StreamGeometry x:Key="IconStatusCircle">M 12 2 A 10 10 0 1 1 12 22 A 10 10 0 1 1 12 2</StreamGeometry>
-    <StreamGeometry x:Key="IconStatusAlert">M 12 2 L 22 21 L 2 21 Z M 12 9 L 12 14 M 12 17 L 12 17.5</StreamGeometry>
+    <!-- Lucide icon geometries are injected from WTLauncher.App.Infrastructure.LucideIconGeometry
+         via App.axaml.cs, uniformly scaled from the 24×24 viewbox so the glyph centre lands on
+         the Path centre (see that class for why raw coordinates would render offset/clipped). -->
   </Window.Resources>
   <Window.Styles>
     <Style Selector="Border.status-panel">
@@ -47,7 +41,7 @@
       <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="BoxShadow" Value="{StaticResource CardBoxShadow}"/>
-      <Setter Property="RenderTransform" Value="translateY(0)"/>
+      <Setter Property="RenderTransform" Value="{StaticResource CardHoverLiftRestTransform}"/>
       <Setter Property="Transitions">
         <Transitions>
           <DoubleTransition Property="Opacity" Duration="0:0:0.12"/>
@@ -62,11 +56,11 @@
       <Setter Property="BoxShadow" Value="{StaticResource NoBoxShadow}"/>
     </Style>
     <Style Selector="Border.card:pointerover">
-      <Setter Property="RenderTransform" Value="translateY(-2px)"/>
+      <Setter Property="RenderTransform" Value="{StaticResource CardHoverLiftTransform}"/>
     </Style>
     <!-- Suppress hover lift during drag preview to avoid visual conflict -->
     <Style Selector="Border.card.drag-source:pointerover">
-      <Setter Property="RenderTransform" Value="translateY(0)"/>
+      <Setter Property="RenderTransform" Value="{StaticResource CardHoverLiftRestTransform}"/>
     </Style>
     <!-- R2: Disable transitions when user prefers reduced motion -->
     <Style Selector=".reduced-motion Border.card">
@@ -84,11 +78,11 @@
          12→13, 10→8 (nearest Fibonacci-aligned value), 11→13. -->
     <Style Selector="Border.card.compact">
       <Setter Property="Padding" Value="13"/>
-      <Setter Property="CornerRadius" Value="13"/>
+      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
     </Style>
     <Style Selector="Border.card.micro">
       <Setter Property="Padding" Value="8"/>
-      <Setter Property="CornerRadius" Value="13"/>
+      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
     </Style>
     <Style Selector="Border.card.detail-row">
       <!-- Details list should feel closer to Windows Explorer: compact, column-aligned, flat rows. -->
@@ -113,11 +107,11 @@
     </Style>
     <Style Selector="Border.card.selected">
       <Setter Property="BorderBrush" Value="{StaticResource SelectionBorderBrush}"/>
-      <Setter Property="BorderThickness" Value="2"/>
+      <Setter Property="BorderThickness" Value="{StaticResource CardSelectedBorderThickness}"/>
     </Style>
     <Style Selector="Border.card.keyboard-focused">
       <Setter Property="BorderBrush" Value="{StaticResource SelectionBorderBrush}"/>
-      <Setter Property="BorderThickness" Value="2"/>
+      <Setter Property="BorderThickness" Value="{StaticResource CardSelectedBorderThickness}"/>
     </Style>
     <Style Selector="Border.detail-header">
       <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
@@ -153,9 +147,13 @@
       <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
       <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
+    <!-- Name tiles are only 24px tall, so the well shrinks to 18 to fit inside the
+         tile's 18px content box (24 - 2 border - 4 vertical padding). Still a visible
+         box equal to its own hit area, just at name-wall scale. -->
     <Style Selector="Border.card.name-tile Border.entry-drag-handle">
-      <Setter Property="Padding" Value="4,0"/>
-      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
+      <Setter Property="Width" Value="18"/>
+      <Setter Property="Height" Value="18"/>
+      <Setter Property="CornerRadius" Value="4"/>
     </Style>
     <Style Selector="ListBox.details-list">
       <Setter Property="Background" Value="Transparent"/>
@@ -190,16 +188,8 @@
     </Style>
     <Style Selector="Border.card.detail-row Button.accent">
       <Setter Property="Padding" Value="8,2"/>
-      <Setter Property="CornerRadius" Value="{StaticResource CardBorderRadius}"/>
+      <Setter Property="CornerRadius" Value="{StaticResource ButtonCornerRadius}"/>
       <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
-    </Style>
-    <Style Selector="Border.card.detail-row Button.more">
-      <Setter Property="Padding" Value="6,0"/>
-      <Setter Property="MinWidth" Value="28"/>
-      <Setter Property="MinHeight" Value="28"/>
-    </Style>
-    <Style Selector="Border.card.detail-row Border.entry-drag-handle">
-      <Setter Property="Padding" Value="6,0"/>
     </Style>
     <Style Selector="TextBlock.card-title">
       <Setter Property="FontSize" Value="18"/>
@@ -240,32 +230,58 @@
     </Style>
     <Style Selector="Border.card.compact Button.accent">
       <Setter Property="Padding" Value="14,7"/>
-      <Setter Property="CornerRadius" Value="9"/>
+      <Setter Property="CornerRadius" Value="{StaticResource ButtonCornerRadius}"/>
     </Style>
     <Style Selector="Border.card.micro Button.accent">
       <Setter Property="Padding" Value="12,6"/>
-      <Setter Property="CornerRadius" Value="9"/>
+      <Setter Property="CornerRadius" Value="{StaticResource ButtonCornerRadius}"/>
     </Style>
-    <!-- Ghost icon button: transparent until hover, neutral gray glyph -->
+    <!--
+      Icon button = a permanently visible well: 1px border + surface fill, radius from
+      ButtonCornerRadius. The drawn box IS the hit box, so the pointer never reacts
+      outside what the eye can see. (The old "ghost" style drew only a 16x16 glyph while
+      hit-testing a 24x24 box, so hovering a few pixels away from the gear still lit it
+      up — that stray response read as a shadow that did not match the icon.)
+    -->
     <Style Selector="Button.more">
       <Setter Property="Theme" Value="{StaticResource BorderlessButton}"/>
-      <Setter Property="Padding" Value="8"/>
-      <Setter Property="MinWidth" Value="32"/>
-      <Setter Property="MinHeight" Value="32"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="Width" Value="32"/>
+      <Setter Property="Height" Value="32"/>
+      <Setter Property="CornerRadius" Value="{StaticResource ButtonCornerRadius}"/>
       <Setter Property="HorizontalContentAlignment" Value="Center"/>
       <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
-    <Style Selector="Button.more:pointerover /template/ Path">
-      <Setter Property="Stroke" Value="{StaticResource TextPrimaryBrush}"/>
+    <Style Selector="Button.more /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="{StaticResource ButtonCornerRadius}"/>
     </Style>
-    <!-- Drag handle: ghost grip — transparent, light fill only on hover -->
+    <Style Selector="Button.more:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
+    </Style>
+    <!-- Semi's inherited pressed fill is translucent; left alone it would punch a ghost
+         through the solid well. Pin it to the hover fill — the cursor carries the press
+         state, same as the reference implementation. -->
+    <Style Selector="Button.more:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
+    </Style>
+    <!-- Drag handle: the same visible well, so hit area == drawn area. -->
     <Style Selector="Border.entry-drag-handle">
-      <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="CornerRadius" Value="8"/>
-      <Setter Property="Padding" Value="6"/>
+      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="{StaticResource ButtonCornerRadius}"/>
+      <Setter Property="Width" Value="32"/>
+      <Setter Property="Height" Value="32"/>
+      <Setter Property="Padding" Value="0"/>
     </Style>
     <Style Selector="Border.entry-drag-handle:pointerover">
       <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}"/>
     </Style>
     <Style Selector="Border.control-box">
       <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>

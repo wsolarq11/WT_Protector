@@ -36,16 +36,19 @@
       <Setter Property="BorderBrush" Value="{StaticResource DestructiveBrush}"/>
     </Style>
     <Style Selector="Button.destructive:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="{StaticResource DestructiveBrush}"/>
+      <Setter Property="Background" Value="{StaticResource DestructiveHoverBrush}"/>
       <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
-      <Setter Property="BorderBrush" Value="{StaticResource DestructiveBrush}"/>
-      <Setter Property="Opacity" Value="0.86"/>
+      <Setter Property="BorderBrush" Value="{StaticResource DestructiveHoverBrush}"/>
     </Style>
     <Style Selector="Button.destructive:pressed /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="{StaticResource DestructiveBrush}"/>
+      <Setter Property="Background" Value="{StaticResource DestructivePressedBrush}"/>
       <Setter Property="Foreground" Value="{StaticResource SurfaceBrush}"/>
-      <Setter Property="BorderBrush" Value="{StaticResource DestructiveBrush}"/>
-      <Setter Property="Opacity" Value="0.72"/>
+      <Setter Property="BorderBrush" Value="{StaticResource DestructivePressedBrush}"/>
+    </Style>
+    <Style Selector="Button.destructive:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource DestructiveDisabledBackgroundBrush}"/>
+      <Setter Property="Foreground" Value="{StaticResource DestructiveDisabledForegroundBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource DestructiveDisabledBackgroundBrush}"/>
     </Style>
 
     <!-- Accent button: interaction states read the user-chosen accent ramp,

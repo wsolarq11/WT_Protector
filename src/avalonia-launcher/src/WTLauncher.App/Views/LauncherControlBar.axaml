@@ -50,9 +50,9 @@
       <Button Grid.Column="8" Classes="more" VerticalAlignment="Center"
               automation:AutomationProperties.Name="{Binding BarManageAutomation}"
               Click="OnOverflowMenuClicked">
-        <Path Data="{StaticResource IconMoreVertical}"
+        <Path Data="{StaticResource IconSettings}"
               Stroke="{StaticResource TextMutedBrush}"
-              StrokeThickness="2"
+              StrokeThickness="{StaticResource IconStroke16}"
               Fill="Transparent"
               Width="16" Height="16"
               HorizontalAlignment="Center"

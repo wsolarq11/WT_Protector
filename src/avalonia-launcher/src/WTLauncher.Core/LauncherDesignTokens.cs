@@ -78,6 +78,28 @@ public static class LauncherDesignTokens
     public const double CardBorderRadius = 13;
     public const double CardPadding = 13;
 
+    // ── Card hover lift ─────────────────────────────────────
+    // 上浮动画的唯一权威源。第一行卡片 hover 上浮 L px 后，其顶部边框必须仍
+    // 高于最近的 clip 边界，否则顶边被裁。嵌套的 ItemsControl 默认 ClipToBounds，
+    // 其 clip 边界与卡片顶部 y=0 对齐，因此预留 P 必须加在最内层卡片排列器
+    // （FillGridPanel）上，让卡片相对所有 clip 层都有 P px 余量。P 覆盖全部向上
+    // 侵占的因素——Avalonia Border 是中心描边（BackgroundSizing.CenterBorder），
+    // 边框最外沿比 bounds 高 O px：
+    //   L  = CardHoverLift                上浮幅度（translateY 的负值绝对值）
+    //   T  = CardSelectedBorderThickness  selected 卡片边框厚度（2px）
+    //   O  = T / 2                        中心描边外溢：border 顶沿高出 bounds 顶部 O px
+    //   AA = CardHoverLiftAntialias       抗锯齿晕染向上取整为 1px
+    //   P  = CardHoverLiftMarginTop = L + O + AA
+    // 卡片自身必须 ClipToBounds=false：clip 会连同上浮部分、描边外半侧、BoxShadow
+    // 一起裁掉，让 P 无论取多少都无效。
+    // ScrollViewer 负 margin = -P 把 P 从根 Grid 顶部间距借出，静止位置不变（16px）。
+    public const double CardHoverLift = 2;
+    public const double CardSelectedBorderThickness = 2;
+    public const double CardHoverLiftAntialias = 1;
+    public static double CardSelectedBorderOverflow => CardSelectedBorderThickness / 2;
+    public static double CardHoverLiftMarginTop => CardHoverLift + CardSelectedBorderOverflow + CardHoverLiftAntialias;
+    public static double CardHoverLiftScrollMarginTop => -CardHoverLiftMarginTop;
+
     // ── Name Tile ──────────────────────────────────────────
     public const double NameTileGap = 6;
     public const double NameTileRowGap = 4;
