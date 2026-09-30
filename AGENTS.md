@@ -89,6 +89,7 @@ WT_Protector/
 - `config/launcher.json` 是唯一权威源，无 AppData/registry 后备
 - 源码在 `src/avalonia-launcher/`，退役物在 `retired/`，不恢复退役路径
 - 每类事实只有一个权威源；完整分配见 `docs/decision-ladder.md` 变化闭包
+- 私有仓库触发 CI 前必须先转公开：`gh repo edit wsolarq11/WT_Protector --visibility public --accept-visibility-change-consequences`，再 push/rerun；禁止先私有 push 触发 CI、失败后才发现账单拦截再转公开重跑（账单拦截表现为 runner_id=0 / steps=0）
 
 ## 藤曼路径（Vine Trail）
 
