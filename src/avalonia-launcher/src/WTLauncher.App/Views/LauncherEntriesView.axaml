@@ -11,7 +11,12 @@
   <ScrollViewer x:Name="CardsScrollViewer"
                 HorizontalScrollBarVisibility="Disabled"
                 VerticalScrollBarVisibility="Auto"
+                Margin="{StaticResource CardHoverLiftScrollMargin}"
                 IsVisible="{Binding IsCardsViewMode}">
+    <!-- 预留空间 P（CardHoverLiftMargin）加在最内层 FillGridPanel 上：卡片相对
+         内层两个 ItemsControl[clip=True] 与 SCP[clip=True] 都有 P px 余量，hover
+         上浮 L px 时顶部边框完整。ScrollViewer 负 margin（-P）把这 P px 从根 Grid
+         的 16px 顶部间距借出，第一行卡片静止位置仍是 16px，与其余视图一致。 -->
     <Grid>
     <ItemsControl x:Name="CardsEntriesItemsControl"
                   ItemsSource="{Binding VisibleGroups}"
@@ -35,13 +40,11 @@
                 <Button Grid.Column="0"
                         Classes="more"
                         Command="{Binding ToggleExpandedCommand}"
-                        Padding="8,2"
-                        MinWidth="32"
                         ToolTip.Tip="{Binding GroupCollapseTooltip}">
                   <Grid>
                     <Path Data="{StaticResource IconChevronDown}"
                           Stroke="{StaticResource TextMutedBrush}"
-                          StrokeThickness="2"
+                          StrokeThickness="{StaticResource IconStroke16}"
                           Fill="Transparent"
                           HorizontalAlignment="Center"
                           VerticalAlignment="Center"
@@ -49,7 +52,7 @@
                           IsVisible="{Binding IsExpanded}"/>
                     <Path Data="{StaticResource IconChevronRight}"
                           Stroke="{StaticResource TextMutedBrush}"
-                          StrokeThickness="2"
+                          StrokeThickness="{StaticResource IconStroke16}"
                           Fill="Transparent"
                           HorizontalAlignment="Center"
                           VerticalAlignment="Center"
@@ -89,7 +92,8 @@
                           IsVisible="{Binding IsExpanded}">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                  <views:FillGridPanel ItemSpacing="{x:Static core:LauncherDesignTokens.SpacingSmall}"
+                  <views:FillGridPanel Margin="{StaticResource CardHoverLiftMargin}"
+                                       ItemSpacing="{x:Static core:LauncherDesignTokens.SpacingSmall}"
                                        LineSpacing="{x:Static core:LauncherDesignTokens.SpacingSmall}"
                                        Columns="{Binding CardColumns}"
                                        ViewportHeight="{Binding CardsViewportHeight}"
@@ -109,8 +113,7 @@
                           Classes.keyboard-focused="{Binding IsKeyboardFocused}"
                           Classes.stale="{Binding IsStaleDirectory}"
                           HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch"
-                          ClipToBounds="True">
+                          VerticalAlignment="Stretch">
                     <!-- L51: Keyboard accelerators for context menu discoverability -->
                     <Border.ContextMenu>
                       <ContextMenu>
@@ -217,6 +220,7 @@
                             Classes="entry-actions"
                             ColumnDefinitions="*,Auto,Auto">
                         <Button Classes="accent"
+                                HorizontalAlignment="Stretch"
                                 Content="{Binding LaunchLabel}"
                                 AutomationProperties.Name="{Binding LaunchLabel}"
                                 Command="{Binding LaunchCommand}"/>
@@ -226,9 +230,9 @@
                                 ToolTip.Tip="{Binding MoreLabel}"
                                 AutomationProperties.Name="{Binding MoreLabel}"
                                 Click="OnEntryMoreClicked">
-                          <Path Data="{StaticResource IconMoreVertical}"
+                          <Path Data="{StaticResource IconSettings}"
                                 Stroke="{StaticResource TextMutedBrush}"
-                                StrokeThickness="2"
+                                StrokeThickness="{StaticResource IconStroke16}"
                                 Fill="Transparent"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
@@ -243,7 +247,7 @@
                                 PointerPressed="OnEntryDragPointerPressed">
                           <Path Data="{StaticResource IconGripVertical}"
                                 Stroke="{StaticResource TextMutedBrush}"
-                                StrokeThickness="2"
+                                StrokeThickness="{StaticResource IconStroke16}"
                                 Fill="Transparent"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
@@ -437,9 +441,9 @@
                             ToolTip.Tip="{Binding MoreLabel}"
                             AutomationProperties.Name="{Binding MoreLabel}"
                             Click="OnEntryMoreClicked">
-                      <Path Data="{StaticResource IconMoreVertical}"
+                      <Path Data="{StaticResource IconSettings}"
                             Stroke="{StaticResource TextMutedBrush}"
-                            StrokeThickness="2"
+                            StrokeThickness="{StaticResource IconStroke16}"
                             Fill="Transparent"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
@@ -452,7 +456,7 @@
                             PointerPressed="OnEntryDragPointerPressed">
                       <Path Data="{StaticResource IconGripVertical}"
                             Stroke="{StaticResource TextMutedBrush}"
-                            StrokeThickness="2"
+                            StrokeThickness="{StaticResource IconStroke16}"
                             Fill="Transparent"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
@@ -575,13 +579,13 @@
                         ToolTip.Tip="{Binding DragSortLabel}"
                         AutomationProperties.Name="{Binding DragSortLabel}"
                         PointerPressed="OnEntryDragPointerPressed">
-                  <Path Data="{StaticResource IconGripVertical}"
+                  <Path Data="{StaticResource IconGripVerticalSmall}"
                         Stroke="{StaticResource TextMutedBrush}"
-                        StrokeThickness="2"
+                        StrokeThickness="{StaticResource IconStroke12}"
                         Fill="Transparent"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        Width="14" Height="14"/>
+                        Width="12" Height="12"/>
                 </Border>
               </StackPanel>
             </Grid>

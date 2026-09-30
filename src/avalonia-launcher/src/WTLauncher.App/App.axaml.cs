@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
+using Avalonia.Media.Transformation;
 using Avalonia.Threading;
 using WTLauncher.App.Features.Dialogs;
 using WTLauncher.App.Features.Entries;
@@ -37,6 +38,15 @@ public sealed partial class App : Application
         Resources["ActiveBorderBrush"]  = new SolidColorBrush(Color.Parse(LauncherDesignTokens.ActiveBorderColor));
         Resources["DestructiveBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.DestructiveColor));
         Resources["ErrorBrush"]       = new SolidColorBrush(Color.Parse(LauncherDesignTokens.ErrorColor));
+
+        // Destructive button interaction ramp — same HSL derivation as the
+        // accent ramp, but keyed to the fixed destructive base. Hover/pressed
+        // darken instead of fading the whole button (the old opacity hack).
+        var destructiveRamp = AccentColorRamp.FromHex(LauncherDesignTokens.DestructiveColor);
+        Resources["DestructiveHoverBrush"] = new SolidColorBrush(Color.Parse(destructiveRamp.Hover));
+        Resources["DestructivePressedBrush"] = new SolidColorBrush(Color.Parse(destructiveRamp.Pressed));
+        Resources["DestructiveDisabledBackgroundBrush"] = new SolidColorBrush(Color.Parse(destructiveRamp.DisabledBackground));
+        Resources["DestructiveDisabledForegroundBrush"] = new SolidColorBrush(Color.Parse(destructiveRamp.DisabledForeground));
         Resources["TextPrimaryBrush"] = new SolidColorBrush(Color.Parse(LauncherDesignTokens.TextPrimaryColor));
         Resources["TextMutedBrush"]   = new SolidColorBrush(Color.Parse(LauncherDesignTokens.TextMutedColor));
         Resources["CardBorderBrush"]  = new SolidColorBrush(Color.Parse(LauncherDesignTokens.BorderColor));
@@ -101,6 +111,16 @@ public sealed partial class App : Application
         Resources["WindowMinWidth"] = LauncherDesignTokens.WindowMinWidth;
         Resources["WindowMinHeight"] = LauncherDesignTokens.WindowMinHeight;
 
+        // ── Card hover lift ────────────────────────────────
+        // 位移与预留空间都由 LauncherDesignTokens.CardHoverLift 单一推导，
+        // 保证 XAML 里不再手写 -2px / 4px 两处 magic number。
+        Resources["CardSelectedBorderThickness"] = new Thickness(LauncherDesignTokens.CardSelectedBorderThickness);
+        Resources["CardHoverLiftMargin"] = new Thickness(0, LauncherDesignTokens.CardHoverLiftMarginTop, 0, 0);
+        // ScrollViewer 借位：-P，与 FillGridPanel 的 +P 抵消，第一行卡片静止位置不变。
+        Resources["CardHoverLiftScrollMargin"] = new Thickness(0, LauncherDesignTokens.CardHoverLiftScrollMarginTop, 0, 0);
+        Resources["CardHoverLiftTransform"] = TransformOperations.Parse($"translateY(-{LauncherDesignTokens.CardHoverLift}px)");
+        Resources["CardHoverLiftRestTransform"] = TransformOperations.Parse("translateY(0px)");
+
         // ── BoxShadow ───────────────────────────────────────
         Resources["CardBoxShadow"] = BoxShadows.Parse($"0 8 24 0 {LauncherDesignTokens.BoxShadowColor}");
         Resources["ControlBoxShadow"] = BoxShadows.Parse($"0 3 10 0 {LauncherDesignTokens.ControlShadowColor}");
@@ -109,6 +129,25 @@ public sealed partial class App : Application
         // ── Acrylic material colors ──────────────────────
         Resources["AcrylicTintColor"] = Color.Parse(LauncherDesignTokens.BackgroundColor);
         Resources["AcrylicFallbackColor"] = Color.Parse(LauncherDesignTokens.BackgroundColor);
+
+        // ── Lucide icons ─────────────────────────────────
+        // Each geometry is uniformly scaled from its 24×24 viewbox to the target
+        // pixel size, so the icon centre lands on the Path centre by construction
+        // (the old raw-coordinate render left the icon offset and clipped). The
+        // matching stroke width is injected alongside so the line weight tracks the
+        // same scale instead of staying a 24-viewbox 2-unit pen on a smaller glyph.
+        Resources["IconGripVertical"] = LucideIconGeometry.Fit(LucideIconGeometry.GripVertical, 16);
+        Resources["IconGripVerticalSmall"] = LucideIconGeometry.Fit(LucideIconGeometry.GripVertical, 12);
+        Resources["IconSettings"] = LucideIconGeometry.Fit(LucideIconGeometry.Settings, 16);
+        Resources["IconChevronDown"] = LucideIconGeometry.Fit(LucideIconGeometry.ChevronDown, 16);
+        Resources["IconChevronRight"] = LucideIconGeometry.Fit(LucideIconGeometry.ChevronRight, 16);
+        Resources["IconStatusCheck"] = LucideIconGeometry.Fit(LucideIconGeometry.StatusCheck, 16);
+        Resources["IconStatusX"] = LucideIconGeometry.Fit(LucideIconGeometry.StatusX, 16);
+        Resources["IconStatusCircle"] = LucideIconGeometry.Fit(LucideIconGeometry.StatusCircle, 14);
+        Resources["IconStatusAlert"] = LucideIconGeometry.Fit(LucideIconGeometry.StatusAlert, 16);
+        Resources["IconStroke16"] = LucideIconGeometry.StrokeFor(16);
+        Resources["IconStroke14"] = LucideIconGeometry.StrokeFor(14);
+        Resources["IconStroke12"] = LucideIconGeometry.StrokeFor(12);
     }
 
     /// <summary>
