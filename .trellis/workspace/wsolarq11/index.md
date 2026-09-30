@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 13
+- **Total Sessions**: 14
 - **Last Active**: 2026-09-30
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~376 | Active |
+| `journal-1.md` | ~417 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 14 | 2026-09-30 | 拖拽命中区整卡化 + CI 公开流程固化收口 | `b460cfa9`, `5f2ff4bb` | `main` |
 | 13 | 2026-09-30 | 图标几何注入 + 控件 well 化 + 卡片 hover 上浮修复 | `52254486`, `2b1e029f` | `main` |
 | 12 | 2026-09-26 | 治理收缩 + 测试收敛 + 少即是多落地 | `6e06c4ef`, `ab959491`, `2d7685b7`, `9ae8c79f`, `dee7658c`, `18475881`, `4099cff5`, `4fc2b623`, `092207d2`, `5cc6c1b9`, `c427ce0e`, `e6c9d260`, `054366f2`, `664a3306`, `28db73b7`, `73571f6d`, `4ee895a9`, `69982f53`, `f62e07ec`, `2b4d6eeb`, `5fd6a41f`, `044ca0ca`, `e7ecf8bd`, `3eac83dc`, `5d7ae4ef`, `55408779` | `main` |
 | 11 | 2026-09-22 | 文档单一源重构 + 命令表门禁 + 治理成本框架 | `371d8025`, `d4d1cd3e` | `main` |

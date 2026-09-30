@@ -374,3 +374,44 @@ Migrated auxiliary scripts to TS; added .NET smoke probe and self-contained unin
 ### Next Steps
 
 - 搁置项见 HANDOFF：数据迁移登记器、外部库四张未来牌等，等触发条件
+
+
+## Session 14: 拖拽命中区整卡化 + CI 公开流程固化收口
+<!-- trellis-session: v=2 fp=362a44e1f1745f05 -->
+
+**Date**: 2026-09-30
+**Task**: 拖拽命中区整卡化 + CI 公开流程固化收口
+**Branch**: `main`
+
+### Summary
+
+名称墙拖拽命中区改为整卡（严格占优决策），删除独立手柄 well 与六点 grip 图标；三域合一契约锁定；固化 CI 先转公开规则；CI 绿后转回私有收口。
+
+### Main Changes
+
+- 拖拽命中区整卡化：PointerPressed/Moved/Released 接整张 Border.card，删 entry-drag-handle well 与六点 grip
+- 4px 阈值 MainWindowDragThreshold.ThresholdPx 单一源；卡片手势排除集 MainWindowCardGesture 单一源
+- 三域合一契约 CursorRegion==DragRegion==DoubleTapLaunchRegion 锁定（MainWindowCardGestureTests.CursorRegion_EqualsGestureRegion）
+- 删死代码：LauncherDialogText/DragHandleTextColor/DragSortLabel/IconGripVertical/IconStroke12/MainWindowEntryRowDoubleTap
+- CI 规则固化：AGENTS.md 核心规则 + pitfalls §2.27（先转公开再触发 CI）
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b460cfa9` | feat: 拖拽命中区整卡化并删除手柄 well 与 grip 图标 |
+| `5f2ff4bb` | docs: 固化 CI 公开流程规则并收口拖拽整卡化移交 |
+
+### Testing
+
+- [OK] verify:mainline PASS 819 测试 + nativeAot + guiSmoke
+- [OK] 远端 CI success（run 36724477560 / 36726694430）
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 用户 GUI 目检拖拽/图标/控件后标记 adopt-semi-theme 完成
+- 移交新会话（HANDOFF.md 已重写）
