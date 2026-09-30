@@ -23,15 +23,6 @@ public static class LucideIconGeometry
     /// <summary>Lucide's default stroke width, in viewbox units.</summary>
     public const double StrokeWidth = 2.0;
 
-    // GripVertical: six dots (lucide grip-vertical), two columns × three rows.
-    // Each dot is a r=1 circle rendered as two arcs so it stays pure path data.
-    public const string GripVertical =
-        "M 8 12 A 1 1 0 1 1 10 12 A 1 1 0 1 1 8 12 " +
-        "M 8 5 A 1 1 0 1 1 10 5 A 1 1 0 1 1 8 5 " +
-        "M 8 19 A 1 1 0 1 1 10 19 A 1 1 0 1 1 8 19 " +
-        "M 14 12 A 1 1 0 1 1 16 12 A 1 1 0 1 1 14 12 " +
-        "M 14 5 A 1 1 0 1 1 16 5 A 1 1 0 1 1 14 5 " +
-        "M 14 19 A 1 1 0 1 1 16 19 A 1 1 0 1 1 14 19";
     public const string Settings = "M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915 M 12 9 A 3 3 0 1 1 12 15 A 3 3 0 1 1 12 9";
     public const string ChevronDown = "M 6 9 L 12 15 L 18 9";
     public const string ChevronRight = "M 9 6 L 15 12 L 9 18";

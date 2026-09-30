@@ -136,8 +136,6 @@ public sealed partial class App : Application
         // (the old raw-coordinate render left the icon offset and clipped). The
         // matching stroke width is injected alongside so the line weight tracks the
         // same scale instead of staying a 24-viewbox 2-unit pen on a smaller glyph.
-        Resources["IconGripVertical"] = LucideIconGeometry.Fit(LucideIconGeometry.GripVertical, 16);
-        Resources["IconGripVerticalSmall"] = LucideIconGeometry.Fit(LucideIconGeometry.GripVertical, 12);
         Resources["IconSettings"] = LucideIconGeometry.Fit(LucideIconGeometry.Settings, 16);
         Resources["IconChevronDown"] = LucideIconGeometry.Fit(LucideIconGeometry.ChevronDown, 16);
         Resources["IconChevronRight"] = LucideIconGeometry.Fit(LucideIconGeometry.ChevronRight, 16);
@@ -147,7 +145,6 @@ public sealed partial class App : Application
         Resources["IconStatusAlert"] = LucideIconGeometry.Fit(LucideIconGeometry.StatusAlert, 16);
         Resources["IconStroke16"] = LucideIconGeometry.StrokeFor(16);
         Resources["IconStroke14"] = LucideIconGeometry.StrokeFor(14);
-        Resources["IconStroke12"] = LucideIconGeometry.StrokeFor(12);
     }
 
     /// <summary>

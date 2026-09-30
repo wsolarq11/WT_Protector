@@ -46,6 +46,7 @@ New/changed:
 - 顶部 overflow 菜单承载高频动作；选择/刷新、数据管理、启动组维护用可键盘打开的菜单
 - 右键复制：深拷贝为新条目，新 `Id`，名称追加 ` (副本)`，取消选择
 - 拖拽 ghost（半透明覆盖层卡片）与插入指示（左/右高亮线）
+- 拖拽排序命中区 = 整个卡片：删除独立手柄/六点 grip 图标（它标记「把手」却与「整卡热区」矛盾），affordance 由整卡 hover 上浮 + `Cursor=SizeAll` 单一承担；指针超过 4px 阈值后整行进入拖拽，点击/双击不受影响（`MainWindowDragThreshold.ThresholdPx` 单一源）
 - 三档密度：Normal / Compact / Micro
 - Cards / Details / Names 三视图
 - 四框控制行：搜索、排序、视图、启动组，单个父 Grid 管理，列比例 `1.8* / 1* / 1* / 2.8*`
@@ -62,6 +63,9 @@ New/changed:
 - 拖拽排序唯一源：`DragReorderSession?`；snapshot/source/target/last preview 不散落
 - 选择写入只有两个入口：用户勾选 `IsSelected` 立即保存；批量/预设/编辑 `SetSelectionFromOwner` 批量保存一次
 - 拖拽视觉 token 集中在 MainWindow.axaml 两个共享样式：`Border.card.drag-target` 与 `Border.drag-insert`；三视图只保留方向/尺寸/定位差异
+- 拖拽起始阈值唯一源：`MainWindowDragThreshold.ThresholdPx`；三视图拖拽命中区统一为整卡（`PointerPressed/Moved/Released` 于 `Border.card`）
+- 拖拽光标单一源：`Border.card` 样式 `Cursor=SizeAll`；卡片内 `Button`/`CheckBox` 显式 `Cursor=Arrow` 钉回点击语义，不继承 SizeAll；不保留 `entry-drag-handle` 命中框与 grip 图标
+- 卡片手势排除集单一源：`MainWindowCardGesture.ExcludedControlTypes`；`CursorRegion == DragRegion == DoubleTapLaunchRegion == card − 排除集`（契约测试锁定），双击启动与拖拽都经 `IsGestureEligible` 判定
 
 ## Accessibility
 

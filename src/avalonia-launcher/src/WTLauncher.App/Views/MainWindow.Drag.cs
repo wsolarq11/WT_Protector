@@ -23,21 +23,31 @@ public sealed partial class MainWindow
     private const string SuppressTransitionsClass = "suppress-drag-transitions";
     private Point? _lastValidHoverPosition;
     private bool _cleaningUp;
+    // Candidate drag armed on press, promoted to a real drag only after the
+    // pointer travels past MainWindowDragThreshold.ThresholdPx.
+    private (LauncherEntryViewModel Entry, Control Card, IPointer? Pointer, Point Start)? _pendingDrag;
 
-    // ── Drag start (PointerPressed on drag handle) ───────────────────
+    // ── Drag start (PointerPressed on the card body) ─────────────────
 
     private void OnEntryDragPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         try
         {
+            _pendingDrag = null;
+
             if (_isDragging)
                 ForceCleanup();
 
-            if (DataContext is not MainWindowViewModel viewModel)
+            if (DataContext is not MainWindowViewModel)
                 return;
 
             var point = e.GetCurrentPoint(this);
             if (!point.Properties.IsLeftButtonPressed)
+                return;
+
+            // Button/CheckBox keep their own press handling; only a press on the
+            // card body arms a candidate drag.
+            if (!MainWindowCardGesture.IsGestureEligible(e.Source))
                 return;
 
             var resolved = MainWindowEntryCardResolver.ResolveFromSource(sender);
@@ -45,7 +55,7 @@ public sealed partial class MainWindow
                 return;
 
             var (item, card) = resolved.Value;
-            BeginDrag(viewModel, item, card, e);
+            _pendingDrag = (item, card, e.Pointer, e.GetPosition(this));
         }
         catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
         {
@@ -54,15 +64,54 @@ public sealed partial class MainWindow
         }
     }
 
+    private void OnEntryDragPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (_isDragging || _pendingDrag is not { } pending)
+            return;
+
+        if (DataContext is not MainWindowViewModel viewModel)
+            return;
+
+        // A press promoted to a drag only while the button stays down. If the
+        // button was released off-card (no PointerReleased here), the stale
+        // candidate must never re-arm on a later hover.
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            _pendingDrag = null;
+            return;
+        }
+
+        var position = e.GetPosition(this);
+        if (!MainWindowDragThreshold.ShouldStartDrag(pending.Start, position))
+            return;
+
+        _pendingDrag = null;
+        if (pending.Pointer is not { } pointer)
+            return;
+
+        try
+        {
+            BeginDrag(viewModel, pending.Entry, pending.Card, pointer, position);
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            ErrorLog.Write(ex, "DragPointerMoved");
+            ForceCleanup();
+        }
+    }
+
+    private void OnEntryDragPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        _pendingDrag = null;
+    }
+
     private void BeginDrag(
         MainWindowViewModel viewModel,
         LauncherEntryViewModel item,
         Control card,
-        PointerPressedEventArgs e)
+        IPointer pointer,
+        Point position)
     {
-        var pointer = e.Pointer;
-        if (pointer is null) return;
-
         _activeDragEntryId = item.Id;
         _lastDragInsertAfterDecision = false;
         _lastValidHoverPosition = null;
@@ -70,7 +119,7 @@ public sealed partial class MainWindow
         _isDragging = true;
 
         viewModel.BeginDragReorder(item.Id);
-        ShowDragGhost(item, card, e);
+        ShowDragGhost(item, card, position);
 
         DisplayModeComboBox.IsEnabled = false;
         SuppressDragTransitions(true);
@@ -230,7 +279,7 @@ public sealed partial class MainWindow
     private void ShowDragGhost(
         LauncherEntryViewModel item,
         Control card,
-        PointerPressedEventArgs e)
+        Point position)
     {
         _overlayLayer ??= OverlayLayer.GetOverlayLayer(this);
         if (_overlayLayer is null)
@@ -243,8 +292,8 @@ public sealed partial class MainWindow
         if (_dragGhost is not null)
             return;
 
-        var pointerX = e.GetPosition(this).X;
-        var pointerY = e.GetPosition(this).Y;
+        var pointerX = position.X;
+        var pointerY = position.Y;
         var ghost = CreateGhostBorder(
             item.Name,
             item.Directory,
@@ -308,8 +357,8 @@ public sealed partial class MainWindow
             Width = layout.Width,
             Height = layout.Height,
             Classes = { MainWindowEntryClasses.Card },
-            Background = LauncherDialogText.SafeParseBrush(LauncherDesignTokens.SurfaceColor, Brushes.White),
-            BorderBrush = LauncherDialogText.SafeParseBrush(LauncherDesignTokens.DragHighlightColor, Brushes.CornflowerBlue),
+            Background = ParseBrush(LauncherDesignTokens.SurfaceColor, Brushes.White),
+            BorderBrush = ParseBrush(LauncherDesignTokens.DragHighlightColor, Brushes.CornflowerBlue),
             BorderThickness = new Thickness(2),
             CornerRadius = new CornerRadius(LauncherDesignTokens.CardBorderRadius),
             Opacity = 0.86,
@@ -334,7 +383,7 @@ public sealed partial class MainWindow
                         Text = name,
                         FontSize = titleFontSize,
                         FontWeight = FontWeight.SemiBold,
-                        Foreground = LauncherDialogText.SafeParseBrush(LauncherDesignTokens.TextPrimaryColor, Brushes.Black),
+                        Foreground = ParseBrush(LauncherDesignTokens.TextPrimaryColor, Brushes.Black),
                         TextTrimming = TextTrimming.CharacterEllipsis,
                         IsHitTestVisible = false,
                     },
@@ -343,7 +392,7 @@ public sealed partial class MainWindow
                         Text = directory,
                         FontFamily = GhostFontFamily,
                         FontSize = LauncherDesignTokens.FontSizeSmall,
-                        Foreground = LauncherDialogText.SafeParseBrush(LauncherDesignTokens.TextMutedColor, Brushes.Gray),
+                        Foreground = ParseBrush(LauncherDesignTokens.TextMutedColor, Brushes.Gray),
                         TextTrimming = TextTrimming.CharacterEllipsis,
                         IsHitTestVisible = false,
                     },
@@ -352,6 +401,20 @@ public sealed partial class MainWindow
         };
 
         return (control, layout.Left, layout.Top);
+    }
+
+    /// <summary>Parses a design-token color with a safe fallback so a malformed token
+    /// cannot crash the static ghost factory.</summary>
+    private static IBrush ParseBrush(string color, IBrush fallback)
+    {
+        try
+        {
+            return Brush.Parse(color);
+        }
+        catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex))
+        {
+            return fallback;
+        }
     }
 
     // ── Transitions suppression ──────────────────────────────────────
@@ -388,5 +451,19 @@ public static class MainWindowDragInsertDecision
         return isDetailedListMode
             ? positionInCard.Y >= cardSize.Height * threshold
             : positionInCard.X >= cardSize.Width * threshold;
+    }
+}
+
+public static class MainWindowDragThreshold
+{
+    // Windows SM_CXDRAG-style start threshold in px. Below it a press is a
+    // click/double-tap; at or beyond it the press becomes a drag.
+    public const double ThresholdPx = 4;
+
+    public static bool ShouldStartDrag(Point start, Point current)
+    {
+        var dx = current.X - start.X;
+        var dy = current.Y - start.Y;
+        return (dx * dx) + (dy * dy) >= ThresholdPx * ThresholdPx;
     }
 }
