@@ -51,11 +51,17 @@ public sealed class StoreGrain : IDisposable
     }
 
     /// <summary>Reload state from disk via persistence. Does not notify subscribers.
-    /// Used by <see cref="MainWindowViewModel.Refresh"/> to synchronize with external changes.</summary>
+    /// Used by <see cref="MainWindowViewModel.Refresh"/> to synchronize with external changes.
+    /// Load and memory update are serialized under the same lock as Dispatch's
+    /// save + memory update, eliminating the reload/dispatch TOCTOU window.</summary>
     public void ReloadFromDisk()
     {
-        var fresh = _persistence.Load(_storePath);
-        lock (_lock) { _state = fresh; }
+        LauncherStoreFile fresh;
+        lock (_lock)
+        {
+            fresh = _persistence.Load(_storePath);
+            _state = fresh;
+        }
         try { Reloaded?.Invoke(fresh); }
         catch (Exception ex) when (LauncherErrors.IsRecoverable(ex))
         {

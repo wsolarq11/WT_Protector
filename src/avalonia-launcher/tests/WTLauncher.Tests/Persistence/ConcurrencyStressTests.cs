@@ -1,3 +1,4 @@
+using ErrorOr;
 using WTLauncher.App.Infrastructure;
 using WTLauncher.App.ViewModels;
 using WTLauncher.Core;
@@ -48,6 +49,49 @@ public sealed class ConcurrencyStressTests
         Assert.NotNull(final.Entries);
     }
 
+    [Fact]
+    public void StoreGrain_ReloadFromDisk_SerializesWithDispatch_NoOverwrite()
+    {
+        var loadStarted = new ManualResetEventSlim(false);
+        var releaseLoad = new ManualResetEventSlim(false);
+        var freshState = NewStoreFile("fresh");
+        var persistence = new BlockingLoadPersistence(freshState, loadStarted, releaseLoad);
+
+        using var grain = new StoreGrain("unused.json", NewStoreFile("initial"), persistence);
+
+        Exception? reloadError = null;
+        var reloadThread = new Thread(() =>
+        {
+            try { grain.ReloadFromDisk(); }
+            catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex)) { reloadError = ex; }
+        });
+        reloadThread.Start();
+
+        Assert.True(loadStarted.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken),
+            "Load should start and block under the lock.");
+
+        Exception? dispatchError = null;
+        var dispatchThread = new Thread(() =>
+        {
+            try { grain.Dispatch(s => s with { DefaultPresetId = "dispatched" }); }
+            catch (Exception ex) when (ExceptionFilters.IsRecoverable(ex)) { dispatchError = ex; }
+        });
+        dispatchThread.Start();
+
+        // Give Dispatch a moment to contend for the lock, then release the slow Load.
+        Thread.Sleep(50);
+        releaseLoad.Set();
+
+        Assert.True(reloadThread.Join(TimeSpan.FromSeconds(5)), "Reload should complete.");
+        Assert.True(dispatchThread.Join(TimeSpan.FromSeconds(5)), "Dispatch should complete.");
+        Assert.Null(reloadError);
+        Assert.Null(dispatchError);
+
+        // Dispatch's write must survive the reload. A TOCTOU (Load outside the lock)
+        // would let the stale reload overwrite "dispatched" back to "fresh".
+        Assert.Equal("dispatched", grain.Select(s => s.DefaultPresetId));
+    }
+
     // ── ErrorLog concurrent write never throws ────────────────────────
 
     [Fact]
@@ -76,5 +120,49 @@ public sealed class ConcurrencyStressTests
         Assert.True(File.Exists(logPath));
         var lineCount = File.ReadAllLines(logPath).Length;
         Assert.True(lineCount > 0, "At least one log entry should exist");
+    }
+
+    private static LauncherStoreFile NewStoreFile(string defaultPresetId) => new()
+    {
+        SchemaVersion = LauncherStoreValidator.ExpectedSchemaVersion,
+        Entries = [],
+        Settings = new LauncherSettings(),
+        Presets = [],
+        DefaultPresetId = defaultPresetId,
+    };
+
+    private sealed class BlockingLoadPersistence : IStorePersistence
+    {
+        private readonly LauncherStoreFile _freshState;
+        private readonly ManualResetEventSlim _loadStarted;
+        private readonly ManualResetEventSlim _releaseLoad;
+
+        public BlockingLoadPersistence(
+            LauncherStoreFile freshState,
+            ManualResetEventSlim loadStarted,
+            ManualResetEventSlim releaseLoad)
+        {
+            _freshState = freshState;
+            _loadStarted = loadStarted;
+            _releaseLoad = releaseLoad;
+        }
+
+        public LauncherStoreFile Load(string storePath, Action<Exception, string>? onRecovery = null)
+        {
+            _loadStarted.Set();
+            _releaseLoad.Wait(TimeSpan.FromSeconds(5));
+            return _freshState;
+        }
+
+        public void Save(LauncherStoreFile store, string storePath, bool backup = true) { }
+
+        public ErrorOr<LauncherStoreFile> LoadErrorOr(string storePath) =>
+            throw new NotSupportedException();
+
+        public string ResolveStorePath(
+            string? explicitPath,
+            string? currentDirectory = null,
+            string? appBaseDirectory = null) =>
+            explicitPath ?? string.Empty;
     }
 }
