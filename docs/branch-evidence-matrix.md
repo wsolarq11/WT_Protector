@@ -122,26 +122,28 @@ Update when: 门禁步骤、CI 流程、Trellis 更新逻辑、配置 schema 或
 | `LauncherEntryOrder` 同步/移动/去重 | 排序状态机 | 实测确证（870 tests） | `LauncherEntryOrderTests.cs`、PBT |
 | `LauncherStoreValidator` 版本 >2/<1 | schema 升级边界 | 实测确证（870 tests） | `LauncherStoreValidatorPbtTests.cs` |
 | `StoreGrain.Dispatch` 并发 save+state | 并发写一致性 | 实测确证（870 tests） | `ConcurrencyStressTests.cs:18-49` |
-| `StoreGrain.ReloadFromDisk` 锁外读盘 + `StateChanged` 锁外触发 | 重载与通知竞态 | 源码静态推断（无直接竞态测试） | `StoreGrain.cs:55-84`；研究文件 M6/M7 仍指向此处 |
+| `StoreGrain.ReloadFromDisk` 锁外读盘 + `StateChanged` 锁外触发 | 重载与通知竞态 | 实测确证（已修复：`Load` 移入锁内，与 `Dispatch` 的 `Save` 对称，消除 TOCTOU；确定性竞态测试锁定） | `StoreGrain.cs` `ReloadFromDisk`；`ConcurrencyStressTests.StoreGrain_ReloadFromDisk_SerializesWithDispatch_NoOverwrite` |
 | `MainWindowViewModel` 15 个 partial | 单写状态聚合 | 实测确证（门禁行预算） | `main-vm-line-budget` lines=1197/1200，余量 3 行 |
 | `DiscoverAgentsWindow.axaml.cs` 动态构建 UI | 有意命令式 UI 例外 | 实测确证（修正后） | `no-imperative-view-ui` 白名单唯一命令式视图 |
 | 其余 View `.axaml.cs` | 禁止命令式建 UI | 实测确证（修正后扫 20 文件） | `checkNoImperativeViewUi` viewsScanned=20 |
 | Analyzer 告警转错 | 编译期规则 | 实测确证 | `analyzer-wiring` PASS |
 
-关键结论：Core 层边界测试密度高；Persistence 的 `ReloadFromDisk`/`StateChanged` 竞态仍是源码静态推断，没有直接测试钉死；Views 的命令式 UI 检查刚从 2 个文件收紧到 20 个文件。
+关键结论：Core 层边界测试密度高；Persistence 的 `ReloadFromDisk`/`StateChanged` 竞态已修复——`Load` 移入锁内与 `Dispatch` 的 `Save` 对称，消除 TOCTOU 窗口，并新增确定性竞态测试（未修复时该测试实测失败 `Expected "dispatched" / Actual "fresh"`，修复后转绿）；Views 的命令式 UI 检查刚从 2 个文件收紧到 20 个文件。
 
-Top 无覆盖分叉（源码静态推断，按静默错误风险降序；本 session 已关闭前五项主路径，剩余为部分分支）：
+Top 无覆盖分叉（钻探到底复验：原 10 条中 9 条已实测关闭，仅剩 CodeFixProvider 一条低风险缺口）：
 
-1. `StoreGrain.cs:106-126` 初始化读失败静默回退空 store：已新增可读失败与 FileNotFound 两条测试；后续 Dispatch 覆盖原本可读配置的完整攻击链仍属静态推断。
-2. `LegacyMigration.cs:33-85`：已新增四测覆盖迁移成功、统一 store 跳过、settings/presets 损坏降级；改名 `.bak` 失败分支仍静态推断。
-3. `FileLauncherJsonIO.cs:71-104`：已新增备份恢复失败回抛、主文件缺失从备份链恢复；备份轮转失败吞异常仍静态推断。
-4. `ErrorOrExtensions.cs:25-56`：已新增 Try/TryAsync 可恢复与非可恢复四测。
-5. `EntryId.cs`/`DirectoryPath.cs` 保留名、路径分隔符、`..`、设备路径：已新增测试补齐。
-6. `MainWindowViewModel.cs:272-304` `OnStoreReloaded` 验证失败部分恢复与 preset 重载 catch：已新增 Refresh 损坏主文件无备份时报错分支；验证失败部分恢复分支仍静态推断。
-7. `EntryListViewModel.cs:231-305`：已新增删除保存失败保留条目并报错；重命名保存失败分支仍静态推断。
-8. `UpdateCheckService.cs:17-26`：已新增本地文件读取与非 2xx 报错；真实网络超时/非 2xx 的 HTTP 延迟分支仍静态推断。
-9. `ImportConfigViewModel.cs`：已新增 Summary/BuildPlan 重复、缺失、无效引用分支；保存失败回滚仍静态推断。
-10. `ResourceKeyAnalyzer.cs` 已新增未定义 StaticResource 诊断测试；`CatchExceptionMustHaveWhenCodeFixProvider.cs` 仍零测试。
+1. `StoreGrain.cs` 初始化读失败静默回退空 store + Dispatch 覆盖攻击链：实测确证——`Constructor_WhenLoadFails_DispatchOverwritesPersistedStore`（AppStoreTests.cs:267-280）断言覆盖行为；静默回退是「graceful fallback + `.bak` 兜底」的有意设计。
+2. `LegacyMigration.cs` 改名 `.bak` 失败：实测确证——`MigrateFromLegacyFiles_WhenBakRenameFails_StillReturnsMigratedStore`（LegacyMigrationTests.cs:91）。
+3. `FileLauncherJsonIO.cs` 备份轮转失败吞异常：实测确证——`Save_WhenBackupRotationFails_StillWritesPrimary`（FileLauncherJsonIOTests.cs:75）+ PBT `RotateBackups_NeverExceedsMaxBackups`（CsCheckPropertyTests.cs:22）。
+4. `ErrorOrExtensions.cs`：已覆盖（Try/TryAsync 可恢复与非可恢复四测）。
+5. `EntryId.cs`/`DirectoryPath.cs` 保留名、路径分隔符、`..`、设备路径：已覆盖。
+6. `MainWindowViewModel.cs` `OnStoreReloaded` 验证失败部分恢复：实测确证——`Refresh_WhenReloadValidationSaveFails_SetsConfigValidationFailedStatus`（RefreshFailureTests.cs:25-46）。
+7. `EntryListViewModel.cs` 重命名保存失败：实测确证——`EditEntryAsync_WhenSaveFails_KeepsOriginalEntryAndReportsSaveError`（EntryListViewModelSaveFailureTests.cs:55）。
+8. `UpdateCheckService.cs` 非 2xx：实测确证——`CheckAsync_NonSuccessHttpStatus_SurfacesError`（UpdateCheckServiceTests.cs:81，StubHttpMessageHandler 返回 500）；仅真实公网延迟属远端不可复现。
+9. `ImportConfigViewModel.cs` 保存失败回滚：实测确证——`ImportConfig_WhenSaveFails_KeepsOriginalStoreAndReportsError`（MigrationTests.cs:164）。
+
+唯一剩余缺口（低风险，登记不治理）：
+10. `CatchExceptionMustHaveWhenCodeFixProvider.cs` 零测试——IDE 快速修复工具，非运行时路径；bug 后果为「开发者看到错误修复建议」而非数据/行为错误；测试需手动构造 Roslyn Workspaces `CodeFixContext`（约 80 行 + 引用管理），治理成本高于价值。判定：已知低风险，登记不治理。
 
 ## CI 工作流层
 
