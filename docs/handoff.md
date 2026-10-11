@@ -2,13 +2,13 @@
 
 > 最后一棒状态：「现在是什么状态」。
 
-## 当前状态（2026-10-11 ~08:32 UTC）
+## 当前状态（2026-10-11 ~08:55 UTC）
 
 **WT_Protector** — 收敛维护期。
 - 本地 `npm run verify`：42 门禁步，820 测试，0 阻断 ✅
-- 远端 CI (docs restructure)：`success` (run 38124464520) ✅
-- 远端 CI (handoff update)：`success` (run 38124552605) ✅
-- 最新 commit：`724a11ff`（本会话 2 个 commit）
+- 远端 CI (docs restructure)：`success` ✅
+- 远端 CI (CI simplify)：`success` (run 38125445129) ✅
+- 最新 commit：`484aa6b8`（本会话 4 个 commit）
 
 ## 本次会话完成的变更
 
@@ -40,8 +40,11 @@ Status 按目录取值，不再有打架：
 - `docs/adr/decision-ladder.md` — 目录架构节 + 证据引用链
 - `docs/adr/feature-reality-north-star-audit.md` — design-benchmark + giants-shoulders 链
 
-### 不动
-- `evidence/archive/` + `retired/` 中所有旧路径引用保留原样（历史快照不修改）
+### CI 精简
+`.github/workflows/verify.yml` 从 8 step → 4 step（23 行 YAML），砍掉两遍 Native AOT + `release:contract`：
+- CI 现在是单 job 单命令：`npm run verify`
+- `release:contract` 回到发布流程（打 tag / release 时跑），不在每次 push 触发
+- `scripts/checks/static.ts` 的 `ci-fast-lane-no-publish-duplication` 检查同步更新
 
 ## 关键锚点
 
