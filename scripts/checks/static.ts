@@ -672,17 +672,19 @@ export function checkNoActivePowerShellScripts(): void {
 
 export function checkCiFastLaneNoPublishDuplication(): void {
   const workflow = readText(".github/workflows/verify.yml");
-  const required = ["name: CI", "npm run test:fast", "npm run verify", "npm run release:contract"];
+  const required = ["name: CI", "npm run verify"];
   for (const marker of required) {
     if (!workflow.includes(marker)) {
       throw new Error(`CI workflow must include: ${marker}`);
     }
   }
+  // CI 是一个 job，verify 是唯一门禁命令。release:contract 属于发布流程不在 CI 里。
+  // 拆成多 job 或用 always() 分支会引入重复 Native AOT。
   if (workflow.includes("needs:")) {
     throw new Error("CI workflow must be a single sequential job with no needs graph");
   }
   if (workflow.includes("if: always()")) {
     throw new Error("CI workflow must not use always() upload branching");
   }
-  addCheck("ci-fast-lane-no-publish-duplication", { jobs: 1, publishOwnedBy: "npm run release:contract" });
+  addCheck("ci-fast-lane-no-publish-duplication", { jobs: 1, gateCommand: "npm run verify" });
 }

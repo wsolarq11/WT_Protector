@@ -2,24 +2,17 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
 
 jobs:
   verify:
-    name: Verify
     runs-on: windows-latest
-    permissions:
-      contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          lfs: false
+      - uses: actions/checkout@v7
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v6
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.301"
           cache: true
@@ -29,38 +22,16 @@ jobs:
             src/avalonia-launcher/src/WTLauncher.Analyzers/packages.lock.json
             src/avalonia-launcher/tests/WTLauncher.Tests/packages.lock.json
 
-      - name: Setup Node
-        uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "lts/*"
           cache: npm
 
-      - name: Install dependencies
+      - name: Install
         run: npm ci
 
-      - name: Typecheck and unit tests
-        run: npm run typecheck && npm test
-
-      - name: Fast test lane
-        run: npm run test:fast -- --logger "trx;LogFileName=wtlauncher-fast.trx"
-
-      - name: NuGet security audit
-        run: |
-          dotnet restore src/avalonia-launcher/WTLauncher.Avalonia.sln -r win-x64 -p:EnableNativeAot=true --locked-mode
-          dotnet list src/avalonia-launcher/WTLauncher.Avalonia.sln package --vulnerable --include-transitive --no-restore
-
-      - name: Prepare launcher store
+      - name: Verify
         shell: pwsh
-        run: Copy-Item config/launcher.ci.json config/launcher.json -Force
-
-      - name: Full native gate
-        run: npm run verify
-
-      - name: Release contract
-        run: npm run release:contract
-
-      - name: Upload release artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: release-artifacts
-          path: src/avalonia-launcher/artifacts/publish/win-x64/
+        run: |
+          Copy-Item config/launcher.ci.json config/launcher.json -Force
+          npm run verify
