@@ -1,4 +1,4 @@
-Status: Active
+Status: External
 Purpose: 12 工具行业调研提炼的一等启动器对象与边界。
 Update when: 调研结论、命名启动组模型或门禁参与关系变化时。
 

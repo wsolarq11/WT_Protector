@@ -1,4 +1,4 @@
-Status: Reference
+Status: Evidence
 Purpose: 某次实测的门禁分支证据矩阵与判定方法示例。具体步数/属性数是快照（权威源在 AGENTS.md 结构基线表）；价值在于判定口径与分支证据方法论，不是当前计数值。
 Update when: 判定口径、证据方法论或 CI 流程变化时（步数/属性数由基线派生，不在此手动更新）。
 

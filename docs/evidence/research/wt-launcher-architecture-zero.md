@@ -1,4 +1,4 @@
-Status: Research
+Status: Evidence
 Purpose: 放弃 GUI 的退路方案审计（2026-07-10），非行动方案。
 Update when: 不更新（仅当"放弃 GUI"重新成为真实选项时）。
 

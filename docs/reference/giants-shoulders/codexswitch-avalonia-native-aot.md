@@ -1,4 +1,4 @@
-Status: Reference
+Status: External
 Purpose: 记录 CodexSwitch（Avalonia + .NET 10 + Native AOT）的核对观察与可借/不借边界。
 Update when: 上游核对或本地技术栈结论变化时。
 

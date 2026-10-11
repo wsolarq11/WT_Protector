@@ -1,4 +1,4 @@
-Status: Reference
+Status: External
 Purpose: win-x64 便携发布、签名与更新策略契约。
 Update when: 发布路径、manifest schema、签名或更新策略变化时。
 

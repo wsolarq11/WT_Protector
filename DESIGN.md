@@ -8,7 +8,7 @@ Update when: UI/UX、视觉 Token 或组件所有权变化时。
 
 - Last refreshed: 2026-07-23
 - Product surfaces: `src/avalonia-launcher/src/WTLauncher.App/Views/MainWindow.axaml` + code-behind + `ViewModels/*`
-- Evidence: `src/avalonia-launcher/README.md`, `docs/design-benchmark-digest.md`, mainline implementation, gate scripts, Microsoft Fluent 2 / Apple HIG / Material layout guidance
+- Evidence: `src/avalonia-launcher/README.md`, `docs/adr/design-benchmark-digest.md`, mainline implementation, gate scripts, Microsoft Fluent 2 / Apple HIG / Material layout guidance
 
 ## Brand
 
@@ -29,7 +29,7 @@ Non-goals: 不做跨平台设计系统；不迁移状态到 AppData/registry；�
 
 ## Visual Language
 
-视觉系统遵循三条规则（画布中性、单一强调色、焦点不散）。唯一设计源与完整实现映射见 `docs/visual-perspective-system.md`——颜色/间距/圆角/层级/响应式的具体值、决策阶梯、变化闭包均在该文件单一维护，本文不重复。
+视觉系统遵循三条规则（画布中性、单一强调色、焦点不散）。唯一设计源与完整实现映射见 `docs/spec/visual-perspective-system.md`——颜色/间距/圆角/层级/响应式的具体值、决策阶梯、变化闭包均在该文件单一维护，本文不重复。
 
 ## Components
 

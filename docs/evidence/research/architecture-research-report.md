@@ -1,4 +1,4 @@
-Status: Research
+Status: Evidence
 Purpose: 2026-07-23 行业架构调研报告，非行动方案。
 Update when: 不更新（研究快照）。
 

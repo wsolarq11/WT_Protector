@@ -456,7 +456,7 @@ export function checkVtkNoAppstoreResidue(): void {
 }
 
 export function checkWiringMapConsistency(): void {
-  const wiringMap = readText("docs/wiring-map.md");
+  const wiringMap = readText("docs/adr/wiring-map.md");
   const workflowDir = path.join(avaloniaRoot, "src", "WTLauncher.App", "ViewModels", "Commands");
   const workflowFiles = walkFiles(workflowDir).filter((file) => file.endsWith(".cs"));
   if (workflowFiles.length === 0) {
@@ -478,7 +478,7 @@ export function checkWiringMapConsistency(): void {
     throw new Error(`wiring-map-consistency: missing workflows: ${missingWorkflows.join(", ")}; missing ports: ${missingPorts.join(", ")}`);
   }
   addCheck("wiring-map-consistency", {
-    path: "docs\\wiring-map.md",
+    path: "docs\\adr\\wiring-map.md",
     workflows: workflowFiles.length,
     missingWorkflows: missingWorkflows.join(", "),
     missingPorts: missingPorts.join(", "),

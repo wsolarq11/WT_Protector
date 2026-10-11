@@ -1,67 +1,77 @@
-Status: Active
-Purpose: docs 目录唯一索引，按 Active / Reference / Research / Archive 分层。
-Update when: 文档新增、移动、归档或用途变化时。
+# docs/ — 唯一文档根
 
-# 文档索引
+> 四层路由：spec（是什么） → adr（为什么） → evidence（怎么来的） → reference（别人的）
+> 依赖方向：spec ⊥ adr ⊥ evidence ⊥ reference（无反向引用）
+> 真相锚点：每类事实只存一处，他处引用。
 
-检索顺序：Active → Spec → Reference → Research → Archive。
+## 第一层：Spec — 现状（是什么）
 
-## Active
-
-| 文档 | 用途 | 更新触发 |
-| --- | --- | --- |
-| [../README.md](../README.md) | 用户功能、配置 schema、安全口径、安装使用 | 用户可见行为或 schema 变化 |
-| [../AGENTS.md](../AGENTS.md) | AI 导航中枢、命令人工视图、结构基线、项目级不变量 | 结构、命令、门禁或导航变化 |
-| [../DESIGN.md](../DESIGN.md) | 设计契约、视觉 Token 与组件所有权 | UI/UX 或 Token 变化 |
-| [feature-reality-north-star-audit.md](feature-reality-north-star-audit.md) | 22 项功能映射审计与声明边界 | 功能边界或 claim 变化 |
-| [business-wiring-boundaries.md](business-wiring-boundaries.md) | View → VM → StoreGrain → 外部进程接线总账 | 接线或持久化变化 |
-| [wiring-map.md](wiring-map.md) | workflow 与端口唯一台账 | 新增端口或 workflow |
-| [design-benchmark-digest.md](design-benchmark-digest.md) | 12 项外部设计基准 → 本地验收规则 | 基准或验收规则变化 |
-| [test-structure.md](test-structure.md) | 测试体系唯一设计源：漂移模型、四层结构、取舍规则、北极星停止条件 | 测试分层或取舍规则变化 |
-| [visual-perspective-system.md](visual-perspective-system.md) | 视觉系统 | 视觉令牌、控件样式、响应式规则变化 |
-| [decision-ladder.md](decision-ladder.md) | 决策阶梯与变化闭包（单一源分配） | 架构分层、函数职责、文档分类规则变化 |
-
-## Spec
-
-代码层编码规范，供 AI 代理在改动前读取。独立于 Active/Reference/Research/Archive 分层：不套 `Status/Purpose/Update when` 三行头，不参与文档生命周期判据。生命周期与维护判据由 [spec/guides/index.md](spec/guides/index.md) 层入口声明。
+代码现在是什么、应该怎么改。编码规范 + 设计契约。
 
 | 路径 | 内容 |
 | --- | --- |
-| [spec/guides/index.md](spec/guides/index.md) | 跨包思维指南入口 + Pre-Development Checklist |
-| [spec/guides/pitfalls.md](spec/guides/pitfalls.md) | 跨会话踩坑实录与预防规则 |
-| [spec/core/index.md](spec/core/index.md) | Core 层编码规范入口 |
-| [spec/views/index.md](spec/views/index.md) | Views 层编码规范入口 |
-| [spec/tests/index.md](spec/tests/index.md) | 测试层编码规范入口 |
+| [spec/index.md](spec/index.md) | 层入口：编码规范 + 设计契约索引 |
+| [spec/core/](spec/core/) | Core 层：数据类型、持久化、错误处理、质量指南 |
+| [spec/views/](spec/views/) | Views 层：MVVM 契约、drag-drop、对话框、视觉质量 |
+| [spec/tests/](spec/tests/) | 测试层：xUnit v3 + ArchUnitNET 覆盖 5 层 |
+| [spec/guides/](spec/guides/) | 跨层思维：坑实录、代码复用、五层数据流 |
+| [spec/test-structure.md](spec/test-structure.md) | 测试体系唯一设计源：漂移模型、取舍规则、北极星停止条件 |
+| [spec/visual-perspective-system.md](spec/visual-perspective-system.md) | 视觉系统：令牌、控件样式、响应式规则 |
 
-## Reference
+## 第二层：ADR — 决策（为什么）
 
-查阅型：机器可读快照、稳定契约、外部对标。部分仍按触发条件维护。
+每条决策可追溯：问题 → 选项 → 选择 → 后果。
 
 | 路径 | 内容 |
 | --- | --- |
-| [reference/github-similar-projects-snapshot.json](reference/github-similar-projects-snapshot.json) | 12 项目市场对标快照，机器可读 |
-| [reference/shortcut-backup-manifest.json](reference/shortcut-backup-manifest.json) | 退役快捷方式清单，机器可读 |
-| [reference/branch-evidence-matrix.md](reference/branch-evidence-matrix.md) | 门禁分支证据矩阵与判定方法示例 | 判定口径或证据方法论变化 |
-| [reference/distribution-signing-strategy.md](reference/distribution-signing-strategy.md) | 发布、签名与更新策略契约 | 发布路径、签名或更新策略变化 |
-| [giants-shoulders/README.md](giants-shoulders/README.md) | 外部项目教训库入口与准入规则 |
+| [adr/index.md](adr/index.md) | 层入口：架构决策 + 功能设计索引 |
+| [adr/decision-ladder.md](adr/decision-ladder.md) | 决策阶梯 + 变化闭包（目录/代码/视觉/命令/不变量/文档单一源分配） |
+| [adr/wiring-map.md](adr/wiring-map.md) | workflow 与端口唯一台账 |
+| [adr/business-wiring-boundaries.md](adr/business-wiring-boundaries.md) | View → VM → StoreGrain → 外部进程接线总账 |
+| [adr/feature-reality-north-star-audit.md](adr/feature-reality-north-star-audit.md) | 22 项功能映射审计与声明边界 |
+| [adr/design-benchmark-digest.md](adr/design-benchmark-digest.md) | 12 项外部设计基准 → 本地验收规则 |
 
-## Research
+## 第三层：Evidence — 证据（怎么来的）
 
-探索性记录，非行动方案。此处只列仓库级架构调研。
+探索记录、实测结果、历史快照。不是规范，不是决策，是支撑材料。
 
-| 文档 | 用途 |
+| 路径 | 内容 |
 | --- | --- |
-| [research/architecture-patterns-survey.md](research/architecture-patterns-survey.md) | 架构模式调研（2026-07-21 时点） |
-| [research/wt-launcher-architecture-zero.md](research/wt-launcher-architecture-zero.md) | 放弃 GUI 的退路方案，非行动方案 |
-| [research/architecture-research-report.md](research/architecture-research-report.md) | 行业架构调研（2026-07-23 时点） |
+| [evidence/index.md](evidence/index.md) | 层入口：门禁证据 + 调研 + 归档索引 |
+| [evidence/branch-evidence-matrix.md](evidence/branch-evidence-matrix.md) | 门禁分支证据矩阵与判定方法示例 |
+| [evidence/research/](evidence/research/) | 架构调研（2026-07 时点） |
+| [evidence/archive/](evidence/archive/) | 历史快照——不维护、不改写、不参与门禁扫描 |
 
-## Archive
+## 第四层：Reference — 外部归档（别人的）
 
-历史快照，不维护、不改写、不参与门禁扫描。清单见 [archive/README.md](archive/README.md)。
+市场对标、发布契约、教训库。外部事实，不参与本地决策推理。
+
+| 路径 | 内容 |
+| --- | --- |
+| [reference/index.md](reference/index.md) | 层入口：发布对标 + 巨人肩膀索引 |
+| [reference/distribution-signing-strategy.md](reference/distribution-signing-strategy.md) | 发布、签名与更新策略契约 |
+| [reference/github-similar-projects-snapshot.json](reference/github-similar-projects-snapshot.json) | 12 项目市场对标快照 |
+| [reference/shortcut-backup-manifest.json](reference/shortcut-backup-manifest.json) | 退役快捷方式清单 |
+| [reference/giants-shoulders/](reference/giants-shoulders/) | 外部项目教训库（准入规则见 `giants-shoulders/README.md`） |
+
+## SOP
+
+操作流程——触发条件 + 步骤 + 红线。
+
+| 路径 | 内容 |
+| --- | --- |
+| [sop/upstream-sync.md](sop/upstream-sync.md) | 上游跟进 SOP：触发/流程/红线 + 状态基线 |
+
+## 导航
+
+| 文件 | 用途 |
+| --- | --- |
+| [handoff.md](handoff.md) | 交接快照：「现在是什么状态」 |
+| [roadmap.md](roadmap.md) | 路线图：「接下来做什么」 |
 
 ## 维护规则
 
-1. Active 文档头部保留 `Status`、`Purpose`、`Update when` 三行。
-2. 生命周期判据：`Status` 头、所在目录、索引分节三者必须一致（`Status: Reference` 的文档须位于 `reference/` 且列在 Reference 分节）。
-3. 结构与门禁计数只允许出现在 `AGENTS.md` 结构基线派生表（`gen:structure-baseline` 生成）。
-4. 文档引用必须可解析；归档后只在 `archive/README.md` 登记旧路径。
+1. 文档引用必须可解析——新文档列入对应层 index.md，归档后在 `evidence/archive/README.md` 登记旧路径。
+2. `docs/README.md` 是本文件——唯一总索引；层 index.md 是层内清单的补充，不重复总索引已有条目。
+3. 结构计数只出现在 `AGENTS.md` 结构基线派生表（`gen:structure-baseline` 生成），禁止文档硬编码文件计数。
+4. Status 头按层取值：`spec/` 和 `adr/` → `Active`（可被 Superseded）；`evidence/` 非归档 → `Evidence`；`reference/` → `External`；`evidence/archive/` → `Archived`。`Purpose` 和 `Update when` 保留，`Status` 与所在目录必须一致。

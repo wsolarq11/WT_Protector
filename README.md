@@ -111,7 +111,7 @@ This launcher intentionally starts arbitrary local commands. Treat every config 
 
 The Avalonia mainline supports search, single/batch launch, adaptive cards, custom drag reorder, three density states, Cards/Details/Names views, add/edit/delete/clone, AI Agent CLI discovery, per-agent badges, launch groups/presets, five sort modes, command templates, global confirmation, quick-launch hotkey, tray icon, config export/import, run history, update checks, and a portable installer/uninstaller.
 
-Claim boundary (authoritative audit: [`docs/feature-reality-north-star-audit.md`](docs/feature-reality-north-star-audit.md)):
+Claim boundary (authoritative audit: [`docs/adr/feature-reality-north-star-audit.md`](docs/adr/feature-reality-north-star-audit.md)):
 
 - The feature audit classifies all 22 active feature mappings as narrow-domain north-star for the portable Windows Terminal workspace-launcher scope only.
 - The full absolute objective remains not complete as written because unimprovable-product, stronger-than-every-GitHub-similar, and absolute zero-side-effect claims are still blocked by current evidence.

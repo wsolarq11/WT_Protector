@@ -5,7 +5,7 @@ Update when: 功能边界、声明或证据变化时。
 # 功能现实与北极星审计
 
 范围：`src/avalonia-launcher/` 主线、`config/launcher.json` 统一存储、`README.md`、`DESIGN.md`、
-`docs/design-benchmark-digest.md`、`docs/reference/github-similar-projects-snapshot.json`、`scripts/verify.ts`。
+`docs/adr/design-benchmark-digest.md`、`docs/reference/github-similar-projects-snapshot.json`、`scripts/verify.ts`。
 不评估 `.snow/` 忽略状态。
 
 窄域 north-star 判定：
@@ -46,7 +46,7 @@ Update when: 功能边界、声明或证据变化时。
 | 18 | Core/App/Tests 分离 | 启动规则与配置可不开 GUI 测试 | Core 纯记录/规则；App VM/View；Tests 行为契约 | narrow-north-star | none-proven |
 | 19 | 自包含 win-x64 发布与原生门禁 | 桌面启动器要能恢复/测试/发布/冒烟 | `scripts/verify.ts`、`scripts/verify-mainline.ts`、忽略的发布产物 | narrow-north-star | distribution-scope：无安装器/更新通道 |
 | 20 | 退役旧界面 | 两条活跃 UI 线造成双真相 | Avalonia 主线；HTA/WinForms 仅归档 | narrow-north-star | none-proven |
-| 21 | 设计基准与巨人肩膀库 | UI/产品决策不靠感觉或抄框架 | `DESIGN.md`、`docs/design-benchmark-digest.md`、`docs/giants-shoulders/` | narrow-north-star | source-freshness：外部来源失效需刷新 |
+| 21 | 设计基准与巨人肩膀库 | UI/产品决策不靠感觉或抄框架 | `DESIGN.md`、`docs/adr/design-benchmark-digest.md`、`docs/reference/giants-shoulders/` | narrow-north-star | source-freshness：外部来源失效需刷新 |
 | 22 | AI Agent CLI 自动发现 | 手动录入多个 agent exec+目录繁琐 | `AgentCatalog.cs`、`AgentDiscoveryScanner.cs`、`DiscoverAgentsViewModel.cs`、`MainWindowViewModel.Discovery.cs` | narrow-north-star | future-workload：目录需随市场刷新，未安装 agent 静默跳过 |
 
 22 项结论均为 narrow-domain north-star；证据以 repo-battle-tested 为主，其余补充 market-informed /

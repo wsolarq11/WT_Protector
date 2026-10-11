@@ -29,7 +29,7 @@ WT_Protector/
 ├── make.bat / run.bat       ← 双击构建/启动入口（纯 npm 命令包层，不重复逻辑）
 ├── src/avalonia-launcher/ ← 活动主线：Avalonia/.NET 源码 + 测试 + 构建（五层架构唯一源）
 ├── tools/                 ← .NET 辅助工具（smoke-probe / uninstaller）
-├── docs/                  ← 深度文档，唯一索引见 docs/README.md（Active/Reference/Research/Archive/Spec）
+├── docs/                  ← 深度文档，唯一索引见 docs/README.md（spec/adr/evidence/reference 四层）
 └── retired/               ← 退役归档（旧 HTA + WinForms 教训），永不恢复
 ```
 
@@ -88,7 +88,7 @@ WT_Protector/
 - 声称完成前必须跑通 `git diff --check` + `npm run verify`
 - `config/launcher.json` 是唯一权威源，无 AppData/registry 后备
 - 源码在 `src/avalonia-launcher/`，退役物在 `retired/`，不恢复退役路径
-- 每类事实只有一个权威源；完整分配见 `docs/decision-ladder.md` 变化闭包
+- 每类事实只有一个权威源；完整分配见 `docs/adr/decision-ladder.md` 变化闭包
 - 私有仓库触发 CI 前必须先转公开：`gh repo edit wsolarq11/WT_Protector --visibility public --accept-visibility-change-consequences`，再 push/rerun；禁止先私有 push 触发 CI、失败后才发现账单拦截再转公开重跑（账单拦截表现为 runner_id=0 / steps=0）
 
 ## 藤曼路径（Vine Trail）
@@ -99,12 +99,12 @@ WT_Protector/
 | --- | --- |
 | 了解全貌 / 配置 schema | `README.md` |
 | 查命令 | 本文件「脚本工具箱」（机器源 `package.json`） |
-| 改源码 / 加 workflow / 加端口 | `src/avalonia-launcher/README.md`（五层）+ `docs/wiring-map.md` |
-| 接线（View→VM→Store→外部进程） | `docs/business-wiring-boundaries.md` |
+| 改源码 / 加 workflow / 加端口 | `src/avalonia-launcher/README.md`（五层）+ `docs/adr/wiring-map.md` |
+| 接线（View→VM→Store→外部进程） | `docs/adr/business-wiring-boundaries.md` |
 | 做 UI/UX 决策 | `DESIGN.md` |
-| 改视觉样式 | `docs/visual-perspective-system.md` |
-| 审计功能边界 / claim | `docs/feature-reality-north-star-audit.md` |
-| 参考外部设计 | `docs/design-benchmark-digest.md` + `docs/giants-shoulders/` |
-| 统一架构 / 单一源决策 | `docs/decision-ladder.md` |
+| 改视觉样式 | `docs/spec/visual-perspective-system.md` |
+| 审计功能边界 / claim | `docs/adr/feature-reality-north-star-audit.md` |
+| 参考外部设计 | `docs/adr/design-benchmark-digest.md` + `docs/reference/giants-shoulders/` |
+| 统一架构 / 单一源决策 | `docs/adr/decision-ladder.md` |
 | 踩坑 / 代码层规范 | `docs/spec/` |
 | 查任何文档 | `docs/README.md` |

@@ -1,4 +1,4 @@
-Status: Active
+Status: External
 Purpose: 外部项目教训库入口与准入规则。
 Update when: 新增/移除教训条目或准入规则变化时。
 

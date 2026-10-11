@@ -12,7 +12,7 @@ Update when: 目录、代码分层、函数职责、文档分类或单一源分�
 2. 语义归类：这个变化属于哪类事实（目录、代码/函数、视觉、命令、不变量、文档），影响哪个闭包。
 3. 唯一源修改：只改该层的唯一源，不动消费方。
 4. 消费方复验：跑 `npm run verify`、`npm test`、`typecheck`、`release:contract`。
-5. 证据归档：更新 `docs/reference/branch-evidence-matrix.md`，把静态推断转成实测确证。
+5. 证据归档：更新 `docs/evidence/branch-evidence-matrix.md`，把静态推断转成实测确证。
 
 ## 变化闭包
 
@@ -22,11 +22,11 @@ Update when: 目录、代码分层、函数职责、文档分类或单一源分�
 | 配置 schema | Core record 定义（`LauncherStoreFile`/`LauncherSettings`/`LauncherPreset`/`LaunchEntry`）+ `LauncherStoreValidator` + `LauncherJsonContext` | `README.md` 人类摘要、`config/launcher.example.json` 模板 | 在 README 或模板里手写字段定义 |
 | 代码分层 | `src/avalonia-launcher/README.md` 五层架构 | Analyzer 层规则、门禁 | 跨层直接调用、造第二个可写状态源；其他入口文档复制架构表 |
 | 函数职责 | 每个文件首导出的核心入口 + 后续函数按调用图拓扑排列 | `grep ^func`/`^public` 的执行叙事 | 模糊命名、过早抽象、重复逻辑 |
-| 视觉 | `docs/visual-perspective-system.md` + `LauncherDesignTokens.cs` | `App.axaml` 全局皮肤 | XAML 裸色值、窗口内联重复皮肤 |
+| 视觉 | `docs/spec/visual-perspective-system.md` + `LauncherDesignTokens.cs` | `App.axaml` 全局皮肤 | XAML 裸色值、窗口内联重复皮肤 |
 | 命令 | `package.json`（机器源）+ `AGENTS.md` 脚本工具箱（唯一人工视图） | `README.md`/`src/avalonia-launcher/README.md` 只引用 | 各入口文档各自重列命令清单 |
 | 项目不变量 | `AGENTS.md` 核心规则 | `README.md` 安全口径（用户视角）、`docs/spec/`（代码层） | 第二份不变量表 |
 | 门禁分层 | `AGENTS.md` | 其他入口只引用 | 另一份 gate tier 说明 |
-| 文档 | `docs/README.md` 索引 | 藤曼路径 | 归档后仍留在 Active、旧三文件引用、`Status` 头与目录与索引分节三者不一致 |
+| 文档 | `docs/README.md` 索引 | 藤曼路径 | 文档移动后不更新层 index.md、文档引用了已删除的旧路径、重复引用（同一事实在多处列出） |
 
 ## 治理成本
 
@@ -46,9 +46,9 @@ Update when: 目录、代码分层、函数职责、文档分类或单一源分�
 ## 目录架构
 
 - `src/avalonia-launcher/` 是唯一活动源码，`retired/` 永不恢复。
-- `docs/` 四类：Active / Reference / Research / Archive，唯一入口是 `docs/README.md`。
-- 生命周期判据：`Status` 头、所在目录、索引分节三者必须一致。
-- 新文档先问：它是不是 Active 事实源；不是则进 Reference/Research/Archive。
+- `docs/` 四层：spec（是什么）→ adr（为什么）→ evidence（怎么来的）→ reference（别人的），唯一入口是 `docs/README.md`。
+- 文档生命周期判据（仅适用于 Active 状态文档）：`Status` 头。Archive 文档永远留在 `evidence/archive/`。
+- 新文档先问：它属于哪类知识？Spec 是规范，ADR 是决策，Evidence 是证据，Reference 是外部。不属于前两者则归档至 evidence。
 
 ## 代码架构
 

@@ -1,4 +1,4 @@
-Status: Research
+Status: Evidence
 Purpose: 2026-07-21 架构模式调研记录，非行动方案。
 Update when: 不更新（研究快照；结论变化时归档或另立文档）。
 
