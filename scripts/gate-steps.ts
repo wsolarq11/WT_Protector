@@ -31,7 +31,6 @@ export const gateStepIds = [
   "avalonia-mainline-verify",
   "coverage-gate",
   "analyzer-wiring",
-  "task-ledger-citations-resolve",
   "command-table-consistency",
   "settings-single-source",
   "winget-config-schema",

@@ -1,4 +1,0 @@
-{"file": ".trellis/spec/core/index.md", "reason": "Core 层不变量与 single-source-of-truth 规则 — LaunchEntry 字段添加 + FilterAndSort 分支必须遵守"}
-{"file": ".trellis/spec/core/quality-guidelines.md", "reason": "Core 层质量准则 — init-only record / with 表达式 / Optional 字段前向兼容规则"}
-{"file": ".trellis/spec/guides/pitfalls.md", "reason": "已知陷阱清单 — JSON schema 校验 / 时间戳解析 / ToDictionary 重复 ID 等历史教训"}
-{"file": ".trellis/spec/tests/index.md", "reason": "测试规范 — Theory 数据 / 命名约定 / mock 策略"}

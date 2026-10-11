@@ -1,2 +1,0 @@
-{"file":".trellis/spec/views/mvvm-pattern.md","reason":"Verify single writable status authority, service boundary and no mirrored severity state."}
-{"file":".trellis/spec/tests/test-quality.md","reason":"Verify tests cover semantic branches rather than brittle copy-only assertions."}

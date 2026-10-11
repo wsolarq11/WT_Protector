@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { avaloniaRoot, repoRoot, solutionPath, testsProjectPath, appProjectPath } from "../config-lib.js";
 import {
@@ -7,7 +7,6 @@ import {
   assertMatcherDetects,
   containsRequiredMarkers,
   countMatches,
-  fileExists,
   git,
   readConfigItems,
   readText,
@@ -100,7 +99,7 @@ export function checkNoBareCatchException(): void {
     path: "src/avalonia-launcher/src",
     scannedFiles,
     violations: 0,
-    invariant: ".trellis/spec/guides/index.md §5",
+    invariant: "docs/spec/guides/index.md §5",
   });
 }
 
@@ -232,51 +231,6 @@ export function checkStructureBaselineUpToDate(): void {
     );
   }
   addCheck("structure-baseline-up-to-date", { derivedBlockCurrent: true });
-}
-
-export function checkTaskLedgerCitationsResolve(): void {
-  // 文档常把 Trellis 任务台账当证据引用,而 Trellis 归档任务时会把目录移入
-  // .trellis/tasks/archive/YYYY-MM/,引用随之静默失效——读者照着路径找不到证据链。
-  // 本检查把"引用必须可解析"变成门禁事实:归档动作发生的当次就变红,而不是留给下一个读者踩空。
-  // 扫描集 = 仓库根 *.md + docs/**/*.md(排除 docs/archive/**)。.trellis/ 自身是 Trellis
-  // 管理的可变内容(其 archive 内大量引用归档前的兄弟路径,属历史语境),不在本检查范围。
-  const citationPattern = /\.trellis\/tasks\/[\w./-]+\.md/g;
-  // 非全局副本专供自检:test() 会推进全局正则的 lastIndex,污染 matchAll 的扫描起点。
-  const citationDetector = new RegExp(citationPattern.source);
-  assertMatcherDetects(
-    citationDetector,
-    "见验证台账 .trellis/tasks/08-15-docs/ledgers/example.md",
-    "task-ledger-citations-resolve",
-  );
-  assertMatcherAllows(citationDetector, "依据 .trellis/tasks/08-15-docs 协议逐项核实", "task-ledger-citations-resolve");
-
-  const rootDocs = readdirSync(repoRoot, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
-    .map((entry) => path.join(repoRoot, entry.name));
-  const docsFiles = walkFiles(path.join(repoRoot, "docs")).filter(
-    (file) => file.endsWith(".md") && !file.replaceAll("\\", "/").includes("/archive/"),
-  );
-  const scannedDocs = [...rootDocs, ...docsFiles];
-  if (scannedDocs.length === 0) {
-    throw new Error("task-ledger-citations-resolve scanned 0 markdown docs: scan target or suffix filter is broken");
-  }
-
-  const unresolved: string[] = [];
-  let citations = 0;
-  for (const doc of scannedDocs) {
-    for (const match of readText(doc).matchAll(citationPattern)) {
-      citations += 1;
-      if (!fileExists(match[0])) {
-        unresolved.push(`${relDisplay(doc)} -> ${match[0]}`);
-      }
-    }
-  }
-  if (unresolved.length > 0) {
-    throw new Error(
-      `Task ledger citations do not resolve (Trellis archives move tasks under .trellis/tasks/archive/YYYY-MM/): ${unresolved.join("; ")}`,
-    );
-  }
-  addCheck("task-ledger-citations-resolve", { scannedDocs: scannedDocs.length, citations });
 }
 
 export function checkNoImperativeViewUi(): void {

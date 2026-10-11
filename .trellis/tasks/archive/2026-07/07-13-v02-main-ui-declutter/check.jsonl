@@ -1,3 +1,0 @@
-{"file":".trellis/spec/views/quality-guidelines.md","reason":"Audit that overflow routing remains view-only and all actions stay accessible."}
-{"file":".trellis/spec/tests/test-quality.md","reason":"Audit structural coverage and full production gate evidence."}
-{"file":"docs/exemplar-gap-refactor-audit.md","reason":"Verify V-02 resolves the documented top-control/action-density gap without V-05 scope creep."}

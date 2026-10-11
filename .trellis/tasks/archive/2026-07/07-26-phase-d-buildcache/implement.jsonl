@@ -1,4 +1,0 @@
-{"file": "src/WTLauncher.Core/WTLauncher.Core.csproj", "reason": "Target for MSBuild.CompilerCache"}
-{"file": "src/WTLauncher.App/WTLauncher.App.csproj", "reason": "Target for MSBuild.CompilerCache"}
-{"file": "src/avalonia-launcher/Directory.Build.props", "reason": "Reference for CPM config"}
-{"file": ".github/workflows/verify.yml", "reason": "Target for NuGet cache step"}

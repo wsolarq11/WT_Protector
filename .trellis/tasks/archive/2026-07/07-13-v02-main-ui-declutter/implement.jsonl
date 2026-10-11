@@ -1,3 +1,0 @@
-{"file":".trellis/spec/views/quality-guidelines.md","reason":"View-only action hierarchy, code-behind boundary, keyboard and automation contracts."}
-{"file":".trellis/spec/tests/test-quality.md","reason":"Stable structural assertions and published GUI smoke requirements."}
-{"file":"DESIGN.md","reason":"Authoritative main-window hierarchy, four-box alignment, direct-action and scanability rules."}

@@ -29,13 +29,7 @@ Non-goals: 不做跨平台设计系统；不迁移状态到 AppData/registry；�
 
 ## Visual Language
 
-视觉系统遵循三条规则（画布中性、单一强调色、焦点不散），完整映射见 `docs/visual-perspective-system.md`。
-
-- Color: 强调色用户可调（默认 #0369A1，12 色中国古典色板）；激活/选中描边用 ActiveBorderBrush；拖拽高亮青蓝提示线；画布单一中性色。
-- Typography: 标题 SemiBold；路径/命令等宽；详细列表单行文字、行高固定。
-- Spacing: 8 / 13 / 21 / 34 收敛节奏。
-- Shape: 卡片圆角克制；控件圆角 10/12/16 分层；拖拽幽灵略增阴影与透明度。
-- Motion: 只做短过渡，前景悬停 1px 抬升，降低重排突兀感。
+视觉系统遵循三条规则（画布中性、单一强调色、焦点不散）。唯一设计源与完整实现映射见 `docs/visual-perspective-system.md`——颜色/间距/圆角/层级/响应式的具体值、决策阶梯、变化闭包均在该文件单一维护，本文不重复。
 
 ## Components
 

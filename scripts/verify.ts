@@ -34,7 +34,6 @@ import {
   checkSettingsSingleSourceBuildStoreFile,
   checkSnowIgnoredLocalState,
   checkStructureBaselineUpToDate,
-  checkTaskLedgerCitationsResolve,
   checkTestStructureLayering,
   checkTrinityArchitectureIntegrity,
   checkUpdateManifestGeneration,
@@ -196,7 +195,6 @@ export const gateSteps: GateStep[] = [
   { id: "avalonia-mainline-verify", tier: "native", run: () => checkAvaloniaMainlineVerify() },
   { id: "coverage-gate", tier: "native", run: () => checkCoverageGate() },
   { id: "analyzer-wiring", tier: "native", run: () => checkAnalyzerWiring() },
-  { id: "task-ledger-citations-resolve", tier: "static", run: () => checkTaskLedgerCitationsResolve() },
   { id: "command-table-consistency", tier: "static", run: () => checkCommandTableConsistency() },
   {
     id: "settings-single-source",

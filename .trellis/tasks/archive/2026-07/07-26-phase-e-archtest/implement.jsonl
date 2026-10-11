@@ -1,2 +1,0 @@
-{"file": "tools/verify.ps1", "reason": "Target: fix security audit F1 path, add arch check gate"}
-{"file": "src/WTLauncher.Core/DirectoryPath.cs", "reason": "Reference: actual path for F1 fix"}

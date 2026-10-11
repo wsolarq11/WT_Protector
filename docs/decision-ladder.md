@@ -12,7 +12,7 @@ Update when: 目录、代码分层、函数职责、文档分类或单一源分�
 2. 语义归类：这个变化属于哪类事实（目录、代码/函数、视觉、命令、不变量、文档），影响哪个闭包。
 3. 唯一源修改：只改该层的唯一源，不动消费方。
 4. 消费方复验：跑 `npm run verify`、`npm test`、`typecheck`、`release:contract`。
-5. 证据归档：更新 `docs/branch-evidence-matrix.md`，把静态推断转成实测确证。
+5. 证据归档：更新 `docs/reference/branch-evidence-matrix.md`，把静态推断转成实测确证。
 
 ## 变化闭包
 
@@ -24,9 +24,9 @@ Update when: 目录、代码分层、函数职责、文档分类或单一源分�
 | 函数职责 | 每个文件首导出的核心入口 + 后续函数按调用图拓扑排列 | `grep ^func`/`^public` 的执行叙事 | 模糊命名、过早抽象、重复逻辑 |
 | 视觉 | `docs/visual-perspective-system.md` + `LauncherDesignTokens.cs` | `App.axaml` 全局皮肤 | XAML 裸色值、窗口内联重复皮肤 |
 | 命令 | `package.json`（机器源）+ `AGENTS.md` 脚本工具箱（唯一人工视图） | `README.md`/`src/avalonia-launcher/README.md` 只引用 | 各入口文档各自重列命令清单 |
-| 项目不变量 | `AGENTS.md` 核心规则 | `README.md` 安全口径（用户视角）、`.trellis/spec/`（代码层） | 第二份不变量表 |
+| 项目不变量 | `AGENTS.md` 核心规则 | `README.md` 安全口径（用户视角）、`docs/spec/`（代码层） | 第二份不变量表 |
 | 门禁分层 | `AGENTS.md` | 其他入口只引用 | 另一份 gate tier 说明 |
-| 文档 | `docs/README.md` 索引 | 藤曼路径、`task-ledger-citations-resolve` | 归档后仍留在 Active、旧三文件引用、`Status` 头与目录与索引分节三者不一致 |
+| 文档 | `docs/README.md` 索引 | 藤曼路径 | 归档后仍留在 Active、旧三文件引用、`Status` 头与目录与索引分节三者不一致 |
 
 ## 治理成本
 
@@ -34,7 +34,7 @@ Update when: 目录、代码分层、函数职责、文档分类或单一源分�
 
 - 漂移定价看读者：AI 读者盲目信任不试错，AI 入口文档（`AGENTS.md`）必须准，值得锚定；人类读者会试错纠偏，人类入口可略旧，约定即可。
 - 手段按成本从低到高：不做 → 流程约束（归档登记旧路径）→ 少量关键锚点（`wiring-map` 类名）→ 双向门禁（命令表镜像）→ 真生成（脚本产出文档）。能用便宜的不用贵的。
-- 门禁是负债不是资产：每加一个 = 加一个要维护的漂移源 + 一个把文档焊死的点；焊点累积会杀死可重构性。定期按引用密度判据（`.trellis/spec/guides/pitfalls.md` §2.26）审计删过剩门禁。
+- 门禁是负债不是资产：每加一个 = 加一个要维护的漂移源 + 一个把文档焊死的点；焊点累积会杀死可重构性。定期按引用密度判据（`docs/spec/guides/pitfalls.md` §2.26）审计删过剩门禁。
 - 可重构性 > 完整性：文档能被放心重构，比所有事实都被门禁钉死更重要。
 
 ## 复杂度收敛（2026-09 取证，含修正）

@@ -64,7 +64,7 @@ foreach ($forbidden in @('spikes', 'src\winforms-launcher', 'WT Launcher.exe', '
 }
 Add-Check 'retired-paths-removed' @{ paths = @('spikes', 'src\winforms-launcher', 'WT Launcher.exe', 'WT Launcher') }
 
-# Spec invariant .trellis/spec/guides/index.md §5: "Never catch (Exception) — Narrow It".
+# Spec invariant docs/spec/guides/index.md §5: "Never catch (Exception) — Narrow It".
 # A bare catch swallows unrecoverable exceptions (OOM/SEH/AccessViolation) behind a
 # status string, hiding real bugs. Enforcing here prevents future regressions of the
 # bug fixed in 266aa6f. Filtered catches (`catch (Exception ex) when (...)`) are allowed.
@@ -87,7 +87,7 @@ if ($bareCatchViolations.Count -gt 0) {
 Add-Check 'no-bare-catch-exception' @{
     path = 'src/avalonia-launcher/src'
     violations = 0
-    invariant = '.trellis/spec/guides/index.md §5'
+    invariant = 'docs/spec/guides/index.md §5'
 }
 
 # App views consume semantic resources/tokens; raw color literals belong only in

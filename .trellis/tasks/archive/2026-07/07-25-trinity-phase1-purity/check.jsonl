@@ -1,5 +1,0 @@
-{"file": ".trellis/spec/core/quality-guidelines.md", "reason": "Core 层质量指南"}
-{"file": ".trellis/spec/guides/pitfalls.md", "reason": "已知踩坑记录"}
-{"file": "tools/verify.ps1", "reason": "全量门禁脚本"}
-{"file": "src/avalonia-launcher/tests/WTLauncher.Tests/LauncherStoreLoadFailureTests.cs", "reason": "现有 Store 测试参考"}
-{"file": "src/avalonia-launcher/src/WTLauncher.App/Program.cs", "reason": "入口点，可能涉及初始化"}

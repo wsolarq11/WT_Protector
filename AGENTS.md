@@ -12,7 +12,6 @@ Local Windows Terminal workspace launcher: open saved folders with a chosen shel
 | --- | --- |
 | 人类用户 | `README.md` |
 | AI 代理 | 本文件 |
-| DeepSeek Harness | `.dsh/DSH.md` |
 | 设计决策 | `DESIGN.md` |
 | 深度知识 | `docs/`（索引 `docs/README.md`） |
 
@@ -23,13 +22,14 @@ WT_Protector/
 ├── AGENTS.md              ← 本文件：AI 导航中枢 + 结构基线 + 项目级不变量唯一源
 ├── README.md              ← 用户/产品文档：快速上手、配置 schema、验证、运行、安全、状态
 ├── DESIGN.md              ← 设计契约：品牌、原则、组件所有权、Token
-├── .dsh/DSH.md            ← DeepSeek Harness 的 Trellis 接入说明
 ├── .wt-protector.dsc.yaml ← WinGet Configuration：新机前置依赖
 ├── config/launcher.json   ← 唯一运行时状态（entries/presets/settings/defaultPresetId/runHistory）
 ├── package.json / scripts/ ← Node/TypeScript 脚本层（命令机器源 + verify / build-release / release-contract / smoke）
+├── global.json              ← .NET SDK 版本钉固（10.0.301 + rollForward: latestFeature）
+├── make.bat / run.bat       ← 双击构建/启动入口（纯 npm 命令包层，不重复逻辑）
 ├── src/avalonia-launcher/ ← 活动主线：Avalonia/.NET 源码 + 测试 + 构建（五层架构唯一源）
 ├── tools/                 ← .NET 辅助工具（smoke-probe / uninstaller）
-├── docs/                  ← 深度文档，唯一索引见 docs/README.md（Active/Reference/Research/Archive）
+├── docs/                  ← 深度文档，唯一索引见 docs/README.md（Active/Reference/Research/Archive/Spec）
 └── retired/               ← 退役归档（旧 HTA + WinForms 教训），永不恢复
 ```
 
@@ -76,12 +76,12 @@ WT_Protector/
 | WTLauncher.Analyzers C# files | 8 |
 | Tests C# files | 121 |
 | Test attributes [Fact]+[Theory] | 740 |
-| Gate steps (verify.ts) | 43 |
+| Gate steps (verify.ts) | 42 |
 <!-- DERIVED:structure-baseline:END -->
 
 ## 核心规则
 
-项目级不变量唯一源；代码层规范在 `.trellis/spec/`。
+项目级不变量唯一源；代码层规范在 `docs/spec/`。
 
 - `.snow/` 是本地忽略状态，不追踪、不校验、不作为完成依据
 - 行尾由 `.gitattributes` 统一为 LF
@@ -106,28 +106,5 @@ WT_Protector/
 | 审计功能边界 / claim | `docs/feature-reality-north-star-audit.md` |
 | 参考外部设计 | `docs/design-benchmark-digest.md` + `docs/giants-shoulders/` |
 | 统一架构 / 单一源决策 | `docs/decision-ladder.md` |
-| 踩坑 / 代码层规范 | `.trellis/spec/` |
-| dsh 平台 Trellis 接入 | `.dsh/DSH.md` |
+| 踩坑 / 代码层规范 | `docs/spec/` |
 | 查任何文档 | `docs/README.md` |
-
-<!-- TRELLIS:START -->
-# Trellis Instructions
-
-These instructions are for AI assistants working in this project.
-
-This project is managed by Trellis. The working knowledge you need lives under `.trellis/`:
-
-- `.trellis/workflow.md` — development phases, when to create tasks, skill routing
-- `.trellis/spec/` — package- and layer-scoped coding guidelines (read before writing code in a given layer)
-- `.trellis/workspace/` — per-developer journals and session traces
-- `.trellis/tasks/` — active and archived tasks (PRDs, research, jsonl context)
-
-If a Trellis command is available on your platform (e.g. `/trellis:finish-work`, `/trellis:continue`), prefer it over manual steps. Not every platform exposes every command.
-
-If you're using Codex or another agent-capable tool, additional project-scoped helpers may live in:
-- `.agents/skills/` — reusable Trellis skills
-- `.codex/agents/` — optional custom subagents
-
-Managed by Trellis. Edits outside this block are preserved; edits inside may be overwritten by a future `trellis update`.
-
-<!-- TRELLIS:END -->

@@ -1,4 +1,0 @@
-{"file":".trellis/spec/core/quality-guidelines.md","reason":"Core remains framework-free and every token has production consumers."}
-{"file":".trellis/spec/views/dialogs.md","reason":"Audit safe/destructive default and focus semantics across every dialog."}
-{"file":".trellis/spec/tests/test-quality.md","reason":"Audit coverage of all migrated production windows and full gate evidence."}
-{"file":"docs/exemplar-gap-refactor-audit.md","reason":"Verify V-03 closes the documented component-consistency gap without XAML rewrite scope creep."}

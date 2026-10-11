@@ -1,2 +1,0 @@
-{"file":".trellis/spec/views/mvvm-pattern.md","reason":"MainWindow authoritative status, derived presentation and typed service-result ownership contracts."}
-{"file":".trellis/spec/tests/test-quality.md","reason":"Behavioral contract coverage expectations for typed status values and notification projections."}

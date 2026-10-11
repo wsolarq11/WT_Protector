@@ -1,1 +1,0 @@
-{"file": ".trellis/spec/guides/pitfalls.md", "reason": "AOT lockfile restore-graph gotcha was the governing invariant for TS release parity"}

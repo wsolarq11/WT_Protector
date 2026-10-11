@@ -1,8 +1,0 @@
-{"file": ".trellis/spec/core/index.md", "reason": "Core layer coding guidelines — understand current architecture constraints"}
-{"file": ".trellis/spec/core/quality-guidelines.md", "reason": "Core quality rules — single source of truth, error handling invariants"}
-{"file": ".trellis/spec/views/index.md", "reason": "View layer guidelines — XAML design token rules"}
-{"file": ".trellis/spec/tests/index.md", "reason": "Test architecture — ArchUnitNET rules, gate structure"}
-{"file": "DESIGN.md", "reason": "Full design document — brand, principles, component ownership table"}
-{"file": "README.md", "reason": "Feature list, schema, implementation status"}
-{"file": "docs/feature-reality-north-star-audit.md", "reason": "Claim-boundary ledger — what the project asserts about itself"}
-{"file": "docs/giants-shoulders/", "reason": "External project lessons — Avalonia, Native AOT decisions"}

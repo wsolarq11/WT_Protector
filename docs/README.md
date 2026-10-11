@@ -4,7 +4,7 @@ Update when: 文档新增、移动、归档或用途变化时。
 
 # 文档索引
 
-检索顺序：Active → Reference → Research → Archive。
+检索顺序：Active → Spec → Reference → Research → Archive。
 
 ## Active
 
@@ -18,9 +18,20 @@ Update when: 文档新增、移动、归档或用途变化时。
 | [wiring-map.md](wiring-map.md) | workflow 与端口唯一台账 | 新增端口或 workflow |
 | [design-benchmark-digest.md](design-benchmark-digest.md) | 12 项外部设计基准 → 本地验收规则 | 基准或验收规则变化 |
 | [test-structure.md](test-structure.md) | 测试体系唯一设计源：漂移模型、四层结构、取舍规则、北极星停止条件 | 测试分层或取舍规则变化 |
-| [branch-evidence-matrix.md](branch-evidence-matrix.md) | 全仓显隐分支实测矩阵 | 门禁/CI/Trellis/配置/源码分支证据变化 |
 | [visual-perspective-system.md](visual-perspective-system.md) | 视觉系统 | 视觉令牌、控件样式、响应式规则变化 |
 | [decision-ladder.md](decision-ladder.md) | 决策阶梯与变化闭包（单一源分配） | 架构分层、函数职责、文档分类规则变化 |
+
+## Spec
+
+代码层编码规范，供 AI 代理在改动前读取。独立于 Active/Reference/Research/Archive 分层：不套 `Status/Purpose/Update when` 三行头，不参与文档生命周期判据。生命周期与维护判据由 [spec/guides/index.md](spec/guides/index.md) 层入口声明。
+
+| 路径 | 内容 |
+| --- | --- |
+| [spec/guides/index.md](spec/guides/index.md) | 跨包思维指南入口 + Pre-Development Checklist |
+| [spec/guides/pitfalls.md](spec/guides/pitfalls.md) | 跨会话踩坑实录与预防规则 |
+| [spec/core/index.md](spec/core/index.md) | Core 层编码规范入口 |
+| [spec/views/index.md](spec/views/index.md) | Views 层编码规范入口 |
+| [spec/tests/index.md](spec/tests/index.md) | 测试层编码规范入口 |
 
 ## Reference
 
@@ -30,12 +41,13 @@ Update when: 文档新增、移动、归档或用途变化时。
 | --- | --- |
 | [reference/github-similar-projects-snapshot.json](reference/github-similar-projects-snapshot.json) | 12 项目市场对标快照，机器可读 |
 | [reference/shortcut-backup-manifest.json](reference/shortcut-backup-manifest.json) | 退役快捷方式清单，机器可读 |
-| [reference/distribution-signing-strategy.md](reference/distribution-signing-strategy.md) | 发布、签名与更新策略契约（发布或签名策略变化时更新） |
+| [reference/branch-evidence-matrix.md](reference/branch-evidence-matrix.md) | 门禁分支证据矩阵与判定方法示例 | 判定口径或证据方法论变化 |
+| [reference/distribution-signing-strategy.md](reference/distribution-signing-strategy.md) | 发布、签名与更新策略契约 | 发布路径、签名或更新策略变化 |
 | [giants-shoulders/README.md](giants-shoulders/README.md) | 外部项目教训库入口与准入规则 |
 
 ## Research
 
-探索性记录，非行动方案。此处只列仓库级架构调研；Trellis 任务级研究（含编码标准）在 `.trellis/research/`，任务台账（PRD/归档）在 `.trellis/tasks/`（含 `archive/`），都由 Trellis 任务上下文管理，不在本索引范围。
+探索性记录，非行动方案。此处只列仓库级架构调研。
 
 | 文档 | 用途 |
 | --- | --- |

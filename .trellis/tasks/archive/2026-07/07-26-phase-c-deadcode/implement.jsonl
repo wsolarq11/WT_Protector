@@ -1,4 +1,0 @@
-{"file": "src/WTLauncher.Core/AppState.cs", "reason": "C1 dead code record"}
-{"file": "src/WTLauncher.App/Infrastructure/ErrorSupervisor.cs", "reason": "C2 dead code circuit breaker"}
-{"file": "src/WTLauncher.App/Features/ServiceResult.cs", "reason": "C3 unused abstraction"}
-{"file": "src/WTLauncher.Core/LauncherPresetValidator.cs", "reason": "C5 dead validator"}

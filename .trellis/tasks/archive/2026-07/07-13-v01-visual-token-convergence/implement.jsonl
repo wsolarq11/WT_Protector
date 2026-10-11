@@ -1,3 +1,0 @@
-{"file":".trellis/spec/core/data-types.md","reason":"LauncherDesignTokens ownership and production-consumer contract."}
-{"file":".trellis/spec/views/quality-guidelines.md","reason":"View token consumption and forbidden hardcoded visual values."}
-{"file":".trellis/spec/tests/test-quality.md","reason":"Stable structure/gate assertions for visual token drift."}
