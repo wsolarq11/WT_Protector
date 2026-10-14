@@ -116,3 +116,5 @@ Claim boundary (authoritative audit: [`docs/adr/feature-reality-north-star-audit
 - The feature audit classifies all 22 active feature mappings as narrow-domain north-star for the portable Windows Terminal workspace-launcher scope only.
 - The full absolute objective remains not complete as written because unimprovable-product, stronger-than-every-GitHub-similar, and absolute zero-side-effect claims are still blocked by current evidence.
 - This project does not claim to be unimprovable, stronger than every GitHub similar, or free of side effects after starting arbitrary external processes.
+
+Maintenance status: continued maintenance. The promise itself — triggers, closing ritual, exit condition, decision record — lives in exactly one place: [`docs/roadmap.md`](docs/roadmap.md)「维护承诺」.

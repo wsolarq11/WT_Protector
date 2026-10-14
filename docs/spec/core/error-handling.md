@@ -40,7 +40,7 @@
 
 异常类型是公共 API；变更前审计所有 `Assert.Throws<T>`。
 
-## Catch 纪律（gate 强制，commit `266aa6f`）
+## Catch 纪律（gate 强制：`no-bare-catch-exception`）
 
 `tools/verify.ps1` `no-bare-catch-exception` 拒绝 `src/avalonia-launcher/src/**/*.cs` 中任何无 `when` 过滤的 `catch (Exception)`。
 

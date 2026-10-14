@@ -62,7 +62,7 @@
 - 预防：规范化集中在 `LauncherJson` 一处
 
 ### §2.3 KISS 合并后 catch 过宽
-- 证据：commit `a8624d2`、`86d75c2`
+- 证据：提交 `fix: eliminate bare catch violations and protect async void handlers`
 - 根因：`TrySaveWindowBounds` 裸 catch 吞异常
 - 预防：永不裸 `catch (Exception)`；窄化为 `IOException | UnauthorizedAccessException | SecurityException`
 
@@ -323,7 +323,7 @@
 - 修复：F13b 每视图 `_scrollOffsets`；E8 移除 `FailedCount>0` 跳过强制确认；"用户能忍"不是拒修理由
 
 ### M12 Spec 不变量必须有 gate 强制层
-- 来源：2026-07-10 `07-10-discovery-scan-narrow-catch`（`266aa6f`）
+- 来源：2026-07-10 任务 `07-10-discovery-scan-narrow-catch`
 - 修复：裸 catch 不变量 + `no-bare-catch-exception` gate；每条不变量问"gate 在哪强制"
 
 ## 5. UltraReview 全量修复（2026-06-24）

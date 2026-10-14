@@ -27,6 +27,7 @@ Update when: 目录、代码分层、函数职责、文档分类或单一源分�
 | 项目不变量 | `AGENTS.md` 核心规则 | `README.md` 安全口径（用户视角）、`docs/spec/`（代码层） | 第二份不变量表 |
 | 门禁分层 | `AGENTS.md` | 其他入口只引用 | 另一份 gate tier 说明 |
 | 文档 | `docs/README.md` 索引 | 藤曼路径 | 文档移动后不更新层 index.md、文档引用了已删除的旧路径、重复引用（同一事实在多处列出） |
+| 维护承诺 | `docs/roadmap.md`「维护承诺」（拍板、触发条件、收口仪式、退出条件仅此一处） | `README.md` / `docs/handoff.md` 状态句（只带状态词与指针，不复述日期或承诺文本） | 第二份维护承诺清单；拍板日期在唯一源之外列出 |
 
 ## 治理成本
 
@@ -39,9 +40,9 @@ Update when: 目录、代码分层、函数职责、文档分类或单一源分�
 
 ## 复杂度收敛（2026-09 取证，含修正）
 
-取证（修正）：归档任务名的 6 次范式切换（unified-store → fluxor → eventsourcing → cqrs → trinity → arch-cut）是**历史探索过程**，不是当前状态。`arch-cut` 已把事件溯源/Fluxor/CQRS 代码删净（grep 零匹配）。当前是收敛的 MVVM：Core 51 + App 121 + Analyzers 7，无过度抽象骨架可砍。
+取证（修正）：归档任务名的 6 次范式切换（unified-store → fluxor → eventsourcing → cqrs → trinity → arch-cut）是**历史探索过程**，不是当前状态。`arch-cut` 已把事件溯源/Fluxor/CQRS 代码删净（grep 零匹配）。当前是收敛的 MVVM，各层文件数见 `AGENTS.md` 结构基线表，无过度抽象骨架可砍。
 
-方向：架构无需再砍——它已经收敛。治理层已砍 2 个门禁（`no-hardcoded-gate-counts`、`no-stale-three-file-refs`，46→44）；剩余治理密度是「探索的沉淀」而非「过度设计的镜像」，边际收益递减，停手。教训：归档任务名反映历史而非现状，任何「当前代码过度设计」的推断必须经代码取证，不能由任务名推断。
+方向：架构无需再砍——它已经收敛。治理层在 2026-09 收口时已砍 2 个门禁（`no-hardcoded-gate-counts`、`no-stale-three-file-refs`）；当前门禁步数见 `AGENTS.md` 结构基线表。剩余治理密度是「探索的沉淀」而非「过度设计的镜像」，边际收益递减，停手。教训：归档任务名反映历史而非现状，任何「当前代码过度设计」的推断必须经代码取证，不能由任务名推断。
 
 ## 目录架构
 

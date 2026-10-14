@@ -1,6 +1,6 @@
 # Directory Structure — Views Layer
 
-> `Views/` 文件组织。计数由 `AGENTS.md` 结构基线 + `structure-baseline-consistency` 机器校验，本文件不硬编码漂移数字。
+> `Views/` 文件组织。计数由 `AGENTS.md` 结构基线 + `structure-baseline-up-to-date` 机器校验，本文件不硬编码漂移数字。
 
 ## 文件布局
 

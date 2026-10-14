@@ -1,6 +1,6 @@
 # Directory Structure — Core Layer
 
-> 5 层架构：每层只依赖下层。结构事实（文件数 / partial / 测试 / gate 步数）单一源于 `AGENTS.md` 结构基线 + `structure-baseline-consistency`；本文件不硬编码漂移数字。
+> 5 层架构：每层只依赖下层。结构事实（文件数 / partial / 测试 / gate 步数）单一源于 `AGENTS.md` 结构基线 + `structure-baseline-up-to-date`；本文件不硬编码漂移数字。
 
 ## 5 层
 
