@@ -37,8 +37,17 @@
 
 - Avalonia Native AOT 发布体积是 WPF 的 ~3x——这是 runtime 代价，已接受
 - `config/launcher.json` 单文件：并发窗口写可能丢更新的上限 ≥2 窗口——概率极小，暂不解决
-- 历史中提交过构建产物（`tools/uninstaller/bin|obj` 等，约 85MB 快照），`.gitignore` 已止血但历史仍占 ~43MB。本地实测 `git filter-repo --strip-blobs-with-ids` 剥离后 `.git` 可降至 ~5.5MB（含 `.trellis/` 时 ~3.9MB），工作树哈希不变（`9618a81c`）。**未执行**：需 force-push 公开仓库且已引用的 commit 短哈希会失效。前提已就绪：`docs/spec/` 的短哈希引用（原本就无法解析的 phantom reference）已改为提交标题/任务名引用，重写不会再损坏文档引用。剩余决策点仅「是否接受公开仓库 force-push」。
-- 仓库 0 tag / 0 release：维护承诺的收口仪式要求「打 tag、receipt 随 tag 留档」，尚未执行。
+- 重写代价（接受）：2026-10-14 历史重写后，重写前发布过的 commit 短哈希失效。规则：文档引用一律用 tag 或提交标题，不写裸短哈希。
+
+## 历史重写记录（2026-10-14）
+
+误提交的构建产物（`tools/uninstaller/bin|obj` 等 242 个可再生 blob，约 85MB 快照）经 `git filter-repo --strip-blobs-with-ids` 从历史剥离：
+
+- `.git` 43MB → 5.4MB；1268 提交全保留；工作树哈希不变（前后均 `b574e745`）
+- `--force-with-lease` 覆盖 `origin/main`（公开仓库；未走私有 push）
+- 重写前完整历史存于仓库外 bundle（`WT_Protector-history-backup-20261014.bundle`）与本地分支 `backup/pre-rewrite`
+- `.trellis/` 过程日志刻意保留——是证据，不是产物
+- 首个版本 tag `v0.1.0` 打于重写后 HEAD，receipt 与 friend zip 随 release 留档（维护承诺的收口仪式首次执行）
 
 ## 不做的
 

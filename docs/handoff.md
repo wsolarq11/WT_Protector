@@ -6,10 +6,9 @@
 
 **WT_Protector** — 收敛维护期。维护模式：继续维护；拍板日期与承诺全文唯一源见 [roadmap.md](roadmap.md)「维护承诺」。
 - 本地 `npm run verify`：全部门禁步 PASS，0 阻断 ✅（步数与测试计数见 `AGENTS.md` 结构基线表）
-- 交付物：`artifacts/friend/WTLauncher-0.1.0-c26af95d.zip`，与 HEAD `c26af95d` 对齐（含 StoreGrain TOCTOU 修复）
-- 远端 CI (docs restructure)：`success` ✅
-- 远端 CI (CI simplify)：`success` (run 38125445129) ✅
-- 最新 commit：`c26af95d`（前次会话 4 个 commit）
+- 交付物：`artifacts/friend/` 下与当前 tag 对齐的 friend zip（tag `v0.1.0`，含 StoreGrain TOCTOU 修复）
+- 远端 CI：见仓库 Actions 最新 run
+- 远端 `origin/main` 已重写（见下「历史重写」），commit 哈希与重写前不再对应
 
 ## 本次会话（2026-10-14）
 
@@ -19,13 +18,17 @@
 - `docs/spec/core/directory-structure.md`、`docs/spec/views/directory-structure.md`：修正失效门禁名
 - `docs/adr/decision-ladder.md`：复杂度收敛节的硬编码计数改为指针
 - `docs/handoff.md`：状态句去掉绝对计数，只留状态词 + 指针
-- `docs/spec/core/error-handling.md`、`docs/spec/guides/pitfalls.md`：失效的 commit 短哈希（`266aa6f`/`a8624d2`/`86d75c2` 本就不可解析，属 phantom reference）改为提交标题/任务名引用，重写历史不再损坏文档
+- `docs/spec/core/error-handling.md`、`docs/spec/guides/pitfalls.md`：失效的 commit 短哈希（原就不可解析，属 phantom reference）改为提交标题/任务名引用
+
+### 历史重写（构建产物剥离）
+历史中误提交过构建产物（`tools/uninstaller/bin|obj` 等，约 85MB 快照）。用 `git filter-repo --strip-blobs-with-ids` 剥离 242 个可再生产物 blob：
+- `.git` 43MB → 5.4MB；1268 个提交全部保留；工作树哈希不变（前后均 `b574e745`）
+- `--force-with-lease` 覆盖 `origin/main`；重写前完整历史存于仓库外 bundle（`WT_Protector-history-backup-20261014.bundle`）与本地分支 `backup/pre-rewrite`
+- 未剥离 `.trellis/` 过程日志（那是刻意保留的证据，非产物）
+- 代价：重写前发布过的 commit 哈希全部失效；新增引用一律用 tag / 提交标题，不再写裸短哈希
 
 ### 交付物刷新
-`npm run make` 重跑：AOT 发布 + critical-journey smoke（launch/title PASS）+ friend zip，产物与 HEAD 对齐。旧 zip `WTLauncher-0.1.0-197c75b1.zip`（2026-09-30，缺 TOCTOU 修复）已被取代。
-
-### 已知待决（未执行）
-历史中提交过构建产物（`tools/uninstaller/bin|obj` 等），`.gitignore` 已止血但历史仍占 ~43MB。剥离后 `.git` 可降至 ~5.5MB 且工作树哈希不变；因涉及公开仓库 force-push 与已引用的 commit 哈希失效，未执行，见 [roadmap.md](roadmap.md) 技术债务。
+`npm run make` 重跑：AOT 发布 + critical-journey smoke（launch/title PASS）+ friend zip。首个版本 tag `v0.1.0` 打在当前 HEAD，friend zip 与 release 资产以该 tag 为准。
 
 ## 上一次会话（2026-10-11）
 
