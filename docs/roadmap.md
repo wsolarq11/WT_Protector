@@ -33,6 +33,11 @@
 - [ ] 响应 Windows Terminal 配置格式变更
 - [ ] 按需扩展 preset 能力（用户反馈驱动）
 
+## 依赖维护
+
+- 2026-10-14：CsCheck → 4.9.1、System.Composition → 10.0.12、Microsoft.CodeAnalysis.Analyzers → 5.9.0。在重写后的 main 上直接升级（未合并基于旧历史的 Dependabot 分支 #24/#25/#26），lockfile 经可达镜像重生成，contentHash 与 CI 生成物逐一一致；build 0 警告、820/820 测试通过。
+- 本机环境注意：`api.nuget.org` 在本机不可达（NU1900），AOT locked restore 需 `-p:NuGetAudit=false` 或可达镜像；CI runner 不受影响。
+
 ## 技术债务（known + accepted）
 
 - Avalonia Native AOT 发布体积是 WPF 的 ~3x——这是 runtime 代价，已接受
