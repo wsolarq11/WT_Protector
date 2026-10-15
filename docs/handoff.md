@@ -25,7 +25,7 @@
 - `.git` 43MB → 5.4MB；1268 个提交全部保留；工作树哈希不变（前后均 `b574e745`）
 - `--force-with-lease` 覆盖 `origin/main`；重写前完整历史存于仓库外 bundle（`WT_Protector-history-backup-20261014.bundle`）与本地分支 `backup/pre-rewrite`
 - 未剥离 `.trellis/` 过程日志（那是刻意保留的证据，非产物）
-- 代价：重写前发布过的 commit 哈希全部失效；新增引用一律用 tag / 提交标题，不再写裸短哈希
+- 代价：含被剥离产物的提交及其后代哈希改变（实测 1268 个旧提交中 114 个哈希改变、1154 个不变）；新增引用一律用 tag / 提交标题，不再写裸短哈希
 
 ### 交付物刷新
 `npm run make` 重跑：AOT 发布 + critical-journey smoke（launch/title PASS）+ friend zip。首个版本 tag `v0.1.0` 打在重写后 HEAD，friend zip 与 release 资产以该 tag 为准（其后 2 个提交为文档/依赖升级，不改变交付二进制——`App` 运行时闭包与 tag 时一致，31 个库零差异）。
