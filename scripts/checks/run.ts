@@ -9,9 +9,35 @@ export async function checkReleaseLockfileConsistency(): Promise<void> {
   addCheck("release-lockfile-consistency", { lockedMode: true, aotMarker: "EnableNativeAot" });
 }
 
+/** guiSmoke 账单的诚实规则:在 Windows 上冒烟确实执行过,因此 receipt 只能记
+ * "launch+title"(跑了)或 "skipped-non-windows"(平台不支持)。此前 CI 分支把真实结果
+ * 覆盖成 "skipped-ci-headless",而 CI 的 windows runner 有桌面会话、冒烟实际跑过——
+ * 于是"首次超时重试成功"与"干净通过"在 receipt 里写成同一个字符串。
+ * 抽成纯函数,好让这条规则有自己的单测,而不只靠昂贵的全量门禁兜底。 */
+export function validateGuiSmokeReceipt(guiSmoke: string, attempts: number): void {
+  if (guiSmoke !== "launch+title" && guiSmoke !== "skipped-non-windows") {
+    throw new Error(
+      `Avalonia mainline receipt guiSmoke must be "launch+title" or "skipped-non-windows"; got "${guiSmoke}"`,
+    );
+  }
+  if (guiSmoke === "launch+title" && attempts < 1) {
+    throw new Error("Avalonia mainline receipt ran guiSmoke but reported zero attempts");
+  }
+}
+
 export async function checkAvaloniaMainlineVerify(): Promise<void> {
   const mainline = await runVerifyMainline();
-  const requiredFields = ["schemaVersion", "kind", "status", "repoHead", "worktreeDirty", "worktreeStatus", "nativeAot"];
+  const requiredFields = [
+    "schemaVersion",
+    "kind",
+    "status",
+    "repoHead",
+    "worktreeDirty",
+    "worktreeStatus",
+    "nativeAot",
+    "guiSmoke",
+    "guiSmokeAttempts",
+  ];
   for (const field of requiredFields) {
     if (!(field in mainline)) {
       throw new Error(`Avalonia mainline receipt missing field: ${field}`);
@@ -35,6 +61,7 @@ export async function checkAvaloniaMainlineVerify(): Promise<void> {
   if (mainline.publishedDll !== null) {
     throw new Error("Avalonia mainline Native AOT receipt must not claim a managed publishedDll");
   }
+  validateGuiSmokeReceipt(String(mainline.guiSmoke ?? ""), Number(mainline.guiSmokeAttempts));
   addCheck("avalonia-mainline-verify", {
     schemaVersion: mainline.schemaVersion,
     kind: mainline.kind,
@@ -44,6 +71,7 @@ export async function checkAvaloniaMainlineVerify(): Promise<void> {
     nativeAot: mainline.nativeAot,
     tests: mainline.tests,
     guiSmoke: mainline.guiSmoke,
+    guiSmokeAttempts: mainline.guiSmokeAttempts,
     publishedExe: mainline.publishedExe,
     publishedDll: mainline.publishedDll,
     sha256: mainline.sha256,

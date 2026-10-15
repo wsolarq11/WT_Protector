@@ -132,18 +132,24 @@ export function formatGateSummary(
   return lines.join("\n");
 }
 
-/** 探测本机是否具备 .NET 10 SDK。门禁的 native 层需要它,而 global.json 钉的
- * 就是 10.x,因此这里只认 10.x 前缀,避免用旧 SDK 产生误导性的 NETSDK1045。 */
-async function detectDotnet10Sdk(): Promise<string | null> {
-  const result = await execa("dotnet", ["--list-sdks"], { reject: false });
+/** 判定 `dotnet --version` 的输出是否是本次构建可用的 SDK。global.json 钉的是
+ * 10.x,非 10.x 说明解析到了不兼容的 SDK,视同缺失——让 native 层显式跳过,
+ * 而不是拿一个不兼容的 SDK 去构建、再报成代码失败。 */
+export function isSupportedDotnetSdk(versionOutput: string): boolean {
+  return versionOutput.trim().startsWith("10.");
+}
+
+/** 探测本机实际会用于构建的 .NET SDK 版本。此前用 `dotnet --list-sdks` 取第一个
+ * 10.x,但该列表按目录顺序返回、与 global.json 的解析无关——CI 上装的是 10.0.301,
+ * receipt 却写成了镜像预装的 10.0.112,等于用一个没参与构建的 SDK 为产物背书。
+ * `dotnet --version` 尊重 global.json(含 rollForward),返回的正是 MSBuild 会用的那个
+ * SDK;拿不到兼容版本时返回 null,让 native 层显式跳过而不是伪装通过。 */
+async function detectActiveDotnetSdk(): Promise<string | null> {
+  const result = await execa("dotnet", ["--version"], { cwd: repoRoot, reject: false });
   if (result.exitCode !== 0) {
     return null;
   }
-  const versions = result.stdout
-    .split(/\r?\n/)
-    .map((line) => line.trim().split(/\s+/)[0] ?? "")
-    .filter((version) => version.length > 0);
-  return versions.find((version) => version.startsWith("10.")) ?? null;
+  return isSupportedDotnetSdk(result.stdout) ? result.stdout.trim() : null;
 }
 
 /** launcher-store 的校验结果要喂给 shortcut-backup-retirement,而清单里的步骤
@@ -268,7 +274,7 @@ export async function runVerify(): Promise<VerifyReceipt> {
   resetChecks();
   assertManifestMatchesImplementation();
 
-  const dotnetSdk = await detectDotnet10Sdk();
+  const dotnetSdk = await detectActiveDotnetSdk();
   const isCi = process.env.CI === "true";
 
   const failures: GateFailure[] = [];

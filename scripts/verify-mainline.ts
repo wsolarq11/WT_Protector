@@ -142,19 +142,39 @@ function writeSmokeConfig(storePath: string): void {
   writeFileSync(storePath, JSON.stringify(store), "utf8");
 }
 
-async function processSmoke(exePath: string): Promise<string> {
+export interface SmokeOutcome {
+  result: string;
+  attempts: number;
+}
+
+/** 关键旅程冒烟的实测结果。CI 的 windows runner 有桌面会话,能拿到 MainWindowHandle,
+ * 因此这里不按 CI 跳过:跳过会把"没跑"伪装成"通过",而调用点是阻塞的。冷启动 AOT exe
+ * 在负载高的 runner 上可能超过探针的 10s 上窗窗口,故做有界重试——重试次数如实写进
+ * receipt,让抖动可见而不是被抹平。 */
+async function processSmoke(exePath: string): Promise<SmokeOutcome> {
   if (process.platform !== "win32") {
-    return "skipped-non-windows";
+    return { result: "skipped-non-windows", attempts: 0 };
   }
-  rmSync(smokeRoot, { recursive: true, force: true });
-  const smokeStore = path.join(smokeRoot, "config", "launcher.json");
-  writeSmokeConfig(smokeStore);
-  const receipt = await runSmoke({ exe: exePath, configPath: smokeStore, workingDirectory: smokeRoot });
-  const checks = receipt.checks.map((check) => check.name).join("+");
-  if (checks !== "launch+title") {
-    throw new Error(`Critical journey smoke reported unexpected checks: ${checks}`);
+  const maxAttempts = 2;
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      rmSync(smokeRoot, { recursive: true, force: true });
+      const smokeStore = path.join(smokeRoot, "config", "launcher.json");
+      writeSmokeConfig(smokeStore);
+      const receipt = await runSmoke({ exe: exePath, configPath: smokeStore, workingDirectory: smokeRoot });
+      const checks = receipt.checks.map((check) => check.name).join("+");
+      if (checks !== "launch+title") {
+        throw new Error(`Critical journey smoke reported unexpected checks: ${checks}`);
+      }
+      return { result: checks, attempts: attempt };
+    } catch (error) {
+      lastError = error;
+      const message = error instanceof Error ? error.message : String(error);
+      process.stderr.write(`critical journey smoke attempt ${attempt}/${maxAttempts} failed: ${message}\n`);
+    }
   }
-  return checks;
+  throw lastError;
 }
 
 export async function runVerifyMainline(): Promise<ToolReceipt> {
@@ -214,25 +234,16 @@ export async function runVerifyMainline(): Promise<ToolReceipt> {
     throw new Error(`Contract violation: bare integer in XAML TimeSpan at: ${timeSpanBare.join(", ")}`);
   }
 
-  const processSmokeResult = await processSmoke(exePath);
-  const isCi = process.env.CI === "true";
-  let guiSmoke: string;
-  if (process.platform !== "win32") {
-    guiSmoke = "skipped-non-windows";
-  } else if (isCi) {
-    guiSmoke = "skipped-ci-headless";
-  } else {
-    guiSmoke = processSmokeResult;
-  }
-  if (guiSmoke !== "skipped-non-windows" && guiSmoke !== "skipped-ci-headless") {
-    guiSmoke = "hidden-temp-config-window-title";
-  }
+  const smoke = await processSmoke(exePath);
 
   return makeReceipt("avalonia-mainline-verify", {
     sourceRoot: avaloniaRoot,
     nativeAot: true,
     tests: counters.total,
-    guiSmoke,
+    guiSmoke: smoke.result,
+    // 重试次数是抖动的一手证据。若这里出现 2,说明首次冒烟上窗超时——
+    // 状态仍是 PASS,但"这台 runner 不稳"这个事实必须可被审计,不能被重试抹掉。
+    guiSmokeAttempts: smoke.attempts,
     publishedExe: exePath,
     publishedDll: null,
     bytes: fileBytes(exePath),
