@@ -14,7 +14,7 @@ Update when: 判定口径、证据方法论或 CI 流程变化时（步数/属�
 
 ## 门禁层
 
-本 session 已装 .NET 10.0.401 SDK（`C:\Program Files\dotnet`），实测默认 `npm run verify` 全量 PASS：`dotnetSdk=10.0.401`、`failures=0`、`advisory=1`、`skipped=0`；Avalonia 主线测试全部通过。winget 1.29.290 已安装，`apply:config` 与 `apply:config:dry` 均实测通过。步数与分层计数见 `AGENTS.md` 结构基线表与 `scripts/gate-steps.ts`。
+本 session 已装 .NET 10.0.401 SDK（`C:\Program Files\dotnet`），`npm run verify` 实测 static/local 全 PASS、native 三层因本机 nuget.org 502（NU1900）失败——该失败在干净 HEAD 上可复现，属环境而非改动（CI 可达 nuget.org，为绿）。门禁 receipt 的 `dotnetSdk` 现为 `10.0.401`（= `dotnet --version`，尊重 `global.json`），此前取 `--list-sdks` 首个 10.x 会误报镜像预装但未参与构建的版本。winget 1.29.290 已安装，`apply:config` 与 `apply:config:dry` 均实测通过。步数与分层计数见 `AGENTS.md` 结构基线表与 `scripts/gate-steps.ts`。
 
 ### Static
 
@@ -37,7 +37,7 @@ Update when: 判定口径、证据方法论或 CI 流程变化时（步数/属�
 | 15 | portable-installer-contract | PASS | 实测确证（通过路径） | 4 个标记存在 |
 | 16 | update-manifest-generation | PASS | 实测确证（通过路径） | 只查 `update-manifest.json` 字符串存在 |
 | 17 | test-structure-layering | PASS | 实测确证（通过路径） | 8 层目录均非空；缺层/空层分支未注入 |
-| 18 | ci-fast-lane-no-publish-duplication | PASS | 实测确证（通过路径） | 只查 `npm run test:fast` 与禁止 publish 字符串；改名假绿是已知名字耦合 |
+| 18 | ci-fast-lane-no-publish-duplication | PASS，pinnedActions=3，workflowFiles=2，hardenedInvariants=4 | 实测确证（通过路径 + 反例注入） | 单 job 无 `needs:`/`always()` + 唯一门禁命令 `npm run verify`；2026-10 加固：`permissions: contents: read`、`concurrency`、`timeout-minutes`、`tags: ["v*"]`，且 **全 workflow 目录**的 `uses:` 必须钉 40 位 SHA（不止 verify.yml）。反例已注入实测：把 checkout 改回 `@v7` 即捕获并报出文件名 |
 | 19 | aot-toolchain-owned-by-sdk | PASS + vitest | 实测确证（通过路径）+ 单测 | `root-gate.test.ts` 有 `not.toThrow()`；显式引用失败分支未实测 |
 | 20 | command-table-consistency | PASS | 实测确证（通过路径） | `package.json` 命令表与 `AGENTS.md` 脚本工具箱双向一致；漂移分支未注入 |
 | 21 | settings-single-source | PASS，signatureCount=1 | 实测确证（通过路径） | 正则精确命中唯一装配点；若正则失效会假红而非假绿 |

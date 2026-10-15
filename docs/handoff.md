@@ -2,15 +2,33 @@
 
 > 最后一棒状态：「现在是什么状态」。
 
-## 当前状态（2026-10-14）
+## 当前状态（2026-10-15）
 
 **WT_Protector** — 收敛维护期。维护模式：继续维护；拍板日期与承诺全文唯一源见 [roadmap.md](roadmap.md)「维护承诺」。
-- 本地 `npm run verify`：全部门禁步 PASS，0 阻断 ✅（步数与测试计数见 `AGENTS.md` 结构基线表）
+- 本地 `npm run verify`：static/local 全 PASS；native 三层在本机因 nuget.org 502（NU1900）失败，属环境（干净 HEAD 可复现，CI 可达 nuget.org 为绿）
 - 交付物：`artifacts/friend/` 下与当前 tag 对齐的 friend zip（tag `v0.1.0`，含 StoreGrain TOCTOU 修复）
-- 远端 CI：见仓库 Actions 最新 run
+- 远端 CI：见仓库 Actions 最新 run；`main` 已开分支保护（required check `verify`）
 - 远端 `origin/main` 已重写（见下「历史重写」），commit 哈希与重写前不再对应
 
-## 本次会话（2026-10-14）
+## 本次会话（2026-10-15）
+
+### CI 加固（诚实性与牙）
+审计发现 receipt 在 GUI 冒烟上自相矛盾，已修复并给每条新不变量配上机器强制层：
+- **receipt 说谎**：`verify-mainline.ts` 无条件调用 `processSmoke()`（windows runner 有桌面会话、冒烟真跑），随后 `isCi` 分支把真实结果覆盖成常量 `"skipped-ci-headless"`——一次超时失败与一次干净通过在 receipt 里写成同一字符串。`861fde60` 原本用 `-not $isCi` 真正跳过，TS 迁移（`559619ec`）丢了守卫只留下标签。现改为：如实记录 `launch+title`，仅在平台不支持时记 `skipped-non-windows`；冷启动首次上窗超时做有界重试（2 次），次数写入新字段 `guiSmokeAttempts`，抖动可审计
+- **SDK 溯源**：`detectDotnet10Sdk` 取 `--list-sdks` 首个 10.x，在 CI 上把 10.0.301 报成镜像预装的 10.0.112。改为 `dotnet --version`（尊重 `global.json`），并抽 `isSupportedDotnetSdk` 纯函数
+- **workflow 加固**：`permissions: contents: read`、`concurrency`（PR 取消被取代的运行，main/tag 不取消）、`timeout-minutes: 30`、`tags: ["v*"]` 触发（tag→产物绑定由机器验证）、两个 workflow 的 action 全钉 40 位 SHA（浮动标签可被上游移动）
+- **门禁扩权**：`ci-fast-lane-no-publish-duplication` 新增 4 条不变量 + 全 workflow SHA 钉固校验，并对每条正则做注入自检；反例已实测——把 checkout 改回 `@v7` 即被捕获
+- **单测**：新增 `gui-smoke-honesty.test.ts`（5 例）与 SDK 溯源 2 例，脚本层 46 tests 全绿
+
+### 仓库设置
+- `main` 分支保护：required check `verify`、`enforce_admins: true`、禁 force-push、禁删除、线性历史
+- 安全开关：secret scanning、push protection、dependabot security updates 已启用；`non_provider_patterns` / `validity_checks` 需 GitHub Advanced Security，保持关闭
+
+### 文档漂移收口
+- `docs/spec/core/quality-guidelines.md`：删「CI 无头检测跳过 GUI smoke」的过时描述，改为如实记账不变量
+- `docs/evidence/branch-evidence-matrix.md`：第 18 项更新为加固后的实测值（含反例注入）
+
+## 上一次会话（2026-10-14）
 
 ### 文档漂移收口
 证据矩阵与 handoff 的绝对计数违背 `docs/README.md` 规则 3（计数只存 `AGENTS.md` 结构基线派生表），已改为指针：
