@@ -77,7 +77,7 @@ xUnit v3 + ArchUnitNET；计数随代码演进，跑 `ls tests/WTLauncher.Tests/
 - Null 安全：`<Nullable>enable</Nullable>` + `<WarningsAsErrors>nullable</WarningsAsErrors>`；NullReferenceException 在数据层物理不可能。
 - 不可变数据流：`sealed record` + init-only；`entry.Selected = true` 编译期拒绝，mutation 走 `with { }`。
 - 不可变 workflow mutation：静态方法改 record 标量用 `ref` 参数（List 内容可变 + 标量 `with { }`），`ref` 使替换在调用点显式。
-- CI 无头检测：`$env:CI -eq 'true'` 跳过 GUI smoke / 用户路径检查，receipt 记 `skipped-ci-headless`。
+- GUI 冒烟如实记账：CI 的 windows runner 有桌面会话，`critical journey smoke` 在 CI 上**真实执行**，不按 `CI` 跳过。receipt 的 `guiSmoke` 只允许 `launch+title`（跑了）或 `skipped-non-windows`（平台不支持）——把真跑过的冒烟标成“跳过”等于让 receipt 说谎。冷启动 AOT exe 在重载 runner 上可能首次上窗超时，故做有界重试；重试次数写入 `guiSmokeAttempts`，抖动因此可审计而非被抹平。
 
 ## Code Review Checklist
 
