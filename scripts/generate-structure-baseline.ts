@@ -2,10 +2,11 @@ import path from "node:path";
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { repoRoot } from "./config-lib.js";
-import { countMatches, readText, walkFiles } from "./checks/common.js";
-import { gateStepIds } from "./gate-steps.js";
+import { type Ctx, createCtx } from "./kernel/check.js";
+import { createRealWorld, type World } from "./kernel/world.js";
+import { gateChecks } from "./registry.js";
 
-// 结构基线是派生数据：文件数、测试属性数、门禁步数都能从文件系统与 gate-steps.ts
+// 结构基线是派生数据：文件数、测试属性数、门禁步数都能从文件系统与注册表
 // 算出来。手工维护这些数字再用门禁锁死，是"派生数据当权威源"的反模式。
 // 本脚本是唯一权威：AGENTS.md 只保留生成结果，漂移在物理上不可能发生。
 
@@ -46,33 +47,35 @@ function isGeneratedArtifact(file: string): boolean {
   return normalized.includes("/obj/") || normalized.includes("/bin/") || normalized.includes("/TestResults/");
 }
 
-function countFiles(row: BaselineRow): number {
-  const directory = path.join(repoRoot, row.path);
-  return walkFiles(directory).filter((file) => matchesFilter(file, row.filter) && !isGeneratedArtifact(file)).length;
+function countFiles(ctx: Ctx, row: BaselineRow): number {
+  return ctx
+    .walkFiles(ctx.path(row.path))
+    .filter((file) => matchesFilter(file, row.filter) && !isGeneratedArtifact(file)).length;
 }
 
-function countTestAttributes(): number {
-  const testDir = path.join(repoRoot, "src", "avalonia-launcher", "tests", "WTLauncher.Tests");
+function countTestAttributes(ctx: Ctx): number {
+  const testDir = ctx.path("src", "avalonia-launcher", "tests", "WTLauncher.Tests");
   let factCount = 0;
   let theoryCount = 0;
-  for (const file of walkFiles(testDir)) {
+  for (const file of ctx.walkFiles(testDir)) {
     if (!file.endsWith(".cs") || isGeneratedArtifact(file)) {
       continue;
     }
-    const text = readText(file);
-    factCount += countMatches(text, /\[Fact/g);
-    theoryCount += countMatches(text, /\[Theory/g);
+    const text = ctx.readText(file);
+    factCount += ctx.countMatches(text, /\[Fact/g);
+    theoryCount += ctx.countMatches(text, /\[Theory/g);
   }
   return factCount + theoryCount;
 }
 
-export function generateStructureBaseline(): string {
+export function generateStructureBaseline(world: World = createRealWorld(repoRoot)): string {
+  const ctx = createCtx(world);
   const lines = ["| 基线项 | 数量 |", "|--------|------|"];
   for (const row of baselineRows) {
-    lines.push(`| ${row.label} | ${countFiles(row)} |`);
+    lines.push(`| ${row.label} | ${countFiles(ctx, row)} |`);
   }
-  lines.push(`| Test attributes [Fact]+[Theory] | ${countTestAttributes()} |`);
-  lines.push(`| Gate steps (verify.ts) | ${gateStepIds.length} |`);
+  lines.push(`| Test attributes [Fact]+[Theory] | ${countTestAttributes(ctx)} |`);
+  lines.push(`| Gate checks (registry.ts) | ${gateChecks.length} |`);
   return lines.join("\n");
 }
 
@@ -81,7 +84,7 @@ export const structureBaselineEndMarker = "<!-- DERIVED:structure-baseline:END -
 
 export function updateAgentsFile(): void {
   const agentsPath = path.join(repoRoot, "AGENTS.md");
-  const content = readText(agentsPath);
+  const content = createCtx(createRealWorld(repoRoot)).readText(agentsPath);
   const startIdx = content.indexOf(structureBaselineStartMarker);
   const endIdx = content.indexOf(structureBaselineEndMarker);
   if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) {

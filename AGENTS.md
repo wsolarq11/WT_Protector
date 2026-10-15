@@ -41,6 +41,7 @@ WT_Protector/
 | --- | --- |
 | `npm run make` | 唯一产品编译：build + smoke + package:friend，产出可交付 zip |
 | `npm run verify` | 全量门禁：static + local + native + snapshot；提交前必须跑 |
+| `npm run verify:static` | 仅 static 层快车道（纯文本检查，约 2s，无 .NET 依赖） |
 | `npm run verify:mainline` | 仅 Avalonia 主线门禁 |
 | `npm run release:contract` | 发布契约：locked restore + AOT publish + clean tree + receipt |
 | `npm run release:build` | 发布构建：AOT exe → artifacts/publish/win-x64/ |
@@ -76,7 +77,7 @@ WT_Protector/
 | WTLauncher.Analyzers C# files | 8 |
 | Tests C# files | 121 |
 | Test attributes [Fact]+[Theory] | 740 |
-| Gate steps (verify.ts) | 42 |
+| Gate checks (registry.ts) | 42 |
 <!-- DERIVED:structure-baseline:END -->
 
 ## 核心规则

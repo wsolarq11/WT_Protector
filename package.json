@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "verify": "tsx scripts/verify.ts",
+    "verify:static": "tsx scripts/verify.ts --tier=static",
     "verify:mainline": "tsx scripts/verify-mainline.ts",
     "test:fast": "tsx scripts/test-fast.ts",
     "test:coverage": "tsx scripts/test-coverage.ts",

@@ -10,18 +10,24 @@ export interface SmokeOptions {
   exe: string;
   configPath?: string;
   workingDirectory?: string;
+  /** 上窗超时的重试次数上限(默认 1 = 不重试)。冷启动 AOT exe 在重载 runner 上
+   * 可能首次拿不到 MainWindowHandle;重试上限属冒烟契约本身,而不是某个调用方的私事。 */
+  maxAttempts?: number;
 }
 
 export interface SmokeReceipt {
   smoke: string;
   exe: string;
   config: string;
+  attempts: number;
   checks: Array<{ name: string; pass: boolean; detail?: string }>;
 }
 
-function writeSmokeConfig(storePath: string): void {
-  mkdirSync(path.dirname(storePath), { recursive: true });
-  const store = {
+/** 冒烟专用的 launcher store fixture。这是"冒烟看到的配置长什么样"的唯一权威源:
+ * 此前它在本文件与 verify-mainline.ts 里各有一份逐字节相同的副本,schema 一升级就会
+ * 出现两份不同步的真相。 */
+export function smokeStoreFixture(): Record<string, unknown> {
+  return {
     schemaVersion: 2,
     entries: [{ id: "smoke", name: "smoke", directory: ".", command: "echo smoke", selected: false, updatedAtUtc: "", launchedAtUtc: "" }],
     settings: {
@@ -38,10 +44,14 @@ function writeSmokeConfig(storePath: string): void {
     presets: [{ id: "smoke-group", name: "Smoke", entryIds: ["smoke"] }],
     defaultPresetId: "smoke-group",
   };
-  writeFileSync(storePath, JSON.stringify(store), "utf8");
 }
 
-export async function runSmoke(options: SmokeOptions): Promise<SmokeReceipt> {
+export function writeSmokeConfig(storePath: string): void {
+  mkdirSync(path.dirname(storePath), { recursive: true });
+  writeFileSync(storePath, JSON.stringify(smokeStoreFixture()), "utf8");
+}
+
+async function attemptSmoke(options: SmokeOptions): Promise<SmokeReceipt> {
   const exe = normalizePath(options.exe);
   if (!existsSync(exe)) {
     throw new Error(`Published exe missing: ${exe}`);
@@ -51,6 +61,7 @@ export async function runSmoke(options: SmokeOptions): Promise<SmokeReceipt> {
       smoke: "critical-journey",
       exe,
       config: options.configPath ?? "",
+      attempts: 0,
       checks: [],
     };
   }
@@ -92,12 +103,35 @@ export async function runSmoke(options: SmokeOptions): Promise<SmokeReceipt> {
   }
 }
 
+/** 跑关键旅程冒烟,带上窗超时的有界重试。
+ *
+ * 重试放在这里而不是调用方:此前 verify-mainline.ts 自己写了 2 次重试、
+ * build-product.ts 裸调一次也不重试,同一件事在门禁里被容忍、在 `npm run make`
+ * 里直接失败。冒烟耐不耐抖属于冒烟契约本身,两个调用方该拿到同一张契约。
+ * 实测次数写进 receipt.attempts,让抖动可见而不是被抹平。 */
+export async function runSmoke(options: SmokeOptions): Promise<SmokeReceipt> {
+  const maxAttempts = Math.max(1, options.maxAttempts ?? 1);
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const receipt = await attemptSmoke(options);
+      return { ...receipt, attempts: attempt };
+    } catch (error) {
+      lastError = error;
+      const message = error instanceof Error ? error.message : String(error);
+      process.stderr.write(`critical journey smoke attempt ${attempt}/${maxAttempts} failed: ${message}\n`);
+    }
+  }
+  throw lastError;
+}
+
 async function main(): Promise<void> {
   const { values } = parseArgs({
     options: {
       exe: { type: "string" },
       "config-path": { type: "string", default: "" },
       "working-directory": { type: "string", default: "" },
+      "max-attempts": { type: "string", default: "1" },
     },
   });
   if (!values.exe) {
@@ -107,6 +141,7 @@ async function main(): Promise<void> {
     exe: normalizePath(values.exe),
     configPath: values["config-path"] || undefined,
     workingDirectory: values["working-directory"] || undefined,
+    maxAttempts: Number(values["max-attempts"]),
   });
   console.log(JSON.stringify(receipt));
 }
