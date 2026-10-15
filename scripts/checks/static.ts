@@ -686,5 +686,69 @@ export function checkCiFastLaneNoPublishDuplication(): void {
   if (workflow.includes("if: always()")) {
     throw new Error("CI workflow must not use always() upload branching");
   }
-  addCheck("ci-fast-lane-no-publish-duplication", { jobs: 1, gateCommand: "npm run verify" });
+  // 以下四项是 2026-10 加固的 CI 不变量。它们此前只存在于 review 记忆里:
+  // 浮动标签、无权限收敛、无并发组、无超时,任何一次编辑都能悄悄退回原状。
+  const permissionsPattern = /^permissions:\n(?: {2}\S.*\n)* {2}contents: read$/m;
+  const timeoutPattern = /^ {4}timeout-minutes: \d+$/m;
+  const tagsPattern = /^ {4}tags: \["v\*"\]$/m;
+  const hardened: Array<{ test: boolean; message: string }> = [
+    {
+      test: permissionsPattern.test(workflow),
+      message: "CI workflow must declare least-privilege `permissions: contents: read`",
+    },
+    {
+      test: /^concurrency:\n/m.test(workflow) && workflow.includes("cancel-in-progress:"),
+      message: "CI workflow must declare a concurrency group so superseded runs are bounded",
+    },
+    {
+      test: timeoutPattern.test(workflow),
+      message: "CI job must declare timeout-minutes so a hung step cannot burn the default budget",
+    },
+    {
+      test: tagsPattern.test(workflow),
+      message: 'CI must also run on `tags: ["v*"]` so the tag→artifact binding is machine-verified',
+    },
+  ];
+  // 匹配器自检:这些断言检查的是"某项声明存在",若正则写错就会永久放行。
+  // 先证明每条正则可以命中一个最小合规样本,再拿它去判真实 workflow。
+  assertMatcherDetects(permissionsPattern, "permissions:\n  contents: read", "CI permissions");
+  assertMatcherDetects(timeoutPattern, "    timeout-minutes: 30", "CI job timeout");
+  assertMatcherDetects(tagsPattern, '    tags: ["v*"]', "CI tag trigger");
+  for (const { test, message } of hardened) {
+    if (!test) {
+      throw new Error(message);
+    }
+  }
+  // action 必须钉 commit SHA:浮动大版本标签可被上游移动,同一份 workflow 会解析到不同代码。
+  // 覆盖整个 .github/workflows 目录,而不只是 verify.yml——dependabot-lockfile.yml 持有
+  // contents: write,是全仓权限最大的 workflow,更不能让它引用可被移动的标签。
+  const workflowFiles = walkFiles(repoPath(".github/workflows")).filter(
+    (file) => file.toLowerCase().endsWith(".yml") || file.toLowerCase().endsWith(".yaml"),
+  );
+  if (workflowFiles.length === 0) {
+    throw new Error("CI hygiene: found no workflow files to verify action pinning");
+  }
+  let usesCount = 0;
+  for (const file of workflowFiles) {
+    const label = file.replaceAll("\\", "/").split("/.github/")[1] ?? file;
+    for (const rawLine of readText(file).split("\n")) {
+      if (!rawLine.trimStart().startsWith("- uses:")) {
+        continue;
+      }
+      usesCount += 1;
+      if (!/@[0-9a-f]{40}\b/.test(rawLine)) {
+        throw new Error(`Workflow action must be pinned to a 40-char commit SHA (${label}): ${rawLine.trim()}`);
+      }
+    }
+  }
+  if (usesCount === 0) {
+    throw new Error("CI hygiene: found no `uses:` lines; scan target or matcher is broken");
+  }
+  addCheck("ci-fast-lane-no-publish-duplication", {
+    jobs: 1,
+    gateCommand: "npm run verify",
+    pinnedActions: usesCount,
+    workflowFiles: workflowFiles.length,
+    hardenedInvariants: hardened.length,
+  });
 }

@@ -7,18 +7,24 @@ on:
 permissions:
   contents: write
 
+# 同一 PR 只保留最新一次 lockfile 刷新,避免并发 push 互相覆盖。
+concurrency:
+  group: dependabot-lockfile-${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   refresh:
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: windows-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout PR branch
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.head_ref }}
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v6
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           dotnet-version: "10.0.301"
           cache: true

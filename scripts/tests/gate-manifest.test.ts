@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { gateStepIds } from "../gate-steps.js";
-import { formatGateSummary, gateSteps, type GateTier } from "../verify.js";
+import { formatGateSummary, gateSteps, isSupportedDotnetSdk, type GateTier } from "../verify.js";
 
 const KNOWN_TIERS: readonly GateTier[] = ["static", "local", "native", "snapshot"];
 
@@ -106,5 +106,20 @@ describe("gate summary formatting", () => {
     );
     expect(text).toContain("[native] coverage-gate: requires .NET 10 SDK");
     expect(text).toContain("dotnet SDK: none installed (native tier skipped)");
+  });
+});
+
+// SDK 溯源:receipt 的 dotnetSdk 必须是 MSBuild 真正会用的那个 SDK。
+// 此前取 `--list-sdks` 的第一个 10.x,在装有多个 SDK 的镜像上会报出没参与构建的版本。
+describe("dotnet SDK provenance", () => {
+  it("accepts the 10.x line that global.json pins", () => {
+    expect(isSupportedDotnetSdk("10.0.301")).toBe(true);
+    expect(isSupportedDotnetSdk("10.0.401\n")).toBe(true);
+  });
+
+  it("rejects a non-10.x resolution so the native tier skips instead of building wrong", () => {
+    expect(isSupportedDotnetSdk("8.0.424")).toBe(false);
+    expect(isSupportedDotnetSdk("9.0.100")).toBe(false);
+    expect(isSupportedDotnetSdk("")).toBe(false);
   });
 });

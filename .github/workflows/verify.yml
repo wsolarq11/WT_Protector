@@ -3,16 +3,34 @@ name: CI
 on:
   push:
     branches: [main]
+    # tag 推送也验证:release 资产挂在 tag 上,只有让 CI 针对该 tag 跑一次,
+    # "tag → 产物"的绑定才是机器证明的,而不是靠人声称。
+    tags: ["v*"]
   pull_request:
     branches: [main]
+
+# 最小权限:验证只需读代码,不需要写任何东西。
+permissions:
+  contents: read
+
+# 同一 ref 只保留最新一次运行。PR 上取消被取代的运行省额度;
+# main/tag 不取消——每个 commit 的 CI 结论都应独立存在,否则"某个提交绿了"会变成无法追溯的断言。
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   verify:
     runs-on: windows-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      # action 钉到 commit SHA(注释标注语义版本):浮动大版本标签可被上游移动,
+      # 供应链攻击下同一份 workflow 会解析到不同代码。
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           dotnet-version: "10.0.301"
           cache: true
@@ -22,7 +40,7 @@ jobs:
             src/avalonia-launcher/src/WTLauncher.Analyzers/packages.lock.json
             src/avalonia-launcher/tests/WTLauncher.Tests/packages.lock.json
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: "lts/*"
           cache: npm
