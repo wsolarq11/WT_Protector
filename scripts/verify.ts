@@ -1,106 +1,59 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseArgs } from "node:util";
 import { execa } from "execa";
 import { makeReceipt, repoRoot, type ToolReceipt } from "./config-lib.js";
-import {
-  addCheck,
-  addFailedCheck,
-  addSkippedCheck,
-  checks,
-  resetChecks,
-  type GateCheck,
-} from "./checks/common.js";
-import { gateStepIds } from "./gate-steps.js";
-import {
-  checkAotToolchainOwnedBySdk,
-  checkAppRawHexZero,
-  checkCiFastLaneNoPublishDuplication,
-  checkCommandTableConsistency,
-  checkDialogServiceNoFuncAction,
-  checkHtaRetiredConfig,
-  checkLineEndingPolicy,
-  checkMainVmLineBudget,
-  checkMainlineLayout,
-  checkNoActivePowerShellScripts,
-  checkNoBareCatchException,
-  checkNoImperativeViewUi,
-  checkNoThinWrapperDelegation,
-  checkPortableInstallerContract,
-  checkReadme,
-  checkRetiredPathsRemoved,
-  checkSecurityAuditF1,
-  checkSecurityAuditF2,
-  checkSecurityAuditF3,
-  checkSettingsSingleSourceBuildStoreFile,
-  checkSnowIgnoredLocalState,
-  checkStructureBaselineUpToDate,
-  checkTestStructureLayering,
-  checkTrinityArchitectureIntegrity,
-  checkUpdateManifestGeneration,
-  checkViewsNoDirectCoreBusinessCalls,
-  checkVtkNoAppstoreResidue,
-  checkWingetConfigSchemaValid,
-  checkWinformsRetiredDesign,
-  checkWiringMapConsistency,
-  checkWorkflowNoCallbackBag,
-} from "./checks/static.js";
-import {
-  checkConfigExampleSchema,
-  checkConfigRequiredFields,
-  checkGithubSnapshot,
-  checkGithubSnapshotFreshness,
-  checkLauncherStore,
-  checkLocalEntryDirectories,
-  checkShortcutBackupRetirement,
-} from "./checks/schema.js";
-import {
-  checkAnalyzerWiring,
-  checkAvaloniaMainlineVerify,
-  checkCoverageGate,
-  checkReleaseLockfileConsistency,
-} from "./checks/run.js";
+import type { Check } from "./kernel/check.js";
+import { type Preconditions, TIER_ORDER } from "./kernel/policy.js";
+import { type GateFailure, type GateOutcome, type GateSkip, runGate } from "./kernel/runner.js";
+import type { TierName } from "./kernel/verdict.js";
+import { createRealWorld } from "./kernel/world.js";
+import { assertRegistryIntegrity, gateChecks } from "./registry.js";
 
-/** 门禁分层。分层决定失败是否阻断,以及缺少依赖时如何留痕。 */
-export type GateTier =
-  | "static" // 纯文件/文本检查:无外部依赖,失败即阻断
-  | "local" // 本机环境事实:CI 用 config/launcher.ci.json 覆盖,故 CI 上显式跳过
-  | "native" // 需要 .NET 10 SDK:缺 SDK 的机器显式跳过,不伪装成通过
-  | "snapshot"; // 外部人工数据时效性:仅 advisory,不阻断代码验证
+export type { Check, GateFailure, GateSkip, TierName };
+export { TIER_ORDER };
 
-export interface GateStep {
-  id: string;
-  tier: GateTier;
-  run: () => void | Promise<void>;
+export interface GateCheckRecord {
+  readonly name: string;
+  readonly detail: Record<string, unknown>;
 }
 
-export interface GateFailure {
-  id: string;
-  tier: GateTier;
-  message: string;
-}
-
-export interface GateSkip {
-  id: string;
-  tier: GateTier;
-  reason: string;
-}
-
-/** 门禁凭证的完整形状。字段与 runVerify 实际写入的内容一一对应。 */
 export interface VerifyReceipt extends ToolReceipt {
-  failures: GateFailure[];
-  advisory: GateFailure[];
-  skipped: GateSkip[];
-  dotnetSdk: string | null;
-  checks: GateCheck[];
+  readonly failures: readonly GateFailure[];
+  readonly advisory: readonly GateFailure[];
+  readonly skipped: readonly GateSkip[];
+  readonly dotnetSdk: string | null;
+  readonly checks: readonly GateCheckRecord[];
+  /** 本次实际评估的分层,便于 --tier 快车道自证"只跑了这一层"。 */
+  readonly tiersRun: readonly TierName[];
 }
 
-/** 人读摘要。凭证本身是给机器解析的数百行 JSON,而 CI 日志和终端需要
- * 一眼看清"哪些失败、哪些只是 advisory、哪些被跳过、为什么跳过"。 */
+/** 判定 `dotnet --version` 的输出是否是本次构建可用的 SDK。global.json 钉的是
+ * 10.x,非 10.x 说明解析到了不兼容的 SDK,视同缺失——让 native 层显式跳过,
+ * 而不是拿一个不兼容的 SDK 去构建、再报成代码失败。 */
+export function isSupportedDotnetSdk(versionOutput: string): boolean {
+  return versionOutput.trim().startsWith("10.");
+}
+
+/** 探测本机实际会用于构建的 .NET SDK 版本。`dotnet --version` 尊重 global.json
+ * (含 rollForward),返回的正是 MSBuild 会用的那个 SDK;此前用 `--list-sdks` 取
+ * 第一个 10.x,在装有多个 SDK 的镜像上会报出没参与构建的版本。 */
+async function detectActiveDotnetSdk(): Promise<string | null> {
+  const result = await execa("dotnet", ["--version"], { cwd: repoRoot, reject: false });
+  if (result.exitCode !== 0) {
+    return null;
+  }
+  return isSupportedDotnetSdk(result.stdout) ? result.stdout.trim() : null;
+}
+
+/** 人读摘要。凭证本身是给机器解析的 JSON,而 CI 日志和终端需要一眼看清
+ * "哪些失败、哪些只是 advisory、哪些被跳过、为什么跳过"。 */
 export function formatGateSummary(
-  failures: GateFailure[],
-  advisory: GateFailure[],
-  skipped: GateSkip[],
+  failures: readonly GateFailure[],
+  advisory: readonly GateFailure[],
+  skipped: readonly GateSkip[],
   dotnetSdk: string | null,
+  nativeInScope = true,
 ): string {
   const lines: string[] = [];
   lines.push(
@@ -124,232 +77,94 @@ export function formatGateSummary(
       lines.push(`  [${item.tier}] ${item.id}: ${item.reason}`);
     }
   }
+  // --tier 收窄了范围时,native 层根本没被要求运行,并不等于本机缺 SDK。
+  // 不加这句区分,"none installed" 会被误读成环境缺陷。
   lines.push(
-    dotnetSdk === null
-      ? "dotnet SDK: none installed (native tier skipped)"
-      : `dotnet SDK: ${dotnetSdk}`,
+    !nativeInScope
+      ? "dotnet SDK: not probed (native tier not in scope for this run)"
+      : dotnetSdk === null
+        ? "dotnet SDK: none installed (native tier skipped)"
+        : `dotnet SDK: ${dotnetSdk}`,
   );
   return lines.join("\n");
 }
 
-/** 判定 `dotnet --version` 的输出是否是本次构建可用的 SDK。global.json 钉的是
- * 10.x,非 10.x 说明解析到了不兼容的 SDK,视同缺失——让 native 层显式跳过,
- * 而不是拿一个不兼容的 SDK 去构建、再报成代码失败。 */
-export function isSupportedDotnetSdk(versionOutput: string): boolean {
-  return versionOutput.trim().startsWith("10.");
+/** 选择本次要评估的检查。--tier 让"最便宜、最常跑"的那层可被单独调用:
+ * 36 条 static 检查实测 261ms,而全量门禁含四次 .NET 调用约 4 分钟。
+ * 没有这个开关时,想只跑静态检查只能自己造脚本——这正是本重构要消除的摩擦。 */
+export function selectChecks(checks: readonly Check[], tiers: readonly TierName[]): Check[] {
+  if (tiers.length === 0) {
+    return [...checks];
+  }
+  const wanted = new Set(tiers);
+  return checks.filter((check) => wanted.has(check.tier));
 }
 
-/** 探测本机实际会用于构建的 .NET SDK 版本。此前用 `dotnet --list-sdks` 取第一个
- * 10.x,但该列表按目录顺序返回、与 global.json 的解析无关——CI 上装的是 10.0.301,
- * receipt 却写成了镜像预装的 10.0.112,等于用一个没参与构建的 SDK 为产物背书。
- * `dotnet --version` 尊重 global.json(含 rollForward),返回的正是 MSBuild 会用的那个
- * SDK;拿不到兼容版本时返回 null,让 native 层显式跳过而不是伪装通过。 */
-async function detectActiveDotnetSdk(): Promise<string | null> {
-  const result = await execa("dotnet", ["--version"], { cwd: repoRoot, reject: false });
-  if (result.exitCode !== 0) {
-    return null;
-  }
-  return isSupportedDotnetSdk(result.stdout) ? result.stdout.trim() : null;
+export interface RunVerifyOptions {
+  readonly tiers?: readonly TierName[];
 }
 
-/** launcher-store 的校验结果要喂给 shortcut-backup-retirement,而清单里的步骤
- * 只返回 void。用显式闭包变量传递,并在消费处断言依赖步骤已运行。 */
-let launcherActiveIds: Set<string> | undefined;
+export async function runVerify(options: RunVerifyOptions = {}): Promise<VerifyReceipt> {
+  assertRegistryIntegrity();
+  const tiers = options.tiers ?? [];
+  const selected = selectChecks(gateChecks, tiers);
 
-export const gateSteps: GateStep[] = [
-  { id: "line-ending-policy", tier: "static", run: () => checkLineEndingPolicy() },
-  { id: "snow-ignored-local-state", tier: "static", run: () => checkSnowIgnoredLocalState() },
-  { id: "retired-paths-removed", tier: "static", run: () => checkRetiredPathsRemoved() },
-  { id: "no-bare-catch-exception", tier: "static", run: () => checkNoBareCatchException() },
-  { id: "app-raw-hex-zero", tier: "static", run: () => checkAppRawHexZero() },
-  { id: "mainline-layout", tier: "static", run: () => checkMainlineLayout() },
-  { id: "readme", tier: "static", run: () => checkReadme() },
-  { id: "github-snapshot-shape", tier: "static", run: () => checkGithubSnapshot() },
-  { id: "github-snapshot-freshness", tier: "snapshot", run: () => checkGithubSnapshotFreshness() },
-  {
-    id: "launcher-store",
-    tier: "static",
-    run: () => {
-      launcherActiveIds = checkLauncherStore();
-    },
-  },
-  { id: "local-entry-directories", tier: "local", run: () => checkLocalEntryDirectories() },
-  { id: "config-example-schema", tier: "static", run: () => checkConfigExampleSchema() },
-  {
-    id: "shortcut-backup-retirement",
-    tier: "static",
-    run: () => {
-      if (launcherActiveIds === undefined) {
-        throw new Error("gate step order broken: launcher-store must run before shortcut-backup-retirement");
-      }
-      checkShortcutBackupRetirement(launcherActiveIds);
-    },
-  },
-  { id: "config-required-fields", tier: "static", run: () => checkConfigRequiredFields() },
-  { id: "winforms-retired-design", tier: "static", run: () => checkWinformsRetiredDesign() },
-  { id: "hta-retired-config", tier: "static", run: () => checkHtaRetiredConfig() },
-  { id: "portable-installer-contract", tier: "static", run: () => checkPortableInstallerContract() },
-  { id: "update-manifest-generation", tier: "static", run: () => checkUpdateManifestGeneration() },
-  { id: "test-structure-layering", tier: "static", run: () => checkTestStructureLayering() },
-  {
-    id: "ci-fast-lane-no-publish-duplication",
-    tier: "static",
-    run: () => checkCiFastLaneNoPublishDuplication(),
-  },
-  { id: "aot-toolchain-owned-by-sdk", tier: "static", run: () => checkAotToolchainOwnedBySdk() },
-  { id: "release-lockfile-consistency", tier: "native", run: () => checkReleaseLockfileConsistency() },
-  { id: "avalonia-mainline-verify", tier: "native", run: () => checkAvaloniaMainlineVerify() },
-  { id: "coverage-gate", tier: "native", run: () => checkCoverageGate() },
-  { id: "analyzer-wiring", tier: "native", run: () => checkAnalyzerWiring() },
-  { id: "command-table-consistency", tier: "static", run: () => checkCommandTableConsistency() },
-  {
-    id: "settings-single-source",
-    tier: "static",
-    run: () => checkSettingsSingleSourceBuildStoreFile(),
-  },
-  { id: "winget-config-schema", tier: "static", run: () => checkWingetConfigSchemaValid() },
-  { id: "no-imperative-view-ui", tier: "static", run: () => checkNoImperativeViewUi() },
-  { id: "dialog-service-no-func-action", tier: "static", run: () => checkDialogServiceNoFuncAction() },
-  {
-    id: "views-no-direct-core-business-calls",
-    tier: "static",
-    run: () => checkViewsNoDirectCoreBusinessCalls(),
-  },
-  { id: "security-audit-f1", tier: "static", run: () => checkSecurityAuditF1() },
-  { id: "security-audit-f2", tier: "static", run: () => checkSecurityAuditF2() },
-  { id: "security-audit-f3", tier: "static", run: () => checkSecurityAuditF3() },
-  { id: "no-thin-wrapper-delegation", tier: "static", run: () => checkNoThinWrapperDelegation() },
-  {
-    id: "trinity-architecture-integrity",
-    tier: "static",
-    run: () => checkTrinityArchitectureIntegrity(),
-  },
-  { id: "vtk-no-appstore-residue", tier: "static", run: () => checkVtkNoAppstoreResidue() },
-  { id: "wiring-map-consistency", tier: "static", run: () => checkWiringMapConsistency() },
-  { id: "main-vm-line-budget", tier: "static", run: () => checkMainVmLineBudget() },
-  { id: "workflow-no-callback-bag", tier: "static", run: () => checkWorkflowNoCallbackBag() },
-  { id: "no-active-powershell-scripts", tier: "static", run: () => checkNoActivePowerShellScripts() },
-  { id: "structure-baseline-up-to-date", tier: "static", run: () => checkStructureBaselineUpToDate() },
-];
-
-/** 清单自检:实现清单与 gate-steps.ts 的 id 序列必须逐一对应。
- * 这条断言让"加了检查却忘了登记"和"登记了却忘了实现"都在门禁里暴露。 */
-function assertManifestMatchesImplementation(): void {
-  const implemented = gateSteps.map((step) => step.id);
-  if (implemented.length !== gateStepIds.length) {
-    throw new Error(
-      `Gate manifest drift: gate-steps.ts declares ${gateStepIds.length} steps, verify.ts implements ${implemented.length}`,
-    );
-  }
-  for (let index = 0; index < implemented.length; index += 1) {
-    if (implemented[index] !== gateStepIds[index]) {
-      throw new Error(
-        `Gate manifest drift at position ${index}: gate-steps.ts has "${gateStepIds[index]}", verify.ts has "${implemented[index]}"`,
-      );
-    }
-  }
-}
-
-/** 每个步骤都必须留下一条记录。执行器保证 pass/fail/skip 三种路径都会记账,
- * 因此记录数少于步骤数就说明有步骤被跳过却没留痕。 */
-function assertEveryStepAccounted(): void {
-  if (checks.length < gateSteps.length) {
-    throw new Error(
-      `Gate accounting drift: ${gateSteps.length} steps ran but only ${checks.length} results were recorded`,
-    );
-  }
-  // 一步一记的步骤,其记录名必须等于步骤 id,receipt 才能按 id 直接反查。
-  // launcher-store 是唯一豁免:它有意一步记 4 条 schema(分别留痕),本身没有同名记录。
-  const multiRecordSteps = new Set(["launcher-store"]);
-  const checkNames = new Set(checks.map((check) => check.name));
-  const nameMismatches = gateSteps
-    .map((step) => step.id)
-    .filter((id) => !multiRecordSteps.has(id) && !checkNames.has(id));
-  if (nameMismatches.length > 0) {
-    throw new Error(`Gate accounting name drift: steps without a same-named check record: ${nameMismatches.join(", ")}`);
-  }
-}
-
-export async function runVerify(): Promise<VerifyReceipt> {
-  resetChecks();
-  assertManifestMatchesImplementation();
-
-  const dotnetSdk = await detectActiveDotnetSdk();
+  const world = createRealWorld(repoRoot);
   const isCi = process.env.CI === "true";
+  const needsNative = selected.some((check) => check.tier === "native");
+  // 只在真的要跑 native 时才探测 SDK:static 快车道不该付 `dotnet --version` 的进程代价。
+  const dotnetSdk = needsNative ? await detectActiveDotnetSdk() : null;
+  const pre: Preconditions = { isCi, dotnetSdk };
 
-  const failures: GateFailure[] = [];
-  const advisory: GateFailure[] = [];
-  const skipped: GateSkip[] = [];
+  const outcome: GateOutcome = await runGate(selected, world, pre);
 
-  for (const step of gateSteps) {
-    let skipReason: string | null = null;
-    if (step.tier === "native" && dotnetSdk === null) {
-      skipReason = "requires .NET 10 SDK; none installed on this machine";
-    } else if (step.tier === "local" && isCi) {
-      skipReason = "CI overlays config/launcher.ci.json, so entry directories are not applicable";
-    }
-
-    if (skipReason !== null) {
-      skipped.push({ id: step.id, tier: step.tier, reason: skipReason });
-      addSkippedCheck(step.id, skipReason);
-      continue;
-    }
-
-    try {
-      await step.run();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      const record: GateFailure = { id: step.id, tier: step.tier, message };
-      if (step.tier === "snapshot" || step.tier === "local") {
-        // snapshot 是外部人工数据时效;local 是本机路径存在性。二者都不描述代码正确性,
-        // 只作 advisory 报告,避免一台机器缺一个目录就瘫痪整条验证。
-        advisory.push(record);
-      } else {
-        failures.push(record);
-      }
-      addFailedCheck(step.id, error);
-    }
-  }
-
-  // 清单与记账自检放在所有步骤之后:它们描述的是本次执行的整体事实。
-  try {
-    assertEveryStepAccounted();
-    addCheck("gate-accounting", {
-      steps: gateSteps.length,
-      recorded: checks.length,
-      failures: failures.length,
-      advisory: advisory.length,
-      skipped: skipped.length,
-    });
-  } catch (error) {
-    failures.push({
-      id: "gate-accounting",
-      tier: "static",
-      message: error instanceof Error ? error.message : String(error),
-    });
-  }
-
-  const status = failures.length === 0 ? "PASS" : "FAIL";
+  const status = outcome.failures.length === 0 ? "PASS" : "FAIL";
   const receipt = await makeReceipt(
     "root-verify",
     {
       root: repoRoot,
-      failures,
-      advisory,
-      skipped,
+      failures: outcome.failures,
+      advisory: outcome.advisory,
+      skipped: outcome.skipped,
       dotnetSdk,
-      checks,
+      checks: outcome.checks,
+      tiersRun: [...new Set(selected.map((check) => check.tier))],
     },
     status,
   );
   return receipt as VerifyReceipt;
 }
 
-const isMain = Boolean(process.argv[1]) && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-if (isMain) {
-  const receipt = await runVerify();
+function parseTiers(raw: string | undefined): TierName[] {
+  if (raw === undefined || raw.trim() === "") {
+    return [];
+  }
+  const parts = raw
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+  for (const part of parts) {
+    if (!TIER_ORDER.includes(part as TierName)) {
+      throw new Error(`Unknown tier "${part}"; expected one of ${TIER_ORDER.join(", ")}`);
+    }
+  }
+  return parts as TierName[];
+}
+
+async function main(): Promise<void> {
+  const { values } = parseArgs({
+    options: { tier: { type: "string", default: "" } },
+    allowPositionals: false,
+  });
+  const receipt = await runVerify({ tiers: parseTiers(values.tier) });
   console.error(
-    formatGateSummary(receipt.failures, receipt.advisory, receipt.skipped, receipt.dotnetSdk),
+    formatGateSummary(
+      receipt.failures,
+      receipt.advisory,
+      receipt.skipped,
+      receipt.dotnetSdk,
+      receipt.tiersRun.includes("native"),
+    ),
   );
   // The receipt is the machine-readable payload on stdout; the human summary above
   // goes to stderr. Native-tier steps run child processes with stdio "inherit", so
@@ -361,4 +176,9 @@ if (isMain) {
   if (receipt.status === "FAIL") {
     process.exitCode = 1;
   }
+}
+
+const isMain = Boolean(process.argv[1]) && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  await main();
 }

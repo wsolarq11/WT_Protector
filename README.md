@@ -64,6 +64,7 @@ Live `config/launcher.json` is git-ignored runtime state; `config/launcher.examp
 npm ci                     # 一次性安装脚本依赖
 npm run make               # 唯一产品编译命令：build + smoke + friend zip
 npm run verify             # full gate: static blocks; local and snapshot are advisory; native skips without .NET SDK
+npm run verify:static      # static tier only (~2s, no .NET): commit-time fast lane
 npm run start              # 运行主线应用
 npm run smoke              # published exe critical journey
 npm run install:portable   # 便携安装（npm run uninstall 卸载）

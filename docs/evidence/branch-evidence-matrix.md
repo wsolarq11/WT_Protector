@@ -14,7 +14,7 @@ Update when: 判定口径、证据方法论或 CI 流程变化时（步数/属�
 
 ## 门禁层
 
-本 session 已装 .NET 10.0.401 SDK（`C:\Program Files\dotnet`），`npm run verify` 实测 static/local 全 PASS、native 三层因本机 nuget.org 502（NU1900）失败——该失败在干净 HEAD 上可复现，属环境而非改动（CI 可达 nuget.org，为绿）。门禁 receipt 的 `dotnetSdk` 现为 `10.0.401`（= `dotnet --version`，尊重 `global.json`），此前取 `--list-sdks` 首个 10.x 会误报镜像预装但未参与构建的版本。winget 1.29.290 已安装，`apply:config` 与 `apply:config:dry` 均实测通过。步数与分层计数见 `AGENTS.md` 结构基线表与 `scripts/gate-steps.ts`。
+本 session 已装 .NET 10.0.401 SDK（`C:\Program Files\dotnet`），`npm run verify` 实测 static/local 全 PASS、native 四层因本机 nuget.org 502（NU1900）失败——该失败在干净 HEAD 上可复现，属环境而非改动（CI 可达 nuget.org，为绿）。门禁 receipt 的 `dotnetSdk` 现为 `10.0.401`（= `dotnet --version`，尊重 `global.json`），此前取 `--list-sdks` 首个 10.x 会误报镜像预装但未参与构建的版本。winget 1.29.290 已安装，`apply:config` 与 `apply:config:dry` 均实测通过。步数与分层计数见 `AGENTS.md` 结构基线表；门禁清单的唯一权威源是 `scripts/registry.ts` 的 `gateChecks`——内核重构后 id 清单与实现不再分家（原 `scripts/gate-steps.ts` 已删除）。
 
 ### Static
 
@@ -85,9 +85,10 @@ Update when: 判定口径、证据方法论或 CI 流程变化时（步数/属�
 
 | 命令 | 退出码/结果 | 判定 |
 | --- | --- | --- |
-| npm test | 34/34 PASS | 实测确证 |
-| npm run typecheck | PASS | 实测确证 |
+| npm test | 52/52 PASS（9 files） | 实测确证 |
+| npm run typecheck | PASS（0 error） | 实测确证 |
 | npm run verify | PASS，advisory 1，skipped 0，dotnetSdk 10.0.401 | 实测确证 |
+| npm run verify:static | PASS，tiersRun=["static"]，约 2s，未探测 dotnet SDK | 实测确证 |
 | npm run verify:mainline | 已由 verify 的 avalonia-mainline-verify 执行：PASS | 实测确证 |
 | npm run test:fast | EXIT=0 | 实测确证 |
 | npm run test:coverage | EXIT=0，写 coverage-gate-receipt.json | 实测确证 |
@@ -167,7 +168,7 @@ Top 无覆盖分叉（钻探到底复验：原 10 条中 9 条已实测关闭，
 | 字段/校验分支 | 期望 | 判定 | 证据 |
 | --- | --- | --- | --- |
 | `schemaVersion` | TS 侧必须 `2`；C# `ExpectedSchemaVersion=2`、`Minimum=1` | 有测试覆盖（全量测试实测） | `schema.ts:235`；`LauncherStoreValidatorPbtTests.cs` 覆盖 >2 与 <1 |
-| `entries[].id/name/directory/command` | `[JsonRequired]`，四字段非空 | 有测试覆盖 + 门禁实测 | `LaunchEntry.cs`；`common.ts readConfigItems` |
+| `entries[].id/name/directory/command` | `[JsonRequired]`，四字段非空 | 有测试覆盖 + 门禁实测 | `LaunchEntry.cs`；`kernel/check.ts readConfigItems` |
 | `DirectoryPath.Parse` 空值/无效字符/UNC/设备路径 | 抛 `FormatException` | 有测试覆盖（全量测试实测） | `DirectoryPath.cs:24-48`；`EntryDirectoryTests.cs:13-60` |
 | `DirectoryPath.ParseAndValidateExists` | 不存在目录抛 `DirectoryNotFoundException` | 有测试覆盖（全量测试实测） | `EntryDirectoryTests.cs:30` |
 | `EntryId.Parse` 空/保留名/路径符/非拉丁同形字/控制符 | 抛 `FormatException` | 有测试覆盖（全量测试实测） | `EntryId.cs:45-77`、`150-183`；`LauncherEntryIdsTests.cs:129-152` |
@@ -192,7 +193,7 @@ Top 无覆盖分叉（钻探到底复验：原 10 条中 9 条已实测关闭，
 | 未知键 loose read 跳过，下次 Save 被 source-gen 清除 | 手改字段静默消失 |
 | `launcher.ci.json`/`launcher.example.json` 不受 `checkLauncherStore` 业务规则约束 | 只有 `config-required-fields` 检查它们 |
 | `settings.window` 运行态缺 `[JsonRequired]` → null，门禁却强制 | 两套契约不一致 |
-| `asArray` 单值包装让门禁比运行态宽容 | `common.ts:69-74` |
+| `asArray` 单值包装让门禁比运行态宽容 | `kernel/check.ts:155-159` |
 | `schemaVersion=1` 运行态接受，门禁拒绝，且无升级路径 | `LauncherStoreValidator.cs:13-14` |
 
 ## 视觉系统层

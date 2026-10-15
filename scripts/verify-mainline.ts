@@ -15,7 +15,7 @@ import {
   type ToolReceipt,
 } from "./config-lib.js";
 import { restoreSolutionNativeAot, runNativeAotPublish } from "./publish-lib.js";
-import { runSmoke } from "./smoke-critical-journey.js";
+import { runSmoke, writeSmokeConfig } from "./smoke-critical-journey.js";
 
 const verifyPublishDir = path.join(avaloniaRoot, "artifacts", "verify-publish", "win-x64");
 const testResultsDir = path.join(avaloniaRoot, "artifacts", "test-results");
@@ -120,61 +120,33 @@ function contractTimeSpanBare(viewsRoot: string): string[] {
   return violations;
 }
 
-function writeSmokeConfig(storePath: string): void {
-  mkdirSync(path.dirname(storePath), { recursive: true });
-  const store = {
-    schemaVersion: 2,
-    entries: [{ id: "smoke", name: "smoke", directory: ".", command: "echo smoke", selected: false, updatedAtUtc: "", launchedAtUtc: "" }],
-    settings: {
-      lastFilterText: "",
-      sortMode: "custom",
-      entryViewMode: "cards",
-      requireConfirmationForLaunches: true,
-      runInTray: false,
-      customEntryOrder: ["smoke"],
-      searchHistory: [],
-      commandTemplates: {},
-      window: { width: 1180, height: 760, windowState: "Normal" },
-    },
-    presets: [{ id: "smoke-group", name: "Smoke", entryIds: ["smoke"] }],
-    defaultPresetId: "smoke-group",
-  };
-  writeFileSync(storePath, JSON.stringify(store), "utf8");
-}
-
 export interface SmokeOutcome {
   result: string;
   attempts: number;
 }
 
 /** 关键旅程冒烟的实测结果。CI 的 windows runner 有桌面会话,能拿到 MainWindowHandle,
- * 因此这里不按 CI 跳过:跳过会把"没跑"伪装成"通过",而调用点是阻塞的。冷启动 AOT exe
- * 在负载高的 runner 上可能超过探针的 10s 上窗窗口,故做有界重试——重试次数如实写进
- * receipt,让抖动可见而不是被抹平。 */
+ * 因此这里不按 CI 跳过:跳过会把"没跑"伪装成"通过",而调用点是阻塞的。
+ * 配置 fixture 与重试策略都来自 smoke-critical-journey.ts——配置不再在本文件复制一份,
+ * 重试也不再由调用方各自决定。 */
 async function processSmoke(exePath: string): Promise<SmokeOutcome> {
   if (process.platform !== "win32") {
     return { result: "skipped-non-windows", attempts: 0 };
   }
-  const maxAttempts = 2;
-  let lastError: unknown;
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    try {
-      rmSync(smokeRoot, { recursive: true, force: true });
-      const smokeStore = path.join(smokeRoot, "config", "launcher.json");
-      writeSmokeConfig(smokeStore);
-      const receipt = await runSmoke({ exe: exePath, configPath: smokeStore, workingDirectory: smokeRoot });
-      const checks = receipt.checks.map((check) => check.name).join("+");
-      if (checks !== "launch+title") {
-        throw new Error(`Critical journey smoke reported unexpected checks: ${checks}`);
-      }
-      return { result: checks, attempts: attempt };
-    } catch (error) {
-      lastError = error;
-      const message = error instanceof Error ? error.message : String(error);
-      process.stderr.write(`critical journey smoke attempt ${attempt}/${maxAttempts} failed: ${message}\n`);
-    }
+  rmSync(smokeRoot, { recursive: true, force: true });
+  const smokeStore = path.join(smokeRoot, "config", "launcher.json");
+  writeSmokeConfig(smokeStore);
+  const receipt = await runSmoke({
+    exe: exePath,
+    configPath: smokeStore,
+    workingDirectory: smokeRoot,
+    maxAttempts: 2,
+  });
+  const checks = receipt.checks.map((check) => check.name).join("+");
+  if (checks !== "launch+title") {
+    throw new Error(`Critical journey smoke reported unexpected checks: ${checks}`);
   }
-  throw lastError;
+  return { result: checks, attempts: receipt.attempts };
 }
 
 export async function runVerifyMainline(): Promise<ToolReceipt> {

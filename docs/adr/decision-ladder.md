@@ -25,7 +25,7 @@ Update when: 目录、代码分层、函数职责、文档分类或单一源分�
 | 视觉 | `docs/spec/visual-perspective-system.md` + `LauncherDesignTokens.cs` | `App.axaml` 全局皮肤 | XAML 裸色值、窗口内联重复皮肤 |
 | 命令 | `package.json`（机器源）+ `AGENTS.md` 脚本工具箱（唯一人工视图） | `README.md`/`src/avalonia-launcher/README.md` 只引用 | 各入口文档各自重列命令清单 |
 | 项目不变量 | `AGENTS.md` 核心规则 | `README.md` 安全口径（用户视角）、`docs/spec/`（代码层） | 第二份不变量表 |
-| 门禁分层 | `AGENTS.md` | 其他入口只引用 | 另一份 gate tier 说明 |
+| 门禁分层 | `scripts/kernel/policy.ts` 的 `TIER_POLICY`（分层语义与阻断判定）+ 每条 `Check` 的 `tier` 字段（归属） | `scripts/registry.ts` 汇总执行清单；`AGENTS.md` 结构基线表只放计数 | 另写一份 gate tier 说明；在 executor 里用 `if (isCi)` 之类分支重判分层 |
 | 文档 | `docs/README.md` 索引 | 藤曼路径 | 文档移动后不更新层 index.md、文档引用了已删除的旧路径、重复引用（同一事实在多处列出） |
 | 维护承诺 | `docs/roadmap.md`「维护承诺」（拍板、触发条件、收口仪式、退出条件仅此一处） | `README.md` / `docs/handoff.md` 状态句（只带状态词与指针，不复述日期或承诺文本） | 第二份维护承诺清单；拍板日期在唯一源之外列出 |
 

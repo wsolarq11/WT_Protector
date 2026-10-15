@@ -5,12 +5,43 @@
 ## 当前状态（2026-10-15）
 
 **WT_Protector** — 收敛维护期。维护模式：继续维护；拍板日期与承诺全文唯一源见 [roadmap.md](roadmap.md)「维护承诺」。
-- 本地 `npm run verify`：static/local 全 PASS；native 三层在本机因 nuget.org 502（NU1900）失败，属环境（干净 HEAD 可复现，CI 可达 nuget.org 为绿）
+- 本地 `npm run verify`：static/local 全 PASS；native 四层在本机因 nuget.org 502（NU1900）失败，属环境（干净 HEAD 可复现，CI 可达 nuget.org 为绿）
 - 交付物：`artifacts/friend/` 下与当前 tag 对齐的 friend zip（tag `v0.1.0`，含 StoreGrain TOCTOU 修复）
 - 远端 CI：见仓库 Actions 最新 run；`main` 已开分支保护（required check `verify`）
 - 远端 `origin/main` 已重写（见下「历史重写」），commit 哈希与重写前不再对应
 
-## 本次会话（2026-10-15）
+## 本次会话（2026-10-15 门禁内核重构）
+
+把 42 项门禁从「一份 id 数组 + 一份实现数组，靠断言互相看齐」重构成值/端口/代数模型。行为零漂移，纯结构收敛。
+
+### 问题
+`scripts/gate-steps.ts` 存 id 清单、`scripts/verify.ts` 存实现数组，二者只能靠一条断言同步；跳过策略散在 `if (isCi)` 分支里，receipt 的 layering 是字符串拼装。结果是「跳过」与「通过」在类型上同形——同一字符串可以既表示真跑过、又表示没跑（本次会话前刚落地的 `guiSmokeAttempts` 修复正是这个病的实例）。
+
+### 新结构（`scripts/kernel/`）
+- **World 端口**（`world.ts`）：唯一允许碰 `node:fs`/`execa` 的模块。其余检查代码只依赖 `World` 接口，因此判定逻辑可在内存世界里跑单测，不需要真文件系统
+- **Verdict 代数**（`verdict.ts`）：`pass(evidence) | fail(reason) | skip(reason)` 判别联合。跳过与通过是**不同的值**而非同一字符串的两种拼法——receipt 说谎在类型上不可表达
+- **Check 值**（`check.ts`）：`defineCheck({id, tier, needs?, run})`。`createCtx(world)` 把旧 helper 名（`readText`/`walkFiles`/`assertMatcherDetects`…）绑到 `World`，迁移期检查体改动最小
+- **层策略表**（`policy.ts`）：`TIER_POLICY` 声明每层是否 blocking 及跳过原因；executor 里不再有 `if (isCi)`
+- **执行器**（`runner.ts`）：按 `needs` 拓扑排序 → 按层排序 → 求值 → 投影成 receipt。`needs` 未通过的检查自动跳过，非阻塞层失败进 `advisory`
+- **注册表**（`registry.ts`）：`gateChecks` 是 id 与实现的唯一同址权威源；`gate-steps.ts` 与 `checks/common.ts` 已删除
+
+### 新增能力
+- `npm run verify:static`：只跑 36 项静态检查（约 2s，不探测 .NET SDK），相对全量门禁（约 4min）是提交前快车道。CLI 只在 native 在范围内时才探测 SDK，避免把「未安装 SDK」误报给不涉及 .NET 的运行
+
+### 等价性证明
+
+用一个 `git worktree` 在重构前的 HEAD 上开出干净检出，把新 `scripts/` 覆盖进去，于是**新旧两版门禁跑在同一棵字节相同的树上**（只有门禁代码不同；本机 git-ignored 的 `config/launcher.json` 已预置，避免文件缺失造成的假差异）。逐项 diff 两版 receipt：
+
+- **判定投影完全相同**：`failures` = 4 条 native（本机 nuget.org 502，与改动无关）、`advisory` = 1 条 local、`skipped` = 空——阻断/告警/跳过的划分两版逐字节一致。
+- 明细只剩 2 处差异，都可由改动本身解释：`command-table-consistency` 的命令数 20→21（新增 `verify:static`），`no-active-powershell-scripts` 的扫描数 +4（新增 `kernel/` 5 个文件 + `registry.ts`，减去删除的 `gate-steps.ts` 与 `checks/common.ts`）。
+- `launcher-store` 的记录粒度从「1 条 + 4 条内联」变为注册表汇总的 `records` 结构，是重构的预期产物，判定不变。
+
+加上 `tsc --noEmit` 0 error、脚本层 52 tests 全绿、`--tier=static` 实测 PASS。
+
+### 未做（有意）
+没有把 coverage 的 `--collect` 折进 mainline 的那次 `dotnet test`。看似是「省一次全量测试」的优化，但 coverage 门禁是**故意**只统计 6 类测试中的 4 类（`CoreUnit|PropertyTest|Persistence|ViewModelBehavior`，排除 `Analyzer`/`UiContract`）来算 9 条关键路径阈值的；合并会抬高被测行覆盖率，静默放宽阈值。
+
+## 上一次会话（2026-10-15 CI 加固）
 
 ### CI 加固（诚实性与牙）
 审计发现 receipt 在 GUI 冒烟上自相矛盾，已修复并给每条新不变量配上机器强制层：

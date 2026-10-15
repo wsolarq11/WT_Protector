@@ -1,36 +1,36 @@
 import { describe, expect, it } from "vitest";
-import { gateStepIds } from "../gate-steps.js";
-import { formatGateSummary, gateSteps, isSupportedDotnetSdk, type GateTier } from "../verify.js";
+import { assertRegistryIntegrity, gateChecks } from "../registry.js";
+import { formatGateSummary, isSupportedDotnetSdk, selectChecks, TIER_ORDER } from "../verify.js";
+import { TIER_POLICY } from "../kernel/policy.js";
+import type { TierName } from "../kernel/verdict.js";
 
-const KNOWN_TIERS: readonly GateTier[] = ["static", "local", "native", "snapshot"];
+const KNOWN_TIERS: readonly TierName[] = ["static", "local", "native", "snapshot"];
 
-describe("gate manifest", () => {
-  it("declares no duplicate step ids", () => {
-    expect(new Set(gateStepIds).size).toBe(gateStepIds.length);
+describe("gate registry", () => {
+  it("declares no duplicate ids and only kebab-case ids", () => {
+    expect(() => assertRegistryIntegrity()).not.toThrow();
   });
 
-  it("implements exactly the declared manifest, in order", () => {
-    expect(gateSteps.map((step) => step.id)).toEqual([...gateStepIds]);
-  });
-
-  it("assigns every step a known tier", () => {
-    for (const step of gateSteps) {
-      expect(KNOWN_TIERS).toContain(step.tier);
+  it("assigns every check a known tier", () => {
+    for (const check of gateChecks) {
+      expect(KNOWN_TIERS).toContain(check.tier);
     }
   });
 
   it("keeps only external-freshness work in the non-blocking tier", () => {
-    // snapshot 层失败只进 advisory:它描述的是外部人工数据的时效,
-    // 与代码正确性无关,因此这里锁死哪些步骤允许出现在该层。
-    const snapshotSteps = gateSteps.filter((step) => step.tier === "snapshot").map((step) => step.id);
-    expect(snapshotSteps).toEqual(["github-snapshot-freshness"]);
+    // snapshot 层失败只进 advisory:它描述的是外部人工数据的时效,与代码正确性无关。
+    const snapshot = gateChecks.filter((check) => check.tier === "snapshot").map((check) => check.id);
+    expect(snapshot).toEqual(["github-snapshot-freshness"]);
   });
 
-  it("marks every .NET dependent step as native so missing SDKs are explicit", () => {
-    // native 层在缺 .NET 10 SDK 的机器上会被显式跳过并留痕,
-    // 而不是以 NETSDK1045 的形式伪装成代码失败。
-    const nativeSteps = gateSteps.filter((step) => step.tier === "native").map((step) => step.id);
-    expect(nativeSteps).toEqual([
+  it("keeps only machine-path facts in the local tier", () => {
+    const local = gateChecks.filter((check) => check.tier === "local").map((check) => check.id);
+    expect(local).toEqual(["local-entry-directories"]);
+  });
+
+  it("marks every .NET dependent check as native so missing SDKs are explicit", () => {
+    const native = gateChecks.filter((check) => check.tier === "native").map((check) => check.id);
+    expect(native).toEqual([
       "release-lockfile-consistency",
       "avalonia-mainline-verify",
       "coverage-gate",
@@ -38,18 +38,55 @@ describe("gate manifest", () => {
     ]);
   });
 
-  it("marks local-entry-directories as the only local-tier step", () => {
-    const localSteps = gateSteps.filter((step) => step.tier === "local").map((step) => step.id);
-    expect(localSteps).toEqual(["local-entry-directories"]);
-  });
-
-  it("runs launcher-store before its dependent shortcut-backup-retirement", () => {
-    const ids = gateSteps.map((step) => step.id);
-    expect(ids.indexOf("launcher-store")).toBeLessThan(ids.indexOf("shortcut-backup-retirement"));
+  it("declares the shortcut dependency instead of relying on array order", () => {
+    const shortcut = gateChecks.find((check) => check.id === "shortcut-backup-retirement");
+    expect(shortcut?.needs).toEqual(["launcher-store"]);
   });
 
   it("ends with structure-baseline-up-to-date so stale derived data is reported last", () => {
-    expect(gateSteps[gateSteps.length - 1]?.id).toBe("structure-baseline-up-to-date");
+    expect(gateChecks[gateChecks.length - 1]?.id).toBe("structure-baseline-up-to-date");
+  });
+});
+
+describe("tier selection (--tier fast lane)", () => {
+  it("returns every check when no tier is requested", () => {
+    expect(selectChecks(gateChecks, []).length).toBe(gateChecks.length);
+  });
+
+  it("narrows to exactly the requested tier", () => {
+    const staticOnly = selectChecks(gateChecks, ["static"]);
+    expect(staticOnly.length).toBeGreaterThan(30);
+    expect(staticOnly.every((check) => check.tier === "static")).toBe(true);
+    expect(staticOnly.length).toBeLessThan(gateChecks.length);
+  });
+
+  it("supports multiple tiers in one call", () => {
+    const both = selectChecks(gateChecks, ["static", "native"]);
+    expect(both.every((check) => check.tier === "static" || check.tier === "native")).toBe(true);
+    expect(both.some((check) => check.tier === "local")).toBe(false);
+  });
+});
+
+describe("tier policy", () => {
+  it("blocks only static and native", () => {
+    expect(TIER_POLICY.static.blocking).toBe(true);
+    expect(TIER_POLICY.native.blocking).toBe(true);
+    expect(TIER_POLICY.local.blocking).toBe(false);
+    expect(TIER_POLICY.snapshot.blocking).toBe(false);
+  });
+
+  it("skips the native tier when no supported SDK is present", () => {
+    expect(TIER_POLICY.native.skipReason({ isCi: false, dotnetSdk: null })).toContain("requires .NET 10 SDK");
+    expect(TIER_POLICY.native.skipReason({ isCi: false, dotnetSdk: "10.0.401" })).toBeNull();
+  });
+
+  it("skips the local tier only in CI", () => {
+    expect(TIER_POLICY.local.skipReason({ isCi: true, dotnetSdk: null })).toContain("launcher.ci.json");
+    expect(TIER_POLICY.local.skipReason({ isCi: false, dotnetSdk: null })).toBeNull();
+  });
+
+  it("covers every tier", () => {
+    expect([...TIER_ORDER].sort()).toEqual(["local", "native", "snapshot", "static"]);
   });
 });
 
@@ -91,13 +128,12 @@ describe("gate summary formatting", () => {
       [],
       "10.0.301",
     );
-    // advisory 不改变结论:它只被报告。
     expect(text).toContain("PASS");
     expect(text).toContain("Advisory (reported, does not block)");
     expect(text).toContain("[snapshot] github-snapshot-freshness: stale");
   });
 
-  it("records why each step was skipped", () => {
+  it("records why each check was skipped", () => {
     const text = formatGateSummary(
       [],
       [],
