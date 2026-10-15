@@ -28,7 +28,7 @@
 - 代价：重写前发布过的 commit 哈希全部失效；新增引用一律用 tag / 提交标题，不再写裸短哈希
 
 ### 交付物刷新
-`npm run make` 重跑：AOT 发布 + critical-journey smoke（launch/title PASS）+ friend zip。首个版本 tag `v0.1.0` 打在当前 HEAD，friend zip 与 release 资产以该 tag 为准。
+`npm run make` 重跑：AOT 发布 + critical-journey smoke（launch/title PASS）+ friend zip。首个版本 tag `v0.1.0` 打在重写后 HEAD，friend zip 与 release 资产以该 tag 为准（其后 2 个提交为文档/依赖升级，不改变交付二进制——`App` 运行时闭包与 tag 时一致，31 个库零差异）。
 
 ## 上一次会话（2026-10-11）
 
